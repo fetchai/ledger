@@ -24,7 +24,6 @@ namespace fetch {
 
 class Settings;
 
-constellation::Constellation::Config BuildConstellationConfig(Settings const &        settings,
-                                                              crypto::Identity const &identity);
+constellation::Constellation::Config BuildConstellationConfig(Settings const &settings);
 
 }  // namespace fetch

@@ -251,42 +251,7 @@ GenesisDescriptor const HARD_CODED_CONFIGS[] = {{"mainnet", 10000u, 250000u,
     ]
   }
 }
-)"},
-
-                                                {"local", 3000u, 250000u,
-                                                 R"(
-{
-  "version": 4,
-  "accounts": [
-    {
-      "address": "<own_address>",
-      "balance": 0,
-      "stake": 1000
-    },
-    {
-      "address": "<initial_address>",
-      "balance": 1152996575,
-      "stake": 0
-    }
-  ],
-  "consensus": {
-    "aeonOffset": 100,
-    "aeonPeriodicity": 25,
-    "cabinetSize": 1,
-    "entropyRunahead": 2,
-    "minimumStake": 1000,
-    "startTime": 0,
-    "stakers": [
-      {
-        "identity": "<own_network_id>",
-        "amount": 10000000000000
-      }
-    ]
-  }
-}
-)"}
-
-};
+)"}};
 
 }  // namespace
 
@@ -318,8 +283,7 @@ Constellation::NetworkMode GetNetworkMode(Settings const &settings)
  * @param settings The system settings
  * @return The configuration
  */
-Constellation::Config BuildConstellationConfig(Settings const &        settings,
-                                               crypto::Identity const &identity)
+Constellation::Config BuildConstellationConfig(Settings const &settings)
 {
   Constellation::Config cfg;
 
@@ -354,9 +318,28 @@ Constellation::Config BuildConstellationConfig(Settings const &        settings,
   std::string network_name = settings.network_name.value();
 
   // Setting the network to local if it is a standalone node
-  if (settings.standalone.value())
+  if (settings.standalone.value() && network_name == "local")
   {
-    network_name = "local";
+    auto mainaccount       = variant::Variant::Object();
+    mainaccount["address"] = settings.initial_address.value();
+    mainaccount["balance"] = 1152997575;
+    mainaccount["stake"]   = 0;
+
+    auto accounts = variant::Variant::Array(1);
+    accounts[0]   = mainaccount;
+
+    variant::Variant config = variant::Variant::Object();
+    config["version"]       = 4;
+    config["accounts"]      = accounts;
+
+    std::stringstream contents{""};
+    contents << config;
+
+    cfg.genesis_file_contents = contents.str();
+    cfg.block_interval_ms     = 3000;
+    cfg.aeon_period           = 0;
+    cfg.proof_of_stake        = false;
+    return cfg;
   }
 
   if (cfg.genesis_file_contents.empty() && !network_name.empty())
@@ -367,29 +350,7 @@ Constellation::Config BuildConstellationConfig(Settings const &        settings,
       {
         FETCH_LOG_INFO("ConfigBuilder", "Using ", genesis.name, " configuration");
 
-        // Setting the address where all funds are located for standalone nodes
-        auto contents = static_cast<std::string>(genesis.contents);
-        if (settings.standalone.value())
-        {
-          std::size_t    pos = 0;
-          chain::Address own_address{identity};
-
-          std::string key_network_id = "<own_network_id>";
-          pos                        = contents.find(key_network_id);
-          contents                   = contents.replace(pos, key_network_id.size(),
-                                      static_cast<std::string>(identity.identifier().ToBase64()));
-
-          std::string key_own_address = "<own_address>";
-          pos                         = contents.find(key_own_address);
-          contents                    = contents.replace(pos, key_own_address.size(),
-                                      static_cast<std::string>(own_address.display()));
-
-          std::string key_init_adr = "<initial_address>";
-          pos                      = contents.find(key_init_adr);
-          contents = contents.replace(pos, key_init_adr.size(), settings.initial_address.value());
-        }
-
-        cfg.genesis_file_contents = contents;
+        cfg.genesis_file_contents = genesis.contents;
         cfg.block_interval_ms     = genesis.block_interval;
         cfg.aeon_period           = genesis.aeon_period;
         cfg.proof_of_stake        = true;

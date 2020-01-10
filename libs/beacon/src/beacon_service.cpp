@@ -281,17 +281,6 @@ BeaconService::State BeaconService::OnPrepareEntropyGeneration()
 
 BeaconService::State BeaconService::OnCollectSignaturesState()
 {
-  // Taking care of the corner case where we run a standalone node
-  if (active_exe_unit_->manager.qual().size() == 1)
-  {
-    if (active_exe_unit_->manager.can_verify() && active_exe_unit_->manager.Verify())
-    {
-      return State::COMPLETE;
-    }
-    state_machine_->Delay(500ms);
-    return State::COLLECT_SIGNATURES;
-  }
-
   // Otherwise we collect the signatures
   beacon_state_gauge_->set(static_cast<uint64_t>(state_machine_->state()));
 

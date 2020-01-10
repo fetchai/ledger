@@ -265,8 +265,7 @@ int main(int argc, char **argv)
       auto p2p_key = fetch::crypto::GenerateP2PKey();
 
       // attempt to build the configuration for constellation
-      fetch::constellation::Constellation::Config cfg =
-          BuildConstellationConfig(settings, p2p_key->identity());
+      fetch::constellation::Constellation::Config cfg = BuildConstellationConfig(settings);
 
       FETCH_LOG_INFO(LOGGING_NAME, "Configuration:\n", settings, "-\n", cfg);
 
