@@ -1162,9 +1162,7 @@ TEST_F(VMModelTests, model_sequential_reshape_2d_in_2d_out)
 {
   static char const *SRC_METRIC = R"(
           function main() : Tensor
-                          var shape = Array<UInt64>(1);
-                          shape[0] = 1u64;
-                          var x = Tensor(shape);
+                          var x = Tensor();
                           var str_vals = "0.5; 7.1; 9.1; 6.2;";
                           x.fromString(str_vals);
 
@@ -1202,9 +1200,7 @@ TEST_F(VMModelTests, model_sequential_reshape_2d_in_2d_out_wrong_shape)
 {
   static char const *SRC_METRIC = R"(
           function main() : Tensor
-                          var shape = Array<UInt64>(1);
-                          shape[0] = 1u64;
-                          var x = Tensor(shape);
+                          var x = Tensor();
                           var str_vals = "0.5; 7.1; 9.1; 6.2;";
                           x.fromString(str_vals);
 
@@ -1272,9 +1268,7 @@ TEST_F(VMModelTests, model_sequential_reshape_2d_in_3d_out)
 {
   static char const *SRC_METRIC = R"(
           function main() : Tensor
-                          var shape = Array<UInt64>(1);
-                          shape[0] = 1u64;
-                          var x = Tensor(shape);
+                          var x = Tensor();
                           var str_vals = "0.5; 7.1; 9.1; 6.2;";
                           x.fromString(str_vals);
 
@@ -1315,9 +1309,7 @@ TEST_F(VMModelTests, model_sequential_reshape_5d_in_3d_out)
 {
   static char const *SRC_METRIC = R"(
           function main() : Tensor
-                          var shape = Array<UInt64>(1);
-                          shape[0] = 1u64;
-                          var x = Tensor(shape);
+                          var x = Tensor();
                           var str_vals = "0.5; 7.1; 9.1; 6.2;";
                           x.fromString(str_vals);
                           x = x.unsqueeze();
@@ -1361,9 +1353,7 @@ TEST_F(VMModelTests, model_sequential_reshape_2d_in_8d_out)
 {
   static char const *SRC_METRIC = R"(
           function main() : Tensor
-                          var shape = Array<UInt64>(1);
-                          shape[0] = 1u64;
-                          var x = Tensor(shape);
+                          var x = Tensor();
                           var str_vals = "0.5; 7.1; 8.0999; 6.2;";
                           x.fromString(str_vals);
 
@@ -1408,9 +1398,7 @@ TEST_F(VMModelTests, model_sequential_flatten_4d_in_2d_out)
 {
   static char const *SRC_METRIC = R"(
               function main() : Tensor
-                var shape = Array<UInt64>(1);
-                shape[0] = 1u64;
-                var x = Tensor(shape);
+                var x = Tensor();
                 var str_vals = "0.5, 7.1, 9.1; 6.2, 7.1, 4.;";
                 x.fromString(str_vals);
                 x = x.unsqueeze();
