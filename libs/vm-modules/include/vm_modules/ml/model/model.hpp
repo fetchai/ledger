@@ -47,8 +47,6 @@ enum class ModelCategory : uint8_t
 {
   NONE,
   SEQUENTIAL,
-  REGRESSOR,
-  CLASSIFIER
 };
 
 enum class SupportedLayerType : uint8_t

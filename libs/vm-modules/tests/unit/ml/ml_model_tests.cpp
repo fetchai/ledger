@@ -380,53 +380,11 @@ TEST_F(VMModelTests, non_permitted_serialisation_model_sequential_test)
   EXPECT_FALSE(toolkit.Run());
 }
 
-TEST_F(VMModelTests, non_permitted_serialisation_model_regressor_test)
-{
-  static char const *model_regressor_serialise_src = R"(
-
-      function main()
-
-        // set up a model
-        var model = Model("regressor");
-
-        // serialise model
-        var model_state = State<Model>("model");
-        model_state.set(model);
-
-      endfunction
-    )";
-
-  ASSERT_TRUE(toolkit.Compile(model_regressor_serialise_src));
-  EXPECT_FALSE(toolkit.Run());
-}
-
-TEST_F(VMModelTests, non_permitted_serialisation_model_classifier_test)
-{
-  static char const *model_classifier_serialise_src = R"(
-
-      function main()
-
-        // set up a model
-        var model = Model("classifier");
-
-        // serialise model
-        var model_state = State<Model>("model");
-        model_state.set(model);
-
-      endfunction
-    )";
-
-  ASSERT_TRUE(toolkit.Compile(model_classifier_serialise_src));
-  EXPECT_FALSE(toolkit.Run());
-}
-
 TEST_F(VMModelTests, model_init_with_wrong_name)
 {
   static char const *SRC_CORRECT_NAMES = R"(
         function main()
           var model1 = Model("sequential");
-          var model2 = Model("regressor");
-          var model3 = Model("classifier");
           var model4 = Model("none");
         endfunction
       )";
@@ -592,19 +550,6 @@ TEST_F(VMModelTests, model_uncompilable_add_layer__activation_invalid_params)
   TestAddingUncompilableLayer(R"(model.add("activation", 0u64);)");
 }
 
-TEST_F(VMModelTests, model_add_layer_to_non_sequential)
-{
-  static char const *SRC = R"(
-        function main()
-          var model = Model("regressor");
-          model.add("conv1d", 1u64, 1u64, 1u64, 1u64);
-        endfunction
-      )";
-  EXPECT_TRUE(toolkit.Compile(SRC));
-  std::cout << "Testing manual layer adding to a regressor model" << std::endl;
-  EXPECT_FALSE(toolkit.Run());
-}
-
 TEST_F(VMModelTests, model_empty_sequential_compilation)
 {
   static char const *EMPTY_SEQUENTIAL_SRC = R"(
@@ -640,36 +585,6 @@ TEST_F(VMModelTests, model_compilation_invalid_params)
     ASSERT_TRUE(toolkit.Compile(src));
     EXPECT_FALSE(toolkit.Run());
   }
-}
-
-TEST_F(VMModelTests, DISABLED_model_compilation_simple_with_wrong_optimizer)
-{
-  static char const *SIMPLE_NONADAM_SRC = R"(
-      function main()
-         var hidden_layers = Array<UInt64>(2);
-         var model = Model("classifier");
-         model.compile("sgd", hidden_layers);
-      endfunction
-    )";
-
-  ASSERT_TRUE(toolkit.Compile(SIMPLE_NONADAM_SRC));
-  std::cout << "Testing non-Adam optimizer for a Simple model" << std::endl;
-  EXPECT_FALSE(toolkit.Run());
-}
-
-TEST_F(VMModelTests, DISABLED_model_compilation_simple_with_too_few_layer_shapes)
-{
-  static char const *SIMPLE_1_HIDDEN_SRC = R"(
-      function main()
-         var hidden_layers = Array<UInt64>(1);
-         var model = Model("classifier");
-         model.compile("adam", hidden_layers);
-      endfunction
-    )";
-
-  ASSERT_TRUE(toolkit.Compile(SIMPLE_1_HIDDEN_SRC));
-  std::cout << "Testing insufficient hidden layers quantity for a Simple model" << std::endl;
-  EXPECT_FALSE(toolkit.Run());
 }
 
 // Disableduntil AddDropout estimator implementation
@@ -720,21 +635,6 @@ TEST_F(VMModelTests, model_dropout_comparison)
   ASSERT_TRUE(toolkit.Compile(SOURCE));
   EXPECT_TRUE(toolkit.Run(nullptr, ChargeAmount{0}));
 }
-
-TEST_F(VMModelTests, model_compilation_sequential_from_layer_shapes)
-{
-  static char const *HIDDEN_TO_SEQUENTIAL_SRC = R"(
-      function main()
-         var hidden_layers = Array<UInt64>(10);
-         var model = Model("sequential");
-         model.compile("adam", hidden_layers);
-      endfunction
-    )";
-
-  ASSERT_TRUE(toolkit.Compile(HIDDEN_TO_SEQUENTIAL_SRC));
-  std::cout << "Testing misuse of sequential compile by passing hidden layers" << std::endl;
-  EXPECT_FALSE(toolkit.Run());
-}  // namespace
 
 TEST_F(VMModelTests, dense_sequential_model_test)
 {
@@ -908,78 +808,6 @@ TEST_F(VMModelTests, conv2d_sequential_model_test)
   ASSERT_TRUE((prediction->GetTensor())
                   .AllClose(gt, fetch::math::function_tolerance<DataType>(),
                             fetch::math::function_tolerance<DataType>()));
-}
-
-TEST_F(VMModelTests, DISABLED_classifier_model_test)
-{
-  static char const *classifier_model_src = R"(
-    function main()
-
-      // set up data and labels
-      var data_shape = Array<UInt64>(2);
-      data_shape[0] = 10u64;
-      data_shape[1] = 250u64;
-      var label_shape = Array<UInt64>(2);
-      label_shape[0] = 10u64;
-      label_shape[1] = 250u64;
-      var data = Tensor(data_shape);
-      var label = Tensor(label_shape);
-
-      // set up a model
-      var hidden_layers = Array<UInt64>(3);
-      hidden_layers[0] = 10u64;
-      hidden_layers[1] = 10u64;
-      hidden_layers[2] = 10u64;
-      var model = Model("classifier");
-      model.compile("adam", hidden_layers);
-
-      // train the model
-      model.fit(data, label, 32u64);
-
-      // make a prediction
-      var loss = model.evaluate();
-
-    endfunction
-  )";
-
-  ASSERT_TRUE(toolkit.Compile(classifier_model_src));
-  ASSERT_TRUE(toolkit.Run());
-}
-
-TEST_F(VMModelTests, DISABLED_regressor_model_test)
-{
-  static char const *regressor_model_src = R"(
-    function main()
-
-      // set up data and labels
-      var data_shape = Array<UInt64>(2);
-      data_shape[0] = 10u64;
-      data_shape[1] = 250u64;
-      var label_shape = Array<UInt64>(2);
-      label_shape[0] = 1u64;
-      label_shape[1] = 250u64;
-      var data = Tensor(data_shape);
-      var label = Tensor(label_shape);
-
-      // set up a model
-      var hidden_layers = Array<UInt64>(3);
-      hidden_layers[0] = 10u64;
-      hidden_layers[1] = 10u64;
-      hidden_layers[2] = 1u64;
-      var model = Model("regressor");
-      model.compile("adam", hidden_layers);
-
-      // train the model
-      model.fit(data, label, 32u64);
-
-      // make a prediction
-      var loss = model.evaluate();
-
-    endfunction
-  )";
-
-  ASSERT_TRUE(toolkit.Compile(regressor_model_src));
-  ASSERT_TRUE(toolkit.Run());
 }
 
 TEST_F(VMModelTests, model_with_metric)
