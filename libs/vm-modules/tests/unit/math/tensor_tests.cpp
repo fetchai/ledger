@@ -1410,16 +1410,15 @@ TEST_F(MathTensorTests, empty_tensor_unsqueeze)
   static char const *tensor_from_string_src = R"(
     function main()
       var x = Tensor();
-      x.unsqueeze();
+      x = x.unsqueeze();
       var shape = x.shape();
       print(shape);
     endfunction
   )";
 
   ASSERT_TRUE(toolkit.Compile(tensor_from_string_src));
-  // does nothing because of size=0 and shape=[0]
   ASSERT_TRUE(toolkit.Run());
-  ASSERT_EQ(stdout.str(), "[0]");
+  ASSERT_EQ(stdout.str(), "[0, 1]");
 }
 
 TEST_F(MathTensorTests, empty_tensor_at)
