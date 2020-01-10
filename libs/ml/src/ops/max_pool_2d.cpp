@@ -173,7 +173,8 @@ std::vector<TensorType> MaxPool2D<TensorType>::Backward(const VecTensorType &inp
 
           // Add error to max node
           return_signal(c, max_iterw, max_iterh, n_i) =
-              return_signal(c, max_iterw, max_iterh, n_i) + *erit;
+              static_cast<DataType>(return_signal(c, max_iterw, max_iterh, n_i) + (*erit));
+
           ++erit;
         }
       }
