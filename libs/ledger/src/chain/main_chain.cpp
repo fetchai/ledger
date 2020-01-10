@@ -1969,6 +1969,8 @@ DigestSet MainChain::DetectDuplicateTransactions(BlockHash const &           sta
 
   FETCH_LOG_DEBUG(LOGGING_NAME, "Starting TX uniqueness verify");
 
+  FETCH_LOCK(lock_);
+
   IntBlockPtr block;
   if (!LookupBlock(starting_hash, block) || block->is_loose)
   {
