@@ -25,45 +25,12 @@
 namespace fetch {
 namespace ml {
 namespace ops {
-/**
- * Update pointer to pooling op depending on input size
- * @tparam TensorType
- * @param inputs
- */
-template <typename TensorType>
-void MaxPool<TensorType>::UpdatePointer(VecTensorType const &inputs)
-{
-  switch (inputs.at(0)->shape().size())
-  {
-    // MaxPool1D
-  case static_cast<SizeType>(3):
-  {
-    if (!pool_op_ptr_ || pool_2d_)
-    {
-      pool_op_ptr_ =
-          std::make_shared<fetch::ml::ops::MaxPool1D<TensorType>>(kernel_size_, stride_size_);
-      pool_2d_ = false;
-    }
-    break;
-  }
-    // MaxPool2D
-  case static_cast<SizeType>(4):
-  {
-    if (!pool_op_ptr_ || !pool_2d_)
-    {
-      pool_op_ptr_ =
-          std::make_shared<fetch::ml::ops::MaxPool2D<TensorType>>(kernel_size_, stride_size_);
-      pool_2d_ = true;
-    }
-    break;
-  }
 
-  default:
-  {
-    throw fetch::ml::exceptions::InvalidMode("Unsupported data shape");
-  }
-  }
-}
+template <typename T>
+MaxPool<T>::MaxPool(SizeType const kernel_size, SizeType const stride_size)
+  : kernel_size_{kernel_size}
+  , stride_size_{stride_size}
+{}
 
 template <typename T>
 MaxPool<T>::MaxPool(const SPType &sp)
@@ -167,6 +134,46 @@ std::vector<fetch::math::SizeType> MaxPool<TensorType>::ComputeOutputShape(
   }
 
   return output_shape;
+}
+
+/**
+ * Update pointer to pooling op depending on input size
+ * @tparam TensorType
+ * @param inputs
+ */
+template <typename TensorType>
+void MaxPool<TensorType>::UpdatePointer(VecTensorType const &inputs)
+{
+  switch (inputs.at(0)->shape().size())
+  {
+    // MaxPool1D
+  case static_cast<SizeType>(3):
+  {
+    if (!pool_op_ptr_ || pool_2d_)
+    {
+      pool_op_ptr_ =
+          std::make_shared<fetch::ml::ops::MaxPool1D<TensorType>>(kernel_size_, stride_size_);
+      pool_2d_ = false;
+    }
+    break;
+  }
+    // MaxPool2D
+  case static_cast<SizeType>(4):
+  {
+    if (!pool_op_ptr_ || !pool_2d_)
+    {
+      pool_op_ptr_ =
+          std::make_shared<fetch::ml::ops::MaxPool2D<TensorType>>(kernel_size_, stride_size_);
+      pool_2d_ = true;
+    }
+    break;
+  }
+
+  default:
+  {
+    throw fetch::ml::exceptions::InvalidMode("Unsupported data shape");
+  }
+  }
 }
 
 ///////////////////////////////

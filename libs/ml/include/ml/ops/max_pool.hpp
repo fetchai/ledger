@@ -38,10 +38,7 @@ public:
   using SPType        = OpMaxPoolSaveableParams<T>;
   using MyType        = MaxPool<TensorType>;
 
-  MaxPool(SizeType const kernel_size, SizeType const stride_size)
-    : kernel_size_{kernel_size}
-    , stride_size_{stride_size}
-  {}
+  MaxPool(SizeType const kernel_size, SizeType const stride_size);
 
   explicit MaxPool(SPType const &sp);
 
