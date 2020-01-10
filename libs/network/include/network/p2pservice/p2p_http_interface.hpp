@@ -105,7 +105,8 @@ private:
       // if the request for the chain size is too large then
       if (chain_length > CHAIN_QUERY_LIMIT)
       {
-        return http::CreateJsonResponse(R"({"error": "Requested chain size is too large"})", http::Status::CLIENT_ERROR_BAD_REQUEST);
+        return http::CreateJsonResponse(R"({"error": "Requested chain size is too large"})",
+                                        http::Status::CLIENT_ERROR_BAD_REQUEST);
       }
     }
 
@@ -119,7 +120,7 @@ private:
       include_transactions = true;
     }
 
-    Variant response  = Variant::Object();
+    Variant response = Variant::Object();
 
     if (start_hash.empty())
     {
@@ -130,7 +131,7 @@ private:
       response["chain"] = GenerateForwardChain(start_hash, chain_length, include_transactions);
     }
 
-    response["block"] = "0x" + chain_.GetHeaviestBlockHash().ToHex();
+    response["block"]   = "0x" + chain_.GetHeaviestBlockHash().ToHex();
     response["genesis"] = "0x" + chain::GetGenesisDigest().ToHex();
 
     return http::CreateJsonResponse(response);
@@ -162,7 +163,8 @@ private:
     return http::CreateJsonResponse(data);
   }
 
-  Variant GenerateForwardChain(ConstByteArray const &start_hash, std::size_t limit, bool include_transactions)
+  Variant GenerateForwardChain(ConstByteArray const &start_hash, std::size_t limit,
+                               bool include_transactions)
   {
     auto travelogue = chain_.TimeTravel(start_hash, limit);
 
@@ -199,7 +201,8 @@ private:
     return block_list;
   }
 
-  void PopulateJsonFromBlock(Variant &output, MainChain::BlockPtr const &block, bool include_transactions)
+  void PopulateJsonFromBlock(Variant &output, MainChain::BlockPtr const &block,
+                             bool include_transactions)
   {
     // format the block number
     output                 = Variant::Object();
