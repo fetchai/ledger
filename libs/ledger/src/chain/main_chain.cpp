@@ -150,11 +150,6 @@ BlockStatus MainChain::AddBlock(Block const &blk)
   FETCH_LOG_DEBUG(LOGGING_NAME, "New Block: 0x", block->hash.ToHex(), " -> ", ToString(status),
                   " (weight: ", block->weight, " total: ", block->total_weight, ")");
 
-  if (status == BlockStatus::ADDED)
-  {
-    AddBlockToBloomFilter(*block);
-  }
-
   return status;
 }
 
@@ -1545,6 +1540,8 @@ BlockStatus MainChain::InsertBlock(IntBlockPtr const &block, bool evaluate_loose
   {
     CompleteLooseBlocks(block);
   }
+
+  AddBlockToBloomFilter(*block);
 
   return BlockStatus::ADDED;
 }
