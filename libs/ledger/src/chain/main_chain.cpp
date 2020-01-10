@@ -1449,6 +1449,23 @@ BlockStatus MainChain::InsertBlock(IntBlockPtr const &block, bool evaluate_loose
     return BlockStatus::INVALID;
   }
 
+  TransactionLayoutSet txs;
+  for (auto const &slice : block->slices)
+  {
+    for (auto const &tx_layout : slice)
+    {
+      txs.insert(tx_layout);
+    }
+  }
+
+  auto const duplicates = DetectDuplicateTransactions(block->previous_hash, txs);
+  if (!duplicates.empty())
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Block discard due to duplicate tx(s)");
+
+    return BlockStatus::INVALID;
+  }
+
   // Assume for the moment that this block is not loose. The validity of this statement will be
   // checked below
   block->is_loose = false;
