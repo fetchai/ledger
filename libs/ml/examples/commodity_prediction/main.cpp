@@ -108,7 +108,7 @@ std::pair<std::string, std::vector<std::string>> ReadArchitecture(
   SizeType                 input_layer_size;
   SizeType                 previous_layer_size;
   std::string              layer_activation;
-  DataType                 dropout_prob{1};
+  DataType                 dropout_prob{0};
   std::vector<std::string> node_names({});
   LayerType                layer_type;
 
