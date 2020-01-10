@@ -438,13 +438,12 @@ void Convolution2D<TensorType>::ReverseFillOutput(TensorType &gemm_output, Tenso
 /// EXPLICIT INSTANTIATIONS ///
 ///////////////////////////////
 
-// TODO (ML-438)
-// template class Convolution2D<math::Tensor<int8_t>>;
-// template class Convolution2D<math::Tensor<int16_t>>;
+template class Convolution2D<math::Tensor<int8_t>>;
+template class Convolution2D<math::Tensor<int16_t>>;
 template class Convolution2D<math::Tensor<int32_t>>;
 template class Convolution2D<math::Tensor<int64_t>>;
-// template class Convolution2D<math::Tensor<uint8_t>>;
-// template class Convolution2D<math::Tensor<uint16_t>>;
+template class Convolution2D<math::Tensor<uint8_t>>;
+template class Convolution2D<math::Tensor<uint16_t>>;
 template class Convolution2D<math::Tensor<uint32_t>>;
 template class Convolution2D<math::Tensor<uint64_t>>;
 template class Convolution2D<math::Tensor<float>>;
