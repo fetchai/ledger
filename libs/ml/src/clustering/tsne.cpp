@@ -264,11 +264,10 @@ void TSNE<TensorType>::CalculatePairwiseAffinitiesP(TensorType const &input_matr
   // sum_x = sum(square(x), 1)
   TensorType sum_x = fetch::math::ReduceSum(fetch::math::Square(input_matrix), 1);
 
-  // d= ((-2 * dot(X, X.T))+sum_x).T+sum_x
+  // d= (sum_x - (2 * dot(X, X.T))).T+sum_x
   TensorType d =
-      fetch::math::Multiply(DataType{-2}, fetch::math::DotTranspose(input_matrix, input_matrix));
-
-  d = (d + sum_x).Transpose() + sum_x;
+      fetch::math::Multiply(DataType{2}, fetch::math::DotTranspose(input_matrix, input_matrix));
+  d = (sum_x - d).Transpose() + sum_x;
 
   // beta = 1/(2*sigma^2)
   // Prefill beta array with 1.0
@@ -369,12 +368,11 @@ void TSNE<TensorType>::CalculateSymmetricAffinitiesQ(TensorType const &output_ma
   // sum_y = sum(square(y), 1)
   TensorType sum_y = fetch::math::ReduceSum(fetch::math::Square(output_matrix), 1);
 
-  // num = -2. * dot(Y, Y.T)
-  num =
-      fetch::math::Multiply(DataType{-2}, fetch::math::DotTranspose(output_matrix, output_matrix));
+  // num = 2. * dot(Y, Y.T)
+  num = fetch::math::Multiply(DataType{2}, fetch::math::DotTranspose(output_matrix, output_matrix));
 
   // num = 1 / (1 + (num+sum_y).T+sum_y)
-  TensorType val((num + sum_y).Transpose());
+  TensorType val((sum_y - num).Transpose());
   num = fetch::math::Divide(DataType{1}, fetch::math::Add(DataType{1}, (val + sum_y)));
 
   // num[range(n), range(n)] = 0.
@@ -445,7 +443,6 @@ TensorType TSNE<TensorType>::ComputeGradient(TensorType const &output_matrix,
       fetch::math::Multiply(num.At(i, j), val, val);
 
       // val*(yi-yj), where val=(Pij-Qij)/(1+||yi-yj||^2)
-
       TensorType diff = (output_matrix.Slice(j).Copy()) - (output_matrix.Slice(i).Copy());
 
       SizeVector shape = diff.shape();
@@ -483,10 +480,15 @@ void TSNE<TensorType>::LimitMin(TensorType &matrix, DataType const &min)
 /// EXPLICIT INSTANTIATIONS ///
 ///////////////////////////////
 
-template class TSNE<math::Tensor<int8_t>>;
-template class TSNE<math::Tensor<int16_t>>;
+// TODO (ML-438)
+// template class TSNE<math::Tensor<int8_t>>;
+// template class TSNE<math::Tensor<int16_t>>;
 template class TSNE<math::Tensor<int32_t>>;
 template class TSNE<math::Tensor<int64_t>>;
+// template class TSNE<math::Tensor<uint8_t>>;
+// template class TSNE<math::Tensor<uint16_t>>;
+template class TSNE<math::Tensor<uint32_t>>;
+template class TSNE<math::Tensor<uint64_t>>;
 template class TSNE<math::Tensor<float>>;
 template class TSNE<math::Tensor<double>>;
 template class TSNE<math::Tensor<fixed_point::fp32_t>>;
