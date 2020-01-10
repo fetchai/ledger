@@ -664,7 +664,7 @@ MainChain::Blocks MainChain::GetChainPreceding(BlockHash start, uint64_t limit) 
  * @param current_hash The hash of the first block's parent
  * @return The array of blocks, plus the current heaviest hash
  */
-MainChain::Travelogue MainChain::TimeTravel(BlockHash current_hash) const
+MainChain::Travelogue MainChain::TimeTravel(BlockHash current_hash, std::size_t limit) const
 {
   MilliTimer myTimer("MainChain::TimeTravel", 750);
 
@@ -698,10 +698,12 @@ MainChain::Travelogue MainChain::TimeTravel(BlockHash current_hash) const
   // We have the block we want to sync forward from. Check if it is on the heaviest chain.
   bool const on_heaviest_branch = (block && (block->chain_label == heaviest_.ChainLabel()));
 
+  std::size_t const output_limit = std::min(limit, std::size_t{UPPER_BOUND});
+
   bool not_done = true;
   for (current_hash = std::move(next_hash);
        // stop once we have gathered enough blocks or passed the tip
-       not_done && !current_hash.empty() && result.size() < UPPER_BOUND;
+       not_done && !current_hash.empty() && result.size() < output_limit;
        // walk the stack
        current_hash = std::move(next_hash))
   {
