@@ -242,24 +242,9 @@ bool MainChain::LookupReference(BlockHash const &hash, BlockHash &next_hash) con
     assert(parent_block);
     assert(heaviest_.ChainLabel() != 0);
     // check if this block is cached and known to lie on the current heaviest chain
-    if (parent_block->chain_label != heaviest_.ChainLabel())
+    if (parent_block->chain_label == heaviest_.ChainLabel())
     {
-      // we need to descend from tip
-      auto next_block = HeaviestChainBlockAbove(parent_block->block_number);
-      if (!next_block)
-      {
-        // there was a failure on block lookup attempt
-        return false;
-      }
-      if (next_block->previous_hash == hash)
-      {
-        next_hash = next_block->hash;
-        return true;
-      }
-    }
-    else
-    {
-      // it does
+      // it is
       auto references_range = forward_references_.equal_range(hash);
       for (auto reference_it = references_range.first; reference_it != references_range.second;
            ++reference_it)
@@ -274,6 +259,21 @@ bool MainChain::LookupReference(BlockHash const &hash, BlockHash &next_hash) con
       }
       // at least one forward ref has to be to a block of current chain
       assert(false);
+    }
+    else
+    {
+      // we need to descend from tip
+      auto next_block = HeaviestChainBlockAbove(parent_block->block_number);
+      if (!next_block)
+      {
+        // there was a failure on block lookup attempt
+        return false;
+      }
+      if (next_block->previous_hash == hash)
+      {
+        next_hash = next_block->hash;
+        return true;
+      }
     }
     // there are several forward references from the parent hash
     // and it is not on the heaviest chain
@@ -321,8 +321,8 @@ MainChain::BlockMap::size_type MainChain::UncacheBlock(BlockHash const &hash) co
  */
 void MainChain::KeepBlock(IntBlockPtr const &block) const
 {
-  ASSERT(static_cast<bool>(block));
-  ASSERT(static_cast<bool>(block_store_));
+  assert(static_cast<bool>(block));
+  assert(static_cast<bool>(block_store_));
 
   auto const &hash{block->hash};
 
@@ -663,7 +663,7 @@ MainChain::Blocks MainChain::GetChainPreceding(BlockHash start, uint64_t limit) 
 }
 
 /**
- * Walk the chain forward collecting at most UPPER_LIMIT blocks, until either tip reached,
+ * Walk the chain forward collecting at most UPPER_LIMIT blocks, until either tip is reached,
  * or next block is ambiguous, which can happen off-heaviest chain.
  * If current_hash is empty, travel starts from genesis.
  *
@@ -697,7 +697,7 @@ MainChain::Travelogue MainChain::TimeTravel(BlockHash current_hash) const
       FETCH_LOG_DEBUG(LOGGING_NAME, "Block lookup failure for block: 0x", ToHex(current_hash),
                       " during time travel. Note, next hash: ", next_hash);
 
-      return {};
+      return {heaviest->hash, heaviest->block_number};
     }
   }
 

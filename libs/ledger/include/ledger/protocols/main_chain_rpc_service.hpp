@@ -101,8 +101,7 @@ public:
     START_SYNC_WITH_PEER,
     REQUEST_NEXT_BLOCKS,
     WAIT_FOR_NEXT_BLOCKS,
-    COMPLETE_SYNC_WITH_PEER,
-    WALK_BACK
+    COMPLETE_SYNC_WITH_PEER
   };
 
   using MuddleEndpoint  = muddle::MuddleEndpoint;
@@ -190,9 +189,9 @@ private:
   State OnRequestNextSetOfBlocks();
   State OnWaitForBlocks();
   State OnCompleteSyncWithPeer();
-  State OnWalkBack();
 
-  bool ValidBlock(Block const &block, char const *action) const;
+  bool  ValidBlock(Block const &block, char const *action) const;
+  State WalkBack();
   /// @}
 
   /// @name System Components
@@ -265,8 +264,6 @@ constexpr char const *ToString(MainChainRpcService::State state) noexcept
     return "Waiting for Blocks";
   case MainChainRpcService::State::COMPLETE_SYNC_WITH_PEER:
     return "Completed Sync with Peer";
-  case MainChainRpcService::State::WALK_BACK:
-    return "Walk Back";
   }
 
   return "unknown";

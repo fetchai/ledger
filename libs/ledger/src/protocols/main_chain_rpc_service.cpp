@@ -127,7 +127,6 @@ MainChainRpcService::MainChainRpcService(MuddleEndpoint &             endpoint,
   state_machine_->RegisterHandler(State::REQUEST_NEXT_BLOCKS,     this, &MainChainRpcService::OnRequestNextSetOfBlocks);
   state_machine_->RegisterHandler(State::WAIT_FOR_NEXT_BLOCKS,    this, &MainChainRpcService::OnWaitForBlocks);
   state_machine_->RegisterHandler(State::COMPLETE_SYNC_WITH_PEER, this, &MainChainRpcService::OnCompleteSyncWithPeer);
-  state_machine_->RegisterHandler(State::WALK_BACK,               this, &MainChainRpcService::OnWalkBack);
   // clang-format on
 
   state_machine_->OnStateChange([](State current, State previous) {
@@ -485,7 +484,7 @@ State MainChainRpcService::OnWaitForBlocks()
   if (log.status == TravelogueStatus::NOT_FOUND)
   {
     // if the responding block was not found then start walking back slowly
-    return State::WALK_BACK;
+    return WalkBack();
   }
   // The remote peer did not respond with NOT_FOUND, we can reset the stride.
   back_stride_ = 1;
@@ -552,18 +551,42 @@ bool MainChainRpcService::ValidBlock(Block const &block, char const *action) con
   }
 }
 
-State MainChainRpcService::OnWalkBack()
+State MainChainRpcService::WalkBack()
 {
-  auto blocks_back = back_stride_;
-  if (blocks_back < max_sensible_step_back)
+  assert(block_resolving_);
+
+  std::size_t blocks_back    = back_stride_;
+  std::size_t current_height = block_resolving_->block_number;
+
+  if (current_height == 0)
   {
+    assert(block_resolving_->IsGenesis());
+
+    // genesis digest mismatch, stop sync with this peer
+    block_resolving_.reset();
+    return State::COMPLETE_SYNC_WITH_PEER;
+  }
+
+  if (blocks_back >= current_height)
+  {
+    // we don't need to (and actually can't) leap back as far
+    // let's descend down to genesis logarithmically!
+    blocks_back = current_height / 2;
+  }
+  else if (back_stride_ < max_sensible_step_back)
+  {
+    // speed up, unless we're already fast enough
     back_stride_ *= 2;
   }
 
-  for (std::size_t i = 0; i < blocks_back && !block_resolving_->IsGenesis(); ++i)
+  // TODO (nobody): we should consider once if this linear crawlback is worth improving
+  for (std::size_t i = 0; i < blocks_back; ++i)
   {
+    assert(!block_resolving_->IsGenesis());
     block_resolving_ = chain_.GetBlock(block_resolving_->previous_hash);
   }
+
+  // now re-try requesting blocks from this point
   return State::REQUEST_NEXT_BLOCKS;
 }
 
