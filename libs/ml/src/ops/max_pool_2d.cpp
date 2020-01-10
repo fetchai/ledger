@@ -205,13 +205,13 @@ std::vector<fetch::math::SizeType> MaxPool2D<T>::ComputeOutputShape(
 ///////////////////////////////
 /// EXPLICIT INSTANTIATIONS ///
 ///////////////////////////////
-
-template class MaxPool2D<math::Tensor<int8_t>>;
-template class MaxPool2D<math::Tensor<int16_t>>;
+//TODO (ML-438)
+//template class MaxPool2D<math::Tensor<int8_t>>;
+//template class MaxPool2D<math::Tensor<int16_t>>;
 template class MaxPool2D<math::Tensor<int32_t>>;
 template class MaxPool2D<math::Tensor<int64_t>>;
-template class MaxPool2D<math::Tensor<uint8_t>>;
-template class MaxPool2D<math::Tensor<uint16_t>>;
+//template class MaxPool2D<math::Tensor<uint8_t>>;
+//template class MaxPool2D<math::Tensor<uint16_t>>;
 template class MaxPool2D<math::Tensor<uint32_t>>;
 template class MaxPool2D<math::Tensor<uint64_t>>;
 template class MaxPool2D<math::Tensor<float>>;
