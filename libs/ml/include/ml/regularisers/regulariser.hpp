@@ -17,7 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/tensor/tensor.hpp"
 #include "ml/regularisers/reg_types.hpp"
 
 namespace fetch {

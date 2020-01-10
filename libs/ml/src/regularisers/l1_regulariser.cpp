@@ -16,6 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "math/tensor/tensor.hpp"
 #include "ml/regularisers/l1_regulariser.hpp"
 #include "ml/regularisers/reg_types.hpp"
 

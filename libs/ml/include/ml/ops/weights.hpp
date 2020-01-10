@@ -29,12 +29,6 @@ struct StateDict;
 
 struct OpsSaveableParams;
 
-template <class TensorType>
-struct OpWeightsSaveableParams : public OpVariableSaveableParams<TensorType>
-{
-  fetch::ml::OpType op_type = OpType::OP_WEIGHTS;
-};
-
 namespace ops {
 
 template <class TensorType>
