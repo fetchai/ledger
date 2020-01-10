@@ -45,7 +45,7 @@ struct TimeTravelogue
   /// @name Request Metadata
   /// @{
   TravelogueStatus status = TravelogueStatus::NOT_FOUND;
-  MutableBlocks    blocks = {};
+  Blocks           blocks = {};
   /// @}
 };
 

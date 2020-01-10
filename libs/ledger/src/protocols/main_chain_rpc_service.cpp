@@ -245,7 +245,7 @@ MainChainRpcService::Address MainChainRpcService::GetRandomTrustedPeer() const
   return address;
 }
 
-void MainChainRpcService::HandleChainResponse(Address const &address, MutableBlocks blocks)
+void MainChainRpcService::HandleChainResponse(Address const &address, Blocks blocks)
 {
   // default expectations is that blocks are returned in reverse order, later-to-earlier
   HandleChainResponse(address, blocks.rbegin(), blocks.rend());

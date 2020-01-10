@@ -47,19 +47,19 @@ public:
     Expose(TIME_TRAVEL, this, &MainChainProtocol::TimeTravel);
   }
 
-  MutableBlocks GetHeaviestChain(uint64_t maxsize)
+  Blocks GetHeaviestChain(uint64_t maxsize)
   {
     return chain_.GetHeaviestChain(maxsize);
   }
 
-  MutableBlocks GetCommonSubChain(Digest start, Digest last_seen, uint64_t limit)
+  Blocks GetCommonSubChain(Digest start, Digest last_seen, uint64_t limit)
   {
-    MutableBlocks blocks;
+    Blocks blocks;
 
     // TODO(issue 1725): this can cause issue if it doesn't exist (?)
     if (!chain_.GetPathToCommonAncestor(blocks, std::move(start), std::move(last_seen), limit))
     {
-      return MutableBlocks{};
+      return Blocks{};
     }
 
     return blocks;

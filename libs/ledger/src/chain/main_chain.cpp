@@ -151,18 +151,7 @@ BlockStatus MainChain::AddBlock(Block block)
  * @param block The block that will be added to the chain.
  * @return The status enumeration signalling the operation result
  */
-BlockStatus MainChain::AddBlock(BlockPtr &&block)
-{
-  return AddBlock(ConstPointerCast<Block>(std::move(block)));
-}
-
-/**
- * Adds a block to the chain
- *
- * @param block The block that will be added to the chain.
- * @return The status enumeration signalling the operation result
- */
-BlockStatus MainChain::AddBlock(MutableBlockPtr const &block)
+BlockStatus MainChain::AddBlock(BlockPtr const &block)
 {
   // At this point we assume that the weight has been correctly set by the miner
   block->total_weight = 1;
@@ -307,7 +296,7 @@ bool MainChain::LookupReference(BlockHash const &hash, BlockHash &next_hash) con
  *
  * @param block The block to be cached
  */
-void MainChain::CacheBlock(MutableBlockPtr const &block) const
+void MainChain::CacheBlock(BlockPtr const &block) const
 {
   ASSERT(static_cast<bool>(block));
 
@@ -340,7 +329,7 @@ MainChain::BlockMap::size_type MainChain::UncacheBlock(BlockHash const &hash) co
  *
  * @param block The block to be kept
  */
-void MainChain::KeepBlock(MutableBlockPtr const &block) const
+void MainChain::KeepBlock(BlockPtr const &block) const
 {
   ASSERT(static_cast<bool>(block));
   ASSERT(static_cast<bool>(block_store_));
@@ -454,8 +443,8 @@ BlockPtr MainChain::GetHeaviestBlock() const
 bool MainChain::RemoveTree(BlockHash const &removed_hash, BlockHashSet &invalidated_blocks)
 {
   // check if the block is actually found in this chain
-  MutableBlockPtr root;
-  bool            retVal{LookupBlock(removed_hash, root)};
+  BlockPtr root;
+  bool     retVal{LookupBlock(removed_hash, root)};
   if (retVal)
   {
     // forget the forward ref to this block from its parent
@@ -583,7 +572,7 @@ bool MainChain::RemoveBlock(BlockHash const &hash)
  * @param limit The maximum amount of blocks returned
  * @return The array of blocks
  */
-MutableBlocks MainChain::GetHeaviestChain(uint64_t limit) const
+Blocks MainChain::GetHeaviestChain(uint64_t limit) const
 {
   // Note: min needs a reference to something, so this is a workaround since UPPER_BOUND is a
   // constexpr
@@ -594,7 +583,7 @@ MutableBlocks MainChain::GetHeaviestChain(uint64_t limit) const
   return GetChainPreceding(GetHeaviestBlockHash(), limit);
 }
 
-MainChain::MutableBlockPtr MainChain::GetLabeledSubchainStart() const
+MainChain::BlockPtr MainChain::GetLabeledSubchainStart() const
 {
   return labeled_subchain_start_;
 }
@@ -606,7 +595,7 @@ MainChain::MutableBlockPtr MainChain::GetLabeledSubchainStart() const
  * @param limit the earliest block number, this colouring stops at.
  * @return the heaviest chain block right above the limit
  */
-MainChain::MutableBlockPtr MainChain::HeaviestChainBlockAbove(uint64_t limit) const
+MainChain::BlockPtr MainChain::HeaviestChainBlockAbove(uint64_t limit) const
 {
   MilliTimer myTimer("MainChain::HeaviestChainBlockAbove");
   FETCH_LOCK(lock_);
@@ -645,7 +634,7 @@ MainChain::MutableBlockPtr MainChain::HeaviestChainBlockAbove(uint64_t limit) co
  * @param limit The maximum amount of blocks returned
  * @return The array of blocks
  */
-MutableBlocks MainChain::GetChainPreceding(BlockHash start, uint64_t limit) const
+Blocks MainChain::GetChainPreceding(BlockHash start, uint64_t limit) const
 {
   MilliTimer myTimer("MainChain::ChainPreceding", 2000);
 
@@ -655,12 +644,12 @@ MutableBlocks MainChain::GetChainPreceding(BlockHash start, uint64_t limit) cons
   assert(GetBlock(chain::GetGenesisDigest()));
   assert(GetBlock(chain::GetGenesisDigest())->block_number == 0);
 
-  MutableBlocks result;
-  bool          not_at_genesis = true;
+  Blocks result;
+  bool   not_at_genesis = true;
 
   for (BlockHash current_hash = std::move(start);
        // exit once we have gathered enough blocks or reached genesis
-       not_at_genesis && result.size() < static_cast<MutableBlocks::size_type>(limit);)
+       not_at_genesis && result.size() < static_cast<Blocks::size_type>(limit);)
   {
     // look up the block
     auto block = LookupBlock(current_hash);
@@ -696,15 +685,15 @@ MainChain::Travelogue MainChain::TimeTravel(BlockHash current_hash) const
   MilliTimer myTimer("MainChain::TimeTravel", 750);
 
   // Moving forward in time, towards tip
-  BlockHash     next_hash;
-  MutableBlocks result;
+  BlockHash next_hash;
+  Blocks    result;
 
   FETCH_LOCK(lock_);
 
   // cache the heaviest block
   auto const heaviest = GetHeaviestBlock();
 
-  MutableBlockPtr block;
+  BlockPtr block;
   if (current_hash.empty())
   {
     // start of the sync, from genesis
@@ -776,9 +765,8 @@ MainChain::Travelogue MainChain::TimeTravel(BlockHash current_hash) const
  *
  * @return true if successful, otherwise false
  */
-bool MainChain::GetPathToCommonAncestor(MutableBlocks &blocks, BlockHash tip_hash,
-                                        BlockHash node_hash, uint64_t limit,
-                                        BehaviourWhenLimit behaviour) const
+bool MainChain::GetPathToCommonAncestor(Blocks &blocks, BlockHash tip_hash, BlockHash node_hash,
+                                        uint64_t limit, BehaviourWhenLimit behaviour) const
 {
   limit = std::min(limit, uint64_t{MainChain::UPPER_BOUND});
   MilliTimer myTimer("MainChain::GetPathToCommonAncestor", 500);
@@ -790,12 +778,12 @@ bool MainChain::GetPathToCommonAncestor(MutableBlocks &blocks, BlockHash tip_has
   // clear the output structure
   blocks.clear();
 
-  MutableBlockPtr left, right;
+  BlockPtr left, right;
 
   BlockHash left_hash  = std::move(tip_hash);
   BlockHash right_hash = std::move(node_hash);
 
-  std::deque<MutableBlockPtr> res;
+  std::deque<BlockPtr> res;
 
   // The algorithm implemented here is effectively a coordinated parallel walk about from the two
   // input tips until the a common ancestor is located.
@@ -1048,7 +1036,7 @@ void MainChain::RecoverFromFile(Mode mode)
   }
 
   // load the head block, and attempt verify that this block forms a complete chain to genesis
-  MutableBlockPtr head = std::make_shared<Block>();
+  BlockPtr head = std::make_shared<Block>();
 
   // retrieve the starting hash
   BlockHash head_block_hash = GetHeadHash();
@@ -1059,7 +1047,7 @@ void MainChain::RecoverFromFile(Mode mode)
     auto block_index = head->block_number;
 
     // Copy head block so as to walk down the chain
-    MutableBlockPtr next = std::make_shared<Block>(*head);
+    BlockPtr next = std::make_shared<Block>(*head);
 
     while (LoadBlock(next->previous_hash, *next))
     {
@@ -1137,7 +1125,7 @@ void MainChain::RecoverFromFile(Mode mode)
 void MainChain::WriteToFile()
 {
   // look up the heaviest block
-  MutableBlockPtr block = block_chain_.at(heaviest_.Hash());
+  BlockPtr block = block_chain_.at(heaviest_.Hash());
 
   // skip if the block store is not persistent
   if (block_store_ && (block->block_number >= chain::FINALITY_PERIOD))
@@ -1179,8 +1167,8 @@ void MainChain::WriteToFile()
       FETCH_LOG_DEBUG(LOGGING_NAME, "Writing block. ", block->block_number);
 
       // Recover the current head block from the file
-      MutableBlockPtr current_file_head = std::make_shared<Block>();
-      MutableBlockPtr block_head        = block;
+      BlockPtr current_file_head = std::make_shared<Block>();
+      BlockPtr block_head        = block;
 
       LoadBlock(GetHeadHash(), *current_file_head);
 
@@ -1320,7 +1308,7 @@ void MainChain::TrimCache()
  *
  * @param block The block to be flushed
  */
-void MainChain::FlushBlock(MutableBlockPtr const &block)
+void MainChain::FlushBlock(BlockPtr const &block)
 {
   // remove the block from the block map
   UncacheBlock(block->hash);
@@ -1331,7 +1319,7 @@ void MainChain::FlushBlock(MutableBlockPtr const &block)
 
 // We have added a non-loose block. It is then safe to lock the loose blocks map and
 // walk through it adding the blocks, so long as we do breadth first search (!!)
-void MainChain::CompleteLooseBlocks(MutableBlockPtr const &block)
+void MainChain::CompleteLooseBlocks(BlockPtr const &block)
 {
   FETCH_LOCK(lock_);
 
@@ -1359,7 +1347,7 @@ void MainChain::CompleteLooseBlocks(MutableBlockPtr const &block)
     for (auto const &hash : blocks_to_add)
     {
       // This should be guaranteed safe
-      MutableBlockPtr add_block = block_chain_.at(hash);  // TODO(EJF): What happens when this fails
+      BlockPtr add_block = block_chain_.at(hash);  // TODO(EJF): What happens when this fails
 
       // This won't re-call this function due to the flag
       InsertBlock(add_block, false);
@@ -1385,7 +1373,7 @@ void MainChain::CompleteLooseBlocks(MutableBlockPtr const &block)
  *
  * @param block The reference to the block being marked as loose
  */
-void MainChain::RecordLooseBlock(MutableBlockPtr const &block)
+void MainChain::RecordLooseBlock(BlockPtr const &block)
 {
   FETCH_LOCK(lock_);
 
@@ -1404,7 +1392,7 @@ void MainChain::RecordLooseBlock(MutableBlockPtr const &block)
  * @param prev_block The previous block
  * @return true if the heaviest tip was advanced, otherwise false
  */
-bool MainChain::UpdateTips(MutableBlockPtr const &block)
+bool MainChain::UpdateTips(BlockPtr const &block)
 {
   assert(!block->is_loose);
   assert(block->weight != 0);
@@ -1425,7 +1413,7 @@ bool MainChain::UpdateTips(MutableBlockPtr const &block)
  * @param block The block to possibly become the new heaviest
  * @return true if the heaviest tip was advanced, otherwise false
  */
-bool MainChain::UpdateHeaviestTip(MutableBlockPtr const &block)
+bool MainChain::UpdateHeaviestTip(BlockPtr const &block)
 {
   assert(block);
   auto ret_val = heaviest_.Update(*block);
@@ -1447,7 +1435,7 @@ bool MainChain::UpdateHeaviestTip(MutableBlockPtr const &block)
  * @param evaluate_loose_blocks Flag to signal if the loose blocks should be evaluated
  * @return
  */
-BlockStatus MainChain::InsertBlock(MutableBlockPtr const &block, bool evaluate_loose_blocks)
+BlockStatus MainChain::InsertBlock(BlockPtr const &block, bool evaluate_loose_blocks)
 {
   assert(!block->previous_hash.empty());
   uint64_t const time_now =
@@ -1483,7 +1471,7 @@ BlockStatus MainChain::InsertBlock(MutableBlockPtr const &block, bool evaluate_l
   // checked below
   block->is_loose = false;
 
-  MutableBlockPtr prev_block{};
+  BlockPtr prev_block{};
   if (evaluate_loose_blocks)  // normal case - not being called from inside CompleteLooseBlocks
   {
     // First check if block already exists (not checking in object store)
@@ -1574,9 +1562,9 @@ BlockStatus MainChain::InsertBlock(MutableBlockPtr const &block, bool evaluate_l
   return BlockStatus::ADDED;
 }
 
-MainChain::MutableBlockPtr MainChain::LookupBlock(BlockHash const &hash) const
+MainChain::BlockPtr MainChain::LookupBlock(BlockHash const &hash) const
 {
-  MutableBlockPtr ret_val;
+  BlockPtr ret_val;
   LookupBlock(hash, ret_val);
   return ret_val;
 }
@@ -1593,8 +1581,7 @@ MainChain::MutableBlockPtr MainChain::LookupBlock(BlockHash const &hash) const
  *
  * @return true if successful, otherwise false
  */
-bool MainChain::LookupBlock(BlockHash const &hash, MutableBlockPtr &block,
-                            BlockHash *next_hash) const
+bool MainChain::LookupBlock(BlockHash const &hash, BlockPtr &block, BlockHash *next_hash) const
 {
   auto is_in_cache = LookupBlockFromCache(hash, block);
   if (is_in_cache)
@@ -1621,7 +1608,7 @@ bool MainChain::LookupBlock(BlockHash const &hash, MutableBlockPtr &block,
  * @param block The output block to be populated
  * @return true if successful, otherwise false
  */
-bool MainChain::LookupBlockFromCache(BlockHash const &hash, MutableBlockPtr &block) const
+bool MainChain::LookupBlockFromCache(BlockHash const &hash, BlockPtr &block) const
 {
   FETCH_LOCK(lock_);
 
@@ -1643,7 +1630,7 @@ bool MainChain::LookupBlockFromCache(BlockHash const &hash, MutableBlockPtr &blo
  * @param block The output block to be populated
  * @return true if successful, otherwise false
  */
-bool MainChain::LookupBlockFromStorage(BlockHash const &hash, MutableBlockPtr &block,
+bool MainChain::LookupBlockFromStorage(BlockHash const &hash, BlockPtr &block,
                                        BlockHash *next_hash) const
 {
   bool success{false};
@@ -1685,7 +1672,7 @@ bool MainChain::IsBlockInCache(BlockHash const &hash) const
  *
  * @param block The block to be written into the cache
  */
-void MainChain::AddBlockToCache(MutableBlockPtr const &block) const
+void MainChain::AddBlockToCache(BlockPtr const &block) const
 {
   block->is_loose = false;
 
@@ -1701,7 +1688,7 @@ void MainChain::AddBlockToCache(MutableBlockPtr const &block) const
  *
  * @param block The block for the tip to be created from
  */
-bool MainChain::AddTip(MutableBlockPtr const &block)
+bool MainChain::AddTip(BlockPtr const &block)
 {
   FETCH_LOCK(lock_);
 
@@ -1814,7 +1801,7 @@ bool MainChain::ReindexTips()
  * Create the initial genesis block
  * @return The generated block
  */
-MainChain::MutableBlockPtr MainChain::CreateGenesisBlock()
+MainChain::BlockPtr MainChain::CreateGenesisBlock()
 {
   auto genesis           = std::make_shared<Block>();
   genesis->previous_hash = chain::ZERO_HASH;
@@ -1981,7 +1968,7 @@ DigestSet MainChain::DetectDuplicateTransactions(BlockHash const &           sta
 
   FETCH_LOG_DEBUG(LOGGING_NAME, "Starting TX uniqueness verify");
 
-  MutableBlockPtr block;
+  BlockPtr block;
   if (!LookupBlock(starting_hash, block) || block->is_loose)
   {
     FETCH_LOG_WARN(LOGGING_NAME, "TX uniqueness verify on bad block hash");
