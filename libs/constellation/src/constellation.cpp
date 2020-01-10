@@ -789,7 +789,7 @@ void Constellation::OnTearDownExternalNetwork()
 
   if (http_)
   {
-    // TODO(tfr): There is a logical flaw in the http server that causes
+    // TODO(LDGR-695): There is a logical flaw in the http server that causes
     // catastrophic failure on shutdown. The key problem has to do with
     // the order in which objects are destructed and the fact, that
     // connections are not shutdown by calling Stop.
