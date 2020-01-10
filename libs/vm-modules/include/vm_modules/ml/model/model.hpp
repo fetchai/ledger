@@ -106,9 +106,6 @@ public:
                                        fetch::vm::Ptr<fetch::vm::String> const &      optimiser,
                                        std::vector<fetch::ml::ops::MetricType> const &metrics);
 
-  void CompileSimple(fetch::vm::Ptr<fetch::vm::String> const &        optimiser,
-                     fetch::vm::Ptr<vm::Array<math::SizeType>> const &layer_shapes);
-
   void Fit(vm::Ptr<VMTensor> const &data, vm::Ptr<VMTensor> const &labels,
            ::fetch::math::SizeType const &batch_size);
 
