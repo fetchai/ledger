@@ -17,10 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/activation_functions/sigmoid.hpp"
-#include "math/activation_functions/softmax.hpp"
-#include "math/fundamental_operators.hpp"
-#include "math/metrics/cross_entropy.hpp"
 #include "ml/ops/ops.hpp"
 
 #include <cassert>
@@ -44,79 +40,21 @@ public:
 
   CrossEntropyLoss() = default;
 
-  explicit CrossEntropyLoss(SPType const &sp)
-    : Ops<T>(sp)
-  {}
+  explicit CrossEntropyLoss(SPType const &sp);
 
   ~CrossEntropyLoss() override = default;
 
-  std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override
-  {
-    auto sp = std::make_shared<SPType>();
-    return sp;
-  }
+  std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override;
 
   std::shared_ptr<fetch::ml::ops::Ops<TensorType>> MakeSharedCopy(
-      std::shared_ptr<fetch::ml::ops::Ops<TensorType>> me) override
-  {
-    FETCH_UNUSED(me);
-    assert(me.get() == this);
+      std::shared_ptr<fetch::ml::ops::Ops<TensorType>> me) override;
 
-    auto copyshare = std::make_shared<MyType>(*this);  // calls default copy constructor of MyType
-
-    return copyshare;
-  }
-  void Forward(VecTensorType const &inputs, TensorType &output) override
-  {
-    assert(inputs.size() == 2);
-    assert(inputs.at(0)->size() == inputs.at(1)->size());
-
-    output(0, 0) = fetch::math::CrossEntropyLoss((*inputs.at(0)), (*inputs.at(1)));
-  }
+  void Forward(VecTensorType const &inputs, TensorType &output) override;
 
   std::vector<TensorType> Backward(VecTensorType const &inputs,
-                                   TensorType const &   error_signal) override
-  {
-    FETCH_UNUSED(error_signal);
+                                   TensorType const &   error_signal) override;
 
-    assert(inputs.size() == 2);
-    assert(inputs.at(0)->size() == inputs.at(1)->size());
-    assert(inputs.at(0)->shape().size() == 2);
-
-    bool is_binary  = (inputs.at(0)->shape(0) == 1);
-    auto batch_size = static_cast<DataType>(inputs.at(0)->shape(1));
-
-    TensorType ret({inputs.at(0)->shape()});
-
-    auto       a_it = inputs.at(0)->cbegin();
-    auto       b_it = inputs.at(1)->cbegin();
-    auto       r_it = ret.begin();
-    auto const one  = DataType{1};
-
-    while (a_it.is_valid())
-    {
-      assert(*b_it == DataType{0} || *b_it == DataType{1});
-      if (*b_it == DataType{1})
-      {
-        *r_it = -*b_it / *a_it;
-      }
-      else if (is_binary)
-      {
-        *r_it = (one - *b_it) / (one - *a_it);
-      }
-
-      ++a_it;
-      ++b_it;
-      ++r_it;
-    }
-    return {ret / batch_size, ret};
-  }
-
-  std::vector<typename T::SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
-  {
-    (void)inputs;
-    return {1, 1};
-  }
+  std::vector<math::SizeType> ComputeOutputShape(VecTensorType const &inputs) const override;
 
   static constexpr OpType OpCode()
   {

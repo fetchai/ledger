@@ -266,9 +266,7 @@ TYPED_TEST(MaxPool1DTest, saveparams_test)
   using SizeType      = fetch::math::SizeType;
 
   TensorType          data({2, 5, 2});
-  TensorType          gt({2, 2, 2});
   std::vector<double> data_input({1, -2, 3, -4, 5, -6, 7, -8, 9, -10});
-  std::vector<double> gt_input({3, 5, 9, 9});
 
   for (SizeType i_b{0}; i_b < 2; i_b++)
   {
@@ -278,15 +276,6 @@ TYPED_TEST(MaxPool1DTest, saveparams_test)
       {
         data(i, j, i_b) = fetch::math::AsType<DataType>(data_input[i * 5 + j]) +
                           fetch::math::AsType<DataType>(i_b * 10);
-      }
-    }
-
-    for (SizeType i{0}; i < 2; ++i)
-    {
-      for (SizeType j{0}; j < 2; ++j)
-      {
-        gt(i, j, i_b) = fetch::math::AsType<DataType>(gt_input[i * 2 + j]) +
-                        fetch::math::AsType<DataType>(i_b * 10);
       }
     }
   }
