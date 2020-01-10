@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "chain/address.hpp"
+#include "core/containers/vector_util.hpp"
 #include "core/serializers/main_serializer.hpp"
 #include "crypto/ecdsa.hpp"
 #include "gtest/gtest.h"
@@ -617,10 +618,10 @@ TEST_F(MainChainServiceTests, CheckExponentialBackStep)
   auto wrong_fifth_pack  = block_generator_(pack_size, wrong_fourth_pack.back());
   auto wrong_heaviest    = block_generator_(wrong_fifth_pack.back());
 
-  auto right_third_pack  = block_generator_(pack_size - 6384, second_pack.back());
-  auto right_fourth_pack = block_generator_(pack_size, right_third_pack.back());
-  auto right_fifth_pack  = block_generator_(pack_size, right_fourth_pack.back(), 10);  // heavier
-  // auto const &right_heaviest = right_fifth_pack.back();
+  auto right_third_pack  = block_generator_(pack_size - 6384, second_pack.back(), 10);  // heavier
+  auto right_fourth_pack = block_generator_(pack_size, right_third_pack.back(), 10);
+  auto right_fifth_pack  = block_generator_(pack_size, right_fourth_pack.back(), 10);
+  auto const &right_heaviest = right_fifth_pack.back();
 
   MainChainProtocol::Travelogue log;
   log.status = TravelogueStatus::HEAVIEST_BRANCH;
@@ -640,81 +641,85 @@ TEST_F(MainChainServiceTests, CheckExponentialBackStep)
       .WillOnce(Return(CreatePromise(TimeTravel(wrong_heaviest, wrong_fifth_pack))));
   // denounce this chain
   EXPECT_CALL(rpc_client_, TimeTravel(other1_, wrong_fifth_pack.back()->hash))
-      .WillOnce(Return(CreatePromise(MainChainProtocol::TimeTravelogue{})));
+      .WillOnce(Return(CreatePromise(MainChainProtocol::Travelogue{})));
   EXPECT_CALL(rpc_client_, TimeTravel(other1_, wrong_fifth_pack[pack_size - 1]->hash))
-      .WillOnce(Return(CreatePromise(MainChainProtocol::TimeTravelogue{})));
+      .WillOnce(Return(CreatePromise(MainChainProtocol::Travelogue{})));
   EXPECT_CALL(rpc_client_, TimeTravel(other1_, wrong_fifth_pack[pack_size - 2]->hash))
-      .WillOnce(Return(CreatePromise(MainChainProtocol::TimeTravelogue{})));
+      .WillOnce(Return(CreatePromise(MainChainProtocol::Travelogue{})));
   EXPECT_CALL(rpc_client_, TimeTravel(other1_, wrong_fifth_pack[pack_size - 4]->hash))
-      .WillOnce(Return(CreatePromise(MainChainProtocol::TimeTravelogue{})));
+      .WillOnce(Return(CreatePromise(MainChainProtocol::Travelogue{})));
   EXPECT_CALL(rpc_client_, TimeTravel(other1_, wrong_fifth_pack[pack_size - 8]->hash))
-      .WillOnce(Return(CreatePromise(MainChainProtocol::TimeTravelogue{})));
+      .WillOnce(Return(CreatePromise(MainChainProtocol::Travelogue{})));
   EXPECT_CALL(rpc_client_, TimeTravel(other1_, wrong_fifth_pack[pack_size - 16]->hash))
-      .WillOnce(Return(CreatePromise(MainChainProtocol::TimeTravelogue{})));
+      .WillOnce(Return(CreatePromise(MainChainProtocol::Travelogue{})));
   EXPECT_CALL(rpc_client_, TimeTravel(other1_, wrong_fifth_pack[pack_size - 32]->hash))
-      .WillOnce(Return(CreatePromise(MainChainProtocol::TimeTravelogue{})));
+      .WillOnce(Return(CreatePromise(MainChainProtocol::Travelogue{})));
   EXPECT_CALL(rpc_client_, TimeTravel(other1_, wrong_fifth_pack[pack_size - 64]->hash))
-      .WillOnce(Return(CreatePromise(MainChainProtocol::TimeTravelogue{})));
+      .WillOnce(Return(CreatePromise(MainChainProtocol::Travelogue{})));
   EXPECT_CALL(rpc_client_, TimeTravel(other1_, wrong_fifth_pack[pack_size - 128]->hash))
-      .WillOnce(Return(CreatePromise(MainChainProtocol::TimeTravelogue{})));
+      .WillOnce(Return(CreatePromise(MainChainProtocol::Travelogue{})));
   EXPECT_CALL(rpc_client_, TimeTravel(other1_, wrong_fifth_pack[pack_size - 256]->hash))
-      .WillOnce(Return(CreatePromise(MainChainProtocol::TimeTravelogue{})));
+      .WillOnce(Return(CreatePromise(MainChainProtocol::Travelogue{})));
   EXPECT_CALL(rpc_client_, TimeTravel(other1_, wrong_fifth_pack[pack_size - 512]->hash))
-      .WillOnce(Return(CreatePromise(MainChainProtocol::TimeTravelogue{})));
+      .WillOnce(Return(CreatePromise(MainChainProtocol::Travelogue{})));
   EXPECT_CALL(rpc_client_, TimeTravel(other1_, wrong_fifth_pack[pack_size - 1024]->hash))
-      .WillOnce(Return(CreatePromise(MainChainProtocol::TimeTravelogue{})));
+      .WillOnce(Return(CreatePromise(MainChainProtocol::Travelogue{})));
   EXPECT_CALL(rpc_client_, TimeTravel(other1_, wrong_fifth_pack[pack_size - 2048]->hash))
-      .WillOnce(Return(CreatePromise(MainChainProtocol::TimeTravelogue{})));
+      .WillOnce(Return(CreatePromise(MainChainProtocol::Travelogue{})));
   EXPECT_CALL(rpc_client_, TimeTravel(other1_, wrong_fifth_pack[pack_size - 4096]->hash))
-      .WillOnce(Return(CreatePromise(MainChainProtocol::TimeTravelogue{})));
+      .WillOnce(Return(CreatePromise(MainChainProtocol::Travelogue{})));
   EXPECT_CALL(rpc_client_, TimeTravel(other1_, wrong_fifth_pack[pack_size - 8192]->hash))
-      .WillOnce(Return(CreatePromise(MainChainProtocol::TimeTravelogue{})));
+      .WillOnce(Return(CreatePromise(MainChainProtocol::Travelogue{})));
   EXPECT_CALL(rpc_client_, TimeTravel(other1_, wrong_fourth_pack[pack_size - 6384]->hash))
-      .WillOnce(Return(CreatePromise(MainChainProtocol::TimeTravelogue{})));
+      .WillOnce(Return(CreatePromise(MainChainProtocol::Travelogue{})));
   EXPECT_CALL(rpc_client_, TimeTravel(other1_, wrong_third_pack[pack_size - 6384]->hash))
-      .WillOnce(Return(CreatePromise(MainChainProtocol::TimeTravelogue{})));
+      .WillOnce(Return(CreatePromise(MainChainProtocol::Travelogue{})));
 
   BlockGenerator::BlockPtrs right_pack(second_pack.cend() - 6384, second_pack.cend());
+  fetch::core::Append(right_pack, right_third_pack);
 
   EXPECT_CALL(rpc_client_, TimeTravel(other1_, second_pack[pack_size - 6384]->hash))
-      .WillOnce(Return(CreatePromise(MainChainProtocol::TimeTravelogue{})));
+      .WillOnce(Return(CreatePromise(TimeTravel(right_heaviest, right_pack))));
+  EXPECT_CALL(rpc_client_, TimeTravel(other1_, right_third_pack.back()->hash))
+      .WillOnce(Return(CreatePromise(TimeTravel(right_heaviest, right_fourth_pack))));
+  EXPECT_CALL(rpc_client_, TimeTravel(other1_, right_fourth_pack.back()->hash))
+      .WillOnce(Return(CreatePromise(TimeTravel(right_heaviest, right_fifth_pack))));
 
-  /*
-  Tick(State::SYNCHRONISING, State::START_SYNC_WITH_PEER);
-  Tick(State::START_SYNC_WITH_PEER, State::REQUEST_NEXT_BLOCKS);
-  Tick(State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS);
-  Tick(State::WAIT_FOR_NEXT_BLOCKS, State::REQUEST_NEXT_BLOCKS);
-  Tick(State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS);
-  Tick(State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS);
-  */
-  FollowPath(State::SYNCHRONISING, State::START_SYNC_WITH_PEER);
-  FollowPath(State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS);  // first_pack
-  FollowPath(State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS);  // second_pack
-  FollowPath(State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS);  // wrong_third_pack
-  FollowPath(State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS);  // wrong_fourth_pack
-  FollowPath(State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS);  // wrong_fifth_pack
+  // build fake chain
+  FollowPath(State::SYNCHRONISING, State::START_SYNC_WITH_PEER, State::REQUEST_NEXT_BLOCKS,
+             State::WAIT_FOR_NEXT_BLOCKS,                              // first_pack
+             State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS,  // second_pack
+             State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS,  // wrong_third_pack
+             State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS,  // wrong_fourth_pack
+             State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS,  // wrong_fifth_pack
 
-  /*
+             // denounce fake chain
+             State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS,  // first NOT_FOUND
 
-  EXPECT_CALL(rpc_client_, TimeTravel(other1_, second_pack.back()->hash))
-      .WillOnge(Return(CreatePromise(TimeTravel(wrong_heaviest, wrong_third_pack))));
-  EXPECT_CALL(rpc_client_, TimeTravel(other1_, third_pack.back()->hash))
-      .WillOnce(Return(CreatePromise(TimeTravel(wrong_heaviest, wrong_fourth_pack))));
-  EXPECT_CALL(rpc_client_, TimeTravel(other1_, fourth_pack.back()->hash))
-      .WillOnce(Return(CreatePromise(TimeTravel(wrong_heaviest, wrong_fifth_pack))));
-  EXPECT_CALL(rpc_client_, TimeTravel(other1_, fifth_pack.back()->hash))
-      .WillOnce(Return(CreatePromise(MainChainProtocol::Travelogue{right_heaviest->hash,
-  right_heaviest->block_number})));
+             State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS,  // wrong_fifth_pack[-1]
+             State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS,  // wrong_fifth_pack[-2]
+             State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS,  // wrong_fifth_pack[-4]
+             State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS,  // wrong_fifth_pack[-8]
+             State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS,  // wrong_fifth_pack[-16]
+             State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS,  // wrong_fifth_pack[-32]
+             State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS,  // wrong_fifth_pack[-64]
+             State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS,  // wrong_fifth_pack[-128]
+             State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS,  // wrong_fifth_pack[-256]
+             State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS,  // wrong_fifth_pack[-512]
+             State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS,  // wrong_fifth_pack[-1024]
+             State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS,  // wrong_fifth_pack[-2048]
+             State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS,  // wrong_fifth_pack[-4096]
+             State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS,  // wrong_fifth_pack[-8192]
+             State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS,  // wrong_fourth_pack[-6384]
+             State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS,  // wrong_third_pack[-6384]
 
-  Tick(State::SYNCHRONISING, State::START_SYNC_WITH_PEER);
-  Tick(State::START_SYNC_WITH_PEER, State::REQUEST_NEXT_BLOCKS);
-  Tick(State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS);
-  Tick(State::WAIT_FOR_NEXT_BLOCKS, State::REQUEST_NEXT_BLOCKS);
-  Tick(State::REQUEST_NEXT_BLOCKS, State::COMPLETE_SYNC_WITH_PEER);
-  Tick(State::COMPLETE_SYNC_WITH_PEER, State::SYNCHRONISED);
+             // now build the true chain
+             State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS,  // second_pack[-6384]
+             State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS,  // right_fourth_pack
+             State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS,  // right_fifth_pack
+             State::COMPLETE_SYNC_WITH_PEER);                          // and here it ends
 
-  EXPECT_EQ(chain_.GetHeaviestBlockHash(), blocks.back()->hash);
-  */
+  EXPECT_EQ(chain_.GetHeaviestBlockHash(), right_heaviest->hash);
 }
 
 }  // namespace
