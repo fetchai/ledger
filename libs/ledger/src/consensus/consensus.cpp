@@ -16,10 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/consensus/consensus.hpp"
 #include "beacon/block_entropy.hpp"
 #include "core/mutex.hpp"
 #include "core/random/lcg.hpp"
+#include "ledger/consensus/consensus.hpp"
 #include "network/generics/milli_timer.hpp"
 
 #include <ctime>

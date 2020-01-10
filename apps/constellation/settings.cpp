@@ -55,7 +55,7 @@ Settings::Settings()
   , block_interval        {*this, "block-interval",          DEFAULT_BLOCK_INTERVAL,       "The block interval is milliseconds"}
   , standalone            {*this, "standalone",              false,                        "Signal the network should run in standalone mode"}
   , private_network       {*this, "private-network",         false,                        "Signal the network should run as part of a private network"}
-  , initial_address       {*this, "initial-address",         "",                           "The initial address where all funds can be found for a standalone node"}  
+  , initial_address       {*this, "initial-address",         "",                           "The initial address where all funds can be found for a standalone node"}
   , db_prefix             {*this, "db-prefix",               "node_storage",               "The prefix for filenames related to constellation databases"}
   , port                  {*this, "port",                    DEFAULT_PORT,                 "The starting port for ledger services"}
   , peers                 {*this, "peers",                   {},                           "The comma separated list of addresses to initially connect to"}
@@ -83,7 +83,7 @@ Settings::Settings()
   , graceful_failure      {*this, "graceful-failure",        false,                        "Whether or not to shutdown on critical system failures"}
   , fault_tolerant        {*this, "fault-tolerant",          false,                        "Whether or not to allow critical system failures to cause a crash"}
   , enable_agents         {*this, "enable-agents",           false,                        "Run the node with agent support"}
-  , messenger_port        {*this, "messenger-port",          DEFAULT_MESSENGER_PORT,       "Port that agents connect to"}  
+  , messenger_port        {*this, "messenger-port",          DEFAULT_MESSENGER_PORT,       "Port that agents connect to"}
 {}
 // clang-format on
 

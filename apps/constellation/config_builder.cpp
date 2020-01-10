@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "config_builder.hpp"
 #include "chain/address.hpp"
+#include "config_builder.hpp"
 #include "core/filesystem/read_file_contents.hpp"
 #include "ledger/chaincode/contract_context.hpp"
 #include "manifest_builder.hpp"
@@ -267,7 +267,7 @@ GenesisDescriptor const HARD_CODED_CONFIGS[] = {{"mainnet", 10000u, 250000u,
       "address": "<initial_address>",
       "balance": 1152996575,
       "stake": 0
-    }    
+    }
   ],
   "consensus": {
     "aeonOffset": 100,

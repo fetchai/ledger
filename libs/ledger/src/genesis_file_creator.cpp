@@ -16,7 +16,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/genesis_loading/genesis_file_creator.hpp"
 #include "chain/address.hpp"
 #include "chain/constants.hpp"
 #include "core/byte_array/decoders.hpp"
@@ -32,6 +31,7 @@
 #include "ledger/consensus/consensus_interface.hpp"
 #include "ledger/consensus/stake_manager.hpp"
 #include "ledger/consensus/stake_snapshot.hpp"
+#include "ledger/genesis_loading/genesis_file_creator.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 #include "storage/resource_mapper.hpp"
 #include "variant/variant.hpp"
