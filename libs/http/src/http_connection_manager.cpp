@@ -16,13 +16,14 @@
 //
 //------------------------------------------------------------------------------
 
+#include "http/http_connection_manager.hpp"
 #include "core/byte_array/byte_array.hpp"
 #include "http/abstract_connection.hpp"
 #include "http/abstract_server.hpp"
-#include "http/http_connection_manager.hpp"
 #include "http/request.hpp"
 #include "logging/logging.hpp"
 
+#include <iostream>
 #include <utility>
 
 namespace fetch {
@@ -105,6 +106,12 @@ std::string HTTPConnectionManager::GetAddress(HandleType client)
   }
 
   return "0.0.0.0";
+}
+
+bool HTTPConnectionManager::has_connections() const
+{
+  FETCH_LOCK(clients_mutex_);
+  return !clients_.empty();
 }
 
 }  // namespace http

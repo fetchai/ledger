@@ -18,11 +18,13 @@
 //------------------------------------------------------------------------------
 
 #include "constellation/constellation.hpp"
+#include "crypto/identity.hpp"
 
 namespace fetch {
 
 class Settings;
 
-constellation::Constellation::Config BuildConstellationConfig(Settings const &settings);
+constellation::Constellation::Config BuildConstellationConfig(Settings const &        settings,
+                                                              crypto::Identity const &identity);
 
 }  // namespace fetch
