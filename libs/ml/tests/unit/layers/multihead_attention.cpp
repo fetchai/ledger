@@ -19,8 +19,6 @@
 #include "ml/layers/multihead_attention.hpp"
 
 #include "gtest/gtest.h"
-#include "ml/serializers/ml_types.hpp"
-#include "ml/utilities/graph_builder.hpp"
 #include "test_types.hpp"
 
 namespace fetch {
@@ -122,66 +120,6 @@ TYPED_TEST(MultiheadAttention, backward_test)  // Use the class as an Ops
   ASSERT_EQ(backprop_error[0].shape()[2], 5);
 }
 
-TYPED_TEST(MultiheadAttention, saveparams_test)
-{
-  using LayerType = typename fetch::ml::layers::MultiheadAttention<TypeParam>;
-  using SPType    = typename LayerType::SPType;
-  using DataType  = typename TypeParam::Type;
-
-  fetch::math::SizeType n_heads   = 3;
-  fetch::math::SizeType model_dim = 6;
-
-  std::string output_name = "MultiheadAttention_Final_Transformation";
-
-  // create input data
-  TypeParam query_data = TypeParam({6, 12, 3});
-  query_data.FillUniformRandom();
-
-  TypeParam key_data   = query_data.Copy();
-  TypeParam value_data = query_data.Copy();
-
-  TypeParam mask_data = TypeParam({12, 12, 3});
-  mask_data.Fill(DataType{1});
-
-  // create labels data
-  TypeParam labels({6, 12, 3});
-  labels.FillUniformRandom();
-
-  // Create layer
-  LayerType layer(n_heads, model_dim);
-
-  // add label node
-  std::string label_name =
-      layer.template AddNode<fetch::ml::ops::PlaceHolder<TypeParam>>("label", {});
-
-  // Add loss function
-  std::string error_output = layer.template AddNode<fetch::ml::ops::MeanSquareErrorLoss<TypeParam>>(
-      "num_error", {output_name, label_name});
-
-  // set input and evaluate
-  layer.SetInput("MultiheadAttention_Query", query_data);
-  layer.SetInput("MultiheadAttention_Key", key_data);
-  layer.SetInput("MultiheadAttention_Value", value_data);
-  layer.SetInput("MultiheadAttention_Mask", mask_data);
-
-  TypeParam prediction;
-  prediction = layer.Evaluate(output_name, true);
-
-  // extract saveparams
-  auto sp = layer.GetOpSaveableParams();
-
-  // downcast to correct type
-  auto dsp = std::dynamic_pointer_cast<SPType>(sp);
-
-  // serialize
-  fetch::serializers::MsgPackSerializer b;
-  b << *dsp;
-
-  // deserialize
-  b.seek(0);
-  auto dsp2 = std::make_shared<SPType>();
-  b >> *dsp2;
-}
 
 }  // namespace test
 }  // namespace ml

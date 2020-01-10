@@ -16,12 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/serializers/main_serializer.hpp"
 #include "gtest/gtest.h"
 #include "ml/layers/convolution_2d.hpp"
 #include "ml/meta/ml_type_traits.hpp"
 #include "ml/serializers/ml_types.hpp"
-#include "ml/utilities/graph_builder.hpp"
 #include "test_types.hpp"
 
 #include <memory>
@@ -335,117 +333,6 @@ TYPED_TEST(Convolution2DTest, getStateDict)
                                     math::function_tolerance<DataType>()));
   EXPECT_EQ(weights_ptr->shape(), std::vector<SizeType>({output_channels, input_channels,
                                                          kernel_height, kernel_height, 1}));
-}
-
-TYPED_TEST(Convolution2DTest, saveparams_test)
-{
-  using TensorType = TypeParam;
-  using DataType   = typename TypeParam::Type;
-  using SizeType   = fetch::math::SizeType;
-  using LayerType  = fetch::ml::layers::Convolution2D<TensorType>;
-  using SPType     = typename LayerType::SPType;
-
-  SizeType const input_channels  = 3;
-  SizeType const output_channels = 5;
-  SizeType const input_height    = 3;
-  SizeType const input_width     = 3;
-  SizeType const kernel_height   = 3;
-  SizeType const stride_size     = 1;
-
-  std::string input_name  = "Conv2D_Input";
-  std::string output_name = "Conv2D_Conv2D";
-
-  // Generate input
-  TensorType input({input_channels, input_height, input_width, 1});
-  input.FillUniformRandom();
-
-  TensorType labels({output_channels, 1, 1, 1});
-  labels.FillUniformRandom();
-
-  // Create layer
-  LayerType layer(output_channels, input_channels, kernel_height, stride_size);
-
-  // add label node
-  std::string label_name =
-      layer.template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("label", {});
-
-  // Add loss function
-  std::string error_output =
-      layer.template AddNode<fetch::ml::ops::MeanSquareErrorLoss<TensorType>>(
-          "num_error", {output_name, label_name});
-
-  // set input and evaluate
-  layer.SetInput(input_name, input);
-  TensorType prediction;
-  // make initial prediction to set internal buffers which must be correctly set in serialisation
-  prediction = layer.Evaluate(output_name, true);
-
-  // extract saveparams
-  auto sp = layer.GetOpSaveableParams();
-
-  // downcast to correct type
-  auto dsp = std::dynamic_pointer_cast<SPType>(sp);
-
-  // serialize
-  fetch::serializers::MsgPackSerializer b;
-  b << *dsp;
-
-  // deserialize
-  b.seek(0);
-  auto dsp2 = std::make_shared<SPType>();
-  b >> *dsp2;
-
-  // rebuild
-  auto layer2 = *(fetch::ml::utilities::BuildLayer<TensorType, LayerType>(dsp2));
-
-  // test equality
-  layer.SetInput(input_name, input);
-  prediction = layer.Evaluate(output_name, true);
-  layer2.SetInput(input_name, input);
-  TensorType prediction2 = layer2.Evaluate(output_name, true);
-
-  ASSERT_TRUE(prediction.AllClose(prediction2, fetch::math::function_tolerance<DataType>(),
-                                  fetch::math::function_tolerance<DataType>()));
-
-  // train g
-  layer.SetInput(label_name, labels);
-  TensorType loss = layer.Evaluate(error_output);
-  layer.BackPropagate(error_output);
-  auto grads = layer.GetGradients();
-  for (auto &grad : grads)
-  {
-    grad *= fetch::math::Type<DataType>("-0.1");
-  }
-  layer.ApplyGradients(grads);
-
-  // train g2
-  layer2.SetInput(label_name, labels);
-  TensorType loss2 = layer2.Evaluate(error_output);
-  layer2.BackPropagate(error_output);
-  auto grads2 = layer2.GetGradients();
-  for (auto &grad : grads2)
-  {
-    grad *= fetch::math::Type<DataType>("-0.1");
-  }
-  layer2.ApplyGradients(grads2);
-
-  EXPECT_TRUE(loss.AllClose(loss2, fetch::math::function_tolerance<DataType>(),
-                            fetch::math::function_tolerance<DataType>()));
-
-  // new random input
-  input.FillUniformRandom();
-
-  layer.SetInput(input_name, input);
-  TensorType prediction3 = layer.Evaluate(output_name);
-
-  layer2.SetInput(input_name, input);
-  TensorType prediction4 = layer2.Evaluate(output_name, true);
-
-  EXPECT_FALSE(prediction.AllClose(prediction3, fetch::math::function_tolerance<DataType>(),
-                                   fetch::math::function_tolerance<DataType>()));
-
-  EXPECT_TRUE(prediction3.AllClose(prediction4, fetch::math::function_tolerance<DataType>(),
-                                   fetch::math::function_tolerance<DataType>()));
 }
 
 }  // namespace test

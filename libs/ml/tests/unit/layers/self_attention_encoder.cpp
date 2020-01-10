@@ -16,11 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/serializers/main_serializer.hpp"
 #include "gtest/gtest.h"
 #include "ml/layers/self_attention_encoder.hpp"
-#include "ml/serializers/ml_types.hpp"
-#include "ml/utilities/graph_builder.hpp"
 #include "test_types.hpp"
 
 namespace fetch {
@@ -95,64 +92,6 @@ TYPED_TEST(SelfAttentionEncoder, backward_dimension_test)  // Use the class as a
   ASSERT_EQ(backprop_error[1].shape()[2], 5);
 }
 
-TYPED_TEST(SelfAttentionEncoder, saveparams_test)
-{
-  using SizeType  = fetch::math::SizeType;
-  using LayerType = typename fetch::ml::layers::SelfAttentionEncoder<TypeParam>;
-  using SPType    = typename LayerType::SPType;
-  using DataType  = typename TypeParam::Type;
-
-  SizeType n_heads   = 2;
-  SizeType model_dim = 6;
-  SizeType ff_dim    = 12;
-
-  std::string input_name  = "SelfAttentionEncoder_Input";
-  std::string mask_name   = "SelfAttentionEncoder_Mask";
-  std::string output_name = "SelfAttentionEncoder_Feedforward_Residual_LayerNorm";
-
-  // create input
-  TypeParam input({model_dim, 25, 2});
-  input.FillUniformRandom();
-
-  TypeParam mask_data = TypeParam({25, 25, 2});
-  mask_data.Fill(DataType{1});
-
-  // create labels
-  TypeParam labels({model_dim, 25, 2});
-  labels.FillUniformRandom();
-
-  // Create layer
-  LayerType layer(n_heads, model_dim, ff_dim);
-
-  // add label node
-  std::string label_name =
-      layer.template AddNode<fetch::ml::ops::PlaceHolder<TypeParam>>("label", {});
-
-  // Add loss function
-  std::string error_output = layer.template AddNode<fetch::ml::ops::MeanSquareErrorLoss<TypeParam>>(
-      "num_error", {output_name, label_name});
-
-  // set input and evaluate
-  layer.SetInput(input_name, input);
-  layer.SetInput(mask_name, mask_data);
-  TypeParam prediction;
-  prediction = layer.Evaluate(output_name, true);
-
-  // extract saveparams
-  auto sp = layer.GetOpSaveableParams();
-
-  // downcast to correct type
-  auto dsp = std::dynamic_pointer_cast<SPType>(sp);
-
-  // serialize
-  fetch::serializers::MsgPackSerializer b;
-  b << *dsp;
-
-  // deserialize
-  b.seek(0);
-  auto dsp2 = std::make_shared<SPType>();
-  b >> *dsp2;
-}
 
 }  // namespace test
 }  // namespace ml

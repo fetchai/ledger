@@ -16,20 +16,14 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/serializers/main_serializer_definition.hpp"
+//#include "core/serializers/main_serializer_definition.hpp"
 #include "math/base_types.hpp"
-#include "ml/core/graph.hpp"
-#include "ml/ops/placeholder.hpp"
 #include "ml/ops/reshape.hpp"
-#include "ml/serializers/ml_types.hpp"
-#include "ml/utilities/graph_builder.hpp"
+//#include "ml/serializers/ml_types.hpp"
 #include "test_types.hpp"
-#include "vectorise/fixed_point/fixed_point.hpp"
 
 #include "gtest/gtest.h"
 
-#include <cmath>
-#include <cstdint>
 #include <vector>
 
 namespace {
@@ -240,50 +234,6 @@ TYPED_TEST(ReshapeTest, saveparams_backward_test)
       new_error_signal.at(0), fetch::math::function_tolerance<typename TypeParam::Type>(),
       fetch::math::function_tolerance<typename TypeParam::Type>()));
   fetch::math::state_clear<DataType>();
-}
-
-TYPED_TEST(ReshapeTest, Reshape_graph_serialisation_test)
-{
-  using TensorType = TypeParam;
-  using DataType   = typename TypeParam::Type;
-  using SPType     = fetch::ml::GraphSaveableParams<TensorType>;
-
-  std::vector<SizeType> final_shape({8, 1, 1, 1});
-
-  TensorType data = TensorType::FromString("1, 2, 4, 8, 100, 1000, -100, -200");
-  data.Reshape({2, 2, 2, 1});
-
-  fetch::ml::Graph<TensorType> g;
-
-  std::string input_name = g.template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Input", {});
-  std::string output_name =
-      g.template AddNode<fetch::ml::ops::Reshape<TensorType>>("Output", {input_name}, final_shape);
-
-  g.SetInput(input_name, data);
-  TypeParam output = g.Evaluate("Output");
-
-  // extract saveparams
-  SPType gsp = g.GetGraphSaveableParams();
-
-  fetch::serializers::MsgPackSerializer b;
-  b << gsp;
-
-  // deserialize
-  b.seek(0);
-  SPType dsp2;
-  b >> dsp2;
-
-  // rebuild graph
-  auto new_graph_ptr = std::make_shared<fetch::ml::Graph<TensorType>>();
-  fetch::ml::utilities::BuildGraph(gsp, new_graph_ptr);
-
-  new_graph_ptr->SetInput(input_name, data);
-  TypeParam output2 = new_graph_ptr->Evaluate("Output");
-
-  // Test correct values
-  ASSERT_EQ(output.shape(), output2.shape());
-  ASSERT_TRUE(output.AllClose(output2, fetch::math::function_tolerance<DataType>(),
-                              fetch::math::function_tolerance<DataType>()));
 }
 
 }  // namespace

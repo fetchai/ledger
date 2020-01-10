@@ -81,6 +81,24 @@
 
 namespace fetch {
 namespace ml {
+
+///////////////////////////
+/// FORWARD DECLARATION ///
+///////////////////////////
+
+namespace ops
+{
+template <typename T>
+class PReluOp;
+}
+
+namespace layers
+{
+template <typename T>
+class PRelu;
+}
+
+
 namespace utilities {
 
 template <typename T>
@@ -261,14 +279,14 @@ void BuildNodeAndInsertTrainables(NodeSaveableParams<T> const &nsp, std::string 
     g->AddTrainable(node, name);
     break;
   }
-  case ops::PReluOp<T>::OpCode():
+  case OpType::OP_PRELU_OP:
   {
     op_ptr = GetOp<ops::PReluOp<T>>(nsp.op_save_params);
     node->SetNodeSaveableParams(nsp, op_ptr);
     g->AddTrainable(node, name);
     break;
   }
-  case ops::Log<T>::OpCode():
+  case OpType::OP_LOG:
   {
     op_ptr = GetOp<ops::Log<T>>(nsp.op_save_params);
     node->SetNodeSaveableParams(nsp, op_ptr);
