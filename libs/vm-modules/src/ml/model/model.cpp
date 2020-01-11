@@ -693,6 +693,7 @@ void VMModel::PrepareDataloader()
   data_loader->SetRandomMode(true);
   model_->SetDataloader(std::move(data_loader));
 }
+
 }  // namespace model
 }  // namespace ml
 }  // namespace vm_modules

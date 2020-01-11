@@ -21,7 +21,6 @@
 #include "ml/model/model_config.hpp"
 
 #include <string>
-#include <vector>
 
 namespace fetch {
 namespace ml {
@@ -55,37 +54,6 @@ private:
   std::string prev_layer_;
 };
 
-/**
- * constructor sets up the neural net architecture and optimiser with default config
- * @tparam TensorType
- * @param data_loader_ptr  pointer to the dataloader for running the optimiser
- * @param hidden_layers vector of hidden layers for defining the architecture
- * @param optimiser_type type of optimiser to run
- */
-template <typename TensorType>
-Sequential<TensorType>::Sequential()
-  : Model<TensorType>(ModelConfig<DataType>())
-{
-  this->input_ = this->graph_ptr_->template AddNode<ops::PlaceHolder<TensorType>>("Input", {});
-  this->label_ = this->graph_ptr_->template AddNode<ops::PlaceHolder<TensorType>>("Label", {});
-}
-
-/**
- * constructor sets up the neural net architecture and optimiser
- * @tparam TensorType
- * @param data_loader_ptr  pointer to the dataloader for running the optimiser
- * @param model_config config parameters for setting up the network
- * @param hidden_layers vector of hidden layers for defining the architecture
- * @param optimiser_type type of optimiser to run
- */
-template <typename TensorType>
-Sequential<TensorType>::Sequential(ModelConfig<DataType> model_config)
-  : Model<TensorType>(model_config)
-{
-  this->input_ = this->graph_ptr_->template AddNode<ops::PlaceHolder<TensorType>>("Input", {});
-  this->label_ = this->graph_ptr_->template AddNode<ops::PlaceHolder<TensorType>>("Label", {});
-}
-
 template <typename TensorType>
 template <typename LayerType, typename... Params>
 void Sequential<TensorType>::Add(Params... params)
@@ -103,12 +71,6 @@ void Sequential<TensorType>::Add(Params... params)
     this->output_ = this->graph_ptr_->template AddNode<LayerType>("", {prev_layer_}, params...);
   }
   layer_count_++;
-}
-
-template <typename TensorType>
-fetch::math::SizeType Sequential<TensorType>::LayerCount() const
-{
-  return layer_count_;
 }
 
 }  // namespace model
