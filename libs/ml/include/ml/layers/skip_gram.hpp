@@ -18,15 +18,11 @@
 //------------------------------------------------------------------------------
 
 #include "ml/core/subgraph.hpp"
-#include "ml/ops/activations/sigmoid.hpp"
 #include "ml/ops/embeddings.hpp"
-#include "ml/ops/flatten.hpp"
-#include "ml/ops/matrix_multiply.hpp"
 #include "ml/ops/placeholder.hpp"
-#include "ml/ops/transpose.hpp"
 
-#include <cmath>
-#include <random>
+//#include <cmath>
+//#include <random>
 
 namespace fetch {
 namespace ml {
@@ -51,71 +47,11 @@ public:
 
   SkipGram(SizeType in_size, SizeType out, SizeType embedding_size, SizeType vocab_size,
            std::string const &name      = "SkipGram",
-           WeightsInit        init_mode = WeightsInit::XAVIER_FAN_OUT)
-    : out_size_(out)
-    , vocab_size_(vocab_size)
-  {
+           WeightsInit        init_mode = WeightsInit::XAVIER_FAN_OUT);
 
-    // define input and context placeholders
-    std::string input =
-        this->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>(name + "_Input", {});
-    std::string context =
-        this->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>(name + "_Context", {});
+  std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override;
 
-    TensorType weights_in({embedding_size, vocab_size_});
-    this->Initialise(weights_in, init_mode, in_size, embedding_size);
-    TensorType weights_ctx({embedding_size, vocab_size_});
-    this->Initialise(weights_ctx, init_mode, in_size, embedding_size);
-
-    // embed both inputs
-    embed_in_ = this->template AddNode<fetch::ml::ops::Embeddings<TensorType>>(
-        name + "_Embed_Inputs", {input}, weights_in);
-    std::string embed_ctx = this->template AddNode<fetch::ml::ops::Embeddings<TensorType>>(
-        name + "_Embed_Context", {context}, weights_ctx);
-
-    // dot product input and context embeddings
-    std::string in_ctx_matmul = this->template AddNode<fetch::ml::ops::MatrixMultiply<TensorType>>(
-        name + "_In_Ctx_MatMul", {embed_ctx, embed_in_}, true);
-
-    std::string in_ctx_matmul_flat = this->template AddNode<fetch::ml::ops::Flatten<TensorType>>(
-        name + "_In_Ctx_MatMul_Flat", {in_ctx_matmul});
-
-    std::string output = this->template AddNode<fetch::ml::ops::Sigmoid<TensorType>>(
-        name + "_Sigmoid", {in_ctx_matmul_flat});
-
-    this->AddInputNode(input);
-    this->AddInputNode(context);
-    this->SetOutputNode(output);
-    this->Compile();
-  }
-
-  std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override
-  {
-    // get all base classes saveable params
-    std::shared_ptr<OpsSaveableParams> sgsp = SubGraph<TensorType>::GetOpSaveableParams();
-
-    auto ret = std::make_shared<SPType>();
-
-    // copy subgraph saveable params over
-    auto sg_ptr1 = std::dynamic_pointer_cast<typename SubGraph<TensorType>::SPType>(sgsp);
-    auto sg_ptr2 = std::dynamic_pointer_cast<typename SubGraph<TensorType>::SPType>(ret);
-    *sg_ptr2     = *sg_ptr1;
-
-    // assign layer specific params
-    ret->out_size   = out_size_;
-    ret->embed_in   = embed_in_;
-    ret->vocab_size = vocab_size_;
-
-    return ret;
-  }
-
-  void SetOpSaveableParams(SPType const &sp)
-  {
-    // assign layer specific params
-    out_size_   = sp.out_size;
-    embed_in_   = sp.embed_in;
-    vocab_size_ = sp.vocab_size;
-  }
+  void SetOpSaveableParams(SPType const &sp);
 
   std::shared_ptr<ops::Embeddings<TensorType>> GetEmbeddings(
       std::shared_ptr<SkipGram<TensorType>> &g)

@@ -16,11 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/layers/convolution_1d.hpp"
+#include "ml/layers/convolution_2d.hpp"
 #include "ml/meta/ml_type_traits.hpp"
-#include "ml/ops/convolution_1d.hpp"
+#include "ml/ops/convolution_2d.hpp"
 #include "ml/ops/placeholder.hpp"
-#include "ml/saveparams/saveable_params.hpp"
 
 #include <functional>
 #include <memory>
@@ -32,7 +31,7 @@ namespace ml {
 namespace layers {
 
 template <typename TensorType>
-Convolution1D<TensorType>::Convolution1D(SizeType const output_channels,
+Convolution2D<TensorType>::Convolution2D(SizeType const output_channels,
                                          SizeType const input_channels, SizeType const kernel_size,
                                          SizeType const                stride_size,
                                          details::ActivationType const activation_type,
@@ -50,12 +49,12 @@ Convolution1D<TensorType>::Convolution1D(SizeType const output_channels,
       this->template AddNode<fetch::ml::ops::Weights<TensorType>>(name + "_Weights", {});
 
   TensorType weights_data(
-      std::vector<SizeType>{{output_channels_, input_channels_, kernel_size_, 1}});
+      std::vector<SizeType>{{output_channels_, input_channels_, kernel_size_, kernel_size_, 1}});
   fetch::ml::ops::Weights<TensorType>::Initialise(weights_data, 1, 1, init_mode, seed);
   this->SetInput(weights, weights_data);
 
-  std::string output = this->template AddNode<fetch::ml::ops::Convolution1D<TensorType>>(
-      name + "_Conv1D", {input, weights}, stride_size_);
+  std::string output = this->template AddNode<fetch::ml::ops::Convolution2D<TensorType>>(
+      name + "_Conv2D", {input, weights}, stride_size_);
 
   output = fetch::ml::details::AddActivationNode<TensorType>(activation_type, this,
                                                              name + "_Activation", output);
@@ -67,17 +66,7 @@ Convolution1D<TensorType>::Convolution1D(SizeType const output_channels,
 }
 
 template <typename TensorType>
-void Convolution1D<TensorType>::SetOpSaveableParams(SPType const &sp)
-{
-  // assign layer specific params
-  kernel_size_     = sp.kernel_size;
-  input_channels_  = sp.input_channels;
-  output_channels_ = sp.output_channels;
-  stride_size_     = sp.stride_size;
-}
-
-template <class TensorType>
-std::shared_ptr<OpsSaveableParams> Convolution1D<TensorType>::GetOpSaveableParams()
+std::shared_ptr<OpsSaveableParams> Convolution2D<TensorType>::GetOpSaveableParams()
 {
   // get all base classes saveable params
   std::shared_ptr<OpsSaveableParams> sgsp = SubGraph<TensorType>::GetOpSaveableParams();
@@ -98,13 +87,23 @@ std::shared_ptr<OpsSaveableParams> Convolution1D<TensorType>::GetOpSaveableParam
   return ret;
 }
 
-template <class TensorType>
-std::vector<fetch::math::SizeType> Convolution1D<TensorType>::ComputeOutputShape(
+template <typename TensorType>
+void Convolution2D<TensorType>::SetOpSaveableParams(SPType const &sp)
+{
+  // assign layer specific params
+  kernel_size_     = sp.kernel_size;
+  input_channels_  = sp.input_channels;
+  output_channels_ = sp.output_channels;
+  stride_size_     = sp.stride_size;
+}
+
+template <typename TensorType>
+std::vector<math::SizeType> Convolution2D<TensorType>::ComputeOutputShape(
     VecTensorType const &inputs) const
 {
   TensorType weights_data(
-      std::vector<SizeType>{{output_channels_, input_channels_, kernel_size_, 1}});
-  return fetch::ml::ops::Convolution1D<TensorType>(stride_size_)
+      std::vector<SizeType>{{output_channels_, input_channels_, kernel_size_, kernel_size_, 1}});
+  return fetch::ml::ops::Convolution2D<TensorType>(stride_size_)
       .ComputeOutputShape({inputs.at(0), std::make_shared<TensorType>(weights_data)});
 }
 
@@ -112,20 +111,19 @@ std::vector<fetch::math::SizeType> Convolution1D<TensorType>::ComputeOutputShape
 /// EXPLICIT INSTANTIATIONS ///
 ///////////////////////////////
 
-// template class Convolution1D<math::Tensor<int8_t>>;
-// template class Convolution1D<math::Tensor<int16_t>>;
-template class Convolution1D<math::Tensor<int32_t>>;
-template class Convolution1D<math::Tensor<int64_t>>;
-// template class Convolution1D<math::Tensor<uint8_t>>;
-// template class Convolution1D<math::Tensor<uint16_t>>;
-template class Convolution1D<math::Tensor<uint32_t>>;
-template class Convolution1D<math::Tensor<uint64_t>>;
-template class Convolution1D<math::Tensor<float>>;
-template class Convolution1D<math::Tensor<double>>;
-template class Convolution1D<math::Tensor<fixed_point::fp32_t>>;
-template class Convolution1D<math::Tensor<fixed_point::fp64_t>>;
-template class Convolution1D<math::Tensor<fixed_point::fp128_t>>;
-
+// template class Convolution2D<math::Tensor<int8_t>>;
+// template class Convolution2D<math::Tensor<int16_t>>;
+template class Convolution2D<math::Tensor<int32_t>>;
+template class Convolution2D<math::Tensor<int64_t>>;
+// template class Convolution2D<math::Tensor<uint8_t>>;
+// template class Convolution2D<math::Tensor<uint16_t>>;
+template class Convolution2D<math::Tensor<uint32_t>>;
+template class Convolution2D<math::Tensor<uint64_t>>;
+template class Convolution2D<math::Tensor<float>>;
+template class Convolution2D<math::Tensor<double>>;
+template class Convolution2D<math::Tensor<fixed_point::fp32_t>>;
+template class Convolution2D<math::Tensor<fixed_point::fp64_t>>;
+template class Convolution2D<math::Tensor<fixed_point::fp128_t>>;
 }  // namespace layers
 }  // namespace ml
 }  // namespace fetch
