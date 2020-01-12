@@ -21,7 +21,6 @@
 #include "core/assert.hpp"
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/encoders.hpp"
-#include "core/pointer.hpp"
 #include "crypto/hash.hpp"
 #include "crypto/sha256.hpp"
 #include "ledger/chain/block_db_record.hpp"
