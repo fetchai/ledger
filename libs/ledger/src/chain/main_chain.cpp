@@ -892,7 +892,7 @@ BlockPtr MainChain::GetBlock(BlockHash const &hash) const
   if (LookupBlock(hash, internal_block))
   {
     // convert the pointer type to per const
-    output_block = std::static_pointer_cast<Block const>(internal_block);
+    output_block = std::move(internal_block);
   }
   else
   {
