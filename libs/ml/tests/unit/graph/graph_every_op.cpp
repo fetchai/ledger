@@ -114,8 +114,7 @@ void ComparePrediction(GraphPtrType g, GraphPtrType g2, std::string node_name)
   EXPECT_TRUE(prediction.AllClose(prediction2, DataType{0}, DataType{0}));
 }
 
-// TEMPORARY disabled because fails on time-distributed Dense layers.
-TYPED_TEST(GraphRebuildTest, DISABLED_graph_rebuild_every_op)
+TYPED_TEST(GraphRebuildTest, graph_rebuild_every_op)
 {
   using TensorType   = TypeParam;
   using DataType     = typename TensorType::Type;

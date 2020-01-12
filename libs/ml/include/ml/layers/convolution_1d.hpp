@@ -136,6 +136,15 @@ public:
 
   static constexpr char const *DESCRIPTOR = "Convolution1DLayer";
 
+  OpType OperationType() const override
+  {
+    return this->OpCode();
+  }
+  char const *Descriptor() const override
+  {
+    return DESCRIPTOR;
+  }
+
 private:
   SizeType kernel_size_{};
   SizeType input_channels_{};

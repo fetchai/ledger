@@ -212,7 +212,7 @@ public:
     time_distributed_ = sp.time_distributed;
   }
 
-  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
+  math::SizeVector ComputeOutputShape(VecTensorType const &inputs) const override
   {
     if (!time_distributed_)
     {
@@ -231,9 +231,19 @@ public:
             inputs.front()->shape(inputs.front()->shape().size() - 1)};
   }
 
-  OpType OperationType() const override
+  math::SizeVector ComputeBatchOutputShape(
+      std::vector<math::SizeVector> const &input_shapes) override
   {
-    return this->OpCode();
+    if (!time_distributed_)
+    {
+      // auto const total_ins = this->TotalElementsIn(input_shapes);
+      this->SetBatchInputShapes(input_shapes);
+      this->SetBatchOutputShape({this->out_size_, 1});
+      return this->batch_output_shape_;
+    }
+    FETCH_LOG_ERROR(DESCRIPTOR, "Time-distributed layers do not support shape auto-deduction!");
+
+    return math::SizeVector{};
   }
 
   static constexpr OpType OpCode()
@@ -242,7 +252,12 @@ public:
   }
 
   static constexpr char const *DESCRIPTOR = "FullyConnected";
-  char const *                 Descriptor() const override
+
+  OpType OperationType() const override
+  {
+    return this->OpCode();
+  }
+  char const *Descriptor() const override
   {
     return DESCRIPTOR;
   }

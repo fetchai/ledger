@@ -61,11 +61,10 @@ public:
    * @param input_shapes
    * @return
    */
-  std::vector<SizeType> ComputeBatchOutputShape(ShapeVector const &input_shapes)
+  virtual std::vector<SizeType> ComputeBatchOutputShape(ShapeVector const &input_shapes)
   {
-    ShapeVector   tensor_shapes = input_shapes;
     VecTensorType dummies;
-    for (auto &shape : tensor_shapes)
+    for (auto &shape : input_shapes)
     {
       dummies.push_back(std::make_shared<TensorType>(shape));
     }
