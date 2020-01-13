@@ -205,7 +205,7 @@ private:
   static const fixed_point::fp64_t CONSTRUCTION_PADDED_SIZE_COEF;
   static const fixed_point::fp64_t CONSTRUCTION_CONST_COEF;
 
-  static const fixed_point::fp64_t CONSTRUCTION_STRING_PADDED_SIZE_COEF;
+  static const fixed_point::fp64_t CONSTRUCTION_STRING_SIZE_COEF;
   static const fixed_point::fp64_t CONSTRUCTION_STRING_CONST_COEF;
 };
 

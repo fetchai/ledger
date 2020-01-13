@@ -98,7 +98,7 @@ void VMTensor::Bind(Module &module, bool const enable_experimental)
   auto tensor_string_constructor_charge_estimate = [](Ptr<String> const &str) -> ChargeAmount {
     DataType size = static_cast<DataType>(str->string().size());
 
-    return static_cast<ChargeAmount>(CONSTRUCTION_STRING_PADDED_SIZE_COEF * size +
+    return static_cast<ChargeAmount>(CONSTRUCTION_STRING_SIZE_COEF * size +
                                      CONSTRUCTION_STRING_CONST_COEF) *
            COMPUTE_CHARGE_COST;
   };
@@ -560,9 +560,8 @@ TensorEstimator &VMTensor::Estimator()
 fixed_point::fp64_t const VMTensor::CONSTRUCTION_PADDED_SIZE_COEF = fixed_point::fp64_t("0.0028");
 fixed_point::fp64_t const VMTensor::CONSTRUCTION_CONST_COEF       = fixed_point::fp64_t("22");
 
-fixed_point::fp64_t const VMTensor::CONSTRUCTION_STRING_PADDED_SIZE_COEF =
-    fixed_point::fp64_t("0.0028");
-fixed_point::fp64_t const VMTensor::CONSTRUCTION_STRING_CONST_COEF = fixed_point::fp64_t("22");
+fixed_point::fp64_t const VMTensor::CONSTRUCTION_STRING_SIZE_COEF  = fixed_point::fp64_t("0.12");
+fixed_point::fp64_t const VMTensor::CONSTRUCTION_STRING_CONST_COEF = fixed_point::fp64_t("25");
 
 }  // namespace math
 }  // namespace vm_modules
