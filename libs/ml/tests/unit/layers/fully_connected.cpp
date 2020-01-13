@@ -93,7 +93,7 @@ TYPED_TEST(FullyConnectedTest,
 
   FullyConnected fc(10u, 5u, ActivationType::NOTHING, RegType::NONE, DataType{0},
                     WeightsInitType::XAVIER_GLOROT, FullyConnected::TIME_DISTRIBUTED);
-  TypeParam      input_data({10, 10, 2});
+  TypeParam      input_data(std::vector<typename TypeParam::SizeType>({10, 10, 2}));
   fc.SetInput("TimeDistributed_FullyConnected_Input", input_data);
   TypeParam output = fc.Evaluate("TimeDistributed_FullyConnected_MatrixMultiply", true);
 
