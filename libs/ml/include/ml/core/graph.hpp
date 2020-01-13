@@ -481,7 +481,7 @@ void Graph<TensorType>::ComputeAllNodeShapes()
 
   if (output_shape_of_last_layer.empty())
   {
-    FETCH_LOG_ERROR(DESCRIPTOR, " Node shape computing failed! ");
+    FETCH_LOG_ERROR(DESCRIPTOR, " Node batch output shape computing failed! ");
   }
 }
 

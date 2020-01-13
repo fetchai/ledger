@@ -66,7 +66,6 @@ std::vector<TensorType> DataHolder<TensorType>::Backward(VecTensorType const &in
 template <class TensorType>
 bool DataHolder<TensorType>::SetData(TensorType const &data)
 {
-  // TODO(VH): check for pre-set Shape and throw if it does not match.
   bool shape_changed = true;
   if (data_)
   {

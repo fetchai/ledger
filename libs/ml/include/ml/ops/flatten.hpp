@@ -66,12 +66,13 @@ public:
   {
     return OpType::OP_FLATTEN;
   }
-  OpType OperationType() const override
+  static constexpr char const *DESCRIPTOR = "Flatten";
+
+  OpType OperationType() const override  // TODO(ML-466) : move implementation to .cpp
   {
     return this->OpCode();
   }
-  static constexpr char const *DESCRIPTOR = "Flatten";
-  char const *                 Descriptor() const override
+  char const *Descriptor() const override  // TODO(ML-466) : move implementation to .cpp
   {
     return DESCRIPTOR;
   }

@@ -109,8 +109,6 @@ public:
   std::shared_ptr<TensorType> Evaluate(bool is_training);
 
   NodeErrorMapType BackPropagate(TensorType const &error_signal);
-  using Shape       = fetch::math::SizeVector;
-  using ShapeVector = std::vector<Shape>;
 
   void                                AddInput(NodeWeakPtrType const &i);
   std::vector<std::string>            GetInputNames();
@@ -133,13 +131,13 @@ public:
 
   bool HasValidCache();
 
-  void SetBatchOutputShape(Shape const &new_shape);
+  void SetBatchOutputShape(fetch::math::SizeVector const &new_shape);
 
-  void SetBatchInputShapes(ShapeVector const &new_shapes);
+  void SetBatchInputShapes(std::vector<fetch::math::SizeVector> const &new_shapes);
 
-  ShapeVector const &BatchInputShapes();
+  std::vector<fetch::math::SizeVector> const &BatchInputShapes();
 
-  Shape BatchOutputShape();
+  fetch::math::SizeVector BatchOutputShape();
 
 private:
   std::vector<NodeWeakPtrType> input_nodes_;

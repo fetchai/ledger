@@ -50,13 +50,13 @@ bool Node<TensorType>::HasValidCache()
 }
 
 template <typename TensorType>
-void Node<TensorType>::SetBatchOutputShape(const Node::Shape &new_shape)
+void Node<TensorType>::SetBatchOutputShape(const Shape &new_shape)
 {
   op_ptr_->SetBatchOutputShape(new_shape);
 }
 
 template <typename TensorType>
-void Node<TensorType>::SetBatchInputShapes(const Node::ShapeVector &new_shapes)
+void Node<TensorType>::SetBatchInputShapes(const ShapeVector &new_shapes)
 {
   op_ptr_->SetBatchInputShapes(new_shapes);
 }
@@ -76,7 +76,7 @@ const ShapeVector &Node<TensorType>::BatchInputShapes()
 template <typename TensorType>
 Shape Node<TensorType>::BatchOutputShape()
 {
-  // Returned cached shape result if available;
+  // Return cached shape result if available.
   Shape const candidate     = op_ptr_->BatchOutputShape();
   bool const  i_am_subgraph = OperationType() == OpType::LAYER_FULLY_CONNECTED;  // DEBUG! REMOVEME
   if (!candidate.empty() && !i_am_subgraph)
@@ -87,10 +87,10 @@ Shape Node<TensorType>::BatchOutputShape()
       FETCH_LOG_INFO(name_.c_str(), "Shape deduction reached an leaf node : " + this->name_ + " " +
                                         op_ptr_->OutputShapeAsString());
     }
-
     return candidate;
   }
 
+  // If no input nodes exist - it is impossible to infer/deduce their shapes.
   if (input_nodes_.empty())
   {
     FETCH_LOG_INFO(name_.c_str(), "Shape deduction reached a Graph leaf : " + this->name_);
@@ -105,7 +105,8 @@ Shape Node<TensorType>::BatchOutputShape()
     {
       throw std::runtime_error("Unable to lock weak pointer.");
     }
-    // Deeper recursive call.
+
+    // If there are valid input nodes, make a deeper recursive call to each of the previous nodes.
     auto const in_shape = node_ptr->BatchOutputShape();
     if (!in_shape.empty())
     {
@@ -113,13 +114,13 @@ Shape Node<TensorType>::BatchOutputShape()
     }
     else
     {
-      // TODO(VH): else (if there _is_ an empty shape among inputs) what?
       if (node_ptr->OperationType() != OpType::OP_PLACEHOLDER)
       {
         FETCH_LOG_INFO(name_.c_str(),
                        "Got an empty shape as return from non-placeholder layer! : " +
                            node_ptr->GetNodeName());
       }
+      // TODO(VH): else (if there _is_ an empty shape among inputs) what?
     }
   }
 
@@ -139,7 +140,6 @@ Shape Node<TensorType>::BatchOutputShape()
   Shape const ops_out_shape = op_ptr_->BatchOutputShape();
   if (ops_out_shape.empty())
   {
-    // throw an error: invalid calcs from a previous layer.
     FETCH_LOG_ERROR(name_.c_str(), "Shape deduction failed on " + this->name_ +
                                        " : unable to compute underlying Ops output shape.");
   }
@@ -147,6 +147,7 @@ Shape Node<TensorType>::BatchOutputShape()
   // After all shapes for current Node are deduced, shape-dependent Ops could be
   // updated and their initialisation completed.
   op_ptr_->CompleteInitialisation();
+
   return ops_out_shape;
 }
 

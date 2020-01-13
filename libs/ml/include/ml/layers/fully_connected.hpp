@@ -56,7 +56,15 @@ public:
   using WeightsType    = fetch::ml::ops::Weights<TensorType>;
   using WeightsPtrType = std::shared_ptr<WeightsType>;
 
-  FullyConnected() = default;
+  /**
+   * @brief FullyConnected default constructor without parameters is used to create an empty
+   * object during deserialisation. After deserialisation the object is treated as an initialised
+   * one.
+   */
+  FullyConnected()
+    : SubGraph<T>()
+    , is_initialised_(true)
+  {}
 
   /**
    * Normal fully connected layer constructor
@@ -80,9 +88,6 @@ public:
     , regularisation_rate_(regularisation_rate)
     , init_mode_(init_mode)
   {
-    is_initialised_ = false;  // a workaround to force CompleteInitialisation be called only if
-    // this type of constructor was called (but not default one);
-
     // get correct name for the layer
     std::string name = GetName();
 
@@ -98,13 +103,14 @@ public:
 
     weights_ = this->template AddNode<fetch::ml::ops::Weights<TensorType>>(name + "_Weights", {});
 
-    weights_matmul_ = this->template AddNode<fetch::ml::ops::MatrixMultiply<TensorType>>(
-        name + "_MatrixMultiply", {weights_, flattened_input_});
+    std::string weights_matmul_ =
+        this->template AddNode<fetch::ml::ops::MatrixMultiply<TensorType>>(
+            name + "_MatrixMultiply", {weights_, flattened_input_});
 
     bias_ = this->template AddNode<fetch::ml::ops::Weights<TensorType>>(name + "_Bias", {});
 
-    add_ = this->template AddNode<fetch::ml::ops::Add<TensorType>>(name + "_Add",
-                                                                   {weights_matmul_, bias_});
+    std::string add_ = this->template AddNode<fetch::ml::ops::Add<TensorType>>(
+        name + "_Add", {weights_matmul_, bias_});
 
     output_ =
         fetch::ml::details::AddActivationNode<T>(activation_type, this, name + "_Activation", add_);
@@ -137,9 +143,9 @@ public:
 
     assert(!this->batch_input_shapes_.empty());
     assert(!this->batch_output_shape_.empty());
+    FETCH_LOG_INFO(Descriptor(), "-- Compiling sub-graph ... --");
     this->nodes_.at(input_)->SetBatchInputShapes(this->batch_input_shapes_);
     this->nodes_.at(input_)->SetBatchOutputShape(this->batch_input_shapes_.front());
-    FETCH_LOG_INFO(DESCRIPTOR, "-- Compiling sub-graph ... --");
 
     if (in_size_ == AUTODETECT_INPUT_SHAPE)
     {
@@ -163,16 +169,16 @@ public:
     out_size_ = this->batch_output_shape_.front();
 
     // At this point we know everything necessary to directly assign shapes to
-    // leaf nodes such as Weights and Bias
+    // leaf nodes such as Weights and Bias.
     this->nodes_.at(weights_)->SetBatchOutputShape({out_size_, in_size_});
     this->nodes_.at(bias_)->SetBatchOutputShape(this->batch_output_shape_);
 
-    // initialize weight with specified method
+    // initialize weight with specified method.
     TensorType weights_data(std::vector<SizeType>({out_size_, in_size_}));
-    this->Initialise(weights_data, init_mode_);
+    fetch::ml::ops::Weights<TensorType>::Initialise(weights_data, in_size_, out_size_, init_mode_);
     this->SetInput(weights_, weights_data);
 
-    // initialize bias with right shape and set to all zero
+    // initialize bias with right shape and set to all zero.
     TensorType bias_data;
     if (time_distributed_)
     {
@@ -187,7 +193,7 @@ public:
     this->SetRegularisation(fetch::ml::details::CreateRegulariser<T>(regulariser_),
                             regularisation_rate_);
     this->Compile();
-    FETCH_LOG_INFO(DESCRIPTOR, "-- Sub-graph compiled. --");
+    FETCH_LOG_INFO(Descriptor(), "-- Sub-graph compiled. --");
     is_initialised_ = true;
   }
 
@@ -285,11 +291,11 @@ public:
 
   static constexpr char const *DESCRIPTOR = "FullyConnected";
 
-  OpType OperationType() const override
+  OpType OperationType() const override  // TODO(ML-466) : move implementation to .cpp
   {
     return this->OpCode();
   }
-  char const *Descriptor() const override
+  char const *Descriptor() const override  // TODO(ML-466) : move implementation to .cpp
   {
     return DESCRIPTOR;
   }
@@ -298,26 +304,21 @@ public:
   static constexpr bool     TIME_DISTRIBUTED       = true;
 
 private:
+  // Saveable params
   SizeType in_size_          = fetch::math::numeric_max<SizeType>();
   SizeType out_size_         = fetch::math::numeric_max<SizeType>();
   bool     time_distributed_ = false;
-  bool     is_initialised_   = true;
 
+  // Non-saveable params
+  bool                          is_initialised_ = false;
   std::string                   input_;
   std::string                   flattened_input_;
   std::string                   weights_;
-  std::string                   weights_matmul_;
   std::string                   bias_;
-  std::string                   add_;
   std::string                   output_;
   fetch::ml::RegularisationType regulariser_;
   DataType                      regularisation_rate_;
   WeightsInit                   init_mode_;
-
-  void Initialise(TensorType &weights, WeightsInit init_mode)
-  {
-    fetch::ml::ops::Weights<TensorType>::Initialise(weights, in_size_, out_size_, init_mode);
-  }
 
   std::string GetName()
   {

@@ -64,12 +64,13 @@ public:
   {
     return OpType::OP_SOFTMAX;
   }
-  OpType OperationType() const override
+  static constexpr char const *DESCRIPTOR = "Softmax";
+
+  OpType OperationType() const override  // TODO(ML-466) : move implementation to .cpp
   {
     return this->OpCode();
   }
-  static constexpr char const *DESCRIPTOR = "Softmax";
-  char const *                 Descriptor() const override
+  char const *Descriptor() const override  // TODO(ML-466) : move implementation to .cpp
   {
     return DESCRIPTOR;
   }
