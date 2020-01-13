@@ -20,6 +20,12 @@
 #include "ml/meta/ml_type_traits.hpp"
 #include "ml/model/model.hpp"
 #include "ml/model/model_config.hpp"
+#include "ml/ops/activation.hpp"
+
+#include "ml/ops/placeholder.hpp"
+
+#include "ml/layers/fully_connected.hpp"
+
 
 #include <vector>
 

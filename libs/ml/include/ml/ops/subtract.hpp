@@ -17,10 +17,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/macros.hpp"
+//#include "core/macros.hpp"
 #include "ml/ops/ops.hpp"
 
-#include <cassert>
+//#include <cassert>
 #include <vector>
 
 namespace fetch {
@@ -40,52 +40,21 @@ public:
 
   Subtract() = default;
 
-  explicit Subtract(SPType const &sp)
-    : Ops<T>(sp)
-  {}
+  explicit Subtract(SPType const &sp);
 
   ~Subtract() override = default;
 
-  std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override
-  {
-    SPType sp{};
-    return std::make_shared<SPType>(sp);
-  }
+  std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override;
 
   std::shared_ptr<fetch::ml::ops::Ops<TensorType>> MakeSharedCopy(
-      std::shared_ptr<fetch::ml::ops::Ops<TensorType>> me) override
-  {
-    FETCH_UNUSED(me);
-    assert(me.get() == this);
+      std::shared_ptr<fetch::ml::ops::Ops<TensorType>> me) override;
 
-    auto copyshare = std::make_shared<MyType>(*this);  // calls default copy constructor of MyType
-
-    return copyshare;
-  }
-  void Forward(VecTensorType const &inputs, TensorType &output) override
-  {
-    assert(inputs.size() == 2);
-    assert(inputs.at(0)->size() == inputs.at(1)->size());
-    assert(output.shape() == this->ComputeOutputShape(inputs));
-
-    fetch::math::Subtract((*inputs.at(0)), (*inputs.at(1)), output);
-  }
+  void Forward(VecTensorType const &inputs, TensorType &output) override;
 
   std::vector<TensorType> Backward(VecTensorType const &inputs,
-                                   TensorType const &   error_signal) override
-  {
-    FETCH_UNUSED(inputs);
-    assert(inputs.size() == 2);
-    assert(inputs.at(0)->size() == inputs.at(1)->size());
-    assert(error_signal.size() == inputs.at(1)->size());
+                                   TensorType const &   error_signal) override;
 
-    return {error_signal, fetch::math::Multiply(error_signal, DataType{-1})};
-  }
-
-  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
-  {
-    return inputs.front()->shape();
-  }
+  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override;
 
   static constexpr OpType OpCode()
   {

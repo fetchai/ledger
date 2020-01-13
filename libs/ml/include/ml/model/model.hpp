@@ -32,6 +32,21 @@
 #include <utility>
 
 namespace fetch {
+namespace ml {
+
+namespace ops {
+
+template <typename TensorType>
+class CrossEntropyLoss;
+
+template <typename TensorType>
+class MeanSquareErrorLoss;
+
+template <typename TensorType>
+class SoftmaxCrossEntropyLoss;
+}  // namespace ops
+
+}  // namespace ml
 
 namespace vm_modules {
 namespace ml {
@@ -517,6 +532,7 @@ bool Model<TensorType>::DataLoaderIsSet()
 }  // namespace ml
 
 namespace serializers {
+
 /**
  * serializer for Model
  * @tparam TensorType
@@ -741,6 +757,6 @@ struct MapSerializer<ml::model::Model<TensorType>, D>
     map.ExpectKeyGetValue(COMPILED_FLAG, sp.compiled_);
   }
 };
-
 }  // namespace serializers
+
 }  // namespace fetch

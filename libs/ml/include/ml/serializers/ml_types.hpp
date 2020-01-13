@@ -29,6 +29,24 @@ namespace ml {
 template <typename T>
 struct StateDict;
 
+namespace model {
+template <typename TensorType>
+class Model;
+}
+
+namespace dataloaders {
+template <typename LabelType, typename InputType>
+class TensorDataLoader;
+}
+
+namespace optimisers {
+template <typename TensorType>
+class SGDOptimiser;
+
+template <typename TensorType>
+class AdamOptimiser;
+}  // namespace optimisers
+
 }  // namespace ml
 
 namespace serializers {
