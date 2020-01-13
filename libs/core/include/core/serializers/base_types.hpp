@@ -799,7 +799,7 @@ template <typename K, typename V, typename D>
 struct ArraySerializer<std::pair<K, V>, D>
 {
 public:
-  using Type       = std::pair<V, K>;
+  using Type       = std::pair<K, V>;
   using DriverType = D;
 
   template <typename Constructor>

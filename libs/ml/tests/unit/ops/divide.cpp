@@ -121,10 +121,6 @@ TYPED_TEST(DivideTest, saveparams_test)
       " 8, -7, 6,-5, 4,-3, 2,-1;"
       "-8,  7,-6, 5,-4, 3,-2, 1");
 
-  TensorType gt = TensorType::FromString(
-      "0.125,	0.285714285714286,	0.5,	0.8,	1.25,	2,	3.5,	8;"
-      "-0.125, 0.285714285714286,	-0.5,	0.8,	-1.25,	2,	-3.5,	8");
-
   OpType op;
 
   TensorType    prediction(op.ComputeOutputShape(

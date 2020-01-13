@@ -271,10 +271,6 @@ TYPED_TEST(AddTest, saveparams_test)
       "8;"
       "-8");
 
-  TensorType gt = TensorType::FromString(
-      "9,  6, 11,  4, 13,  2, 15, 0;"
-      "-7, -6, -5, -4, -3,	-2,	-1,	0");
-
   OpType op;
 
   TensorType    prediction(op.ComputeOutputShape(

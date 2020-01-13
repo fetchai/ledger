@@ -2468,15 +2468,17 @@ struct MapSerializer<ml::OpSliceSaveableParams<TensorType>, D>
   static uint8_t const BASE_OPS = 1;
   static uint8_t const OP_CODE  = 2;
 
-  static uint8_t const AXES    = 3;
-  static uint8_t const INDICES = 4;
-  static uint8_t const AXIS    = 5;
-  static uint8_t const INDEX   = 6;
+  static uint8_t const AXES            = 3;
+  static uint8_t const INDICES         = 4;
+  static uint8_t const AXIS            = 5;
+  static uint8_t const INDEX           = 6;
+  static uint8_t const SLICE_TYPE      = 7;
+  static uint8_t const START_END_SLICE = 8;
 
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &sp)
   {
-    auto map = map_constructor(6);
+    auto map = map_constructor(8);
 
     // serialize parent class first
     auto ops_pointer = static_cast<ml::OpsSaveableParams const *>(&sp);
@@ -2486,6 +2488,8 @@ struct MapSerializer<ml::OpSliceSaveableParams<TensorType>, D>
     map.Append(INDICES, sp.indices);
     map.Append(AXIS, sp.axis);
     map.Append(INDEX, sp.index);
+    map.Append(SLICE_TYPE, sp.slice_type);
+    map.Append(START_END_SLICE, sp.start_end_slice);
   }
 
   template <typename MapDeserializer>
@@ -2498,6 +2502,8 @@ struct MapSerializer<ml::OpSliceSaveableParams<TensorType>, D>
     map.ExpectKeyGetValue(INDICES, sp.indices);
     map.ExpectKeyGetValue(AXIS, sp.axis);
     map.ExpectKeyGetValue(INDEX, sp.index);
+    map.ExpectKeyGetValue(SLICE_TYPE, sp.slice_type);
+    map.ExpectKeyGetValue(START_END_SLICE, sp.start_end_slice);
   }
 };
 
