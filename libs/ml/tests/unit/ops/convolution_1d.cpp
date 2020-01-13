@@ -16,27 +16,23 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/serializers/main_serializer_definition.hpp"
 #include "math/base_types.hpp"
 #include "ml/ops/convolution_1d.hpp"
-#include "ml/serializers/ml_types.hpp"
 #include "test_types.hpp"
-#include "vectorise/fixed_point/fixed_point.hpp"
 
 #include "gtest/gtest.h"
 
 #include <memory>
 #include <vector>
 
-namespace fetch {
-namespace ml {
-namespace test {
+namespace {
+
 template <typename T>
 class Convolution1DTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(Convolution1DTest, math::test::TensorFloatingTypes);
+TYPED_TEST_CASE(Convolution1DTest, fetch::math::test::TensorFloatingTypes);
 
 TYPED_TEST(Convolution1DTest, forward_1x1x2_1x1x1x2)
 {
@@ -296,151 +292,4 @@ TYPED_TEST(Convolution1DTest, backward_3x3x2_5x3x3x2)
                                      fetch::math::function_tolerance<DataType>()));
 }
 
-TYPED_TEST(Convolution1DTest, saveparams_test)
-{
-  using TensorType    = TypeParam;
-  using DataType      = typename TypeParam::Type;
-  using VecTensorType = typename fetch::ml::ops::Ops<TensorType>::VecTensorType;
-  using SPType        = typename fetch::ml::ops::Convolution1D<TensorType>::SPType;
-  using OpType        = fetch::ml::ops::Convolution1D<TensorType>;
-
-  TensorType input({1, 1, 2});
-  TensorType weights({1, 1, 1, 1});
-  input.At(0, 0, 0)      = DataType{5};
-  input.At(0, 0, 1)      = DataType{6};
-  weights.At(0, 0, 0, 0) = DataType{-4};
-
-  OpType op;
-
-  TensorType    prediction(op.ComputeOutputShape(
-      {std::make_shared<const TensorType>(input), std::make_shared<const TensorType>(weights)}));
-  VecTensorType vec_data(
-      {std::make_shared<const TensorType>(input), std::make_shared<const TensorType>(weights)});
-
-  op.Forward(vec_data, prediction);
-
-  // extract saveparams
-  std::shared_ptr<fetch::ml::OpsSaveableParams> sp = op.GetOpSaveableParams();
-
-  // downcast to correct type
-  auto dsp = std::static_pointer_cast<SPType>(sp);
-
-  // serialize
-  fetch::serializers::MsgPackSerializer b;
-  b << *dsp;
-
-  // deserialize
-  b.seek(0);
-  auto dsp2 = std::make_shared<SPType>();
-  b >> *dsp2;
-
-  // rebuild node
-  OpType new_op(*dsp2);
-
-  // check that new predictions match the old
-  TensorType new_prediction(op.ComputeOutputShape(
-      {std::make_shared<const TensorType>(input), std::make_shared<const TensorType>(weights)}));
-  new_op.Forward(vec_data, new_prediction);
-
-  // test correct values
-  EXPECT_TRUE(new_prediction.AllClose(prediction, DataType{0}, DataType{0}));
-}
-
-TYPED_TEST(Convolution1DTest, saveparams_backward_3x3x2_5x3x3x2)
-{
-  using DataType   = typename TypeParam::Type;
-  using TensorType = TypeParam;
-  using SizeType   = fetch::math::SizeType;
-  using OpType     = fetch::ml::ops::Convolution1D<TensorType>;
-  using SPType     = typename OpType::SPType;
-
-  SizeType const input_channels  = 3;
-  SizeType const output_channels = 5;
-  SizeType const input_height    = 3;
-  SizeType const kernel_height   = 3;
-  SizeType const output_height   = 1;
-  SizeType const batch_size      = 2;
-
-  TensorType input({input_channels, input_height, batch_size});
-  TensorType kernels({output_channels, input_channels, kernel_height, 1});
-  TensorType error({output_channels, output_height, batch_size});
-
-  // Generate input
-  for (SizeType i_b{0}; i_b < batch_size; ++i_b)
-  {
-    for (SizeType i_ic{0}; i_ic < input_channels; ++i_ic)
-    {
-      for (SizeType i_i{0}; i_i < input_height; ++i_i)
-      {
-        input(i_ic, i_i, i_b) = fetch::math::AsType<DataType>(i_i + 1);
-      }
-    }
-  }
-
-  // Generate kernels
-  for (SizeType i_oc{0}; i_oc < output_channels; ++i_oc)
-  {
-    for (SizeType i_ic{0}; i_ic < input_channels; ++i_ic)
-    {
-      for (SizeType i_k{0}; i_k < kernel_height; ++i_k)
-      {
-
-        kernels(i_oc, i_ic, i_k, 0) = DataType{2};
-      }
-    }
-  }
-
-  // Generate error signal
-  for (SizeType i_b{0}; i_b < batch_size; ++i_b)
-  {
-    for (SizeType i_oc{0}; i_oc < output_channels; ++i_oc)
-    {
-      for (SizeType i_o{0}; i_o < output_height; ++i_o)
-      {
-        error(i_oc, i_o, i_b) = static_cast<DataType>(i_o + 1);
-      }
-    }
-  }
-
-  fetch::ml::ops::Convolution1D<TensorType> op;
-  std::vector<TensorType>                   prediction = op.Backward(
-      {std::make_shared<TensorType>(input), std::make_shared<TensorType>(kernels)}, error);
-
-  // extract saveparams
-  std::shared_ptr<fetch::ml::OpsSaveableParams> sp = op.GetOpSaveableParams();
-
-  // downcast to correct type
-  auto dsp = std::dynamic_pointer_cast<SPType>(sp);
-
-  // serialize
-  fetch::serializers::MsgPackSerializer b;
-  b << *dsp;
-
-  // make another prediction with the original op
-  prediction = op.Backward(
-      {std::make_shared<TensorType>(input), std::make_shared<TensorType>(kernels)}, error);
-
-  // deserialize
-  b.seek(0);
-  auto dsp2 = std::make_shared<SPType>();
-  b >> *dsp2;
-
-  // rebuild node
-  OpType new_op(*dsp2);
-
-  // check that new predictions match the old
-  std::vector<TensorType> new_prediction = new_op.Backward(
-      {std::make_shared<TensorType>(input), std::make_shared<TensorType>(kernels)}, error);
-
-  // test correct values
-  EXPECT_TRUE(prediction.at(0).AllClose(
-      new_prediction.at(0), fetch::math::function_tolerance<typename TypeParam::Type>(),
-      fetch::math::function_tolerance<typename TypeParam::Type>()));
-  EXPECT_TRUE(prediction.at(1).AllClose(
-      new_prediction.at(1), fetch::math::function_tolerance<typename TypeParam::Type>(),
-      fetch::math::function_tolerance<typename TypeParam::Type>()));
-}
-
-}  // namespace test
-}  // namespace ml
-}  // namespace fetch
+}  // namespace

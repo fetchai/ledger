@@ -93,11 +93,6 @@ namespace ml {
 /// FORWARD DECLARATION ///
 ///////////////////////////
 
-namespace ops {
-template <typename T>
-class PReluOp;
-}
-
 namespace layers {
 template <typename T>
 class PRelu;
