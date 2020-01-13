@@ -16,27 +16,24 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/serializers/main_serializer_definition.hpp"
 #include "math/base_types.hpp"
-#include "ml/core/graph.hpp"
-#include "ml/ops/placeholder.hpp"
 #include "ml/ops/reduce_mean.hpp"
-#include "ml/serializers/ml_types.hpp"
 #include "test_types.hpp"
 
 #include "gtest/gtest.h"
 
 #include <vector>
 
-namespace fetch {
-namespace ml {
-namespace test {
+namespace {
+
+using namespace fetch::ml;
+
 template <typename T>
 class ReduceMeanTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(ReduceMeanTest, math::test::TensorFloatingTypes);
+TYPED_TEST_CASE(ReduceMeanTest, fetch::math::test::TensorFloatingTypes);
 
 TYPED_TEST(ReduceMeanTest, forward_2_2_2_test)
 {
@@ -92,6 +89,4 @@ TYPED_TEST(ReduceMeanTest, backward_2_2_2_test)
   fetch::math::state_clear<DataType>();
 }
 
-}  // namespace test
-}  // namespace ml
-}  // namespace fetch
+}  // namespace

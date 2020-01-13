@@ -16,27 +16,24 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/serializers/main_serializer_definition.hpp"
-#include "math/base_types.hpp"
 #include "ml/ops/transpose.hpp"
-#include "ml/serializers/ml_types.hpp"
 #include "test_types.hpp"
-#include "vectorise/fixed_point/fixed_point.hpp"
 
 #include "gtest/gtest.h"
 
 #include <memory>
 #include <vector>
 
-namespace fetch {
-namespace ml {
-namespace test {
+namespace {
+
+using namespace fetch::ml;
+
 template <typename T>
 class TransposeTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(TransposeTest, math::test::TensorIntAndFloatingTypes);
+TYPED_TEST_CASE(TransposeTest, fetch::math::test::TensorIntAndFloatingTypes);
 
 TYPED_TEST(TransposeTest, forward_test)
 {
@@ -104,92 +101,4 @@ TYPED_TEST(TransposeTest, backward_batch_test)
   EXPECT_TRUE(backpropagated_signals[0].AllClose(gradient));
 }
 
-TYPED_TEST(TransposeTest, saveparams_test)
-{
-  using TensorType    = TypeParam;
-  using DataType      = typename TypeParam::Type;
-  using VecTensorType = typename fetch::ml::ops::Ops<TensorType>::VecTensorType;
-  using SPType        = typename fetch::ml::ops::Transpose<TensorType>::SPType;
-  using OpType        = typename fetch::ml::ops::Transpose<TensorType>;
-
-  TensorType data = TypeParam::FromString(R"(1, 2, -3; 4, 5, 6)");
-
-  OpType op;
-
-  TensorType    prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
-  VecTensorType vec_data({std::make_shared<const TensorType>(data)});
-
-  op.Forward(vec_data, prediction);
-
-  // extract saveparams
-  std::shared_ptr<fetch::ml::OpsSaveableParams> sp = op.GetOpSaveableParams();
-
-  // downcast to correct type
-  auto dsp = std::static_pointer_cast<SPType>(sp);
-
-  // serialize
-  fetch::serializers::MsgPackSerializer b;
-  b << *dsp;
-
-  // deserialize
-  b.seek(0);
-  auto dsp2 = std::make_shared<SPType>();
-  b >> *dsp2;
-
-  // rebuild node
-  OpType new_op(*dsp2);
-
-  // check that new predictions match the old
-  TensorType new_prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
-  new_op.Forward(vec_data, new_prediction);
-
-  // test correct values
-  EXPECT_TRUE(new_prediction.AllClose(prediction, DataType{0}, DataType{0}));
-}
-
-TYPED_TEST(TransposeTest, saveparams_backward_batch_test)
-{
-  using TensorType = TypeParam;
-  using OpType     = typename fetch::ml::ops::Transpose<TensorType>;
-  using SPType     = typename OpType::SPType;
-  TypeParam a({4, 5, 2});
-  TypeParam error({5, 4, 2});
-
-  fetch::ml::ops::Transpose<TypeParam> op;
-  std::vector<TypeParam>               backpropagated_signals =
-      op.Backward({std::make_shared<TypeParam>(a)}, error);
-
-  // extract saveparams
-  std::shared_ptr<fetch::ml::OpsSaveableParams> sp = op.GetOpSaveableParams();
-
-  // downcast to correct type
-  auto dsp = std::dynamic_pointer_cast<SPType>(sp);
-
-  // serialize
-  fetch::serializers::MsgPackSerializer b;
-  b << *dsp;
-
-  // make another prediction with the original op
-  backpropagated_signals = op.Backward({std::make_shared<TypeParam>(a)}, error);
-
-  // deserialize
-  b.seek(0);
-  auto dsp2 = std::make_shared<SPType>();
-  b >> *dsp2;
-
-  // rebuild node
-  OpType new_op(*dsp2);
-
-  // check that new predictions match the old
-  std::vector<TypeParam> new_backpropagated_signals =
-      new_op.Backward({std::make_shared<TypeParam>(a)}, error);
-
-  // test correct values
-  EXPECT_TRUE(backpropagated_signals.at(0).AllClose(
-      new_backpropagated_signals.at(0), fetch::math::function_tolerance<typename TypeParam::Type>(),
-      fetch::math::function_tolerance<typename TypeParam::Type>()));
-}
-
-}  // namespace test
-}  // namespace ml
-}  // namespace fetch
+}  // namespace

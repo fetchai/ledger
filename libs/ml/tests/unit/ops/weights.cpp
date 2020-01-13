@@ -16,27 +16,25 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/serializers/main_serializer_definition.hpp"
 #include "math/base_types.hpp"
 #include "ml/ops/weights.hpp"
-#include "ml/serializers/ml_types.hpp"
 #include "ml/state_dict.hpp"
 #include "test_types.hpp"
-#include "vectorise/fixed_point/fixed_point.hpp"
 
 #include "gtest/gtest.h"
 
 #include <memory>
 
-namespace fetch {
-namespace ml {
-namespace test {
+namespace {
+
+using namespace fetch::ml;
+
 template <typename T>
 class WeightsTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(WeightsTest, math::test::TensorIntAndFloatingTypes);
+TYPED_TEST_CASE(WeightsTest, fetch::math::test::TensorIntAndFloatingTypes);
 
 TYPED_TEST(WeightsTest, allocation_test)
 {
@@ -111,118 +109,4 @@ TYPED_TEST(WeightsTest, loadStateDict)
   EXPECT_EQ(prediction, *data);
 }
 
-TYPED_TEST(WeightsTest, saveparams_test)
-{
-  using TensorType = TypeParam;
-  using DataType   = typename TypeParam::Type;
-  using SPType     = typename fetch::ml::ops::Weights<TensorType>::SPType;
-  using OpType     = typename fetch::ml::ops::Weights<TensorType>;
-
-  TensorType data = TensorType::FromString("1, -2, 3, -4, 5, -6, 7, -8");
-
-  OpType op;
-  op.SetData(data);
-
-  TensorType prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
-
-  op.Forward({}, prediction);
-
-  // extract saveparams
-  std::shared_ptr<fetch::ml::OpsSaveableParams> sp = op.GetOpSaveableParams();
-
-  // downcast to correct type
-  auto dsp = std::static_pointer_cast<SPType>(sp);
-
-  // serialize
-  fetch::serializers::MsgPackSerializer b;
-  b << *dsp;
-
-  // deserialize
-  b.seek(0);
-  auto dsp2 = std::make_shared<SPType>();
-  b >> *dsp2;
-
-  // rebuild node
-  OpType new_op(*dsp2);
-
-  // check that new predictions match the old
-  TensorType new_prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
-  new_op.Forward({}, new_prediction);
-
-  // test correct values
-  EXPECT_TRUE(new_prediction.AllClose(prediction, DataType{0}, DataType{0}));
-}
-
-TYPED_TEST(WeightsTest, saveparams_gradient_step_test)
-{
-  using TensorType = TypeParam;
-  using DataType   = typename TypeParam::Type;
-  using SizeType   = fetch::math::SizeType;
-  using OpType     = typename fetch::ml::ops::Weights<TensorType>;
-  using SPType     = typename OpType::SPType;
-
-  TensorType       data(8);
-  TensorType       error(8);
-  std::vector<int> dataInput({1, -2, 3, -4, 5, -6, 7, -8});
-  std::vector<int> errorInput({-1, 2, 3, -5, -8, 13, -21, -34});
-  for (SizeType i{0}; i < 8; ++i)
-  {
-    data.Set(i, static_cast<DataType>(dataInput[i]));
-    error.Set(i, static_cast<DataType>(errorInput[i]));
-  }
-
-  fetch::ml::ops::Weights<TensorType> op;
-  op.SetData(data);
-
-  TensorType prediction(op.ComputeOutputShape({}));
-  op.Forward({}, prediction);
-
-  std::vector<TensorType> error_signal = op.Backward({}, error);
-
-  // extract saveparams
-  std::shared_ptr<fetch::ml::OpsSaveableParams> sp = op.GetOpSaveableParams();
-
-  // downcast to correct type
-  auto dsp = std::dynamic_pointer_cast<SPType>(sp);
-
-  // serialize
-  fetch::serializers::MsgPackSerializer b;
-  b << *dsp;
-
-  // make another prediction with the original op
-  op.Backward({}, error);
-
-  TensorType grad = op.GetGradientsReferences();
-  fetch::math::Multiply(grad, DataType{-1}, grad);
-  op.ApplyGradient(grad);
-
-  prediction = TensorType(op.ComputeOutputShape({}));
-  op.Forward({}, prediction);
-
-  // deserialize
-  b.seek(0);
-  auto dsp2 = std::make_shared<SPType>();
-  b >> *dsp2;
-
-  // rebuild node
-  OpType new_op(*dsp2);
-
-  // check that new predictions match the old
-  new_op.Backward({}, error);
-
-  TensorType new_grad = new_op.GetGradientsReferences();
-  fetch::math::Multiply(new_grad, DataType{-1}, new_grad);
-  new_op.ApplyGradient(new_grad);
-
-  TensorType new_prediction = TensorType(new_op.ComputeOutputShape({}));
-  new_op.Forward({}, new_prediction);
-
-  // test correct values
-  EXPECT_TRUE(prediction.AllClose(new_prediction,
-                                  fetch::math::function_tolerance<typename TypeParam::Type>(),
-                                  fetch::math::function_tolerance<typename TypeParam::Type>()));
-}
-
-}  // namespace test
-}  // namespace ml
-}  // namespace fetch
+}  // namespace

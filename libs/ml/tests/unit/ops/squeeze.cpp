@@ -16,25 +16,23 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/serializers/main_serializer_definition.hpp"
 #include "gtest/gtest.h"
 #include "math/base_types.hpp"
-#include "ml/core/graph.hpp"
-#include "ml/ops/placeholder.hpp"
 #include "ml/ops/squeeze.hpp"
-#include "ml/serializers/ml_types.hpp"
+
 #include "test_types.hpp"
 #include <vector>
 
-namespace fetch {
-namespace ml {
-namespace test {
+namespace {
+
+using namespace fetch::ml;
+
 template <typename T>
 class SqueezeTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(SqueezeTest, math::test::TensorFloatingTypes);
+TYPED_TEST_CASE(SqueezeTest, fetch::math::test::TensorFloatingTypes);
 
 TYPED_TEST(SqueezeTest, forward_1_6_1_test)
 {
@@ -133,6 +131,4 @@ TYPED_TEST(SqueezeTest, backward_1_5_test)
   fetch::math::state_clear<DataType>();
 }
 
-}  // namespace test
-}  // namespace ml
-}  // namespace fetch
+}  // namespace
