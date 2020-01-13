@@ -110,7 +110,7 @@ void NaiveSynergeticMiner::Mine()
   // TODO(HUT): would be nicer to specify here what we want by type
   auto handled_block_index = previous_epoch_block_index_;
 
-  auto dag_nodes           = dag_->GetLatest(true, previous_epoch_block_index_);
+  auto dag_nodes = dag_->GetLatest(true, previous_epoch_block_index_);
   if (handled_block_index == previous_epoch_block_index_)
   {
     FETCH_LOG_DEBUG(LOGGING_NAME, "Data from block ", previous_epoch_block_index_,

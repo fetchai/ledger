@@ -184,7 +184,7 @@ void DAG::AddTransaction(chain::Transaction const &tx, DAGTypes type)
   // Create a new dag node containing this data
   DAGNodePtr new_node = std::make_shared<DAGNode>();
 
-  new_node->type = DAGNode::DATA;
+  new_node->type             = DAGNode::DATA;
   new_node->contract_address = tx.contract_address();
   new_node->contents         = tx.data();
 
