@@ -57,6 +57,13 @@ VMTensor::VMTensor(VM *vm, TypeId type_id)
   , estimator_(*this)
 {}
 
+VMTensor::VMTensor(VM *vm, TypeId type_id, std::string const &str)
+  : Object(vm, type_id)
+  , estimator_(*this)
+{
+  tensor_ = tensor_.FromString(str);
+}
+
 Ptr<VMTensor> VMTensor::Constructor(VM *vm, TypeId type_id, Ptr<Array<SizeType>> const &shape)
 {
   for (SizeType axis_size : shape->elements)
@@ -68,6 +75,11 @@ Ptr<VMTensor> VMTensor::Constructor(VM *vm, TypeId type_id, Ptr<Array<SizeType>>
     }
   }
   return Ptr<VMTensor>{new VMTensor(vm, type_id, shape->elements)};
+}
+
+Ptr<VMTensor> VMTensor::StringConstructor(VM *vm, TypeId type_id, Ptr<String> const &str)
+{
+  return Ptr<VMTensor>{new VMTensor(vm, type_id, str->string())};
 }
 
 void VMTensor::Bind(Module &module, bool const enable_experimental)
@@ -83,9 +95,19 @@ void VMTensor::Bind(Module &module, bool const enable_experimental)
            COMPUTE_CHARGE_COST;
   };
 
+  auto tensor_string_constructor_charge_estimate = [](Ptr<String> const &str) -> ChargeAmount {
+    DataType size = static_cast<DataType>(str->string().size());
+
+    return static_cast<ChargeAmount>(CONSTRUCTION_STRING_PADDED_SIZE_COEF * size +
+                                     CONSTRUCTION_STRING_CONST_COEF) *
+           COMPUTE_CHARGE_COST;
+  };
+
   auto interface =
       module.CreateClassType<VMTensor>("Tensor")
           .CreateConstructor(&VMTensor::Constructor, tensor_constructor_charge_estimate)
+          .CreateConstructor(&VMTensor::StringConstructor,
+                             tensor_string_constructor_charge_estimate)
           .CreateSerializeDefaultConstructor([](VM *vm, TypeId type_id) -> Ptr<VMTensor> {
             return Ptr<VMTensor>{new VMTensor(vm, type_id)};
           })
@@ -537,6 +559,10 @@ TensorEstimator &VMTensor::Estimator()
 
 fixed_point::fp64_t const VMTensor::CONSTRUCTION_PADDED_SIZE_COEF = fixed_point::fp64_t("0.0028");
 fixed_point::fp64_t const VMTensor::CONSTRUCTION_CONST_COEF       = fixed_point::fp64_t("22");
+
+fixed_point::fp64_t const VMTensor::CONSTRUCTION_STRING_PADDED_SIZE_COEF =
+    fixed_point::fp64_t("0.0028");
+fixed_point::fp64_t const VMTensor::CONSTRUCTION_STRING_CONST_COEF = fixed_point::fp64_t("22");
 
 }  // namespace math
 }  // namespace vm_modules
