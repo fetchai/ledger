@@ -22,6 +22,7 @@
 
 #include "gtest/gtest.h"
 #include "test_types.hpp"
+#include <memory>
 
 namespace {
 
@@ -54,14 +55,23 @@ TYPED_TEST_CASE(GraphRebuildTest, fetch::math::test::HighPrecisionTensorFloating
 
 /// helper functions
 
+/**
+ *
+ * @tparam SPType
+ * @tparam TensorType
+ * @tparam LayerType
+ * @param layer
+ * @param mode - if true, LayerType should be a Layer, otherwise an Op
+ * @return
+ */
 template <typename SPType, typename TensorType, typename LayerType>
-LayerType SerialiseDeserialiseBuild(LayerType &layer)
+std::shared_ptr<SPType> SerialiseDeserialiseBuild(LayerType &layer)
 {
   // extract saveparams
   auto sp = layer.GetOpSaveableParams();
 
   // downcast to correct type
-  auto dsp = std::dynamic_pointer_cast<SPType>(sp);
+  auto dsp = std::static_pointer_cast<SPType>(sp);
 
   // serialize
   fetch::serializers::MsgPackSerializer b{};
@@ -72,13 +82,13 @@ LayerType SerialiseDeserialiseBuild(LayerType &layer)
   auto dsp2 = std::make_shared<SPType>();
   b >> *dsp2;
 
-  // rebuild
-  return *(fetch::ml::utilities::BuildLayer<TensorType, LayerType>(dsp2));
+  return dsp2;
 }
 
 template <typename DataType, typename TensorType, typename LayerType>
 void TestLayerPredictionsEqual(LayerType &layer, LayerType &layer2, TensorType const &input,
-                               std::string const &input_name, std::string const &output_name, TensorType const &prediction0)
+                               std::string const &input_name, std::string const &output_name,
+                               TensorType const &prediction0)
 {
   // test equality
   layer.SetInput(input_name, input);
@@ -140,7 +150,8 @@ TYPED_TEST(SaveParamsTest, conv1d_saveparams_test)
   // make initial prediction to set internal buffers which must be correctly set in serialisation
   prediction = layer.Evaluate(output_name, true);
 
-  auto layer2 = SerialiseDeserialiseBuild<SPType, TensorType>(layer);
+  auto dsp = SerialiseDeserialiseBuild<SPType, TensorType>(layer);
+  auto layer2 = *(fetch::ml::utilities::BuildLayer<TensorType, LayerType>(dsp));
 
   TestLayerPredictionsEqual<DataType>(layer, layer2, input, input_name, output_name, prediction);
 
@@ -228,7 +239,8 @@ TYPED_TEST(SaveParamsTest, conv2d_saveparams_test)
   // make initial prediction to set internal buffers which must be correctly set in serialisation
   prediction = layer.Evaluate(output_name, true);
 
-  auto layer2 = SerialiseDeserialiseBuild<SPType, TensorType>(layer);
+  auto dsp = SerialiseDeserialiseBuild<SPType, TensorType>(layer);
+  auto layer2 = *(fetch::ml::utilities::BuildLayer<TensorType, LayerType>(dsp));
 
   TestLayerPredictionsEqual<DataType>(layer, layer2, input, input_name, output_name, prediction);
 
@@ -311,7 +323,8 @@ TYPED_TEST(SaveParamsTest, fully_connected_saveparams_test)
   TypeParam prediction;
   prediction = layer.Evaluate(output_name, true);
 
-  auto layer2 = SerialiseDeserialiseBuild<SPType, TypeParam>(layer);
+  auto dsp = SerialiseDeserialiseBuild<SPType, TypeParam>(layer);
+  auto layer2 = *(fetch::ml::utilities::BuildLayer<TypeParam, LayerType>(dsp));
 
   TestLayerPredictionsEqual<DataType>(layer, layer2, input, input_name, output_name, prediction);
 
@@ -391,7 +404,8 @@ TYPED_TEST(SaveParamsTest, layer_norm_saveparams_test)
   TypeParam prediction;
   prediction = layer.Evaluate(output_name, true);
 
-  auto layer2 = SerialiseDeserialiseBuild<SPType, TypeParam>(layer);
+  auto dsp = SerialiseDeserialiseBuild<SPType, TypeParam>(layer);
+  auto layer2 = *(fetch::ml::utilities::BuildLayer<TypeParam, LayerType>(dsp));
 
   TestLayerPredictionsEqual<DataType>(layer, layer2, input, input_name, output_name, prediction);
 
@@ -444,7 +458,7 @@ TYPED_TEST(SaveParamsTest, multi_head_attention_saveparams_test)
   fetch::math::SizeType n_heads   = 3;
   fetch::math::SizeType model_dim = 6;
 
-  std::string input_name = "MultiheadAttention_Value";
+  std::string input_name  = "MultiheadAttention_Value";
   std::string output_name = "MultiheadAttention_Final_Transformation";
 
   // create input data
@@ -480,7 +494,8 @@ TYPED_TEST(SaveParamsTest, multi_head_attention_saveparams_test)
 
   TypeParam prediction0 = layer.Evaluate(output_name, true);
 
-  auto layer2 = SerialiseDeserialiseBuild<SPType, TypeParam>(layer);
+  auto dsp = SerialiseDeserialiseBuild<SPType, TypeParam>(layer);
+  auto layer2 = *(fetch::ml::utilities::BuildLayer<TypeParam, LayerType>(dsp));
 
   TypeParam prediction1 = layer.Evaluate(output_name);
 
@@ -491,7 +506,7 @@ TYPED_TEST(SaveParamsTest, multi_head_attention_saveparams_test)
   TypeParam prediction2 = layer2.Evaluate(output_name);
 
   EXPECT_FALSE(prediction1.AllClose(prediction2, fetch::math::function_tolerance<DataType>(),
-                                   fetch::math::function_tolerance<DataType>()));
+                                    fetch::math::function_tolerance<DataType>()));
   EXPECT_TRUE(prediction0.AllClose(prediction1, fetch::math::function_tolerance<DataType>(),
                                    fetch::math::function_tolerance<DataType>()));
 }
@@ -530,7 +545,8 @@ TYPED_TEST(SaveParamsTest, prelu_saveparams_test)
 
   TypeParam prediction = layer.Evaluate(output_name, true);
 
-  auto layer2 = SerialiseDeserialiseBuild<SPType, TypeParam>(layer);
+  auto dsp = SerialiseDeserialiseBuild<SPType, TypeParam>(layer);
+  auto layer2 = *(fetch::ml::utilities::BuildLayer<TypeParam, LayerType>(dsp));
 
   TestLayerPredictionsEqual<DataType>(layer, layer2, input, input_name, output_name, prediction);
 
@@ -611,7 +627,8 @@ TYPED_TEST(SaveParamsTest, scaled_dot_product_attention_saveparams_test)
   std::string error_output = layer.template AddNode<fetch::ml::ops::MeanSquareErrorLoss<TypeParam>>(
       "num_error", {output_name, label_name});
 
-  auto layer2 = SerialiseDeserialiseBuild<SPType, TypeParam>(layer);
+  auto dsp = SerialiseDeserialiseBuild<SPType, TypeParam>(layer);
+  auto layer2 = *(fetch::ml::utilities::BuildLayer<TypeParam, LayerType>(dsp));
 
   // test equality
   layer.SetInput("ScaledDotProductAttention_Query", query_data);
@@ -718,7 +735,8 @@ TYPED_TEST(SaveParamsTest, self_attention_saveparams_test)
   layer.SetInput(mask_name, mask_data);
   TypeParam prediction0 = layer.Evaluate(output_name, true);
 
-  auto layer2 = SerialiseDeserialiseBuild<SPType, TypeParam>(layer);
+  auto dsp = SerialiseDeserialiseBuild<SPType, TypeParam>(layer);
+  auto layer2 = *(fetch::ml::utilities::BuildLayer<TypeParam, LayerType>(dsp));
 
   TypeParam prediction1 = layer.Evaluate(output_name);
 
@@ -727,7 +745,7 @@ TYPED_TEST(SaveParamsTest, self_attention_saveparams_test)
   TypeParam prediction2 = layer2.Evaluate(output_name);
 
   EXPECT_FALSE(prediction1.AllClose(prediction2, fetch::math::function_tolerance<DataType>(),
-                                   fetch::math::function_tolerance<DataType>()));
+                                    fetch::math::function_tolerance<DataType>()));
   EXPECT_TRUE(prediction0.AllClose(prediction1, fetch::math::function_tolerance<DataType>(),
                                    fetch::math::function_tolerance<DataType>()));
 }
@@ -774,7 +792,8 @@ TYPED_TEST(SaveParamsTest, skipgram_saveparams_test)
   // make initial prediction to set internal buffers which must be correctly set in serialisation
   TypeParam prediction0 = layer.Evaluate(output_name, true);
 
-  auto layer2 = SerialiseDeserialiseBuild<SPType, TypeParam>(layer);
+  auto dsp = SerialiseDeserialiseBuild<SPType, TypeParam>(layer);
+  auto layer2 = *(fetch::ml::utilities::BuildLayer<TypeParam, LayerType>(dsp));
 
   // test that deserialized model gives the same forward prediction as the original layer
   layer.SetInput("SkipGram_Input", input);
@@ -865,23 +884,8 @@ TYPED_TEST(SaveParamsTest, matrix_multiply_saveparams_test)
 
   op.Forward(vec_data, prediction);
 
-  // extract saveparams
-  std::shared_ptr<fetch::ml::OpsSaveableParams> sp = op.GetOpSaveableParams();
-
-  // downcast to correct type
-  auto dsp = std::static_pointer_cast<SPType>(sp);
-
-  // serialize
-  fetch::serializers::MsgPackSerializer b;
-  b << *dsp;
-
-  // deserialize
-  b.seek(0);
-  auto dsp2 = std::make_shared<SPType>();
-  b >> *dsp2;
-
-  // rebuild node
-  OpType new_op(*dsp2);
+  auto dsp = SerialiseDeserialiseBuild<SPType, TypeParam>(op);
+  OpType new_op(*dsp);
 
   // check that new predictions match the old
   TensorType new_prediction(op.ComputeOutputShape(
