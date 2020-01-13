@@ -499,12 +499,19 @@ void Analyser::ValidateFunctionAnnotations(NodePtr const &function_node)
   for (auto const &annotation : annotations_node->children)
   {
     auto const &text = annotation->text;
-    bool        test_annotation =
-        (!allow_test_annotations_) || (text != TEST_ANNOTATION && text != TEST_INIT_ANNOTATION);
+    if (text == TEST_ANNOTATION || text == TEST_INIT_ANNOTATION)
+    {
+      if (!allow_test_annotations_)
+      {
+        AddError(annotation->line, "Test annotations are disabled '" + text + "'");
+      }
 
-    if (test_annotation && text != INIT_ANNOTATION && text != ACTION_ANNOTATION &&
-        text != QUERY_ANNOTATION && text != PROBLEM_ANNOTATION && text != OBJECTIVE_ANNOTATION &&
-        text != WORK_ANNOTATION && text != CLEAR_ANNOTATION)
+      return;
+    }
+
+    if (text != INIT_ANNOTATION && text != ACTION_ANNOTATION && text != QUERY_ANNOTATION &&
+        text != PROBLEM_ANNOTATION && text != OBJECTIVE_ANNOTATION && text != WORK_ANNOTATION &&
+        text != CLEAR_ANNOTATION)
     {
       AddError(annotation->line, "Invalid annotation '" + text + "'");
     }
