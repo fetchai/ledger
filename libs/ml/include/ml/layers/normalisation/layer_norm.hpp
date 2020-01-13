@@ -140,6 +140,15 @@ public:
 
   static constexpr char const *DESCRIPTOR = "LayerNorm";
 
+  OpType OperationType() const override
+  {
+    return this->OpCode();
+  }
+  char const *Descriptor() const override
+  {
+    return DESCRIPTOR;
+  }
+
 private:
   std::vector<SizeType> data_shape_;
   SizeType              axis_{};

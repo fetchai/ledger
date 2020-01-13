@@ -471,7 +471,7 @@ void Graph<TensorType>::ComputeAllNodeShapes()
   if (nodes_.find(last_node_name) == nodes_.end())
   {
     throw std::runtime_error("No node named " + last_node_name +
-                             " found in the Graph! Shape computing is not possble.");
+                             " found in the Graph! Shape computing is not possible.");
   }
   NodePtrType last_node = nodes_.at(last_node_name);
 
@@ -481,9 +481,7 @@ void Graph<TensorType>::ComputeAllNodeShapes()
 
   if (output_shape_of_last_layer.empty())
   {
-    // throw error, something went bad.
-    FETCH_LOG_INFO(DESCRIPTOR, " Shape linking failed! ");
-    return;
+    FETCH_LOG_ERROR(DESCRIPTOR, " Node shape computing failed! ");
   }
 }
 

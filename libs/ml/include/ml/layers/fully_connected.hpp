@@ -111,8 +111,7 @@ public:
     this->AddInputNode(input_);
     this->SetOutputNode(output_);
 
-    // TEMP! workaround to solve test failing problems. If inputs count is known, the initialisation
-    // can be completed immediately.
+    // If inputs count is known, the initialisation can be completed immediately.
     if (in_size_ != 0)
     {
       this->batch_input_shapes_ = {{in_size_, 1}};
@@ -236,11 +235,11 @@ public:
   {
     if (!time_distributed_)
     {
-      // auto const total_ins = this->TotalElementsIn(input_shapes);
       this->SetBatchInputShapes(input_shapes);
       this->SetBatchOutputShape({this->out_size_, 1});
       return this->batch_output_shape_;
     }
+    // TODO(VH): fix this; probably extract a time-distributed Dense layer to a separate file.
     FETCH_LOG_ERROR(DESCRIPTOR, "Time-distributed layers do not support shape auto-deduction!");
 
     return math::SizeVector{};

@@ -59,12 +59,13 @@ public:
   {
     return OpType::OP_SIGMOID;
   }
+  static constexpr char const *DESCRIPTOR = "Sigmoid";
+
   OpType OperationType() const override
   {
     return this->OpCode();
   }
-  static constexpr char const *DESCRIPTOR = "Sigmoid";
-  char const *                 Descriptor() const override
+  char const *Descriptor() const override
   {
     return DESCRIPTOR;
   }

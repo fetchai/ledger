@@ -61,6 +61,15 @@ public:
     return OpType::OP_PRELU_OP;
   }
   static constexpr char const *DESCRIPTOR = "PReluOp";
+
+  OpType OperationType() const override
+  {
+    return this->OpCode();
+  }
+  char const *Descriptor() const override
+  {
+    return DESCRIPTOR;
+  }
 };
 
 }  // namespace ops

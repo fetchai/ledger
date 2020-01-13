@@ -59,12 +59,14 @@ public:
   {
     return OpType::OP_RELU;
   }
+
+  static constexpr char const *DESCRIPTOR = "Relu";
+
   OpType OperationType() const override
   {
     return this->OpCode();
   }
-  static constexpr char const *DESCRIPTOR = "Relu";
-  char const *                 Descriptor() const override
+  char const *Descriptor() const override
   {
     return DESCRIPTOR;
   }

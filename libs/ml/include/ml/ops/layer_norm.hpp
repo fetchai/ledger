@@ -71,6 +71,15 @@ public:
 
   static constexpr char const *DESCRIPTOR = "LayerNormalization";
 
+  OpType OperationType() const override
+  {
+    return this->OpCode();
+  }
+  char const *Descriptor() const override
+  {
+    return DESCRIPTOR;
+  }
+
 private:
   SizeType axis_;
   DataType epsilon_;

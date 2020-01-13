@@ -136,6 +136,15 @@ public:
 
   static constexpr char const *DESCRIPTOR = "Convolution2DLayer";
 
+  OpType OperationType() const override
+  {
+    return this->OpCode();
+  }
+  char const *Descriptor() const override
+  {
+    return DESCRIPTOR;
+  }
+
 private:
   void Initialise(TensorType &weights, WeightsInit init_mode)
   {

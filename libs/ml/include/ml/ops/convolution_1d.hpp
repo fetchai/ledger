@@ -70,6 +70,15 @@ public:
   }
   static constexpr char const *DESCRIPTOR = "Convolution1D";
 
+  OpType OperationType() const override
+  {
+    return this->OpCode();
+  }
+  char const *Descriptor() const override
+  {
+    return DESCRIPTOR;
+  }
+
 private:
   void FillVerticalStride(TensorType const &input, TensorType &vertical_stride,
                           SizeType output_channels, SizeType input_channels,

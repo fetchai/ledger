@@ -147,6 +147,15 @@ public:
     return OpType::OP_MULTIPLY;
   }
   static constexpr char const *DESCRIPTOR = "Multiply";
+
+  OpType OperationType() const override
+  {
+    return this->OpCode();
+  }
+  char const *Descriptor() const override
+  {
+    return DESCRIPTOR;
+  }
 };
 
 }  // namespace ops

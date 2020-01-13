@@ -99,6 +99,15 @@ public:
   }
 
   static constexpr char const *DESCRIPTOR = "ParametricRelu";
+
+  OpType OperationType() const override
+  {
+    return this->OpCode();
+  }
+  char const *Descriptor() const override
+  {
+    return DESCRIPTOR;
+  }
 };
 
 }  // namespace layers
