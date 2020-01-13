@@ -133,7 +133,6 @@ TYPED_TEST(SqueezeTest, backward_1_5_test)
   fetch::math::state_clear<DataType>();
 }
 
-
 }  // namespace test
 }  // namespace ml
 }  // namespace fetch

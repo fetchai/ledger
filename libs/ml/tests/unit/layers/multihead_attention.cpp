@@ -120,7 +120,6 @@ TYPED_TEST(MultiheadAttention, backward_test)  // Use the class as an Ops
   ASSERT_EQ(backprop_error[0].shape()[2], 5);
 }
 
-
 }  // namespace test
 }  // namespace ml
 }  // namespace fetch

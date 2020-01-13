@@ -236,7 +236,6 @@ TYPED_TEST(SliceTest, ranged_backward_3D_value_test)
   EXPECT_TRUE(backpropagated_signals[0].AllClose(gt));
 }
 
-
 }  // namespace test
 }  // namespace ml
 }  // namespace fetch

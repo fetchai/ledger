@@ -35,7 +35,6 @@ class SaveParamsTest : public ::testing::Test
 
 TYPED_TEST_CASE(SaveParamsTest, math::test::TensorFloatingTypes);
 
-
 /////////////////////////
 /// REDUCE MEAN TESTS ///
 /////////////////////////
@@ -180,7 +179,6 @@ TYPED_TEST(SaveParamsTest, ReduceMean_graph_serialization_test)
 /// RESHAPE TESTS ///
 /////////////////////
 
-
 TYPED_TEST(SaveParamsTest, Reshape_graph_serialisation_test)
 {
   using TensorType = TypeParam;
@@ -224,7 +222,6 @@ TYPED_TEST(SaveParamsTest, Reshape_graph_serialisation_test)
   ASSERT_TRUE(output.AllClose(output2, fetch::math::function_tolerance<DataType>(),
                               fetch::math::function_tolerance<DataType>()));
 }
-
 
 TYPED_TEST(SaveParamsTest, slice_single_axis_saveparams_test)
 {

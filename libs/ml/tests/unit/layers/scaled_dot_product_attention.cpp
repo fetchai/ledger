@@ -272,7 +272,6 @@ TYPED_TEST(ScaledDotProductAttention,
   EXPECT_TRUE(backprop_error[3].AllClose(gt_mask_grad));
 }
 
-
 }  // namespace test
 }  // namespace ml
 }  // namespace fetch

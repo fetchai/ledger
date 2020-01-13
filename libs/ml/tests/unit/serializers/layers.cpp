@@ -257,7 +257,6 @@ TYPED_TEST(SaveParamsTest, conv2d_saveparams_test)
                                    fetch::math::function_tolerance<DataType>()));
 }
 
-
 TYPED_TEST(SaveParamsTest, fully_connected_saveparams_test)
 {
   using DataType  = typename TypeParam::Type;
@@ -527,7 +526,6 @@ TYPED_TEST(SaveParamsTest, multi_head_attention_saveparams_test)
   b >> *dsp2;
 }
 
-
 TYPED_TEST(SaveParamsTest, prelu_saveparams_test)
 {
   using DataType  = typename TypeParam::Type;
@@ -629,7 +627,6 @@ TYPED_TEST(SaveParamsTest, prelu_saveparams_test)
   EXPECT_TRUE(prediction3.AllClose(prediction4, fetch::math::function_tolerance<DataType>(),
                                    fetch::math::function_tolerance<DataType>()));
 }
-
 
 TYPED_TEST(SaveParamsTest, scaled_dot_product_attention_saveparams_test)
 {
@@ -807,7 +804,6 @@ TYPED_TEST(SaveParamsTest, self_attention_saveparams_test)
   auto dsp2 = std::make_shared<SPType>();
   b >> *dsp2;
 }
-
 
 TYPED_TEST(SaveParamsTest, skipgram_saveparams_test)
 {

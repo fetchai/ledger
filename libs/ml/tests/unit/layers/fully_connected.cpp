@@ -588,7 +588,6 @@ TYPED_TEST(FullyConnectedTest, training_should_change_output)
                                    fetch::math::function_tolerance<DataType>()));
 }
 
-
 }  // namespace test
 }  // namespace ml
 }  // namespace fetch

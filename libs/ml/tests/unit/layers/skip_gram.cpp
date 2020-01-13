@@ -30,7 +30,6 @@ class SkipGramTest : public ::testing::Test
 
 TYPED_TEST_CASE(SkipGramTest, math::test::TensorFloatingTypes);
 
-
 }  // namespace test
 }  // namespace ml
 }  // namespace fetch

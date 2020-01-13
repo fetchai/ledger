@@ -92,7 +92,6 @@ TYPED_TEST(SelfAttentionEncoder, backward_dimension_test)  // Use the class as a
   ASSERT_EQ(backprop_error[1].shape()[2], 5);
 }
 
-
 }  // namespace test
 }  // namespace ml
 }  // namespace fetch
