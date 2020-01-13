@@ -442,15 +442,11 @@ void Consensus::UpdateCurrentBlock(Block const &current)
                    current_block_.block_number, " Attempt: ", current.block_number);
   }
 
-  // Don't try to set previous when we see genesis!
-  if (current.block_number == 0)
-  {
-    current_block_ = current;
-  }
-  else
-  {
-    current_block_ = current;
+  current_block_ = current;
 
+  // Don't try to set previous when we see genesis!
+  if (current.block_number != 0)
+  {
     auto prior = GetBlockPriorTo(current_block_, chain_);
 
     if (!prior)
