@@ -57,8 +57,7 @@ std::shared_ptr<fetch::ml::model::Sequential<TensorType>> MakeMNistModel(std::st
   auto mnist_labels = fetch::math::utilities::ReadCSV<TensorType>(labels);
   mnist_labels      = fetch::ml::utilities::convert_labels_to_onehot(mnist_labels);
 
-  auto dataloader_ptr =
-      std::make_unique<fetch::ml::dataloaders::TensorDataLoader<TensorType, TensorType>>();
+  auto dataloader_ptr = std::make_unique<fetch::ml::dataloaders::TensorDataLoader<TensorType>>();
   dataloader_ptr->AddData({mnist_images}, mnist_labels);
   dataloader_ptr->SetTestRatio(test_set_ratio);
   dataloader_ptr->SetRandomMode(true);

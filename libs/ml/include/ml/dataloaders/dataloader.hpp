@@ -39,13 +39,13 @@ enum class DataLoaderMode : uint16_t
   TEST,
 };
 
-template <typename LabelType, typename InputType>
+template <typename TensorType>
 class DataLoader
 {
 public:
   using SizeType   = fetch::math::SizeType;
   using SizeVector = fetch::math::SizeVector;
-  using ReturnType = std::pair<LabelType, std::vector<InputType>>;
+  using ReturnType = std::pair<TensorType, std::vector<TensorType>>;
 
   explicit DataLoader() = default;
 
@@ -53,7 +53,7 @@ public:
 
   virtual ReturnType GetNext() = 0;
 
-  virtual bool       AddData(std::vector<InputType> const &data, LabelType const &label) = 0;
+  virtual bool       AddData(std::vector<TensorType> const &data, TensorType const &label) = 0;
   virtual ReturnType PrepareBatch(fetch::math::SizeType batch_size, bool &is_done_set);
 
   virtual SizeType Size() const                                   = 0;
@@ -87,18 +87,17 @@ private:
   ReturnType cur_training_pair_;
   ReturnType ret_pair_;
 
-  void SetDataSize(std::pair<LabelType, std::vector<InputType>> &ret_pair);
+  void SetDataSize(std::pair<TensorType, std::vector<TensorType>> &ret_pair);
 };
 
 /**
  * This method sets the shapes of the data and labels, as well as the return pair.
- * @tparam LabelType
- * @tparam InputType
+ * @tparam TensorType
+ * @tparam TensorType
  * @param ret_pair
  */
-template <typename LabelType, typename InputType>
-void DataLoader<LabelType, InputType>::SetDataSize(
-    std::pair<LabelType, std::vector<InputType>> &ret_pair)
+template <typename TensorType>
+void DataLoader<TensorType>::SetDataSize(std::pair<TensorType, std::vector<TensorType>> &ret_pair)
 {
   ret_pair_.first = ret_pair.first.Copy();
 
@@ -113,14 +112,14 @@ void DataLoader<LabelType, InputType>::SetDataSize(
  * Creates pair of label tensor and vector of data tensors
  * Size of each tensor is [data,subset_size], where data can have any dimensions and trailing
  * dimension is subset_size
- * @tparam LabelType
- * @tparam InputType
+ * @tparam TensorType
+ * @tparam TensorType
  * @param batch_size i.e. batch size of returned Tensors
  * @return pair of label tensor and vector of data tensors with specified batch size
  */
-template <typename LabelType, typename InputType>
-typename DataLoader<LabelType, InputType>::ReturnType
-DataLoader<LabelType, InputType>::PrepareBatch(fetch::math::SizeType batch_size, bool &is_done_set)
+template <typename TensorType>
+typename DataLoader<TensorType>::ReturnType DataLoader<TensorType>::PrepareBatch(
+    fetch::math::SizeType batch_size, bool &is_done_set)
 {
   if (size_not_set_)
   {
@@ -185,8 +184,8 @@ DataLoader<LabelType, InputType>::PrepareBatch(fetch::math::SizeType batch_size,
   return ret_pair_;
 }
 
-template <typename LabelType, typename DataType>
-void DataLoader<LabelType, DataType>::SetMode(DataLoaderMode new_mode)
+template <typename TensorType>
+void DataLoader<TensorType>::SetMode(DataLoaderMode new_mode)
 {
   if (mode_ == new_mode)
   {
@@ -201,14 +200,14 @@ void DataLoader<LabelType, DataType>::SetMode(DataLoaderMode new_mode)
   }
 }
 
-template <typename LabelType, typename DataType>
-void DataLoader<LabelType, DataType>::SetRandomMode(bool random_mode_state)
+template <typename TensorType>
+void DataLoader<TensorType>::SetRandomMode(bool random_mode_state)
 {
   random_mode_ = random_mode_state;
 }
 
-template <typename LabelType, typename InputType>
-void DataLoader<LabelType, InputType>::SetSeed(DataLoader::SizeType seed)
+template <typename TensorType>
+void DataLoader<TensorType>::SetSeed(DataLoader::SizeType seed)
 {
   rand.Seed(seed);
 }
@@ -252,10 +251,10 @@ struct MapSerializer<ml::dataloaders::DataLoaderMode, D>
  * serializer for Dataloader
  * @tparam TensorType
  */
-template <typename LabelType, typename InputType, typename D>
-struct MapSerializer<fetch::ml::dataloaders::DataLoader<LabelType, InputType>, D>
+template <typename TensorType, typename D>
+struct MapSerializer<fetch::ml::dataloaders::DataLoader<TensorType>, D>
 {
-  using Type       = fetch::ml::dataloaders::DataLoader<LabelType, InputType>;
+  using Type       = fetch::ml::dataloaders::DataLoader<TensorType>;
   using DriverType = D;
 
   static uint8_t const RANDOM_MODE              = 1;

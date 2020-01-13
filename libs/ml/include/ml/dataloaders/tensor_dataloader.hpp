@@ -29,15 +29,14 @@ namespace fetch {
 namespace ml {
 namespace dataloaders {
 
-template <typename LabelType, typename InputType>
-class TensorDataLoader : public DataLoader<LabelType, InputType>
+template <typename TensorType>
+class TensorDataLoader : public DataLoader<TensorType>
 {
-  using TensorType = InputType;
-  using DataType   = typename TensorType::Type;
+  using DataType = typename TensorType::Type;
 
   using SizeType     = fetch::math::SizeType;
   using SizeVector   = fetch::math::SizeVector;
-  using ReturnType   = std::pair<LabelType, std::vector<TensorType>>;
+  using ReturnType   = std::pair<TensorType, std::vector<TensorType>>;
   using IteratorType = typename TensorType::IteratorType;
 
 public:
@@ -47,7 +46,7 @@ public:
 
   ReturnType GetNext() override;
 
-  bool AddData(std::vector<InputType> const &data, LabelType const &labels) override;
+  bool AddData(std::vector<TensorType> const &data, TensorType const &labels) override;
 
   SizeType Size() const override;
   bool     IsDone() const override;
@@ -98,12 +97,11 @@ protected:
   void UpdateCursor() override;
 };
 
-template <typename LabelType, typename InputType>
-typename TensorDataLoader<LabelType, InputType>::ReturnType
-TensorDataLoader<LabelType, InputType>::GetNext()
+template <typename TensorType>
+typename TensorDataLoader<TensorType>::ReturnType TensorDataLoader<TensorType>::GetNext()
 {
-  std::vector<InputType> ret_data;
-  LabelType ret_labels = labels_.View(*this->current_cursor_).Copy(one_sample_label_shape_);
+  std::vector<TensorType> ret_data;
+  TensorType ret_labels = labels_.View(*this->current_cursor_).Copy(one_sample_label_shape_);
 
   for (SizeType i{0}; i < data_.size(); i++)
   {
@@ -124,9 +122,9 @@ TensorDataLoader<LabelType, InputType>::GetNext()
   return ReturnType(ret_labels, ret_data);
 }
 
-template <typename LabelType, typename InputType>
-bool TensorDataLoader<LabelType, InputType>::AddData(std::vector<InputType> const &data,
-                                                     LabelType const &             labels)
+template <typename TensorType>
+bool TensorDataLoader<TensorType>::AddData(std::vector<TensorType> const &data,
+                                           TensorType const &             labels)
 {
   one_sample_label_shape_                                        = labels.shape();
   one_sample_label_shape_.at(one_sample_label_shape_.size() - 1) = 1;
@@ -154,15 +152,14 @@ bool TensorDataLoader<LabelType, InputType>::AddData(std::vector<InputType> cons
   return true;
 }
 
-template <typename LabelType, typename InputType>
-typename TensorDataLoader<LabelType, InputType>::SizeType
-TensorDataLoader<LabelType, InputType>::Size() const
+template <typename TensorType>
+typename TensorDataLoader<TensorType>::SizeType TensorDataLoader<TensorType>::Size() const
 {
   return this->current_size_;
 }
 
-template <typename LabelType, typename InputType>
-bool TensorDataLoader<LabelType, InputType>::IsDone() const
+template <typename TensorType>
+bool TensorDataLoader<TensorType>::IsDone() const
 {
   if (this->random_mode_)
   {
@@ -172,29 +169,29 @@ bool TensorDataLoader<LabelType, InputType>::IsDone() const
   return *(this->current_cursor_) >= this->current_max_;
 }
 
-template <typename LabelType, typename InputType>
-void TensorDataLoader<LabelType, InputType>::Reset()
+template <typename TensorType>
+void TensorDataLoader<TensorType>::Reset()
 {
   *count_                  = 0;
   *(this->current_cursor_) = this->current_min_;
 }
 
-template <typename LabelType, typename InputType>
-void TensorDataLoader<LabelType, InputType>::SetTestRatio(float new_test_ratio)
+template <typename TensorType>
+void TensorDataLoader<TensorType>::SetTestRatio(float new_test_ratio)
 {
   test_to_train_ratio_ = new_test_ratio;
   UpdateRanges();
 }
 
-template <typename LabelType, typename InputType>
-void TensorDataLoader<LabelType, InputType>::SetValidationRatio(float new_validation_ratio)
+template <typename TensorType>
+void TensorDataLoader<TensorType>::SetValidationRatio(float new_validation_ratio)
 {
   validation_to_train_ratio_ = new_validation_ratio;
   UpdateRanges();
 }
 
-template <typename LabelType, typename InputType>
-void TensorDataLoader<LabelType, InputType>::UpdateRanges()
+template <typename TensorType>
+void TensorDataLoader<TensorType>::UpdateRanges()
 {
   float test_percentage       = 1.0f - test_to_train_ratio_ - validation_to_train_ratio_;
   float validation_percentage = test_percentage + test_to_train_ratio_;
@@ -238,8 +235,8 @@ void TensorDataLoader<LabelType, InputType>::UpdateRanges()
   UpdateCursor();
 }
 
-template <typename LabelType, typename InputType>
-void TensorDataLoader<LabelType, InputType>::UpdateCursor()
+template <typename TensorType>
+void TensorDataLoader<TensorType>::UpdateCursor()
 {
   switch (this->mode_)
   {
@@ -285,8 +282,8 @@ void TensorDataLoader<LabelType, InputType>::UpdateCursor()
   }
 }
 
-template <typename LabelType, typename InputType>
-bool TensorDataLoader<LabelType, InputType>::IsModeAvailable(DataLoaderMode mode)
+template <typename TensorType>
+bool TensorDataLoader<TensorType>::IsModeAvailable(DataLoaderMode mode)
 {
   switch (mode)
   {
@@ -318,10 +315,10 @@ namespace serializers {
  * serializer for tensor dataloader
  * @tparam TensorType
  */
-template <typename LabelType, typename InputType, typename D>
-struct MapSerializer<fetch::ml::dataloaders::TensorDataLoader<LabelType, InputType>, D>
+template <typename TensorType, typename D>
+struct MapSerializer<fetch::ml::dataloaders::TensorDataLoader<TensorType>, D>
 {
-  using Type       = fetch::ml::dataloaders::TensorDataLoader<LabelType, InputType>;
+  using Type       = fetch::ml::dataloaders::TensorDataLoader<TensorType>;
   using DriverType = D;
 
   static uint8_t const BASE_DATA_LOADER          = 1;
@@ -354,7 +351,7 @@ struct MapSerializer<fetch::ml::dataloaders::TensorDataLoader<LabelType, InputTy
     auto map = map_constructor(21);
 
     // serialize parent class first
-    auto dl_pointer = static_cast<ml::dataloaders::DataLoader<LabelType, InputType> const *>(&sp);
+    auto dl_pointer = static_cast<ml::dataloaders::DataLoader<TensorType> const *>(&sp);
     map.Append(BASE_DATA_LOADER, *(dl_pointer));
 
     map.Append(TRAIN_CURSOR, *sp.train_cursor_);
@@ -388,7 +385,7 @@ struct MapSerializer<fetch::ml::dataloaders::TensorDataLoader<LabelType, InputTy
   template <typename MapDeserializer>
   static void Deserialize(MapDeserializer &map, Type &sp)
   {
-    auto dl_pointer = static_cast<ml::dataloaders::DataLoader<LabelType, InputType> *>(&sp);
+    auto dl_pointer = static_cast<ml::dataloaders::DataLoader<TensorType> *>(&sp);
     map.ExpectKeyGetValue(BASE_DATA_LOADER, (*dl_pointer));
 
     map.ExpectKeyGetValue(TRAIN_CURSOR, *sp.train_cursor_);
