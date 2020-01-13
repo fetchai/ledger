@@ -23,7 +23,6 @@
 #include "crypto/mcl_dkg.hpp"
 #include "ledger/chain/main_chain.hpp"
 #include "ledger/consensus/consensus.hpp"
-#include "ledger/consensus/consensus_interface.hpp"
 #include "ledger/consensus/stake_snapshot.hpp"
 #include "ledger/protocols/notarisation_service.hpp"
 #include "ledger/storage_unit/fake_storage_unit.hpp"
