@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "math/base_types.hpp"
 #include "ml/meta/ml_type_traits.hpp"
 
 #include <unordered_map>
@@ -33,8 +34,10 @@ struct OpsSaveableParams
 
   virtual ~OpsSaveableParams() = default;
 
-  fetch::ml::OpType op_type     = OpType::NONE;
-  bool              is_training = true;
+  fetch::ml::OpType                    op_type     = OpType::NONE;
+  bool                                 is_training = true;
+  std::vector<fetch::math::SizeVector> batch_input_shapes{};
+  fetch::math::SizeVector              batch_output_shape{};
 };
 
 ////////////////////////////

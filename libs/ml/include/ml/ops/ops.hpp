@@ -78,9 +78,10 @@ public:
   Ops() = default;
 
   explicit Ops(OpsSaveableParams const &sp)
-  {
-    is_training_ = sp.is_training;
-  }
+    : is_training_(sp.is_training)
+    , batch_input_shapes_(sp.batch_input_shapes)
+    , batch_output_shape_(sp.batch_output_shape)
+  {}
 
   virtual std::shared_ptr<Ops<TensorType>> MakeSharedCopy(std::shared_ptr<Ops<TensorType>> me) = 0;
 
@@ -123,16 +124,18 @@ public:
   }
 
   /// OOP polymorphic wrapper around each Ops/Layer OpCode() static method.
-  virtual OpType OperationType() const  // TODO(VH): make a pure virtual.
+  virtual OpType OperationType() const  // TODO(ML-466): make a pure virtual.
   {
+    // TODO(ML-466): std::cout usage will be eliminated in pure virtual method.
     std::cout << "Error: call to unexisting OperationType() implementation! returned None."
               << std::endl;
     return OpType::NONE;
   }
 
   /// OOP polymorphic wrapper around each Ops/Layer DESCRIPTOR.
-  virtual char const *Descriptor() const  // TODO(VH): make a pure virtual.
+  virtual char const *Descriptor() const  // TODO(ML-466): make a pure virtual.
   {
+    // TODO(ML-466): std::cout usage will be eliminated in pure virtual method.
     std::cout << "Error: call to unexisting Descriptor() implementation! returned UNKNOWN."
               << std::endl;
     return "UNKNOWN";
@@ -145,76 +148,11 @@ public:
     // Empty deafult implementation for non-trainable Ops.
   }
 
-  // TODO(VH): extract to a free function.
-  std::string OutputShapeAsString()
-  {
-    std::vector<SizeType> const out_shape = this->BatchOutputShape();
-    std::stringstream           ss;
-    ss << " (out ";
-    if (out_shape.empty())
-    {
-      ss << "[??] )";
-      return ss.str();
-    }
-    ss << "[";
-    for (auto const &dim : out_shape)
-    {
-      ss << " " << dim;
-    }
-    ss << " ])";
-    return ss.str();
-  }
-
-  // TODO(VH): extract to a free function.
-  std::string InputShapesAsString()
-  {
-    std::vector<std::vector<SizeType>> const in_shapes = this->BatchInputShapes();
-    std::stringstream                        ss;
-    ss << " (in ";
-    if (in_shapes.empty())
-    {
-      ss << "[[??]] )";
-      return ss.str();
-    }
-    ss << "[";
-    for (auto const &shape : in_shapes)
-    {
-      ss << "[";
-      for (auto const &dim : shape)
-      {
-        ss << " " << dim;
-      }
-      ss << " ]";
-    }
-    ss << "])";
-    return ss.str();
-  }
-
 protected:
   bool is_training_ = true;
 
   ShapeVector batch_input_shapes_{};
   Shape       batch_output_shape_{};
-  // TODO(VH): ^^ impl. serialisation of new fields.
-
-  // TODO(VH): extract to a free function.
-  static fetch::math::SizeType TotalElementsIn(std::vector<fetch::math::SizeVector> const &shapes)
-  {
-    if (shapes.empty())
-    {
-      return 0;
-    }
-    fetch::math::SizeType total_elements = 1;
-    for (auto const &shape : shapes)
-    {
-      for (auto const &dimension : shape)
-      {
-        // TODO(VH): handle a bad case with a dim of size 0.
-        total_elements *= dimension;
-      }
-    }
-    return total_elements;
-  }
 };
 
 }  // namespace ops

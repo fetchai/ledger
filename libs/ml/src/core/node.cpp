@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "ml/core/node.hpp"
+#include "ml/core/subgraph.hpp"
 
 namespace fetch {
 namespace ml {
@@ -77,15 +78,17 @@ template <typename TensorType>
 Shape Node<TensorType>::BatchOutputShape()
 {
   // Return cached shape result if available.
-  Shape const candidate     = op_ptr_->BatchOutputShape();
-  bool const  i_am_subgraph = OperationType() == OpType::LAYER_FULLY_CONNECTED;  // DEBUG! REMOVEME
-  if (!candidate.empty() && !i_am_subgraph)
+  Shape const candidate = op_ptr_->BatchOutputShape();
+  bool const  op_is_subgraph =
+      (std::dynamic_pointer_cast<std::shared_ptr<SubGraph<TensorType>>>(op_ptr_) != nullptr);
+
+  if (!candidate.empty() && !op_is_subgraph)
   {
     if (input_nodes_.empty() &&
         (OperationType() == OpType::OP_PLACEHOLDER || OperationType() == OpType::OP_WEIGHTS))
     {
       FETCH_LOG_INFO(name_.c_str(), "Shape deduction reached an leaf node : " + this->name_ + " " +
-                                        op_ptr_->OutputShapeAsString());
+                                        OutputShapeAsString(candidate));
     }
     return candidate;
   }
@@ -127,8 +130,8 @@ Shape Node<TensorType>::BatchOutputShape()
   if (!input_shapes.empty())
   {
     op_ptr_->ComputeBatchOutputShape(input_shapes);
-    FETCH_LOG_INFO(name_.c_str(),
-                   op_ptr_->InputShapesAsString() + "->" + op_ptr_->OutputShapeAsString());
+    FETCH_LOG_INFO(name_.c_str(), InputShapesAsString(op_ptr_->BatchInputShapes()) + "->" +
+                                      OutputShapeAsString(op_ptr_->BatchOutputShape()));
   }
   else
   {
@@ -168,6 +171,53 @@ template class Node<math::Tensor<double>>;
 template class Node<math::Tensor<fixed_point::fp32_t>>;
 template class Node<math::Tensor<fixed_point::fp64_t>>;
 template class Node<math::Tensor<fixed_point::fp128_t>>;
+
+/**
+ * @brief A helper function for printing layer's output shape
+ */
+std::string OutputShapeAsString(const math::SizeVector &out_shape)
+{
+  std::stringstream ss;
+  ss << " (out ";
+  if (out_shape.empty())
+  {
+    ss << "[??] )";
+    return ss.str();
+  }
+  ss << "[";
+  for (auto const &dim : out_shape)
+  {
+    ss << " " << dim;
+  }
+  ss << " ])";
+  return ss.str();
+}
+
+/**
+ * @brief A helper function for printing layer's input shape(s)
+ */
+std::string InputShapesAsString(const std::vector<math::SizeVector> &in_shapes)
+{
+  std::stringstream ss;
+  ss << " (in ";
+  if (in_shapes.empty())
+  {
+    ss << "[[??]] )";
+    return ss.str();
+  }
+  ss << "[";
+  for (auto const &shape : in_shapes)
+  {
+    ss << "[";
+    for (auto const &dim : shape)
+    {
+      ss << " " << dim;
+    }
+    ss << " ]";
+  }
+  ss << "])";
+  return ss.str();
+}
 
 }  // namespace ml
 }  // namespace fetch

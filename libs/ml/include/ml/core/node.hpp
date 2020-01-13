@@ -27,6 +27,7 @@
 #include <cstdint>
 #include <functional>
 #include <memory>
+#include <set>
 #include <string>
 #include <utility>
 #include <vector>
@@ -98,8 +99,8 @@ public:
 
   std::shared_ptr<SPType> GetNodeSaveableParams() const;
 
-  void SetNodeSaveableParams(NodeSaveableParams<TensorType> const &nsp,
-                             std::shared_ptr<ops::Ops<TensorType>> op_ptr);
+  void SetNodeSaveableParams(NodeSaveableParams<TensorType> const &       nsp,
+                             std::shared_ptr<ops::Ops<TensorType>> const &op_ptr);
 
   ///////////////////////////////////
   /// FORWARD/BACKWARD OPERATIONS ///
@@ -395,14 +396,17 @@ void Node<TensorType>::ResetCache(bool input_size_changed)
  * @param op_ptr
  */
 template <typename TensorType>
-void Node<TensorType>::SetNodeSaveableParams(NodeSaveableParams<TensorType> const &nsp,
-                                             std::shared_ptr<ops::Ops<TensorType>> op_ptr)
+void Node<TensorType>::SetNodeSaveableParams(NodeSaveableParams<TensorType> const &       nsp,
+                                             std::shared_ptr<ops::Ops<TensorType>> const &op_ptr)
 {
   name_                 = nsp.name;
   cached_output_status_ = CachedOutputState::CHANGED_SIZE;
   operation_type_       = nsp.operation_type;
   op_ptr_               = op_ptr;
 }
+
+std::string OutputShapeAsString(fetch::math::SizeVector const &out_shape);
+std::string InputShapesAsString(std::vector<fetch::math::SizeVector> const &in_shapes);
 
 }  // namespace ml
 }  // namespace fetch
