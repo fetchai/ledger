@@ -152,6 +152,7 @@ BlockStatus MainChain::AddBlock(Block block)
  */
 BlockStatus MainChain::AddBlock(BlockPtr const &block)
 {
+  assert(block);
   // At this point we assume that the weight has been correctly set by the miner
   block->total_weight = 1;
 
@@ -582,7 +583,7 @@ Blocks MainChain::GetHeaviestChain(uint64_t limit) const
   return GetChainPreceding(GetHeaviestBlockHash(), limit);
 }
 
-MainChain::BlockPtr MainChain::GetLabeledSubchainStart() const
+BlockPtr MainChain::GetLabeledSubchainStart() const
 {
   return labeled_subchain_start_;
 }
@@ -594,7 +595,7 @@ MainChain::BlockPtr MainChain::GetLabeledSubchainStart() const
  * @param limit the earliest block number, this colouring stops at.
  * @return the heaviest chain block right above the limit
  */
-MainChain::BlockPtr MainChain::HeaviestChainBlockAbove(uint64_t limit) const
+BlockPtr MainChain::HeaviestChainBlockAbove(uint64_t limit) const
 {
   MilliTimer myTimer("MainChain::HeaviestChainBlockAbove");
   FETCH_LOCK(lock_);
@@ -891,7 +892,6 @@ BlockPtr MainChain::GetBlock(BlockHash const &hash) const
   auto internal_block = std::make_shared<Block>();
   if (LookupBlock(hash, internal_block))
   {
-    // convert the pointer type to per const
     output_block = std::move(internal_block);
   }
   else
@@ -1561,7 +1561,7 @@ BlockStatus MainChain::InsertBlock(BlockPtr const &block, bool evaluate_loose_bl
   return BlockStatus::ADDED;
 }
 
-MainChain::BlockPtr MainChain::LookupBlock(BlockHash const &hash) const
+BlockPtr MainChain::LookupBlock(BlockHash const &hash) const
 {
   BlockPtr ret_val;
   LookupBlock(hash, ret_val);
@@ -1800,7 +1800,7 @@ bool MainChain::ReindexTips()
  * Create the initial genesis block
  * @return The generated block
  */
-MainChain::BlockPtr MainChain::CreateGenesisBlock()
+BlockPtr MainChain::CreateGenesisBlock()
 {
   auto genesis           = std::make_shared<Block>();
   genesis->previous_hash = chain::ZERO_HASH;

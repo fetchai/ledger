@@ -35,7 +35,6 @@ namespace {
 
 using fetch::ledger::MainChain;
 using fetch::ledger::BlockHash;
-using fetch::ledger::BlockPtr;
 using fetch::ledger::BlockStatus;
 using fetch::ledger::Blocks;
 using fetch::ledger::testing::BlockGenerator;
