@@ -21,9 +21,6 @@
 #include "ml/ops/embeddings.hpp"
 #include "ml/ops/placeholder.hpp"
 
-//#include <cmath>
-//#include <random>
-
 namespace fetch {
 namespace ml {
 
