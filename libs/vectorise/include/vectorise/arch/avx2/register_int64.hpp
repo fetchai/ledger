@@ -375,6 +375,60 @@ inline int64_t first_element(VectorRegister<int64_t, 256> const &x)
   return static_cast<int64_t>(_mm256_extract_epi64(x.data(), 0));
 }
 
+template<int32_t elements>
+inline VectorRegister<int64_t, 128> rotate_elements_left(VectorRegister<int64_t, 128> const &x)
+{
+  __m128i n = x.data();
+  n         = _mm_alignr_epi8(n, n, elements * 8);
+  return {n};
+}
+
+template<int64_t elements>
+inline VectorRegister<int64_t, 256> rotate_elements_left(VectorRegister<int64_t, 256> const &x);
+
+template<>
+inline VectorRegister<int64_t, 256> rotate_elements_left<0>(VectorRegister<int64_t, 256> const &x)
+{
+  return x;
+}
+
+template<>
+inline VectorRegister<int64_t, 256> rotate_elements_left<1>(VectorRegister<int64_t, 256> const &x)
+{
+  __m128i hi = _mm256_extractf128_si256(x.data(), 1);
+  __m128i lo = _mm256_extractf128_si256(x.data(), 0);
+  __m128i hi1 = _mm_alignr_epi8(lo, hi, 8);
+  __m128i lo1 = _mm_alignr_epi8(hi, lo, 8);
+
+  return {_mm256_set_m128i(hi1, lo1)};
+}
+
+template<>
+inline VectorRegister<int64_t, 256> rotate_elements_left<2>(VectorRegister<int64_t, 256> const &x)
+{
+  __m128i hi = _mm256_extractf128_si256(x.data(), 1);
+  __m128i lo = _mm256_extractf128_si256(x.data(), 0);
+
+  return {_mm256_set_m128i(lo, hi)};
+}
+
+template<>
+inline VectorRegister<int64_t, 256> rotate_elements_left<3>(VectorRegister<int64_t, 256> const &x)
+{
+  __m128i hi = _mm256_extractf128_si256(x.data(), 1);
+  __m128i lo = _mm256_extractf128_si256(x.data(), 0);
+  __m128i hi1 = _mm_alignr_epi8(lo, hi, 8);
+  __m128i lo1 = _mm_alignr_epi8(hi, lo, 8);
+
+  return {_mm256_set_m128i(lo1, hi1)};
+}
+
+template<>
+inline VectorRegister<int64_t, 256> rotate_elements_left<4>(VectorRegister<int64_t, 256> const &x)
+{
+  return rotate_elements_left<0>(x);
+}
+
 inline VectorRegister<int64_t, 128> shift_elements_left(VectorRegister<int64_t, 128> const &x)
 {
   __m128i n = _mm_bslli_si128(x.data(), 8);

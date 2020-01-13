@@ -17,6 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include "vectorise/arch/avx2/register_int32.hpp"
+
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
@@ -31,7 +33,6 @@
 namespace fetch {
 namespace vectorise {
 
-// ADD_REGISTER_SIZE(float, 128);
 ADD_REGISTER_SIZE(float, 256);
 
 template <>
@@ -306,64 +307,21 @@ inline VectorRegister<float, 256> vector_zero_above_element(VectorRegister<float
 
   return {_mm256_castsi256_ps(conv)};
 }
-    
+
 template<int32_t elements>
 inline VectorRegister<float, 128> rotate_elements_left(VectorRegister<float, 128> const &x)
 {
-  __m128i n = _mm_castps_si128(x.data());
-  n         = _mm_alignr_epi8(n, n, elements * 4);
-  return {_mm_castsi128_ps(n)};
+  __m128i xi = _mm_castps_si128(x.data());
+  VectorRegister<int32_t, 128> ret = rotate_elements_left<elements>(VectorRegister<int32_t, 128>(xi));
+  return {_mm_castsi128_ps(ret.data())};
 }
 
 template<int32_t elements>
-inline VectorRegister<float, 256> rotate_elements_left(VectorRegister<float, 256> const &x);
-
-template<>
-inline VectorRegister<float, 256> rotate_elements_left<0>(VectorRegister<float, 256> const &x)
+inline VectorRegister<float, 256> rotate_elements_left(VectorRegister<float, 256> const &x)
 {
-  return x;
-}
-
-template<>
-inline VectorRegister<float, 256> rotate_elements_left<1>(VectorRegister<float, 256> const &x)
-{
-  __m128 hi = _mm256_extractf128_ps(x.data(), 1);
-  __m128 lo = _mm256_extractf128_ps(x.data(), 0);
-  __m128i hi1 = _mm_alignr_epi8(_mm_castps_si128(lo), _mm_castps_si128(hi), 4);
-  __m128i lo1 = _mm_alignr_epi8(_mm_castps_si128(hi), _mm_castps_si128(lo), 4);
-
-  return {_mm256_castsi256_ps(_mm256_set_m128i(hi1, lo1))};
-}
-
-template<>
-inline VectorRegister<float, 256> rotate_elements_left<2>(VectorRegister<float, 256> const &x)
-{
-  __m128 hi = _mm256_extractf128_ps(x.data(), 1);
-  __m128 lo = _mm256_extractf128_ps(x.data(), 0);
-  __m128i hi1 = _mm_alignr_epi8(_mm_castps_si128(lo), _mm_castps_si128(hi), 8);
-  __m128i lo1 = _mm_alignr_epi8(_mm_castps_si128(hi), _mm_castps_si128(lo), 8);
-
-  return {_mm256_castsi256_ps(_mm256_set_m128i(hi1, lo1))};
-}
-
-template<>
-inline VectorRegister<float, 256> rotate_elements_left<3>(VectorRegister<float, 256> const &x)
-{
-  __m128 hi = _mm256_extractf128_ps(x.data(), 1);
-  __m128 lo = _mm256_extractf128_ps(x.data(), 0);
-  __m128i hi1 = _mm_alignr_epi8(_mm_castps_si128(lo), _mm_castps_si128(hi), 12);
-  __m128i lo1 = _mm_alignr_epi8(_mm_castps_si128(hi), _mm_castps_si128(lo), 12);
-
-  return {_mm256_castsi256_ps(_mm256_set_m128i(hi1, lo1))};
-}
-
-template<>
-inline VectorRegister<float, 256> rotate_elements_left<4>(VectorRegister<float, 256> const &x)
-{
-  __m128 hi = _mm256_extractf128_ps(x.data(), 1);
-  __m128 lo = _mm256_extractf128_ps(x.data(), 0);
-
-  return {_mm256_set_m128(lo, hi)};
+  __m256i xi = _mm256_castps_si256(x.data());
+  VectorRegister<int32_t, 256> ret = rotate_elements_left<elements>(VectorRegister<int32_t, 256>(xi));
+  return {_mm256_castsi256_ps(ret.data())};
 }
 
 inline VectorRegister<float, 128> shift_elements_left(VectorRegister<float, 128> const &x)
