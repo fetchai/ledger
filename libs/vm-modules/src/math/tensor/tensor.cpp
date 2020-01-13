@@ -59,10 +59,9 @@ VMTensor::VMTensor(VM *vm, TypeId type_id)
 
 VMTensor::VMTensor(VM *vm, TypeId type_id, std::string const &str)
   : Object(vm, type_id)
+  , tensor_(TensorType::FromString(str))
   , estimator_(*this)
-{
-  tensor_ = tensor_.FromString(str);
-}
+{}
 
 Ptr<VMTensor> VMTensor::Constructor(VM *vm, TypeId type_id, Ptr<Array<SizeType>> const &shape)
 {
@@ -105,70 +104,136 @@ void VMTensor::Bind(Module &module, bool const enable_experimental)
            COMPUTE_CHARGE_COST;
   };
 
-  auto interface =
-      module.CreateClassType<VMTensor>("Tensor")
-          .CreateConstructor(&VMTensor::Constructor, tensor_constructor_charge_estimate)
-          .CreateConstructor(&VMTensor::StringConstructor,
-                             tensor_string_constructor_charge_estimate)
-          .CreateSerializeDefaultConstructor([](VM *vm, TypeId type_id) -> Ptr<VMTensor> {
-            return Ptr<VMTensor>{new VMTensor(vm, type_id)};
-          })
-          .CreateMemberFunction("copy", &VMTensor::Copy, UseEstimator(&TensorEstimator::Copy))
-          .CreateMemberFunction("at", &VMTensor::At<Index>, UseEstimator(&TensorEstimator::AtOne))
-          .CreateMemberFunction("at", &VMTensor::At<Index, Index>,
-                                UseEstimator(&TensorEstimator::AtTwo))
-          .CreateMemberFunction("at", &VMTensor::At<Index, Index, Index>,
-                                UseEstimator(&TensorEstimator::AtThree))
-          .CreateMemberFunction("at", &VMTensor::At<Index, Index, Index, Index>,
-                                UseEstimator(&TensorEstimator::AtFour))
-          .CreateMemberFunction("setAt", &VMTensor::SetAt<Index, DataType>,
-                                UseEstimator(&TensorEstimator::SetAtOne))
-          .CreateMemberFunction("setAt", &VMTensor::SetAt<Index, Index, DataType>,
-                                UseEstimator(&TensorEstimator::SetAtTwo))
-          .CreateMemberFunction("setAt", &VMTensor::SetAt<Index, Index, Index, DataType>,
-                                UseEstimator(&TensorEstimator::SetAtThree))
-          .CreateMemberFunction("setAt", &VMTensor::SetAt<Index, Index, Index, Index, DataType>,
-                                UseEstimator(&TensorEstimator::SetAtFour))
-          .CreateMemberFunction("size", &VMTensor::size, UseEstimator(&TensorEstimator::size))
-          .CreateMemberFunction("shape", &VMTensor::VMShape,
-                                UseEstimator(&TensorEstimator::VMShape))
-          .CreateMemberFunction("fill", &VMTensor::Fill, UseEstimator(&TensorEstimator::Fill))
-          .CreateMemberFunction("fillRandom", &VMTensor::FillRandom,
-                                UseEstimator(&TensorEstimator::FillRandom))
-          .CreateMemberFunction("min", &VMTensor::Min, UseEstimator(&TensorEstimator::Min))
-          .CreateMemberFunction("max", &VMTensor::Max, UseEstimator(&TensorEstimator::Max))
-          .CreateMemberFunction("reshape", &VMTensor::Reshape,
-                                UseEstimator(&TensorEstimator::Reshape))
-          .CreateMemberFunction("squeeze", &VMTensor::Squeeze,
-                                UseEstimator(&TensorEstimator::Squeeze))
-          .CreateMemberFunction("sum", &VMTensor::Sum, UseEstimator(&TensorEstimator::Sum))
-          .CreateMemberFunction("argMax", &VMTensor::ArgMax, UseEstimator(&TensorEstimator::ArgMax))
-          .CreateMemberFunction("argMax", &VMTensor::ArgMaxNoIndices,
-                                UseEstimator(&TensorEstimator::ArgMaxNoIndices))
-          .CreateMemberFunction("dot", &VMTensor::Dot, UseEstimator(&TensorEstimator::Dot))
-          .EnableOperator(Operator::Negate)
-          .EnableOperator(Operator::Equal)
-          .EnableOperator(Operator::NotEqual)
-          .EnableOperator(Operator::Add)
-          .EnableOperator(Operator::Subtract)
-          .EnableOperator(Operator::InplaceAdd)
-          .EnableOperator(Operator::InplaceSubtract)
-          .EnableOperator(Operator::Multiply)
-          .EnableOperator(Operator::Divide)
-          .EnableOperator(Operator::InplaceMultiply)
-          .EnableOperator(Operator::InplaceDivide)
-          .CreateMemberFunction("transpose", &VMTensor::Transpose,
-                                UseEstimator(&TensorEstimator::Transpose))
-          .CreateMemberFunction("unsqueeze", &VMTensor::Unsqueeze,
-                                UseEstimator(&TensorEstimator::Unsqueeze))
-          .CreateMemberFunction("fromString", &VMTensor::FromString,
-                                UseEstimator(&TensorEstimator::FromString))
-          .CreateMemberFunction("toString", &VMTensor::ToString,
-                                UseEstimator(&TensorEstimator::ToString));
-
-  if (enable_experimental)
+  // If experimental is DISABLED
+  if (!enable_experimental)
   {
-    // no tensor features are experimental
+    auto interface =
+        module.CreateClassType<VMTensor>("Tensor")
+            .CreateConstructor(&VMTensor::Constructor, tensor_constructor_charge_estimate)
+            .CreateSerializeDefaultConstructor([](VM *vm, TypeId type_id) -> Ptr<VMTensor> {
+              return Ptr<VMTensor>{new VMTensor(vm, type_id)};
+            })
+            .CreateMemberFunction("copy", &VMTensor::Copy, UseEstimator(&TensorEstimator::Copy))
+            .CreateMemberFunction("at", &VMTensor::At<Index>, UseEstimator(&TensorEstimator::AtOne))
+            .CreateMemberFunction("at", &VMTensor::At<Index, Index>,
+                                  UseEstimator(&TensorEstimator::AtTwo))
+            .CreateMemberFunction("at", &VMTensor::At<Index, Index, Index>,
+                                  UseEstimator(&TensorEstimator::AtThree))
+            .CreateMemberFunction("at", &VMTensor::At<Index, Index, Index, Index>,
+                                  UseEstimator(&TensorEstimator::AtFour))
+            .CreateMemberFunction("setAt", &VMTensor::SetAt<Index, DataType>,
+                                  UseEstimator(&TensorEstimator::SetAtOne))
+            .CreateMemberFunction("setAt", &VMTensor::SetAt<Index, Index, DataType>,
+                                  UseEstimator(&TensorEstimator::SetAtTwo))
+            .CreateMemberFunction("setAt", &VMTensor::SetAt<Index, Index, Index, DataType>,
+                                  UseEstimator(&TensorEstimator::SetAtThree))
+            .CreateMemberFunction("setAt", &VMTensor::SetAt<Index, Index, Index, Index, DataType>,
+                                  UseEstimator(&TensorEstimator::SetAtFour))
+            .CreateMemberFunction("size", &VMTensor::size, UseEstimator(&TensorEstimator::size))
+            .CreateMemberFunction("shape", &VMTensor::VMShape,
+                                  UseEstimator(&TensorEstimator::VMShape))
+            .CreateMemberFunction("fill", &VMTensor::Fill, UseEstimator(&TensorEstimator::Fill))
+            .CreateMemberFunction("fillRandom", &VMTensor::FillRandom,
+                                  UseEstimator(&TensorEstimator::FillRandom))
+            .CreateMemberFunction("min", &VMTensor::Min, UseEstimator(&TensorEstimator::Min))
+            .CreateMemberFunction("max", &VMTensor::Max, UseEstimator(&TensorEstimator::Max))
+            .CreateMemberFunction("reshape", &VMTensor::Reshape,
+                                  UseEstimator(&TensorEstimator::Reshape))
+            .CreateMemberFunction("squeeze", &VMTensor::Squeeze,
+                                  UseEstimator(&TensorEstimator::Squeeze))
+            .CreateMemberFunction("sum", &VMTensor::Sum, UseEstimator(&TensorEstimator::Sum))
+            .CreateMemberFunction("argMax", &VMTensor::ArgMax,
+                                  UseEstimator(&TensorEstimator::ArgMax))
+            .CreateMemberFunction("argMax", &VMTensor::ArgMaxNoIndices,
+                                  UseEstimator(&TensorEstimator::ArgMaxNoIndices))
+            .CreateMemberFunction("dot", &VMTensor::Dot, UseEstimator(&TensorEstimator::Dot))
+            .EnableOperator(Operator::Negate)
+            .EnableOperator(Operator::Equal)
+            .EnableOperator(Operator::NotEqual)
+            .EnableOperator(Operator::Add)
+            .EnableOperator(Operator::Subtract)
+            .EnableOperator(Operator::InplaceAdd)
+            .EnableOperator(Operator::InplaceSubtract)
+            .EnableOperator(Operator::Multiply)
+            .EnableOperator(Operator::Divide)
+            .EnableOperator(Operator::InplaceMultiply)
+            .EnableOperator(Operator::InplaceDivide)
+            .CreateMemberFunction("transpose", &VMTensor::Transpose,
+                                  UseEstimator(&TensorEstimator::Transpose))
+            .CreateMemberFunction("unsqueeze", &VMTensor::Unsqueeze,
+                                  UseEstimator(&TensorEstimator::Unsqueeze))
+            .CreateMemberFunction("fromString", &VMTensor::FromString,
+                                  UseEstimator(&TensorEstimator::FromString))
+            .CreateMemberFunction("toString", &VMTensor::ToString,
+                                  UseEstimator(&TensorEstimator::ToString));
+
+    FETCH_UNUSED(interface);
+  }
+  // If experimental is ENABLED
+  else
+  {
+    auto interface =
+        module.CreateClassType<VMTensor>("Tensor")
+            .CreateConstructor(&VMTensor::Constructor, tensor_constructor_charge_estimate)
+            .CreateConstructor(&VMTensor::StringConstructor,
+                               tensor_string_constructor_charge_estimate)
+            .CreateSerializeDefaultConstructor([](VM *vm, TypeId type_id) -> Ptr<VMTensor> {
+              return Ptr<VMTensor>{new VMTensor(vm, type_id)};
+            })
+            .CreateMemberFunction("copy", &VMTensor::Copy, UseEstimator(&TensorEstimator::Copy))
+            .CreateMemberFunction("at", &VMTensor::At<Index>, UseEstimator(&TensorEstimator::AtOne))
+            .CreateMemberFunction("at", &VMTensor::At<Index, Index>,
+                                  UseEstimator(&TensorEstimator::AtTwo))
+            .CreateMemberFunction("at", &VMTensor::At<Index, Index, Index>,
+                                  UseEstimator(&TensorEstimator::AtThree))
+            .CreateMemberFunction("at", &VMTensor::At<Index, Index, Index, Index>,
+                                  UseEstimator(&TensorEstimator::AtFour))
+            .CreateMemberFunction("setAt", &VMTensor::SetAt<Index, DataType>,
+                                  UseEstimator(&TensorEstimator::SetAtOne))
+            .CreateMemberFunction("setAt", &VMTensor::SetAt<Index, Index, DataType>,
+                                  UseEstimator(&TensorEstimator::SetAtTwo))
+            .CreateMemberFunction("setAt", &VMTensor::SetAt<Index, Index, Index, DataType>,
+                                  UseEstimator(&TensorEstimator::SetAtThree))
+            .CreateMemberFunction("setAt", &VMTensor::SetAt<Index, Index, Index, Index, DataType>,
+                                  UseEstimator(&TensorEstimator::SetAtFour))
+            .CreateMemberFunction("size", &VMTensor::size, UseEstimator(&TensorEstimator::size))
+            .CreateMemberFunction("shape", &VMTensor::VMShape,
+                                  UseEstimator(&TensorEstimator::VMShape))
+            .CreateMemberFunction("fill", &VMTensor::Fill, UseEstimator(&TensorEstimator::Fill))
+            .CreateMemberFunction("fillRandom", &VMTensor::FillRandom,
+                                  UseEstimator(&TensorEstimator::FillRandom))
+            .CreateMemberFunction("min", &VMTensor::Min, UseEstimator(&TensorEstimator::Min))
+            .CreateMemberFunction("max", &VMTensor::Max, UseEstimator(&TensorEstimator::Max))
+            .CreateMemberFunction("reshape", &VMTensor::Reshape,
+                                  UseEstimator(&TensorEstimator::Reshape))
+            .CreateMemberFunction("squeeze", &VMTensor::Squeeze,
+                                  UseEstimator(&TensorEstimator::Squeeze))
+            .CreateMemberFunction("sum", &VMTensor::Sum, UseEstimator(&TensorEstimator::Sum))
+            .CreateMemberFunction("argMax", &VMTensor::ArgMax,
+                                  UseEstimator(&TensorEstimator::ArgMax))
+            .CreateMemberFunction("argMax", &VMTensor::ArgMaxNoIndices,
+                                  UseEstimator(&TensorEstimator::ArgMaxNoIndices))
+            .CreateMemberFunction("dot", &VMTensor::Dot, UseEstimator(&TensorEstimator::Dot))
+            .EnableOperator(Operator::Negate)
+            .EnableOperator(Operator::Equal)
+            .EnableOperator(Operator::NotEqual)
+            .EnableOperator(Operator::Add)
+            .EnableOperator(Operator::Subtract)
+            .EnableOperator(Operator::InplaceAdd)
+            .EnableOperator(Operator::InplaceSubtract)
+            .EnableOperator(Operator::Multiply)
+            .EnableOperator(Operator::Divide)
+            .EnableOperator(Operator::InplaceMultiply)
+            .EnableOperator(Operator::InplaceDivide)
+            .CreateMemberFunction("transpose", &VMTensor::Transpose,
+                                  UseEstimator(&TensorEstimator::Transpose))
+            .CreateMemberFunction("unsqueeze", &VMTensor::Unsqueeze,
+                                  UseEstimator(&TensorEstimator::Unsqueeze))
+            .CreateMemberFunction("fromString", &VMTensor::FromString,
+                                  UseEstimator(&TensorEstimator::FromString))
+            .CreateMemberFunction("toString", &VMTensor::ToString,
+                                  UseEstimator(&TensorEstimator::ToString));
+
     FETCH_UNUSED(interface);
   }
 
