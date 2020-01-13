@@ -156,7 +156,8 @@ TYPED_TEST(DNNClassifierModelTest, sgd_dnnclasifier)
                                                      fetch::math::Type<DataType>("0.7"), 400));
 }
 
-TYPED_TEST(DNNClassifierModelTest, sgd_dnnclasifier_serialisation)
+// Disabled because of deprecation of regressor/classifier models (ML-375)
+TYPED_TEST(DNNClassifierModelTest, DISABLED_sgd_dnnclasifier_serialisation)
 {
   using DataType  = typename TypeParam::Type;
   using ModelType = fetch::ml::model::DNNClassifier<TypeParam>;
