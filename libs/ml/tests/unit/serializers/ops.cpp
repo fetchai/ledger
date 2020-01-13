@@ -185,7 +185,7 @@ TYPED_TEST(SaveParamsTest, Reshape_graph_serialisation_test)
   using DataType   = typename TypeParam::Type;
   using SPType     = fetch::ml::GraphSaveableParams<TensorType>;
 
-  std::vector<SizeType> final_shape({8, 1, 1, 1});
+  std::vector<math::SizeType> final_shape({8, 1, 1, 1});
 
   TensorType data = TensorType::FromString("1, 2, 4, 8, 100, 1000, -100, -200");
   data.Reshape({2, 2, 2, 1});
