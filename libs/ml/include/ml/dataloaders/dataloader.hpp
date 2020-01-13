@@ -93,7 +93,6 @@ private:
 /**
  * This method sets the shapes of the data and labels, as well as the return pair.
  * @tparam TensorType
- * @tparam TensorType
  * @param ret_pair
  */
 template <typename TensorType>
@@ -112,7 +111,6 @@ void DataLoader<TensorType>::SetDataSize(std::pair<TensorType, std::vector<Tenso
  * Creates pair of label tensor and vector of data tensors
  * Size of each tensor is [data,subset_size], where data can have any dimensions and trailing
  * dimension is subset_size
- * @tparam TensorType
  * @tparam TensorType
  * @param batch_size i.e. batch size of returned Tensors
  * @return pair of label tensor and vector of data tensors with specified batch size
