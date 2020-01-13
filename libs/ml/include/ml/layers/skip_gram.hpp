@@ -55,6 +55,7 @@ public:
     : out_size_(out)
     , vocab_size_(vocab_size)
   {
+    FETCH_LOG_INFO(Descriptor(), "-- Compiling sub-graph ... --");
 
     // define input and context placeholders
     std::string input =
@@ -83,10 +84,14 @@ public:
     std::string output = this->template AddNode<fetch::ml::ops::Sigmoid<TensorType>>(
         name + "_Sigmoid", {in_ctx_matmul_flat});
 
+    this->nodes_.at(embed_in_)->SetBatchOutputShape({embedding_size, 1, 1});
+    this->nodes_.at(embed_ctx)->SetBatchOutputShape({embedding_size, 1, 1});
+
     this->AddInputNode(input);
     this->AddInputNode(context);
     this->SetOutputNode(output);
     this->Compile();
+    FETCH_LOG_INFO(Descriptor(), "-- Sub-graph compiled. --");
   }
 
   std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override

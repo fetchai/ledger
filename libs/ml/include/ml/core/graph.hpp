@@ -844,7 +844,7 @@ void Graph<TensorType>::SetInputReference(std::string const &node_name, TensorTy
 template <typename TensorType>
 void Graph<TensorType>::SetInput(std::string const &node_name, TensorType const &data)
 {
-  SetInputReference(node_name, data.Copy());
+  SetInputReference(node_name, data);
 }
 
 /**
