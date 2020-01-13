@@ -20,16 +20,6 @@
 #include "logging/logging.hpp"
 #include "ml/ops/ops.hpp"
 #include "ml/ops/weights.hpp"
-#include "ml/saveparams/saveable_params.hpp"
-
-#include <algorithm>
-#include <cassert>
-#include <cstdint>
-#include <functional>
-#include <memory>
-#include <string>
-#include <utility>
-#include <vector>
 
 namespace fetch {
 namespace ml {
@@ -117,12 +107,12 @@ public:
   void                                ResetCache(bool input_size_changed);
   void                                ResetInputsAndOutputs();
 
-  std::string const &GetNodeName()
+  inline std::string const &GetNodeName()
   {
     return name_;
   }
 
-  std::shared_ptr<ops::Ops<TensorType>> GetOp()
+  inline std::shared_ptr<ops::Ops<TensorType>> GetOp()
   {
     return op_ptr_;
   }
@@ -131,12 +121,12 @@ public:
    * returns the stored operation type
    * @return
    */
-  OpType const &get_op_type()
+  inline OpType const &get_op_type()
   {
     return operation_type_;
   }
 
-  bool HasValidCache()
+  inline bool HasValidCache()
   {
     return static_cast<bool>(cached_output_status_ == CachedOutputState::VALID_CACHE);
   }
