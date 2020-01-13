@@ -65,10 +65,10 @@ class SynergeticContractTestHelper:
         with open(self._workdir+"/"+self._name+".json", "r") as f:
             self.contract = Contract.load(f)
 
-    def submit_random_data(self, n, number_range, hold_state_sec=10):
+    def submit_random_data(self, n, number_range, fee_limit, hold_state_sec=10):
         # create a whole series of random data to submit to the DAG
         random_ints = [random.randint(*number_range) for _ in range(n)]
-        txs = [self._api.contracts.submit_data(self._entity, self.contract.address, value=value)
+        txs = [self._api.contracts.submit_data(self._entity, self.contract.address, fee_limit, value=value)
                for value in random_ints]
         self._api.sync(txs, hold_state_sec=hold_state_sec,
                        extend_success_status=["Submitted"])

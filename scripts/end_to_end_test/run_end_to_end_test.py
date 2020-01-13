@@ -489,6 +489,7 @@ def run_contract(parameters, test_instance):
     nodes = parameters["nodes"]
     contract_name = parameters["contract_name"]
     wait_for_blocks_num = parameters["wait_for_blocks"]
+    fee_limit = parameters.get("fee_limit", 10000000)
     for node_index in nodes:
         node_host = "localhost"
         node_port = test_instance._nodes[node_index]._port_start
@@ -507,7 +508,7 @@ def run_contract(parameters, test_instance):
                 contract_name, api, entity, test_instance._workspace)
             contract_helper.load()
         output('Submit data, available balance: ', api.tokens.balance(entity))
-        contract_helper.submit_random_data(10, (0, 200))
+        contract_helper.submit_random_data(10, (0, 200), fee_limit)
         api.wait_for_blocks(wait_for_blocks_num)
         valid = contract_helper.validate_execution()
         if not valid:
