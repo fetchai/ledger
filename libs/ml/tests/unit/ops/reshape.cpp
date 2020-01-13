@@ -20,8 +20,8 @@
 #include "ml/ops/reshape.hpp"
 #include "ml/serializers/ml_types.hpp"
 
-#include "test_types.hpp"
 #include "gtest/gtest.h"
+#include "test_types.hpp"
 
 #include <vector>
 
