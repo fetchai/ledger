@@ -89,6 +89,7 @@ private:
   std::shared_ptr<StateMachine> state_machine_;
   std::atomic<bool>             is_mining_{false};
   TokenContract                 token_contract_{};
+  uint64_t                      previous_epoch_block_index_{0};
 };
 
 }  // namespace ledger

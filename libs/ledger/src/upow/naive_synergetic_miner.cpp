@@ -108,8 +108,15 @@ void NaiveSynergeticMiner::Mine()
   // iterate through the latest DAG nodes and build a complete set of addresses to mine solutions
   // for
   // TODO(HUT): would be nicer to specify here what we want by type
-  auto dag_nodes = dag_->GetLatest(true);
+  auto handled_block_index = previous_epoch_block_index_;
 
+  auto dag_nodes           = dag_->GetLatest(true, previous_epoch_block_index_);
+  if (handled_block_index == previous_epoch_block_index_)
+  {
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Data from block ", previous_epoch_block_index_,
+                    " already handled!");
+    return;
+  }
   // loop through the data that is available for the previous epoch
   ProblemSpaces problem_spaces{};
   for (auto const &node : dag_nodes)
