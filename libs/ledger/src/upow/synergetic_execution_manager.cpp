@@ -105,7 +105,7 @@ ExecStatus SynergeticExecutionManager::PrepareWorkQueue(Block const &current)
 
   using WorkMap = std::unordered_map<chain::Address, WorkItemPtr>;
 
-  auto const &current_epoch  = current.dag_epoch;
+  auto const &current_epoch = current.dag_epoch;
 
   FETCH_LOG_DEBUG(LOGGING_NAME, "Preparing work queue for epoch: ", current_epoch.block_number);
 
@@ -121,7 +121,8 @@ ExecStatus SynergeticExecutionManager::PrepareWorkQueue(Block const &current)
       FETCH_LOG_WARN(LOGGING_NAME, "Failed to get work from DAG Node: 0x", digest.ToHex());
       continue;
     }
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Got work for epoch ", current_epoch.block_number, ": ", work->address().display(), ", data nodes=", work->data_nodes().size());
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Got work for epoch ", current_epoch.block_number, ": ",
+                    work->address().display(), ", data nodes=", work->data_nodes().size());
 
     // look up (or create) the solution queue
     auto &work_item = work_map[work->address()];
@@ -131,7 +132,7 @@ ExecStatus SynergeticExecutionManager::PrepareWorkQueue(Block const &current)
       work_item = std::make_shared<WorkItem>();
     }
 
-    for(auto const &hash : work->data_nodes())
+    for (auto const &hash : work->data_nodes())
     {
       // look up the referenced DAG node
       if (!dag_->GetDAGNode(DAGHash(hash), node))
@@ -147,7 +148,6 @@ ExecStatus SynergeticExecutionManager::PrepareWorkQueue(Block const &current)
         continue;
       }
       work_item->problem_data.emplace_back(node.contents);
-
     }
 
     // add the work to the queue

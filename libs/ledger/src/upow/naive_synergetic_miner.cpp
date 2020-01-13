@@ -109,14 +109,15 @@ void NaiveSynergeticMiner::Mine()
   // for
   // TODO(HUT): would be nicer to specify here what we want by type
   auto handled_block_index = previous_epoch_block_index_;
-  auto dag_nodes = dag_->GetLatest(true, previous_epoch_block_index_);
+  auto dag_nodes           = dag_->GetLatest(true, previous_epoch_block_index_);
   if (handled_block_index == previous_epoch_block_index_)
   {
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Data from block ", previous_epoch_block_index_, " already handled!");
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Data from block ", previous_epoch_block_index_,
+                    " already handled!");
     return;
   }
   // loop through the data that is available for the previous epoch
-  ProblemSpaces problem_spaces{};
+  ProblemSpaces                                                               problem_spaces{};
   std::unordered_map<chain::Address, std::vector<byte_array::ConstByteArray>> data_node_hashes;
   for (auto const &node : dag_nodes)
   {
@@ -241,8 +242,8 @@ WorkPtr NaiveSynergeticMiner::MineSolution(chain::Address const &contract_addres
       if (fee >= balance)
       {
         // not enough balance, stop using contract
-        FETCH_LOG_DEBUG(LOGGING_NAME, "Not enough balance for contract ", contract_address.display(), " (fee=", fee,
-            ", balance=", balance, ")");
+        FETCH_LOG_DEBUG(LOGGING_NAME, "Not enough balance for contract ",
+                        contract_address.display(), " (fee=", fee, ", balance=", balance, ")");
         return {};
       }
     }

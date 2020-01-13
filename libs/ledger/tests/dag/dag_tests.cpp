@@ -66,7 +66,7 @@ protected:
   void VerifyEpochNodes(uint64_t index)
   {
     uint64_t block_idx;
-    auto latest_nodes = dag_->GetLatest(true, block_idx);
+    auto     latest_nodes = dag_->GetLatest(true, block_idx);
 
     auto &epoch_history_relevant = epoch_history_[index];
 

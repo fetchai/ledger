@@ -60,13 +60,14 @@ public:
   virtual void AddWork(Work const &work)                                   = 0;
   virtual void AddArbitrary(ConstByteArray const &payload)                 = 0;
 
-  virtual DAGEpoch             CreateEpoch(uint64_t block_number)  = 0;
-  virtual bool                 CommitEpoch(DAGEpoch)               = 0;
-  virtual bool                 RevertToEpoch(uint64_t)             = 0;
-  virtual uint64_t             CurrentEpoch() const                = 0;
-  virtual bool                 HasEpoch(EpochHash const &hash)     = 0;
-  virtual bool                 SatisfyEpoch(DAGEpoch const &)      = 0;
-  virtual std::vector<DAGNode> GetLatest(bool previous_epoch_only, uint64_t &previous_epoch_number) = 0;
+  virtual DAGEpoch             CreateEpoch(uint64_t block_number)         = 0;
+  virtual bool                 CommitEpoch(DAGEpoch)                      = 0;
+  virtual bool                 RevertToEpoch(uint64_t)                    = 0;
+  virtual uint64_t             CurrentEpoch() const                       = 0;
+  virtual bool                 HasEpoch(EpochHash const &hash)            = 0;
+  virtual bool                 SatisfyEpoch(DAGEpoch const &)             = 0;
+  virtual std::vector<DAGNode> GetLatest(bool      previous_epoch_only,
+                                         uint64_t &previous_epoch_number) = 0;
 
   // Functions used for syncing
   virtual std::vector<DAGNode> GetRecentlyAdded()                             = 0;

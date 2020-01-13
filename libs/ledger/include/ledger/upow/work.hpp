@@ -93,8 +93,8 @@ public:
   using Type       = ledger::Work;
   using DriverType = D;
 
-  static uint8_t const NONCE = 1;
-  static uint8_t const SCORE = 2;
+  static uint8_t const NONCE      = 1;
+  static uint8_t const SCORE      = 2;
   static uint8_t const DATA_NODES = 3;
 
   template <typename Constructor>

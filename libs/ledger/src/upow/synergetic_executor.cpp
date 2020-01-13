@@ -64,7 +64,8 @@ void SynergeticExecutor::Verify(WorkQueue &solutions, ProblemData const &problem
                                 std::size_t num_lanes, chain::Address const &miner)
 {
   std::unique_ptr<SynergeticContract> contract;
-  FETCH_LOG_INFO(LOGGING_NAME, "Verify: queue_size=", solutions.size(), ";problem_data=", problem_data.size());
+  FETCH_LOG_INFO(LOGGING_NAME, "Verify: queue_size=", solutions.size(),
+                 ";problem_data=", problem_data.size());
 
   // iterate through each of the solutions
   while (!solutions.empty())
@@ -151,8 +152,9 @@ void SynergeticExecutor::Verify(WorkQueue &solutions, ProblemData const &problem
       break;
     }
 
-    FETCH_LOG_WARN(LOGGING_NAME, "Best solution is not valid, trying next solution, calculated_score=", calculated_score,
-        "; solution_score=", solution->score());
+    FETCH_LOG_WARN(LOGGING_NAME,
+                   "Best solution is not valid, trying next solution, calculated_score=",
+                   calculated_score, "; solution_score=", solution->score());
   }
 }
 
