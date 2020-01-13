@@ -19,6 +19,7 @@
 #include "core/serializers/main_serializer.hpp"
 #include "ml/core/graph.hpp"
 #include "ml/layers/fully_connected.hpp"
+#include "ml/ops/loss_functions/mean_square_error_loss.hpp"
 #include "ml/ops/placeholder.hpp"
 #include "ml/serializers/ml_types.hpp"
 #include "ml/utilities/graph_builder.hpp"
