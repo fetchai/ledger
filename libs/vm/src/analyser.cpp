@@ -51,6 +51,9 @@ std::string const OBJECTIVE_ANNOTATION = "@objective";
 std::string const WORK_ANNOTATION      = "@work";
 std::string const CLEAR_ANNOTATION     = "@clear";
 
+std::string const TEST_INIT_ANNOTATION = "@initTest";
+std::string const TEST_ANNOTATION      = "@test";
+
 bool HasAnnotation(NodePtr const &annotations_node, std::string const &annotation_name)
 {
   if (annotations_node)
@@ -71,8 +74,10 @@ bool HasAnnotation(NodePtr const &annotations_node, std::string const &annotatio
 
 }  // namespace
 
-void Analyser::Initialise()
+void Analyser::Initialise(bool use_test_annotations)
 {
+  allow_test_annotations_ = use_test_annotations;
+
   operator_map_ = {{NodeKind::Equal, Operator::Equal},
                    {NodeKind::NotEqual, Operator::NotEqual},
                    {NodeKind::LessThan, Operator::LessThan},
@@ -494,9 +499,12 @@ void Analyser::ValidateFunctionAnnotations(NodePtr const &function_node)
   for (auto const &annotation : annotations_node->children)
   {
     auto const &text = annotation->text;
-    if (text != INIT_ANNOTATION && text != ACTION_ANNOTATION && text != QUERY_ANNOTATION &&
-        text != PROBLEM_ANNOTATION && text != OBJECTIVE_ANNOTATION && text != WORK_ANNOTATION &&
-        text != CLEAR_ANNOTATION)
+    bool        test_annotation =
+        (!allow_test_annotations_) || (text != TEST_ANNOTATION && text != TEST_INIT_ANNOTATION);
+
+    if (test_annotation && text != INIT_ANNOTATION && text != ACTION_ANNOTATION &&
+        text != QUERY_ANNOTATION && text != PROBLEM_ANNOTATION && text != OBJECTIVE_ANNOTATION &&
+        text != WORK_ANNOTATION && text != CLEAR_ANNOTATION)
     {
       AddError(annotation->line, "Invalid annotation '" + text + "'");
     }
