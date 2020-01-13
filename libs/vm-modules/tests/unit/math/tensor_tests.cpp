@@ -60,6 +60,35 @@ TEST_F(MathTensorTests, tensor_1_dim_fixed64_fill)
   ASSERT_TRUE(toolkit.Run());
 }
 
+TEST_F(MathTensorTests, tensor_construction_from_1D_string_fixed64)
+{
+  static char const *STR_CONSTRUCT_SRC = R"(
+            function main()
+              var d = Tensor("1.0, 2.0");
+              assert(d.at(0u64,0u64) == 1.0fp64);
+              assert(d.at(0u64,1u64) == 2.0fp64);
+            endfunction
+          )";
+  ASSERT_TRUE(toolkit.Compile(STR_CONSTRUCT_SRC));
+  ASSERT_TRUE(toolkit.Run());
+}
+
+TEST_F(MathTensorTests, tensor_construction_from_2D_string_fixed64)
+{
+  static char const *STR_CONSTRUCT_SRC = R"(
+            function main()
+              var d = Tensor("1.0, 2.0; 3.0, 4.0");
+              assert(d.at(0u64,0u64) == 1.0fp64);
+              assert(d.at(0u64,1u64) == 2.0fp64);
+              assert(d.at(1u64,0u64) == 3.0fp64);
+              assert(d.at(1u64,1u64) == 4.0fp64);
+
+            endfunction
+          )";
+  ASSERT_TRUE(toolkit.Compile(STR_CONSTRUCT_SRC));
+  ASSERT_TRUE(toolkit.Run());
+}
+
 TEST_F(MathTensorTests, tensor_2_dim_fixed64_fill)
 {
   static char const *FILL_2_DIM_SRC = R"(
