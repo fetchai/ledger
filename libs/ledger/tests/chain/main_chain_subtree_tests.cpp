@@ -35,12 +35,12 @@ namespace {
 
 using fetch::ledger::MainChain;
 using fetch::ledger::BlockHash;
+using fetch::ledger::BlockPtr;
 using fetch::ledger::BlockStatus;
 using fetch::ledger::Blocks;
 using fetch::ledger::testing::BlockGenerator;
 
 using MainChainPtr = std::unique_ptr<MainChain>;
-using BlockPtr     = BlockGenerator::BlockPtr;
 
 class MainChainSubTreeTests : public ::testing::Test
 {
