@@ -480,13 +480,12 @@ void TSNE<TensorType>::LimitMin(TensorType &matrix, DataType const &min)
 /// EXPLICIT INSTANTIATIONS ///
 ///////////////////////////////
 
-// TODO (ML-438)
-// template class TSNE<math::Tensor<int8_t>>;
-// template class TSNE<math::Tensor<int16_t>>;
+template class TSNE<math::Tensor<int8_t>>;
+template class TSNE<math::Tensor<int16_t>>;
 template class TSNE<math::Tensor<int32_t>>;
 template class TSNE<math::Tensor<int64_t>>;
-// template class TSNE<math::Tensor<uint8_t>>;
-// template class TSNE<math::Tensor<uint16_t>>;
+template class TSNE<math::Tensor<uint8_t>>;
+template class TSNE<math::Tensor<uint16_t>>;
 template class TSNE<math::Tensor<uint32_t>>;
 template class TSNE<math::Tensor<uint64_t>>;
 template class TSNE<math::Tensor<float>>;

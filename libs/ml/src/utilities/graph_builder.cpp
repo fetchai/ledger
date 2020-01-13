@@ -542,18 +542,6 @@ template void BuildNodeAndInsertTrainables<math::Tensor<int32_t>>(
 template void BuildNodeAndInsertTrainables<math::Tensor<int64_t>>(
     NodeSaveableParams<math::Tensor<int64_t>> const &, std::string const &,
     std::shared_ptr<Graph<math::Tensor<int64_t>>>);
-template void BuildNodeAndInsertTrainables<math::Tensor<uint8_t>>(
-    NodeSaveableParams<math::Tensor<uint8_t>> const &, std::string const &,
-    std::shared_ptr<Graph<math::Tensor<uint8_t>>>);
-template void BuildNodeAndInsertTrainables<math::Tensor<uint16_t>>(
-    NodeSaveableParams<math::Tensor<uint16_t>> const &, std::string const &,
-    std::shared_ptr<Graph<math::Tensor<uint16_t>>>);
-template void BuildNodeAndInsertTrainables<math::Tensor<uint32_t>>(
-    NodeSaveableParams<math::Tensor<uint32_t>> const &, std::string const &,
-    std::shared_ptr<Graph<math::Tensor<uint32_t>>>);
-template void BuildNodeAndInsertTrainables<math::Tensor<uint64_t>>(
-    NodeSaveableParams<math::Tensor<uint64_t>> const &, std::string const &,
-    std::shared_ptr<Graph<math::Tensor<uint64_t>>>);
 template void BuildNodeAndInsertTrainables<math::Tensor<float>>(
     NodeSaveableParams<math::Tensor<float>> const &, std::string const &,
     std::shared_ptr<Graph<math::Tensor<float>>>);

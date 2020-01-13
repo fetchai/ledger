@@ -97,11 +97,11 @@ void Blas<S, Signature(_C <= _alpha, _A, _B, _beta, _C),
   }
 }
 
-template class Blas<double, Signature(_C <= _alpha, _A, _B, _beta, _C),
+template class Blas<uint8_t, Signature(_C <= _alpha, _A, _B, _beta, _C),
                     Computes(_C <= _alpha * _A * _B + _beta * _C),
                     platform::Parallelisation::NOT_PARALLEL>;
 
-template class Blas<float, Signature(_C <= _alpha, _A, _B, _beta, _C),
+template class Blas<uint16_t, Signature(_C <= _alpha, _A, _B, _beta, _C),
                     Computes(_C <= _alpha * _A * _B + _beta * _C),
                     platform::Parallelisation::NOT_PARALLEL>;
 
@@ -113,11 +113,27 @@ template class Blas<uint64_t, Signature(_C <= _alpha, _A, _B, _beta, _C),
                     Computes(_C <= _alpha * _A * _B + _beta * _C),
                     platform::Parallelisation::NOT_PARALLEL>;
 
+template class Blas<int8_t, Signature(_C <= _alpha, _A, _B, _beta, _C),
+                    Computes(_C <= _alpha * _A * _B + _beta * _C),
+                    platform::Parallelisation::NOT_PARALLEL>;
+
+template class Blas<int16_t, Signature(_C <= _alpha, _A, _B, _beta, _C),
+                    Computes(_C <= _alpha * _A * _B + _beta * _C),
+                    platform::Parallelisation::NOT_PARALLEL>;
+
 template class Blas<int32_t, Signature(_C <= _alpha, _A, _B, _beta, _C),
                     Computes(_C <= _alpha * _A * _B + _beta * _C),
                     platform::Parallelisation::NOT_PARALLEL>;
 
 template class Blas<int64_t, Signature(_C <= _alpha, _A, _B, _beta, _C),
+                    Computes(_C <= _alpha * _A * _B + _beta * _C),
+                    platform::Parallelisation::NOT_PARALLEL>;
+
+template class Blas<double, Signature(_C <= _alpha, _A, _B, _beta, _C),
+                    Computes(_C <= _alpha * _A * _B + _beta * _C),
+                    platform::Parallelisation::NOT_PARALLEL>;
+
+template class Blas<float, Signature(_C <= _alpha, _A, _B, _beta, _C),
                     Computes(_C <= _alpha * _A * _B + _beta * _C),
                     platform::Parallelisation::NOT_PARALLEL>;
 

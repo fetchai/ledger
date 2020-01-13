@@ -26,7 +26,6 @@
 
 #include "ml/layers/fully_connected.hpp"
 
-
 #include <vector>
 
 namespace fetch {
