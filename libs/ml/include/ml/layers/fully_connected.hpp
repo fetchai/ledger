@@ -112,7 +112,7 @@ public:
     this->SetOutputNode(output_);
 
     // If inputs count is known, the initialisation can be completed immediately.
-    if (in_size_ != 0)
+    if (in_size_ != AUTODETECT_INPUTS)
     {
       this->batch_input_shapes_ = {{in_size_, 1}};
       this->ComputeBatchOutputShape(this->batch_input_shapes_);
@@ -220,7 +220,7 @@ public:
       {
         total_in_size *= inputs.front()->shape(i);
       }
-      // assert(total_in_size == this->in_size_); - disabled, not necessary if auto-deduced
+      assert((this->in_size_ == AUTODETECT_INPUTS) || (total_in_size == this->in_size_));
       return {this->out_size_, inputs.front()->shape(inputs.front()->shape().size() - 1)};
     }
 
@@ -265,7 +265,9 @@ private:
   SizeType in_size_          = fetch::math::numeric_max<SizeType>();
   SizeType out_size_         = fetch::math::numeric_max<SizeType>();
   bool     time_distributed_ = false;
-  bool     is_initialised_   = true;  // TEMPORARY
+  bool     is_initialised_   = true;
+
+  static constexpr SizeType AUTODETECT_INPUTS = 0;
 
   std::string                   input_;
   std::string                   flattened_input_;
