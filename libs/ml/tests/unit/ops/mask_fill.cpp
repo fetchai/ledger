@@ -166,9 +166,6 @@ TYPED_TEST(MaskFillTest, saveparams_test)
   TensorType then_array = TensorType::FromString("3, 6, 2, 1, 3, -2, 2, 1, -9");
   then_array.Reshape({3, 3, 1});
 
-  TensorType gt = TensorType::FromString("3, -100, 2, -100, -100, -100, -100, 1, -9");
-  gt.Reshape({3, 3, 1});
-
   fetch::ml::ops::MaskFill<TensorType> op(static_cast<DataType>(-100));
 
   TypeParam prediction(op.ComputeOutputShape(
