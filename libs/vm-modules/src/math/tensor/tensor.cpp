@@ -86,7 +86,8 @@ void VMTensor::Bind(Module &module, bool const enable_experimental)
 {
   using Index = fetch::math::SizeType;
 
-  auto tensor_constructor_charge_estimate = [](Ptr<Array<SizeType>> const &shape) -> ChargeAmount {
+  auto const tensor_constructor_charge_estimate =
+      [](Ptr<Array<SizeType>> const &shape) -> ChargeAmount {
     DataType padded_size =
         static_cast<DataType>(fetch::math::Tensor<DataType>::PaddedSizeFromShape(shape->elements));
 
@@ -95,7 +96,8 @@ void VMTensor::Bind(Module &module, bool const enable_experimental)
            COMPUTE_CHARGE_COST;
   };
 
-  auto tensor_string_constructor_charge_estimate = [](Ptr<String> const &str) -> ChargeAmount {
+  auto const tensor_string_constructor_charge_estimate =
+      [](Ptr<String> const &str) -> ChargeAmount {
     DataType size = static_cast<DataType>(str->string().size());
 
     return static_cast<ChargeAmount>(CONSTRUCTION_STRING_SIZE_COEF * size +
