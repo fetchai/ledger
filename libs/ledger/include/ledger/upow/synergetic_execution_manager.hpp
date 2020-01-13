@@ -54,7 +54,7 @@ public:
 
   /// @name Synergetic Execution Manager Interface
   /// @{
-  ExecStatus PrepareWorkQueue(Block const &current, Block const &previous) override;
+  ExecStatus PrepareWorkQueue(Block const &current) override;
   bool       ValidateWorkAndUpdateState(std::size_t num_lanes) override;
   /// @}
 

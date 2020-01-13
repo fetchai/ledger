@@ -658,7 +658,7 @@ BlockCoordinator::State BlockCoordinator::OnPreExecBlockValidation()
     BlockPtr previous_block = chain_.GetBlock(current_block_->previous_hash);
 
     // All work is identified on the latest DAG segment and prepared in a queue
-    auto const result = synergetic_exec_mgr_->PrepareWorkQueue(*current_block_, *previous_block);
+    auto const result = synergetic_exec_mgr_->PrepareWorkQueue(*current_block_);
     if (SynExecStatus::SUCCESS != result)
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Block certifies work that possibly is malicious (0x",
@@ -696,7 +696,7 @@ BlockCoordinator::State BlockCoordinator::OnSynergeticExecution()
     }
 
     // prepare the work queue
-    auto const status = synergetic_exec_mgr_->PrepareWorkQueue(*current_block_, *previous_block);
+    auto const status = synergetic_exec_mgr_->PrepareWorkQueue(*current_block_);
     if (SynExecStatus::SUCCESS != status)
     {
       FETCH_LOG_WARN(LOGGING_NAME,
@@ -1044,7 +1044,7 @@ BlockCoordinator::State BlockCoordinator::OnNewSynergeticExecution()
     BlockPtr previous_block = chain_.GetBlock(next_block_->previous_hash);
 
     // prepare the work queue
-    auto const status = synergetic_exec_mgr_->PrepareWorkQueue(*next_block_, *previous_block);
+    auto const status = synergetic_exec_mgr_->PrepareWorkQueue(*next_block_);
     if (SynExecStatus::SUCCESS != status)
     {
       FETCH_LOG_WARN(LOGGING_NAME,

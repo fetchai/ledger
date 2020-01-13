@@ -99,19 +99,19 @@ SynergeticExecutionManager::SynergeticExecutionManager(DAGPtr dag, std::size_t n
   }
 }
 
-ExecStatus SynergeticExecutionManager::PrepareWorkQueue(Block const &current, Block const &previous)
+ExecStatus SynergeticExecutionManager::PrepareWorkQueue(Block const &current)
 {
   telemetry::FunctionTimer const timer{*prepare_queue_duration_};
 
   using WorkMap = std::unordered_map<chain::Address, WorkItemPtr>;
 
   auto const &current_epoch  = current.dag_epoch;
-  auto const &previous_epoch = previous.dag_epoch;
 
   FETCH_LOG_DEBUG(LOGGING_NAME, "Preparing work queue for epoch: ", current_epoch.block_number);
 
   // Step 1. loop through all the solutions which were presented in this epoch
   WorkMap work_map{};
+  DAGNode node{};
   for (auto const &digest : current_epoch.solution_nodes)
   {
     // look up the work from the block
@@ -121,6 +121,7 @@ ExecStatus SynergeticExecutionManager::PrepareWorkQueue(Block const &current, Bl
       FETCH_LOG_WARN(LOGGING_NAME, "Failed to get work from DAG Node: 0x", digest.ToHex());
       continue;
     }
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Got work for epoch ", current_epoch.block_number, ": ", work->address().display(), ", data nodes=", work->data_nodes().size());
 
     // look up (or create) the solution queue
     auto &work_item = work_map[work->address()];
@@ -130,39 +131,27 @@ ExecStatus SynergeticExecutionManager::PrepareWorkQueue(Block const &current, Bl
       work_item = std::make_shared<WorkItem>();
     }
 
+    for(auto const &hash : work->data_nodes())
+    {
+      // look up the referenced DAG node
+      if (!dag_->GetDAGNode(DAGHash(hash), node))
+      {
+        FETCH_LOG_WARN(LOGGING_NAME, "Failed to retrieve referenced DAG node: 0x", digest.ToHex());
+        continue;
+      }
+
+      // ensure the node is of data type
+      if (node.type != DAGNode::DATA)
+      {
+        FETCH_LOG_WARN(LOGGING_NAME, "Invalid data node referenced in epoch: 0x", digest.ToHex());
+        continue;
+      }
+      work_item->problem_data.emplace_back(node.contents);
+
+    }
+
     // add the work to the queue
     work_item->work_queue.push(std::move(work));
-  }
-
-  // Step 2. Loop through previous epochs data in order to form the problem data
-  DAGNode node{};
-  for (auto const &digest : previous_epoch.data_nodes)
-  {
-    // look up the referenced DAG node
-    if (!dag_->GetDAGNode(digest, node))
-    {
-      FETCH_LOG_WARN(LOGGING_NAME, "Failed to retrieve referenced DAG node: 0x", digest.ToHex());
-      continue;
-    }
-
-    // ensure the node is of data type
-    if (node.type != DAGNode::DATA)
-    {
-      FETCH_LOG_WARN(LOGGING_NAME, "Invalid data node referenced in epoch: 0x", digest.ToHex());
-      continue;
-    }
-
-    // attempt to look up the contract being referenced
-    auto it = work_map.find(node.contract_address);
-    if (it == work_map.end())
-    {
-      FETCH_LOG_WARN(LOGGING_NAME, "Unable to look up references contract: address ",
-                     node.contract_address.display());
-      continue;
-    }
-
-    // add the problem into the work node
-    it->second->problem_data.emplace_back(node.contents);
   }
 
   FETCH_LOG_DEBUG(LOGGING_NAME, "Preparing work queue for epoch: ", current_epoch.block_number,

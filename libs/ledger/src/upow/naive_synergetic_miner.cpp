@@ -108,18 +108,26 @@ void NaiveSynergeticMiner::Mine()
   // iterate through the latest DAG nodes and build a complete set of addresses to mine solutions
   // for
   // TODO(HUT): would be nicer to specify here what we want by type
-  auto dag_nodes = dag_->GetLatest(true);
-
+  auto handled_block_index = previous_epoch_block_index_;
+  auto dag_nodes = dag_->GetLatest(true, previous_epoch_block_index_);
+  if (handled_block_index == previous_epoch_block_index_)
+  {
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Data from block ", previous_epoch_block_index_, " already handled!");
+    return;
+  }
   // loop through the data that is available for the previous epoch
   ProblemSpaces problem_spaces{};
+  std::unordered_map<chain::Address, std::vector<byte_array::ConstByteArray>> data_node_hashes;
   for (auto const &node : dag_nodes)
   {
     if (DAGNode::DATA == node.type)
     {
       // look up the problem data
       auto &problem_data = problem_spaces[node.contract_address];
+      auto &data_nodes   = data_node_hashes[node.contract_address];
 
       problem_data.emplace_back(node.contents);
+      data_nodes.emplace_back(node.hash.hash);
     }
   }
 
@@ -135,7 +143,7 @@ void NaiveSynergeticMiner::Mine()
     std::ostringstream oss;
     for (auto const &element : problem_spaces)
     {
-      oss << "\n -> 0x" << element.first.contract_address.display();
+      oss << "  ->" << element.first.display() << "; data=" << element.second.size();
     }
 
     FETCH_LOG_DEBUG(LOGGING_NAME, "Available synergetic contracts to be mined", oss.str());
@@ -151,6 +159,7 @@ void NaiveSynergeticMiner::Mine()
     // check to see if a solution was generated
     if (solution)
     {
+      solution->AddDataNodes(std::move(data_node_hashes[problem.first]));
       dag_->AddWork(*solution);
 
       FETCH_LOG_DEBUG(LOGGING_NAME, "Mined and added work! Epoch number: ", dag_->CurrentEpoch());
@@ -232,6 +241,8 @@ WorkPtr NaiveSynergeticMiner::MineSolution(chain::Address const &contract_addres
       if (fee >= balance)
       {
         // not enough balance, stop using contract
+        FETCH_LOG_DEBUG(LOGGING_NAME, "Not enough balance for contract ", contract_address.display(), " (fee=", fee,
+            ", balance=", balance, ")");
         return {};
       }
     }

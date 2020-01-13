@@ -42,6 +42,7 @@ class Work
 public:
   using UInt256    = vectorise::UInt<256>;
   using BlockIndex = uint64_t;
+  using DataNodes  = std::vector<byte_array::ConstByteArray>;
 
   // Construction / Destruction
   Work() = default;
@@ -56,12 +57,14 @@ public:
   UInt256 const &         nonce() const;
   WorkScore               score() const;
   BlockIndex              block_index() const;
+  DataNodes const &       data_nodes() const;
 
   // Setters
   void UpdateAddress(chain::Address address);
   void UpdateIdentity(crypto::Identity const &identity);
   void UpdateScore(WorkScore score);
   void UpdateNonce(UInt256 const &nonce);
+  void AddDataNodes(std::vector<byte_array::ConstByteArray> data_node);
 
   // Actions
   UInt256 CreateHashedNonce() const;
@@ -72,6 +75,7 @@ private:
   UInt256          nonce_{};
   WorkScore        score_{std::numeric_limits<WorkScore>::max()};
   BlockIndex       block_index_{0};
+  DataNodes        data_nodes_;
 
   template <typename T, typename S>
   friend struct serializers::MapSerializer;
@@ -91,13 +95,15 @@ public:
 
   static uint8_t const NONCE = 1;
   static uint8_t const SCORE = 2;
+  static uint8_t const DATA_NODES = 3;
 
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &work)
   {
-    auto map = map_constructor(2);
+    auto map = map_constructor(3);
     map.Append(NONCE, work.nonce_);
     map.Append(SCORE, work.score_);
+    map.Append(DATA_NODES, work.data_nodes_);
   }
 
   template <typename MapDeserializer>
@@ -105,6 +111,7 @@ public:
   {
     map.ExpectKeyGetValue(NONCE, work.nonce_);
     map.ExpectKeyGetValue(SCORE, work.score_);
+    map.ExpectKeyGetValue(DATA_NODES, work.data_nodes_);
   }
 };
 }  // namespace serializers

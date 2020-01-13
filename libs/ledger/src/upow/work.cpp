@@ -67,6 +67,11 @@ Work::BlockIndex Work::block_index() const
   return block_index_;
 }
 
+Work::DataNodes const &Work::data_nodes() const
+{
+  return data_nodes_;
+}
+
 void Work::UpdateAddress(chain::Address address)
 {
   contract_address_ = std::move(address);
@@ -85,6 +90,11 @@ void Work::UpdateScore(WorkScore score)
 void Work::UpdateNonce(UInt256 const &nonce)
 {
   nonce_ = nonce;
+}
+
+void Work::AddDataNodes(std::vector<byte_array::ConstByteArray> data_nodes)
+{
+  data_nodes_ = std::move(data_nodes);
 }
 
 Work::UInt256 Work::CreateHashedNonce() const

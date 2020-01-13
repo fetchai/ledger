@@ -43,8 +43,8 @@ public:
 
   /// @name Synergetic Execution Manager Interface
   /// @{
-  virtual ExecStatus PrepareWorkQueue(Block const &current, Block const &previous) = 0;
-  virtual bool       ValidateWorkAndUpdateState(std::size_t num_lanes)             = 0;
+  virtual ExecStatus PrepareWorkQueue(Block const &current)            = 0;
+  virtual bool       ValidateWorkAndUpdateState(std::size_t num_lanes) = 0;
   /// @}
 };
 

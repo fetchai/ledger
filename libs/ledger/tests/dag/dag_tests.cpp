@@ -65,7 +65,8 @@ protected:
   // Verify that the nodes in the latest dag epoch match the sanity check epoch_history_
   void VerifyEpochNodes(uint64_t index)
   {
-    auto latest_nodes = dag_->GetLatest(true);
+    uint64_t block_idx;
+    auto latest_nodes = dag_->GetLatest(true, block_idx);
 
     auto &epoch_history_relevant = epoch_history_[index];
 

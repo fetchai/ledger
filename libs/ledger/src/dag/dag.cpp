@@ -131,11 +131,12 @@ DAG::DAG(std::string db_name, bool load, CertificatePtr certificate)
   }
 }
 
-std::vector<DAGNode> DAG::GetLatest(bool previous_epoch_only)
+std::vector<DAGNode> DAG::GetLatest(bool previous_epoch_only, uint64_t &previous_epoch_number)
 {
   std::vector<DAGNode> ret;
   FETCH_LOCK(mutex_);
 
+  previous_epoch_number = previous_epoch_.block_number;
   for (auto const &node_hash : previous_epoch_.all_nodes)
   {
     bool dummy;
@@ -184,7 +185,6 @@ void DAG::AddTransaction(chain::Transaction const &tx, DAGTypes type)
   DAGNodePtr new_node = std::make_shared<DAGNode>();
 
   new_node->type = DAGNode::DATA;
-  new_node->SetContents(tx);
   new_node->contract_address = tx.contract_address();
   new_node->contents         = tx.data();
 
@@ -194,8 +194,11 @@ void DAG::AddTransaction(chain::Transaction const &tx, DAGTypes type)
   new_node->Finalise();
   new_node->signature = certificate_->Sign(new_node->hash.hash);
 
-  PushInternal(new_node);
-  recently_added_.push_back(*new_node);
+  if (PushInternal(new_node))
+  {
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Added data (contract=", new_node->contract_address.display(), "), dag_hash=", new_node->hash.ToBase64());
+    recently_added_.push_back(*new_node);
+  }
 }
 
 void DAG::AddWork(Work const &solution)
@@ -219,8 +222,11 @@ void DAG::AddWork(Work const &solution)
   new_node->Finalise();
   new_node->signature = certificate_->Sign(new_node->hash.hash);
 
-  PushInternal(new_node);
-  recently_added_.push_back(*new_node);
+  if (PushInternal(new_node))
+  {
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Added contract (", new_node->contract_address.display(), "), dag_hash=", new_node->hash.ToBase64());
+    recently_added_.push_back(*new_node);
+  }
 }
 
 void DAG::AddArbitrary(ConstByteArray const &payload)
@@ -237,8 +243,10 @@ void DAG::AddArbitrary(ConstByteArray const &payload)
   new_node->Finalise();
   new_node->signature = certificate_->Sign(new_node->hash.hash);
 
-  PushInternal(new_node);
-  recently_added_.push_back(*new_node);
+  if (PushInternal(new_node))
+  {
+    recently_added_.push_back(*new_node);
+  }
 }
 
 // Get as many references as required for the node, when adding. DAG nodes or epoch hashes are
@@ -504,12 +512,14 @@ bool DAG::PushInternal(DAGNodePtr const &node)
   // First check if we have already seen this node
   if (AlreadySeenInternal(node))
   {
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Failed to add node (", node->hash.ToBase64(), ") because it's an already seen node!");
     return false;
   }
 
   // Check if node refers too far back in the dag to be considered valid
   if (TooOldInternal(node->oldest_epoch_referenced))
   {
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Failed to add node (", node->hash.ToBase64(), ") because it refers back too far!");
     return false;
   }
 
@@ -618,6 +628,7 @@ DAGEpoch DAG::CreateEpoch(uint64_t block_number)
 
   if (block_number != most_recent_epoch_ + 1)
   {
+    FETCH_LOG_WARN(LOGGING_NAME, "CreateEpoch: Attempt to create an epoch from a desynchronised DAG");
     throw std::runtime_error("Attempt to create an epoch from a desynchronised DAG");
   }
 
@@ -662,15 +673,24 @@ DAGEpoch DAG::CreateEpoch(uint64_t block_number)
     {
     case DAGNode::WORK:
       ret.solution_nodes.insert(dag_node_to_add->hash);
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Adding contract node to epoch ", ret.block_number, ": ", dag_node_to_add->hash.ToBase64());
       break;
     case DAGNode::DATA:
       ret.data_nodes.insert(dag_node_to_add->hash);
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Adding data node to epoch ", ret.block_number, ": ",  dag_node_to_add->hash.ToBase64());
       break;
     case DAGNode::ARBITRARY:
       break;
     case DAGNode::GENESIS:
       break;
     }
+#ifdef FETCH_LOG_DEBUG_ENABLED
+    for(const auto& p : dag_node_to_add->previous)
+    {
+      FETCH_LOG_DEBUG(LOGGING_NAME, "      PREV: ", p.ToBase64());
+    }
+#endif
+
   }
 
   ret.Finalise();
@@ -778,6 +798,7 @@ void DAG::TraverseFromTips(std::set<DAGHash> const &            tip_hashes,
   {
     if (node_pool_.find(tip_hash) == node_pool_.end())
     {
+      FETCH_LOG_WARN(LOGGING_NAME, "TraverseFromTips: Tip (", tip_hash.ToBase64(), ") found in DAG that refers nowhere");
       throw std::runtime_error("Tip found in DAG that refers nowhere");
     }
 
@@ -788,6 +809,8 @@ void DAG::TraverseFromTips(std::set<DAGHash> const &            tip_hashes,
 
     if (HashInPrevEpochsInternal(start))
     {
+      FETCH_LOG_WARN(LOGGING_NAME, "TraverseFromTips: Tip (", start.ToBase64(),
+          ") found in DAG that refers to something finalised");
       throw std::runtime_error("Tip found in DAG that refers to something finalised");
     }
 
