@@ -142,12 +142,12 @@ TYPED_TEST(VectorRegisterTest, rotate_tests)
 
   TypeParam rot0{rotate_elements_left<0>(va)};
   EXPECT_TRUE(all_equal_to(rot0, va));
-  
+
   TypeParam rot1{rotate_elements_left<1>(va)};
   first = a[0];
   for (std::size_t i = 0; i < TypeParam::E_BLOCK_COUNT - 1; i++)
   {
-    a[i] = a[i+1];
+    a[i] = a[i + 1];
   }
   a[TypeParam::E_BLOCK_COUNT - 1] = first;
   TypeParam vrot1{a};
@@ -157,7 +157,7 @@ TYPED_TEST(VectorRegisterTest, rotate_tests)
   first = a[0];
   for (std::size_t i = 0; i < TypeParam::E_BLOCK_COUNT - 1; i++)
   {
-    a[i] = a[i+1];
+    a[i] = a[i + 1];
   }
   a[TypeParam::E_BLOCK_COUNT - 1] = first;
   TypeParam vrot2{a};
@@ -169,7 +169,7 @@ TYPED_TEST(VectorRegisterTest, rotate_tests)
     first = a[0];
     for (std::size_t i = 0; i < TypeParam::E_BLOCK_COUNT - 1; i++)
     {
-      a[i] = a[i+1];   
+      a[i] = a[i + 1];
     }
     a[TypeParam::E_BLOCK_COUNT - 1] = first;
     TypeParam vrot3{a};
@@ -179,7 +179,7 @@ TYPED_TEST(VectorRegisterTest, rotate_tests)
     first = a[0];
     for (std::size_t i = 0; i < TypeParam::E_BLOCK_COUNT - 1; i++)
     {
-      a[i] = a[i+1];
+      a[i] = a[i + 1];
     }
     a[TypeParam::E_BLOCK_COUNT - 1] = first;
     TypeParam vrot4{a};

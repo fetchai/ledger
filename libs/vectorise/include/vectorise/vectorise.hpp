@@ -17,9 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include "vectorise/fixed_point/fixed_point.hpp"
 #include "vectorise/info.hpp"
 #include "vectorise/register.hpp"
-#include "vectorise/fixed_point/fixed_point.hpp"
 
 namespace fetch {
 namespace vectorise {
@@ -46,6 +46,5 @@ ADD_REGISTER_SIZE(fixed_point::fp64_t, 8 * sizeof(fixed_point::fp64_t));
 }  // namespace vectorise
 }  // namespace fetch
 #endif
-
 
 #include "vectorise/iterator.hpp"

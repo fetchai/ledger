@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -54,10 +54,6 @@ BENCHMARK_TEMPLATE_F(ParallelDispatcherAbsBench, abs_implementation, double)  //
   for (auto _ : st)
   {
     // Here we use a kernel to compute the same, using an approximation
-    a_.in_parallel().Apply(
-        [](auto const &x, auto &y) {
-          y = fetch::vectorise::Abs(x);
-        },
-        b_);
+    a_.in_parallel().Apply([](auto const &x, auto &y) { y = fetch::vectorise::Abs(x); }, b_);
   }
 }

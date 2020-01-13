@@ -30,8 +30,8 @@
 #include "math/linalg/prototype.hpp"
 #include "math/meta/math_type_traits.hpp"
 #include "math/tensor/tensor_reduce.hpp"
-#include "vectorise/memory/parallel_dispatcher.hpp"
 #include "vectorise/math/standard_functions.hpp"
+#include "vectorise/memory/parallel_dispatcher.hpp"
 
 #include <cassert>
 #include <numeric>
@@ -394,8 +394,9 @@ meta::IfIsMathArray<ArrayType, void> Min(ArrayType const &array, typename ArrayT
   if (array.size() >= array.data().padded_size())
   {
     ret = array.data().in_parallel().Reduce(
-      [](auto const &a, auto const &b) { return fetch::vectorise::Min(a, b); },
-      [](auto const &a) { return fetch::vectorise::Min(a); }, fetch::math::numeric_max<typename ArrayType::Type>());
+        [](auto const &a, auto const &b) { return fetch::vectorise::Min(a, b); },
+        [](auto const &a) { return fetch::vectorise::Min(a); },
+        fetch::math::numeric_max<typename ArrayType::Type>());
   }
   else
   {

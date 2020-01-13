@@ -37,35 +37,39 @@ inline VectorRegister<int32_t, 256> Abs(VectorRegister<int32_t, 256> const &a)
 
 inline VectorRegister<int64_t, 128> Abs(VectorRegister<int64_t, 128> const &a)
 {
-  auto const ret  = VectorRegister<int64_t, 128>(_mm_abs_epi64(a.data()));
+  auto const ret = VectorRegister<int64_t, 128>(_mm_abs_epi64(a.data()));
   return ret;
 }
 
 inline VectorRegister<int64_t, 256> Abs(VectorRegister<int64_t, 256> const &a)
 {
-  auto const ret  = VectorRegister<int64_t, 256>(_mm256_abs_epi64(a.data()));
+  auto const ret = VectorRegister<int64_t, 256>(_mm256_abs_epi64(a.data()));
   return ret;
 }
 
-inline VectorRegister<fixed_point::fp32_t, 128> Abs(VectorRegister<fixed_point::fp32_t, 128> const &a)
+inline VectorRegister<fixed_point::fp32_t, 128> Abs(
+    VectorRegister<fixed_point::fp32_t, 128> const &a)
 {
   VectorRegister<int32_t, 128> abs_int32 = Abs(VectorRegister<int32_t, 128>(a.data()));
   return {abs_int32.data()};
 }
 
-inline VectorRegister<fixed_point::fp32_t, 256> Abs(VectorRegister<fixed_point::fp32_t, 256> const &a)
+inline VectorRegister<fixed_point::fp32_t, 256> Abs(
+    VectorRegister<fixed_point::fp32_t, 256> const &a)
 {
   VectorRegister<int32_t, 256> abs_int32 = Abs(VectorRegister<int32_t, 256>(a.data()));
   return {abs_int32.data()};
 }
 
-inline VectorRegister<fixed_point::fp64_t, 128> Abs(VectorRegister<fixed_point::fp64_t, 128> const &a)
+inline VectorRegister<fixed_point::fp64_t, 128> Abs(
+    VectorRegister<fixed_point::fp64_t, 128> const &a)
 {
   VectorRegister<int64_t, 128> abs_int64 = Abs(VectorRegister<int64_t, 128>(a.data()));
   return {abs_int64.data()};
 }
 
-inline VectorRegister<fixed_point::fp64_t, 256> Abs(VectorRegister<fixed_point::fp64_t, 256> const &a)
+inline VectorRegister<fixed_point::fp64_t, 256> Abs(
+    VectorRegister<fixed_point::fp64_t, 256> const &a)
 {
   VectorRegister<int64_t, 256> abs_int64 = Abs(VectorRegister<int64_t, 256>(a.data()));
   return {abs_int64.data()};

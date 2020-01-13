@@ -113,10 +113,10 @@ template <typename DataType, typename ReturnType = void>
 using IfIsNotFixedPoint128 = fetch::meta::EnableIf<IsNotFixedPoint128<DataType>, ReturnType>;
 
 template <typename T>
-constexpr bool Is32bitType = (IsInteger<T> || IsFloat<T> || IsFixedPoint<T>) && (sizeof(T) == 4);
+constexpr bool Is32bitType = (IsInteger<T> || IsFloat<T> || IsFixedPoint<T>)&&(sizeof(T) == 4);
 
 template <typename T>
-constexpr bool Is64bitType = (IsInteger<T> || IsFloat<T> || IsFixedPoint<T>) && (sizeof(T) == 8);
+constexpr bool Is64bitType = (IsInteger<T> || IsFloat<T> || IsFixedPoint<T>)&&(sizeof(T) == 8);
 
 template <typename DataType, typename ReturnType = void>
 using IfIs32bitType = fetch::meta::EnableIf<Is32bitType<DataType>, ReturnType>;

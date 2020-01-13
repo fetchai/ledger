@@ -124,7 +124,7 @@ inline float Max(VectorRegister<float, 128> const &a)
 {
   auto tmp = rotate_elements_left<2>(a);
   auto ret = Max(a, tmp);
-  tmp = rotate_elements_left<1>(ret);
+  tmp      = rotate_elements_left<1>(ret);
   return first_element(Max(tmp, ret));
 }
 
@@ -132,7 +132,7 @@ inline int32_t Max(VectorRegister<int32_t, 128> const &a)
 {
   auto tmp = rotate_elements_left<2>(a);
   auto ret = Max(a, tmp);
-  tmp = rotate_elements_left<1>(ret);
+  tmp      = rotate_elements_left<1>(ret);
   return first_element(Max(tmp, ret));
 }
 
@@ -140,7 +140,7 @@ inline fixed_point::fp32_t Max(VectorRegister<fixed_point::fp32_t, 128> const &a
 {
   auto tmp = rotate_elements_left<2>(a);
   auto ret = Max(a, tmp);
-  tmp = rotate_elements_left<1>(ret);
+  tmp      = rotate_elements_left<1>(ret);
   return first_element(Max(tmp, ret));
 }
 
@@ -148,9 +148,9 @@ inline float Max(VectorRegister<float, 256> const &a)
 {
   auto tmp = rotate_elements_left<4>(a);
   auto ret = Max(a, tmp);
-  tmp = rotate_elements_left<2>(ret);
-  ret = Max(ret, tmp);
-  tmp = rotate_elements_left<1>(ret);
+  tmp      = rotate_elements_left<2>(ret);
+  ret      = Max(ret, tmp);
+  tmp      = rotate_elements_left<1>(ret);
   return first_element(Max(tmp, ret));
 }
 
@@ -158,9 +158,9 @@ inline int32_t Max(VectorRegister<int32_t, 256> const &a)
 {
   auto tmp = rotate_elements_left<4>(a);
   auto ret = Max(a, tmp);
-  tmp = rotate_elements_left<2>(ret);
-  ret = Max(ret, tmp);
-  tmp = rotate_elements_left<1>(ret);
+  tmp      = rotate_elements_left<2>(ret);
+  ret      = Max(ret, tmp);
+  tmp      = rotate_elements_left<1>(ret);
   return first_element(Max(tmp, ret));
 }
 
@@ -168,9 +168,9 @@ inline fixed_point::fp32_t Max(VectorRegister<fixed_point::fp32_t, 256> const &a
 {
   auto tmp = rotate_elements_left<4>(a);
   auto ret = Max(a, tmp);
-  tmp = rotate_elements_left<2>(ret);
-  ret = Max(ret, tmp);
-  tmp = rotate_elements_left<1>(ret);
+  tmp      = rotate_elements_left<2>(ret);
+  ret      = Max(ret, tmp);
+  tmp      = rotate_elements_left<1>(ret);
   return first_element(Max(tmp, ret));
 }
 
@@ -196,7 +196,7 @@ inline double Max(VectorRegister<double, 256> const &a)
 {
   auto tmp = rotate_elements_left<2>(a);
   auto ret = Max(a, tmp);
-  tmp = rotate_elements_left<1>(ret);
+  tmp      = rotate_elements_left<1>(ret);
   return first_element(Max(tmp, ret));
 }
 
@@ -204,7 +204,7 @@ inline int64_t Max(VectorRegister<int64_t, 256> const &a)
 {
   auto tmp = rotate_elements_left<2>(a);
   auto ret = Max(a, tmp);
-  tmp = rotate_elements_left<1>(ret);
+  tmp      = rotate_elements_left<1>(ret);
   return first_element(Max(tmp, ret));
 }
 
@@ -212,7 +212,7 @@ inline fixed_point::fp64_t Max(VectorRegister<fixed_point::fp64_t, 256> const &a
 {
   auto tmp = rotate_elements_left<2>(a);
   auto ret = Max(a, tmp);
-  tmp = rotate_elements_left<1>(ret);
+  tmp      = rotate_elements_left<1>(ret);
   return first_element(Max(tmp, ret));
 }
 

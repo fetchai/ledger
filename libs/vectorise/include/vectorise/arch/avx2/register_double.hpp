@@ -279,19 +279,21 @@ inline VectorRegister<double, 256> vector_zero_above_element(VectorRegister<doub
   return {_mm256_castsi256_pd(conv)};
 }
 
-template<int32_t elements>
+template <int32_t elements>
 inline VectorRegister<double, 128> rotate_elements_left(VectorRegister<double, 128> const &x)
 {
-  __m128i xi = _mm_castpd_si128(x.data());
-  VectorRegister<int64_t, 128> ret = rotate_elements_left<elements>(VectorRegister<int64_t, 128>(xi));
+  __m128i                      xi = _mm_castpd_si128(x.data());
+  VectorRegister<int64_t, 128> ret =
+      rotate_elements_left<elements>(VectorRegister<int64_t, 128>(xi));
   return {_mm_castsi128_pd(ret.data())};
 }
 
-template<int32_t elements>
+template <int32_t elements>
 inline VectorRegister<double, 256> rotate_elements_left(VectorRegister<double, 256> const &x)
 {
-  __m256i xi = _mm256_castpd_si256(x.data());
-  VectorRegister<int64_t, 256> ret = rotate_elements_left<elements>(VectorRegister<int64_t, 256>(xi));
+  __m256i                      xi = _mm256_castpd_si256(x.data());
+  VectorRegister<int64_t, 256> ret =
+      rotate_elements_left<elements>(VectorRegister<int64_t, 256>(xi));
   return {_mm256_castsi256_pd(ret.data())};
 }
 

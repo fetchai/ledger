@@ -778,17 +778,21 @@ inline VectorRegister<fixed_point::fp64_t, 128> vector_zero_above_element(
   return {fixed_point::fp64_t{}};
 }
 
-template<int32_t elements>
-inline VectorRegister<fixed_point::fp64_t, 128> rotate_elements_left(VectorRegister<fixed_point::fp64_t, 128> const &x)
+template <int32_t elements>
+inline VectorRegister<fixed_point::fp64_t, 128> rotate_elements_left(
+    VectorRegister<fixed_point::fp64_t, 128> const &x)
 {
-  VectorRegister<int64_t, 128> ret = rotate_elements_left<elements>(VectorRegister<int64_t, 128>(x.data()));
+  VectorRegister<int64_t, 128> ret =
+      rotate_elements_left<elements>(VectorRegister<int64_t, 128>(x.data()));
   return {ret.data()};
 }
 
-template<int32_t elements>
-inline VectorRegister<fixed_point::fp64_t, 256> rotate_elements_left(VectorRegister<fixed_point::fp64_t, 256> const &x)
+template <int32_t elements>
+inline VectorRegister<fixed_point::fp64_t, 256> rotate_elements_left(
+    VectorRegister<fixed_point::fp64_t, 256> const &x)
 {
-  VectorRegister<int64_t, 256> ret = rotate_elements_left<elements>(VectorRegister<int64_t, 256>(x.data()));
+  VectorRegister<int64_t, 256> ret =
+      rotate_elements_left<elements>(VectorRegister<int64_t, 256>(x.data()));
   return {ret.data()};
 }
 
