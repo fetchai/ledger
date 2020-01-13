@@ -70,6 +70,15 @@ public:
     return OpType::OP_DIVIDE;
   }
   static constexpr char const *DESCRIPTOR = "Divide";
+
+  OpType OperationType() const override
+  {
+    return this->OpCode();
+  }
+  char const *Descriptor() const override
+  {
+    return DESCRIPTOR;
+  }
 };
 
 }  // namespace ops

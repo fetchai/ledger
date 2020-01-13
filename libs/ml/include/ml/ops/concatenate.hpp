@@ -66,6 +66,15 @@ public:
   }
   static constexpr char const *DESCRIPTOR = "Concatenate";
 
+  OpType OperationType() const override
+  {
+    return this->OpCode();
+  }
+  char const *Descriptor() const override
+  {
+    return DESCRIPTOR;
+  }
+
 private:
   SizeType              axis_;
   std::vector<SizeType> concat_points_;

@@ -73,6 +73,15 @@ public:
 
   static constexpr char const *DESCRIPTOR = "CONSTANT";
 
+  OpType OperationType() const override
+  {
+    return this->OpCode();
+  }
+  char const *Descriptor() const override
+  {
+    return DESCRIPTOR;
+  }
+
 protected:
   bool data_set_once_ = false;
 };

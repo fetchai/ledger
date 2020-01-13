@@ -71,7 +71,8 @@ public:
                  details::ActivationType       activation_type = details::ActivationType::NOTHING,
                  fetch::ml::RegularisationType regulariser = fetch::ml::RegularisationType::NONE,
                  DataType                      regularisation_rate = DataType{0},
-                 WeightsInit init_mode = WeightsInit::XAVIER_GLOROT, bool time_distributed = false)
+                 WeightsInit                   init_mode           = WeightsInit::XAVIER_GLOROT,
+                 bool                          time_distributed    = !TIME_DISTRIBUTED)
     : in_size_(in)
     , out_size_(out)
     , time_distributed_(time_distributed)
@@ -112,9 +113,16 @@ public:
     this->SetOutputNode(output_);
 
     // If inputs count is known, the initialisation can be completed immediately.
-    if (in_size_ != AUTODETECT_INPUTS)
+    if (in_size_ != AUTODETECT_INPUT_SHAPE)
     {
-      this->batch_input_shapes_ = {{in_size_, 1}};
+      if (time_distributed_)
+      {
+        this->batch_input_shapes_ = {{in_size_, 1, 1}};
+      }
+      else
+      {
+        this->batch_input_shapes_ = {{in_size_, 1}};
+      }
       this->ComputeBatchOutputShape(this->batch_input_shapes_);
       CompleteInitialisation();
     }
@@ -133,10 +141,25 @@ public:
     this->nodes_.at(input_)->SetBatchOutputShape(this->batch_input_shapes_.front());
     FETCH_LOG_INFO(DESCRIPTOR, "-- Compiling sub-graph ... --");
 
-    // When expected input shape is known, it is possible to compute flattened input
-    // shape of this fully connected layer.
-    this->nodes_.at(flattened_input_)->GetOp()->ComputeBatchOutputShape(this->batch_input_shapes_);
-    in_size_  = this->nodes_.at(flattened_input_)->BatchOutputShape().front();
+    if (in_size_ == AUTODETECT_INPUT_SHAPE)
+    {
+      if (time_distributed_)
+      {
+        math::SizeVector const &first_input_shape = this->batch_input_shapes_.front();
+        // An input size of a time-distributed layer is equal to a first dimension in
+        // the input shape.
+        in_size_ = first_input_shape.front();
+      }
+      else
+      {
+        // An input size of a non-time-distributed layer is equal to total elements
+        // in input tensor, e.g. equal to a flattened input output size.
+        this->nodes_.at(flattened_input_)
+            ->GetOp()
+            ->ComputeBatchOutputShape(this->batch_input_shapes_);
+        in_size_ = this->nodes_.at(flattened_input_)->BatchOutputShape().front();
+      }
+    }
     out_size_ = this->batch_output_shape_.front();
 
     // At this point we know everything necessary to directly assign shapes to
@@ -220,7 +243,7 @@ public:
       {
         total_in_size *= inputs.front()->shape(i);
       }
-      assert((this->in_size_ == AUTODETECT_INPUTS) || (total_in_size == this->in_size_));
+      assert((this->in_size_ == AUTODETECT_INPUT_SHAPE) || (total_in_size == this->in_size_));
       return {this->out_size_, inputs.front()->shape(inputs.front()->shape().size() - 1)};
     }
 
@@ -233,16 +256,26 @@ public:
   math::SizeVector ComputeBatchOutputShape(
       std::vector<math::SizeVector> const &input_shapes) override
   {
-    if (!time_distributed_)
+    if (time_distributed_)
     {
+      assert((this->in_size_ == AUTODETECT_INPUT_SHAPE) ||
+             (input_shapes.front().at(0) == in_size_));
+
       this->SetBatchInputShapes(input_shapes);
-      this->SetBatchOutputShape({this->out_size_, 1});
+      if (input_shapes.front().size() == 3)
+      {
+        this->SetBatchOutputShape({this->out_size_, input_shapes.front().at(1), 1});
+      }
+      else
+      {
+        this->SetBatchOutputShape({this->out_size_, 1, 1});
+      }
       return this->batch_output_shape_;
     }
-    // TODO(VH): fix this; probably extract a time-distributed Dense layer to a separate file.
-    FETCH_LOG_ERROR(DESCRIPTOR, "Time-distributed layers do not support shape auto-deduction!");
 
-    return math::SizeVector{};
+    this->SetBatchInputShapes(input_shapes);
+    this->SetBatchOutputShape({this->out_size_, 1});
+    return this->batch_output_shape_;
   }
 
   static constexpr OpType OpCode()
@@ -261,13 +294,14 @@ public:
     return DESCRIPTOR;
   }
 
+  static constexpr SizeType AUTODETECT_INPUT_SHAPE = 0;
+  static constexpr bool     TIME_DISTRIBUTED       = true;
+
 private:
   SizeType in_size_          = fetch::math::numeric_max<SizeType>();
   SizeType out_size_         = fetch::math::numeric_max<SizeType>();
   bool     time_distributed_ = false;
   bool     is_initialised_   = true;
-
-  static constexpr SizeType AUTODETECT_INPUTS = 0;
 
   std::string                   input_;
   std::string                   flattened_input_;

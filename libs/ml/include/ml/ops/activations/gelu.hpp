@@ -61,6 +61,15 @@ public:
   }
 
   static constexpr char const *DESCRIPTOR = "Gelu";
+
+  OpType OperationType() const override
+  {
+    return this->OpCode();
+  }
+  char const *Descriptor() const override
+  {
+    return DESCRIPTOR;
+  }
 };
 
 }  // namespace ops

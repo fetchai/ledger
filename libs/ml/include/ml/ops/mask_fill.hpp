@@ -118,6 +118,15 @@ public:
 
   static constexpr char const *DESCRIPTOR = "MaskFill";
 
+  OpType OperationType() const override
+  {
+    return this->OpCode();
+  }
+  char const *Descriptor() const override
+  {
+    return DESCRIPTOR;
+  }
+
 private:
   DataType fill_value_;
 };

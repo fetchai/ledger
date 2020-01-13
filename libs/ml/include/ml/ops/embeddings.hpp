@@ -68,6 +68,15 @@ public:
     return OpType::OP_EMBEDDINGS;
   }
   static constexpr char const *DESCRIPTOR = "Embedding";
+
+  OpType OperationType() const override
+  {
+    return this->OpCode();
+  }
+  char const *Descriptor() const override
+  {
+    return DESCRIPTOR;
+  }
 };
 
 }  // namespace ops

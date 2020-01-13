@@ -125,7 +125,7 @@ public:
   /// OOP polymorphic wrapper around each Ops/Layer OpCode() static method.
   virtual OpType OperationType() const  // TODO(VH): make a pure virtual.
   {
-    std::cout << "Error: call to unexisting OperationType implementation! returned None."
+    std::cout << "Error: call to unexisting OperationType() implementation! returned None."
               << std::endl;
     return OpType::NONE;
   }
@@ -133,7 +133,7 @@ public:
   /// OOP polymorphic wrapper around each Ops/Layer DESCRIPTOR.
   virtual char const *Descriptor() const  // TODO(VH): make a pure virtual.
   {
-    std::cout << "Error: call to unexisting OperationType implementation! returned None."
+    std::cout << "Error: call to unexisting Descriptor() implementation! returned UNKNOWN."
               << std::endl;
     return "UNKNOWN";
   }

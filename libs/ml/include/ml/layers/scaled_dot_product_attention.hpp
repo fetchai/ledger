@@ -151,6 +151,15 @@ public:
 
   static constexpr char const *DESCRIPTOR = "ScaledDotProductAttention";
 
+  OpType OperationType() const override
+  {
+    return this->OpCode();
+  }
+  char const *Descriptor() const override
+  {
+    return DESCRIPTOR;
+  }
+
 private:
   SizeType key_dim_{};
   DataType dropout_{};

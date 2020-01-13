@@ -150,6 +150,15 @@ public:
 
   static constexpr char const *DESCRIPTOR = "SelfAttentionEncoder";
 
+  OpType OperationType() const override
+  {
+    return this->OpCode();
+  }
+  char const *Descriptor() const override
+  {
+    return DESCRIPTOR;
+  }
+
 private:
   SizeType       n_heads_{};
   SizeType       model_dim_{};
