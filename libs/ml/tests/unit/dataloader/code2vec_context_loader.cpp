@@ -29,7 +29,7 @@ namespace test {
 
 TEST(C2vLoaderTest, loader_test)
 {
-  using TensorType = fetch::math::Tensor<fetch::math::SizeType>;
+  using TensorType = fetch::math::Tensor<int64_t>;
   using SizeType   = fetch::math::SizeType;
 
   std::string training_data =
