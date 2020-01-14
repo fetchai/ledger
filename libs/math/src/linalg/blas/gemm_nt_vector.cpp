@@ -101,7 +101,7 @@ void Blas<S, Signature(_C <= _alpha, _A, _B, _beta, _C),
 
     for (l = 0; l < a.width(); ++l)
     {
-      Type temp = alpha * b(j, l);
+      Type temp = static_cast<Type>(alpha * b(j, l));
 
       auto ret_slice = c.data().slice(c.padded_height() * j, c.height());
       auto slice_c_j = c.data().slice(c.padded_height() * std::size_t(j), c.padded_height());

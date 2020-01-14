@@ -228,7 +228,7 @@ public:
                 self, regs, kernel);
         vc = op(vc, tmp);
       }
-      ret += hkernel(vc);
+      ret = static_cast<type>(ret + hkernel(vc));
     }
 
     if (STU != ST)

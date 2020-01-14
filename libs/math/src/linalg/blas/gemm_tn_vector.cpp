@@ -87,11 +87,11 @@ void Blas<S, Signature(_C <= _alpha, _A, _B, _beta, _C),
           range, [](auto const &vr_a_i, auto const &vr_b_j) { return vr_a_i * vr_b_j; }, slice_b_j);
       if (beta == Type{0})
       {
-        c(i, j) = alpha * temp;
+        c(i, j) = static_cast<Type>(alpha * temp);
       }
       else
       {
-        c(i, j) = alpha * temp + beta * c(i, j);
+        c(i, j) = static_cast<Type>(alpha * temp + beta * c(i, j));
       }
     }
   }
