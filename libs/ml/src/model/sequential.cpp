@@ -16,12 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/model/model.hpp"
-#include "ml/model/model_config.hpp"
 #include "ml/model/sequential.hpp"
-
-#include <string>
-#include <vector>
 
 namespace fetch {
 namespace ml {
@@ -66,7 +61,8 @@ fetch::math::SizeType Sequential<TensorType>::LayerCount() const
 ///////////////////////////////
 /// EXPLICIT INSTANTIATIONS ///
 ///////////////////////////////
-//template class Sequential<math::Tensor<int8_t>>;
+// ML-464
+// template class Sequential<math::Tensor<int8_t>>;
 template class Sequential<math::Tensor<int16_t>>;
 template class Sequential<math::Tensor<int32_t>>;
 template class Sequential<math::Tensor<int64_t>>;

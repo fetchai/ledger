@@ -399,7 +399,8 @@ bool Model<TensorType>::DataLoaderIsSet()
 ///////////////////////////////
 /// EXPLICIT INSTANTIATIONS ///
 ///////////////////////////////
-//template class Model<math::Tensor<int8_t>>;
+// ML-464
+// template class Model<math::Tensor<int8_t>>;
 template class Model<math::Tensor<int16_t>>;
 template class Model<math::Tensor<int32_t>>;
 template class Model<math::Tensor<int64_t>>;

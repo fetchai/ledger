@@ -17,16 +17,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/core/graph.hpp"
 #include "ml/dataloaders/tensor_dataloader.hpp"
-#include "ml/meta/ml_type_traits.hpp"
 #include "ml/model/model_config.hpp"
 #include "ml/ops/loss_functions/types.hpp"
-#include "ml/ops/metrics/categorical_accuracy.hpp"
 #include "ml/ops/metrics/types.hpp"
-#include "ml/optimisation/optimiser.hpp"
 #include "ml/optimisation/types.hpp"
-#include "ml/utilities/graph_builder.hpp"
 #include "ml/utilities/graph_saver.hpp"
 
 #include <string>
