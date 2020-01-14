@@ -20,11 +20,28 @@
 
 #include "core/serializers/counter.hpp"
 #include "ml/layers/fully_connected.hpp"
+
 #include "ml/model/dnn_classifier.hpp"
 #include "ml/model/dnn_regressor.hpp"
 #include "ml/model/sequential.hpp"
+
+#include "ml/layers/convolution_1d.hpp"
+#include "ml/layers/convolution_2d.hpp"
+
 #include "ml/ops/loss_functions/mean_square_error_loss.hpp"
 #include "ml/ops/loss_functions/types.hpp"
+
+#include "ml/ops/activations/dropout.hpp"
+#include "ml/ops/activations/gelu.hpp"
+#include "ml/ops/activations/leaky_relu.hpp"
+#include "ml/ops/activations/logsigmoid.hpp"
+#include "ml/ops/activations/logsoftmax.hpp"
+#include "ml/ops/activations/relu.hpp"
+#include "ml/ops/activations/sigmoid.hpp"
+#include "ml/ops/activations/softmax.hpp"
+
+#include "ml/ops/reshape.hpp"
+
 #include "vm/module.hpp"
 #include "vm_modules/ml/model/model_estimator.hpp"
 #include "vm_modules/use_estimator.hpp"

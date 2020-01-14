@@ -18,6 +18,8 @@
 //------------------------------------------------------------------------------
 
 #include "ml/model/model.hpp"
+#include "ml/ops/activation.hpp"
+
 #include "vm/array.hpp"
 #include "vm/object.hpp"
 #include "vm_modules/math/tensor/tensor.hpp"

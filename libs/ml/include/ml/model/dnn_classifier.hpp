@@ -26,6 +26,10 @@
 
 #include "ml/layers/fully_connected.hpp"
 
+#include "ml/ops/loss_functions/cross_entropy_loss.hpp"
+#include "ml/ops/loss_functions/mean_square_error_loss.hpp"
+#include "ml/ops/loss_functions/softmax_cross_entropy_loss.hpp"
+
 #include <vector>
 
 namespace fetch {
