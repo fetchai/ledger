@@ -53,8 +53,8 @@ public:
   void     Reset() override;
   bool     IsModeAvailable(DataLoaderMode mode) override;
 
-  void SetTestRatio(float new_test_ratio) override;
-  void SetValidationRatio(float new_validation_ratio) override;
+  void SetTestRatio(DataType new_test_ratio) override;
+  void SetValidationRatio(DataType new_validation_ratio) override;
 
   template <typename X, typename D>
   friend struct fetch::serializers::MapSerializer;
@@ -82,8 +82,8 @@ protected:
 
   SizeVector              one_sample_label_shape_;
   std::vector<SizeVector> one_sample_data_shapes_;
-  float                   test_to_train_ratio_       = 0.0;
-  float                   validation_to_train_ratio_ = 0.0;
+  DataType                test_to_train_ratio_       = DataType{0};
+  DataType                validation_to_train_ratio_ = DataType{0};
 
   SizeType batch_label_dim_ = fetch::math::numeric_max<SizeType>();
   SizeType batch_data_dim_  = fetch::math::numeric_max<SizeType>();
@@ -177,14 +177,14 @@ void TensorDataLoader<TensorType>::Reset()
 }
 
 template <typename TensorType>
-void TensorDataLoader<TensorType>::SetTestRatio(float new_test_ratio)
+void TensorDataLoader<TensorType>::SetTestRatio(DataType new_test_ratio)
 {
   test_to_train_ratio_ = new_test_ratio;
   UpdateRanges();
 }
 
 template <typename TensorType>
-void TensorDataLoader<TensorType>::SetValidationRatio(float new_validation_ratio)
+void TensorDataLoader<TensorType>::SetValidationRatio(DataType new_validation_ratio)
 {
   validation_to_train_ratio_ = new_validation_ratio;
   UpdateRanges();
@@ -193,11 +193,11 @@ void TensorDataLoader<TensorType>::SetValidationRatio(float new_validation_ratio
 template <typename TensorType>
 void TensorDataLoader<TensorType>::UpdateRanges()
 {
-  float test_percentage       = 1.0f - test_to_train_ratio_ - validation_to_train_ratio_;
-  float validation_percentage = test_percentage + test_to_train_ratio_;
+  DataType test_percentage       = DataType{1} - test_to_train_ratio_ - validation_to_train_ratio_;
+  DataType validation_percentage = test_percentage + test_to_train_ratio_;
 
   // Define where test set starts
-  test_offset_ = static_cast<uint32_t>(test_percentage * static_cast<float>(n_samples_));
+  test_offset_ = static_cast<uint32_t>(test_percentage * static_cast<DataType>(n_samples_));
 
   if (test_offset_ == static_cast<SizeType>(0))
   {
@@ -206,7 +206,7 @@ void TensorDataLoader<TensorType>::UpdateRanges()
 
   // Define where validation set starts
   validation_offset_ =
-      static_cast<uint32_t>(validation_percentage * static_cast<float>(n_samples_));
+      static_cast<uint32_t>(validation_percentage * static_cast<DataType>(n_samples_));
 
   if (validation_offset_ <= test_offset_)
   {
