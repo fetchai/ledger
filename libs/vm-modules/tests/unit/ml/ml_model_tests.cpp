@@ -1831,4 +1831,41 @@ TEST_F(VMModelTests, model_add_dense_auto_inputs)
   ASSERT_TRUE(toolkit.Run(nullptr, ChargeAmount{0}));
 }
 
+TEST_F(VMModelTests, model_add_mixed_auto_inputs)
+{
+  static char const *SRC = R"(
+      function main()
+         var num_channels = 3u64;
+         var image_height = 20u64;
+         var image_width = 40u64;
+
+         var data_shape = Array<UInt64>(4);
+         data_shape[0] = num_channels;
+         data_shape[1] = image_height;
+         data_shape[2] = image_width;
+         data_shape[3] = 25u64;
+
+         var model = Model("sequential");
+
+         model.addExperimental("input", data_shape);
+         model.add("conv2d", num_channels, 13u64, 3u64, 1u64);
+         model.add("dropout", 0.5fp64);
+         model.add("conv2d", num_channels, 6u64, 3u64, 2u64);
+         model.add("activation", "sigmoid");
+         model.add("conv2d", num_channels, 3u64, 1u64, 2u64);
+         model.add("dropout", 0.1fp64);
+         model.addExperimental("dense", 6u64);
+         model.addExperimental("dense", 1u64);
+         model.compile("scel", "adam");
+
+         var data = Tensor(data_shape);
+         data.fillRandom();
+         model.predict(data);
+      endfunction
+    )";
+
+  ASSERT_TRUE(toolkit.Compile(SRC));
+  ASSERT_TRUE(toolkit.Run(nullptr, ChargeAmount{0}));
+}
+
 }  // namespace
