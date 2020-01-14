@@ -18,16 +18,8 @@
 
 #include "ml/dataloaders/word2vec_loaders/sgns_w2v_dataloader.hpp"
 
-#include "core/byte_array/const_byte_array.hpp"
-#include "math/standard_functions/sqrt.hpp"
-#include "math/tensor/tensor.hpp"
-#include "ml/dataloaders/dataloader.hpp"
-#include "ml/dataloaders/word2vec_loaders/unigram_table.hpp"
-#include "ml/dataloaders/word2vec_loaders/vocab.hpp"
 #include "ml/exceptions/exceptions.hpp"
-
-#include <map>
-#include <string>
+#include "math/standard_functions/sqrt.hpp"
 
 namespace fetch {
 namespace ml {
