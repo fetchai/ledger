@@ -136,6 +136,13 @@ private:
   void TrainImplementation(DataType &loss, SizeType n_rounds = 1);
 };
 
+template <typename TensorType>
+template <typename... Params>
+void Model<TensorType>::SetData(Params... params)
+{
+  dataloader_ptr_->AddData(params...);
+}
+
 }  // namespace model
 }  // namespace ml
 

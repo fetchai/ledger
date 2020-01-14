@@ -228,13 +228,6 @@ typename Model<TensorType>::DataVectorType Model<TensorType>::Evaluate(
 }
 
 template <typename TensorType>
-template <typename... Params>
-void Model<TensorType>::SetData(Params... params)
-{
-  dataloader_ptr_->AddData(params...);
-}
-
-template <typename TensorType>
 void Model<TensorType>::UpdateConfig(ModelConfig<DataType> &model_config)
 {
   model_config_ = model_config;
