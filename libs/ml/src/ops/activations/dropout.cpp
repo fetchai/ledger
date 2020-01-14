@@ -21,6 +21,8 @@
 #include "math/fundamental_operators.hpp"
 #include "ml/ops/activations/dropout.hpp"
 
+#include <cassert>
+
 namespace fetch {
 namespace ml {
 namespace ops {
