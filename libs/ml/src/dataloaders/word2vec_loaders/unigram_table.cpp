@@ -111,7 +111,7 @@ bool UnigramTable::SampleNegative(SizeType positive_index, SizeType &ret)
  * @return
  */
 bool UnigramTable::SampleNegative(fetch::math::Tensor<SizeType> const &positive_indices,
-                                         SizeType &                           ret)
+                                  SizeType &                           ret)
 {
   ret = data_[rng_() % data_.size()];
 
