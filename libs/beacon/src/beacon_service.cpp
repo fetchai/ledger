@@ -283,9 +283,15 @@ BeaconService::State BeaconService::OnPrepareEntropyGeneration()
   beacon_state_gauge_->set(static_cast<uint64_t>(state_machine_->state()));
   FETCH_LOCK(mutex_);
 
+  uint64_t const index = block_entropy_being_created_->block_number;
+
   // Save state to disk in case of crash - it should return to this
   // state in the state machine with all relevant items setup
-  SaveState();
+  if((index % save_periodicity) == 0)
+  {
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Periodically saving the entropy information");
+    SaveState();
+  }
 
   if (OutOfSync())
   {
