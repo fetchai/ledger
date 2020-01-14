@@ -140,6 +140,12 @@ void MainChain::Reset()
  */
 BlockStatus MainChain::AddBlock(Block const &blk)
 {
+  // perform validity checks on the block
+  if (!blk.IsValid())
+  {
+    return BlockStatus::INVALID;
+  }
+
   // create a copy of the block
   auto block = std::make_shared<Block>(blk);
 

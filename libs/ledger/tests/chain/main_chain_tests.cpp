@@ -933,7 +933,7 @@ TEST_P(MainChainTests, CheckHeaviestChain)
   }
 }
 
-TEST_P(MainChainTests, adding_block_with_duplicate_tx_fails)
+TEST_P(MainChainTests, AddingBlockWithDuplicateTxFails)
 {
   crypto::ECDSASigner signer;
   chain::Address      signer_address{signer.identity()};
@@ -965,6 +965,34 @@ TEST_P(MainChainTests, adding_block_with_duplicate_tx_fails)
 
   ASSERT_EQ(BlockStatus::INVALID, chain_->AddBlock(*main2));
   ASSERT_EQ(chain_->GetHeaviestBlockHash(), main1->hash);
+}
+
+TEST_P(MainChainTests, AddingBlockWithDuplicateTxInSameBlockFails)
+{
+  crypto::ECDSASigner signer;
+  chain::Address      signer_address{signer.identity()};
+
+  auto tx = chain::TransactionBuilder{}
+      .From(signer_address)
+      .TargetChainCode("some.kind.of.chain.code", BitVector{})
+      .Action("do.work")
+      .ValidUntil(100)
+      .ChargeRate(1)
+      .ChargeLimit(1)
+      .Signer(signer.identity())
+      .Seal()
+      .Sign(signer)
+      .Build();
+
+  auto genesis = generator_->Generate();
+  auto main1   = generator_->Generate(genesis);
+
+  main1->slices.push_back({chain::TransactionLayout(*tx, 1)});
+  main1->slices.push_back({chain::TransactionLayout(*tx, 2)});
+  main1->UpdateDigest();
+
+  ASSERT_EQ(BlockStatus::INVALID, chain_->AddBlock(*main1));
+  ASSERT_EQ(chain_->GetHeaviestBlockHash(), genesis->hash);
 }
 
 INSTANTIATE_TEST_CASE_P(ParamBased, MainChainTests,

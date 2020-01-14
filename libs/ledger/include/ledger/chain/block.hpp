@@ -88,6 +88,7 @@ public:
   void        UpdateDigest();
   void        UpdateTimestamp();
   bool        IsGenesis() const;
+  bool        IsValid() const;
 
 private:
   SystemClock clock_ = moment::GetClock("block:body", moment::ClockType::SYSTEM);
