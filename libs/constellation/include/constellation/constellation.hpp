@@ -117,6 +117,8 @@ public:
     uint16_t messenger_port{0};
     uint16_t mailbox_port{0};
 
+    ConstByteArray synergetic_miner_script_contents{};
+
     uint32_t num_lanes() const
     {
       return 1u << log2_num_lanes;

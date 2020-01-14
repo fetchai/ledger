@@ -148,6 +148,7 @@ SmartContract::SmartContract(std::string const &source)
     case FunctionDecoratorKind::OBJECTIVE:
     case FunctionDecoratorKind::PROBLEM:
     case FunctionDecoratorKind::WORK:
+    case FunctionDecoratorKind::MINE_JOBS:
       break;
     case FunctionDecoratorKind::ON_INIT:
       FETCH_LOG_DEBUG(LOGGING_NAME, "Registering on_init: ", fn.name,

@@ -121,6 +121,11 @@ public:
   settings::Setting<uint16_t> messenger_port;
   /// @}
 
+  /// @name Synergetic mining
+  /// @{
+  settings::Setting<std::string> syn_miner_script_path;
+  /// @}
+
   // Operators
   Settings &operator=(Settings const &) = delete;
   Settings &operator=(Settings &&) = delete;

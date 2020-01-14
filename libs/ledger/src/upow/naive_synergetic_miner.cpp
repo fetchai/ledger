@@ -67,11 +67,12 @@ void ExecuteWork(SynergeticContract &contract, WorkPtr const &work)
 
 }  // namespace
 
-NaiveSynergeticMiner::NaiveSynergeticMiner(DAGPtr dag, StorageInterface &storage, ProverPtr prover)
+NaiveSynergeticMiner::NaiveSynergeticMiner(DAGPtr dag, StorageInterface &storage, ProverPtr prover, ConstByteArray const &script)
   : dag_{std::move(dag)}
   , storage_{storage}
   , prover_{std::move(prover)}
   , state_machine_{std::make_shared<core::StateMachine<State>>("NaiveSynMiner", State::INITIAL)}
+  , job_script_{script}
 {
   state_machine_->RegisterHandler(State::INITIAL, this, &NaiveSynergeticMiner::OnInitial);
   state_machine_->RegisterHandler(State::MINE, this, &NaiveSynergeticMiner::OnMine);

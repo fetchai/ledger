@@ -643,7 +643,8 @@ bool Constellation::OnBringUpExternalNetwork(
 
   if (cfg_.features.IsEnabled("synergetic") && dag_)
   {
-    auto syn_miner = std::make_unique<NaiveSynergeticMiner>(dag_, *storage_, external_identity_);
+    auto syn_miner = std::make_unique<NaiveSynergeticMiner>(dag_, *storage_, external_identity_,
+        cfg_.synergetic_miner_script_contents);
     if (!reactor_.Attach(syn_miner->GetWeakRunnable()))
     {
       FETCH_LOG_ERROR(LOGGING_NAME, "Failed to attach synergetic miner to reactor.");

@@ -83,6 +83,7 @@ Settings::Settings()
   , fault_tolerant        {*this, "fault-tolerant",          false,                        "Whether or not to allow critical system failures to cause a crash"}
   , enable_agents         {*this, "enable-agents",           false,                        "Run the node with agent support"}
   , messenger_port        {*this, "messenger-port",          DEFAULT_MESSENGER_PORT,       "Port that agents connect to"}
+  , syn_miner_script_path {*this, "synergetic-miner-script", "", "Path to etch script which implements job selection API"}
 {}
 // clang-format on
 
