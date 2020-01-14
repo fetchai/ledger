@@ -21,6 +21,7 @@
 #include "beacon/trusted_dealer.hpp"
 #include "beacon/trusted_dealer_beacon_service.hpp"
 #include "core/reactor.hpp"
+#include "muddle/create_muddle_fake.hpp"
 #include "muddle/muddle_interface.hpp"
 #include "shards/manifest_cache_interface.hpp"
 
@@ -238,4 +239,70 @@ void RunTrustedDealer(uint16_t total_renewals = 4, uint32_t cabinet_size = 4,
 TEST(beacon_service, trusted_dealer)
 {
   RunTrustedDealer(1, 4, 0.5, 10);
+}
+
+// Simply test that the beacon service saves and recovers the necessary
+// state to continue operating as if nothing happened. Inherit to gain access
+// to private functions and avoid complicated construction setup
+class BeaconServiceStateRecovery : public BeaconService
+{
+public:
+  BeaconServiceStateRecovery(MuddleInterface &muddle, const CertificatePtr &certificate,
+                             BeaconSetupService &beacon_setup, SharedEventManager event_manager,
+                             bool load_and_reload_on_crash)
+    : BeaconService(muddle, certificate, beacon_setup, event_manager, load_and_reload_on_crash)
+  {}
+
+  // getters/setters for the variables that should change
+  SignaturesBeingBuilt &signatures_being_built()
+  {
+    return signatures_being_built_;
+  }
+
+  void Reload()
+  {
+    ReloadState();
+  }
+
+  void Save()
+  {
+    SaveState();
+  }
+};
+
+TEST(beacon_service, correctly_recovers_state)
+{
+  // Create dummy values to construct the service with - since we
+  // do not attach the reactor it will do nothing beyond construction
+  EventManager::SharedEventManager dummy_event_manager;
+  ProverPtr                        dummy_certificate{CreateNewCertificate()};
+  network::NetworkManager          network_manager{"NetworkManager", 1};
+  muddle::MuddlePtr                dummy_muddle{
+      muddle::CreateMuddleFake("Test", dummy_certificate, network_manager, "127.0.0.1")};
+  DummyManifestCache        dummy_manifest_cache;
+  TrustedDealerSetupService dummy_beacon_setup{*dummy_muddle, dummy_manifest_cache,
+                                               dummy_certificate, 0, 0};
+
+  {
+    BeaconServiceStateRecovery initial{*dummy_muddle, dummy_certificate, dummy_beacon_setup,
+                                       dummy_event_manager, true};
+
+    // Must be manually called since no attached reactor
+    initial.Reload();
+
+    // Set some specific state for the variable we expect to be saved. For ease
+    // we just use its default constructors and check the size is correct afterwards
+    initial.signatures_being_built()[0];
+    initial.signatures_being_built()[1];
+    initial.signatures_being_built()[2];
+
+    initial.Save();
+  }
+
+  // Scope ends, re-load
+  BeaconServiceStateRecovery recovered{*dummy_muddle, dummy_certificate, dummy_beacon_setup,
+                                       dummy_event_manager, true};
+  recovered.Reload();
+
+  ASSERT_EQ(recovered.signatures_being_built().size(), 3);
 }

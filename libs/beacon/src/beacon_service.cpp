@@ -18,16 +18,16 @@
 
 #include "beacon/aeon.hpp"
 #include "beacon/beacon_service.hpp"
+#include "core/serializers/main_serializer.hpp"
 #include "crypto/hash.hpp"
 #include "crypto/sha256.hpp"
 #include "muddle/muddle_interface.hpp"
+#include "network/generics/milli_timer.hpp"
 #include "telemetry/counter.hpp"
 #include "telemetry/gauge.hpp"
 #include "telemetry/histogram.hpp"
 #include "telemetry/utils/timer.hpp"
 #include "telemetry/utils/to_seconds.hpp"
-
-#include "network/generics/milli_timer.hpp"
 
 #include <chrono>
 #include <iterator>
@@ -89,7 +89,7 @@ BeaconService::BeaconService(MuddleInterface &muddle, const CertificatePtr &cert
   , identity_{certificate->identity()}
   , muddle_{muddle}
   , endpoint_{muddle_.GetEndpoint()}
-  , state_machine_{std::make_shared<StateMachine>("BeaconService", State::WAIT_FOR_SETUP_COMPLETION,
+  , state_machine_{std::make_shared<StateMachine>("BeaconService", State::RELOAD_ON_STARTUP,
                                                   ToString)}
   , rpc_client_{"BeaconService", endpoint_, SERVICE_DKG, CHANNEL_RPC}
   , event_manager_{std::move(event_manager)}
@@ -130,14 +130,13 @@ BeaconService::BeaconService(MuddleInterface &muddle, const CertificatePtr &cert
   rpc_server_->Add(RPC_BEACON, &beacon_protocol_);
 
   // clang-format off
+  state_machine_->RegisterHandler(State::RELOAD_ON_STARTUP, this, &BeaconService::OnReloadOnStartup);
   state_machine_->RegisterHandler(State::WAIT_FOR_SETUP_COMPLETION, this, &BeaconService::OnWaitForSetupCompletionState);
   state_machine_->RegisterHandler(State::PREPARE_ENTROPY_GENERATION, this, &BeaconService::OnPrepareEntropyGeneration);
   state_machine_->RegisterHandler(State::COLLECT_SIGNATURES, this, &BeaconService::OnCollectSignaturesState);
   state_machine_->RegisterHandler(State::VERIFY_SIGNATURES, this, &BeaconService::OnVerifySignaturesState);
   state_machine_->RegisterHandler(State::COMPLETE, this, &BeaconService::OnCompleteState);
   // clang-format on
-
-  ReloadState();
 
   state_machine_->OnStateChange([this](State current, State previous) {
     FETCH_UNUSED(this);
@@ -148,7 +147,12 @@ BeaconService::BeaconService(MuddleInterface &muddle, const CertificatePtr &cert
   });
 }
 
-// Note these are not locked since there should be no race against the constructor
+/**
+ * Save the exact state of the beacon service for later recovery. Note that this must be used
+ * carefully, for example when recovering certain timers might not be set and it could jump
+ * into a state that expects it to be.
+ *
+ */
 void BeaconService::SaveState()
 {
   if (!load_and_reload_on_crash_)
@@ -156,42 +160,58 @@ void BeaconService::SaveState()
     return;
   }
 
-  assert(active_exe_unit_);
-  old_state_.Set(storage::ResourceAddress("HEAD"), *active_exe_unit_);
+  try
+  {
+    serializers::LargeObjectSerializeHelper serializer{};
+    serializer << *this;
+
+    old_state_.Set(storage::ResourceAddress("HEAD"), serializer.data());
+  }
+  catch (std::exception const &ex)
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Failed to save beacon service to file: ", ex.what());
+  }
+  // assert(active_exe_unit_);
+  // old_state_.Set(storage::ResourceAddress("HEAD"), *active_exe_unit_);
 }
 
 void BeaconService::ReloadState()
 {
-  if (!load_and_reload_on_crash_)
-  {
-    return;
-  }
-
   old_state_.Load("beacon_state.db", "beacon_state.index.db");
 
-  SharedAeonExecutionUnit ret = std::make_shared<AeonExecutionUnit>();
-
-  FETCH_LOG_INFO(LOGGING_NAME, "Reloading... Size: ", old_state_.size());
-
-  if (old_state_.Get(storage::ResourceAddress("HEAD"), *ret))
+  try
   {
-    FETCH_LOG_INFO(LOGGING_NAME,
-                   "Found aeon keys during beacon construction, recovering. Valid from: ",
-                   ret->aeon.round_start, " to ", ret->aeon.round_end);
+    ConstByteArray ret;
 
-    for (auto const &address_in_qual : ret->manager.qual())
+    if (old_state_.Get(storage::ResourceAddress("HEAD"), ret))
     {
-      muddle_.ConnectTo(address_in_qual);
+      FETCH_LOG_INFO(LOGGING_NAME, "Re-loading beacon service state...");
+
+      serializers::LargeObjectSerializeHelper serializer{ret};
+      serializer >> *this;
     }
-
-    ret->manager.SetCertificate(certificate_);
-
-    aeon_exe_queue_.push_back(ret);
   }
-  else
+  catch (std::exception const &ex)
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "On re-loading beacon, no keys found");
+    FETCH_LOG_WARN(LOGGING_NAME, "Failed to load beacon service from storage: ", ex.what());
   }
+}
+
+/**
+ * This function will be called once after construction and will attempt to recover the beacon
+ * service exactly to the last saved state.
+ */
+BeaconService::State BeaconService::OnReloadOnStartup()
+{
+  // Default starting state
+  state_after_reload_ = State::WAIT_FOR_SETUP_COMPLETION;
+
+  if (!load_and_reload_on_crash_)
+  {
+    return state_after_reload_;
+  }
+
+  return state_after_reload_;
 }
 
 BeaconService::Status BeaconService::GenerateEntropy(uint64_t block_number, BlockEntropy &entropy)
@@ -228,6 +248,8 @@ BeaconService::State BeaconService::OnWaitForSetupCompletionState()
   // to produce random numbers.
   if (!aeon_exe_queue_.empty())
   {
+    SaveState();
+
     active_exe_unit_ = aeon_exe_queue_.front();
     aeon_exe_queue_.pop_front();
 
@@ -235,8 +257,6 @@ BeaconService::State BeaconService::OnWaitForSetupCompletionState()
     block_entropy_previous_ =
         std::make_shared<BlockEntropy>(active_exe_unit_->aeon.block_entropy_previous);
     block_entropy_being_created_ = std::make_shared<BlockEntropy>(active_exe_unit_->block_entropy);
-
-    SaveState();
 
     // TODO(HUT): re-enable this check after fixing the dealer test
     /* assert(block_entropy_being_created_->IsAeonBeginning()); */
@@ -265,6 +285,10 @@ BeaconService::State BeaconService::OnPrepareEntropyGeneration()
 {
   beacon_state_gauge_->set(static_cast<uint64_t>(state_machine_->state()));
   FETCH_LOCK(mutex_);
+
+  // Save state to disk in case of crash - it should return to this
+  // state in the state machine with all relevant items setup
+  SaveState();
 
   if (OutOfSync())
   {
@@ -585,6 +609,9 @@ char const *ToString(BeaconService::State state)
 
   switch (state)
   {
+  case BeaconService::State::RELOAD_ON_STARTUP:
+    text = "Loading prior state on startup";
+    break;
   case BeaconService::State::WAIT_FOR_SETUP_COMPLETION:
     text = "Waiting for setup completion";
     break;

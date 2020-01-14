@@ -57,15 +57,23 @@ public:
 
   enum class State
   {
+    RELOAD_ON_STARTUP,
     WAIT_FOR_SETUP_COMPLETION,
     PREPARE_ENTROPY_GENERATION,
     COLLECT_SIGNATURES,
     VERIFY_SIGNATURES,
     COMPLETE,
     CABINET_ROTATION,
-
     WAIT_FOR_PUBLIC_KEYS,
     OBSERVE_ENTROPY_GENERATION
+  };
+
+  using SignatureShare = AeonExecutionUnit::SignatureShare;
+
+  struct SignatureInformation
+  {
+    uint64_t                                                    round{uint64_t(-1)};
+    std::map<dkg::BeaconManager::MuddleAddress, SignatureShare> threshold_signatures;
   };
 
   using Identity                = crypto::Identity;
@@ -87,12 +95,15 @@ public:
   using SubscriptionPtr         = muddle::MuddleEndpoint::SubscriptionPtr;
   using StateMachine            = core::StateMachine<State>;
   using StateMachinePtr         = std::shared_ptr<StateMachine>;
-  using SignatureShare          = AeonExecutionUnit::SignatureShare;
   using Serializer              = serializers::MsgPackSerializer;
   using SharedEventManager      = EventManager::SharedEventManager;
   using BlockEntropyPtr         = std::shared_ptr<beacon::BlockEntropy>;
   using DeadlineTimer           = fetch::moment::DeadlineTimer;
-  using OldStateStore           = fetch::storage::ObjectStore<AeonExecutionUnit>;
+  using OldStateStore           = fetch::storage::ObjectStore<byte_array::ConstByteArray>;
+  using SignaturesBeingBuilt    = std::map<uint64_t, SignatureInformation>;
+  using CompletedBlockEntropy   = std::map<uint64_t, BlockEntropyPtr>;
+  using ActiveExeUnit           = std::shared_ptr<AeonExecutionUnit>;
+  using AeonExeQueue            = std::deque<SharedAeonExecutionUnit>;
 
   BeaconService()                      = delete;
   BeaconService(BeaconService const &) = delete;
@@ -114,15 +125,13 @@ public:
 
   friend class BeaconServiceProtocol;
 
-  struct SignatureInformation
-  {
-    uint64_t                                               round{uint64_t(-1)};
-    std::map<BeaconManager::MuddleAddress, SignatureShare> threshold_signatures;
-  };
+  template <typename T, typename D>
+  friend struct serializers::MapSerializer;
 
 protected:
   /// State methods
   /// @{
+  State OnReloadOnStartup();
   State OnWaitForSetupCompletionState();
   State OnPrepareEntropyGeneration();
 
@@ -136,10 +145,20 @@ protected:
   SignatureInformation GetSignatureShares(uint64_t round);
   /// @}
 
-  mutable Mutex                       mutex_;
-  CertificatePtr                      certificate_;
-  bool                                load_and_reload_on_crash_{false};
-  std::deque<SharedAeonExecutionUnit> aeon_exe_queue_;
+  /// Save keys so that recovery is possible in a crash situation
+  /// @{
+  OldStateStore old_state_;
+  bool          OutOfSync();
+  void          ReloadState();
+  void          SaveState();
+  State         state_after_reload_{State::RELOAD_ON_STARTUP};
+  /// @}
+
+  mutable Mutex        mutex_;
+  CertificatePtr       certificate_;
+  bool                 load_and_reload_on_crash_{false};
+  AeonExeQueue         aeon_exe_queue_;
+  SignaturesBeingBuilt signatures_being_built_;
 
 private:
   bool AddSignature(SignatureShare share);
@@ -161,22 +180,20 @@ private:
 
   /// Beacon and entropy control units
   /// @{
-  std::shared_ptr<AeonExecutionUnit> active_exe_unit_;
+  ActiveExeUnit active_exe_unit_;
   /// @}
 
   /// Variables relating to getting threshold signatures of the seed
   /// @{
-  // Important this is ordered for trimming
-  std::map<uint64_t, SignatureInformation> signatures_being_built_;
-  std::size_t                              random_number_{0};
-  Identity                                 qual_promise_identity_;
-  service::Promise                         sig_share_promise_;
+  std::size_t      random_number_{0};
+  Identity         qual_promise_identity_;
+  service::Promise sig_share_promise_;
 
   BlockEntropyPtr block_entropy_previous_;
   BlockEntropyPtr block_entropy_being_created_;
 
   // Important this is ordered for trimming
-  std::map<uint64_t, BlockEntropyPtr> completed_block_entropy_;
+  CompletedBlockEntropy completed_block_entropy_;
   /// @}
 
   ServerPtr           rpc_server_{nullptr};
@@ -190,14 +207,6 @@ private:
   /// Distributed Key Generation
   /// @{
   BeaconServiceProtocol beacon_protocol_;
-  /// @}
-
-  /// Save keys so that recovery is possible in a crash situation
-  /// @{
-  OldStateStore old_state_;
-  bool          OutOfSync();
-  void          ReloadState();
-  void          SaveState();
   /// @}
 
   //
@@ -244,5 +253,54 @@ public:
     array.GetNextValue(b.threshold_signatures);
   }
 };
+
+// Note that this serializer saves the current state, and on deser will
+// populate state_after_reload_
+template <typename D>
+struct MapSerializer<beacon::BeaconService, D>
+{
+public:
+  using Type       = beacon::BeaconService;
+  using DriverType = D;
+
+  static uint8_t const SIGNATURES_BEING_BUILT      = 1;
+  static uint8_t const COMPLETED_BLOCK_ENTROPY     = 2;
+  static uint8_t const ACTIVE_EXE_UNIT             = 3;
+  static uint8_t const AEON_EXE_QUEUE              = 4;
+  static uint8_t const CURRENT_STATE               = 5;
+  static uint8_t const BLOCK_ENTROPY_PREVIOUS      = 6;
+  static uint8_t const BLOCK_ENTROPY_BEING_CREATED = 7;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &beacon_service_)
+  {
+    auto map = map_constructor(5);
+    map.Append(SIGNATURES_BEING_BUILT, beacon_service_.signatures_being_built_);
+    map.Append(COMPLETED_BLOCK_ENTROPY, beacon_service_.completed_block_entropy_);
+    map.Append(ACTIVE_EXE_UNIT, beacon_service_.active_exe_unit_);
+    map.Append(AEON_EXE_QUEUE, beacon_service_.aeon_exe_queue_);
+    map.Append(CURRENT_STATE, static_cast<uint16_t>(beacon_service_.state_machine_->state()));
+    map.Append(BLOCK_ENTROPY_PREVIOUS, beacon_service_.block_entropy_previous_);
+    map.Append(BLOCK_ENTROPY_BEING_CREATED, beacon_service_.block_entropy_being_created_);
+  }
+
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &beacon_service_)
+  {
+    map.ExpectKeyGetValue(SIGNATURES_BEING_BUILT, beacon_service_.signatures_being_built_);
+    map.ExpectKeyGetValue(COMPLETED_BLOCK_ENTROPY, beacon_service_.completed_block_entropy_);
+    map.ExpectKeyGetValue(ACTIVE_EXE_UNIT, beacon_service_.active_exe_unit_);
+    map.ExpectKeyGetValue(AEON_EXE_QUEUE, beacon_service_.aeon_exe_queue_);
+
+    uint16_t prev_state;
+    map.ExpectKeyGetValue(CURRENT_STATE, prev_state);
+    beacon_service_.state_after_reload_ = static_cast<Type::State>(prev_state);
+
+    map.ExpectKeyGetValue(BLOCK_ENTROPY_PREVIOUS, beacon_service_.block_entropy_previous_);
+    map.ExpectKeyGetValue(BLOCK_ENTROPY_BEING_CREATED,
+                          beacon_service_.block_entropy_being_created_);
+  }
+};
+
 }  // namespace serializers
 }  // namespace fetch
