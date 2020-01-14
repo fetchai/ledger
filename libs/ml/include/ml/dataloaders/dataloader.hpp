@@ -20,13 +20,8 @@
 #include "core/random.hpp"
 #include "core/serializers/group_definitions.hpp"
 #include "math/base_types.hpp"
-#include "math/tensor/tensor.hpp"
-#include "ml/exceptions/exceptions.hpp"
 #include "ml/meta/ml_type_traits.hpp"
 
-#include <cstdint>
-#include <memory>
-#include <utility>
 #include <vector>
 
 namespace fetch {

@@ -23,6 +23,7 @@
 #include "ml/dataloaders/dataloader.hpp"
 #include "ml/dataloaders/word2vec_loaders/unigram_table.hpp"
 #include "ml/dataloaders/word2vec_loaders/vocab.hpp"
+#include "ml/exceptions/exceptions.hpp"
 
 #include <map>
 #include <string>
