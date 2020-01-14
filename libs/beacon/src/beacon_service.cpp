@@ -210,6 +210,8 @@ BeaconService::State BeaconService::OnReloadOnStartup()
 
   ReloadState();
 
+  FETCH_LOG_INFO(LOGGING_NAME, "After reloading state, we have ", completed_block_entropy_.size(), " completed block entropy");
+
   return state_after_reload_;
 }
 
