@@ -58,7 +58,7 @@ Settings::Settings()
   , db_prefix             {*this, "db-prefix",               "node_storage",               "The prefix for filenames related to constellation databases"}
   , port                  {*this, "port",                    DEFAULT_PORT,                 "The starting port for ledger services"}
   , peers                 {*this, "peers",                   {},                           "The comma separated list of addresses to initially connect to"}
-  , external              {*this, "external",                "127.0.0.1",                  "This node's global IP address or hostname"}
+  , external              {*this, "external",                "",                           "This node's global IP address or hostname"}
   , config                {*this, "config",                  "",                           "The path to the manifest configuration"}
   , max_peers             {*this, "max-peers",               DEFAULT_MAX_PEERS,            "The max number of peers to connect to"}
   , transient_peers       {*this, "transient-peers",         DEFAULT_TRANSIENT_PEERS,      "The number of the peers which will be random in answer sent to peer requests"}
