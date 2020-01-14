@@ -114,7 +114,6 @@ void ComparePrediction(GraphPtrType g, GraphPtrType g2, std::string node_name)
   EXPECT_TRUE(prediction.AllClose(prediction2, DataType{0}, DataType{0}));
 }
 
-// Disabled after ML-437, to be fixed in ML-463
 TYPED_TEST(GraphRebuildTest, graph_rebuild_time_distributed_ops)
 {
   using TensorType   = TypeParam;
@@ -134,27 +133,27 @@ TYPED_TEST(GraphRebuildTest, graph_rebuild_time_distributed_ops)
   std::string name = "Graph";
   auto        g    = std::make_shared<GraphType>();
 
-  std::string input_1 = AddOp<ops::PlaceHolder<TensorType>>(g, {});
-  //  std::string input_query = AddOp<ops::PlaceHolder<TensorType>>(g, {});
-  //  std::string input_key   = AddOp<ops::PlaceHolder<TensorType>>(g, {});
-  //  std::string input_value = AddOp<ops::PlaceHolder<TensorType>>(g, {});
-  //  std::string input_mask  = AddOp<ops::PlaceHolder<TensorType>>(g, {});
+  std::string input_1     = AddOp<ops::PlaceHolder<TensorType>>(g, {});
+  std::string input_query = AddOp<ops::PlaceHolder<TensorType>>(g, {});
+  std::string input_key   = AddOp<ops::PlaceHolder<TensorType>>(g, {});
+  std::string input_value = AddOp<ops::PlaceHolder<TensorType>>(g, {});
+  std::string input_mask  = AddOp<ops::PlaceHolder<TensorType>>(g, {});
 
-  //  std::string layer_mh = AddOp<layers::MultiheadAttention<TensorType>>(
-  //      g, {input_query, input_key, input_value, input_mask}, 4, 12);
-  //  std::string layer_scaleddotproductattention =
-  //      AddOp<layers::ScaledDotProductAttention<TensorType>>(
-  //          g, {input_query, input_key, input_value, input_mask}, 4);
-  //  std::string layer_selfattentionencoder =
-  //      AddOp<layers::SelfAttentionEncoder<TensorType>>(g, {input_query, input_mask}, 4, 12, 24);
+  std::string layer_mh = AddOp<layers::MultiheadAttention<TensorType>>(
+      g, {input_query, input_key, input_value, input_mask}, 4, 12);
+  std::string layer_scaleddotproductattention =
+      AddOp<layers::ScaledDotProductAttention<TensorType>>(
+          g, {input_query, input_key, input_value, input_mask}, 4);
+  std::string layer_selfattentionencoder =
+      AddOp<layers::SelfAttentionEncoder<TensorType>>(g, {input_query, input_mask}, 4, 12, 24);
   std::string layer_skipgram =
       AddOp<layers::SkipGram<TensorType>>(g, {input_1, input_1}, 1, 1, 10, 10);
 
   g->SetInput(input_1, data1);
-  //  g->SetInput(input_query, query_data);
-  //  g->SetInput(input_key, key_data);
-  //  g->SetInput(input_value, value_data);
-  //  g->SetInput(input_mask, mask_data);
+  g->SetInput(input_query, query_data);
+  g->SetInput(input_key, key_data);
+  g->SetInput(input_value, value_data);
+  g->SetInput(input_mask, mask_data);
   g->Compile();
 
   // serialise the graph
@@ -179,15 +178,15 @@ TYPED_TEST(GraphRebuildTest, graph_rebuild_time_distributed_ops)
   fetch::ml::utilities::BuildGraph<TensorType>(*gsp2, g2);
 
   g2->SetInput(input_1, data1);
-  //  g2->SetInput(input_query, query_data);
-  //  g2->SetInput(input_key, key_data);
-  //  g2->SetInput(input_value, value_data);
-  //  g2->SetInput(input_mask, mask_data);
+  g2->SetInput(input_query, query_data);
+  g2->SetInput(input_key, key_data);
+  g2->SetInput(input_value, value_data);
+  g2->SetInput(input_mask, mask_data);
   g2->Compile();
 
-  //  ComparePrediction<GraphPtrType, TensorType>(g, g2, layer_mh);
-  //  ComparePrediction<GraphPtrType, TensorType>(g, g2, layer_scaleddotproductattention);
-  //  ComparePrediction<GraphPtrType, TensorType>(g, g2, layer_selfattentionencoder);
+  ComparePrediction<GraphPtrType, TensorType>(g, g2, layer_mh);
+  ComparePrediction<GraphPtrType, TensorType>(g, g2, layer_scaleddotproductattention);
+  ComparePrediction<GraphPtrType, TensorType>(g, g2, layer_selfattentionencoder);
   ComparePrediction<GraphPtrType, TensorType>(g, g2, layer_skipgram);
 }
 

@@ -1787,20 +1787,48 @@ TEST_F(VMModelTests, model_fit_and_refit)
 TEST_F(VMModelTests, model_add_input_layer_as_second)
 {
   static char const *SRC = R"(
-          function main()
-            var data_shape = Array<UInt64>(2);
-            data_shape[0] = 10u64;
-            data_shape[1] = 250u64;
+      function main()
+        var data_shape = Array<UInt64>(2);
+        data_shape[0] = 10u64;
+        data_shape[1] = 250u64;
 
-            var model = Model("sequential");
+        var model = Model("sequential");
 
-            model.add("dense", 10u64, 10u64);
-            model.addExperimental("input", data_shape);
-          endfunction
-        )";
+        model.add("dense", 10u64, 10u64);
+        model.addExperimental("input", data_shape);
+      endfunction
+    )";
 
   ASSERT_TRUE(toolkit.Compile(SRC));
   ASSERT_FALSE(toolkit.Run(nullptr, ChargeAmount{0}));
+}
+
+TEST_F(VMModelTests, model_add_dense_auto_inputs)
+{
+  static char const *SRC = R"(
+      function main()
+        var data_shape = Array<UInt64>(4);
+        data_shape[0] = 3u64;
+        data_shape[1] = 3u64;
+        data_shape[2] = 3u64;
+        data_shape[3] = 25u64;
+
+        var model = Model("sequential");
+
+        model.addExperimental("input", data_shape);
+        model.addExperimental("dense", 10u64);
+        model.addExperimental("dense", 6u64);
+        model.addExperimental("dense", 1u64);
+        model.compile("scel", "adam");
+
+        var data = Tensor(data_shape);
+        data.fillRandom();
+        model.predict(data);
+      endfunction
+    )";
+
+  ASSERT_TRUE(toolkit.Compile(SRC));
+  ASSERT_TRUE(toolkit.Run(nullptr, ChargeAmount{0}));
 }
 
 }  // namespace
