@@ -332,6 +332,13 @@ Constellation::Config BuildConstellationConfig(Settings const &settings)
     }
   }
 
+  // if we did not specify a genesis path, and we could not load one from alternative means attempt
+  // to load the contents from the "default" filename
+  if (genesis_file_path.empty() && cfg.genesis_file_contents.empty())
+  {
+    cfg.genesis_file_contents = core::ReadContentsOfFile("genesis_file.json");
+  }
+
   return cfg;
 }
 

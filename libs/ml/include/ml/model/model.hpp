@@ -60,7 +60,7 @@ public:
   using DataType           = typename TensorType::Type;
   using SizeType           = fetch::math::SizeType;
   using GraphType          = Graph<TensorType>;
-  using DataLoaderType     = dataloaders::DataLoader<TensorType, TensorType>;
+  using DataLoaderType     = dataloaders::DataLoader<TensorType>;
   using ModelOptimiserType = optimisers::Optimiser<TensorType>;
   using GraphPtrType       = typename std::shared_ptr<GraphType>;
   using DataLoaderPtrType  = typename std::shared_ptr<DataLoaderType>;
@@ -555,9 +555,8 @@ struct MapSerializer<ml::model::Model<TensorType>, D>
     {
     case ml::LoaderType::TENSOR:
     {
-      auto *loader_ptr =
-          static_cast<fetch::ml::dataloaders::TensorDataLoader<TensorType, TensorType> *>(
-              sp.dataloader_ptr_.get());
+      auto *loader_ptr = static_cast<fetch::ml::dataloaders::TensorDataLoader<TensorType> *>(
+          sp.dataloader_ptr_.get());
       map.Append(DATALOADER_PTR, *loader_ptr);
       break;
     }
@@ -624,7 +623,7 @@ struct MapSerializer<ml::model::Model<TensorType>, D>
     {
     case ml::LoaderType::TENSOR:
     {
-      auto loader_ptr = new ml::dataloaders::TensorDataLoader<TensorType, TensorType>();
+      auto loader_ptr = new ml::dataloaders::TensorDataLoader<TensorType>();
       map.ExpectKeyGetValue(DATALOADER_PTR, *loader_ptr);
       sp.dataloader_ptr_.reset(loader_ptr);
       break;
