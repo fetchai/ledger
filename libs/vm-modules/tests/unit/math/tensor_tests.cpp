@@ -1301,4 +1301,137 @@ TEST_F(MathTensorTests, tensor_invalid_from_string)
   ASSERT_FALSE(toolkit.Run());
 }
 
+TEST_F(MathTensorTests, empty_tensor_shape)
+{
+  static char const *tensor_from_string_src = R"(
+    function main()
+      var x = Tensor();
+      var shape = x.shape();
+      print(shape);
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(tensor_from_string_src));
+  ASSERT_TRUE(toolkit.Run());
+  ASSERT_EQ(stdout.str(), "[0]");
+}
+
+TEST_F(MathTensorTests, empty_tensor_size)
+{
+  static char const *tensor_from_string_src = R"(
+    function main()
+      var x = Tensor();
+      var size = x.size();
+      print(size);
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(tensor_from_string_src));
+  ASSERT_TRUE(toolkit.Run());
+  ASSERT_EQ(stdout.str(), "0");
+}
+
+TEST_F(MathTensorTests, empty_tensor_from_string)
+{
+  static char const *tensor_from_string_src = R"(
+    function main() : Tensor
+      var x = Tensor();
+      var string_vals = "1.0, 1.0, 1.0, 1.0";
+      x.fromString(string_vals);
+      return x;
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(tensor_from_string_src));
+  Variant res;
+  ASSERT_TRUE(toolkit.Run(&res));
+  auto const                    tensor = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
+  fetch::math::Tensor<DataType> gt({4, 1});
+  gt.Fill(fetch::math::Type<DataType>("1.0"));
+
+  EXPECT_TRUE(gt.AllClose(tensor->GetTensor()));
+}
+
+TEST_F(MathTensorTests, empty_tensor_fill)
+{
+  static char const *tensor_from_string_src = R"(
+    function main()
+      var x = Tensor();
+      x.fill(5.0fp64);
+      var shape = x.shape();
+      print(shape);
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(tensor_from_string_src));
+  // does nothing because of size=0 and shape=[0]
+  ASSERT_TRUE(toolkit.Run());
+  ASSERT_EQ(stdout.str(), "[0]");
+}
+
+TEST_F(MathTensorTests, empty_tensor_random_fill)
+{
+  static char const *tensor_from_string_src = R"(
+    function main()
+      var x = Tensor();
+      x.fillRandom();
+      var shape = x.shape();
+      print(shape);
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(tensor_from_string_src));
+  // does nothing because of size=0 and shape=[0]
+  ASSERT_TRUE(toolkit.Run());
+  ASSERT_EQ(stdout.str(), "[0]");
+}
+
+TEST_F(MathTensorTests, empty_tensor_reshape)
+{
+  static char const *tensor_from_string_src = R"(
+    function main()
+      var tensor_shape = Array<UInt64>(3);
+      tensor_shape[0] = 4u64;
+      tensor_shape[1] = 1u64;
+      tensor_shape[2] = 1u64;
+
+      var x = Tensor();
+      x.reshape(tensor_shape);
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(tensor_from_string_src));
+  // impossible to reshape because shapes doesn't match
+  ASSERT_FALSE(toolkit.Run());
+}
+
+TEST_F(MathTensorTests, empty_tensor_unsqueeze)
+{
+  static char const *tensor_from_string_src = R"(
+    function main()
+      var x = Tensor();
+      x = x.unsqueeze();
+      var shape = x.shape();
+      print(shape);
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(tensor_from_string_src));
+  ASSERT_TRUE(toolkit.Run());
+  ASSERT_EQ(stdout.str(), "[0, 1]");
+}
+
+TEST_F(MathTensorTests, empty_tensor_at)
+{
+  static char const *src = R"(
+    function main()
+      var x = Tensor();
+      x.at(0u64);
+    endfunction
+  )";
+
+  ASSERT_TRUE(toolkit.Compile(src));
+  ASSERT_FALSE(toolkit.Run());
+}
+
 }  // namespace
