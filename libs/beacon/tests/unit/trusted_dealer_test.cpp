@@ -288,6 +288,7 @@ TEST(beacon_service, correctly_recovers_state)
                                        dummy_event_manager, true};
 
     // Must be manually called since no attached reactor
+    // Note this also checks reloading an empty file is not invalid
     initial.Reload();
 
     // Set some specific state for the variable we expect to be saved. For ease

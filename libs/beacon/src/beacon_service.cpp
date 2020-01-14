@@ -84,13 +84,12 @@ char const *ToString(BeaconService::State state);
 BeaconService::BeaconService(MuddleInterface &muddle, const CertificatePtr &certificate,
                              BeaconSetupService &beacon_setup, SharedEventManager event_manager,
                              bool load_and_reload_on_crash)
-  : certificate_{certificate}
-  , load_and_reload_on_crash_{load_and_reload_on_crash}
-  , identity_{certificate->identity()}
+  : identity_{certificate->identity()}
   , muddle_{muddle}
   , endpoint_{muddle_.GetEndpoint()}
   , state_machine_{std::make_shared<StateMachine>("BeaconService", State::RELOAD_ON_STARTUP,
                                                   ToString)}
+  , load_and_reload_on_crash_{load_and_reload_on_crash}
   , rpc_client_{"BeaconService", endpoint_, SERVICE_DKG, CHANNEL_RPC}
   , event_manager_{std::move(event_manager)}
   , beacon_protocol_{*this}
@@ -171,8 +170,6 @@ void BeaconService::SaveState()
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Failed to save beacon service to file: ", ex.what());
   }
-  // assert(active_exe_unit_);
-  // old_state_.Set(storage::ResourceAddress("HEAD"), *active_exe_unit_);
 }
 
 void BeaconService::ReloadState()

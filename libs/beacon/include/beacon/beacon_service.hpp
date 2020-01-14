@@ -50,6 +50,27 @@
 namespace fetch {
 namespace beacon {
 
+/**
+ * The beacon service is responsible for generating entropy that the blocks can use. It is given the
+ * output of DKG (if it was a successful miner) from the beacon setup service, and will continue to
+ * generate entropy until that aeon is complete.
+ *
+ * It does not generate entropy more than N blocks ahead of the most recently seen block to prevent
+ * certain attacks.
+ *
+ * Entropy gen normally happens in the following steps:
+ *
+ * 1. Get the 'aeon execution unit' for block N containing your threshold keys, the entropy of block
+ * N - 1, and the aeon length M
+ * 2. Prepare to generate entropy: populate SignatureInformation with your partial signature of N -
+ * 1
+ * 3. Request from a peer all the partial signatures they have for block N - 1
+ * 4. Verify the response (this could contain all necessary sigs), if insufficient, return to 3.
+ * 5. Prepare to generate entropy for block N + 1 if it's not greater than N + M
+ *
+ * There can be exceptions to this when recovering from a crash or synchronising to the chain.
+ *
+ */
 class BeaconService : public ledger::EntropyGeneratorInterface
 {
 public:
@@ -145,55 +166,50 @@ protected:
   SignatureInformation GetSignatureShares(uint64_t round);
   /// @}
 
-  /// Save keys so that recovery is possible in a crash situation
+  // Related to recovering state after a crash
   /// @{
   OldStateStore old_state_;
-  bool          OutOfSync();
   void          ReloadState();
   void          SaveState();
-  State         state_after_reload_{State::RELOAD_ON_STARTUP};
   /// @}
 
-  mutable Mutex        mutex_;
-  CertificatePtr       certificate_;
-  bool                 load_and_reload_on_crash_{false};
-  AeonExeQueue         aeon_exe_queue_;
+  /// The state and functions that the beacon needs for operation is here. Thus,
+  //  if it is recovered from file it needs these
+  /// @{
   SignaturesBeingBuilt signatures_being_built_;
+
+  // Important this is ordered for trimming - populated for external use
+  // when creating blocks
+  CompletedBlockEntropy completed_block_entropy_;
+
+  ActiveExeUnit   active_exe_unit_;
+  AeonExeQueue    aeon_exe_queue_;
+  State           state_after_reload_{State::RELOAD_ON_STARTUP};
+  BlockEntropyPtr block_entropy_previous_;
+  BlockEntropyPtr block_entropy_being_created_;
+  /// @}
 
 private:
   bool AddSignature(SignatureShare share);
+  bool OutOfSync();
 
+  mutable Mutex    mutex_;
   Identity         identity_;
   MuddleInterface &muddle_;
   Endpoint &       endpoint_;
   StateMachinePtr  state_machine_;
   DeadlineTimer    timer_to_proceed_{"beacon:main"};
+  bool             load_and_reload_on_crash_{false};
 
   // Limit run away entropy generation
   uint64_t entropy_lead_blocks_    = 2;
   uint64_t most_recent_round_seen_ = 0;
-
-  /// General configuration
-  /// @{
-  bool broadcasting_ = false;
-  /// @}
-
-  /// Beacon and entropy control units
-  /// @{
-  ActiveExeUnit active_exe_unit_;
-  /// @}
 
   /// Variables relating to getting threshold signatures of the seed
   /// @{
   std::size_t      random_number_{0};
   Identity         qual_promise_identity_;
   service::Promise sig_share_promise_;
-
-  BlockEntropyPtr block_entropy_previous_;
-  BlockEntropyPtr block_entropy_being_created_;
-
-  // Important this is ordered for trimming
-  CompletedBlockEntropy completed_block_entropy_;
   /// @}
 
   ServerPtr           rpc_server_{nullptr};
@@ -209,7 +225,7 @@ private:
   BeaconServiceProtocol beacon_protocol_;
   /// @}
 
-  //
+  // Telemetry and debug
   using Clock     = std::chrono::high_resolution_clock;
   using Timepoint = Clock::time_point;
 
