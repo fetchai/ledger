@@ -287,7 +287,8 @@ BeaconService::State BeaconService::OnPrepareEntropyGeneration()
 
   // Save state to disk in case of crash - it should return to this
   // state in the state machine with all relevant items setup
-  if ((index % save_periodicity_) == 0)
+  if ((index % save_periodicity_) == 0 ||
+      state_machine_->state() == State::WAIT_FOR_SETUP_COMPLETION)
   {
     FETCH_LOG_DEBUG(LOGGING_NAME, "Periodically saving the entropy information");
     SaveState();
