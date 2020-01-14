@@ -18,8 +18,8 @@
 
 #include "ml/dataloaders/word2vec_loaders/sgns_w2v_dataloader.hpp"
 
-#include "ml/exceptions/exceptions.hpp"
 #include "math/standard_functions/sqrt.hpp"
+#include "ml/exceptions/exceptions.hpp"
 
 namespace fetch {
 namespace ml {
