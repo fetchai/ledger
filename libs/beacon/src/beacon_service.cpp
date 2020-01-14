@@ -176,6 +176,11 @@ void BeaconService::ReloadState()
 {
   old_state_.Load("beacon_state.db", "beacon_state.index.db");
 
+  if (!load_and_reload_on_crash_)
+  {
+    return;
+  }
+
   try
   {
     ConstByteArray ret;
@@ -200,13 +205,10 @@ void BeaconService::ReloadState()
  */
 BeaconService::State BeaconService::OnReloadOnStartup()
 {
-  // Default starting state
+  // Default starting state, will be overwritten on successful load
   state_after_reload_ = State::WAIT_FOR_SETUP_COMPLETION;
 
-  if (!load_and_reload_on_crash_)
-  {
-    return state_after_reload_;
-  }
+  ReloadState();
 
   return state_after_reload_;
 }
@@ -245,8 +247,6 @@ BeaconService::State BeaconService::OnWaitForSetupCompletionState()
   // to produce random numbers.
   if (!aeon_exe_queue_.empty())
   {
-    SaveState();
-
     active_exe_unit_ = aeon_exe_queue_.front();
     aeon_exe_queue_.pop_front();
 
@@ -287,7 +287,7 @@ BeaconService::State BeaconService::OnPrepareEntropyGeneration()
 
   // Save state to disk in case of crash - it should return to this
   // state in the state machine with all relevant items setup
-  if ((index % save_periodicity) == 0)
+  if ((index % save_periodicity_) == 0)
   {
     FETCH_LOG_DEBUG(LOGGING_NAME, "Periodically saving the entropy information");
     SaveState();

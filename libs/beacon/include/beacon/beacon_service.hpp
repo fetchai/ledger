@@ -168,7 +168,7 @@ protected:
 
   // Related to recovering state after a crash
   /// @{
-  uint16_t const save_periodicity = 100;
+  uint16_t const save_periodicity_ = 100;
   OldStateStore  old_state_;
   void           ReloadState();
   void           SaveState();
@@ -291,7 +291,7 @@ public:
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &beacon_service_)
   {
-    auto map = map_constructor(5);
+    auto map = map_constructor(7);
     map.Append(SIGNATURES_BEING_BUILT, beacon_service_.signatures_being_built_);
     map.Append(COMPLETED_BLOCK_ENTROPY, beacon_service_.completed_block_entropy_);
     map.Append(ACTIVE_EXE_UNIT, beacon_service_.active_exe_unit_);
