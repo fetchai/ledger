@@ -163,7 +163,7 @@ Contract::Result SmartContractManager::OnCreate(chain::Transaction const &tx)
     case FunctionDecoratorKind::OBJECTIVE:
     case FunctionDecoratorKind::PROBLEM:
     case FunctionDecoratorKind::WORK:
-    case FunctionDecoratorKind::MINE_JOBS:
+    case FunctionDecoratorKind::MINER_JOBS:
       break;
     }
   }

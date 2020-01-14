@@ -194,7 +194,7 @@ SynergeticContract::SynergeticContract(ConstByteArray const &source)
     case FunctionDecoratorKind::ACTION:
     case FunctionDecoratorKind::QUERY:
     case FunctionDecoratorKind::INVALID:
-    case FunctionDecoratorKind::MINE_JOBS:
+    case FunctionDecoratorKind::MINER_JOBS:
       break;
     }
 

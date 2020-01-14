@@ -65,9 +65,9 @@ FunctionDecoratorKind DetermineKind(vm::Executable::Function const &fn)
     {
       kind = FunctionDecoratorKind::CLEAR;
     }
-    else if (annotation.name == "@minejobs")
+    else if (annotation.name == "@minerjobs")
     {
-      kind = FunctionDecoratorKind ::MINE_JOBS;
+      kind = FunctionDecoratorKind ::MINER_JOBS;
     }
     else
     {

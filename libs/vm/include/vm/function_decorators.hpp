@@ -32,7 +32,7 @@ enum class FunctionDecoratorKind
   ACTION,     ///< A Transaction handler
   QUERY,      ///< A Query handler
   ON_INIT,    ///< A function to be called on smart contract construction
-  MINE_JOBS,  ///< A function to be called by synergetic miner to decide which jobs to execute
+  MINER_JOBS,  ///< A function to be called by synergetic miner to decide which jobs to execute
   INVALID,    ///< The function has an invalid decorator
 };
 
