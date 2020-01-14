@@ -36,7 +36,7 @@ namespace ml {
 namespace dataloaders {
 
 template <typename T>
-class W2VLoader : public DataLoader<fetch::math::Tensor<T>, fetch::math::Tensor<T>>
+class W2VLoader : public DataLoader<fetch::math::Tensor<T>>
 {
 public:
   static_assert(fetch::meta::IsFloat<T> || math::meta::IsFixedPoint<T>,
@@ -44,12 +44,11 @@ public:
                 "should be a float or double or fixed-point type.");
   static constexpr T WindowContextUnused = -1;
 
-  using InputType = fetch::math::Tensor<T>;
-  using LabelType = fetch::math::Tensor<T>;
+  using TensorType = fetch::math::Tensor<T>;
 
   using SizeType   = fetch::math::SizeType;
   using VocabType  = Vocab;
-  using ReturnType = std::pair<LabelType, std::vector<InputType>>;
+  using ReturnType = std::pair<TensorType, std::vector<TensorType>>;
 
   W2VLoader(SizeType window_size, SizeType negative_samples);
 
@@ -63,7 +62,7 @@ public:
   void       GetNext(ReturnType &ret);
   ReturnType GetNext() override;
 
-  bool AddData(std::vector<InputType> const &input, LabelType const &label) override;
+  bool AddData(std::vector<TensorType> const &input, TensorType const &label) override;
 
   bool BuildVocab(std::string const &s);
   void SaveVocab(std::string const &filename);
@@ -111,7 +110,7 @@ private:
  */
 template <typename T>
 W2VLoader<T>::W2VLoader(SizeType window_size, SizeType negative_samples)
-  : DataLoader<LabelType, InputType>()
+  : DataLoader<TensorType>()
   , current_sentence_(0)
   , current_word_(0)
   , window_size_(window_size)
@@ -300,7 +299,7 @@ typename W2VLoader<T>::ReturnType W2VLoader<T>::GetNext()
 }
 
 template <typename T>
-bool W2VLoader<T>::AddData(std::vector<InputType> const &input, LabelType const &label)
+bool W2VLoader<T>::AddData(std::vector<TensorType> const &input, TensorType const &label)
 {
   FETCH_UNUSED(input);
   FETCH_UNUSED(label);

@@ -52,8 +52,7 @@ std::shared_ptr<fetch::ml::model::Sequential<TensorType>> MakeBostonModel(Tensor
   model_ptr->template Add<fetch::ml::layers::FullyConnected<TensorType>>(10u, 1u);
 
   // Initialise DataLoader
-  auto dataloader_ptr =
-      std::make_unique<fetch::ml::dataloaders::TensorDataLoader<TensorType, TensorType>>();
+  auto dataloader_ptr = std::make_unique<fetch::ml::dataloaders::TensorDataLoader<TensorType>>();
   dataloader_ptr->AddData({data}, labels);
   dataloader_ptr->SetTestRatio(test_set_ratio);
   dataloader_ptr->SetRandomMode(true);

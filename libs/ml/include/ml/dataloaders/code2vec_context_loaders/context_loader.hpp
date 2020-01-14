@@ -44,17 +44,16 @@ namespace dataloaders {
  * @tparam InputType the type of "feature" vector, the context triple (hashed)
  * @tparam LabelType the type of the "target", i.e. a (hashed) function name
  */
-template <typename LabelType, typename InputType>
-class C2VLoader : public DataLoader<LabelType, InputType>
+template <typename TensorType>
+class C2VLoader : public DataLoader<TensorType>
 {
 public:
-  using TensorType              = InputType;
   using Type                    = typename TensorType::Type;
   using SizeType                = fetch::math::SizeType;
   using ContextTuple            = std::tuple<SizeType, SizeType, SizeType>;
   using ContextVector           = std::vector<TensorType>;
   using ContextLabelPair        = std::pair<SizeType, ContextTuple>;
-  using ContextTensorsLabelPair = std::pair<LabelType, ContextVector>;
+  using ContextTensorsLabelPair = std::pair<TensorType, ContextVector>;
 
   using WordIdxType   = std::vector<std::vector<SizeType>>;
   using VocabType     = std::unordered_map<std::string, SizeType>;
@@ -63,7 +62,7 @@ public:
   using umap_int_str  = std::unordered_map<SizeType, std::string>;
 
   explicit C2VLoader(SizeType max_contexts_)
-    : DataLoader<LabelType, InputType>()
+    : DataLoader<TensorType>()
     , iterator_position_get_next_context_(0)
     , iterator_position_get_next_(0)
     , current_function_index_(0)
@@ -76,7 +75,7 @@ public:
   SizeType Size() const override;
   bool     IsDone() const override;
   void     Reset() override;
-  bool     AddData(std::vector<InputType> const &data, LabelType const &label) override;
+  bool     AddData(std::vector<TensorType> const &data, TensorType const &label) override;
   void     SetTestRatio(float new_test_ratio) override;
   void     SetValidationRatio(float new_validation_ratio) override;
   bool     IsModeAvailable(DataLoaderMode mode) override;
@@ -134,9 +133,8 @@ private:
                          umap_int_str &idx_to_name);
 };
 
-template <typename LabelType, typename InputType>
-bool C2VLoader<LabelType, InputType>::AddData(std::vector<InputType> const &data,
-                                              LabelType const &             label)
+template <typename TensorType>
+bool C2VLoader<TensorType>::AddData(std::vector<TensorType> const &data, TensorType const &label)
 {
   FETCH_UNUSED(data);
   FETCH_UNUSED(label);
@@ -149,8 +147,8 @@ bool C2VLoader<LabelType, InputType>::AddData(std::vector<InputType> const &data
  *
  * @param text The input corpus in the "correct" c2v format
  */
-template <typename LabelType, typename InputType>
-void C2VLoader<LabelType, InputType>::AddDataAsString(std::string const &c2v_input)
+template <typename TensorType>
+void C2VLoader<TensorType>::AddDataAsString(std::string const &c2v_input)
 {
 
   std::stringstream c2v_input_ss(c2v_input);
@@ -201,9 +199,8 @@ void C2VLoader<LabelType, InputType>::AddDataAsString(std::string const &c2v_inp
  *
  * @return std::pair<InputType, LabelType>
  */
-template <typename LabelType, typename InputType>
-typename C2VLoader<LabelType, InputType>::ContextLabelPair
-C2VLoader<LabelType, InputType>::GetNextContext()
+template <typename TensorType>
+typename C2VLoader<TensorType>::ContextLabelPair C2VLoader<TensorType>::GetNextContext()
 {
   auto return_value = data_[this->iterator_position_get_next_context_];
   this->iterator_position_get_next_context_ += 1;
@@ -215,9 +212,8 @@ C2VLoader<LabelType, InputType>::GetNextContext()
  *
  * @return std::pair<std::vector<TensorType>, LabelType>;
  */
-template <typename LabelType, typename InputType>
-typename C2VLoader<LabelType, InputType>::ContextTensorsLabelPair
-C2VLoader<LabelType, InputType>::GetNext()
+template <typename TensorType>
+typename C2VLoader<TensorType>::ContextTensorsLabelPair C2VLoader<TensorType>::GetNext()
 {
   if (this->random_mode_)
   {
@@ -301,8 +297,8 @@ C2VLoader<LabelType, InputType>::GetNext()
  *
  * @return uint64_t
  */
-template <typename LabelType, typename InputType>
-fetch::math::SizeType C2VLoader<LabelType, InputType>::Size() const
+template <typename TensorType>
+fetch::math::SizeType C2VLoader<TensorType>::Size() const
 {
   return data_.size();
 }
@@ -313,8 +309,8 @@ fetch::math::SizeType C2VLoader<LabelType, InputType>::Size() const
  * @return true
  * @return false
  */
-template <typename LabelType, typename InputType>
-bool C2VLoader<LabelType, InputType>::IsDone() const
+template <typename TensorType>
+bool C2VLoader<TensorType>::IsDone() const
 {
   return ((data_).size() == (this->iterator_position_get_next_context_));
 }
@@ -323,21 +319,21 @@ bool C2VLoader<LabelType, InputType>::IsDone() const
  * @brief Resets the GetNextContext() generator
  *
  */
-template <typename LabelType, typename InputType>
-void C2VLoader<LabelType, InputType>::Reset()
+template <typename TensorType>
+void C2VLoader<TensorType>::Reset()
 {
   this->iterator_position_get_next_context_ = SizeType{0};
 }
 
-template <typename LabelType, typename DataType>
-void C2VLoader<LabelType, DataType>::SetTestRatio(float new_test_ratio)
+template <typename TypeParam>
+void C2VLoader<TypeParam>::SetTestRatio(float new_test_ratio)
 {
   FETCH_UNUSED(new_test_ratio);
   throw exceptions::InvalidMode("Test set splitting is not supported for this dataloader.");
 }
 
-template <typename LabelType, typename DataType>
-void C2VLoader<LabelType, DataType>::SetValidationRatio(float new_validation_ratio)
+template <typename TypeParam>
+void C2VLoader<TypeParam>::SetValidationRatio(float new_validation_ratio)
 {
   FETCH_UNUSED(new_validation_ratio);
   throw exceptions::InvalidMode("Validation set splitting is not supported for this dataloader.");
@@ -350,9 +346,9 @@ void C2VLoader<LabelType, DataType>::SetValidationRatio(float new_validation_rat
  * @param umap the unordered map where the counts are stored
  * @param word the string to be counted.
  */
-template <typename LabelType, typename InputType>
-void C2VLoader<LabelType, InputType>::addValueToCounter(
-    typename C2VLoader<LabelType, InputType>::umap_str_int &umap, const std::string &word)
+template <typename TensorType>
+void C2VLoader<TensorType>::addValueToCounter(typename C2VLoader<TensorType>::umap_str_int &umap,
+                                              const std::string &                           word)
 {
   if (umap.find(word) == umap.end())
   {
@@ -371,9 +367,9 @@ void C2VLoader<LabelType, InputType>::addValueToCounter(
  * @param sep the separator character
  * @return std::vector<std::string> A vector of substrings
  */
-template <typename LabelType, typename InputType>
-std::vector<std::string> C2VLoader<LabelType, InputType>::splitStringByChar(std::stringstream input,
-                                                                            char const *      sep)
+template <typename TensorType>
+std::vector<std::string> C2VLoader<TensorType>::splitStringByChar(std::stringstream input,
+                                                                  char const *      sep)
 {
   std::vector<std::string> split_string;
   std::string              segment;
@@ -392,10 +388,10 @@ std::vector<std::string> C2VLoader<LabelType, InputType>::splitStringByChar(std:
  * @param idx_to_name unordered map for mapping numeric->string
  * @return SizeType index of the string in the unordered maps
  */
-template <typename LabelType, typename InputType>
-typename C2VLoader<LabelType, InputType>::SizeType C2VLoader<LabelType, InputType>::addToIdxUMaps(
-    std::string const &input, typename C2VLoader<LabelType, InputType>::umap_str_int &name_to_idx,
-    typename C2VLoader<LabelType, InputType>::umap_int_str &idx_to_name)
+template <typename TensorType>
+typename C2VLoader<TensorType>::SizeType C2VLoader<TensorType>::addToIdxUMaps(
+    std::string const &input, typename C2VLoader<TensorType>::umap_str_int &name_to_idx,
+    typename C2VLoader<TensorType>::umap_int_str &idx_to_name)
 {
   if (name_to_idx.find(input) == name_to_idx.end())
   {
@@ -417,11 +413,11 @@ typename C2VLoader<LabelType, InputType>::SizeType C2VLoader<LabelType, InputTyp
  * @param name_to_idx unordered map for storing the mapping string->numeric
  * @param idx_to_name unordered map for storing the mapping numeric->string
  */
-template <typename LabelType, typename InputType>
-void C2VLoader<LabelType, InputType>::createIdxUMapsFromCounter(
-    typename C2VLoader<LabelType, InputType>::umap_str_int &counter,
-    typename C2VLoader<LabelType, InputType>::umap_str_int &name_to_idx,
-    typename C2VLoader<LabelType, InputType>::umap_int_str &idx_to_name)
+template <typename TensorType>
+void C2VLoader<TensorType>::createIdxUMapsFromCounter(
+    typename C2VLoader<TensorType>::umap_str_int &counter,
+    typename C2VLoader<TensorType>::umap_str_int &name_to_idx,
+    typename C2VLoader<TensorType>::umap_int_str &idx_to_name)
 {
   int idx = 0;
   for (auto kv : counter)
@@ -435,79 +431,70 @@ void C2VLoader<LabelType, InputType>::createIdxUMapsFromCounter(
 /**
  * @brief Creates umaps mapping strings to indices from the counter
  */
-template <typename LabelType, typename InputType>
-void C2VLoader<LabelType, InputType>::createIdxUMaps()
+template <typename TensorType>
+void C2VLoader<TensorType>::createIdxUMaps()
 {
   createIdxUMapsFromCounter(function_name_counter_, function_name_to_idx_, idx_to_function_name_);
   createIdxUMapsFromCounter(path_counter_, path_to_idx_, idx_to_path_);
   createIdxUMapsFromCounter(word_counter_, word_to_idx_, idx_to_word_);
 }
 
-template <typename LabelType, typename InputType>
-typename C2VLoader<LabelType, InputType>::umap_int_str
-C2VLoader<LabelType, InputType>::umap_idx_to_functionname()
+template <typename TensorType>
+typename C2VLoader<TensorType>::umap_int_str C2VLoader<TensorType>::umap_idx_to_functionname()
 {
   return this->idx_to_function_name_;
 }
 
-template <typename LabelType, typename InputType>
-typename C2VLoader<LabelType, InputType>::umap_int_str
-C2VLoader<LabelType, InputType>::umap_idx_to_path()
+template <typename TensorType>
+typename C2VLoader<TensorType>::umap_int_str C2VLoader<TensorType>::umap_idx_to_path()
 {
   return this->idx_to_path_;
 }
 
-template <typename LabelType, typename InputType>
-typename C2VLoader<LabelType, InputType>::umap_int_str
-C2VLoader<LabelType, InputType>::umap_idx_to_word()
+template <typename TensorType>
+typename C2VLoader<TensorType>::umap_int_str C2VLoader<TensorType>::umap_idx_to_word()
 {
   return this->idx_to_word_;
 }
 
-template <typename LabelType, typename InputType>
-typename C2VLoader<LabelType, InputType>::umap_str_int
-C2VLoader<LabelType, InputType>::umap_functionname_to_idx()
+template <typename TensorType>
+typename C2VLoader<TensorType>::umap_str_int C2VLoader<TensorType>::umap_functionname_to_idx()
 {
   return this->function_name_to_idx_;
 }
 
-template <typename LabelType, typename InputType>
-typename C2VLoader<LabelType, InputType>::umap_str_int
-C2VLoader<LabelType, InputType>::umap_path_to_idx()
+template <typename TensorType>
+typename C2VLoader<TensorType>::umap_str_int C2VLoader<TensorType>::umap_path_to_idx()
 {
   return this->path_to_idx_;
 }
 
-template <typename LabelType, typename InputType>
-typename C2VLoader<LabelType, InputType>::umap_str_int
-C2VLoader<LabelType, InputType>::umap_word_to_idx()
+template <typename TensorType>
+typename C2VLoader<TensorType>::umap_str_int C2VLoader<TensorType>::umap_word_to_idx()
 {
   return this->word_to_idx_;
 }
 
-template <typename LabelType, typename InputType>
-typename C2VLoader<LabelType, InputType>::umap_str_int
-C2VLoader<LabelType, InputType>::function_name_counter()
+template <typename TensorType>
+typename C2VLoader<TensorType>::umap_str_int C2VLoader<TensorType>::function_name_counter()
 {
   return this->function_name_counter_;
 }
 
-template <typename LabelType, typename InputType>
-typename C2VLoader<LabelType, InputType>::umap_str_int
-C2VLoader<LabelType, InputType>::path_counter()
+template <typename TensorType>
+typename C2VLoader<TensorType>::umap_str_int C2VLoader<TensorType>::path_counter()
 {
   return this->path_counter_;
 }
 
-template <typename LabelType, typename InputType>
-typename C2VLoader<LabelType, InputType>::umap_str_int
-C2VLoader<LabelType, InputType>::word_counter()
+template <typename TensorType>
+typename C2VLoader<TensorType>::umap_str_int C2VLoader<TensorType>::word_counter()
 {
   return this->word_counter_;
 }
 
-template <typename LabelType, typename DataType>
-void C2VLoader<LabelType, DataType>::UpdateCursor()
+template <typename TypeParam>
+void C2VLoader<TypeParam>::UpdateCursor()
 {
   if (this->mode_ != DataLoaderMode::TRAIN)
   {
@@ -515,8 +502,8 @@ void C2VLoader<LabelType, DataType>::UpdateCursor()
   }
 }
 
-template <typename LabelType, typename DataType>
-bool C2VLoader<LabelType, DataType>::IsModeAvailable(DataLoaderMode mode)
+template <typename TypeParam>
+bool C2VLoader<TypeParam>::IsModeAvailable(DataLoaderMode mode)
 {
   return mode == DataLoaderMode::TRAIN;
 }

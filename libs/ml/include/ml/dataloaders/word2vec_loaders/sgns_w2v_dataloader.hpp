@@ -32,16 +32,14 @@ namespace ml {
 namespace dataloaders {
 
 template <typename TensorType>
-class GraphW2VLoader : public DataLoader<TensorType, TensorType>
+class GraphW2VLoader : public DataLoader<TensorType>
 {
 public:
   using DataType     = typename TensorType::Type;
-  using InputType    = TensorType;
-  using LabelType    = TensorType;
   using SizeType     = fetch::math::SizeType;
   using VocabType    = Vocab;
   using VocabPtrType = std::shared_ptr<VocabType>;
-  using ReturnType   = std::pair<LabelType, std::vector<InputType>>;
+  using ReturnType   = std::pair<TensorType, std::vector<TensorType>>;
 
   const DataType BufferPositionUnusedDataType = fetch::math::numeric_max<DataType>();
   const SizeType BufferPositionUnusedSizeType = fetch::math::numeric_max<SizeType>();
@@ -55,7 +53,7 @@ public:
   void       RemoveInfrequentFromData(SizeType min);
   void       InitUnigramTable(SizeType size = 1e8, bool use_vocab_frequencies = true);
   ReturnType GetNext() override;
-  bool       AddData(std::vector<InputType> const &input, LabelType const &label) override;
+  bool       AddData(std::vector<TensorType> const &input, TensorType const &label) override;
 
   void SetTestRatio(float new_test_ratio) override;
   void SetValidationRatio(float new_validation_ratio) override;
@@ -100,7 +98,7 @@ private:
   SizeType                           reset_count_ = 0;
 
   // temporary sample and labels for buffering samples
-  InputType                     input_words_, output_words_, labels_;
+  TensorType                    input_words_, output_words_, labels_;
   fetch::math::Tensor<SizeType> output_words_buffer_;
   SizeType                      buffer_pos_ = 0;
   ReturnType                    cur_sample_;
@@ -119,7 +117,7 @@ template <typename TensorType>
 GraphW2VLoader<TensorType>::GraphW2VLoader(SizeType window_size, SizeType negative_samples,
                                            DataType freq_thresh, SizeType max_word_count,
                                            SizeType seed)
-  : DataLoader<LabelType, InputType>()  // no random mode specified
+  : DataLoader<TensorType>()  // no random mode specified
   , current_sentence_(0)
   , current_word_(0)
   , window_size_(window_size)
@@ -128,15 +126,15 @@ GraphW2VLoader<TensorType>::GraphW2VLoader(SizeType window_size, SizeType negati
   , max_word_count_(max_word_count)
 {
   // setup temporary buffers for training purpose
-  input_words_  = InputType({negative_samples * window_size_ * 2 + window_size_ * 2});
-  output_words_ = InputType({negative_samples * window_size_ * 2 + window_size_ * 2});
+  input_words_  = TensorType({negative_samples * window_size_ * 2 + window_size_ * 2});
+  output_words_ = TensorType({negative_samples * window_size_ * 2 + window_size_ * 2});
   output_words_buffer_ =
       fetch::math::Tensor<SizeType>({negative_samples * window_size_ * 2 + window_size_ * 2});
-  labels_ = InputType({negative_samples * window_size_ * 2 + window_size_ * 2 +
-                       1});  // the extra 1 is for testing if label has ran out
+  labels_ = TensorType({negative_samples * window_size_ * 2 + window_size_ * 2 +
+                        1});  // the extra 1 is for testing if label has ran out
   labels_.Fill(BufferPositionUnusedDataType);
-  cur_sample_.first  = InputType({1, 1});
-  cur_sample_.second = {InputType({1, 1}), InputType({1, 1})};
+  cur_sample_.first  = TensorType({1, 1});
+  cur_sample_.second = {TensorType({1, 1}), TensorType({1, 1})};
   this->SetSeed(seed);
 }
 
@@ -501,8 +499,8 @@ typename GraphW2VLoader<TensorType>::ReturnType GraphW2VLoader<TensorType>::GetN
 }
 
 template <typename TensorType>
-bool GraphW2VLoader<TensorType>::AddData(std::vector<InputType> const &input,
-                                         LabelType const &             label)
+bool GraphW2VLoader<TensorType>::AddData(std::vector<TensorType> const &input,
+                                         TensorType const &             label)
 {
   FETCH_UNUSED(input);
   FETCH_UNUSED(label);
