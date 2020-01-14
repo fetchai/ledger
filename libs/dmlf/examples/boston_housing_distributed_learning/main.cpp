@@ -65,7 +65,7 @@ int main(int argc, char **argv)
   auto n_rounds       = doc["n_rounds"].As<SizeType>();
   auto synchronise    = doc["synchronise"].As<bool>();
   auto seed           = doc["random_seed"].As<SizeType>();
-  auto test_set_ratio = doc["test_set_ratio"].As<float>();
+  auto test_set_ratio = fetch::math::AsType<DataType>(doc["test_set_ratio"].As<float>());
 
   std::shared_ptr<std::mutex> console_mutex_ptr = std::make_shared<std::mutex>();
 
