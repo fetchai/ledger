@@ -121,10 +121,6 @@ void SGDOptimiser<T>::ApplyGradients(SizeType batch_size)
 template class SGDOptimiser<math::Tensor<std::int16_t>>;
 template class SGDOptimiser<math::Tensor<std::int32_t>>;
 template class SGDOptimiser<math::Tensor<std::int64_t>>;
-// template class SGDOptimiser<math::Tensor<std::uint8_t>>;
-template class SGDOptimiser<math::Tensor<std::uint16_t>>;
-template class SGDOptimiser<math::Tensor<std::uint32_t>>;
-template class SGDOptimiser<math::Tensor<std::uint64_t>>;
 template class SGDOptimiser<math::Tensor<float>>;
 template class SGDOptimiser<math::Tensor<double>>;
 template class SGDOptimiser<math::Tensor<fixed_point::fp32_t>>;

@@ -197,10 +197,6 @@ void LazyAdamOptimiser<T>::ApplyGradients(SizeType batch_size)
 template class LazyAdamOptimiser<math::Tensor<std::int16_t>>;
 template class LazyAdamOptimiser<math::Tensor<std::int32_t>>;
 template class LazyAdamOptimiser<math::Tensor<std::int64_t>>;
-// template class LazyAdamOptimiser<math::Tensor<std::uint8_t>>;
-template class LazyAdamOptimiser<math::Tensor<std::uint16_t>>;
-template class LazyAdamOptimiser<math::Tensor<std::uint32_t>>;
-template class LazyAdamOptimiser<math::Tensor<std::uint64_t>>;
 template class LazyAdamOptimiser<math::Tensor<float>>;
 template class LazyAdamOptimiser<math::Tensor<double>>;
 template class LazyAdamOptimiser<math::Tensor<fixed_point::fp32_t>>;

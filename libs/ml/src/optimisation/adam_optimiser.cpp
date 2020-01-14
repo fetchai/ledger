@@ -162,10 +162,6 @@ void AdamOptimiser<T>::ResetCache()
 template class AdamOptimiser<math::Tensor<std::int16_t>>;
 template class AdamOptimiser<math::Tensor<std::int32_t>>;
 template class AdamOptimiser<math::Tensor<std::int64_t>>;
-// template class AdamOptimiser<math::Tensor<std::uint8_t>>;
-template class AdamOptimiser<math::Tensor<std::uint16_t>>;
-template class AdamOptimiser<math::Tensor<std::uint32_t>>;
-template class AdamOptimiser<math::Tensor<std::uint64_t>>;
 template class AdamOptimiser<math::Tensor<float>>;
 template class AdamOptimiser<math::Tensor<double>>;
 template class AdamOptimiser<math::Tensor<fixed_point::fp32_t>>;

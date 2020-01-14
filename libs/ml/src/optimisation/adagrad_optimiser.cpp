@@ -117,10 +117,6 @@ void AdaGradOptimiser<T>::ResetCache()
 template class AdaGradOptimiser<math::Tensor<std::int16_t>>;
 template class AdaGradOptimiser<math::Tensor<std::int32_t>>;
 template class AdaGradOptimiser<math::Tensor<std::int64_t>>;
-// template class AdaGradOptimiser<math::Tensor<std::uint8_t>>;
-template class AdaGradOptimiser<math::Tensor<std::uint16_t>>;
-template class AdaGradOptimiser<math::Tensor<std::uint32_t>>;
-template class AdaGradOptimiser<math::Tensor<std::uint64_t>>;
 template class AdaGradOptimiser<math::Tensor<float>>;
 template class AdaGradOptimiser<math::Tensor<double>>;
 template class AdaGradOptimiser<math::Tensor<fixed_point::fp32_t>>;
