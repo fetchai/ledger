@@ -169,9 +169,9 @@ protected:
   // Related to recovering state after a crash
   /// @{
   uint16_t const save_periodicity = 100;
-  OldStateStore old_state_;
-  void          ReloadState();
-  void          SaveState();
+  OldStateStore  old_state_;
+  void           ReloadState();
+  void           SaveState();
   /// @}
 
   /// The state and functions that the beacon needs for operation is here. Thus,
