@@ -262,23 +262,23 @@ T Product(std::vector<T> const &obj1)
 template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, void> Max(ArrayType const &array, typename ArrayType::Type &ret)
 {
-  if (array.size() >= array.data().padded_size())
+  // if (array.size() >= array.data().padded_size())
+  // {
+  //   ret = array.data().in_parallel().Reduce(
+  //       [](auto const &a, auto const &b) { return fetch::vectorise::Max(a, b); },
+  //       [](auto const &a) { return fetch::vectorise::Max(a); });
+  // }
+  // else
+  // {
+  ret = numeric_lowest<typename ArrayType::Type>();
+  for (typename ArrayType::Type const &e : array)
   {
-    ret = array.data().in_parallel().Reduce(
-        [](auto const &a, auto const &b) { return fetch::vectorise::Max(a, b); },
-        [](auto const &a) { return fetch::vectorise::Max(a); });
-  }
-  else
-  {
-    ret = numeric_lowest<typename ArrayType::Type>();
-    for (typename ArrayType::Type const &e : array)
+    if (e > ret)
     {
-      if (e > ret)
-      {
-        ret = e;
-      }
+      ret = e;
     }
   }
+  // }
 }
 
 template <typename ArrayType>
@@ -391,24 +391,24 @@ T Max(std::vector<T> const &obj1)
 template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, void> Min(ArrayType const &array, typename ArrayType::Type &ret)
 {
-  if (array.size() >= array.data().padded_size())
+  // if (array.size() >= array.data().padded_size())
+  // {
+  //   ret = array.data().in_parallel().Reduce(
+  //       [](auto const &a, auto const &b) { return fetch::vectorise::Min(a, b); },
+  //       [](auto const &a) { return fetch::vectorise::Min(a); },
+  //       fetch::math::numeric_max<typename ArrayType::Type>());
+  // }
+  // else
+  // {
+  ret = numeric_max<typename ArrayType::Type>();
+  for (typename ArrayType::Type const &e : array)
   {
-    ret = array.data().in_parallel().Reduce(
-        [](auto const &a, auto const &b) { return fetch::vectorise::Min(a, b); },
-        [](auto const &a) { return fetch::vectorise::Min(a); },
-        fetch::math::numeric_max<typename ArrayType::Type>());
-  }
-  else
-  {
-    ret = numeric_max<typename ArrayType::Type>();
-    for (typename ArrayType::Type const &e : array)
+    if (e < ret)
     {
-      if (e < ret)
-      {
-        ret = e;
-      }
+      ret = e;
     }
   }
+  // }
 }
 
 template <typename ArrayType>
