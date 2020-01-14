@@ -40,9 +40,9 @@ public:
 
   void Reset();
 
-  BlockPtr Generate(BlockPtrConst const &from = BlockPtr{}, uint64_t weight = 1u);
+  BlockPtr Generate(BlockPtrConst const &from = {}, uint64_t weight = 1u);
 
-  BlockPtr operator()(BlockPtrConst const &from = BlockPtr{}, uint64_t weight = 1u);
+  BlockPtr operator()(BlockPtrConst const &from = {}, uint64_t weight = 1u);
 
   BlockPtrs operator()(std::size_t amount, BlockPtrConst from = BlockPtr{}, uint64_t weight = 1u);
 

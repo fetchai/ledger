@@ -93,6 +93,10 @@ private:
   SystemClock clock_ = moment::GetClock("block:body", moment::ClockType::SYSTEM);
 };
 
+using BlockHash = Block::Hash;
+using BlockPtr  = std::shared_ptr<Block>;
+using Blocks    = std::vector<BlockPtr>;
+
 }  // namespace ledger
 
 namespace serializers {

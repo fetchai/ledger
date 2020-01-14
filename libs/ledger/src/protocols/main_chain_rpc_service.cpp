@@ -200,35 +200,29 @@ void MainChainRpcService::OnNewBlock(Address const &from, Block &block, Address 
   // add the new block to the chain
   auto const status = chain_.AddBlock(block);
 
-  char const *status_text = "Unknown";
   switch (status)
   {
   case BlockStatus::ADDED:
-    status_text = "Added";
     recv_block_valid_count_->increment();
     break;
   case BlockStatus::LOOSE:
-    status_text = "Loose";
     recv_block_loose_count_->increment();
     ++loose_blocks_seen_;
     break;
   case BlockStatus::DUPLICATE:
-    status_text = "Duplicate";
     recv_block_duplicate_count_->increment();
     break;
   case BlockStatus::INVALID:
-    status_text = "Invalid";
     recv_block_invalid_count_->increment();
     break;
   case BlockStatus::DIRTY:
-    status_text = "Dirty";
     recv_block_invalid_count_->increment();
     break;
   }
 
   FETCH_LOG_INFO(LOGGING_NAME, "New Block: #", block.block_number, " 0x", block.hash.ToHex(),
                  " (from peer: ", ToBase64(from), " num txs: ", block.GetTransactionCount(),
-                 " status: ", status_text, ")");
+                 " status: ", ToString(status), ")");
 }
 
 MainChainRpcService::Address MainChainRpcService::GetRandomTrustedPeer() const
@@ -253,7 +247,7 @@ MainChainRpcService::Address MainChainRpcService::GetRandomTrustedPeer() const
   return address;
 }
 
-void MainChainRpcService::HandleChainResponse(Address const &address, BlockList blocks)
+void MainChainRpcService::HandleChainResponse(Address const &address, Blocks blocks)
 {
   // default expectations is that blocks are returned in reverse order, later-to-earlier
   HandleChainResponse(address, blocks.rbegin(), blocks.rend());
@@ -262,74 +256,51 @@ void MainChainRpcService::HandleChainResponse(Address const &address, BlockList 
 template <class Begin, class End>
 void MainChainRpcService::HandleChainResponse(Address const &address, Begin begin, End end)
 {
-  std::size_t added{0};
-  std::size_t loose{0};
-  std::size_t duplicate{0};
-  std::size_t invalid{0};
-  std::size_t dirty{0};
+  std::map<BlockStatus, std::size_t> status_stats;
 
   for (auto it = begin; it != end; ++it)
   {
+    auto block = *it;
+
     // skip the genesis block
-    if (it->IsGenesis())
+    if (block->IsGenesis())
     {
       continue;
     }
 
     // recompute the digest
-    it->UpdateDigest();
+    block->UpdateDigest();
 
     // add the block
-    if (!ValidBlock(*it, "during fwd sync"))
+    if (!ValidBlock(*block, "during fwd sync"))
     {
-      FETCH_LOG_DEBUG(LOGGING_NAME, "Synced bad proof block: 0x", it->hash.ToHex(),
-                      " from: muddle://", ToBase64(address));
-      ++invalid;
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Synced bad proof block 0x", block->hash.ToHex(),
+                      " from muddle://", ToBase64(address));
+      ++status_stats[BlockStatus::INVALID];
       continue;
     }
 
-    auto const status = chain_.AddBlock(*it);
+    auto const status = chain_.AddBlock(std::move(block));
 
-    switch (status)
-    {
-    case BlockStatus::ADDED:
-      FETCH_LOG_DEBUG(LOGGING_NAME, "Synced new block: 0x", it->hash.ToHex(), " from: muddle://",
-                      ToBase64(address));
-      ++added;
-      break;
-    case BlockStatus::LOOSE:
-      FETCH_LOG_DEBUG(LOGGING_NAME, "Synced loose block: 0x", it->hash.ToHex(), " from: muddle://",
-                      ToBase64(address));
-      ++loose;
-      break;
-    case BlockStatus::DUPLICATE:
-      FETCH_LOG_DEBUG(LOGGING_NAME, "Synced duplicate block: 0x", it->hash.ToHex(),
-                      " from: muddle://", ToBase64(address));
-      ++duplicate;
-      break;
-    case BlockStatus::INVALID:
-      FETCH_LOG_DEBUG(LOGGING_NAME, "Synced invalid block: 0x", it->hash.ToHex(),
-                      " from: muddle://", ToBase64(address));
-      ++invalid;
-      break;
-    case BlockStatus::DIRTY:
-      FETCH_LOG_DEBUG(LOGGING_NAME, "Synced dirty block: 0x", it->hash.ToHex(), " from: muddle://",
-                      ToBase64(address));
-      ++dirty;
-      break;
-    }
+    ++status_stats[status];
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Sync: ", ToString(status), " block 0x", (*it)->hash.ToHex(),
+                    " from muddle://", ToBase64(address));
   }
 
-  if (invalid != 0u)
+  if (status_stats.count(BlockStatus::INVALID) != 0u)
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Synced Summary: Invalid: ", invalid, " Added: ", added,
-                   " Loose: ", loose, " Duplicate: ", duplicate, " Dirty: ", dirty,
-                   " from: muddle://", ToBase64(address));
+    FETCH_LOG_WARN(
+        LOGGING_NAME, "Synced Summary:", " Invalid: ", status_stats[BlockStatus::INVALID],
+        " Added: ", status_stats[BlockStatus::ADDED], " Loose: ", status_stats[BlockStatus::LOOSE],
+        " Duplicate: ", status_stats[BlockStatus::DUPLICATE],
+        " Dirty: ", status_stats[BlockStatus::DIRTY], " from muddle://", ToBase64(address));
   }
   else
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Synced Summary: Added: ", added, " Loose: ", loose,
-                   " Duplicate: ", duplicate, " Dirty: ", dirty, " from: muddle://",
+    FETCH_LOG_INFO(LOGGING_NAME, "Synced Summary:", " Added: ", status_stats[BlockStatus::ADDED],
+                   " Loose: ", status_stats[BlockStatus::LOOSE],
+                   " Duplicate: ", status_stats[BlockStatus::DUPLICATE],
+                   " Dirty: ", status_stats[BlockStatus::DIRTY], " from muddle://",
                    ToBase64(address));
   }
 }
@@ -501,10 +472,11 @@ State MainChainRpcService::OnWaitForBlocks()
 
   // we have now reached the heaviest tip
   auto const &latest_block = log.blocks.back();
+  assert(!latest_block->hash.empty());  // should be set by HandleChainResponse()
 
   // check to see if we have either reached the heaviest tip or we are starting to advance past the
   // heaviest block number of the peer (presumably we are chasing an side branch)
-  if ((latest_block.hash == log.heaviest_hash) || (latest_block.block_number > log.block_number))
+  if ((latest_block->hash == log.heaviest_hash) || (latest_block->block_number > log.block_number))
   {
     block_resolving_ = {};
   }
@@ -514,7 +486,7 @@ State MainChainRpcService::OnWaitForBlocks()
     // to request the information from
     for (auto it = log.blocks.rbegin(); it != log.blocks.rend(); ++it)
     {
-      block_resolving_ = chain_.GetBlock(it->hash);
+      block_resolving_ = chain_.GetBlock((*it)->hash);
       if (block_resolving_)
       {
         break;

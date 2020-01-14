@@ -153,7 +153,6 @@ TYPED_TEST(TanHTest, saveparams_test)
   using OpType        = typename fetch::ml::ops::TanH<TensorType>;
 
   TensorType data = TypeParam::FromString("0, 0.2, 0.4, -0, -0.2, -0.4");
-  TensorType gt   = TypeParam::FromString("0.0, 0.197375, 0.379949, -0.0, -0.197375, -0.379949");
 
   OpType op;
 

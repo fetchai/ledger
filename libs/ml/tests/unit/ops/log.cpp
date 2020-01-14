@@ -107,9 +107,6 @@ TYPED_TEST(LogTest, saveparams_test)
   using OpType        = fetch::ml::ops::Log<TensorType>;
 
   TensorType data = TensorType::FromString("1, 2, 4, 8, 100, 1000");
-  TensorType gt   = TensorType::FromString(
-      "0, 0.693147180559945, 1.38629436111989, 2.07944154167984, 4.60517018598809, "
-      "6.90775527898214");
 
   OpType op;
 
