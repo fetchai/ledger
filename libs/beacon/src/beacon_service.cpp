@@ -292,7 +292,7 @@ BeaconService::State BeaconService::OnPrepareEntropyGeneration()
   if ((index % save_periodicity_) == 0 ||
       state_machine_->state() == State::WAIT_FOR_SETUP_COMPLETION)
   {
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Periodically saving the entropy information");
+    FETCH_LOG_INFO(LOGGING_NAME, "Periodically saving the entropy information. Index: ", index);
     SaveState();
   }
 
