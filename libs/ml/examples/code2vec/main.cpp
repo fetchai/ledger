@@ -73,7 +73,7 @@ int main(int ac, char **av)
     return 1;
   }
 
-  fetch::ml::dataloaders::C2VLoader<TensorType, TensorType> cloader(20);
+  fetch::ml::dataloaders::C2VLoader<TensorType> cloader(20);
 
   for (int i(1); i < ac; ++i)
   {

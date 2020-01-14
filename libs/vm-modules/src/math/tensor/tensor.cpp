@@ -70,6 +70,11 @@ Ptr<VMTensor> VMTensor::Constructor(VM *vm, TypeId type_id, Ptr<Array<SizeType>>
   return Ptr<VMTensor>{new VMTensor(vm, type_id, shape->elements)};
 }
 
+Ptr<VMTensor> VMTensor::EmptyConstructor(VM *vm, TypeId type_id)
+{
+  return Ptr<VMTensor>{new VMTensor(vm, type_id)};
+}
+
 void VMTensor::Bind(Module &module, bool const enable_experimental)
 {
   using Index = fetch::math::SizeType;
@@ -144,8 +149,9 @@ void VMTensor::Bind(Module &module, bool const enable_experimental)
 
   if (enable_experimental)
   {
-    // no tensor features are experimental
-    FETCH_UNUSED(interface);
+    interface.CreateConstructor(&VMTensor::EmptyConstructor, []() -> ChargeAmount {
+      return static_cast<ChargeAmount>(CONSTRUCTION_CONST_COEF);
+    });
   }
 
   // Add support for Array of Tensors
