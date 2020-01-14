@@ -81,6 +81,11 @@ Ptr<VMTensor> VMTensor::StringConstructor(VM *vm, TypeId type_id, Ptr<String> co
   return Ptr<VMTensor>{new VMTensor(vm, type_id, str->string())};
 }
 
+Ptr<VMTensor> VMTensor::EmptyConstructor(VM *vm, TypeId type_id)
+{
+  return Ptr<VMTensor>{new VMTensor(vm, type_id)};
+}
+
 void VMTensor::Bind(Module &module, bool const enable_experimental)
 {
   using Index = fetch::math::SizeType;
@@ -169,6 +174,9 @@ void VMTensor::Bind(Module &module, bool const enable_experimental)
   {
     interface.CreateConstructor(&VMTensor::StringConstructor,
                                 tensor_string_constructor_charge_estimate);
+    interface.CreateConstructor(&VMTensor::EmptyConstructor, []() -> ChargeAmount {
+      return static_cast<ChargeAmount>(CONSTRUCTION_CONST_COEF);
+    });
   }
 
   // Add support for Array of Tensors

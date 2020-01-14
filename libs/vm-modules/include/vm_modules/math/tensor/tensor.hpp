@@ -62,6 +62,7 @@ public:
 
   static fetch::vm::Ptr<VMTensor> StringConstructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id,
                                                     fetch::vm::Ptr<fetch::vm::String> const &str);
+  static fetch::vm::Ptr<VMTensor> EmptyConstructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id);
 
   static void Bind(fetch::vm::Module &module, bool enable_experimental);
 
