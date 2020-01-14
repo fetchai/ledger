@@ -46,8 +46,9 @@ public:
     // TODO(private issue #566): There should be defined more integer and floating point
     // types here, however they will be relevant only when used with document
     // SCHEMA defining expected types in the document.
-    NUMBER_INT   = 5,
-    NUMBER_FLOAT = 6,
+    NUMBER_INT         = 5,
+    NUMBER_FLOAT       = 6,
+    NUMBER_FIXED_POINT = 7,
 
     OPEN_OBJECT  = 11,
     CLOSE_OBJECT = 12,
@@ -111,7 +112,7 @@ public:
   JSONDocument &operator=(JSONDocument const &) = delete;
   JSONDocument &operator=(JSONDocument &&) = default;
 
-  bool Has(byte_array::ConstByteArray const &key)
+  bool Has(byte_array::ConstByteArray const &key) const
   {
     return variant_.Has(key);
   }

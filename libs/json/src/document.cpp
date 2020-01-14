@@ -111,6 +111,21 @@ void JSONDocument::ExtractPrimitive(Variant &variant, JSONToken const &token,
     break;
   }
 
+  case NUMBER_FIXED_POINT:
+  {
+    std::string const str{document.SubArray(token.first, token.second)};
+    errno = 0;
+    // convert the value
+    auto const converted_value = fixed_point::fp64_t(str);
+
+    // todo: check errno and other failure conditions
+
+    // update the variant
+    variant = converted_value;
+    success = true;
+    break;
+  }
+
   default:
     break;
   }
@@ -150,7 +165,8 @@ void JSONDocument::Parse(ConstByteArray const &document)
     // determine if this is a primitive type
     bool const is_primitive = (token.type == KEYWORD_TRUE) || (token.type == KEYWORD_FALSE) ||
                               (token.type == KEYWORD_NULL) || (token.type == STRING) ||
-                              (token.type == NUMBER_INT) || (token.type == NUMBER_FLOAT);
+                              (token.type == NUMBER_INT) || (token.type == NUMBER_FLOAT) ||
+                              (token.type == NUMBER_FIXED_POINT);
 
     if (is_primitive)
     {
@@ -496,8 +512,8 @@ void JSONDocument::Tokenise(ConstByteArray const &document)
     default:  // If none of the above it must be number:
 
       ++element_counter;
-      type =
-          uint8_t(byte_array::consumers::NumberConsumer<NUMBER_INT, NUMBER_FLOAT>(document, pos));
+      type = uint8_t(
+          byte_array::consumers::NumberConsumer<NUMBER_INT, NUMBER_FIXED_POINT>(document, pos));
       if (type == uint8_t(-1))
       {
         throw JSONParseException("Unable to parse integer on line " + std::to_string(line) +

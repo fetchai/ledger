@@ -386,6 +386,10 @@ meta::IfIsInteger<T, T> Variant::As() const
 template <typename T>
 meta::IfIsFloat<T, T> Variant::As() const
 {
+  if (IsFixedPoint())
+  {
+    return T{fixed_point::fp64_t::FromBase(primitive_.integer)};
+  }
   if (!IsFloatingPoint())
   {
     throw std::runtime_error("Variant type mismatch, unable to extract floating point value");

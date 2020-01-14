@@ -80,8 +80,8 @@ TEST(JsonTests, TypeParsing)
 {
   char const *doc_content = R"({
   "a": 3,
-  "b": 2.3e-2,
-  "c": 2e+9,
+  "b": 0.023,
+  "c": -20000.00000,
   "d": "hello",
   "e": null,
   "f": true,
@@ -92,8 +92,8 @@ TEST(JsonTests, TypeParsing)
   JSONDocument doc;
   doc.Parse(doc_content);
   EXPECT_TRUE(doc["a"].IsInteger());
-  EXPECT_TRUE(doc["b"].IsFloatingPoint());
-  EXPECT_TRUE(doc["c"].IsFloatingPoint());
+  EXPECT_TRUE(doc["b"].IsFixedPoint());
+  EXPECT_TRUE(doc["c"].IsFixedPoint());
   EXPECT_TRUE(doc["d"].IsString());
   EXPECT_TRUE(doc["e"].IsNull());
   EXPECT_TRUE(doc["f"].IsBoolean());
