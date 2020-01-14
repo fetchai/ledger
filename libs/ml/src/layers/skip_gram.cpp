@@ -100,10 +100,6 @@ void SkipGram<TensorType>::SetOpSaveableParams(SPType const &sp)
 // template class SkipGram<math::Tensor<int16_t>>;
 template class SkipGram<math::Tensor<int32_t>>;
 template class SkipGram<math::Tensor<int64_t>>;
-// template class SkipGram<math::Tensor<uint8_t>>;
-// template class SkipGram<math::Tensor<uint16_t>>;
-template class SkipGram<math::Tensor<uint32_t>>;
-template class SkipGram<math::Tensor<uint64_t>>;
 template class SkipGram<math::Tensor<float>>;
 template class SkipGram<math::Tensor<double>>;
 template class SkipGram<math::Tensor<fixed_point::fp32_t>>;

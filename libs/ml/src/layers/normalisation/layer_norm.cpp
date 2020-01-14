@@ -111,10 +111,6 @@ void LayerNorm<TensorType>::SetOpSaveableParams(SPType const &sp)
 // template class LayerNorm<math::Tensor<int16_t>>;
 template class LayerNorm<math::Tensor<int32_t>>;
 template class LayerNorm<math::Tensor<int64_t>>;
-// template class LayerNorm<math::Tensor<uint8_t>>;
-// template class LayerNorm<math::Tensor<uint16_t>>;
-template class LayerNorm<math::Tensor<uint32_t>>;
-template class LayerNorm<math::Tensor<uint64_t>>;
 template class LayerNorm<math::Tensor<float>>;
 template class LayerNorm<math::Tensor<double>>;
 template class LayerNorm<math::Tensor<fixed_point::fp32_t>>;

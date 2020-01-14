@@ -115,10 +115,6 @@ std::vector<math::SizeType> Convolution2D<TensorType>::ComputeOutputShape(
 // template class Convolution2D<math::Tensor<int16_t>>;
 template class Convolution2D<math::Tensor<int32_t>>;
 template class Convolution2D<math::Tensor<int64_t>>;
-// template class Convolution2D<math::Tensor<uint8_t>>;
-// template class Convolution2D<math::Tensor<uint16_t>>;
-template class Convolution2D<math::Tensor<uint32_t>>;
-template class Convolution2D<math::Tensor<uint64_t>>;
 template class Convolution2D<math::Tensor<float>>;
 template class Convolution2D<math::Tensor<double>>;
 template class Convolution2D<math::Tensor<fixed_point::fp32_t>>;

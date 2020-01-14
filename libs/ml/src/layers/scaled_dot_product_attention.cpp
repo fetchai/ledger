@@ -134,10 +134,6 @@ void ScaledDotProductAttention<TensorType>::SetOpSaveableParams(SPType const &sp
 // template class ScaledDotProductAttention<math::Tensor<int16_t>>;
 template class ScaledDotProductAttention<math::Tensor<int32_t>>;
 template class ScaledDotProductAttention<math::Tensor<int64_t>>;
-// template class ScaledDotProductAttention<math::Tensor<uint8_t>>;
-// template class ScaledDotProductAttention<math::Tensor<uint16_t>>;
-template class ScaledDotProductAttention<math::Tensor<uint32_t>>;
-template class ScaledDotProductAttention<math::Tensor<uint64_t>>;
 template class ScaledDotProductAttention<math::Tensor<float>>;
 template class ScaledDotProductAttention<math::Tensor<double>>;
 template class ScaledDotProductAttention<math::Tensor<fixed_point::fp32_t>>;

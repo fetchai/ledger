@@ -168,14 +168,8 @@ std::vector<math::SizeType> FullyConnected<TensorType>::ComputeOutputShape(
 /// EXPLICIT INSTANTIATIONS ///
 ///////////////////////////////
 
-// template class FullyConnected<math::Tensor<int8_t>>;
-// template class FullyConnected<math::Tensor<int16_t>>;
 template class FullyConnected<math::Tensor<int32_t>>;
 template class FullyConnected<math::Tensor<int64_t>>;
-// template class FullyConnected<math::Tensor<uint8_t>>;
-// template class FullyConnected<math::Tensor<uint16_t>>;
-template class FullyConnected<math::Tensor<uint32_t>>;
-template class FullyConnected<math::Tensor<uint64_t>>;
 template class FullyConnected<math::Tensor<float>>;
 template class FullyConnected<math::Tensor<double>>;
 template class FullyConnected<math::Tensor<fixed_point::fp32_t>>;
