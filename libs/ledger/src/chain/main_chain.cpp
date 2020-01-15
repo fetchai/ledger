@@ -98,7 +98,7 @@ MainChain::MainChain(Mode mode, bool dirty_block_functionality)
 MainChain::~MainChain()
 {
   // ensure the chain has been flushed to disk
-  FlushToDisk();
+  FlushToDisk(true);
 }
 
 void MainChain::Reset()
@@ -131,6 +131,12 @@ void MainChain::Reset()
 
   // add the tip for this block
   AddTip(genesis);
+}
+
+void MainChain::Flush()
+{
+  FETCH_LOCK(lock_);
+  FlushToDisk(true);
 }
 
 /**
@@ -2041,7 +2047,7 @@ DigestSet MainChain::DetectDuplicateTransactions(BlockHash const &           sta
   return duplicates;
 }
 
-void MainChain::FlushToDisk()
+void MainChain::FlushToDisk(bool flush_bloom)
 {
   using namespace fetch::serializers;
 
@@ -2050,7 +2056,7 @@ void MainChain::FlushToDisk()
     block_store_->Flush(false);
   }
 
-  if (mode_ != Mode::IN_MEMORY_DB)
+  if (flush_bloom && (mode_ != Mode::IN_MEMORY_DB))
   {
     try
     {
