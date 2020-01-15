@@ -20,10 +20,13 @@
 
 #include "core/serializers/counter.hpp"
 #include "ml/layers/fully_connected.hpp"
+<<<<<<< HEAD
 
 #include "ml/model/dnn_classifier.hpp"
 #include "ml/model/dnn_regressor.hpp"
-#include "ml/model/sequential.hpp"
+=======
+>>>>>>> 985d47e6c1851c7067130910c190862cb4c3c456
+    #include "ml/model/sequential.hpp"
 
 #include "ml/layers/convolution_1d.hpp"
 #include "ml/layers/convolution_2d.hpp"
@@ -46,7 +49,7 @@
 #include "vm_modules/ml/model/model_estimator.hpp"
 #include "vm_modules/use_estimator.hpp"
 
-using namespace fetch::vm;
+    using namespace fetch::vm;
 
 namespace fetch {
 namespace vm_modules {
@@ -92,8 +95,6 @@ std::map<std::string, OptimiserType> const VMModel::optimisers_{
 std::map<std::string, uint8_t> const VMModel::model_categories_{
     {"none", static_cast<uint8_t>(ModelCategory::NONE)},
     {"sequential", static_cast<uint8_t>(ModelCategory::SEQUENTIAL)},
-    {"regressor", static_cast<uint8_t>(ModelCategory::REGRESSOR)},
-    {"classifier", static_cast<uint8_t>(ModelCategory::CLASSIFIER)},
 };
 
 std::map<std::string, MetricType> const VMModel::metrics_{
@@ -208,71 +209,6 @@ void VMModel::CompileSequentialImplementation(Ptr<String> const &loss, Ptr<Strin
   compiled_ = true;
 }
 
-/**
- * @brief VMModel::CompileSimple
- * @param optimiser a valid optimiser name ["adam", "sgd" ...]
- * @param layer_shapes a list of layer shapes, min 2: Input and Output shape correspondingly.
- */
-void VMModel::CompileSimple(fetch::vm::Ptr<fetch::vm::String> const &        optimiser,
-                            fetch::vm::Ptr<vm::Array<math::SizeType>> const &layer_shapes)
-{
-  std::size_t const total_layer_shapes = layer_shapes->elements.size();
-  if (total_layer_shapes < min_total_layer_shapes)
-  {
-    vm_->RuntimeError("Regressor/classifier model compilation requires providing at least " +
-                      std::to_string(min_total_layer_shapes) + " layer shapes (input, output)!");
-    return;
-  }
-
-  std::vector<math::SizeType> shapes;
-  shapes.reserve(total_layer_shapes);
-  for (std::size_t i = 0; i < total_layer_shapes; ++i)
-  {
-    shapes.emplace_back(layer_shapes->elements.at(i));
-  }
-
-  switch (model_category_)
-  {
-  case (ModelCategory::REGRESSOR):
-    model_ = std::make_shared<fetch::ml::model::DNNRegressor<TensorType>>(*model_config_, shapes);
-    break;
-
-  case (ModelCategory::CLASSIFIER):
-    model_ = std::make_shared<fetch::ml::model::DNNClassifier<TensorType>>(*model_config_, shapes);
-    break;
-
-  default:
-    vm_->RuntimeError(
-        "Only regressor/classifier model types accept layer shapes list as a compilation "
-        "parameter!");
-    return;
-  }
-
-  // For regressor and classifier we can't prepare the dataloder until model_ is ready.
-  PrepareDataloader();
-
-  compiled_ = false;
-  try
-  {
-    OptimiserType const optimiser_type = ParseName(optimiser->string(), optimisers_, "optimiser");
-    if (optimiser_type != OptimiserType::ADAM)
-    {
-      vm_->RuntimeError(
-          R"(Wrong optimiser, a regressor/classifier model can use only "adam", while given : )" +
-          optimiser->string());
-      return;
-    }
-    model_->Compile(optimiser_type);
-  }
-  catch (std::exception const &e)
-  {
-    vm_->RuntimeError("Compilation of a regressor/classifier model failed : " +
-                      std::string(e.what()));
-    return;
-  }
-  compiled_ = true;
-}
-
 void VMModel::Fit(vm::Ptr<VMTensor> const &data, vm::Ptr<VMTensor> const &labels,
                   fetch::math::SizeType const &batch_size)
 {
@@ -355,8 +291,6 @@ void VMModel::Bind(Module &module, bool const experimental_enabled)
                               UseEstimator(&ModelEstimator::LayerAddActivation))
         .CreateMemberFunction("add", &VMModel::LayerAddReshape,
                               UseEstimator(&ModelEstimator::LayerAddReshape))
-        .CreateMemberFunction("compile", &VMModel::CompileSimple,
-                              UseEstimator(&ModelEstimator::CompileSimple))
         .CreateMemberFunction("addExperimental", &VMModel::LayerAddDenseActivationExperimental,
                               UseEstimator(&ModelEstimator::LayerAddDenseActivationExperimental));
   }
@@ -687,8 +621,7 @@ void VMModel::LayerAddDropout(const fetch::vm::Ptr<String> &layer,
     AssertLayerTypeMatches(layer_type, {SupportedLayerType::DROPOUT});
     SequentialModelPtr me = GetMeAsSequentialIfPossible();
 
-    // ops::Dropout takes a keep-probability, while Keras-style argument is a drop-probability,
-    // so it is reversed here.
+    // ops::Dropout takes a drop probability
     if (probability < DataType{0} || probability > DataType{1})
     {
       std::stringstream ss;
@@ -697,9 +630,8 @@ void VMModel::LayerAddDropout(const fetch::vm::Ptr<String> &layer,
       vm_->RuntimeError(ss.str());
       return;
     }
-    DataType const keep_probability = DataType{1} - probability;
 
-    me->Add<fetch::ml::ops::Dropout<TensorType>>(keep_probability);
+    me->Add<fetch::ml::ops::Dropout<TensorType>>(probability);
     compiled_ = false;
   }
   catch (std::exception const &e)
@@ -776,10 +708,6 @@ void VMModel::LayerAddReshape(const fetch::vm::Ptr<String> &                    
   }
 }
 
-/**
- * for regressor and classifier we can't prepare the dataloder until after compile has begun
- * because model_ isn't ready until then.
- */
 void VMModel::PrepareDataloader()
 {
   // set up the dataloader

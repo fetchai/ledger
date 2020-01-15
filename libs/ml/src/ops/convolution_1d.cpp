@@ -241,7 +241,8 @@ void Convolution1D<TensorType>::ReverseFillVerticalStride(TensorType &      inpu
     {
       for (SizeType i_oc{0}; i_oc < output_channels; ++i_oc)  // Iterate over output channels
       {
-        input(i_oc, i_ic, i_k, 0) += vertical_stride(i_oc, j_s);
+        input(i_oc, i_ic, i_k, 0) =
+            static_cast<DataType>(input(i_oc, i_ic, i_k, 0) + vertical_stride(i_oc, j_s));
       }
       ++j_s;
     }
@@ -397,6 +398,13 @@ template class Convolution1D<math::Tensor<int8_t>>;
 template class Convolution1D<math::Tensor<int16_t>>;
 template class Convolution1D<math::Tensor<int32_t>>;
 template class Convolution1D<math::Tensor<int64_t>>;
+<<<<<<< HEAD
+=======
+template class Convolution1D<math::Tensor<uint8_t>>;
+template class Convolution1D<math::Tensor<uint16_t>>;
+template class Convolution1D<math::Tensor<uint32_t>>;
+template class Convolution1D<math::Tensor<uint64_t>>;
+>>>>>>> 985d47e6c1851c7067130910c190862cb4c3c456
 template class Convolution1D<math::Tensor<float>>;
 template class Convolution1D<math::Tensor<double>>;
 template class Convolution1D<math::Tensor<fixed_point::fp32_t>>;

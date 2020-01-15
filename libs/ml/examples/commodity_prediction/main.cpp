@@ -115,7 +115,7 @@ std::pair<std::string, std::vector<std::string>> ReadArchitecture(
   SizeType                 input_layer_size;
   SizeType                 previous_layer_size;
   std::string              layer_activation;
-  DataType                 dropout_prob{1};
+  DataType                 dropout_prob{0};
   std::vector<std::string> node_names({});
   LayerType                layer_type;
 
@@ -230,9 +230,9 @@ int ArgPos(char const *str, int argc, char **argv)
 DataType get_loss(std::shared_ptr<GraphType> const &g_ptr, std::string const &test_x_file,
                   std::string const &test_y_file, std::vector<std::string> node_names)
 {
-  DataType                                                         loss{0};
-  DataType                                                         loss_counter{0};
-  fetch::ml::dataloaders::TensorDataLoader<TensorType, TensorType> loader;
+  DataType                                             loss{0};
+  DataType                                             loss_counter{0};
+  fetch::ml::dataloaders::TensorDataLoader<TensorType> loader;
 
   auto data  = fetch::math::utilities::ReadCSV<TensorType>(test_x_file, 1, 1, true);
   auto label = fetch::math::utilities::ReadCSV<TensorType>(test_y_file, 1, 1, true);
@@ -350,7 +350,7 @@ int main(int argc, char **argv)
 
     std::string test_x_file = filename_root + "x_test.csv";
     std::string test_y_file = filename_root + "y_pred_test.csv";
-    fetch::ml::dataloaders::TensorDataLoader<TensorType, TensorType> loader;
+    fetch::ml::dataloaders::TensorDataLoader<TensorType> loader;
     auto data  = fetch::math::utilities::ReadCSV<TensorType>(test_x_file, 1, 1, true);
     auto label = fetch::math::utilities::ReadCSV<TensorType>(test_y_file, 1, 1, true);
     loader.AddData({data}, label);
@@ -393,7 +393,7 @@ int main(int argc, char **argv)
     OptimiserType optimiser(g_ptr, {node_names.front()}, node_names.at(1), node_names.back(),
                             LEARNING_RATE);
 
-    fetch::ml::dataloaders::TensorDataLoader<TensorType, TensorType> loader;
+    fetch::ml::dataloaders::TensorDataLoader<TensorType> loader;
 
     // three training rounds
     for (SizeType j = 0; j < 3; j++)

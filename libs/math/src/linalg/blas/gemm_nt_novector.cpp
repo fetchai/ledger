@@ -61,7 +61,7 @@ void Blas<S, Signature(_C <= _alpha, _A, _B, _beta, _C),
       {
         for (i = 0; i < c.height(); ++i)
         {
-          c(i, j) = beta * c(i, j);
+          c(i, j) = static_cast<Type>(beta * c(i, j));
         }
       }
     }
@@ -83,17 +83,16 @@ void Blas<S, Signature(_C <= _alpha, _A, _B, _beta, _C),
     {
       for (i = 0; i < c.height(); ++i)
       {
-        c(i, j) = beta * c(i, j);
+        c(i, j) = static_cast<Type>(beta * c(i, j));
       }
     }
 
     for (l = 0; l < a.width(); ++l)
     {
-      Type temp;
-      temp = alpha * b(j, l);
+      auto temp = static_cast<Type>(alpha * b(j, l));
       for (i = 0; i < c.height(); ++i)
       {
-        c(i, j) = c(i, j) + temp * a(i, l);
+        c(i, j) = static_cast<Type>(c(i, j) + temp * a(i, l));
       }
     }
   }

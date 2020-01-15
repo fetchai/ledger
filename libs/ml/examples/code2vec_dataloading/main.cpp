@@ -29,11 +29,9 @@
 
 constexpr std::size_t MAX_CONTEXTS = 20;
 
-using DataType    = uint64_t;
-using TensorType  = fetch::math::Tensor<DataType>;
-using SizeType    = fetch::math::Tensor<DataType>::SizeType;
-using LabelType   = TensorType;
-using ContextType = TensorType;
+using DataType   = uint64_t;
+using TensorType = fetch::math::Tensor<DataType>;
+using SizeType   = fetch::math::Tensor<DataType>::SizeType;
 
 std::string ReadFile(std::string const &path)
 {
@@ -49,7 +47,7 @@ int main(int ac, char **av)
     return 1;
   }
 
-  fetch::ml::dataloaders::C2VLoader<LabelType, ContextType> cloader(MAX_CONTEXTS);
+  fetch::ml::dataloaders::C2VLoader<TensorType> cloader(MAX_CONTEXTS);
 
   cloader.AddDataAsString(ReadFile(av[1]));
   std::cout << "Number of different function names: " << cloader.function_name_counter().size()

@@ -41,7 +41,7 @@ class VMDataLoader : public fetch::vm::Object
 public:
   using DataType          = fetch::vm_modules::math::DataType;
   using TensorType        = fetch::math::Tensor<DataType>;
-  using DataLoaderType    = fetch::ml::dataloaders::DataLoader<TensorType, TensorType>;
+  using DataLoaderType    = fetch::ml::dataloaders::DataLoader<TensorType>;
   using DataLoaderPtrType = std::shared_ptr<DataLoaderType>;
 
   enum class DataLoaderMode : uint8_t
@@ -139,7 +139,6 @@ struct MapSerializer<fetch::vm_modules::ml::VMDataLoader, D>
       case vm_modules::ml::VMDataLoader::DataLoaderMode::TENSOR:
       {
         auto tdl_ptr = std::static_pointer_cast<fetch::ml::dataloaders::TensorDataLoader<
-            fetch::math::Tensor<vm_modules::math::DataType>,
             fetch::math::Tensor<vm_modules::math::DataType>>>(sp.loader_);
         map.Append(LOADER, *tdl_ptr);
         break;
@@ -173,13 +172,12 @@ struct MapSerializer<fetch::vm_modules::ml::VMDataLoader, D>
       case vm_modules::ml::VMDataLoader::DataLoaderMode::TENSOR:
       {
         auto tdl_ptr = std::make_shared<fetch::ml::dataloaders::TensorDataLoader<
-            fetch::math::Tensor<vm_modules::math::DataType>,
+
             fetch::math::Tensor<vm_modules::math::DataType>>>();
         map.ExpectKeyGetValue(LOADER, *tdl_ptr);
 
         sp.loader_ = std::static_pointer_cast<
-            fetch::ml::dataloaders::DataLoader<fetch::math::Tensor<vm_modules::math::DataType>,
-                                               fetch::math::Tensor<vm_modules::math::DataType>>>(
+            fetch::ml::dataloaders::DataLoader<fetch::math::Tensor<vm_modules::math::DataType>>>(
             tdl_ptr);
 
         break;

@@ -62,7 +62,7 @@ int main(int argc, char **argv)
   auto labels_file    = doc["labels"].As<std::string>();
   auto n_rounds       = doc["n_rounds"].As<SizeType>();
   auto n_peers        = doc["n_peers"].As<SizeType>();
-  auto test_set_ratio = doc["test_set_ratio"].As<float>();
+  auto test_set_ratio = fetch::math::AsType<DataType>(doc["test_set_ratio"].As<float>());
 
   // get the network config file
   fetch::json::JSONDocument network_doc;

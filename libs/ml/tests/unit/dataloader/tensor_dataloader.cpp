@@ -45,7 +45,7 @@ TYPED_TEST(TensorDataloaderTest, serialize_tensor_dataloader)
   data2_tensor.Reshape({8, 2, 4});
 
   // generate a plausible tensor data loader
-  auto tdl = fetch::ml::dataloaders::TensorDataLoader<TypeParam, TypeParam>();
+  auto tdl = fetch::ml::dataloaders::TensorDataLoader<TypeParam>();
 
   // add some data
   tdl.AddData({data1_tensor, data2_tensor}, label_tensor);
@@ -58,8 +58,8 @@ TYPED_TEST(TensorDataloaderTest, serialize_tensor_dataloader)
 
   b.seek(0);
 
-  fetch::ml::dataloaders::TensorDataLoader<TypeParam, TypeParam> tdl_2;
-  tdl_2.SetTestRatio(0.5);
+  fetch::ml::dataloaders::TensorDataLoader<TypeParam> tdl_2;
+  tdl_2.SetTestRatio(math::AsType<typename TypeParam::Type>(0.5));
 
   b >> tdl_2;
 
@@ -103,9 +103,9 @@ TYPED_TEST(TensorDataloaderTest, test_validation_splitting_dataloader_test)
   data2_tensor.Reshape({8, 2, 4});
 
   // generate a plausible tensor data loader
-  auto tdl = fetch::ml::dataloaders::TensorDataLoader<TypeParam, TypeParam>();
-  tdl.SetTestRatio(0.1f);
-  tdl.SetValidationRatio(0.1f);
+  auto tdl = fetch::ml::dataloaders::TensorDataLoader<TypeParam>();
+  tdl.SetTestRatio(math::AsType<typename TypeParam::Type>(0.1));
+  tdl.SetValidationRatio(math::AsType<typename TypeParam::Type>(0.1));
 
   // add some data
   tdl.AddData({data1_tensor, data2_tensor}, label_tensor);
@@ -134,7 +134,7 @@ TYPED_TEST(TensorDataloaderTest, prepare_batch_test)
   data2_tensor.Reshape({feature_size_2_1, feature_size_2_2, n_data});
 
   // generate a plausible tensor data loader
-  auto tdl = fetch::ml::dataloaders::TensorDataLoader<TypeParam, TypeParam>();
+  auto tdl = fetch::ml::dataloaders::TensorDataLoader<TypeParam>();
   // add some data
   tdl.AddData({data1_tensor, data2_tensor}, label_tensor);
 
