@@ -181,6 +181,7 @@ void BeaconService::SaveState()
       // Now add signatures which are new
       while(!saved_state_all_sigs_.Has(storage::ResourceAddress(std::to_string(highest_relevant_sig_index))))
       {
+        FETCH_LOG_INFO(LOGGING_NAME, "Highest relevant: ", highest_relevant_sig_index, " size: ", signatures_being_built_.size());
         saved_state_all_sigs_.Set(storage::ResourceAddress(std::to_string(highest_relevant_sig_index)), signatures_being_built_.at(highest_relevant_sig_index));
         highest_relevant_sig_index--;
       }
@@ -211,6 +212,8 @@ void BeaconService::ReloadState(State &next_state)
   old_state_.Load("beacon_state.db", "beacon_state.index.db"); // Legacy/depreciated
   saved_state_.Load("beacon_state_v2.db", "beacon_state_v2.index.db");
   saved_state_all_sigs_.Load("beacon_state_sigs_v2.db", "beacon_state_sigs_v2.index.db");
+
+  FETCH_LOG_INFO(LOGGING_NAME, "\n\nReload.");
 
   if (!load_and_reload_on_crash_)
   {
@@ -392,7 +395,7 @@ BeaconService::State BeaconService::OnPrepareEntropyGeneration()
   if ((index % SAVE_PERIODICITY) == 0 ||
       state_machine_->previous_state() == State::WAIT_FOR_SETUP_COMPLETION)
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Periodically saving the entropy information. Index: ", index);
+    FETCH_LOG_INFO(LOGGING_NAME, "\n\nPeriodically saving the entropy information. Index: ", index);
     SaveState();
   }
 
