@@ -84,7 +84,7 @@ void Blas<S, Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
       {
         for (i = 0; i < leny; ++i)
         {
-          y[i] = beta * y[i];
+          y[i] = static_cast<Type>(beta * y[i]);
         }
       }
     }
@@ -105,7 +105,7 @@ void Blas<S, Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
         for (i = 0; i < leny; ++i)
         {
           y[iy] = beta * y[iy];
-          iy    = iy + incy;
+          iy    = static_cast<Type>(iy + incy);
         }
       }
     }
@@ -124,10 +124,10 @@ void Blas<S, Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
       temp = Type{0};
       for (i = 0; i < int(a.height()); ++i)
       {
-        temp = temp + a(i, j) * x[i];
+        temp = static_cast<Type>(temp + a(i, j) * x[i]);
       }
 
-      y[jy] = y[jy] + alpha * temp;
+      y[jy] = static_cast<Type>(y[jy] + alpha * temp);
       jy    = jy + incy;
     }
   }
@@ -140,11 +140,11 @@ void Blas<S, Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
       ix   = -1 + kx;
       for (i = 0; i < int(a.height()); ++i)
       {
-        temp = temp + a(i, j) * x[ix];
+        temp = static_cast<Type>(temp + a(i, j) * x[ix]);
         ix   = ix + incx;
       }
 
-      y[jy] = y[jy] + alpha * temp;
+      y[jy] = static_cast<Type>(y[jy] + alpha * temp);
       jy    = jy + incy;
     }
   }
