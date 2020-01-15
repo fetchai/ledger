@@ -38,7 +38,7 @@ public:
   Analyser()  = default;
   ~Analyser() = default;
 
-  void Initialise();
+  void Initialise(bool use_test_annotations = false);
 
   void UnInitialise();
 
@@ -311,6 +311,7 @@ private:
   FunctionPtr       function_;
   NodePtr           use_any_node_;
   FileErrorsArray   file_errors_array_;
+  bool              allow_test_annotations_{false};
 
   void AddError(uint16_t line, std::string const &message);
   void AddError(std::string const &filename, uint16_t line, std::string const &message);
