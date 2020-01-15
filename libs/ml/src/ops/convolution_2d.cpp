@@ -442,13 +442,10 @@ template class Convolution2D<math::Tensor<int8_t>>;
 template class Convolution2D<math::Tensor<int16_t>>;
 template class Convolution2D<math::Tensor<int32_t>>;
 template class Convolution2D<math::Tensor<int64_t>>;
-<<<<<<< HEAD
-=======
 template class Convolution2D<math::Tensor<uint8_t>>;
 template class Convolution2D<math::Tensor<uint16_t>>;
 template class Convolution2D<math::Tensor<uint32_t>>;
 template class Convolution2D<math::Tensor<uint64_t>>;
->>>>>>> 985d47e6c1851c7067130910c190862cb4c3c456
 template class Convolution2D<math::Tensor<float>>;
 template class Convolution2D<math::Tensor<double>>;
 template class Convolution2D<math::Tensor<fixed_point::fp32_t>>;

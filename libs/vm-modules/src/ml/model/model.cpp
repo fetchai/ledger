@@ -20,13 +20,8 @@
 
 #include "core/serializers/counter.hpp"
 #include "ml/layers/fully_connected.hpp"
-<<<<<<< HEAD
 
-#include "ml/model/dnn_classifier.hpp"
-#include "ml/model/dnn_regressor.hpp"
-=======
->>>>>>> 985d47e6c1851c7067130910c190862cb4c3c456
-    #include "ml/model/sequential.hpp"
+#include "ml/model/sequential.hpp"
 
 #include "ml/layers/convolution_1d.hpp"
 #include "ml/layers/convolution_2d.hpp"

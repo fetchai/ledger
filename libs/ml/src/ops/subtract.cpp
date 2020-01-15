@@ -16,13 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-//#include "math/fundamental_operators.hpp"
-//#include "math/matrix_operations.hpp"
-//#include "math/trigonometry.hpp"
 #include "ml/ops/subtract.hpp"
-//#include "ml/saveparams/saveable_params.hpp"
-//#include "vectorise/fixed_point/fixed_point.hpp"
-//#include "vectorise/math/max.hpp"
 
 namespace fetch {
 namespace ml {
