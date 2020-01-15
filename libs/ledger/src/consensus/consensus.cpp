@@ -261,13 +261,20 @@ bool Consensus::VerifyNotarisation(Block const &block) const
     if (result == NotarisationResult::CAN_NOT_VERIFY)
     {
       // If block is too old then get aeon beginning
-      auto aeon_block                = GetBeginningOfAeon(*previous_notarised_block, chain_);
-      auto threshold                 = GetThreshold(*previous_notarised_block);
-      auto ordered_notarisation_keys = aeon_block.block_entropy.aeon_notarisation_keys;
+      try
+      {
+        auto aeon_block                = GetBeginningOfAeon(*previous_notarised_block, chain_);
+        auto threshold                 = GetThreshold(*previous_notarised_block);
+        auto ordered_notarisation_keys = aeon_block.block_entropy.aeon_notarisation_keys;
 
-      return notarisation_->Verify(previous_notarised_block->hash,
-                                   block.block_entropy.block_notarisation,
-                                   ordered_notarisation_keys, threshold);
+        return notarisation_->Verify(previous_notarised_block->hash,
+                                     block.block_entropy.block_notarisation,
+                                     ordered_notarisation_keys, threshold);
+      }
+      catch (...)
+      {
+        return false;
+      }
     }
     if (result == NotarisationResult::FAIL_VERIFICATION)
     {
@@ -280,24 +287,25 @@ bool Consensus::VerifyNotarisation(Block const &block) const
 uint64_t Consensus::GetBlockGenerationWeight(Block const &current, Identity const &identity) const
 {
   MilliTimer const timer{"GetBlockGenerationWeight ", 1000};
-  auto             beginning_of_aeon = GetBeginningOfAeon(current, chain_);
+  Block            beginning_of_aeon;
+  try
+  {
+    beginning_of_aeon = GetBeginningOfAeon(current, chain_);
+  }
+  catch (...)
+  {
+    return 0;
+  }
 
   auto qualified_cabinet_weighted = QualWeightedByEntropy(beginning_of_aeon.block_entropy.qualified,
                                                           current.block_entropy.EntropyAsU64());
 
-  if (std::find(qualified_cabinet_weighted.begin(), qualified_cabinet_weighted.end(), identity) ==
-      qualified_cabinet_weighted.end())
-  {
-    // Note: weight being non zero indicates not in cabinet
-    return 0;
-  }
+  auto cabinet_position =
+      std::find(qualified_cabinet_weighted.cbegin(), qualified_cabinet_weighted.cend(), identity);
 
-  uint64_t const dist = static_cast<uint64_t>(std::distance(
-      qualified_cabinet_weighted.begin(),
-      std::find(qualified_cabinet_weighted.begin(), qualified_cabinet_weighted.end(), identity)));
-
-  // Top rank, miner 0 should get the highest weight of qual size
-  return static_cast<uint64_t>(qualified_cabinet_weighted.size() - dist);
+  // Note: weight being zero indicates not in cabinet.
+  // Top rank, miner 0 should get the highest weight of qual size.
+  return static_cast<uint64_t>(std::distance(cabinet_position, qualified_cabinet_weighted.cend()));
 }
 
 /**
@@ -317,7 +325,15 @@ bool Consensus::ValidBlockTiming(Block const &previous, Block const &proposed) c
 
   // Have to use the proposed block for this fn in case the block would be a new
   // aeon beginning.
-  Block beginning_of_aeon = GetBeginningOfAeon(proposed, chain_);
+  Block beginning_of_aeon;
+  try
+  {
+    beginning_of_aeon = GetBeginningOfAeon(proposed, chain_);
+  }
+  catch (...)
+  {
+    return false;
+  }
 
   BlockEntropy::Cabinet qualified_cabinet = beginning_of_aeon.block_entropy.qualified;
   auto                  qualified_cabinet_weighted =
@@ -458,8 +474,7 @@ bool Consensus::UpdateCurrentBlock(Block const &current)
       return false;
     }
 
-    previous_block_    = *prior;
-    beginning_of_aeon_ = GetBeginningOfAeon(current_block_, chain_);
+    previous_block_ = *prior;
   }
 
   if (!stake_->Load(storage_))
@@ -561,12 +576,10 @@ NextBlockPtr Consensus::GenerateNextBlock()
 {
   MilliTimer const timer{"GenerateNextBlock ", 1000};
   FETCH_LOCK(mutex_);
-  NextBlockPtr ret;
+  NextBlockPtr ret = std::make_unique<Block>();
 
   // Number of block we want to generate
   uint64_t const block_number = current_block_.block_number + 1;
-
-  ret = std::make_unique<Block>();
 
   // Try to get entropy for the block we are generating - is allowed to fail if we request too
   // early. Need to do entropy generation first so that we can pass the block we are generating
@@ -584,7 +597,14 @@ NextBlockPtr Consensus::GenerateNextBlock()
   ret->block_number  = block_number;
   ret->miner_id      = mining_identity_;
   ret->timestamp = GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM));
-  ret->weight    = GetBlockGenerationWeight(*ret, mining_identity_);
+  try
+  {
+    ret->weight = GetBlockGenerationWeight(*ret, mining_identity_);
+  }
+  catch (...)
+  {
+    return {};
+  }
 
   // Note here the previous block's entropy determines miner selection
   if (!ValidBlockTiming(current_block_, *ret))
@@ -606,6 +626,17 @@ NextBlockPtr Consensus::GenerateNextBlock()
     // Notify notarisation of new valid block
     notarisation_->NotariseBlock(*ret);
   }
+
+#ifndef NDEBUG
+  try
+  {
+    GetBeginningOfAeon(*ret, chain_);
+  }
+  catch (...)
+  {
+    assert(false);
+  }
+#endif
 
   if (ret->weight != GetBeginningOfAeon(*ret, chain_).block_entropy.qualified.size())
   {
@@ -819,27 +850,41 @@ Status Consensus::ValidBlock(Block const &current) const
   }
   else
   {
-    auto beginning_of_aeon = GetBeginningOfAeon(current, chain_);
-    qualified_cabinet      = beginning_of_aeon.block_entropy.qualified;
-    group_pub_key          = beginning_of_aeon.block_entropy.group_public_key;
-
-    auto const &beg_block_entropy = beginning_of_aeon.block_entropy;
-
-    if (beg_block_entropy.qualified != block_entropy.qualified)
+    try
     {
-      consensus_last_validate_block_failure_->set(8);
-      consensus_validate_block_failures_total_->add(1);
-      FETCH_LOG_WARN(LOGGING_NAME, "Saw a block entropy with mismatched qualified field. Size: ",
-                     block_entropy.qualified.size());
+      auto beginning_of_aeon = GetBeginningOfAeon(current, chain_);
+      qualified_cabinet      = beginning_of_aeon.block_entropy.qualified;
+      group_pub_key          = beginning_of_aeon.block_entropy.group_public_key;
+
+      auto const &beg_block_entropy = beginning_of_aeon.block_entropy;
+
+      if (beg_block_entropy.qualified != block_entropy.qualified)
+      {
+        consensus_last_validate_block_failure_->set(8);
+        consensus_validate_block_failures_total_->add(1);
+        FETCH_LOG_WARN(LOGGING_NAME, "Saw a block entropy with mismatched qualified field. Size: ",
+                       block_entropy.qualified.size());
+        return Status::NO;
+      }
+    }
+    catch (...)
+    {
       return Status::NO;
     }
   }
 
-  if (current.weight != GetBlockGenerationWeight(current, current.miner_id))
+  try
   {
-    consensus_last_validate_block_failure_->set(9);
-    consensus_validate_block_failures_total_->add(1);
-    FETCH_LOG_WARN(LOGGING_NAME, "Block with incorrect weight found");
+    if (current.weight != GetBlockGenerationWeight(current, current.miner_id))
+    {
+      consensus_last_validate_block_failure_->set(9);
+      consensus_validate_block_failures_total_->add(1);
+      FETCH_LOG_WARN(LOGGING_NAME, "Block with incorrect weight found");
+      return Status::NO;
+    }
+  }
+  catch (...)
+  {
     return Status::NO;
   }
 

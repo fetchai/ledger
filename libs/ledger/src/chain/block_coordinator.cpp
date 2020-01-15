@@ -971,7 +971,7 @@ BlockCoordinator::State BlockCoordinator::OnPostExecBlockValidation()
 
     if (!consensus_->UpdateCurrentBlock(*current_block_))
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Failed to update consensus with valid block", ex.what());
+      FETCH_LOG_WARN(LOGGING_NAME, "Failed to update consensus with valid block");
       consensus_update_failure_total_->increment();
     }
   }
@@ -1196,7 +1196,7 @@ BlockCoordinator::State BlockCoordinator::OnReset()
 
   if (!consensus_->UpdateCurrentBlock(*block))
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Failed to update consensus", ex.what());
+    FETCH_LOG_WARN(LOGGING_NAME, "Failed to update consensus");
     consensus_update_failure_total_->increment();
   }
 

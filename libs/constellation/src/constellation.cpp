@@ -568,7 +568,7 @@ bool Constellation::OnBringUpExternalNetwork(
   }
 
   // Update with genesis to trigger loading any saved state
-  if (!consensus_->UpdateCurrentBlock(*chain_->CreateGenesisBlock());)
+  if (!consensus_->UpdateCurrentBlock(*chain_->CreateGenesisBlock()))
   {
     return false;
   }
