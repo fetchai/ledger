@@ -31,6 +31,7 @@
 #include "math/meta/math_type_traits.hpp"
 #include "math/tensor/tensor_reduce.hpp"
 #include "vectorise/math/standard_functions.hpp"
+#include "vectorise/memory/parallel_dispatcher.hpp"
 
 #include <cassert>
 #include <numeric>
@@ -41,19 +42,6 @@ namespace math {
 
 // TODO (private 854) - vectorisation implementations not yet called
 namespace details_vectorisation {
-
-/**
- * Min function for returning the smallest value in an array
- * @tparam ArrayType
- * @param array
- * @return
- */
-template <typename ArrayType>
-void Min(ArrayType const &array, typename ArrayType::Type &ret)
-{
-  ret = array.data().in_parallel().Reduce(memory::Range(0, array.size()),
-                                          [](auto const &a, auto const &b) { return min(a, b); });
-}
 
 /**
  * return the product of all elements in the array
@@ -274,6 +262,14 @@ T Product(std::vector<T> const &obj1)
 template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, void> Max(ArrayType const &array, typename ArrayType::Type &ret)
 {
+  // if (array.size() >= array.data().padded_size())
+  // {
+  //   ret = array.data().in_parallel().Reduce(
+  //       [](auto const &a, auto const &b) { return fetch::vectorise::Max(a, b); },
+  //       [](auto const &a) { return fetch::vectorise::Max(a); });
+  // }
+  // else
+  // {
   ret = numeric_lowest<typename ArrayType::Type>();
   for (typename ArrayType::Type const &e : array)
   {
@@ -282,6 +278,7 @@ meta::IfIsMathArray<ArrayType, void> Max(ArrayType const &array, typename ArrayT
       ret = e;
     }
   }
+  // }
 }
 
 template <typename ArrayType>
@@ -394,6 +391,15 @@ T Max(std::vector<T> const &obj1)
 template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, void> Min(ArrayType const &array, typename ArrayType::Type &ret)
 {
+  // if (array.size() >= array.data().padded_size())
+  // {
+  //   ret = array.data().in_parallel().Reduce(
+  //       [](auto const &a, auto const &b) { return fetch::vectorise::Min(a, b); },
+  //       [](auto const &a) { return fetch::vectorise::Min(a); },
+  //       fetch::math::numeric_max<typename ArrayType::Type>());
+  // }
+  // else
+  // {
   ret = numeric_max<typename ArrayType::Type>();
   for (typename ArrayType::Type const &e : array)
   {
@@ -402,6 +408,7 @@ meta::IfIsMathArray<ArrayType, void> Min(ArrayType const &array, typename ArrayT
       ret = e;
     }
   }
+  // }
 }
 
 template <typename ArrayType>

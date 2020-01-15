@@ -18,8 +18,6 @@
 //------------------------------------------------------------------------------
 
 #include "ml/ops/ops.hpp"
-
-#include <cassert>
 #include <vector>
 
 namespace fetch {

@@ -48,7 +48,7 @@ public:
   MultiheadAttention() = default;
 
   MultiheadAttention(SizeType n_heads, SizeType model_dim,
-                     DataType dropout = fetch::math::Type<DataType>("0.9"))
+                     DataType dropout = fetch::math::Type<DataType>("0.1"))
     : n_heads_(n_heads)
     , model_dim_(model_dim)
     , dropout_(dropout)

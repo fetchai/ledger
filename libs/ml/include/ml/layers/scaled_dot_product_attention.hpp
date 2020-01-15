@@ -52,7 +52,7 @@ public:
 
   ScaledDotProductAttention() = default;
   explicit ScaledDotProductAttention(SizeType dk,
-                                     DataType dropout = fetch::math::Type<DataType>("0.9"))
+                                     DataType dropout = fetch::math::Type<DataType>("0.1"))
     : key_dim_(dk)
     , dropout_(dropout)
   {
