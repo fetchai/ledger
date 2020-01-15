@@ -1,6 +1,6 @@
 function build_graph(graph: Graph)
 // make graph with correct architecture
-var dropout_prob = 1.0fp64;
+var dropout_prob = 0.0fp64;
 var input_size = 118;
 var first_dense_size = 216;
 var second_dense_size = 108;

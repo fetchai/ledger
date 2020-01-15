@@ -310,14 +310,6 @@ ChargeAmount ModelEstimator::CompileSequentialWithMetrics(
   return CompileSequential(loss, optimiser);
 }
 
-ChargeAmount ModelEstimator::CompileSimple(Ptr<String> const &         optimiser,
-                                           Ptr<Array<SizeType>> const &in_layers)
-{
-  FETCH_UNUSED(optimiser);
-  FETCH_UNUSED(in_layers);
-  return MaximumCharge(optimiser->string() + NOT_IMPLEMENTED_MESSAGE);
-}
-
 ChargeAmount ModelEstimator::Fit(Ptr<math::VMTensor> const &data, Ptr<math::VMTensor> const &labels,
                                  SizeType const &batch_size)
 {
