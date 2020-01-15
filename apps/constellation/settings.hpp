@@ -57,6 +57,11 @@ public:
   settings::Setting<bool> private_network;
   /// @}
 
+  /// @name Standalone parameters
+  /// @{
+  settings::Setting<std::string> initial_address;
+  /// @}
+
   /// @name Shards
   /// @{
   settings::Setting<std::string> db_prefix;

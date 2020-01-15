@@ -288,7 +288,7 @@ bool GenesisFileCreator::LoadState(Variant const &object, ConsensusParameters co
   // ensure all token supply is taken
   if (remaining_supply > 0)
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Remaining token supply still available");
+    FETCH_LOG_WARN(LOGGING_NAME, "Remaining token supply still available: ", remaining_supply);
     return false;
   }
 
