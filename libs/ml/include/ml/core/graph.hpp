@@ -460,29 +460,27 @@ TensorType Graph<TensorType>::ForwardImplementation(std::string const &node_name
 }
 
 /**
- * Computes and/or deduces layer output shapes starting from the given node and recursively
- * traversing the Graph up to leaf (input) nodes. Layer output shape computation/deduction
- * results are cached in each Node.
+ * Computes and/or deduces layer output shapes, recursively traversing the Graph
+ * up to leaf (input) nodes. Layer output shape computation/deduction results
+ * are cached in each Node.
  * @param node_name
  */
 template <typename TensorType>
 void Graph<TensorType>::ComputeAllNodeShapes()
 {
-  std::string last_node_name = connections_.back().first;
-  if (nodes_.find(last_node_name) == nodes_.end())
+  for (auto const &node_name_and_ptr : nodes_)
   {
-    throw std::runtime_error("No node named " + last_node_name +
-                             " found in the Graph! Shape computing is not possible.");
-  }
-  NodePtrType last_node = nodes_.at(last_node_name);
+    NodePtrType node = node_name_and_ptr.second;
 
-  // A recursive call to the last node, which will trigger shape computing
-  // in all previous nodes.
-  math::SizeVector const output_shape_of_last_layer = last_node->BatchOutputShape();
+    // A recursive call will trigger shape computing in all previous nodes or return
+    // a shape if it has been already computed.
+    math::SizeVector const output_shape = node->BatchOutputShape();
 
-  if (output_shape_of_last_layer.empty())
-  {
-    FETCH_LOG_ERROR(DESCRIPTOR, " Node batch output shape computing failed! ");
+    if (output_shape.empty())
+    {
+      FETCH_LOG_ERROR(DESCRIPTOR, " Batch output shape computing failed for node " +
+                                      node_name_and_ptr.first + ".");
+    }
   }
 }
 

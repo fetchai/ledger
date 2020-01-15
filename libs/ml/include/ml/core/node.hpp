@@ -405,8 +405,5 @@ void Node<TensorType>::SetNodeSaveableParams(NodeSaveableParams<TensorType> cons
   op_ptr_               = op_ptr;
 }
 
-std::string OutputShapeAsString(fetch::math::SizeVector const &out_shape);
-std::string InputShapesAsString(std::vector<fetch::math::SizeVector> const &in_shapes);
-
 }  // namespace ml
 }  // namespace fetch

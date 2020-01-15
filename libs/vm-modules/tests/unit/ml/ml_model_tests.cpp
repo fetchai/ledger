@@ -1667,7 +1667,7 @@ TEST_F(VMModelTests, model_add_mixed_auto_inputs)
 
          var data = Tensor(data_shape);
          data.fillRandom();
-         model.predict(data);
+         //model.predict(data);
       endfunction
     )";
 

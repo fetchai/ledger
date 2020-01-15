@@ -26,6 +26,53 @@ using Shape       = fetch::math::SizeVector;
 using ShapeVector = std::vector<fetch::math::SizeVector>;
 
 /**
+ * @brief A helper function for printing node's output shape
+ */
+static std::string OutputShapeAsString(const math::SizeVector &out_shape)
+{
+  std::stringstream ss;
+  ss << " (out ";
+  if (out_shape.empty())
+  {
+    ss << "[??] )";
+    return ss.str();
+  }
+  ss << "[";
+  for (auto const &dim : out_shape)
+  {
+    ss << " " << dim;
+  }
+  ss << " ])";
+  return ss.str();
+}
+
+/**
+ * @brief A helper function for printing node's input shape(s)
+ */
+static std::string InputShapesAsString(const std::vector<math::SizeVector> &in_shapes)
+{
+  std::stringstream ss;
+  ss << " (in ";
+  if (in_shapes.empty())
+  {
+    ss << "[[??]] )";
+    return ss.str();
+  }
+  ss << "[";
+  for (auto const &shape : in_shapes)
+  {
+    ss << "[";
+    for (auto const &dim : shape)
+    {
+      ss << " " << dim;
+    }
+    ss << " ]";
+  }
+  ss << "])";
+  return ss.str();
+}
+
+/**
  * returns the stored operation type and syncs it with operation type of
  * underlying Ops.
  * @return
@@ -78,12 +125,12 @@ template <typename TensorType>
 Shape Node<TensorType>::BatchOutputShape()
 {
   Shape const &candidate = op_ptr_->BatchOutputShape();
-  bool const   op_is_subgraph =
-      (std::dynamic_pointer_cast<std::shared_ptr<SubGraph<TensorType>>>(op_ptr_) != nullptr);
+  auto const   subgraph_ptr =
+      std::dynamic_pointer_cast<std::shared_ptr<SubGraph<TensorType>>>(op_ptr_);
 
   // If the underlying Op is simple (e.g. not a SubGraph) and its shape is already known (cached)
   // this shape can be returned immediately.
-  if (!candidate.empty() && !op_is_subgraph)
+  if (!candidate.empty() && !subgraph_ptr)
   {
     if (OperationType() == OpType::OP_PLACEHOLDER)
     {
@@ -104,9 +151,11 @@ Shape Node<TensorType>::BatchOutputShape()
     if (candidate.empty())
     {
       // If there is no input nodes, but underlying Op's shape is not known - the Graph
-      // probably is incorrect.
-      FETCH_LOG_ERROR(name_.c_str(),
-                      "Shape deduction reached a Graph leaf with empty shape " + this->name_);
+      // probably is incorrect; however, some nodes (like Label placeholder) could have
+      // empty shape without causing Graph malfunction or shape deduction failure.
+      FETCH_LOG_ERROR(
+          name_.c_str(),
+          " Shape deduction reached a leaf Node with empty/unknown shape : " + this->name_);
     }
     return candidate;
   }
@@ -175,62 +224,11 @@ template class Node<math::Tensor<int8_t>>;
 template class Node<math::Tensor<int16_t>>;
 template class Node<math::Tensor<int32_t>>;
 template class Node<math::Tensor<int64_t>>;
-template class Node<math::Tensor<uint8_t>>;
-template class Node<math::Tensor<uint16_t>>;
-template class Node<math::Tensor<uint32_t>>;
-template class Node<math::Tensor<uint64_t>>;
 template class Node<math::Tensor<float>>;
 template class Node<math::Tensor<double>>;
 template class Node<math::Tensor<fixed_point::fp32_t>>;
 template class Node<math::Tensor<fixed_point::fp64_t>>;
 template class Node<math::Tensor<fixed_point::fp128_t>>;
-
-/**
- * @brief A helper function for printing layer's output shape
- */
-std::string OutputShapeAsString(const math::SizeVector &out_shape)
-{
-  std::stringstream ss;
-  ss << " (out ";
-  if (out_shape.empty())
-  {
-    ss << "[??] )";
-    return ss.str();
-  }
-  ss << "[";
-  for (auto const &dim : out_shape)
-  {
-    ss << " " << dim;
-  }
-  ss << " ])";
-  return ss.str();
-}
-
-/**
- * @brief A helper function for printing layer's input shape(s)
- */
-std::string InputShapesAsString(const std::vector<math::SizeVector> &in_shapes)
-{
-  std::stringstream ss;
-  ss << " (in ";
-  if (in_shapes.empty())
-  {
-    ss << "[[??]] )";
-    return ss.str();
-  }
-  ss << "[";
-  for (auto const &shape : in_shapes)
-  {
-    ss << "[";
-    for (auto const &dim : shape)
-    {
-      ss << " " << dim;
-    }
-    ss << " ]";
-  }
-  ss << "])";
-  return ss.str();
-}
 
 }  // namespace ml
 }  // namespace fetch

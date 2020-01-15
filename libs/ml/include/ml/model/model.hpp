@@ -169,8 +169,7 @@ void Model<TensorType>::Compile(OptimiserType optimiser_type, ops::LossType loss
     }
     case (ops::LossType::NONE):
     {
-      throw ml::exceptions::InvalidMode(
-          "must set loss function on model compile for this model type");
+      throw ml::exceptions::InvalidMode("Impossible to compile a Model without loss function set!");
     }
     default:
     {
