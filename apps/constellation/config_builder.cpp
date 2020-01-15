@@ -336,9 +336,6 @@ Constellation::Config BuildConstellationConfig(Settings const &settings)
     contents << config;
 
     cfg.genesis_file_contents = contents.str();
-    cfg.block_interval_ms     = 3000;
-    cfg.aeon_period           = 0;
-    cfg.proof_of_stake        = false;
     return cfg;
   }
 
