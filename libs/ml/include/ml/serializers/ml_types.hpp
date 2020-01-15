@@ -29,6 +29,33 @@ namespace ml {
 template <typename T>
 struct StateDict;
 
+namespace model {
+template <typename TensorType>
+class Model;
+template <typename TensorType>
+class Sequential;
+template <typename DataType>
+struct ModelConfig;
+}  // namespace model
+
+namespace dataloaders {
+template <typename TensorType>
+class TensorDataLoader;
+}  // namespace dataloaders
+
+namespace optimisers {
+template <typename TensorType>
+class SGDOptimiser;
+template <typename TensorType>
+class AdamOptimiser;
+}  // namespace optimisers
+
+namespace utilities {
+template <typename T>
+void BuildGraph(fetch::ml::GraphSaveableParams<T> const &sp,
+                std::shared_ptr<fetch::ml::Graph<T>>     ret);
+}  // namespace utilities
+
 }  // namespace ml
 
 namespace serializers {
@@ -3487,6 +3514,314 @@ struct MapSerializer<ml::LayerSkipGramSaveableParams<TensorType>, D>
     map.ExpectKeyGetValue(IN_SIZE, sp.in_size);
     map.ExpectKeyGetValue(OUT_SIZE, sp.out_size);
     map.ExpectKeyGetValue(EMBED_IN, sp.embed_in);
+  }
+};
+
+/**
+ * serializer for Model
+ * @tparam TensorType
+ */
+template <typename TensorType, typename D>
+struct MapSerializer<ml::model::Model<TensorType>, D>
+{
+  using Type       = ml::model::Model<TensorType>;
+  using DriverType = D;
+
+  // protected member variables
+  static uint8_t const GRAPH           = 1;
+  static uint8_t const MODEL_CONFIG    = 2;
+  static uint8_t const DATALOADER_PTR  = 3;
+  static uint8_t const DATALOADER_TYPE = 4;
+  static uint8_t const OPTIMISER_PTR   = 5;
+  static uint8_t const OPTIMISER_TYPE  = 6;
+
+  static uint8_t const INPUT_NODE_NAME   = 7;
+  static uint8_t const LABEL_NODE_NAME   = 8;
+  static uint8_t const OUTPUT_NODE_NAME  = 9;
+  static uint8_t const ERROR_NODE_NAME   = 10;
+  static uint8_t const METRIC_NODE_NAMES = 11;
+
+  static uint8_t const LOSS_SET_FLAG      = 12;
+  static uint8_t const OPTIMISER_SET_FLAG = 13;
+  static uint8_t const COMPILED_FLAG      = 14;
+  static uint8_t const TOTAL_MAP_SIZE     = 14;
+
+  template <typename MapType>
+  static void SerializeDataLoader(MapType map, Type const &sp)
+  {
+    map.Append(DATALOADER_TYPE, static_cast<uint8_t>(sp.dataloader_ptr_->LoaderCode()));
+
+    switch (sp.dataloader_ptr_->LoaderCode())
+    {
+    case ml::LoaderType::TENSOR:
+    {
+      auto *loader_ptr = static_cast<fetch::ml::dataloaders::TensorDataLoader<TensorType> *>(
+          sp.dataloader_ptr_.get());
+      map.Append(DATALOADER_PTR, *loader_ptr);
+      break;
+    }
+
+    case ml::LoaderType::SGNS:
+    case ml::LoaderType::W2V:
+    case ml::LoaderType::COMMODITY:
+    case ml::LoaderType::C2V:
+    {
+      throw ml::exceptions::NotImplemented(
+          "Serialization for current dataloader type not implemented yet.");
+    }
+
+    default:
+    {
+      throw ml::exceptions::InvalidMode("Unknown dataloader type.");
+    }
+    }
+  }
+
+  template <typename MapType>
+  static void SerializeOptimiser(MapType map, Type const &sp)
+  {
+    map.Append(OPTIMISER_TYPE, static_cast<uint8_t>(sp.optimiser_ptr_->OptimiserCode()));
+
+    switch (sp.optimiser_ptr_->OptimiserCode())
+    {
+    case ml::OptimiserType::SGD:
+    {
+      auto *optimiser_ptr =
+          static_cast<fetch::ml::optimisers::SGDOptimiser<TensorType> *>(sp.optimiser_ptr_.get());
+      map.Append(OPTIMISER_PTR, *optimiser_ptr);
+      break;
+    }
+    case ml::OptimiserType::ADAM:
+    {
+      auto *optimiser_ptr =
+          static_cast<fetch::ml::optimisers::AdamOptimiser<TensorType> *>(sp.optimiser_ptr_.get());
+      map.Append(OPTIMISER_PTR, *optimiser_ptr);
+      break;
+    }
+    case ml::OptimiserType::ADAGRAD:
+    case ml::OptimiserType::MOMENTUM:
+    case ml::OptimiserType::RMSPROP:
+    {
+      throw ml::exceptions::NotImplemented(
+          "serialization for current optimiser type not implemented yet.");
+    }
+
+    default:
+    {
+      throw ml::exceptions::InvalidMode("Unknown optimiser type.");
+    }
+    }
+  }
+
+  template <typename MapType>
+  static void DeserializeDataLoader(MapType map, Type &sp)
+  {
+    uint8_t loader_type{};
+    map.ExpectKeyGetValue(DATALOADER_TYPE, loader_type);
+
+    switch (static_cast<ml::LoaderType>(loader_type))
+    {
+    case ml::LoaderType::TENSOR:
+    {
+      auto loader_ptr = new ml::dataloaders::TensorDataLoader<TensorType>();
+      map.ExpectKeyGetValue(DATALOADER_PTR, *loader_ptr);
+      sp.dataloader_ptr_.reset(loader_ptr);
+      break;
+    }
+    case ml::LoaderType::SGNS:
+    case ml::LoaderType::W2V:
+    case ml::LoaderType::COMMODITY:
+    case ml::LoaderType::C2V:
+    {
+      throw ml::exceptions::NotImplemented(
+          "serialization for current dataloader type not implemented yet.");
+    }
+
+    default:
+    {
+      throw ml::exceptions::InvalidMode("Unknown dataloader type.");
+    }
+    }
+  }
+
+  template <typename MapType>
+  static void DeserializeOptimiser(MapType map, Type &sp)
+  {
+    uint8_t optimiser_type{};
+    map.ExpectKeyGetValue(OPTIMISER_TYPE, optimiser_type);
+
+    switch (static_cast<ml::OptimiserType>(optimiser_type))
+    {
+    case ml::OptimiserType::SGD:
+    {
+      auto optimiser_ptr = new ml::optimisers::SGDOptimiser<TensorType>();
+      map.ExpectKeyGetValue(OPTIMISER_PTR, *optimiser_ptr);
+      sp.optimiser_ptr_.reset(optimiser_ptr);
+      sp.optimiser_ptr_->SetGraph(sp.graph_ptr_);
+      sp.optimiser_ptr_->Init();
+      break;
+    }
+    case ml::OptimiserType::ADAM:
+    {
+      auto optimiser_ptr = new ml::optimisers::AdamOptimiser<TensorType>();
+      map.ExpectKeyGetValue(OPTIMISER_PTR, *optimiser_ptr);
+      sp.optimiser_ptr_.reset(optimiser_ptr);
+      sp.optimiser_ptr_->SetGraph(sp.graph_ptr_);
+      sp.optimiser_ptr_->Init();
+      break;
+    }
+    case ml::OptimiserType::ADAGRAD:
+    case ml::OptimiserType::MOMENTUM:
+    case ml::OptimiserType::RMSPROP:
+    {
+      throw ml::exceptions::NotImplemented(
+          "serialization for current optimiser type not implemented yet.");
+    }
+
+    default:
+    {
+      throw ml::exceptions::InvalidMode("Unknown optimiser type.");
+    }
+    }
+  }
+
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &sp)
+  {
+    auto map = map_constructor(TOTAL_MAP_SIZE);
+
+    // serialize the graph first
+    map.Append(GRAPH, sp.graph_ptr_->GetGraphSaveableParams());
+    map.Append(MODEL_CONFIG, sp.model_config_);
+
+    // serialize dataloader
+    SerializeDataLoader(map, sp);
+
+    // serialize optimiser
+    SerializeOptimiser(map, sp);
+
+    map.Append(INPUT_NODE_NAME, sp.input_);
+    map.Append(LABEL_NODE_NAME, sp.label_);
+    map.Append(OUTPUT_NODE_NAME, sp.output_);
+    map.Append(ERROR_NODE_NAME, sp.error_);
+    map.Append(METRIC_NODE_NAMES, sp.metrics_);
+
+    map.Append(LOSS_SET_FLAG, sp.loss_set_);
+    map.Append(OPTIMISER_SET_FLAG, sp.optimiser_set_);
+    map.Append(COMPILED_FLAG, sp.compiled_);
+  }
+
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &sp)
+  {
+    // deserialize the graph first
+    fetch::ml::GraphSaveableParams<TensorType> gsp;
+    map.ExpectKeyGetValue(GRAPH, gsp);
+    auto new_graph_ptr = std::make_shared<fetch::ml::Graph<TensorType>>();
+    ml::utilities::BuildGraph(gsp, new_graph_ptr);
+    sp.graph_ptr_ = new_graph_ptr;
+
+    map.ExpectKeyGetValue(MODEL_CONFIG, sp.model_config_);
+
+    // deserialize dataloader
+    DeserializeDataLoader(map, sp);
+
+    // deserialize optimiser
+    DeserializeOptimiser(map, sp);
+
+    map.ExpectKeyGetValue(INPUT_NODE_NAME, sp.input_);
+    map.ExpectKeyGetValue(LABEL_NODE_NAME, sp.label_);
+    map.ExpectKeyGetValue(OUTPUT_NODE_NAME, sp.output_);
+    map.ExpectKeyGetValue(ERROR_NODE_NAME, sp.error_);
+    map.ExpectKeyGetValue(METRIC_NODE_NAMES, sp.metrics_);
+
+    map.ExpectKeyGetValue(LOSS_SET_FLAG, sp.loss_set_);
+    map.ExpectKeyGetValue(OPTIMISER_SET_FLAG, sp.optimiser_set_);
+    map.ExpectKeyGetValue(COMPILED_FLAG, sp.compiled_);
+  }
+};
+
+/**
+ * serializer for Sequential model
+ * @tparam TensorType
+ */
+template <typename TensorType, typename D>
+struct MapSerializer<ml::model::Sequential<TensorType>, D>
+{
+  using Type                          = ml::model::Sequential<TensorType>;
+  using DriverType                    = D;
+  static uint8_t const BASE_MODEL     = 1;
+  static uint8_t const LAYER_COUNT    = 2;
+  static uint8_t const PREV_LAYER_STR = 3;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &sp)
+  {
+    auto map = map_constructor(3);
+
+    // serialize the optimiser parent class
+    auto base_pointer = static_cast<ml::model::Model<TensorType> const *>(&sp);
+    map.Append(BASE_MODEL, *base_pointer);
+    map.Append(LAYER_COUNT, sp.layer_count_);
+    map.Append(PREV_LAYER_STR, sp.prev_layer_);
+  }
+
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &sp)
+  {
+    auto base_pointer = static_cast<ml::model::Model<TensorType> *>(&sp);
+    map.ExpectKeyGetValue(BASE_MODEL, *base_pointer);
+    map.ExpectKeyGetValue(LAYER_COUNT, sp.layer_count_);
+    map.ExpectKeyGetValue(PREV_LAYER_STR, sp.prev_layer_);
+  }
+};
+
+/**
+ * serializer for ModelConfig
+ * @tparam TensorType
+ */
+template <typename DataType, typename D>
+struct MapSerializer<fetch::ml::model::ModelConfig<DataType>, D>
+{
+  using Type       = fetch::ml::model::ModelConfig<DataType>;
+  using DriverType = D;
+
+  // public member variables
+  static uint8_t const EARLY_STOPPING      = 1;
+  static uint8_t const TEST                = 2;
+  static uint8_t const PATIENCE            = 3;
+  static uint8_t const MIN_DELTA           = 4;
+  static uint8_t const LEARNING_RATE_PARAM = 6;
+  static uint8_t const BATCH_SIZE          = 7;
+  static uint8_t const SUSBET_SIZE         = 8;
+  static uint8_t const PRINT_STATS         = 9;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &sp)
+  {
+    auto map = map_constructor(9);
+
+    map.Append(EARLY_STOPPING, sp.early_stopping);
+    map.Append(TEST, sp.test);
+    map.Append(PATIENCE, sp.patience);
+    map.Append(MIN_DELTA, sp.min_delta);
+    map.Append(LEARNING_RATE_PARAM, sp.learning_rate_param);
+    map.Append(BATCH_SIZE, sp.batch_size);
+    map.Append(SUSBET_SIZE, sp.subset_size);
+    map.Append(PRINT_STATS, sp.print_stats);
+  }
+
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &sp)
+  {
+    map.ExpectKeyGetValue(EARLY_STOPPING, sp.early_stopping);
+    map.ExpectKeyGetValue(TEST, sp.test);
+    map.ExpectKeyGetValue(PATIENCE, sp.patience);
+    map.ExpectKeyGetValue(MIN_DELTA, sp.min_delta);
+    map.ExpectKeyGetValue(LEARNING_RATE_PARAM, sp.learning_rate_param);
+    map.ExpectKeyGetValue(BATCH_SIZE, sp.batch_size);
+    map.ExpectKeyGetValue(SUSBET_SIZE, sp.subset_size);
+    map.ExpectKeyGetValue(PRINT_STATS, sp.print_stats);
   }
 };
 

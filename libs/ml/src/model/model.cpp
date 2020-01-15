@@ -17,10 +17,20 @@
 //------------------------------------------------------------------------------
 
 #include "ml/model/model.hpp"
+#include "ml/ops/metrics/types.hpp"
+#include "ml/utilities/graph_saver.hpp"
 
 namespace fetch {
 namespace ml {
 namespace model {
+
+template <typename TensorType>
+Model<TensorType>::Model(const Model &other)
+{
+  graph_ptr_.reset(other.graph_ptr_.get());
+  dataloader_ptr_.reset(other.dataloader_ptr_.get());
+  optimiser_ptr_.reset(other.optimiser_ptr_.get());
+}
 
 template <typename TensorType>
 void Model<TensorType>::Compile(OptimiserType optimiser_type, ops::LossType loss_type,

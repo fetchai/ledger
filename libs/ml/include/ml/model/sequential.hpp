@@ -74,42 +74,4 @@ void Sequential<TensorType>::Add(Params... params)
 
 }  // namespace model
 }  // namespace ml
-
-namespace serializers {
-/**
- * serializer for Sequential model
- * @tparam TensorType
- */
-template <typename TensorType, typename D>
-struct MapSerializer<ml::model::Sequential<TensorType>, D>
-{
-  using Type                          = ml::model::Sequential<TensorType>;
-  using DriverType                    = D;
-  static uint8_t const BASE_MODEL     = 1;
-  static uint8_t const LAYER_COUNT    = 2;
-  static uint8_t const PREV_LAYER_STR = 3;
-
-  template <typename Constructor>
-  static void Serialize(Constructor &map_constructor, Type const &sp)
-  {
-    auto map = map_constructor(3);
-
-    // serialize the optimiser parent class
-    auto base_pointer = static_cast<ml::model::Model<TensorType> const *>(&sp);
-    map.Append(BASE_MODEL, *base_pointer);
-    map.Append(LAYER_COUNT, sp.layer_count_);
-    map.Append(PREV_LAYER_STR, sp.prev_layer_);
-  }
-
-  template <typename MapDeserializer>
-  static void Deserialize(MapDeserializer &map, Type &sp)
-  {
-    auto base_pointer = static_cast<ml::model::Model<TensorType> *>(&sp);
-    map.ExpectKeyGetValue(BASE_MODEL, *base_pointer);
-    map.ExpectKeyGetValue(LAYER_COUNT, sp.layer_count_);
-    map.ExpectKeyGetValue(PREV_LAYER_STR, sp.prev_layer_);
-  }
-};
-}  // namespace serializers
-
 }  // namespace fetch

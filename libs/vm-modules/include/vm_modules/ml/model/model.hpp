@@ -31,6 +31,12 @@ class Module;
 }
 
 namespace ml {
+
+namespace dataloaders {
+template <typename TensorType>
+class TensorDataLoader;
+}  // namespace dataloaders
+
 namespace model {
 
 template <typename TensorType>
