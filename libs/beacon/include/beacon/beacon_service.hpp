@@ -195,7 +195,7 @@ private:
   bool OutOfSync();
 
   mutable Mutex    mutex_;
-  CertificatePtr                      certificate_;
+  CertificatePtr   certificate_;
   Identity         identity_;
   MuddleInterface &muddle_;
   Endpoint &       endpoint_;

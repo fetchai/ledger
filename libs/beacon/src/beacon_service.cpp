@@ -195,14 +195,14 @@ void BeaconService::ReloadState()
 
       // Note, since certificates are not serialized, we must set the beacon managers in the aeon
       // to have the correct one
-      if(active_exe_unit_)
+      if (active_exe_unit_)
       {
         active_exe_unit_->manager.SetCertificate(certificate_);
       }
 
-      for(auto const &i : aeon_exe_queue_)
+      for (auto const &i : aeon_exe_queue_)
       {
-        if(i)
+        if (i)
         {
           i->manager.SetCertificate(certificate_);
         }
@@ -226,7 +226,8 @@ BeaconService::State BeaconService::OnReloadOnStartup()
 
   ReloadState();
 
-  FETCH_LOG_INFO(LOGGING_NAME, "After reloading state, we have ", completed_block_entropy_.size(), " completed block entropy");
+  FETCH_LOG_INFO(LOGGING_NAME, "After reloading state, we have ", completed_block_entropy_.size(),
+                 " completed block entropy");
 
   return state_after_reload_;
 }
