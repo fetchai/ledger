@@ -44,7 +44,7 @@ using SizeType   = TensorType::SizeType;
 using GraphType        = fetch::ml::Graph<TensorType>;
 using CostFunctionType = fetch::ml::ops::MeanSquareErrorLoss<TensorType>;
 using OptimiserType    = fetch::ml::optimisers::AdamOptimiser<TensorType>;
-using DataLoaderType   = fetch::ml::dataloaders::TensorDataLoader<TensorType, TensorType>;
+using DataLoaderType   = fetch::ml::dataloaders::TensorDataLoader<TensorType>;
 
 struct TrainingParams
 {

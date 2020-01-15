@@ -18,6 +18,8 @@
 
 #include "gtest/gtest.h"
 #include "ml/ops/weights.hpp"
+#include "ml/regularisers/l1_regulariser.hpp"
+#include "ml/regularisers/l2_regulariser.hpp"
 #include "ml/regularisers/regularisation.hpp"
 #include "test_types.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
