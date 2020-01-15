@@ -178,7 +178,7 @@ public:
   BlockHash  GetHeaviestBlockHash() const;
   Blocks     GetHeaviestChain(uint64_t limit = UPPER_BOUND) const;
   Blocks     GetChainPreceding(BlockHash start, uint64_t limit = UPPER_BOUND) const;
-  Travelogue TimeTravel(BlockHash current_hash) const;
+  Travelogue TimeTravel(BlockHash current_hash, std::size_t limit = UPPER_BOUND) const;
   bool       GetPathToCommonAncestor(
             Blocks &blocks, BlockHash tip_hash, BlockHash node_hash, uint64_t limit = UPPER_BOUND,
             BehaviourWhenLimit behaviour = BehaviourWhenLimit::RETURN_MOST_RECENT) const;

@@ -27,7 +27,7 @@ namespace vm {
 
 Compiler::Compiler(Module *module)
 {
-  analyser_.Initialise();
+  analyser_.Initialise(module->IsUsingTestAnnotations());
   module->CompilerSetup(this);
 }
 

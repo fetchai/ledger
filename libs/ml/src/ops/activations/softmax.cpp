@@ -20,6 +20,8 @@
 #include "math/standard_functions/clamp.hpp"
 #include "ml/ops/activations/softmax.hpp"
 
+#include <cassert>
+
 namespace fetch {
 namespace ml {
 namespace ops {
