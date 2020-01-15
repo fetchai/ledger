@@ -37,16 +37,15 @@ template <typename TensorType>
 class GraphW2VLoader : public DataLoader<TensorType>
 {
 public:
-  using DataType     = typename TensorType::Type;
   using SizeType     = fetch::math::SizeType;
   using VocabType    = Vocab;
   using VocabPtrType = std::shared_ptr<VocabType>;
   using ReturnType   = std::pair<TensorType, std::vector<TensorType>>;
 
-  const DataType BufferPositionUnusedDataType = fetch::math::numeric_max<DataType>();
+  const int8_t   BufferPositionUnusedDataType = fetch::math::numeric_max<int8_t>();
   const SizeType BufferPositionUnusedSizeType = fetch::math::numeric_max<SizeType>();
 
-  GraphW2VLoader(SizeType window_size, SizeType negative_samples, DataType freq_thresh,
+  GraphW2VLoader(SizeType window_size, SizeType negative_samples, fixed_point::fp64_t freq_thresh,
                  SizeType max_word_count, SizeType seed = 1337);
 
   bool       IsDone() const override;
@@ -57,15 +56,15 @@ public:
   ReturnType GetNext() override;
   bool       AddData(std::vector<TensorType> const &input, TensorType const &label) override;
 
-  void SetTestRatio(DataType new_test_ratio) override;
-  void SetValidationRatio(DataType new_validation_ratio) override;
+  void SetTestRatio(fixed_point::fp32_t new_test_ratio) override;
+  void SetValidationRatio(fixed_point::fp32_t new_validation_ratio) override;
 
   void     BuildVocabAndData(std::vector<std::string> const &sents, SizeType min_count = 0,
                              bool build_data = true);
   void     BuildData(std::vector<std::string> const &sents, SizeType min_count = 0);
   void     SaveVocab(std::string const &filename);
   void     LoadVocab(std::string const &filename);
-  DataType EstimatedSampleNumber();
+  SizeType EstimatedSampleNumber();
 
   bool WordKnown(std::string const &word) const;
   bool IsModeAvailable(DataLoaderMode mode) override;
@@ -90,7 +89,7 @@ private:
   SizeType                           current_word_;
   SizeType                           window_size_;
   SizeType                           negative_samples_;
-  DataType                           freq_thresh_;
+  fixed_point::fp64_t                freq_thresh_;
   VocabPtrType                       vocab_ = std::make_shared<VocabType>();
   std::vector<std::vector<SizeType>> data_;
   std::vector<SizeType>              word_id_counts_;

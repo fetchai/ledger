@@ -17,8 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/tensor/tensor.hpp"
-
 #include "ml/dataloaders/dataloader.hpp"
 
 #include <cstdint>
@@ -48,7 +46,6 @@ template <typename TensorType>
 class C2VLoader : public DataLoader<TensorType>
 {
 public:
-  using DataType                = typename TensorType::Type;
   using SizeType                = fetch::math::SizeType;
   using ContextTuple            = std::tuple<SizeType, SizeType, SizeType>;
   using ContextVector           = std::vector<TensorType>;
@@ -76,8 +73,8 @@ public:
   bool     IsDone() const override;
   void     Reset() override;
   bool     AddData(std::vector<TensorType> const &data, TensorType const &label) override;
-  void     SetTestRatio(DataType new_test_ratio) override;
-  void     SetValidationRatio(DataType new_validation_ratio) override;
+  void     SetTestRatio(fixed_point::fp32_t new_test_ratio) override;
+  void     SetValidationRatio(fixed_point::fp32_t new_validation_ratio) override;
   bool     IsModeAvailable(DataLoaderMode mode) override;
 
   void AddDataAsString(std::string const &c2v_input);

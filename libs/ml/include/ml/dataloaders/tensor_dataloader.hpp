@@ -28,8 +28,6 @@ namespace dataloaders {
 template <typename TensorType>
 class TensorDataLoader : public DataLoader<TensorType>
 {
-  using DataType = typename TensorType::Type;
-
   using SizeType     = fetch::math::SizeType;
   using SizeVector   = fetch::math::SizeVector;
   using ReturnType   = std::pair<TensorType, std::vector<TensorType>>;
@@ -49,8 +47,8 @@ public:
   void     Reset() override;
   bool     IsModeAvailable(DataLoaderMode mode) override;
 
-  void SetTestRatio(DataType new_test_ratio) override;
-  void SetValidationRatio(DataType new_validation_ratio) override;
+  void SetTestRatio(fixed_point::fp32_t new_test_ratio) override;
+  void SetValidationRatio(fixed_point::fp32_t new_validation_ratio) override;
 
   template <typename X, typename D>
   friend struct fetch::serializers::MapSerializer;
@@ -78,8 +76,8 @@ protected:
 
   SizeVector              one_sample_label_shape_;
   std::vector<SizeVector> one_sample_data_shapes_;
-  DataType                test_to_train_ratio_       = DataType{0};
-  DataType                validation_to_train_ratio_ = DataType{0};
+  fixed_point::fp32_t     test_to_train_ratio_       = fixed_point::fp32_t{0};
+  fixed_point::fp32_t     validation_to_train_ratio_ = fixed_point::fp32_t{0};
 
   SizeType batch_label_dim_ = fetch::math::numeric_max<SizeType>();
   SizeType batch_data_dim_  = fetch::math::numeric_max<SizeType>();

@@ -18,7 +18,10 @@
 
 #include "ml/dataloaders/code2vec_context_loaders/context_loader.hpp"
 
+#include "core/macros.hpp"
 #include "math/base_types.hpp"
+#include "math/tensor/tensor.hpp"
+
 #include "ml/dataloaders/dataloader.hpp"
 #include "ml/exceptions/exceptions.hpp"
 
@@ -108,6 +111,8 @@ typename C2VLoader<TensorType>::ContextLabelPair C2VLoader<TensorType>::GetNextC
 template <typename TensorType>
 typename C2VLoader<TensorType>::ContextTensorsLabelPair C2VLoader<TensorType>::GetNext()
 {
+  using DataType = typename TensorType::Type;
+
   if (this->random_mode_)
   {
     throw exceptions::InvalidMode("Random sampling not implemented for C2VLoader");
@@ -223,14 +228,14 @@ void C2VLoader<TensorType>::Reset()
 }
 
 template <typename TypeParam>
-void C2VLoader<TypeParam>::SetTestRatio(DataType new_test_ratio)
+void C2VLoader<TypeParam>::SetTestRatio(fixed_point::fp32_t new_test_ratio)
 {
   FETCH_UNUSED(new_test_ratio);
   throw exceptions::InvalidMode("Test set splitting is not supported for this dataloader.");
 }
 
 template <typename TypeParam>
-void C2VLoader<TypeParam>::SetValidationRatio(DataType new_validation_ratio)
+void C2VLoader<TypeParam>::SetValidationRatio(fixed_point::fp32_t new_validation_ratio)
 {
   FETCH_UNUSED(new_validation_ratio);
   throw exceptions::InvalidMode("Validation set splitting is not supported for this dataloader.");

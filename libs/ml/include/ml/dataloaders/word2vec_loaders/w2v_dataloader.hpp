@@ -17,10 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/dataloaders/word2vec_loaders/w2v_dataloader.hpp"
-
 #include "core/random/lcg.hpp"
-#include "math/tensor/tensor.hpp"
 #include "meta/type_traits.hpp"
 #include "ml/dataloaders/dataloader.hpp"
 #include "ml/dataloaders/word2vec_loaders/unigram_table.hpp"
@@ -44,7 +41,6 @@ public:
   static const T WindowContextUnused;
 
   using TensorType = fetch::math::Tensor<T>;
-  using DataType   = typename TensorType::Type;
   using SizeType   = fetch::math::SizeType;
   using VocabType  = Vocab;
   using ReturnType = std::pair<TensorType, std::vector<TensorType>>;
@@ -53,8 +49,8 @@ public:
 
   bool IsDone() const override;
   void Reset() override;
-  void SetTestRatio(DataType new_test_ratio) override;
-  void SetValidationRatio(DataType new_validation_ratio) override;
+  void SetTestRatio(fixed_point::fp32_t new_test_ratio) override;
+  void SetValidationRatio(fixed_point::fp32_t new_validation_ratio) override;
 
   void       RemoveInfrequent(SizeType min);
   void       InitUnigramTable();

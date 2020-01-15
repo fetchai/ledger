@@ -60,7 +60,7 @@ TYPED_TEST(TensorDataloaderTest, serialize_tensor_dataloader)
   b.seek(0);
 
   fetch::ml::dataloaders::TensorDataLoader<TypeParam> tdl_2;
-  tdl_2.SetTestRatio(math::AsType<typename TypeParam::Type>(0.5));
+  tdl_2.SetTestRatio(math::AsType<fetch::fixed_point::fp32_t>(0.5));
 
   b >> tdl_2;
 
@@ -105,8 +105,8 @@ TYPED_TEST(TensorDataloaderTest, test_validation_splitting_dataloader_test)
 
   // generate a plausible tensor data loader
   auto tdl = fetch::ml::dataloaders::TensorDataLoader<TypeParam>();
-  tdl.SetTestRatio(math::AsType<typename TypeParam::Type>(0.1));
-  tdl.SetValidationRatio(math::AsType<typename TypeParam::Type>(0.1));
+  tdl.SetTestRatio(math::AsType<fetch::fixed_point::fp32_t>(0.1));
+  tdl.SetValidationRatio(math::AsType<fetch::fixed_point::fp32_t>(0.1));
 
   // add some data
   tdl.AddData({data1_tensor, data2_tensor}, label_tensor);

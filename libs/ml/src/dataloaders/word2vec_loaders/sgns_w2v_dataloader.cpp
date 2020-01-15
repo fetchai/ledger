@@ -19,6 +19,7 @@
 #include "ml/dataloaders/word2vec_loaders/sgns_w2v_dataloader.hpp"
 
 #include "math/standard_functions/sqrt.hpp"
+#include "math/tensor/tensor.hpp"
 #include "ml/exceptions/exceptions.hpp"
 
 namespace fetch {
@@ -32,7 +33,7 @@ namespace dataloaders {
  */
 template <typename TensorType>
 GraphW2VLoader<TensorType>::GraphW2VLoader(SizeType window_size, SizeType negative_samples,
-                                           DataType freq_thresh, SizeType max_word_count,
+                                           fixed_point::fp64_t freq_thresh, SizeType max_word_count,
                                            SizeType seed)
   : DataLoader<TensorType>()  // no random mode specified
   , current_sentence_(0)
@@ -42,6 +43,8 @@ GraphW2VLoader<TensorType>::GraphW2VLoader(SizeType window_size, SizeType negati
   , freq_thresh_(freq_thresh)
   , max_word_count_(max_word_count)
 {
+  using DataType = typename TensorType::Type;
+
   // setup temporary buffers for training purpose
   input_words_  = TensorType({negative_samples * window_size_ * 2 + window_size_ * 2});
   output_words_ = TensorType({negative_samples * window_size_ * 2 + window_size_ * 2});
@@ -49,7 +52,7 @@ GraphW2VLoader<TensorType>::GraphW2VLoader(SizeType window_size, SizeType negati
       fetch::math::Tensor<SizeType>({negative_samples * window_size_ * 2 + window_size_ * 2});
   labels_ = TensorType({negative_samples * window_size_ * 2 + window_size_ * 2 +
                         1});  // the extra 1 is for testing if label has ran out
-  labels_.Fill(BufferPositionUnusedDataType);
+  labels_.Fill(static_cast<DataType>(BufferPositionUnusedDataType));
   cur_sample_.first  = TensorType({1, 1});
   cur_sample_.second = {TensorType({1, 1}), TensorType({1, 1})};
   this->SetSeed(seed);
@@ -60,29 +63,31 @@ GraphW2VLoader<TensorType>::GraphW2VLoader(SizeType window_size, SizeType negati
  * @return
  */
 template <typename TensorType>
-typename TensorType::Type GraphW2VLoader<TensorType>::EstimatedSampleNumber()
+fetch::math::SizeType GraphW2VLoader<TensorType>::EstimatedSampleNumber()
 {
-  auto     estimated_sample_number = DataType{0};
-  DataType word_freq;
-  auto     estimated_sample_number_per_word =
-      static_cast<DataType>((window_size_ + 1) * (1 + negative_samples_));
+  auto                estimated_sample_number = fixed_point::fp64_t{0};
+  fixed_point::fp64_t word_freq;
+  auto                estimated_sample_number_per_word =
+      static_cast<fixed_point::fp64_t>((window_size_ + 1) * (1 + negative_samples_));
 
   for (auto word_count : word_id_counts_)
   {
-    word_freq = static_cast<DataType>(word_count) / static_cast<DataType>(size_);
+    word_freq =
+        static_cast<fixed_point::fp64_t>(word_count) / static_cast<fixed_point::fp64_t>(size_);
     if (word_freq > freq_thresh_)
     {
-      estimated_sample_number += static_cast<DataType>(word_count) *
+      estimated_sample_number += static_cast<fixed_point::fp64_t>(word_count) *
                                  estimated_sample_number_per_word *
                                  fetch::math::Sqrt(freq_thresh_ / word_freq);
     }
     else
     {
-      estimated_sample_number +=
-          static_cast<DataType>(word_count) * estimated_sample_number_per_word;
+      estimated_sample_number =
+          estimated_sample_number +
+          static_cast<fixed_point::fp64_t>(word_count) * estimated_sample_number_per_word;
     }
   }
-  return estimated_sample_number;
+  return static_cast<SizeType>(estimated_sample_number);
 }
 
 /**
@@ -130,23 +135,25 @@ bool GraphW2VLoader<TensorType>::IsDone() const
 template <typename TensorType>
 void GraphW2VLoader<TensorType>::Reset()
 {
+  using DataType = typename TensorType::Type;
+
   current_sentence_ = 0;
   current_word_     = 0;
   unigram_table_.ResetRNG();
-  labels_.Fill(BufferPositionUnusedDataType);
+  labels_.Fill(static_cast<DataType>(BufferPositionUnusedDataType));
   buffer_pos_ = 0;
   reset_count_++;
 }
 
 template <typename TensorType>
-void GraphW2VLoader<TensorType>::SetTestRatio(DataType new_test_ratio)
+void GraphW2VLoader<TensorType>::SetTestRatio(fixed_point::fp32_t new_test_ratio)
 {
   FETCH_UNUSED(new_test_ratio);
   throw exceptions::InvalidMode("Test set splitting is not supported for this dataloader.");
 }
 
 template <typename TensorType>
-void GraphW2VLoader<TensorType>::SetValidationRatio(DataType new_validation_ratio)
+void GraphW2VLoader<TensorType>::SetValidationRatio(fixed_point::fp32_t new_validation_ratio)
 {
   FETCH_UNUSED(new_validation_ratio);
   throw exceptions::InvalidMode("Validation set splitting is not supported for this dataloader.");
@@ -279,6 +286,8 @@ void GraphW2VLoader<TensorType>::InitUnigramTable(SizeType size, bool use_vocab_
 template <typename TensorType>
 void GraphW2VLoader<TensorType>::BufferNextSamples()
 {
+  using DataType = typename TensorType::Type;
+
   // reset the index to buffer
   buffer_pos_ = 0;
 
@@ -291,11 +300,12 @@ void GraphW2VLoader<TensorType>::BufferNextSamples()
   // subsample too frequent word
   while (true)
   {
-    auto word_freq =
-        static_cast<DataType>(word_id_counts_[data_.at(current_sentence_).at(current_word_)]) /
-        static_cast<DataType>(size_);
-    auto random_var = this->rand.template AsType<DataType>();  // random variable between 0-1
-    if (random_var < DataType{1} - fetch::math::Sqrt(freq_thresh_ / word_freq))
+    auto word_freq = static_cast<fixed_point::fp64_t>(
+                         word_id_counts_[data_.at(current_sentence_).at(current_word_)]) /
+                     static_cast<fixed_point::fp64_t>(size_);
+    auto random_var =
+        this->rand.template AsType<fixed_point::fp64_t>();  // random variable between 0-1
+    if (random_var < fixed_point::fp64_t{1} - fetch::math::Sqrt(freq_thresh_ / word_freq))
     {  // subsample for a cumulative prob of 1 - sqrt(thresh/freq) // N.B. if word_freq <
       // freq_thresh, then subsampling would not happen
       // store data in case this is the last word
@@ -335,8 +345,8 @@ void GraphW2VLoader<TensorType>::BufferNextSamples()
   SizeType counter = 0;
 
   input_words_.Fill(cur_word_id);
-  labels_.Fill(BufferPositionUnusedDataType);
-  output_words_.Fill(BufferPositionUnusedDataType);
+  labels_.Fill(static_cast<DataType>(BufferPositionUnusedDataType));
+  output_words_.Fill(static_cast<DataType>(BufferPositionUnusedDataType));
   output_words_buffer_.Fill(BufferPositionUnusedSizeType);
 
   // set the context samples
@@ -391,6 +401,8 @@ void GraphW2VLoader<TensorType>::BufferNextSamples()
 template <typename TensorType>
 typename GraphW2VLoader<TensorType>::ReturnType GraphW2VLoader<TensorType>::GetNext()
 {
+  using DataType = typename TensorType::Type;
+
   DataType input_word, output_word;
 
   DataType label = labels_.At(buffer_pos_);  // check if we have drained the buffer, either no more
