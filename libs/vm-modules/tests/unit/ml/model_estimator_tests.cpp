@@ -403,31 +403,6 @@ TEST_F(VMModelEstimatorTests, compile_sequential_test)
   }
 }
 
-TEST_F(VMModelEstimatorTests, compile_simple_test)
-{
-  std::string model_type = "regressor";
-  std::string opt_type   = "adam";
-
-  SizeType min_layer_size = 0;
-  SizeType max_layer_size = 5;
-  SizeType layer_step     = 1;
-
-  fetch::vm::TypeId type_id = 0;
-
-  VmStringPtr vm_ptr_opt_type{new fetch::vm::String(vm.get(), opt_type)};
-
-  for (SizeType layers = min_layer_size; layers < max_layer_size; layers += layer_step)
-  {
-
-    fetch::vm::Ptr<fetch::vm::Array<SizeType>> vm_ptr_layers{};
-    VmModel                                    model(vm.get(), type_id, model_type);
-    VmModelEstimator                           model_estimator(model);
-
-    EXPECT_TRUE(model_estimator.CompileSimple(vm_ptr_opt_type, vm_ptr_layers) ==
-                static_cast<ChargeAmount>(fetch::vm::MAXIMUM_CHARGE));
-  }
-}
-
 TEST_F(VMModelEstimatorTests, estimator_fit_and_predict_test)
 {
   std::string model_type      = "sequential";

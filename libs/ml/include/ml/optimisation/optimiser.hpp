@@ -69,9 +69,9 @@ public:
                SizeType batch_size = SIZE_NOT_SET);
 
   /// DATALOADER RUN INTERFACES ///
-  DataType Run(fetch::ml::dataloaders::DataLoader<TensorType, TensorType> &loader,
+  DataType Run(fetch::ml::dataloaders::DataLoader<TensorType> &loader,
                SizeType batch_size = SIZE_NOT_SET, SizeType subset_size = SIZE_NOT_SET);
-  DataType Run(fetch::ml::dataloaders::DataLoader<TensorType, TensorType> &loader,
+  DataType Run(fetch::ml::dataloaders::DataLoader<TensorType> &loader,
                LearningRateParam<DataType> learning_rate_param, SizeType batch_size = SIZE_NOT_SET,
                SizeType subset_size = SIZE_NOT_SET);
 
@@ -120,7 +120,7 @@ private:
 
   void Init();
 
-  DataType RunImplementation(fetch::ml::dataloaders::DataLoader<TensorType, TensorType> &loader,
+  DataType RunImplementation(fetch::ml::dataloaders::DataLoader<TensorType> &loader,
                              SizeType batch_size  = SIZE_NOT_SET,
                              SizeType subset_size = SIZE_NOT_SET);
 };
@@ -289,9 +289,9 @@ typename T::Type Optimiser<T>::Run(std::vector<TensorType> const &data, TensorTy
  * @return Sum of losses from all mini-batches
  */
 template <class T>
-typename T::Type Optimiser<T>::Run(
-    fetch::ml::dataloaders::DataLoader<TensorType, TensorType> &loader,
-    LearningRateParam<DataType> learning_rate_param, SizeType batch_size, SizeType subset_size)
+typename T::Type Optimiser<T>::Run(fetch::ml::dataloaders::DataLoader<TensorType> &loader,
+                                   LearningRateParam<DataType> learning_rate_param,
+                                   SizeType batch_size, SizeType subset_size)
 {
   // setting up learning_rate_param_
   learning_rate_param_ = learning_rate_param;
@@ -305,16 +305,15 @@ typename T::Type Optimiser<T>::Run(
 }
 
 template <class T>
-typename T::Type Optimiser<T>::Run(
-    fetch::ml::dataloaders::DataLoader<TensorType, TensorType> &loader, SizeType batch_size,
-    SizeType subset_size)
+typename T::Type Optimiser<T>::Run(fetch::ml::dataloaders::DataLoader<TensorType> &loader,
+                                   SizeType batch_size, SizeType subset_size)
 {
   return RunImplementation(loader, batch_size, subset_size);
 }
 
 template <class T>
 typename T::Type Optimiser<T>::RunImplementation(
-    fetch::ml::dataloaders::DataLoader<TensorType, TensorType> &loader, SizeType batch_size,
+    fetch::ml::dataloaders::DataLoader<TensorType> &loader, SizeType batch_size,
     SizeType subset_size)
 {
   if (loader.IsDone())
