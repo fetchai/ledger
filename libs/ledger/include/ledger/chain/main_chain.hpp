@@ -126,8 +126,6 @@ struct TimeTravelogue;
 
 class MainChain
 {
-  using BlockPtr = std::shared_ptr<Block>;
-
 public:
   using BlockHashes          = std::vector<BlockHash>;
   using BlockHashSet         = std::unordered_set<BlockHash>;

@@ -111,7 +111,7 @@ public:
     *os << Show(expected_);
     if (patterns_)
     {
-      os << ", ";
+      *os << ", ";
       Identify(expected_, os);
     }
   }
