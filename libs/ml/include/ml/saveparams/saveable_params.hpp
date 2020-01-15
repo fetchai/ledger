@@ -17,9 +17,11 @@
 //
 //------------------------------------------------------------------------------
 
+#include "math/base_types.hpp"
 #include "ml/meta/ml_type_traits.hpp"
 
 #include <unordered_map>
+#include <vector>
 
 namespace fetch {
 namespace ml {

@@ -19,8 +19,6 @@
 #include "math/tensor/tensor.hpp"
 #include "math/tensor/tensor_slice_iterator.hpp"
 #include "ml/core/graph.hpp"
-//#include "ml/meta/ml_type_traits.hpp"
-//#include "ml/state_dict.hpp"
 #include "ml/ops/weights.hpp"
 
 namespace fetch {

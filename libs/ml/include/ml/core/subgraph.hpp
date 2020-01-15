@@ -22,6 +22,9 @@
 namespace fetch {
 namespace ml {
 
+template <typename TensorType>
+struct SubGraphSaveableParams;
+
 /**
  * A SubGraph is a collection of nodes in the graph.
  * Layers should inherit from SubGraph

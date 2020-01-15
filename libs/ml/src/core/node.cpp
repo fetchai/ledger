@@ -17,8 +17,9 @@
 //------------------------------------------------------------------------------
 
 #include "ml/core/node.hpp"
-#include "ml/saveparams/saveable_params.hpp"
+#include "ml/ops/ops.hpp"
 #include "ml/ops/weights.hpp"
+#include "ml/saveparams/saveable_params.hpp"
 
 namespace fetch {
 namespace ml {

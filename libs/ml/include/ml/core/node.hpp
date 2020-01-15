@@ -17,11 +17,25 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/ops/ops.hpp"
-
+#include <memory>
+#include <stdint.h>
+#include <string>
+#include <unordered_map>
 
 namespace fetch {
 namespace ml {
+
+namespace ops {
+template <class T>
+class Ops;
+}
+
+struct OpsSaveableParams;
+
+template <typename TensorType>
+struct NodeSaveableParams;
+
+enum class OpType : uint16_t;
 
 template <typename TensorType>
 class Node
