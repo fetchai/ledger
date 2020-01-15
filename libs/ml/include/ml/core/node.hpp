@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include <functional>
 #include <memory>
 #include <stdint.h>
 #include <string>
