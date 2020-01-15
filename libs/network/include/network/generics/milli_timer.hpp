@@ -80,3 +80,5 @@ private:
 #define FETCH_MILLI_TIMER(name) \
   fetch::generics::MilliTimer const FETCH_JOIN(mutex_locked_on_line, __LINE__)(name)
 
+#define FETCH_MILLI_TIMER_EX(name, time_limit) \
+  fetch::generics::MilliTimer const FETCH_JOIN(mutex_locked_on_line, __LINE__)(name, time_limit)

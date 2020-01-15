@@ -276,17 +276,27 @@ void MainChainRpcService::HandleChainResponse(Address const &address, Begin begi
       continue;
     }
 
-    // recompute the digest
-    it->UpdateDigest();
-
-    // add the block
-    if (!ValidBlock(*it, "during fwd sync"))
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "Synced bad proof block: 0x", it->hash.ToHex(),
-                      " from: muddle://", ToBase64(address));
-      ++invalid;
-      continue;
+      FETCH_MILLI_TIMER_EX("MainChainRpc:HandleChainResposne:UpdateDigest", 10);
+
+      // recompute the digest
+      it->UpdateDigest();
     }
+
+    {
+      FETCH_MILLI_TIMER_EX("MainChainRpc:HandleChainResposne:ValidBlock", 10);
+
+      // add the block
+      if (!ValidBlock(*it, "during fwd sync"))
+      {
+        FETCH_LOG_INFO(LOGGING_NAME, "Synced bad proof block: 0x", it->hash.ToHex(),
+                       " from: muddle://", ToBase64(address));
+        ++invalid;
+        continue;
+      }
+    }
+
+    FETCH_MILLI_TIMER_EX("MainChainRpc:HandleChainResposne:AddBlock", 10);
 
     auto const status = chain_.AddBlock(*it);
 
