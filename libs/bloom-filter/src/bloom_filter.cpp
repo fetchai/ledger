@@ -30,7 +30,7 @@
 #include <utility>
 #include <vector>
 
-constexpr std::size_t const INITIAL_SIZE_IN_BITS = 8 * 1 * 1024 * 1024;
+constexpr std::size_t const INITIAL_SIZE_IN_BITS = 8 * 10 * 1024 * 1024;
 
 namespace fetch {
 namespace internal {
