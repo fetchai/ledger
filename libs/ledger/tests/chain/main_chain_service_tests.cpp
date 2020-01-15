@@ -98,7 +98,7 @@ public:
     {
       return true;
     }
-    if (patterns_)
+    if (static_cast<bool>(patterns_))
     {
       Identify(actual, listener);
     }
@@ -108,7 +108,7 @@ public:
   void DescribeTo(std::ostream *os) const override
   {
     *os << Show(expected_);
-    if (patterns_)
+    if (static_cast<bool>(patterns_))
     {
       *os << ", ";
       Identify(expected_, os);
@@ -159,7 +159,7 @@ private:
 
 template <template <class...> class Container, class... ContainerArgs, class... NamesAndContainers>
 DigestMatcher::Patterns DigestMatcher::KeepPatterns(
-    Patterns patterns, std::string name,
+    Patterns patterns, std::string const &name,
     Container<fetch::ledger::BlockPtr, ContainerArgs...> const &container,
     NamesAndContainers &&... names_and_containers)
 {
