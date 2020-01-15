@@ -170,7 +170,7 @@ protected:
 
   // Related to recovering state after a crash
   /// @{
-  constexpr static uint16_t SAVE_PERIODICITY = 10;
+  constexpr static uint16_t SAVE_PERIODICITY = 100;
   OldStateStore  old_state_;
   StateStore     saved_state_;
   AllSigsStore   saved_state_all_sigs_;

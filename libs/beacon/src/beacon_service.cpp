@@ -222,7 +222,6 @@ void BeaconService::ReloadState(State &next_state)
   try
   {
     // Load all signatures from the file
-    //for (auto it = saved_state_all_sigs_.begin(); it != saved_state_all_sigs_.end(); ++it)
     for(auto const &siginfo : saved_state_all_sigs_)
     {
       FETCH_LOG_INFO(LOGGING_NAME, "Adding sigs for: ", siginfo.round);
