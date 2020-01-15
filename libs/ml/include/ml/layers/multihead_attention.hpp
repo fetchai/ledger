@@ -17,9 +17,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/layers/fully_connected.hpp"
-#include "ml/layers/scaled_dot_product_attention.hpp"
-#include "ml/ops/placeholder.hpp"
+
+#include "ml/core/subgraph.hpp"
+#include "ml/ops/activation.hpp"
+#include "ml/ops/weights.hpp"
 
 namespace fetch {
 namespace ml {

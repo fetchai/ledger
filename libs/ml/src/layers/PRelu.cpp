@@ -18,7 +18,7 @@
 
 #include "math/tensor/tensor.hpp"
 #include "ml/layers/PRelu.hpp"
-
+#include "ml/ops/placeholder.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 
 #include <cmath>

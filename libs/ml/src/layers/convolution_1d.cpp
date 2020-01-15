@@ -22,6 +22,10 @@
 #include "ml/ops/placeholder.hpp"
 #include "ml/saveparams/saveable_params.hpp"
 
+#include "ml/core/subgraph.hpp"
+#include "ml/ops/activation.hpp"
+#include "ml/ops/weights.hpp"
+
 #include <functional>
 #include <memory>
 #include <string>

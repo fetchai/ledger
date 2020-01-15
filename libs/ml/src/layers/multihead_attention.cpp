@@ -17,10 +17,13 @@
 //------------------------------------------------------------------------------
 
 #include "ml/layers/multihead_attention.hpp"
-
+#include "ml/layers/fully_connected.hpp"
+#include "ml/layers/scaled_dot_product_attention.hpp"
+#include "ml/ops/placeholder.hpp"
 #include "ml/ops/add.hpp"
 #include "ml/ops/concatenate.hpp"
 #include "ml/saveparams/saveable_params.hpp"
+
 
 #include <string>
 

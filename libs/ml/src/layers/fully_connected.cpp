@@ -21,6 +21,9 @@
 #include "ml/regularisers/regularisation.hpp"
 #include "ml/regularisers/regulariser.hpp"
 #include "ml/saveparams/saveable_params.hpp"
+#include "ml/core/subgraph.hpp"
+#include "ml/ops/placeholder.hpp"
+#include "ml/core/subgraph.hpp"
 
 #include "ml/ops/add.hpp"
 #include "ml/ops/flatten.hpp"
