@@ -1430,7 +1430,7 @@ BlockStatus MainChain::InsertBlock(IntBlockPtr const &block, bool evaluate_loose
   uint64_t const time_now =
       GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM));
 
-  MilliTimer myTimer("MainChain::InsertBlock", 750);
+  FETCH_MILLI_TIMER_EX("MainChain::InsertBlock", 10);
 
   FETCH_LOCK(lock_);
 
@@ -1472,6 +1472,8 @@ BlockStatus MainChain::InsertBlock(IntBlockPtr const &block, bool evaluate_loose
 
     return BlockStatus::INVALID;
   }
+
+  FETCH_MILLI_TIMER_EX("MainChain::InsertBlock:Stage2", 10);
 
   // Assume for the moment that this block is not loose. The validity of this statement will be
   // checked below
@@ -1543,6 +1545,8 @@ BlockStatus MainChain::InsertBlock(IntBlockPtr const &block, bool evaluate_loose
   // update the final (total) weight for this block
   block->total_weight = prev_block->total_weight + block->weight;
 
+  FETCH_MILLI_TIMER_EX("MainChain::InsertBlock:Stage3", 10);
+
   // At this point we can proceed knowing that the block is building upon existing tip
 
   // At this point we have a new block with a prev that's known and not loose. Update tips
@@ -1565,6 +1569,7 @@ BlockStatus MainChain::InsertBlock(IntBlockPtr const &block, bool evaluate_loose
     CompleteLooseBlocks(block);
   }
 
+  FETCH_MILLI_TIMER_EX("MainChain::InsertBlock:Stage4", 10);
   AddBlockToBloomFilter(*block);
 
   return BlockStatus::ADDED;
@@ -1972,7 +1977,7 @@ void MainChain::SetHeadHash(BlockHash const &hash)
 DigestSet MainChain::DetectDuplicateTransactions(BlockHash const &           starting_hash,
                                                  TransactionLayoutSet const &transactions) const
 {
-  MilliTimer const timer{"DuplicateTransactionsCheck", 100};
+  FETCH_MILLI_TIMER_EX("MainChain:DuplicateTransactionsCheck", 10);
 
   FETCH_LOG_DEBUG(LOGGING_NAME, "Starting TX uniqueness verify");
 
@@ -1997,6 +2002,11 @@ DigestSet MainChain::DetectDuplicateTransactions(BlockHash const &           sta
       potential_duplicates.insert(tx_layout.digest());
     }
     bloom_filter_query_count_->increment();
+  }
+
+  if (!potential_duplicates.empty())
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Potential duplicates found: ", potential_duplicates.size());
   }
 
   auto search_chain_for_duplicates =
