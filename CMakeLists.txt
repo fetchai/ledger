@@ -25,7 +25,6 @@ option(FETCH_ENABLE_LTO                 "Enable link-time optimisation"         
 option(FETCH_ENABLE_BACKTRACE           "Enable backtrace on errors"            ON)
 option(FETCH_FIXEDPOINT_DEBUG_HEX       "Print Hex value of FixedPoint numbers" OFF)
 option(FETCH_FORCE_COLORED_OUTPUT       "Always produce ANSI-colored output."   ON)
-option(FETCH_PROFILE_BUILD_TIME         "Enable build time profiling"           OFF)
 # cmake-format: on
 
 # custom string options
@@ -77,13 +76,8 @@ if (FETCH_DEBUG_SANITIZER)
   fetch_info("Running with sanitizer: ${FETCH_DEBUG_SANITIZER}")
 endif (FETCH_DEBUG_SANITIZER)
 
-if (FETCH_PROFILE_BUILD_TIME)
-  set(time_profiler "${FETCH_ROOT_DIR}/scripts/build-profile-gen.py --")
-
-  set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE "${time_profiler}")
-  set_property(GLOBAL PROPERTY RULE_LAUNCH_LINK "${time_profiler}")
-elseif (FETCH_ENABLE_CCACHE)
-  # Enable CCACHE - compiler caching to reduce build times
+# Enable CCACHE - compiler caching to reduce build times
+if (FETCH_ENABLE_CCACHE)
   find_program(SCCACHE_FOUND sccache)
   find_program(CCACHE_FOUND ccache)
 
@@ -99,7 +93,7 @@ elseif (FETCH_ENABLE_CCACHE)
       "ccache is enabled but wasn't found on your system - strongly advise installing ccache for reduced build times"
       )
   endif ()
-endif (FETCH_PROFILE_BUILD_TIME)
+endif (FETCH_ENABLE_CCACHE)
 
 conditionally_enable_lto()
 
