@@ -237,7 +237,7 @@ MainChainRpcService::Address MainChainRpcService::GetRandomTrustedPeer() const
 
   auto const direct_peers = endpoint_.GetDirectlyConnectedPeers();
 
-  FETCH_LOG_INFO(LOGGING_NAME, "Main chain connected peers: ", direct_peers.size());
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Main chain connected peers: ", direct_peers.size());
 
   if (!direct_peers.empty())
   {
@@ -276,27 +276,17 @@ void MainChainRpcService::HandleChainResponse(Address const &address, Begin begi
       continue;
     }
 
+    // recompute the digest
+    it->UpdateDigest();
+
+    // add the block
+    if (!ValidBlock(*it, "during fwd sync"))
     {
-      FETCH_MILLI_TIMER_EX("MainChainRpc:HandleChainResposne:UpdateDigest", 10);
-
-      // recompute the digest
-      it->UpdateDigest();
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Synced invalid block: 0x", it->hash.ToHex(),
+                      " from: muddle://", ToBase64(address));
+      ++invalid;
+      continue;
     }
-
-    {
-      FETCH_MILLI_TIMER_EX("MainChainRpc:HandleChainResposne:ValidBlock", 10);
-
-      // add the block
-      if (!ValidBlock(*it, "during fwd sync"))
-      {
-        FETCH_LOG_INFO(LOGGING_NAME, "Synced bad proof block: 0x", it->hash.ToHex(),
-                       " from: muddle://", ToBase64(address));
-        ++invalid;
-        continue;
-      }
-    }
-
-    FETCH_MILLI_TIMER_EX("MainChainRpc:HandleChainResposne:AddBlock", 10);
 
     auto const status = chain_.AddBlock(*it);
 
@@ -413,7 +403,7 @@ State MainChainRpcService::OnStartSyncWithPeer()
 
   if (block_resolving_ && !current_peer_address_.empty())
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Resolving: #", block_resolving_->block_number, " 0x",
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Resolving: #", block_resolving_->block_number, " 0x",
                     block_resolving_->hash.ToHex(), " from: muddle://",
                     current_peer_address_.ToBase64());
   }

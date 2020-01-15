@@ -735,8 +735,7 @@ bool Consensus::EnoughQualSigned(Block const &previous, Block const &current) co
 
 Status Consensus::ValidBlock(Block const &current) const
 {
-  FETCH_MILLI_TIMER_EX("Consensus::ValidBlock ", 10);
-
+  MilliTimer const timer{"ValidBlock ", 1000};
   FETCH_LOCK(mutex_);
   Status ret = Status::YES;
 

@@ -1430,6 +1430,8 @@ BlockStatus MainChain::InsertBlock(IntBlockPtr const &block, bool evaluate_loose
   uint64_t const time_now =
       GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM));
 
+  MilliTimer myTimer("MainChain::InsertBlock", 750);
+
   FETCH_LOCK(lock_);
 
   if (dirty_block_functionality_ && dirty_map_.find(block->hash) != dirty_map_.end())
@@ -1970,7 +1972,7 @@ void MainChain::SetHeadHash(BlockHash const &hash)
 DigestSet MainChain::DetectDuplicateTransactions(BlockHash const &           starting_hash,
                                                  TransactionLayoutSet const &transactions) const
 {
-  FETCH_MILLI_TIMER_EX("MainChain:DuplicateTransactionsCheck", 10);
+  MilliTimer const timer{"DuplicateTransactionsCheck", 100};
 
   FETCH_LOG_DEBUG(LOGGING_NAME, "Starting TX uniqueness verify");
 
@@ -1995,11 +1997,6 @@ DigestSet MainChain::DetectDuplicateTransactions(BlockHash const &           sta
       potential_duplicates.insert(tx_layout.digest());
     }
     bloom_filter_query_count_->increment();
-  }
-
-  if (!potential_duplicates.empty())
-  {
-    FETCH_LOG_WARN(LOGGING_NAME, "Potential duplicates found: ", potential_duplicates.size());
   }
 
   auto search_chain_for_duplicates =
