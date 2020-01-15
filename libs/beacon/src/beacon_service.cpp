@@ -570,6 +570,8 @@ bool BeaconService::AddSignature(SignatureShare share)
       FETCH_LOG_INFO(LOGGING_NAME, "Note: qual is: ", i.ToBase64());
     }
 
+    FETCH_LOG_INFO(LOGGING_NAME, "Note: we are: ", identity_.identifier().ToBase64());
+
     EventSignatureFromNonMember event;
     // TODO(tfr): Received signature from non-member - deal with it.
     event_manager_->Dispatch(event);
