@@ -160,11 +160,6 @@ BlockStatus MainChain::AddBlock(BlockPtr const &block)
   FETCH_LOG_DEBUG(LOGGING_NAME, "New Block: 0x", block->hash.ToHex(), " -> ", ToString(status),
                   " (weight: ", block->weight, " total: ", block->total_weight, ")");
 
-  if (status == BlockStatus::ADDED)
-  {
-    AddBlockToBloomFilter(*block);
-  }
-
   return status;
 }
 
@@ -680,7 +675,7 @@ Blocks MainChain::GetChainPreceding(BlockHash start, uint64_t limit) const
  * @param current_hash The hash of the first block's parent
  * @return The array of blocks, plus the current heaviest hash
  */
-MainChain::Travelogue MainChain::TimeTravel(BlockHash current_hash) const
+MainChain::Travelogue MainChain::TimeTravel(BlockHash current_hash, std::size_t limit) const
 {
   MilliTimer myTimer("MainChain::TimeTravel", 750);
 
@@ -714,10 +709,12 @@ MainChain::Travelogue MainChain::TimeTravel(BlockHash current_hash) const
   // We have the block we want to sync forward from. Check if it is on the heaviest chain.
   bool const on_heaviest_branch = (block && (block->chain_label == heaviest_.ChainLabel()));
 
+  std::size_t const output_limit = std::min(limit, std::size_t{UPPER_BOUND});
+
   bool not_done = true;
   for (current_hash = std::move(next_hash);
        // stop once we have gathered enough blocks or passed the tip
-       not_done && !current_hash.empty() && result.size() < UPPER_BOUND;
+       not_done && !current_hash.empty() && result.size() < output_limit;
        // walk the stack
        current_hash = std::move(next_hash))
   {
@@ -1466,6 +1463,23 @@ BlockStatus MainChain::InsertBlock(BlockPtr const &block, bool evaluate_loose_bl
     return BlockStatus::INVALID;
   }
 
+  TransactionLayoutSet txs;
+  for (auto const &slice : block->slices)
+  {
+    for (auto const &tx_layout : slice)
+    {
+      txs.insert(tx_layout);
+    }
+  }
+
+  auto const duplicates = DetectDuplicateTransactions(block->previous_hash, txs);
+  if (!duplicates.empty())
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Block discard due to duplicate tx(s)");
+
+    return BlockStatus::INVALID;
+  }
+
   // Assume for the moment that this block is not loose. The validity of this statement will be
   // checked below
   block->is_loose = false;
@@ -1557,6 +1571,8 @@ BlockStatus MainChain::InsertBlock(BlockPtr const &block, bool evaluate_loose_bl
   {
     CompleteLooseBlocks(block);
   }
+
+  AddBlockToBloomFilter(*block);
 
   return BlockStatus::ADDED;
 }
@@ -1966,6 +1982,8 @@ DigestSet MainChain::DetectDuplicateTransactions(BlockHash const &           sta
   MilliTimer const timer{"DuplicateTransactionsCheck", 100};
 
   FETCH_LOG_DEBUG(LOGGING_NAME, "Starting TX uniqueness verify");
+
+  FETCH_LOCK(lock_);
 
   BlockPtr block;
   if (!LookupBlock(starting_hash, block) || block->is_loose)

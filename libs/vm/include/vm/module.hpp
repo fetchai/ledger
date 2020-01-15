@@ -475,6 +475,16 @@ public:
     return deserialization_constructors_;
   }
 
+  void EnableTestAnnotations()
+  {
+    test_annotations_ = true;
+  }
+
+  bool IsUsingTestAnnotations() const
+  {
+    return test_annotations_;
+  }
+
 private:
   template <typename Estimator, typename Callable>
   void InternalCreateFreeFunction(std::string const &name, Callable callable,
@@ -545,6 +555,7 @@ private:
   // of C++ objects as Etch objects
   CPPCopyConstructorMap cpp_copy_constructors_;
 
+  bool test_annotations_{false};
   friend class Compiler;
   friend class VM;
 };
