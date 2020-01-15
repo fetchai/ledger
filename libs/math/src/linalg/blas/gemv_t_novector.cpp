@@ -105,7 +105,7 @@ void Blas<S, Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
         for (i = 0; i < leny; ++i)
         {
           y[iy] = beta * y[iy];
-          iy    = static_cast<Type>(iy + incy);
+          iy    = iy + incy;
         }
       }
     }
