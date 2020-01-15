@@ -171,7 +171,7 @@ void BeaconService::SaveState()
       serializers::LargeObjectSerializeHelper serializer_test{};
       serializer << signatures_being_built_;
 
-      FETCH_LOG_INFO(LOGGING_NAME, "Sigs being build: ", signatures_being_built_.size(), " serialized size: ", signatures_being_built_.size());
+      FETCH_LOG_INFO(LOGGING_NAME, "Sigs being build: ", signatures_being_built_.size(), " serialized size: ", serializer_test.size());
     }
 
     FETCH_LOG_INFO(LOGGING_NAME, "Total ser size: ", serializer.size());
