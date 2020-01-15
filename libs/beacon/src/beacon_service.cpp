@@ -145,8 +145,6 @@ BeaconService::BeaconService(MuddleInterface &muddle, const CertificatePtr &cert
     FETCH_LOG_DEBUG(LOGGING_NAME, "Current state: ", ToString(current),
                     " (previous: ", ToString(previous), ")");
   });
-
-  FETCH_LOG_INFO(LOGGING_NAME, "Constructed with identity: ", identity_.identifier().ToBase64());
 }
 
 /**
@@ -311,8 +309,6 @@ BeaconService::State BeaconService::OnPrepareEntropyGeneration()
       state_machine_->previous_state() == State::WAIT_FOR_SETUP_COMPLETION)
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Periodically saving the entropy information. Index: ", index);
-
-    FETCH_LOG_INFO(LOGGING_NAME, "XXXX with identity: ", identity_.identifier().ToBase64());
     SaveState();
   }
 
