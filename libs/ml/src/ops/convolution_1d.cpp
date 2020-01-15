@@ -241,7 +241,8 @@ void Convolution1D<TensorType>::ReverseFillVerticalStride(TensorType &      inpu
     {
       for (SizeType i_oc{0}; i_oc < output_channels; ++i_oc)  // Iterate over output channels
       {
-        input(i_oc, i_ic, i_k, 0) += vertical_stride(i_oc, j_s);
+        input(i_oc, i_ic, i_k, 0) =
+            static_cast<DataType>(input(i_oc, i_ic, i_k, 0) + vertical_stride(i_oc, j_s));
       }
       ++j_s;
     }
