@@ -295,6 +295,8 @@ BeaconService::State BeaconService::OnPrepareEntropyGeneration()
       state_machine_->previous_state() == State::WAIT_FOR_SETUP_COMPLETION)
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Periodically saving the entropy information. Index: ", index);
+
+    FETCH_LOG_INFO(LOGGING_NAME, "XXXX with identity: ", identity_.identifier().ToBase64());
     SaveState();
   }
 
