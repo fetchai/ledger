@@ -389,6 +389,10 @@ T const W2VLoader<T>::WindowContextUnused = static_cast<T>(-1);
 /// EXPLICIT INSTANTIATIONS ///
 ///////////////////////////////
 
+template class W2VLoader<std::int8_t>;
+template class W2VLoader<std::int16_t>;
+template class W2VLoader<std::int32_t>;
+template class W2VLoader<std::int64_t>;
 template class W2VLoader<float>;
 template class W2VLoader<double>;
 template class W2VLoader<fixed_point::fp32_t>;
