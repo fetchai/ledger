@@ -67,12 +67,14 @@ void ExecuteWork(SynergeticContract &contract, WorkPtr const &work)
 
 }  // namespace
 
-NaiveSynergeticMiner::NaiveSynergeticMiner(DAGPtr dag, StorageInterface &storage, ProverPtr prover, ConstByteArray const &script)
+NaiveSynergeticMiner::NaiveSynergeticMiner(DAGPtr dag, StorageInterface &storage, ProverPtr prover,
+    ConstByteArray const &script, ContractAnalyserPtr contract_analyser)
   : dag_{std::move(dag)}
   , storage_{storage}
   , prover_{std::move(prover)}
   , state_machine_{std::make_shared<core::StateMachine<State>>("NaiveSynMiner", State::INITIAL)}
   , job_script_{script}
+  , contract_analyser_{std::move(contract_analyser)}
 {
   state_machine_->RegisterHandler(State::INITIAL, this, &NaiveSynergeticMiner::OnInitial);
   state_machine_->RegisterHandler(State::MINE, this, &NaiveSynergeticMiner::OnMine);
@@ -143,11 +145,51 @@ void NaiveSynergeticMiner::Mine()
   }
 #endif  // FETCH_LOG_DEBUG_ENABLED
 
-  // for each of the contract addresses available mine a solution
+  //Anlyise the problem space
+  std::vector<variant::Variant> job_descriptions{};
+  std::unordered_map<std::size_t, chain::Address> address_lookup{};
+  std::size_t id = 0;
   for (auto const &problem : problem_spaces)
   {
+    auto res = contract_analyser_->AnalyseContract(problem.first, problem.second);
+    if (res.IsUndefined())
+    {
+      continue;
+    }
+    res["id"] = id;
+    address_lookup[id] = problem.first;
+    ++id;
+    FETCH_LOG_INFO(LOGGING_NAME, "Contract ", res["id"], " analysis: problem=", res["problem"], ", work=", res["work"],
+        ", clear=", res["clear"]);
+    job_descriptions.push_back(std::move(res));
+  }
+
+  std::vector<uint64_t> selected_jobs{};
+  auto status = job_script_.GenerateJobList(job_descriptions, selected_jobs);
+
+  if (status != SynergeticMinerScript::Status::SUCCESS)
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Failed to generate job list using synergetic miner script! Falling back to naive version...");
+    selected_jobs.clear();
+    for(std::size_t i=0;i<job_descriptions.size();++i)
+    {
+      selected_jobs.push_back(i);
+    }
+  }
+
+  for(auto const& job : selected_jobs)
+  {
+    auto it = address_lookup.find(job);
+    if (it == address_lookup.end())
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Job selection algorithm returned invalid ID (", job, ")!");
+      continue;
+    }
+    FETCH_LOG_WARN(LOGGING_NAME, "Job with ", job, " id is selected!");
+    auto const &problem = problem_spaces[it->second];
+
     // attempt to mine a solution to this problem
-    auto const solution = MineSolution(problem.first, problem.second);
+    auto const solution = MineSolution(it->second, problem);
 
     // check to see if a solution was generated
     if (solution)

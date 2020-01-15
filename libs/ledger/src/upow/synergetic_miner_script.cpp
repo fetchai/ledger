@@ -160,7 +160,7 @@ SynergeticMinerScript::SynergeticMinerScript(ConstByteArray const &source)
     std::string *function = nullptr;
     switch (kind)
     {
-    case FunctionDecoratorKind::MINE_JOBS:
+    case FunctionDecoratorKind::MINER_JOBS:
       name     = "mine_jobs";
       function = &mine_jobs_function_;
       break;

@@ -1,0 +1,10 @@
+@minerjobs
+function generateSynergeticJobListNaive(jobs: Array<StructuredData>): Array<UInt64>
+
+    var result = Array<UInt64>(jobs.count());
+    for (i in 0:jobs.count())
+        result[i] = toUInt64(i);
+    endfor
+
+    return result;
+endfunction

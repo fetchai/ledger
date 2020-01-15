@@ -24,6 +24,7 @@
 #include "ledger/upow/synergetic_miner_interface.hpp"
 #include "ledger/upow/work.hpp"
 #include "ledger/upow/synergetic_miner_script.hpp"
+#include "ledger/upow/synergetic_contract_analyser_interface.hpp"
 
 #include <memory>
 
@@ -49,9 +50,11 @@ public:
   using DAGPtr         = std::shared_ptr<ledger::DAGInterface>;
   using StateMachine   = core::StateMachine<State>;
   using ConstByteArray = byte_array::ConstByteArray;
+  using ContractAnalyserPtr = std::unique_ptr<SynergeticContractAnalyserInterface>;
 
   // Construction / Destruction
-  NaiveSynergeticMiner(DAGPtr dag, StorageInterface &storage, ProverPtr prover, ConstByteArray const &script);
+  NaiveSynergeticMiner(DAGPtr dag, StorageInterface &storage, ProverPtr prover, ConstByteArray const &script,
+      ContractAnalyserPtr contract_analyser);
   NaiveSynergeticMiner(NaiveSynergeticMiner const &) = delete;
   NaiveSynergeticMiner(NaiveSynergeticMiner &&)      = delete;
   ~NaiveSynergeticMiner() override                   = default;
@@ -92,6 +95,7 @@ private:
   std::atomic<bool>             is_mining_{false};
   TokenContract                 token_contract_{};
   SynergeticMinerScript         job_script_;
+  ContractAnalyserPtr           contract_analyser_;
 };
 
 }  // namespace ledger

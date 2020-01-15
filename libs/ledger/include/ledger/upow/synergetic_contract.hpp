@@ -25,6 +25,7 @@
 #include "vm/compiler.hpp"
 #include "vm/module.hpp"
 #include "vm/vm.hpp"
+#include "core/digest.hpp"
 
 #include <memory>
 #include <string>

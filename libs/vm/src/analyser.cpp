@@ -50,6 +50,7 @@ std::string const PROBLEM_ANNOTATION   = "@problem";
 std::string const OBJECTIVE_ANNOTATION = "@objective";
 std::string const WORK_ANNOTATION      = "@work";
 std::string const CLEAR_ANNOTATION     = "@clear";
+std::string const MINERJOBS_ANNOTATION = "@minerjobs";
 
 bool HasAnnotation(NodePtr const &annotations_node, std::string const &annotation_name)
 {
@@ -496,7 +497,7 @@ void Analyser::ValidateFunctionAnnotations(NodePtr const &function_node)
     auto const &text = annotation->text;
     if (text != INIT_ANNOTATION && text != ACTION_ANNOTATION && text != QUERY_ANNOTATION &&
         text != PROBLEM_ANNOTATION && text != OBJECTIVE_ANNOTATION && text != WORK_ANNOTATION &&
-        text != CLEAR_ANNOTATION)
+        text != CLEAR_ANNOTATION && text != MINERJOBS_ANNOTATION)
     {
       AddError(annotation->line, "Invalid annotation '" + text + "'");
     }
