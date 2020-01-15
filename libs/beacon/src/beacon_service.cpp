@@ -28,6 +28,7 @@
 #include "telemetry/histogram.hpp"
 #include "telemetry/utils/timer.hpp"
 #include "telemetry/utils/to_seconds.hpp"
+#include "core/byte_array/byte_array.hpp"
 
 #include <chrono>
 #include <iterator>
@@ -151,12 +152,12 @@ BeaconService::BeaconService(MuddleInterface &muddle, const CertificatePtr &cert
 template <typename T>
 storage::ResourceID CreateRID(T from)
 {
-  ConstByteArray memory_area(32);
+  byte_array::ByteArray memory_area(32);
   memcpy(memory_area.pointer(), reinterpret_cast<char *>(from), sizeof(T));
 
-  FETCH_LOG_INFO(LOGGING_NAME, "NOW: ", memory_area.ToBase64());
+  FETCH_LOG_INFO("xxx", "NOW: ", memory_area.ToBase64());
 
-  return memory_area;
+  return storage::ResourceID{memory_area};
 }
 
 /**
@@ -176,7 +177,7 @@ void BeaconService::SaveState()
 
   try
   {
-    MilliTimer const timer{"SaveStateSigs ", 10};
+    MilliTimer const timer2{"SaveStateSigs ", 10};
 
     if(!signatures_being_built_.empty())
     {
