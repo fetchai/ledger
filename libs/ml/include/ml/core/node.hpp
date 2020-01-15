@@ -19,7 +19,6 @@
 
 #include <functional>
 #include <memory>
-#include <stdint.h>
 #include <string>
 #include <unordered_map>
 #include <vector>
