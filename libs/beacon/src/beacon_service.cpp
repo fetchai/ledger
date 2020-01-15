@@ -178,8 +178,8 @@ void BeaconService::SaveState()
         lowest_relevant_sig_index--;
       }
 
-      // Now add signatures which are new
-      while(!saved_state_all_sigs_.Has(storage::ResourceAddress(std::to_string(highest_relevant_sig_index))))
+      // Now add signatures which are new (note genesis would never need this)
+      while(!saved_state_all_sigs_.Has(storage::ResourceAddress(std::to_string(highest_relevant_sig_index))) && highest_relevant_sig_index != 0)
       {
         FETCH_LOG_INFO(LOGGING_NAME, "Highest relevant: ", highest_relevant_sig_index, " size: ", signatures_being_built_.size());
         saved_state_all_sigs_.Set(storage::ResourceAddress(std::to_string(highest_relevant_sig_index)), signatures_being_built_.at(highest_relevant_sig_index));
