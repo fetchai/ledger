@@ -29,5 +29,14 @@ public:
 
   MOCK_METHOD2(GetHeaviestChain, BlocksPromise(MuddleAddress, uint64_t));
   MOCK_METHOD4(GetCommonSubChain, BlocksPromise(MuddleAddress, Digest, Digest, uint64_t));
+  /*
+  virtual TraveloguePromise TimeTravel(MuddleAddress peer, Digest start) override
+  {
+    std::cerr << "Timetravelling from hash " << start.ToHex().SubArray(0, 8) << '\n';
+    return FluxCapacitor(std::move(peer), std::move(start));
+  }
+  */
   MOCK_METHOD2(TimeTravel, TraveloguePromise(MuddleAddress, Digest));
+
+private:
 };
