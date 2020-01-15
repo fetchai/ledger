@@ -28,7 +28,7 @@
 #include "gtest/gtest.h"
 
 #include <iostream>
-
+#include <utility>
 using namespace fetch;
 using namespace fetch::muddle;
 using namespace fetch::core;
@@ -250,7 +250,8 @@ public:
   BeaconServiceStateRecovery(MuddleInterface &muddle, const CertificatePtr &certificate,
                              BeaconSetupService &beacon_setup, SharedEventManager event_manager,
                              bool load_and_reload_on_crash)
-    : BeaconService(muddle, certificate, beacon_setup, event_manager, load_and_reload_on_crash)
+    : BeaconService(muddle, certificate, beacon_setup, std::move(event_manager),
+                    load_and_reload_on_crash)
   {}
 
   // getters/setters for the variables that should change
