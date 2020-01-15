@@ -154,7 +154,10 @@ storage::ResourceID CreateRID(T from)
 {
   byte_array::ByteArray memory_area(32);
   memory_area.Resize(32);
-  memcpy(memory_area.pointer(), reinterpret_cast<char *>(from), sizeof(T));
+
+  FETCH_LOG_INFO("xxx", "BEFORE: ", memory_area.ToBase64());
+
+  memcpy(memory_area.pointer(), reinterpret_cast<char *>(&from), sizeof(T));
 
   FETCH_LOG_INFO("xxx", "NOW: ", memory_area.ToBase64());
 
