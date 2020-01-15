@@ -59,9 +59,24 @@ VMTensor::VMTensor(VM *vm, TypeId type_id)
 
 VMTensor::VMTensor(VM *vm, TypeId type_id, std::string const &str)
   : Object(vm, type_id)
-  , tensor_(TensorType::FromString(str))
   , estimator_(*this)
-{}
+{
+  try
+  {
+    tensor_ = TensorType::FromString(str);
+  }
+  catch (std::exception const &ex)
+  {
+    // TODO(issue 1094): Support for nested runtime error(s) and/or exception(s)
+    vm_->RuntimeError("An exception has been thrown from State<...>::FlushIO(). Desc.: " +
+                      std::string(ex.what()));
+  }
+  catch (...)
+  {
+    // TODO(issue 1094): Support for nested runtime error(s) and/or exception(s)
+    vm_->RuntimeError("An exception has been thrown from State<...>::FlushIO().");
+  }
+}
 
 Ptr<VMTensor> VMTensor::Constructor(VM *vm, TypeId type_id, Ptr<Array<SizeType>> const &shape)
 {
