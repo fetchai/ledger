@@ -229,7 +229,6 @@ void BeaconService::SaveState()
         for (int i = 1; i < 99; ++i)
         {
           saved_state_all_sigs_.Set(CreateRID(highest_relevant_sig_index * 1000), signatures_being_built_.at(1));
-          FETCH_UNUSED(result);
         }
       }
     }
