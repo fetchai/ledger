@@ -822,8 +822,8 @@ void BlockCoordinator::RemoveBlock(BlockPtrType &block)
 
 bool BlockCoordinator::RevertToBlock(Block const &block)
 {
-  FETCH_LOG_INFO(LOGGING_NAME, "Revert back to #", block.block_number, " 0x", block.hash.ToHex(),
-                 " state: 0x", block.merkle_hash.ToHex());
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Revert back to #", block.block_number, " 0x", block.hash.ToHex(),
+                  " state: 0x", block.merkle_hash.ToHex());
 
   // we expect that the common parent in this case will always have been processed, but this
   // should be checked
