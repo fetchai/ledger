@@ -274,7 +274,7 @@ TEST(notarisation, notarise_blocks)
       for (auto &block : blocks_this_round)
       {
         node->chain.AddBlock(*block);
-        node->consensus.UpdateCurrentBlock(*block);
+        EXPECT_TRUE(node->consensus.UpdateCurrentBlock(*block));
       }
     }
   }

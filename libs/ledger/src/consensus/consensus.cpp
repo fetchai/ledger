@@ -428,7 +428,7 @@ bool Consensus::ShouldTriggerNewCabinet(Block const &block)
   return false;
 }
 
-void Consensus::UpdateCurrentBlock(Block const &current)
+bool Consensus::UpdateCurrentBlock(Block const &current)
 {
   MilliTimer const timer{"UpdateCurrentBlock ", 1000};
   FETCH_LOCK(mutex_);
@@ -455,7 +455,7 @@ void Consensus::UpdateCurrentBlock(Block const &current)
           LOGGING_NAME,
           "Failed to find the beginning of the aeon when updating the block! Aeon period: ",
           aeon_period_);
-      throw std::runtime_error("Failed to update block!");
+      return false;
     }
 
     previous_block_    = *prior;
@@ -466,7 +466,7 @@ void Consensus::UpdateCurrentBlock(Block const &current)
   {
     FETCH_LOG_ERROR(LOGGING_NAME,
                     "Failure to load stake information. block: ", current_block_.block_number);
-    return;
+    return false;
   }
 
   // this might cause a trim that is not flushed to the state DB, however, on the next block the
@@ -496,7 +496,7 @@ void Consensus::UpdateCurrentBlock(Block const &current)
     {
       FETCH_LOG_ERROR(LOGGING_NAME,
                       "Failed to build cabinet for block: ", current_block_.block_number);
-      return;
+      return false;
     }
 
     CabinetMemberList cabinet_member_list;
@@ -554,6 +554,7 @@ void Consensus::UpdateCurrentBlock(Block const &current)
 
   beacon_->MostRecentSeen(current_block_.block_number);
   cabinet_creator_->Abort(current_block_.block_number);
+  return true;
 }
 
 NextBlockPtr Consensus::GenerateNextBlock()

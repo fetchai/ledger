@@ -58,14 +58,14 @@ uint64_t GetPoissonSample(uint64_t range, double mean_of_distribution)
   return std::min(dist(rng), range);
 }
 
-void SimulatedPowConsensus::UpdateCurrentBlock(Block const &current)
+bool SimulatedPowConsensus::UpdateCurrentBlock(Block const &current)
 {
   FETCH_LOG_DEBUG(LOGGING_NAME, "Updating new current block: ", current.hash.ToHex(),
                   " num: ", current.block_number);
 
   if (current == current_block_)
   {
-    return;
+    return true;
   }
 
   current_block_ = current;
@@ -103,6 +103,7 @@ void SimulatedPowConsensus::UpdateCurrentBlock(Block const &current)
   FETCH_LOG_INFO(LOGGING_NAME, "Generating time to wait (ms): ", time_to_wait_ms,
                  " mean: ", mean_time_to_block, " block time: ", block_interval_ms_,
                  " decided: ", decided_next_timestamp_ms_);
+  return true;
 }
 
 NextBlockPtr SimulatedPowConsensus::GenerateNextBlock()

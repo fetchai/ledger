@@ -44,7 +44,7 @@ public:
   void TriggerBlockGeneration();
 
   // Overridden methods
-  void         UpdateCurrentBlock(Block const &current) override;
+  bool         UpdateCurrentBlock(Block const &current) override;
   NextBlockPtr GenerateNextBlock() override;
   Status       ValidBlock(Block const &current) const override;
 
