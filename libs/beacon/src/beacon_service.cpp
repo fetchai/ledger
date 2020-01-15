@@ -147,12 +147,17 @@ BeaconService::BeaconService(MuddleInterface &muddle, const CertificatePtr &cert
   });
 }
 
-//// Helper function to create an inexpensive resource ID
-//template <typename T>
-//ConstByteArray CreateRID(T from)
-//{
-//  ConstByteArray memory_area(32);
-//}
+// Helper function to create an inexpensive resource ID
+template <typename T>
+storage::ResourceID CreateRID(T from)
+{
+  ConstByteArray memory_area(32);
+  memcpy(memory_area.pointer(), reinterpret_cast<char *>(from), sizeof(T));
+
+  FETCH_LOG_INFO(LOGGING_NAME, "NOW: ", memory_area.ToBase64());
+
+  return memory_area;
+}
 
 /**
  * Save the exact state of the beacon service for later recovery. Note that this must be used
@@ -181,17 +186,17 @@ void BeaconService::SaveState()
       uint64_t highest_relevant_sig_index = signatures_being_built_.rbegin()->first;
 
       // Note the - 1 here to continually remove the one before
-      while(lowest_relevant_sig_index != 0 && saved_state_all_sigs_.Has(storage::ResourceAddress(std::to_string(lowest_relevant_sig_index - 1))))
+      while(lowest_relevant_sig_index != 0 && saved_state_all_sigs_.Has(CreateRID(lowest_relevant_sig_index - 1)))
       {
-        saved_state_all_sigs_.Erase(storage::ResourceAddress(std::to_string(lowest_relevant_sig_index - 1)));
+        saved_state_all_sigs_.Erase(CreateRID(lowest_relevant_sig_index - 1));
         lowest_relevant_sig_index--;
       }
 
       // Now add signatures which are new
-      while(!saved_state_all_sigs_.Has(storage::ResourceAddress(std::to_string(highest_relevant_sig_index))) && signatures_being_built_.find(highest_relevant_sig_index) != signatures_being_built_.end())
+      while(!saved_state_all_sigs_.Has(CreateRID(highest_relevant_sig_index)) && signatures_being_built_.find(highest_relevant_sig_index) != signatures_being_built_.end())
       {
         FETCH_LOG_DEBUG(LOGGING_NAME, "Highest relevant: ", highest_relevant_sig_index, " size: ", signatures_being_built_.size());
-        saved_state_all_sigs_.Set(storage::ResourceAddress(std::to_string(highest_relevant_sig_index)), signatures_being_built_.at(highest_relevant_sig_index));
+        saved_state_all_sigs_.Set(CreateRID(highest_relevant_sig_index), signatures_being_built_.at(highest_relevant_sig_index));
         highest_relevant_sig_index--;
       }
     }
