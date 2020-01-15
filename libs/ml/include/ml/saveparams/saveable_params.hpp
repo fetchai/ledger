@@ -19,7 +19,9 @@
 
 #include "math/base_types.hpp"
 #include "ml/meta/ml_type_traits.hpp"
+#include "ml/regularisers/reg_types.hpp"
 
+#include <string>
 #include <unordered_map>
 #include <vector>
 
@@ -39,15 +41,30 @@ struct OpsSaveableParams
   bool              is_training = true;
 };
 
-////////////////////////////
-/// FORWARD DECLARATIONS ///
-////////////////////////////
+template <typename TensorType>
+struct OpDataHolderSaveableParams : public OpsSaveableParams
+{
+  fetch::ml::OpType           op_type = OpType::OP_DATAHOLDER;
+  std::shared_ptr<TensorType> data;
+};
 
 template <typename TensorType>
-struct OpWeightsSaveableParams;
+struct OpVariableSaveableParams : public OpDataHolderSaveableParams<TensorType>
+{
+  using DataType                      = typename TensorType::Type;
+  fetch::ml::OpType           op_type = OpType::OP_PLACEHOLDER;
+  std::shared_ptr<TensorType> data;
+  std::shared_ptr<TensorType> gradient_accumulation;
+  RegularisationType          regularisation_type = RegularisationType::NONE;
+  DataType                    regularisation_rate = fetch::math::numeric_max<DataType>();
+  bool                        value_frozen        = false;
+};
 
-template <typename TensorType>
-struct OpVariableSaveableParams;
+template <class TensorType>
+struct OpWeightsSaveableParams : public OpVariableSaveableParams<TensorType>
+{
+  fetch::ml::OpType op_type = OpType::OP_WEIGHTS;
+};
 
 template <typename TensorType>
 struct NodeSaveableParams
@@ -551,13 +568,6 @@ struct LayerMultiHeadSaveableParams : public SubGraphSaveableParams<TensorType>
   SizeType n_heads{};
   SizeType model_dim{};
   DataType dropout{};
-};
-
-template <typename TensorType>
-struct OpDataHolderSaveableParams : public OpsSaveableParams
-{
-  fetch::ml::OpType           op_type = OpType::OP_DATAHOLDER;
-  std::shared_ptr<TensorType> data;
 };
 
 template <typename TensorType>

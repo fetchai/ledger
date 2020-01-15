@@ -37,7 +37,7 @@ VectorRegister<T, S> exp(VectorRegister<T, S> x, T const &precision = 0.00001)
   VectorRegister<T, S> p(precision);
   std::size_t          n = 0;
 
-  while (any_less_than(p, abs(xserie)))
+  while (any_less_than(p, Abs(xserie)))
   {
     ret = ret + xserie;
     ++n;
