@@ -240,6 +240,7 @@ bool TensorDataLoader<TensorType>::IsModeAvailable(DataLoaderMode mode)
 /// EXPLICIT INSTANTIATIONS ///
 ///////////////////////////////
 
+// TODO(ML-438)
 // template class TensorDataLoader<math::Tensor<std::int8_t>>;
 // template class TensorDataLoader<math::Tensor<std::int16_t>>;
 template class TensorDataLoader<math::Tensor<std::int32_t>>;

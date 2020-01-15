@@ -677,8 +677,9 @@ byte_array::ConstByteArray GraphW2VLoader<TensorType>::GetVocabHash()
 /// EXPLICIT INSTANTIATIONS ///
 ///////////////////////////////
 
-//          template class GraphW2VLoader<math::Tensor<std::int8_t>>;
-//          template class GraphW2VLoader<math::Tensor<std::int16_t>>;
+// TODO(ML-438)
+// template class GraphW2VLoader<math::Tensor<std::int8_t>>;
+// template class GraphW2VLoader<math::Tensor<std::int16_t>>;
 template class GraphW2VLoader<math::Tensor<std::int32_t>>;
 template class GraphW2VLoader<math::Tensor<std::int64_t>>;
 template class GraphW2VLoader<math::Tensor<float>>;
