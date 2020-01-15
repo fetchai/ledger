@@ -113,7 +113,7 @@ BlockGenerator::BlockPtrs BlockGenerator::operator()(std::size_t amount, BlockPt
 
   while (amount-- > 0)
   {
-    ret_val.push_back(Generate(std::move(from), weight));
+    ret_val.push_back(Generate(from, weight));
     from = ret_val.back();
   }
 

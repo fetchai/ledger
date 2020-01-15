@@ -37,7 +37,6 @@
 
 using ::testing::InSequence;
 using ::testing::MatchResultListener;
-using ::testing::Matcher;
 using ::testing::MatcherInterface;
 using ::testing::NiceMock;
 using ::testing::Return;
@@ -275,7 +274,6 @@ TEST_F(MainChainServiceTests, CheckNoPeersCase)
   Tick(State::SYNCHRONISED);
 }
 
-/*
 TEST_F(MainChainServiceTests, CheckSimpleCatchUpFromSinglePeer)
 {
   auto gen    = block_generator_();
@@ -607,7 +605,6 @@ TEST_F(MainChainServiceTests, CheckWhenGenesisAppearsToBeInvalid)
   FollowPath(State::SYNCHRONISING, State::START_SYNC_WITH_PEER, State::REQUEST_NEXT_BLOCKS,
              State::WAIT_FOR_NEXT_BLOCKS, State::COMPLETE_SYNC_WITH_PEER);
 }
-*/
 
 namespace {
 
