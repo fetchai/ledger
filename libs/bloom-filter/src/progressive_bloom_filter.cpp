@@ -22,6 +22,11 @@
 #include <cstddef>
 
 namespace fetch {
+namespace {
+
+constexpr char const *LOGGING_NAME = "ProgBloom";
+
+} // namespace
 
 ProgressiveBloomFilter::ProgressiveBloomFilter(uint64_t const overlap)
   : overlap_{overlap}
@@ -32,6 +37,7 @@ std::pair<bool, std::size_t> ProgressiveBloomFilter::Match(
 {
   if (!IsInCurrentRange(element_index))
   {
+    FETCH_LOG_WARN(LOGGING_NAME, "Match out of range: ", element_index, " min: ", current_min_index_, " max: ", current_min_index_ + (overlap_ * 2u));
     return {false, 0u};
   }
 
@@ -51,6 +57,7 @@ void ProgressiveBloomFilter::Add(fetch::byte_array::ConstByteArray const &elemen
 
   if (!IsInCurrentRange(element_index))
   {
+    FETCH_LOG_WARN(LOGGING_NAME, "Add out of range: ", element_index, " min: ", current_min_index_, " max: ", current_min_index_ + (overlap_ * 2u));
     return;
   }
 
@@ -64,7 +71,7 @@ void ProgressiveBloomFilter::Add(fetch::byte_array::ConstByteArray const &elemen
 
 bool ProgressiveBloomFilter::IsInCurrentRange(std::size_t const index) const
 {
-  return current_min_index_ <= index && index < current_min_index_ + 2 * overlap_;
+  return (current_min_index_ <= index) && (index < current_min_index_ + (2 * overlap_));
 }
 
 void ProgressiveBloomFilter::Reset()
