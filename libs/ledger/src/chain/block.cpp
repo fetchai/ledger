@@ -17,8 +17,8 @@
 //------------------------------------------------------------------------------
 
 #include "chain/constants.hpp"
-#include "core/serializers/main_serializer.hpp"
 #include "core/containers/is_in.hpp"
+#include "core/serializers/main_serializer.hpp"
 #include "crypto/merkle_tree.hpp"
 #include "crypto/sha256.hpp"
 #include "ledger/chain/block.hpp"

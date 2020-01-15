@@ -289,9 +289,9 @@ private:
   bool            ScheduleBlock(Block const &block);
   ExecutionStatus QueryExecutorStatus();
   template <typename BlockPtrType>
-  void            RemoveBlock(BlockPtrType &block);
-  bool            RevertToBlock(Block const &block);
-  void            Panic();
+  void RemoveBlock(BlockPtrType &block);
+  bool RevertToBlock(Block const &block);
+  void Panic();
 
   static char const *ToString(ExecutionStatus state);
 

@@ -973,16 +973,16 @@ TEST_P(MainChainTests, AddingBlockWithDuplicateTxInSameBlockFails)
   chain::Address      signer_address{signer.identity()};
 
   auto tx = chain::TransactionBuilder{}
-      .From(signer_address)
-      .TargetChainCode("some.kind.of.chain.code", BitVector{})
-      .Action("do.work")
-      .ValidUntil(100)
-      .ChargeRate(1)
-      .ChargeLimit(1)
-      .Signer(signer.identity())
-      .Seal()
-      .Sign(signer)
-      .Build();
+                .From(signer_address)
+                .TargetChainCode("some.kind.of.chain.code", BitVector{})
+                .Action("do.work")
+                .ValidUntil(100)
+                .ChargeRate(1)
+                .ChargeLimit(1)
+                .Signer(signer.identity())
+                .Seal()
+                .Sign(signer)
+                .Build();
 
   auto genesis = generator_->Generate();
   auto main1   = generator_->Generate(genesis);

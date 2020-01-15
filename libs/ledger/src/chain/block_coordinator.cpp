@@ -814,7 +814,7 @@ void BlockCoordinator::RemoveBlock(BlockPtrType &block)
     }
 
     chain_.RemoveBlock(block->hash);
-    block.reset(); // remove dangling reference to the block
+    block.reset();  // remove dangling reference to the block
   }
 
   blocks_to_common_ancestor_.clear();
@@ -830,8 +830,8 @@ bool BlockCoordinator::RevertToBlock(Block const &block)
   if (!storage_unit_.HashExists(block.merkle_hash, block.block_number))
   {
     FETCH_LOG_ERROR(LOGGING_NAME, "Ancestor block's merkle hash cannot be retrieved! block: 0x",
-                    block.hash.ToHex(), " number: ", block.block_number,
-                    " merkle hash: 0x", block.merkle_hash.ToHex());
+                    block.hash.ToHex(), " number: ", block.block_number, " merkle hash: 0x",
+                    block.merkle_hash.ToHex());
 
     return false;
   }
@@ -1184,7 +1184,8 @@ BlockCoordinator::State BlockCoordinator::OnTransmitBlock()
     }
     else
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Attempted to broadcast invalid block: 0x", next_block_->hash.ToHex());
+      FETCH_LOG_WARN(LOGGING_NAME, "Attempted to broadcast invalid block: 0x",
+                     next_block_->hash.ToHex());
       RemoveBlock(next_block_);
     }
   }
