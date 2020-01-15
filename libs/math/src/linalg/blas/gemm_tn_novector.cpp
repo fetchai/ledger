@@ -73,7 +73,7 @@ void Blas<S, Signature(_C <= _alpha, _A, _B, _beta, _C),
   {
     for (i = 0; i < c.height(); ++i)
     {
-      Type        temp = Type{0};
+      auto        temp = Type{0};
       std::size_t l;
       for (l = 0; l < a.height(); ++l)
       {

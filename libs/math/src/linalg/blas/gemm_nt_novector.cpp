@@ -89,7 +89,7 @@ void Blas<S, Signature(_C <= _alpha, _A, _B, _beta, _C),
 
     for (l = 0; l < a.width(); ++l)
     {
-      Type temp = static_cast<Type>(alpha * b(j, l));
+      auto temp = static_cast<Type>(alpha * b(j, l));
       for (i = 0; i < c.height(); ++i)
       {
         c(i, j) = static_cast<Type>(c(i, j) + temp * a(i, l));
