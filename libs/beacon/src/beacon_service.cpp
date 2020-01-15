@@ -84,7 +84,8 @@ char const *ToString(BeaconService::State state);
 BeaconService::BeaconService(MuddleInterface &muddle, const CertificatePtr &certificate,
                              BeaconSetupService &beacon_setup, SharedEventManager event_manager,
                              bool load_and_reload_on_crash)
-  : identity_{certificate->identity()}
+  : certificate_{certificate}
+  , identity_{certificate->identity()}
   , muddle_{muddle}
   , endpoint_{muddle_.GetEndpoint()}
   , state_machine_{std::make_shared<StateMachine>("BeaconService", State::RELOAD_ON_STARTUP,
@@ -193,6 +194,21 @@ void BeaconService::ReloadState()
 
       serializers::LargeObjectSerializeHelper serializer{ret};
       serializer >> *this;
+
+      // Note, since certificates are not serialized, we must set the beacon managers in the aeon
+      // to have the correct one
+      if(active_exe_unit_)
+      {
+        active_exe_unit_->manager.SetCertificate(certificate_);
+      }
+
+      for(auto const &i : aeon_exe_queue_)
+      {
+        if(i)
+        {
+          i->manager.SetCertificate(certificate_);
+        }
+      }
     }
   }
   catch (std::exception const &ex)
