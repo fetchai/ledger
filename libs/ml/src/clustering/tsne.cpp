@@ -298,7 +298,7 @@ void TSNE<TensorType>::CalculatePairwiseAffinitiesP(TensorType const &input_matr
     Hbeta(d.Slice(i).Copy(), this_P, current_entropy, beta.At(i), i);
 
     // Evaluate whether the perplexity is within tolerance
-    DataType entropy_diff = static_cast<DataType>(current_entropy - target_entropy);
+    auto     entropy_diff = static_cast<DataType>(current_entropy - target_entropy);
     SizeType tries        = 0;
 
     while (fetch::math::Abs(entropy_diff) > tolerance && tries < max_tries)
@@ -437,7 +437,7 @@ TensorType TSNE<TensorType>::ComputeGradient(TensorType const &output_matrix,
       DataType q_i_j = output_symmetric_affinities.At(i, j);
 
       // (Pij-Qij)
-      DataType val = static_cast<DataType>(p_i_j - q_i_j);
+      auto val = static_cast<DataType>(p_i_j - q_i_j);
 
       // /(1+||yi-yj||^2)
       fetch::math::Multiply(num.At(i, j), val, val);
