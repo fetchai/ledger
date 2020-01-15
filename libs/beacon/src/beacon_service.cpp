@@ -18,6 +18,7 @@
 
 #include "beacon/aeon.hpp"
 #include "beacon/beacon_service.hpp"
+#include "core/byte_array/byte_array.hpp"
 #include "core/serializers/main_serializer.hpp"
 #include "crypto/hash.hpp"
 #include "crypto/sha256.hpp"
@@ -28,7 +29,6 @@
 #include "telemetry/histogram.hpp"
 #include "telemetry/utils/timer.hpp"
 #include "telemetry/utils/to_seconds.hpp"
-#include "core/byte_array/byte_array.hpp"
 
 #include <chrono>
 #include <iterator>
@@ -155,11 +155,7 @@ storage::ResourceID CreateRID(T from)
   byte_array::ByteArray memory_area(32);
   memory_area.Resize(32);
 
-  FETCH_LOG_INFO("xxx", "BEFORE: ", memory_area.ToBase64());
-
   memcpy(memory_area.pointer(), reinterpret_cast<char *>(&from), sizeof(T));
-
-  FETCH_LOG_INFO("xxx", "NOW: ", memory_area.ToBase64());
 
   return storage::ResourceID{memory_area};
 }
@@ -177,59 +173,35 @@ void BeaconService::SaveState()
     return;
   }
 
-  MilliTimer const timer{"SaveState ", 10};
+  MilliTimer const timer{"SaveState ", 300};
 
   try
   {
-    MilliTimer const timer2{"SaveStateSigs ", 10};
-
-    if(!signatures_being_built_.empty())
+    if (!signatures_being_built_.empty())
     {
       // The signatures are stored in a separate structure so they can be written in incrementally.
       // First, clean possible old signatures (assume they are always contiguous)
-      uint64_t lowest_relevant_sig_index = signatures_being_built_.begin()->first;
+      uint64_t lowest_relevant_sig_index  = signatures_being_built_.begin()->first;
       uint64_t highest_relevant_sig_index = signatures_being_built_.rbegin()->first;
 
+      // Note the - 1 here to continually remove the one before
+      while (lowest_relevant_sig_index != 0 &&
+             saved_state_all_sigs_.Has(CreateRID(lowest_relevant_sig_index - 1)))
       {
-        MilliTimer const timer3{"SaveStateSigsHas ", 10};
-
-        // Note the - 1 here to continually remove the one before
-        while(lowest_relevant_sig_index != 0 && saved_state_all_sigs_.Has(CreateRID(lowest_relevant_sig_index - 1)))
-        {
-          saved_state_all_sigs_.Erase(CreateRID(lowest_relevant_sig_index - 1));
-          lowest_relevant_sig_index--;
-        }
+        saved_state_all_sigs_.Erase(CreateRID(lowest_relevant_sig_index - 1));
+        lowest_relevant_sig_index--;
       }
 
+      // Now add signatures which are new
+      while (!saved_state_all_sigs_.Has(CreateRID(highest_relevant_sig_index)) &&
+             signatures_being_built_.find(highest_relevant_sig_index) !=
+                 signatures_being_built_.end())
       {
-        MilliTimer const timer4{"SaveStateSigsSet ", 10};
-
-        // Now add signatures which are new
-        while(!saved_state_all_sigs_.Has(CreateRID(highest_relevant_sig_index)) && signatures_being_built_.find(highest_relevant_sig_index) != signatures_being_built_.end())
-        {
-          FETCH_LOG_DEBUG(LOGGING_NAME, "Highest relevant: ", highest_relevant_sig_index, " size: ", signatures_being_built_.size());
-          saved_state_all_sigs_.Set(CreateRID(highest_relevant_sig_index), signatures_being_built_.at(highest_relevant_sig_index));
-          highest_relevant_sig_index--;
-        }
-      }
-
-      {
-        MilliTimer const timer4{"SaveStateSigsHasOnly ", 10};
-
-        for (int i = 1; i < 99; ++i)
-        {
-          bool result = saved_state_all_sigs_.Has(CreateRID(highest_relevant_sig_index));
-          FETCH_UNUSED(result);
-        }
-      }
-
-      {
-        MilliTimer const timer4{"SaveStateSigsSetOnly ", 10};
-
-        for (int i = 1; i < 99; ++i)
-        {
-          saved_state_all_sigs_.Set(CreateRID(highest_relevant_sig_index * 1000), signatures_being_built_.at(1));
-        }
+        FETCH_LOG_DEBUG(LOGGING_NAME, "Highest relevant: ", highest_relevant_sig_index,
+                        " size: ", signatures_being_built_.size());
+        saved_state_all_sigs_.Set(CreateRID(highest_relevant_sig_index),
+                                  signatures_being_built_.at(highest_relevant_sig_index));
+        highest_relevant_sig_index--;
       }
     }
   }
@@ -241,9 +213,8 @@ void BeaconService::SaveState()
   try
   {
     serializers::LargeObjectSerializeHelper serializer{};
-    serializer << BeaconServiceSerializeWrapper{*this, static_cast<uint16_t>(state_machine_->state())};
-
-    FETCH_LOG_INFO(LOGGING_NAME, "Total ser size: ", serializer.size());
+    serializer << BeaconServiceSerializeWrapper{*this,
+                                                static_cast<uint16_t>(state_machine_->state())};
 
     saved_state_.Set(storage::ResourceAddress("HEAD"), serializer.data());
   }
@@ -255,11 +226,9 @@ void BeaconService::SaveState()
 
 void BeaconService::ReloadState(State &next_state)
 {
-  old_state_.Load("beacon_state.db", "beacon_state.index.db"); // Legacy/depreciated
+  old_state_.Load("beacon_state.db", "beacon_state.index.db");  // Legacy/depreciated
   saved_state_.Load("beacon_state_v2.db", "beacon_state_v2.index.db");
   saved_state_all_sigs_.Load("beacon_state_sigs_v2.db", "beacon_state_sigs_v2.index.db");
-
-  FETCH_LOG_INFO(LOGGING_NAME, "\n\nReload.");
 
   if (!load_and_reload_on_crash_)
   {
@@ -271,9 +240,9 @@ void BeaconService::ReloadState(State &next_state)
   try
   {
     // Load all signatures from the file
-    for(auto const &siginfo : saved_state_all_sigs_)
+    for (auto const &siginfo : saved_state_all_sigs_)
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "Adding sigs for: ", siginfo.round);
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Adding sigs for: ", siginfo.round);
       signatures_being_built_[siginfo.round] = siginfo;
     }
 
@@ -321,7 +290,7 @@ void BeaconService::ReloadState(State &next_state)
     FETCH_LOG_WARN(LOGGING_NAME, "Failed to load beacon service from storage: ", ex.what());
   }
 
-  if(!loaded_state)
+  if (!loaded_state)
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Failed to load state. Attempting to load legacy file.");
 
@@ -441,7 +410,7 @@ BeaconService::State BeaconService::OnPrepareEntropyGeneration()
   if ((index % SAVE_PERIODICITY) == 0 ||
       state_machine_->previous_state() == State::WAIT_FOR_SETUP_COMPLETION)
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "\n\nPeriodically saving the entropy information. Index: ", index);
+    FETCH_LOG_INFO(LOGGING_NAME, "Periodically saving the entropy information. Index: ", index);
     SaveState();
   }
 

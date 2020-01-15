@@ -171,11 +171,11 @@ protected:
   // Related to recovering state after a crash
   /// @{
   constexpr static uint16_t SAVE_PERIODICITY = 100;
-  OldStateStore  old_state_;
-  StateStore     saved_state_;
-  AllSigsStore   saved_state_all_sigs_;
-  void           ReloadState(State &next_state);
-  void           SaveState();
+  OldStateStore             old_state_;
+  StateStore                saved_state_;
+  AllSigsStore              saved_state_all_sigs_;
+  void                      ReloadState(State &next_state);
+  void                      SaveState();
   /// @}
 
   /// The state and functions that the beacon needs for operation is here. Thus,
@@ -253,7 +253,7 @@ private:
 struct BeaconServiceSerializeWrapper
 {
   BeaconService &beacon_service;
-  uint16_t current_state{0};
+  uint16_t       current_state{0};
 };
 
 }  // namespace beacon
@@ -315,8 +315,7 @@ public:
     map.ExpectKeyGetValue(AEON_EXE_QUEUE, beacon_service.aeon_exe_queue_);
 
     map.ExpectKeyGetValue(BLOCK_ENTROPY_PREVIOUS, beacon_service.block_entropy_previous_);
-    map.ExpectKeyGetValue(BLOCK_ENTROPY_BEING_CREATED,
-                          beacon_service.block_entropy_being_created_);
+    map.ExpectKeyGetValue(BLOCK_ENTROPY_BEING_CREATED, beacon_service.block_entropy_being_created_);
   }
 };
 
@@ -328,7 +327,7 @@ public:
   using DriverType = D;
 
   static uint8_t const BEACON_SERVICE = 1;
-  static uint8_t const CURRENT_STATE   = 2;
+  static uint8_t const CURRENT_STATE  = 2;
 
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &wrapper)
