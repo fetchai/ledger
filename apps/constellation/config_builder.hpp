@@ -18,7 +18,6 @@
 //------------------------------------------------------------------------------
 
 #include "constellation/constellation.hpp"
-#include "crypto/identity.hpp"
 
 namespace fetch {
 
