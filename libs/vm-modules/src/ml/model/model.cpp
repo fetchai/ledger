@@ -19,6 +19,7 @@
 #include "vm_modules/ml/model/model.hpp"
 
 #include "core/serializers/counter.hpp"
+#include "core/byte_array/decoders.hpp"
 #include "ml/layers/fully_connected.hpp"
 #include "ml/model/dnn_classifier.hpp"
 #include "ml/model/dnn_regressor.hpp"

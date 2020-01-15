@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "ml/meta/ml_type_traits.hpp"
+#include "math/base_types.hpp"
 
 #include <unordered_map>
 

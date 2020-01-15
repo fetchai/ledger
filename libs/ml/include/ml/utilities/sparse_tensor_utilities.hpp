@@ -19,8 +19,6 @@
 
 #include "math/tensor/tensor.hpp"
 
-#include <vector>
-
 namespace fetch {
 namespace ml {
 namespace utilities {
@@ -38,127 +36,20 @@ namespace utilities {
 template <class TensorType>
 void SparseAdd(TensorType const &src, TensorType &dst,
                std::unordered_set<fetch::math::SizeType> const &update_rows,
-               fetch::math::SizeType                            sparsity_threshold = 2)
-{
-  using SizeType = fetch::math::SizeType;
-
-  // Normal apply
-  // if number_of_rows_to_update * sparsity_threshold_ > total_rows
-  if ((update_rows.empty() || (update_rows.size() * sparsity_threshold) > (dst.shape().at(1))) &&
-      (update_rows.size() != src.shape().at(0)))
-  {
-    dst.InlineAdd(src);
-  }
-
-  // Sparse apply
-  // if number_of_rows_to_update * sparsity_threshold_ <= total_rows
-  else
-  {
-    memory::Range range(0, std::size_t(dst.height()));
-
-    SizeType cnt = 0;
-    SizeType src_index;
-    SizeType dst_index;
-    for (SizeType update_index : update_rows)
-    {
-
-      // Sparse update full tensor to full tensor
-      if (update_rows.size() != src.shape().at(0))
-      {
-        src_index = update_index;
-        dst_index = update_index;
-      }
-      // Sparse update src sparse tensor to normal dst tensor
-      else
-      {
-        src_index = cnt;
-        dst_index = update_index;
-      }
-
-      auto dst_slice = dst.data().slice(dst.padded_height() * dst_index, dst.padded_height());
-      auto src_slice = src.data().slice(src.padded_height() * src_index, src.padded_height());
-
-      // Parallel addition
-      dst_slice.in_parallel().RangedApplyMultiple(
-          range, [](auto const &a, auto const &b, auto &c) { c = b + a; }, dst_slice, src_slice);
-      cnt++;
-    }
-  }
-}
+               fetch::math::SizeType                            sparsity_threshold = 2);
 
 template <class TensorType>
 void SparseAdd(TensorType const &src, TensorType &dst,
-               std::vector<fetch::math::SizeType> const &update_rows)
-{
-  using SizeType = fetch::math::SizeType;
-
-  memory::Range range(0, std::size_t(dst.height()));
-
-  SizeType src_index = 0;
-  for (SizeType dst_index : update_rows)
-  {
-    if (dst_index == fetch::math::numeric_max<SizeType>())
-    {
-      // Unknown word to be skipped
-      src_index++;
-      continue;
-    }
-    auto dst_slice = dst.data().slice(dst.padded_height() * dst_index, dst.padded_height());
-    auto src_slice = src.data().slice(src.padded_height() * src_index, src.padded_height());
-
-    // Parallel addition
-    dst_slice.in_parallel().RangedApplyMultiple(
-        range, [](auto const &a, auto const &b, auto &c) { c = b + a; }, dst_slice, src_slice);
-    src_index++;
-  }
-}
+               std::vector<fetch::math::SizeType> const &update_rows);
 
 template <class TensorType>
 TensorType ToSparse(TensorType const &                               src,
-                    std::unordered_set<fetch::math::SizeType> const &update_rows)
-{
-  using SizeType = fetch::math::SizeType;
-
-  TensorType dst({src.shape().at(0), update_rows.size()});
-
-  memory::Range range(0, std::size_t(dst.height()));
-
-  SizeType dst_index = 0;
-  for (SizeType src_index : update_rows)
-  {
-    auto dst_slice = dst.data().slice(dst.padded_height() * dst_index, dst.padded_height());
-    auto src_slice = src.data().slice(src.padded_height() * src_index, src.padded_height());
-
-    // Parallel addition
-    dst_slice.in_parallel().RangedApplyMultiple(
-        range, [](auto const &a, auto const &b, auto &c) { c = b + a; }, dst_slice, src_slice);
-    dst_index++;
-  }
-
-  return std::move(dst);
-}
+                    std::unordered_set<fetch::math::SizeType> const &update_rows);
 
 template <class TensorType>
 TensorType FromSparse(TensorType const &                               src,
                       std::unordered_set<fetch::math::SizeType> const &update_rows,
-                      fetch::math::SizeType                            output_rows)
-{
-  using SizeType = fetch::math::SizeType;
-
-  TensorType dst({src.shape().at(0), output_rows});
-
-  SizeType src_index = 0;
-  for (SizeType dst_index : update_rows)
-  {
-    auto dst_view = dst.View(dst_index);
-    auto src_view = src.View(src_index);
-    dst_view.Assign(src_view);
-
-    src_index++;
-  }
-
-  return std::move(dst);
-}
+                      fetch::math::SizeType                            output_rows);
 
 }  // namespace utilities
 }  // namespace ml

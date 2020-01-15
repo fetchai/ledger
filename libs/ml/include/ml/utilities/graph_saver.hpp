@@ -17,16 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/byte_array/decoders.hpp"
-#include "core/filesystem/read_file_contents.hpp"
-#include "core/serializers/main_serializer.hpp"
-#include "ml/exceptions/exceptions.hpp"
-#include "ml/serializers/ml_types.hpp"
-#include "ml/utilities/graph_builder.hpp"
 
-#include <fstream>
-#include <iostream>
-#include <string>
+
+#include "ml/serializers/ml_types.hpp"
 
 namespace fetch {
 namespace ml {
@@ -38,57 +31,10 @@ namespace utilities {
  * @param save_location a string specifying save location
  */
 template <typename GraphType>
-void SaveGraph(GraphType &g, std::string const &save_location)
-{
-  using TensorType = typename GraphType::TensorType;
-
-  std::cout << "Starting large graph serialization" << std::endl;
-
-  fetch::ml::GraphSaveableParams<TensorType> gsp = g.GetGraphSaveableParams();
-
-  fetch::serializers::LargeObjectSerializeHelper serializer;
-
-  serializer << gsp;
-
-  std::ofstream outFile(save_location, std::ios::out | std::ios::binary);
-
-  if (outFile)
-  {
-    outFile.write(serializer.data().char_pointer(), std::streamsize(serializer.size()));
-    outFile.close();
-    std::cout << "Buffer size " << serializer.size() << std::endl;
-    std::cout << "Finish writing to file " << save_location << std::endl;
-  }
-  else
-  {
-    std::cerr << "Can't open save file" << std::endl;
-  }
-}
+void SaveGraph(GraphType &g, std::string const &save_location);
 
 template <typename GraphType>
-std::shared_ptr<GraphType> LoadGraph(std::string const &save_location)
-{
-  using TensorType = typename GraphType::TensorType;
-  std::cout << "Loading graph" << std::endl;
-
-  fetch::byte_array::ConstByteArray buffer = fetch::core::ReadContentsOfFile(save_location.c_str());
-  if (buffer.empty())
-  {
-    throw exceptions::InvalidFile("File does not exist");
-  }
-
-  fetch::serializers::LargeObjectSerializeHelper serializer(buffer);
-
-  fetch::ml::GraphSaveableParams<TensorType> gsp;
-
-  serializer >> gsp;
-
-  auto graph_ptr = std::make_shared<fetch::ml::Graph<TensorType>>();
-
-  fetch::ml::utilities::BuildGraph<TensorType>(gsp, graph_ptr);
-
-  return graph_ptr;
-}
+std::shared_ptr<GraphType> LoadGraph(std::string const &save_location);
 
 }  // namespace utilities
 }  // namespace ml
