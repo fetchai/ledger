@@ -556,6 +556,7 @@ bool Constellation::OnBringUpExternalNetwork(
 
   if (params.snapshot)
   {
+    consensus_->UpdateCurrentBlock(*chain_->GetHeaviestBlock());
     consensus_->Reset(*params.snapshot);
   }
   else

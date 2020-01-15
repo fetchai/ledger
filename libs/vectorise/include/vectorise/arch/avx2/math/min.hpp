@@ -120,5 +120,101 @@ inline VectorRegister<double, 256> Min(VectorRegister<double, 256> const &a,
   return ret;
 }
 
+inline float Min(VectorRegister<float, 128> const &a)
+{
+  auto tmp = rotate_elements_left<2>(a);
+  auto ret = Min(a, tmp);
+  tmp      = rotate_elements_left<1>(ret);
+  return first_element(Min(tmp, ret));
+}
+
+inline int32_t Min(VectorRegister<int32_t, 128> const &a)
+{
+  auto tmp = rotate_elements_left<2>(a);
+  auto ret = Min(a, tmp);
+  tmp      = rotate_elements_left<1>(ret);
+  return first_element(Min(tmp, ret));
+}
+
+inline fixed_point::fp32_t Min(VectorRegister<fixed_point::fp32_t, 128> const &a)
+{
+  auto tmp = rotate_elements_left<2>(a);
+  auto ret = Min(a, tmp);
+  tmp      = rotate_elements_left<1>(ret);
+  return first_element(Min(tmp, ret));
+}
+
+inline float Min(VectorRegister<float, 256> const &a)
+{
+  auto tmp = rotate_elements_left<4>(a);
+  auto ret = Min(a, tmp);
+  tmp      = rotate_elements_left<2>(ret);
+  ret      = Min(ret, tmp);
+  tmp      = rotate_elements_left<1>(ret);
+  return first_element(Min(tmp, ret));
+}
+
+inline int32_t Min(VectorRegister<int32_t, 256> const &a)
+{
+  auto tmp = rotate_elements_left<4>(a);
+  auto ret = Min(a, tmp);
+  tmp      = rotate_elements_left<2>(ret);
+  ret      = Min(ret, tmp);
+  tmp      = rotate_elements_left<1>(ret);
+  return first_element(Min(tmp, ret));
+}
+
+inline fixed_point::fp32_t Min(VectorRegister<fixed_point::fp32_t, 256> const &a)
+{
+  auto tmp = rotate_elements_left<4>(a);
+  auto ret = Min(a, tmp);
+  tmp      = rotate_elements_left<2>(ret);
+  ret      = Min(ret, tmp);
+  tmp      = rotate_elements_left<1>(ret);
+  return first_element(Min(tmp, ret));
+}
+
+inline double Min(VectorRegister<double, 128> const &a)
+{
+  auto tmp = rotate_elements_left<1>(a);
+  return first_element(Min(tmp, a));
+}
+
+inline int64_t Min(VectorRegister<int64_t, 128> const &a)
+{
+  auto tmp = rotate_elements_left<1>(a);
+  return first_element(Min(tmp, a));
+}
+
+inline fixed_point::fp64_t Min(VectorRegister<fixed_point::fp64_t, 128> const &a)
+{
+  auto tmp = rotate_elements_left<1>(a);
+  return first_element(Min(tmp, a));
+}
+
+inline double Min(VectorRegister<double, 256> const &a)
+{
+  auto tmp = rotate_elements_left<2>(a);
+  auto ret = Min(a, tmp);
+  tmp      = rotate_elements_left<1>(ret);
+  return first_element(Min(tmp, ret));
+}
+
+inline int64_t Min(VectorRegister<int64_t, 256> const &a)
+{
+  auto tmp = rotate_elements_left<2>(a);
+  auto ret = Min(a, tmp);
+  tmp      = rotate_elements_left<1>(ret);
+  return first_element(Min(tmp, ret));
+}
+
+inline fixed_point::fp64_t Min(VectorRegister<fixed_point::fp64_t, 256> const &a)
+{
+  auto tmp = rotate_elements_left<2>(a);
+  auto ret = Min(a, tmp);
+  tmp      = rotate_elements_left<1>(ret);
+  return first_element(Min(tmp, ret));
+}
+
 }  // namespace vectorise
 }  // namespace fetch

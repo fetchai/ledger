@@ -17,10 +17,13 @@
 //------------------------------------------------------------------------------
 
 #include "bloom_filter/bloom_filter.hpp"
+#include "chain/transaction_builder.hpp"
+#include "chain/transaction_layout.hpp"
 #include "chain/transaction_layout_rpc_serializers.hpp"
 #include "chain/transaction_rpc_serializers.hpp"
 #include "core/byte_array/byte_array.hpp"
 #include "core/containers/set_difference.hpp"
+#include "crypto/ecdsa.hpp"
 #include "ledger/chain/block.hpp"
 #include "ledger/chain/main_chain.hpp"
 #include "ledger/chain/time_travelogue.hpp"
@@ -35,6 +38,8 @@
 #include <sstream>
 #include <vector>
 
+namespace {
+
 using namespace fetch;
 
 using fetch::ledger::Block;
@@ -47,7 +52,7 @@ using MainChainPtr      = std::unique_ptr<MainChain>;
 using BlockGeneratorPtr = std::unique_ptr<BlockGenerator>;
 using BlockPtr          = BlockGenerator::BlockPtr;
 
-static bool IsSameBlock(Block const &a, Block const &b)
+bool IsSameBlock(Block const &a, Block const &b)
 {
   return (a.hash == b.hash) && (a.previous_hash == b.previous_hash) &&
          (a.merkle_hash == b.merkle_hash) && (a.block_number == b.block_number) &&
@@ -56,7 +61,7 @@ static bool IsSameBlock(Block const &a, Block const &b)
 }
 
 template <typename Container, typename Value>
-static bool Contains(Container const &collection, Value const &value)
+bool Contains(Container const &collection, Value const &value)
 {
   return std::find(collection.begin(), collection.end(), value) != collection.end();
 }
@@ -928,6 +933,42 @@ TEST_P(MainChainTests, CheckHeaviestChain)
   }
 }
 
+TEST_P(MainChainTests, adding_block_with_duplicate_tx_fails)
+{
+  crypto::ECDSASigner signer;
+  chain::Address      signer_address{signer.identity()};
+
+  auto tx = chain::TransactionBuilder{}
+                .From(signer_address)
+                .TargetChainCode("some.kind.of.chain.code", BitVector{})
+                .Action("do.work")
+                .ValidUntil(100)
+                .ChargeRate(1)
+                .ChargeLimit(1)
+                .Signer(signer.identity())
+                .Seal()
+                .Sign(signer)
+                .Build();
+
+  auto genesis = generator_->Generate();
+  auto main1   = generator_->Generate(genesis);
+
+  main1->slices.push_back({chain::TransactionLayout(*tx, 1)});
+  main1->UpdateDigest();
+
+  auto main2 = generator_->Generate(main1);
+  main2->slices.push_back({chain::TransactionLayout(*tx, 1)});
+  main2->UpdateDigest();
+
+  ASSERT_EQ(BlockStatus::ADDED, chain_->AddBlock(*main1));
+  ASSERT_EQ(chain_->GetHeaviestBlockHash(), main1->hash);
+
+  ASSERT_EQ(BlockStatus::INVALID, chain_->AddBlock(*main2));
+  ASSERT_EQ(chain_->GetHeaviestBlockHash(), main1->hash);
+}
+
 INSTANTIATE_TEST_CASE_P(ParamBased, MainChainTests,
                         ::testing::Values(MainChain::Mode::CREATE_PERSISTENT_DB,
                                           MainChain::Mode::IN_MEMORY_DB), );
+
+}  // namespace
