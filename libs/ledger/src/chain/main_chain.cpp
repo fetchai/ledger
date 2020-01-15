@@ -49,7 +49,7 @@ namespace ledger {
 namespace {
 constexpr char const *BLOOM_FILTER_STORE = "chain.bloom.db";
 constexpr uint64_t    OVERLAP            = 400000;
-}
+}  // namespace
 
 const uint64_t DIRTY_TIMEOUT{600};
 
