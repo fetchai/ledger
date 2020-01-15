@@ -848,6 +848,7 @@ void BlockCoordinator::RemoveBlock(MainChain::BlockHash const &hash)
 
 BlockCoordinator::State BlockCoordinator::OnScheduleBlockExecution()
 {
+
   MilliTimer const timer{"OnScheduleBlockExecution ", 1000};
   sch_block_state_count_->increment();
 
