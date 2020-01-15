@@ -52,7 +52,7 @@ using MainChainPtr      = std::unique_ptr<MainChain>;
 using BlockGeneratorPtr = std::unique_ptr<BlockGenerator>;
 using BlockPtr          = BlockGenerator::BlockPtr;
 
-static bool IsSameBlock(Block const &a, Block const &b)
+ bool IsSameBlock(Block const &a, Block const &b)
 {
   return (a.hash == b.hash) && (a.previous_hash == b.previous_hash) &&
          (a.merkle_hash == b.merkle_hash) && (a.block_number == b.block_number) &&
