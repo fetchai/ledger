@@ -48,7 +48,7 @@ template <typename TensorType>
 class C2VLoader : public DataLoader<TensorType>
 {
 public:
-  using Type                    = typename TensorType::Type;
+  using DataType                = typename TensorType::Type;
   using SizeType                = fetch::math::SizeType;
   using ContextTuple            = std::tuple<SizeType, SizeType, SizeType>;
   using ContextVector           = std::vector<TensorType>;
@@ -76,8 +76,8 @@ public:
   bool     IsDone() const override;
   void     Reset() override;
   bool     AddData(std::vector<TensorType> const &data, TensorType const &label) override;
-  void     SetTestRatio(float new_test_ratio) override;
-  void     SetValidationRatio(float new_validation_ratio) override;
+  void     SetTestRatio(DataType new_test_ratio) override;
+  void     SetValidationRatio(DataType new_validation_ratio) override;
   bool     IsModeAvailable(DataLoaderMode mode) override;
 
   void AddDataAsString(std::string const &c2v_input);
@@ -254,16 +254,19 @@ typename C2VLoader<TensorType>::ContextTensorsLabelPair C2VLoader<TensorType>::G
         {
 
           source_word_tensor(i, 0) =
-              static_cast<Type>(std::get<0>(data_[context_positions[i]].second));
-          path_tensor(i, 0) = static_cast<Type>(std::get<1>(data_[context_positions[i]].second));
+              static_cast<DataType>(std::get<0>(data_[context_positions[i]].second));
+          path_tensor(i, 0) =
+              static_cast<DataType>(std::get<1>(data_[context_positions[i]].second));
           target_word_tensor(i, 0) =
-              static_cast<Type>(std::get<2>(data_[context_positions[i]].second));
+              static_cast<DataType>(std::get<2>(data_[context_positions[i]].second));
         }
         for (SizeType i{context_positions.size()}; i < this->max_contexts_; i++)
         {
-          source_word_tensor(i, 0) = static_cast<Type>(this->word_to_idx_[EMPTY_CONTEXT_STRING]);
-          path_tensor(i, 0)        = static_cast<Type>(this->path_to_idx_[EMPTY_CONTEXT_STRING]);
-          target_word_tensor(i, 0) = static_cast<Type>(this->word_to_idx_[EMPTY_CONTEXT_STRING]);
+          source_word_tensor(i, 0) =
+              static_cast<DataType>(this->word_to_idx_[EMPTY_CONTEXT_STRING]);
+          path_tensor(i, 0) = static_cast<DataType>(this->path_to_idx_[EMPTY_CONTEXT_STRING]);
+          target_word_tensor(i, 0) =
+              static_cast<DataType>(this->word_to_idx_[EMPTY_CONTEXT_STRING]);
         }
       }
       else
@@ -271,18 +274,19 @@ typename C2VLoader<TensorType>::ContextTensorsLabelPair C2VLoader<TensorType>::G
         for (SizeType i{0}; i < this->max_contexts_; i++)
         {
           source_word_tensor(i, 0) =
-              static_cast<Type>(std::get<0>(data_[context_positions[i]].second));
-          path_tensor(i, 0) = static_cast<Type>(std::get<1>(data_[context_positions[i]].second));
+              static_cast<DataType>(std::get<0>(data_[context_positions[i]].second));
+          path_tensor(i, 0) =
+              static_cast<DataType>(std::get<1>(data_[context_positions[i]].second));
           target_word_tensor(i, 0) =
-              static_cast<Type>(std::get<2>(data_[context_positions[i]].second));
+              static_cast<DataType>(std::get<2>(data_[context_positions[i]].second));
         }
       }
       ContextVector context_tensor_tuple = {source_word_tensor, path_tensor, target_word_tensor};
 
       TensorType y_true_vec({function_name_counter().size() + 1, 1});
-      y_true_vec.Fill(Type{0});
+      y_true_vec.Fill(DataType{0});
       // Preparing the y_true vector (one-hot-encoded)
-      y_true_vec.Set(old_function_index, Type{0}, Type{1});
+      y_true_vec.Set(old_function_index, DataType{0}, DataType{1});
 
       ContextTensorsLabelPair return_pair{y_true_vec, context_tensor_tuple};
 
@@ -326,14 +330,14 @@ void C2VLoader<TensorType>::Reset()
 }
 
 template <typename TypeParam>
-void C2VLoader<TypeParam>::SetTestRatio(float new_test_ratio)
+void C2VLoader<TypeParam>::SetTestRatio(DataType new_test_ratio)
 {
   FETCH_UNUSED(new_test_ratio);
   throw exceptions::InvalidMode("Test set splitting is not supported for this dataloader.");
 }
 
 template <typename TypeParam>
-void C2VLoader<TypeParam>::SetValidationRatio(float new_validation_ratio)
+void C2VLoader<TypeParam>::SetValidationRatio(DataType new_validation_ratio)
 {
   FETCH_UNUSED(new_validation_ratio);
   throw exceptions::InvalidMode("Validation set splitting is not supported for this dataloader.");

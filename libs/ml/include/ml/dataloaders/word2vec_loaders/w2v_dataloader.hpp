@@ -45,7 +45,7 @@ public:
   static constexpr T WindowContextUnused = -1;
 
   using TensorType = fetch::math::Tensor<T>;
-
+  using DataType   = typename TensorType::Type;
   using SizeType   = fetch::math::SizeType;
   using VocabType  = Vocab;
   using ReturnType = std::pair<TensorType, std::vector<TensorType>>;
@@ -54,8 +54,8 @@ public:
 
   bool IsDone() const override;
   void Reset() override;
-  void SetTestRatio(float new_test_ratio) override;
-  void SetValidationRatio(float new_validation_ratio) override;
+  void SetTestRatio(DataType new_test_ratio) override;
+  void SetValidationRatio(DataType new_validation_ratio) override;
 
   void       RemoveInfrequent(SizeType min);
   void       InitUnigramTable();
@@ -175,14 +175,14 @@ void W2VLoader<T>::Reset()
 }
 
 template <typename T>
-void W2VLoader<T>::SetTestRatio(float new_test_ratio)
+void W2VLoader<T>::SetTestRatio(DataType new_test_ratio)
 {
   FETCH_UNUSED(new_test_ratio);
   throw exceptions::InvalidMode("Test set splitting is not supported for this dataloader.");
 }
 
 template <typename T>
-void W2VLoader<T>::SetValidationRatio(float new_validation_ratio)
+void W2VLoader<T>::SetValidationRatio(DataType new_validation_ratio)
 {
   FETCH_UNUSED(new_validation_ratio);
   throw exceptions::InvalidMode("Validation set splitting is not supported for this dataloader.");

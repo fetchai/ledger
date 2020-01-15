@@ -55,8 +55,8 @@ public:
   ReturnType GetNext() override;
   bool       AddData(std::vector<TensorType> const &input, TensorType const &label) override;
 
-  void SetTestRatio(float new_test_ratio) override;
-  void SetValidationRatio(float new_validation_ratio) override;
+  void SetTestRatio(DataType new_test_ratio) override;
+  void SetValidationRatio(DataType new_validation_ratio) override;
 
   void     BuildVocabAndData(std::vector<std::string> const &sents, SizeType min_count = 0,
                              bool build_data = true);
@@ -222,14 +222,14 @@ void GraphW2VLoader<TensorType>::Reset()
 }
 
 template <typename TensorType>
-void GraphW2VLoader<TensorType>::SetTestRatio(float new_test_ratio)
+void GraphW2VLoader<TensorType>::SetTestRatio(DataType new_test_ratio)
 {
   FETCH_UNUSED(new_test_ratio);
   throw exceptions::InvalidMode("Test set splitting is not supported for this dataloader.");
 }
 
 template <typename TensorType>
-void GraphW2VLoader<TensorType>::SetValidationRatio(float new_validation_ratio)
+void GraphW2VLoader<TensorType>::SetValidationRatio(DataType new_validation_ratio)
 {
   FETCH_UNUSED(new_validation_ratio);
   throw exceptions::InvalidMode("Validation set splitting is not supported for this dataloader.");
