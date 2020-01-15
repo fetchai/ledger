@@ -142,6 +142,8 @@ private:
   type data_;
 };
 
+#undef APPLY_OPERATOR_LIST
+
 template <typename T, std::size_t N = 8 * sizeof(T)>
 inline std::ostream &operator<<(std::ostream &s, VectorRegister<T, N> const &n)
 {
@@ -150,7 +152,7 @@ inline std::ostream &operator<<(std::ostream &s, VectorRegister<T, N> const &n)
 }
 
 template <typename T, std::size_t N = 8 * sizeof(T)>
-inline VectorRegister<T, N> abs(VectorRegister<T, N> const &x)
+inline VectorRegister<T, N> Abs(VectorRegister<T, N> const &x)
 {
   return VectorRegister<T, N>(std::abs(x.data()));
 }
@@ -215,6 +217,5 @@ inline bool any_equal_to(VectorRegister<T, N> const &x, VectorRegister<T, N> con
   return x.data() == y.data();
 }
 
-#undef APPLY_OPERATOR_LIST
 }  // namespace vectorise
 }  // namespace fetch

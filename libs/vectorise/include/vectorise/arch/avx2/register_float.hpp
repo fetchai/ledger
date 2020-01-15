@@ -17,6 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include "vectorise/arch/avx2/register_int32.hpp"
+
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
@@ -31,7 +33,6 @@
 namespace fetch {
 namespace vectorise {
 
-// ADD_REGISTER_SIZE(float, 128);
 ADD_REGISTER_SIZE(float, 256);
 
 template <>
@@ -169,7 +170,6 @@ inline std::ostream &operator<<(std::ostream &s, VectorRegister<float, 128> cons
   alignas(16) float out[4];
   n.Store(out);
   s << std::setprecision(std::numeric_limits<float>::digits10);
-  s << std::fixed;
   s << out[0] << ", " << out[1] << ", " << out[2] << ", " << out[3];
 
   return s;
@@ -181,7 +181,6 @@ inline std::ostream &operator<<(std::ostream &s, VectorRegister<float, 256> cons
   alignas(32) float out[8];
   n.Store(out);
   s << std::setprecision(std::numeric_limits<float>::digits10);
-  s << std::fixed;
   s << out[0] << ", " << out[1] << ", " << out[2] << ", " << out[3] << ", " << out[4] << ", "
     << out[5] << ", " << out[6] << ", " << out[7];
 
@@ -307,6 +306,24 @@ inline VectorRegister<float, 256> vector_zero_above_element(VectorRegister<float
   conv         = _mm256_and_si256(conv, *reinterpret_cast<__m256i const *>(mask));
 
   return {_mm256_castsi256_ps(conv)};
+}
+
+template <int32_t elements>
+inline VectorRegister<float, 128> rotate_elements_left(VectorRegister<float, 128> const &x)
+{
+  __m128i                      xi = _mm_castps_si128(x.data());
+  VectorRegister<int32_t, 128> ret =
+      rotate_elements_left<elements>(VectorRegister<int32_t, 128>(xi));
+  return {_mm_castsi128_ps(ret.data())};
+}
+
+template <int32_t elements>
+inline VectorRegister<float, 256> rotate_elements_left(VectorRegister<float, 256> const &x)
+{
+  __m256i                      xi = _mm256_castps_si256(x.data());
+  VectorRegister<int32_t, 256> ret =
+      rotate_elements_left<elements>(VectorRegister<int32_t, 256>(xi));
+  return {_mm256_castsi256_ps(ret.data())};
 }
 
 inline VectorRegister<float, 128> shift_elements_left(VectorRegister<float, 128> const &x)
