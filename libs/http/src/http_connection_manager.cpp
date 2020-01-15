@@ -23,6 +23,7 @@
 #include "http/request.hpp"
 #include "logging/logging.hpp"
 
+#include <iostream>
 #include <utility>
 
 namespace fetch {
@@ -105,6 +106,12 @@ std::string HTTPConnectionManager::GetAddress(HandleType client)
   }
 
   return "0.0.0.0";
+}
+
+bool HTTPConnectionManager::has_connections() const
+{
+  FETCH_LOCK(clients_mutex_);
+  return !clients_.empty();
 }
 
 }  // namespace http
