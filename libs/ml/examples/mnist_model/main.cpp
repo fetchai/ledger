@@ -17,7 +17,8 @@
 //------------------------------------------------------------------------------
 
 #include "ml/dataloaders/tensor_dataloader.hpp"
-#include "ml/model/dnn_classifier.hpp"
+#include "ml/model/sequential.hpp"
+#include "ml/ops/activation.hpp"
 #include "ml/optimisation/types.hpp"
 #include "ml/utilities/mnist_utilities.hpp"
 
@@ -30,7 +31,7 @@ using DataType   = fetch::fixed_point::FixedPoint<32, 32>;
 using TensorType = fetch::math::Tensor<DataType>;
 using SizeType   = fetch::math::SizeType;
 
-using ModelType      = typename fetch::ml::model::DNNClassifier<TensorType>;
+using ModelType      = typename fetch::ml::model::Sequential<TensorType>;
 using DataLoaderType = typename fetch::ml::dataloaders::TensorDataLoader<TensorType>;
 using OptimiserType  = fetch::ml::OptimiserType;
 
@@ -69,7 +70,14 @@ int main(int ac, char **av)
   data_loader_ptr->SetTestRatio(DataType{"0.2"});
 
   // setup model and pass dataloader
-  ModelType model(model_config, {784, 100, 20, 10});
+  ModelType model(model_config);
+  model.Add<fetch::ml::layers::FullyConnected<TensorType>>(
+      784, 100, fetch::ml::details::ActivationType::RELU);
+  model.Add<fetch::ml::layers::FullyConnected<TensorType>>(
+      100, 20, fetch::ml::details::ActivationType::RELU);
+  model.Add<fetch::ml::layers::FullyConnected<TensorType>>(
+      20, 10, fetch::ml::details::ActivationType::RELU);
+
   model.SetDataloader(std::move(data_loader_ptr));
   model.Compile(OptimiserType::ADAM);
 
