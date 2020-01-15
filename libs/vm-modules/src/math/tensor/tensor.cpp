@@ -102,7 +102,7 @@ void VMTensor::Bind(Module &module, bool const enable_experimental)
 
   auto const tensor_string_constructor_charge_estimate =
       [](Ptr<String> const &str) -> ChargeAmount {
-    DataType size = static_cast<DataType>(str->string().size());
+    auto size = static_cast<DataType>(str->string().size());
 
     return static_cast<ChargeAmount>(CONSTRUCTION_STRING_SIZE_COEF * size +
                                      CONSTRUCTION_STRING_CONST_COEF) *
