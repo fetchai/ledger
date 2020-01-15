@@ -44,7 +44,7 @@ public:
   static const T WindowContextUnused;
 
   using TensorType = fetch::math::Tensor<T>;
-
+  using DataType   = typename TensorType::Type;
   using SizeType   = fetch::math::SizeType;
   using VocabType  = Vocab;
   using ReturnType = std::pair<TensorType, std::vector<TensorType>>;
@@ -53,8 +53,8 @@ public:
 
   bool IsDone() const override;
   void Reset() override;
-  void SetTestRatio(float new_test_ratio) override;
-  void SetValidationRatio(float new_validation_ratio) override;
+  void SetTestRatio(DataType new_test_ratio) override;
+  void SetValidationRatio(DataType new_validation_ratio) override;
 
   void       RemoveInfrequent(SizeType min);
   void       InitUnigramTable();

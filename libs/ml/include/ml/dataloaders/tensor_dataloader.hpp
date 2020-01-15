@@ -49,8 +49,8 @@ public:
   void     Reset() override;
   bool     IsModeAvailable(DataLoaderMode mode) override;
 
-  void SetTestRatio(float new_test_ratio) override;
-  void SetValidationRatio(float new_validation_ratio) override;
+  void SetTestRatio(DataType new_test_ratio) override;
+  void SetValidationRatio(DataType new_validation_ratio) override;
 
   template <typename X, typename D>
   friend struct fetch::serializers::MapSerializer;
@@ -78,8 +78,8 @@ protected:
 
   SizeVector              one_sample_label_shape_;
   std::vector<SizeVector> one_sample_data_shapes_;
-  float                   test_to_train_ratio_       = 0.0;
-  float                   validation_to_train_ratio_ = 0.0;
+  DataType                test_to_train_ratio_       = DataType{0};
+  DataType                validation_to_train_ratio_ = DataType{0};
 
   SizeType batch_label_dim_ = fetch::math::numeric_max<SizeType>();
   SizeType batch_data_dim_  = fetch::math::numeric_max<SizeType>();

@@ -57,8 +57,8 @@ public:
   ReturnType GetNext() override;
   bool       AddData(std::vector<TensorType> const &input, TensorType const &label) override;
 
-  void SetTestRatio(float new_test_ratio) override;
-  void SetValidationRatio(float new_validation_ratio) override;
+  void SetTestRatio(DataType new_test_ratio) override;
+  void SetValidationRatio(DataType new_validation_ratio) override;
 
   void     BuildVocabAndData(std::vector<std::string> const &sents, SizeType min_count = 0,
                              bool build_data = true);

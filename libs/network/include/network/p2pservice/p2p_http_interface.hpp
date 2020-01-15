@@ -41,6 +41,7 @@ namespace p2p {
 class P2PHttpInterface : public http::HTTPModule
 {
 public:
+  using ConstByteArray       = byte_array::ConstByteArray;
   using MainChain            = ledger::MainChain;
   using BlockPackerInterface = ledger::BlockPackerInterface;
   using WeakStateMachine     = std::weak_ptr<core::StateMachineInterface>;
@@ -91,12 +92,27 @@ private:
   http::HTTPResponse GetChainStatus(http::ViewParameters const & /*params*/,
                                     http::HTTPRequest const &request)
   {
-    std::size_t chain_length         = 20;
-    bool        include_transactions = false;
+    static const std::size_t CHAIN_QUERY_LIMIT = 2000;
+
+    std::size_t    chain_length         = 20;
+    bool           include_transactions = false;
+    ConstByteArray start_hash{};
 
     if (request.query().Has("size"))
     {
       chain_length = static_cast<std::size_t>(request.query()["size"].AsInt());
+
+      // if the request for the chain size is too large then
+      if (chain_length > CHAIN_QUERY_LIMIT)
+      {
+        return http::CreateJsonResponse(R"({"error": "Requested chain size is too large"})",
+                                        http::Status::CLIENT_ERROR_BAD_REQUEST);
+      }
+    }
+
+    if (request.query().Has("from"))
+    {
+      start_hash = byte_array::FromHex(request.query()["from"]);
     }
 
     if (request.query().Has("tx"))
@@ -104,9 +120,19 @@ private:
       include_transactions = true;
     }
 
-    Variant response  = Variant::Object();
-    response["chain"] = GenerateBlockList(include_transactions, chain_length);
-    response["block"] = "0x" + chain_.GetHeaviestBlockHash().ToHex();
+    Variant response = Variant::Object();
+
+    if (start_hash.empty())
+    {
+      response["chain"] = GenerateHeaviestBlockList(include_transactions, chain_length);
+    }
+    else
+    {
+      response["chain"] = GenerateForwardChain(start_hash, chain_length, include_transactions);
+    }
+
+    response["block"]   = "0x" + chain_.GetHeaviestBlockHash().ToHex();
+    response["genesis"] = "0x" + chain::GetGenesisDigest().ToHex();
 
     return http::CreateJsonResponse(response);
   }
@@ -137,7 +163,26 @@ private:
     return http::CreateJsonResponse(data);
   }
 
-  Variant GenerateBlockList(bool include_transactions, std::size_t length)
+  Variant GenerateForwardChain(ConstByteArray const &start_hash, std::size_t limit,
+                               bool include_transactions)
+  {
+    auto travelogue = chain_.TimeTravel(start_hash, limit);
+
+    Variant block_list = Variant::Array(travelogue.blocks.size());
+
+    // loop through and generate the complete block list
+    std::size_t block_idx{0};
+    for (auto const &b : travelogue.blocks)
+    {
+      Variant &block = block_list[block_idx++];
+
+      PopulateJsonFromBlock(block, b, include_transactions);
+    }
+
+    return block_list;
+  }
+
+  Variant GenerateHeaviestBlockList(bool include_transactions, std::size_t length)
   {
     // look up the blocks from the heaviest chain
     auto blocks = chain_.GetHeaviestChain(length);
@@ -146,49 +191,55 @@ private:
 
     // loop through and generate the complete block list
     std::size_t block_idx{0};
-    for (auto &b : blocks)
+    for (auto const &b : blocks)
     {
       Variant &block = block_list[block_idx++];
 
-      // format the block number
-      block                 = Variant::Object();
-      block["hash"]         = "0x" + b->hash.ToHex();
-      block["previousHash"] = "0x" + b->previous_hash.ToHex();
-      block["merkleHash"]   = "0x" + b->merkle_hash.ToHex();
-      block["miner"]        = chain::Address(b->miner_id).display();
-      block["blockNumber"]  = b->block_number;
-      block["timestamp"]    = b->timestamp;
-      block["entropy"]      = b->block_entropy.EntropyAsU64();
-      block["weight"]       = b->weight;
-
-      if (include_transactions)
-      {
-        // create and allocate the variant array
-        block["txs"] = Variant::Array(b->GetTransactionCount());
-
-        Variant &tx_list = block["txs"];
-
-        std::size_t tx_idx{0};
-        std::size_t slice_idx{0};
-        for (auto const &slice : b->slices)
-        {
-          for (auto const &transaction : slice)
-          {
-            auto &tx = tx_list[tx_idx];
-
-            tx          = Variant::Object();
-            tx["hash"]  = "0x" + transaction.digest().ToHex();
-            tx["slice"] = slice_idx;
-
-            ++tx_idx;
-          }
-
-          ++slice_idx;
-        }
-      }
+      PopulateJsonFromBlock(block, b, include_transactions);
     }
 
     return block_list;
+  }
+
+  void PopulateJsonFromBlock(Variant &output, MainChain::BlockPtr const &block,
+                             bool include_transactions)
+  {
+    // format the block number
+    output                 = Variant::Object();
+    output["hash"]         = "0x" + block->hash.ToHex();
+    output["previousHash"] = "0x" + block->previous_hash.ToHex();
+    output["merkleHash"]   = "0x" + block->merkle_hash.ToHex();
+    output["miner"]        = chain::Address(block->miner_id).display();
+    output["blockNumber"]  = block->block_number;
+    output["timestamp"]    = block->timestamp;
+    output["entropy"]      = block->block_entropy.EntropyAsU64();
+    output["weight"]       = block->weight;
+
+    if (include_transactions)
+    {
+      // create and allocate the variant array
+      output["txs"] = Variant::Array(block->GetTransactionCount());
+
+      Variant &tx_list = output["txs"];
+
+      std::size_t tx_idx{0};
+      std::size_t slice_idx{0};
+      for (auto const &slice : block->slices)
+      {
+        for (auto const &transaction : slice)
+        {
+          auto &tx = tx_list[tx_idx];
+
+          tx          = Variant::Object();
+          tx["hash"]  = "0x" + transaction.digest().ToHex();
+          tx["slice"] = slice_idx;
+
+          ++tx_idx;
+        }
+
+        ++slice_idx;
+      }
+    }
   }
 
   uint32_t              log2_num_lanes_;

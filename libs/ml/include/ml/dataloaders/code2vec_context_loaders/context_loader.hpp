@@ -48,7 +48,7 @@ template <typename TensorType>
 class C2VLoader : public DataLoader<TensorType>
 {
 public:
-  using Type                    = typename TensorType::Type;
+  using DataType                = typename TensorType::Type;
   using SizeType                = fetch::math::SizeType;
   using ContextTuple            = std::tuple<SizeType, SizeType, SizeType>;
   using ContextVector           = std::vector<TensorType>;
@@ -76,8 +76,8 @@ public:
   bool     IsDone() const override;
   void     Reset() override;
   bool     AddData(std::vector<TensorType> const &data, TensorType const &label) override;
-  void     SetTestRatio(float new_test_ratio) override;
-  void     SetValidationRatio(float new_validation_ratio) override;
+  void     SetTestRatio(DataType new_test_ratio) override;
+  void     SetValidationRatio(DataType new_validation_ratio) override;
   bool     IsModeAvailable(DataLoaderMode mode) override;
 
   void AddDataAsString(std::string const &c2v_input);
@@ -132,20 +132,6 @@ private:
   SizeType addToIdxUMaps(std::string const &input, umap_str_int &name_to_idx,
                          umap_int_str &idx_to_name);
 };
-
-///////////////////////////////
-/// EXPLICIT INSTANTIATIONS ///
-///////////////////////////////
-
-template class C2VLoader<math::Tensor<std::int8_t>>;
-template class C2VLoader<math::Tensor<std::int16_t>>;
-template class C2VLoader<math::Tensor<std::int32_t>>;
-template class C2VLoader<math::Tensor<std::int64_t>>;
-template class C2VLoader<math::Tensor<float>>;
-template class C2VLoader<math::Tensor<double>>;
-template class C2VLoader<math::Tensor<fixed_point::fp32_t>>;
-template class C2VLoader<math::Tensor<fixed_point::fp64_t>>;
-template class C2VLoader<math::Tensor<fixed_point::fp128_t>>;
 
 }  // namespace dataloaders
 }  // namespace ml

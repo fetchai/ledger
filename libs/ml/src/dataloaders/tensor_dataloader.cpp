@@ -105,14 +105,14 @@ void TensorDataLoader<TensorType>::Reset()
 }
 
 template <typename TensorType>
-void TensorDataLoader<TensorType>::SetTestRatio(float new_test_ratio)
+void TensorDataLoader<TensorType>::SetTestRatio(DataType new_test_ratio)
 {
   test_to_train_ratio_ = new_test_ratio;
   UpdateRanges();
 }
 
 template <typename TensorType>
-void TensorDataLoader<TensorType>::SetValidationRatio(float new_validation_ratio)
+void TensorDataLoader<TensorType>::SetValidationRatio(DataType new_validation_ratio)
 {
   validation_to_train_ratio_ = new_validation_ratio;
   UpdateRanges();
@@ -121,11 +121,11 @@ void TensorDataLoader<TensorType>::SetValidationRatio(float new_validation_ratio
 template <typename TensorType>
 void TensorDataLoader<TensorType>::UpdateRanges()
 {
-  float test_percentage       = 1.0f - test_to_train_ratio_ - validation_to_train_ratio_;
-  float validation_percentage = test_percentage + test_to_train_ratio_;
+  DataType test_percentage       = DataType{1} - test_to_train_ratio_ - validation_to_train_ratio_;
+  DataType validation_percentage = test_percentage + test_to_train_ratio_;
 
   // Define where test set starts
-  test_offset_ = static_cast<uint32_t>(test_percentage * static_cast<float>(n_samples_));
+  test_offset_ = static_cast<uint32_t>(test_percentage * static_cast<DataType>(n_samples_));
 
   if (test_offset_ == static_cast<SizeType>(0))
   {
@@ -134,7 +134,7 @@ void TensorDataLoader<TensorType>::UpdateRanges()
 
   // Define where validation set starts
   validation_offset_ =
-      static_cast<uint32_t>(validation_percentage * static_cast<float>(n_samples_));
+      static_cast<uint32_t>(validation_percentage * static_cast<DataType>(n_samples_));
 
   if (validation_offset_ <= test_offset_)
   {
@@ -238,8 +238,8 @@ bool TensorDataLoader<TensorType>::IsModeAvailable(DataLoaderMode mode)
 /// EXPLICIT INSTANTIATIONS ///
 ///////////////////////////////
 
-template class TensorDataLoader<math::Tensor<std::int8_t>>;
-template class TensorDataLoader<math::Tensor<std::int16_t>>;
+// template class TensorDataLoader<math::Tensor<std::int8_t>>;
+// template class TensorDataLoader<math::Tensor<std::int16_t>>;
 template class TensorDataLoader<math::Tensor<std::int32_t>>;
 template class TensorDataLoader<math::Tensor<std::int64_t>>;
 template class TensorDataLoader<math::Tensor<float>>;

@@ -42,6 +42,7 @@ public:
   using SizeType   = fetch::math::SizeType;
   using SizeVector = fetch::math::SizeVector;
   using ReturnType = std::pair<TensorType, std::vector<TensorType>>;
+  using DataType   = typename TensorType::Type;
 
   explicit DataLoader() = default;
 
@@ -52,11 +53,11 @@ public:
   virtual bool       AddData(std::vector<TensorType> const &data, TensorType const &label) = 0;
   virtual ReturnType PrepareBatch(fetch::math::SizeType batch_size, bool &is_done_set);
 
-  virtual SizeType Size() const                                   = 0;
-  virtual bool     IsDone() const                                 = 0;
-  virtual void     Reset()                                        = 0;
-  virtual void     SetTestRatio(float new_test_ratio)             = 0;
-  virtual void     SetValidationRatio(float new_validation_ratio) = 0;
+  virtual SizeType Size() const                                      = 0;
+  virtual bool     IsDone() const                                    = 0;
+  virtual void     Reset()                                           = 0;
+  virtual void     SetTestRatio(DataType new_test_ratio)             = 0;
+  virtual void     SetValidationRatio(DataType new_validation_ratio) = 0;
   void             SetMode(DataLoaderMode new_mode);
   virtual bool     IsModeAvailable(DataLoaderMode mode) = 0;
   void             SetRandomMode(bool random_mode_state);

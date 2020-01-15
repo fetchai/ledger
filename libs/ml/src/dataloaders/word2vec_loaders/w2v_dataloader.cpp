@@ -23,7 +23,6 @@
 namespace fetch {
 namespace ml {
 namespace dataloaders {
-
 /**
  *
  * @tparam T
@@ -98,14 +97,14 @@ void W2VLoader<T>::Reset()
 }
 
 template <typename T>
-void W2VLoader<T>::SetTestRatio(float new_test_ratio)
+void W2VLoader<T>::SetTestRatio(DataType new_test_ratio)
 {
   FETCH_UNUSED(new_test_ratio);
   throw exceptions::InvalidMode("Test set splitting is not supported for this dataloader.");
 }
 
 template <typename T>
-void W2VLoader<T>::SetValidationRatio(float new_validation_ratio)
+void W2VLoader<T>::SetValidationRatio(DataType new_validation_ratio)
 {
   FETCH_UNUSED(new_validation_ratio);
   throw exceptions::InvalidMode("Validation set splitting is not supported for this dataloader.");
@@ -241,7 +240,7 @@ bool W2VLoader<T>::BuildVocab(std::string const &s)
   std::vector<SizeType> indexes = StringsToIndices(PreprocessString(s));
   if (indexes.size() >=
       2 * window_size_ + 1)  // each sentence stored in the data_ are guaranteed to have minimum
-                             // length to handle window_size context sampling
+  // length to handle window_size context sampling
   {
     data_.push_back(std::move(indexes));
     return true;

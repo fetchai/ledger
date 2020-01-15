@@ -670,8 +670,7 @@ void VMModel::LayerAddDropout(const fetch::vm::Ptr<String> &layer,
     AssertLayerTypeMatches(layer_type, {SupportedLayerType::DROPOUT});
     SequentialModelPtr me = GetMeAsSequentialIfPossible();
 
-    // ops::Dropout takes a keep-probability, while Keras-style argument is a drop-probability,
-    // so it is reversed here.
+    // ops::Dropout takes a drop probability
     if (probability < DataType{0} || probability > DataType{1})
     {
       std::stringstream ss;
@@ -680,9 +679,8 @@ void VMModel::LayerAddDropout(const fetch::vm::Ptr<String> &layer,
       vm_->RuntimeError(ss.str());
       return;
     }
-    DataType const keep_probability = DataType{1} - probability;
 
-    me->Add<fetch::ml::ops::Dropout<TensorType>>(keep_probability);
+    me->Add<fetch::ml::ops::Dropout<TensorType>>(probability);
     compiled_ = false;
   }
   catch (std::exception const &e)
