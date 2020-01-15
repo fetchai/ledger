@@ -61,7 +61,7 @@ bool IsSameBlock(Block const &a, Block const &b)
 }
 
 template <typename Container, typename Value>
-static bool Contains(Container const &collection, Value const &value)
+bool Contains(Container const &collection, Value const &value)
 {
   return std::find(collection.begin(), collection.end(), value) != collection.end();
 }
