@@ -32,7 +32,7 @@ using TensorType = fetch::math::Tensor<DataType>;
 using SizeType   = fetch::math::SizeType;
 
 using ModelType      = typename fetch::ml::model::Sequential<TensorType>;
-using DataLoaderType = typename fetch::ml::dataloaders::TensorDataLoader<TensorType, TensorType>;
+using DataLoaderType = typename fetch::ml::dataloaders::TensorDataLoader<TensorType>;
 using OptimiserType  = fetch::ml::OptimiserType;
 
 int main(int ac, char **av)
@@ -67,7 +67,7 @@ int main(int ac, char **av)
 
   auto data_loader_ptr = std::make_unique<DataLoaderType>();
   data_loader_ptr->AddData({mnist_images}, mnist_labels);
-  data_loader_ptr->SetTestRatio(0.2f);
+  data_loader_ptr->SetTestRatio(DataType{"0.2"});
 
   // setup model and pass dataloader
   ModelType model(model_config);

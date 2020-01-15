@@ -20,6 +20,8 @@
 #include "math/fundamental_operators.hpp"
 #include "ml/ops/activations/elu.hpp"
 
+#include <cassert>
+
 namespace fetch {
 namespace ml {
 namespace ops {
