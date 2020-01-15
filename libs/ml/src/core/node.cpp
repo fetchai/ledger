@@ -18,15 +18,7 @@
 
 #include "ml/core/node.hpp"
 #include "ml/saveparams/saveable_params.hpp"
-
-#include <algorithm>
-#include <cassert>
-#include <cstdint>
-#include <functional>
-#include <memory>
-#include <string>
-#include <utility>
-#include <vector>
+#include "ml/ops/weights.hpp"
 
 namespace fetch {
 namespace ml {

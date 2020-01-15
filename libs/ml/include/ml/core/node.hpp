@@ -17,9 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "logging/logging.hpp"
 #include "ml/ops/ops.hpp"
-#include "ml/ops/weights.hpp"
+
 
 namespace fetch {
 namespace ml {

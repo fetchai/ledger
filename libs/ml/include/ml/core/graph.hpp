@@ -18,7 +18,9 @@
 //------------------------------------------------------------------------------
 
 #include "ml/core/node.hpp"
-#include "ml/ops/weights.hpp"
+#include "ml/regularisers/regulariser.hpp"
+#include "ml/exceptions/exceptions.hpp"
+//#include <map>
 #include "ml/state_dict.hpp"
 
 // TODO(#1554) - we should only reset the cache for trained nodes, not all nodes
@@ -67,6 +69,9 @@ enum class GraphState : uint8_t
 /////////////
 /// GRAPH ///
 /////////////
+
+template <typename T>
+struct StateDict;
 
 template <class T>
 class Graph

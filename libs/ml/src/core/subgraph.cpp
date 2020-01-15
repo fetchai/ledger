@@ -18,12 +18,6 @@
 
 #include "ml/core/subgraph.hpp"
 
-#include <cassert>
-#include <memory>
-#include <string>
-#include <utility>
-#include <vector>
-
 namespace fetch {
 namespace ml {
 
