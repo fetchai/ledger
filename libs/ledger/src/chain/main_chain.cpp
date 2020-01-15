@@ -48,6 +48,7 @@ namespace ledger {
 
 namespace {
 constexpr char const *BLOOM_FILTER_STORE = "chain.bloom.db";
+constexpr uint64_t    OVERLAP            = 400000;
 }
 
 const uint64_t DIRTY_TIMEOUT{600};
@@ -60,7 +61,7 @@ const uint64_t DIRTY_TIMEOUT{600};
 MainChain::MainChain(Mode mode, bool dirty_block_functionality)
   : mode_{mode}
   , dirty_block_functionality_{dirty_block_functionality}
-  , bloom_filter_{1 + chain::Transaction::MAXIMUM_TX_VALIDITY_PERIOD / 2}
+  , bloom_filter_{OVERLAP}
   , bloom_filter_queried_bit_count_(telemetry::Registry::Instance().CreateGauge<std::size_t>(
         "ledger_main_chain_bloom_filter_queried_bit_number",
         "Total number of bits checked during each query to the Ledger Main Chain Bloom filter"))
