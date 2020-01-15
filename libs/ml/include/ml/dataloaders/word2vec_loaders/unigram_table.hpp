@@ -19,7 +19,6 @@
 
 #include "core/random/lcg.hpp"
 #include "math/base_types.hpp"
-#include "math/tensor/tensor.hpp"
 
 #include <numeric>
 

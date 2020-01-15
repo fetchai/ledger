@@ -16,6 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "math/tensor/tensor.hpp"
 #include "ml/dataloaders/word2vec_loaders/unigram_table.hpp"
 
 namespace fetch {
