@@ -164,15 +164,37 @@ void BeaconService::SaveState()
 
   try
   {
+    if(!signatures_being_built_.empty())
+    {
+      // The signatures are stored in a separate structure so they can be written in incrementally.
+      // First, clean possible old signatures (assume they are always contiguous)
+      uint64_t lowest_relevant_sig_index = signatures_being_built_.begin()->first;
+      uint64_t highest_relevant_sig_index = signatures_being_built_.rbegin()->first;
+
+      // Note the - 1 here to continually remove the one before
+      while(lowest_relevant_sig_index != 0 && saved_state_all_sigs_.Has(storage::ResourceAddress(std::to_string(lowest_relevant_sig_index - 1))))
+      {
+        saved_state_all_sigs_.Erase(storage::ResourceAddress(std::to_string(lowest_relevant_sig_index - 1)));
+        lowest_relevant_sig_index--;
+      }
+
+      // Now add signatures which are new
+      while(!saved_state_all_sigs_.Has(storage::ResourceAddress(std::to_string(highest_relevant_sig_index))))
+      {
+        saved_state_all_sigs_.Set(storage::ResourceAddress(std::to_string(highest_relevant_sig_index)), signatures_being_built_.at(highest_relevant_sig_index));
+        highest_relevant_sig_index--;
+      }
+    }
+  }
+  catch (std::exception const &ex)
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Failed to save beacon service sigs to file: ", ex.what());
+  }
+
+  try
+  {
     serializers::LargeObjectSerializeHelper serializer{};
     serializer << BeaconServiceSerializeWrapper{*this, static_cast<uint16_t>(state_machine_->state())};
-
-    {
-      serializers::LargeObjectSerializeHelper serializer_test{};
-      serializer << signatures_being_built_;
-
-      FETCH_LOG_INFO(LOGGING_NAME, "Sigs being build: ", signatures_being_built_.size(), " serialized size: ", serializer_test.size());
-    }
 
     FETCH_LOG_INFO(LOGGING_NAME, "Total ser size: ", serializer.size());
 
@@ -188,6 +210,7 @@ void BeaconService::ReloadState(State &next_state)
 {
   old_state_.Load("beacon_state.db", "beacon_state.index.db"); // Legacy/depreciated
   saved_state_.Load("beacon_state_v2.db", "beacon_state_v2.index.db");
+  saved_state_all_sigs_.Load("beacon_state_sigs_v2.db", "beacon_state_sigs_v2.index.db");
 
   if (!load_and_reload_on_crash_)
   {
@@ -198,6 +221,14 @@ void BeaconService::ReloadState(State &next_state)
 
   try
   {
+    // Load all signatures from the file
+    //for (auto it = saved_state_all_sigs_.begin(); it != saved_state_all_sigs_.end(); ++it)
+    for(auto const &siginfo : saved_state_all_sigs_)
+    {
+      FETCH_LOG_INFO(LOGGING_NAME, "Adding sigs for: ", siginfo.round);
+      signatures_being_built_[siginfo.round] = siginfo;
+    }
+
     ConstByteArray ret;
 
     if (saved_state_.Get(storage::ResourceAddress("HEAD"), ret))

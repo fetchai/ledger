@@ -122,6 +122,7 @@ public:
   using DeadlineTimer           = fetch::moment::DeadlineTimer;
   using OldStateStore           = fetch::storage::ObjectStore<AeonExecutionUnit>;
   using StateStore              = fetch::storage::ObjectStore<byte_array::ConstByteArray>;
+  using AllSigsStore            = fetch::storage::ObjectStore<SignatureInformation>;
   using SignaturesBeingBuilt    = std::map<uint64_t, SignatureInformation>;
   using CompletedBlockEntropy   = std::map<uint64_t, BlockEntropyPtr>;
   using ActiveExeUnit           = std::shared_ptr<AeonExecutionUnit>;
@@ -169,9 +170,10 @@ protected:
 
   // Related to recovering state after a crash
   /// @{
-  constexpr static uint16_t SAVE_PERIODICITY = 100;
+  constexpr static uint16_t SAVE_PERIODICITY = 10;
   OldStateStore  old_state_;
   StateStore     saved_state_;
+  AllSigsStore   saved_state_all_sigs_;
   void           ReloadState(State &next_state);
   void           SaveState();
   /// @}
@@ -246,6 +248,8 @@ private:
   telemetry::HistogramPtr       beacon_verify_time_;
 };
 
+// Since it is annoying to serialize the state, an enum,
+// we create a wrapper for serializing the beacon service
 struct BeaconServiceSerializeWrapper
 {
   BeaconService &beacon_service;
@@ -289,17 +293,15 @@ public:
   using Type       = beacon::BeaconService;
   using DriverType = D;
 
-  static uint8_t const SIGNATURES_BEING_BUILT      = 1;
-  static uint8_t const ACTIVE_EXE_UNIT             = 2;
-  static uint8_t const AEON_EXE_QUEUE              = 3;
-  static uint8_t const BLOCK_ENTROPY_PREVIOUS      = 4;
-  static uint8_t const BLOCK_ENTROPY_BEING_CREATED = 5;
+  static uint8_t const ACTIVE_EXE_UNIT             = 1;
+  static uint8_t const AEON_EXE_QUEUE              = 2;
+  static uint8_t const BLOCK_ENTROPY_PREVIOUS      = 3;
+  static uint8_t const BLOCK_ENTROPY_BEING_CREATED = 4;
 
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &beacon_service)
   {
-    auto map = map_constructor(5);
-    map.Append(SIGNATURES_BEING_BUILT, beacon_service.signatures_being_built_);
+    auto map = map_constructor(4);
     map.Append(ACTIVE_EXE_UNIT, beacon_service.active_exe_unit_);
     map.Append(AEON_EXE_QUEUE, beacon_service.aeon_exe_queue_);
     map.Append(BLOCK_ENTROPY_PREVIOUS, beacon_service.block_entropy_previous_);
@@ -309,7 +311,6 @@ public:
   template <typename MapDeserializer>
   static void Deserialize(MapDeserializer &map, Type &beacon_service)
   {
-    map.ExpectKeyGetValue(SIGNATURES_BEING_BUILT, beacon_service.signatures_being_built_);
     map.ExpectKeyGetValue(ACTIVE_EXE_UNIT, beacon_service.active_exe_unit_);
     map.ExpectKeyGetValue(AEON_EXE_QUEUE, beacon_service.aeon_exe_queue_);
 
