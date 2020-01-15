@@ -145,6 +145,39 @@ TEST_F(MathTensorTests, tensor_construction_from_string_2_fixed64)
   ASSERT_TRUE(toolkit.Run());
 }
 
+TEST_F(MathTensorTests, tensor_construction_from_malformed_string_1_fixed64)
+{
+  static char const *STR_CONSTRUCT_SRC = R"(
+            function main()
+              var d = Tensor("1.0.0, 2.0");
+            endfunction
+          )";
+  ASSERT_TRUE(toolkit.Compile(STR_CONSTRUCT_SRC));
+  ASSERT_FALSE(toolkit.Run());
+}
+
+TEST_F(MathTensorTests, tensor_construction_from_malformed_string_2_fixed64)
+{
+  static char const *STR_CONSTRUCT_SRC = R"(
+            function main()
+              var d = Tensor("1.0, 2.0; 3.0");
+            endfunction
+          )";
+  ASSERT_TRUE(toolkit.Compile(STR_CONSTRUCT_SRC));
+  ASSERT_FALSE(toolkit.Run());
+}
+
+TEST_F(MathTensorTests, tensor_construction_from_malformed_string_3_fixed64)
+{
+  static char const *STR_CONSTRUCT_SRC = R"(
+            function main()
+              var d = Tensor("");
+            endfunction
+          )";
+  ASSERT_TRUE(toolkit.Compile(STR_CONSTRUCT_SRC));
+  ASSERT_FALSE(toolkit.Run());
+}
+
 TEST_F(MathTensorTests, tensor_at_on_invalid_index)
 {
   static char const *SRC = R"(
