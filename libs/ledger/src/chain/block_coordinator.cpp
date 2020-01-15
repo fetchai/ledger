@@ -399,8 +399,10 @@ BlockCoordinator::State BlockCoordinator::OnSynchronising()
 
     if (!lookup_success)
     {
-      FETCH_LOG_WARN(LOGGING_NAME,
-                     "Unable to look up common ancestor for block:", ToBase64(current_hash));
+      FETCH_LOG_ERROR(LOGGING_NAME, "Unable to look up common ancestor for block: 0x",
+                      current_hash.ToHex(), " last processed: 0x", last_processed_block.ToHex());
+
+      Panic();
       return State::RESET;
     }
 
@@ -429,50 +431,10 @@ BlockCoordinator::State BlockCoordinator::OnSynchronising()
                      next_block->block_number, " of ", current_block_->block_number, ")");
     }
 
-    // we expect that the common parent in this case will always have been processed, but this
-    // should be checked
-    if (!storage_unit_.HashExists(common_parent->merkle_hash, common_parent->block_number))
+    // revert the state back to the common parent
+    if (!RevertToBlock(*common_parent))
     {
-      FETCH_LOG_ERROR(LOGGING_NAME, "Ancestor block's merkle hash cannot be retrieved! block: 0x",
-                      current_hash.ToHex(), " number: ", common_parent->block_number,
-                      " merkle hash: 0x", common_parent->merkle_hash.ToHex(),
-                      " Last processed: ", last_processed_block.ToHex());
-
-      // this is a bad situation so the easiest solution is to revert back to genesis
-      execution_manager_.SetLastProcessedBlock(chain::ZERO_HASH);
-      if (!storage_unit_.RevertToHash(chain::GetGenesisMerkleRoot(), 0))
-      {
-        FETCH_LOG_ERROR(LOGGING_NAME, "Unable to revert back to genesis");
-      }
-
-      if (dag_ && !dag_->RevertToEpoch(0))
-      {
-        FETCH_LOG_ERROR(LOGGING_NAME, "Unable to revert DAG back to genesis!");
-      }
-
-      // delay the state machine in these error cases, to allow the network to catch up if the issue
-      // is network related and if nothing else restrict logs being spammed
-      state_machine_->Delay(std::chrono::seconds{5});
-
-      return State::RESET;
-    }
-
-    // revert the storage back to the known state
-    if (!storage_unit_.RevertToHash(common_parent->merkle_hash, common_parent->block_number))
-    {
-      FETCH_LOG_ERROR(LOGGING_NAME, "Unable to restore state for block: ", current_hash.ToHex());
-
-      // delay the state machine in these error cases, to allow the network to catch up if the issue
-      // is network related and if nothing else restrict logs being spammed
-      state_machine_->Delay(std::chrono::seconds{5});
-
-      return State::RESET;
-    }
-
-    if (dag_ && !dag_->RevertToEpoch(common_parent->block_number))
-    {
-      FETCH_LOG_ERROR(LOGGING_NAME, "Failed to revert dag to block: ", common_parent->block_number);
-      state_machine_->Delay(std::chrono::seconds{5});
+      Panic();
       return State::RESET;
     }
 
@@ -602,14 +564,13 @@ BlockCoordinator::State BlockCoordinator::OnPreExecBlockValidation()
       consensus_update_failure_total_->increment();
     }
 
-    if (!(result == ConsensusInterface::Status::YES))
+    if (ConsensusInterface::Status::YES != result)
     {
       FETCH_LOG_ERROR(LOGGING_NAME,
                       "Block validation failed: Block coordinator failed to verify block (0x",
                       current_block_->hash.ToHex(), ')', ". This should not happen.");
 
-      RemoveBlock(current_block_->hash);
-      Reset();
+      RemoveBlock(current_block_);
       return State::RESET;
     }
 
@@ -636,7 +597,7 @@ BlockCoordinator::State BlockCoordinator::OnPreExecBlockValidation()
                      " Actual: ", (1u << current_block_->log2_num_lanes), " (0x",
                      current_block_->hash.ToHex(), ')');
 
-      RemoveBlock(current_block_->hash);
+      RemoveBlock(current_block_);
       return State::RESET;
     }
 
@@ -647,7 +608,7 @@ BlockCoordinator::State BlockCoordinator::OnPreExecBlockValidation()
           LOGGING_NAME, "Block validation failed: Slice count mismatch. Expected: ", num_slices_,
           " Actual: ", current_block_->slices.size(), " (0x", current_block_->hash.ToHex(), ')');
 
-      RemoveBlock(current_block_->hash);
+      RemoveBlock(current_block_);
       return State::RESET;
     }
   }
@@ -664,7 +625,7 @@ BlockCoordinator::State BlockCoordinator::OnPreExecBlockValidation()
       FETCH_LOG_WARN(LOGGING_NAME, "Block certifies work that possibly is malicious (0x",
                      current_block_->hash.ToHex(), ")");
 
-      RemoveBlock(current_block_->hash);
+      RemoveBlock(current_block_);
       return State::RESET;
     }
   }
@@ -707,8 +668,8 @@ BlockCoordinator::State BlockCoordinator::OnSynergeticExecution()
     if (!synergetic_exec_mgr_->ValidateWorkAndUpdateState(num_lanes_))
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Work did not execute (0x", current_block_->hash.ToHex(), ")");
-      RemoveBlock(current_block_->hash);
 
+      RemoveBlock(current_block_);
       return State::RESET;
     }
   }
@@ -732,8 +693,7 @@ BlockCoordinator::State BlockCoordinator::OnWaitForTransactions(State current, S
         unable_to_find_tx_count_->increment();
 
         // Assume block was invalid and discard it
-        RemoveBlock(current_block_->hash);
-
+        RemoveBlock(current_block_);
         return State::RESET;
       }
     }
@@ -840,10 +800,86 @@ BlockCoordinator::State BlockCoordinator::OnWaitForTransactions(State current, S
   return State::WAIT_FOR_TRANSACTIONS;
 }
 
-void BlockCoordinator::RemoveBlock(MainChain::BlockHash const &hash)
+template <typename BlockPtrType>
+void BlockCoordinator::RemoveBlock(BlockPtrType &block)
 {
-  chain_.RemoveBlock(hash);
+  if (block && !block->IsGenesis())
+  {
+    FETCH_LOG_ERROR(LOGGING_NAME, "RemoveBlock: 0x", block->hash.ToHex());
+
+    auto const previous_block = chain_.GetBlock(block->previous_hash);
+    if (!previous_block || !RevertToBlock(*previous_block))
+    {
+      Panic();
+    }
+
+    chain_.RemoveBlock(block->hash);
+    block.reset(); // remove dangling reference to the block
+  }
+
   blocks_to_common_ancestor_.clear();
+}
+
+bool BlockCoordinator::RevertToBlock(Block const &block)
+{
+  FETCH_LOG_INFO(LOGGING_NAME, "Revert back to #", block.block_number, " 0x", block.hash.ToHex(),
+                 " state: 0x", block.merkle_hash.ToHex());
+
+  // we expect that the common parent in this case will always have been processed, but this
+  // should be checked
+  if (!storage_unit_.HashExists(block.merkle_hash, block.block_number))
+  {
+    FETCH_LOG_ERROR(LOGGING_NAME, "Ancestor block's merkle hash cannot be retrieved! block: 0x",
+                    block.hash.ToHex(), " number: ", block.block_number,
+                    " merkle hash: 0x", block.merkle_hash.ToHex());
+
+    return false;
+  }
+
+  // revert the storage back to the known state
+  if (!storage_unit_.RevertToHash(block.merkle_hash, block.block_number))
+  {
+    FETCH_LOG_ERROR(LOGGING_NAME, "Unable to restore state for block: 0x", block.hash.ToHex());
+
+    return false;
+  }
+
+  if (dag_ && !dag_->RevertToEpoch(block.block_number))
+  {
+    FETCH_LOG_ERROR(LOGGING_NAME, "Failed to revert dag to block: ", block.block_number);
+
+    return false;
+  }
+
+  last_executed_block_.ApplyVoid([&](auto &digest) { digest = block.hash; });
+  execution_manager_.SetLastProcessedBlock(block.hash);
+
+  return true;
+}
+
+void BlockCoordinator::Panic()
+{
+  FETCH_LOG_ERROR(LOGGING_NAME, "In Panic -> Reverting to Genesis");
+
+  auto const genesis_digest = chain::GetGenesisDigest();
+  auto const genesis_merkle = chain::GetGenesisMerkleRoot();
+
+  if (!storage_unit_.RevertToHash(genesis_merkle, 0))
+  {
+    FETCH_LOG_CRITICAL(LOGGING_NAME, "Unable to revert back to Genesis!!!");
+  }
+
+  if (dag_ && !dag_->RevertToEpoch(0))
+  {
+    FETCH_LOG_CRITICAL(LOGGING_NAME, "Unable to revert DAG back to genesis!");
+  }
+
+  last_executed_block_.ApplyVoid([&](auto &digest) { digest = genesis_digest; });
+  execution_manager_.SetLastProcessedBlock(genesis_digest);
+
+  // delay the state machine in these error cases, to allow the network to catch up if the issue
+  // is network related and if nothing else restrict logs being spammed
+  state_machine_->Delay(std::chrono::seconds{5});
 }
 
 BlockCoordinator::State BlockCoordinator::OnScheduleBlockExecution()
@@ -935,39 +971,7 @@ BlockCoordinator::State BlockCoordinator::OnPostExecBlockValidation()
   // After the checks have been completed, if the validation has failed, the system needs to recover
   if (invalid_block)
   {
-    bool revert_successful{false};
-
-    // we need to restore back to the previous block
-    BlockPtr previous_block = chain_.GetBlock(current_block_->previous_hash);
-    if (previous_block)
-    {
-      if (dag_)
-      {
-        revert_successful = dag_->RevertToEpoch(previous_block->block_number);
-      }
-
-      // signal the storage engine to make these changes
-      if (storage_unit_.RevertToHash(previous_block->merkle_hash, previous_block->block_number) &&
-          revert_successful)
-      {
-        execution_manager_.SetLastProcessedBlock(previous_block->hash);
-        revert_successful = true;
-      }
-    }
-
-    // if the revert has gone wrong, we need to initiate a complete re-sync
-    if (!revert_successful)
-    {
-      if (dag_)
-      {
-        dag_->RevertToEpoch(0);
-      }
-      storage_unit_.RevertToHash(chain::GetGenesisMerkleRoot(), 0);
-      execution_manager_.SetLastProcessedBlock(chain::ZERO_HASH);
-    }
-
-    // finally mark the block as invalid and purge it from the chain
-    RemoveBlock(current_block_->hash);
+    RemoveBlock(current_block_);
   }
   else
   {
@@ -1116,8 +1120,8 @@ BlockCoordinator::State BlockCoordinator::OnWaitForNewBlockExecution()
   case ExecutionStatus::RUNNING:
     if (exec_wait_periodic_.Poll())
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "Waiting for new block execution (following: ",
-                     next_block_->previous_hash.ToBase64(), ")");
+      FETCH_LOG_INFO(LOGGING_NAME, "Waiting for new block execution (following: 0x",
+                     next_block_->previous_hash.ToHex(), ")");
     }
 
     // signal that the next execution should not happen immediately
@@ -1178,6 +1182,11 @@ BlockCoordinator::State BlockCoordinator::OnTransmitBlock()
           static_cast<uint64_t>(ToSeconds(Clock::now() - start_block_packing_)));
       blocks_minted_->add(1);
     }
+    else
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Attempted to broadcast invalid block: 0x", next_block_->hash.ToHex());
+      RemoveBlock(next_block_);
+    }
   }
   catch (std::exception const &ex)
   {
@@ -1201,40 +1210,32 @@ BlockCoordinator::State BlockCoordinator::OnReset()
   {
     block = current_block_.get();
   }
-  else
-  {
-    FETCH_LOG_ERROR(LOGGING_NAME,
-                    "Unable to find a previously executed block! Doing a hard reset.");
-    Reset();
 
-    auto genesis_block = MainChain::CreateGenesisBlock();
-    block              = genesis_block.get();
-  }
-
-  current_block_weight_->set(block->weight);
   reset_state_count_->increment();
 
   if (block != nullptr && !block->hash.empty())
   {
+    current_block_weight_->set(block->weight);
+
     if ((block->block_number % 100) == 0)
     {
       block_hash_->set(*reinterpret_cast<uint64_t const *>(block->hash.pointer()));
     }
-  }
 
-  try
-  {
-    consensus_->UpdateCurrentBlock(*block);
-  }
-  catch (std::exception const &ex)
-  {
-    FETCH_LOG_WARN(LOGGING_NAME, "Failed to update consensus with error: ", ex.what());
-    consensus_update_failure_total_->increment();
-  }
-  catch (...)
-  {
-    FETCH_LOG_WARN(LOGGING_NAME, "Unknown error when updating consensus!");
-    consensus_update_failure_total_->increment();
+    try
+    {
+      consensus_->UpdateCurrentBlock(*block);
+    }
+    catch (std::exception const &ex)
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Failed to update consensus with error: ", ex.what());
+      consensus_update_failure_total_->increment();
+    }
+    catch (...)
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Unknown error when updating consensus!");
+      consensus_update_failure_total_->increment();
+    }
   }
 
   current_block_.reset();
@@ -1409,23 +1410,6 @@ char const *BlockCoordinator::ToString(ExecutionStatus state)
   }
 
   return text;
-}
-
-void BlockCoordinator::Reset()
-{
-  FETCH_LOG_INFO(LOGGING_NAME, "Hard resetting block coordinator");
-  chain_.Reset();
-  current_block_ = MainChain::CreateGenesisBlock();
-  last_executed_block_.ApplyVoid([](auto &digest) { digest = chain::GetGenesisDigest(); });
-  execution_manager_.SetLastProcessedBlock(chain::GetGenesisDigest());
-}
-
-void BlockCoordinator::ResetGenesis()
-{
-  FETCH_LOG_INFO(LOGGING_NAME, "Resetting block coordinator");
-  current_block_ = MainChain::CreateGenesisBlock();
-  last_executed_block_.ApplyVoid([](auto &digest) { digest = chain::GetGenesisDigest(); });
-  execution_manager_.SetLastProcessedBlock(chain::GetGenesisDigest());
 }
 
 }  // namespace ledger
