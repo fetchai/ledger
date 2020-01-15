@@ -77,81 +77,94 @@ const ShapeVector &Node<TensorType>::BatchInputShapes()
 template <typename TensorType>
 Shape Node<TensorType>::BatchOutputShape()
 {
-  // Return cached shape result if available.
-  Shape const candidate = op_ptr_->BatchOutputShape();
-  bool const  op_is_subgraph =
+  Shape const &candidate = op_ptr_->BatchOutputShape();
+  bool const   op_is_subgraph =
       (std::dynamic_pointer_cast<std::shared_ptr<SubGraph<TensorType>>>(op_ptr_) != nullptr);
 
+  // If the underlying Op is simple (e.g. not a SubGraph) and its shape is already known (cached)
+  // this shape can be returned immediately.
   if (!candidate.empty() && !op_is_subgraph)
   {
-    if (input_nodes_.empty() &&
-        (OperationType() == OpType::OP_PLACEHOLDER || OperationType() == OpType::OP_WEIGHTS))
+    if (OperationType() == OpType::OP_PLACEHOLDER)
     {
-      FETCH_LOG_INFO(name_.c_str(), "Shape deduction reached an leaf node : " + this->name_ + " " +
+      FETCH_LOG_INFO(name_.c_str(), "Shape deduction reached a placeholder input node : " +
+                                        this->name_ + " " + OutputShapeAsString(candidate));
+    }
+    if (OperationType() == OpType::OP_WEIGHTS)
+    {
+      FETCH_LOG_INFO(name_.c_str(), "Shape deduction reached weights node : " + this->name_ + " " +
                                         OutputShapeAsString(candidate));
     }
     return candidate;
   }
 
-  // If no input nodes exist - it is impossible to infer/deduce their shapes.
+  // If there is no input nodes, shape deduction can not go further.
   if (input_nodes_.empty())
   {
-    FETCH_LOG_INFO(name_.c_str(), "Shape deduction reached a Graph leaf : " + this->name_);
+    if (candidate.empty())
+    {
+      // If there is no input nodes, but underlying Op's shape is not known - the Graph
+      // probably is incorrect.
+      FETCH_LOG_ERROR(name_.c_str(),
+                      "Shape deduction reached a Graph leaf with empty shape " + this->name_);
+    }
     return candidate;
   }
 
   ShapeVector input_shapes;
   for (auto const &i : input_nodes_)
   {
-    auto node_ptr = i.lock();
-    if (!node_ptr)
+    auto input_node_ptr = i.lock();
+    if (!input_node_ptr)
     {
       throw std::runtime_error("Unable to lock weak pointer.");
     }
 
     // If there are valid input nodes, make a deeper recursive call to each of the previous nodes.
-    auto const in_shape = node_ptr->BatchOutputShape();
-    if (!in_shape.empty())
+    Shape const in_shape = input_node_ptr->BatchOutputShape();
+
+    if (in_shape.empty())
     {
-      input_shapes.emplace_back(in_shape);
-    }
-    else
-    {
-      if (node_ptr->OperationType() != OpType::OP_PLACEHOLDER)
+      if (input_node_ptr->OperationType() != OpType::OP_PLACEHOLDER)
       {
         FETCH_LOG_INFO(name_.c_str(),
                        "Got an empty shape as return from non-placeholder layer! : " +
-                           node_ptr->GetNodeName());
+                           input_node_ptr->GetNodeName());
       }
-      // TODO(VH): else (if there _is_ an empty shape among inputs) what?
+      continue;
     }
+
+    input_shapes.emplace_back(in_shape);
   }
 
-  if (!input_shapes.empty())
-  {
-    op_ptr_->ComputeBatchOutputShape(input_shapes);
-    FETCH_LOG_INFO(name_.c_str(), InputShapesAsString(op_ptr_->BatchInputShapes()) + "->" +
-                                      OutputShapeAsString(op_ptr_->BatchOutputShape()));
-  }
-  else
+  // If there is no one valid (non-empty) input shape, shape deduction can not go further.
+  if (input_shapes.empty())
   {
     FETCH_LOG_ERROR(name_.c_str(), "Shape deduction failed on " + this->name_ +
                                        " : only empty shapes were received as Input ones.");
     return candidate;
   }
 
-  Shape const ops_out_shape = op_ptr_->BatchOutputShape();
-  if (ops_out_shape.empty())
+  // When all valid (non-empty) input shapes are collected, it is possbile to compute
+  // an output shape of this node.
+  Shape const my_out_shape = op_ptr_->ComputeBatchOutputShape(input_shapes);
+
+  if (my_out_shape.empty())
   {
     FETCH_LOG_ERROR(name_.c_str(), "Shape deduction failed on " + this->name_ +
                                        " : unable to compute underlying Ops output shape.");
+  }
+  else
+  {
+    FETCH_LOG_INFO(name_.c_str(), InputShapesAsString(op_ptr_->BatchInputShapes()) + "->" +
+                                      OutputShapeAsString(op_ptr_->BatchOutputShape()));
   }
 
   // After all shapes for current Node are deduced, shape-dependent Ops could be
   // updated and their initialisation completed.
   op_ptr_->CompleteInitialisation();
 
-  return ops_out_shape;
+  return my_out_shape;
 }
 
 ///////////////////////////////
