@@ -44,7 +44,7 @@
 #include "vm_modules/ml/model/model_estimator.hpp"
 #include "vm_modules/use_estimator.hpp"
 
-    using namespace fetch::vm;
+using namespace fetch::vm;
 
 namespace fetch {
 namespace vm_modules {
