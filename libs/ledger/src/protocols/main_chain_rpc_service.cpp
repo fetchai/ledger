@@ -527,9 +527,7 @@ State MainChainRpcService::WalkBack()
 {
   assert(block_resolving_);
 
-  std::size_t blocks_back    = back_stride_;
   std::size_t current_height = block_resolving_->block_number;
-
   if (current_height == 0)
   {
     assert(block_resolving_->IsGenesis());
@@ -539,6 +537,7 @@ State MainChainRpcService::WalkBack()
     return State::COMPLETE_SYNC_WITH_PEER;
   }
 
+  std::size_t blocks_back = back_stride_;
   if (blocks_back >= current_height)
   {
     // we don't need to (and actually can't) leap back as far
