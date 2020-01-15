@@ -11,11 +11,11 @@ function main()
   var label = Tensor(label_shape);
 
   // set up a model
-  var hidden_layers = Array<UInt64>(3);
-  hidden_layers[0] = 10u64;
-  hidden_layers[1] = 10u64;
-  hidden_layers[2] = 10u64;
-  var model = Model("classifier");
+  var model = Model("sequential");
+  model.add("dense", 10u64, 10u64, "relu");
+  model.add("dense", 10u64, 10u64, "relu");
+  model.add("dense", 10u64, 1u64);
+
   model.compile("adam", hidden_layers);
 
   // train the model
