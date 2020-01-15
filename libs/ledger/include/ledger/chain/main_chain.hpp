@@ -207,6 +207,8 @@ public:
   MainChain &operator=(MainChain const &rhs) = delete;
   MainChain &operator=(MainChain &&rhs) = delete;
 
+private:
+
   using DbRecord      = BlockDbRecord;
   using IntBlockPtr   = std::shared_ptr<Block>;
   using BlockMap      = std::unordered_map<BlockHash, IntBlockPtr>;
@@ -299,7 +301,9 @@ public:
   IntBlockPtr GetLabeledSubchainStart() const;
   /// @}
 
+public:
   static IntBlockPtr CreateGenesisBlock();
+private:
 
   BlockHash GetHeadHash();
   void      SetHeadHash(BlockHash const &hash);
