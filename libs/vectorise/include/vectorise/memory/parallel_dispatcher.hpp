@@ -307,7 +307,6 @@ public:
       }
       vc = VectorRegisterType(c.data());
     }
-
     if (ST >= VectorRegisterType::E_BLOCK_COUNT)
     {
       for (std::size_t i = SF; i < ST; i += VectorRegisterType::E_BLOCK_COUNT)
