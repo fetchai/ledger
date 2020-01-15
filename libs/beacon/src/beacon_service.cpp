@@ -147,6 +147,13 @@ BeaconService::BeaconService(MuddleInterface &muddle, const CertificatePtr &cert
   });
 }
 
+//// Helper function to create an inexpensive resource ID
+//template <typename T>
+//ConstByteArray CreateRID(T from)
+//{
+//  ConstByteArray memory_area(32);
+//}
+
 /**
  * Save the exact state of the beacon service for later recovery. Note that this must be used
  * carefully, for example when recovering certain timers might not be set and it could jump
@@ -164,6 +171,8 @@ void BeaconService::SaveState()
 
   try
   {
+    MilliTimer const timer{"SaveStateSigs ", 10};
+
     if(!signatures_being_built_.empty())
     {
       // The signatures are stored in a separate structure so they can be written in incrementally.
@@ -181,7 +190,7 @@ void BeaconService::SaveState()
       // Now add signatures which are new
       while(!saved_state_all_sigs_.Has(storage::ResourceAddress(std::to_string(highest_relevant_sig_index))) && signatures_being_built_.find(highest_relevant_sig_index) != signatures_being_built_.end())
       {
-        FETCH_LOG_INFO(LOGGING_NAME, "Highest relevant: ", highest_relevant_sig_index, " size: ", signatures_being_built_.size());
+        FETCH_LOG_DEBUG(LOGGING_NAME, "Highest relevant: ", highest_relevant_sig_index, " size: ", signatures_being_built_.size());
         saved_state_all_sigs_.Set(storage::ResourceAddress(std::to_string(highest_relevant_sig_index)), signatures_being_built_.at(highest_relevant_sig_index));
         highest_relevant_sig_index--;
       }
