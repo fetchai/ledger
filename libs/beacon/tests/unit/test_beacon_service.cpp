@@ -262,7 +262,8 @@ public:
 
   void Reload()
   {
-    ReloadState();
+    State dummy;
+    ReloadState(dummy);
   }
 
   void Save()
