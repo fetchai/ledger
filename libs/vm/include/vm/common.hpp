@@ -20,6 +20,7 @@
 #include "core/serializers/base_types.hpp"
 #include "core/serializers/main_serializer.hpp"
 #include "meta/type_util.hpp"
+#include "meta/vm_types.hpp"
 
 #include <cmath>
 #include <cstdint>
@@ -232,9 +233,6 @@ template <typename T>
 class Ptr;
 class Object;
 
-using ChargeAmount                                = uint64_t;
-static constexpr ChargeAmount COMPUTE_CHARGE_COST = 1u;
-static constexpr ChargeAmount MAXIMUM_CHARGE      = std::numeric_limits<ChargeAmount>::max();
 template <typename... Args>
 using ChargeEstimator = std::function<ChargeAmount(Args const &...)>;
 
