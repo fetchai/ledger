@@ -144,6 +144,8 @@ BeaconService::BeaconService(MuddleInterface &muddle, const CertificatePtr &cert
     FETCH_LOG_DEBUG(LOGGING_NAME, "Current state: ", ToString(current),
                     " (previous: ", ToString(previous), ")");
   });
+
+  FETCH_LOG_INFO(LOGGING_NAME, "Constructed with identity: ", identity_.identifier().ToBase64());
 }
 
 /**
