@@ -138,10 +138,16 @@ void BasicMiner::GenerateBlock(Block &block, std::size_t num_lanes, std::size_t 
     mining_pool_.Splice(pending_);
   }
 
-  std::remove_if(mining_pool_.begin(), mining_pool_.end(), [&block](auto const &tx_layout) {
-    return fetch::chain::GetValidity(tx_layout, block.block_number) !=
-           chain::Transaction::Validity::VALID;
-  });
+  // generate an invalid transaction set and remove them from the mining pool
+  DigestSet invalid{};
+  for (auto const &layout : mining_pool_)
+  {
+    if (chain::Transaction::Validity::VALID != chain::GetValidity(layout, block.block_number))
+    {
+      invalid.emplace(layout.digest());
+    }
+  }
+  mining_pool_.Remove(invalid);
 
   // detect the transactions which have already been incorporated into previous blocks
   auto const duplicates =
