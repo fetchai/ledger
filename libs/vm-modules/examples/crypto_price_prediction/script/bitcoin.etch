@@ -44,7 +44,9 @@ function build_graph(graph : Graph)
 
 endfunction
 
-function add_leading_zero_dim(tensor : Tensor)
+// This function changes the size from [x, y] to [1, x, y]
+// which is required for the input to the conv layer
+function add_leading_dim(tensor : Tensor)
     var shape = tensor.shape();
     var newshape = Array<UInt64>(3);
     newshape[0] = 1u64;
@@ -65,10 +67,10 @@ var orig_train_labels = readCSV(System.Argv(2));
 var orig_test_data = readCSV(System.Argv(3));
 var orig_test_labels = readCSV(System.Argv(4));
 
-add_leading_zero_dim(orig_train_data);
-add_leading_zero_dim(orig_train_labels);
-add_leading_zero_dim(orig_test_data);
-add_leading_zero_dim(orig_test_labels);
+add_leading_dim(orig_train_data);
+add_leading_dim(orig_train_labels);
+add_leading_dim(orig_test_data);
+add_leading_dim(orig_test_labels);
 
 // NORMALISE ALL DATA TO THE MAX RANGE OF THE TRAINING DATA
 var scaler = Scaler();
