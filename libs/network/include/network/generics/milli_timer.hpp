@@ -76,3 +76,7 @@ private:
 
 }  // namespace generics
 }  // namespace fetch
+
+#define FETCH_MILLI_TIMER(name) \
+  fetch::generics::MilliTimer const FETCH_JOIN(mutex_locked_on_line, __LINE__)(name)
+
