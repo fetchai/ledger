@@ -22,6 +22,7 @@
 #include "core/byte_array/consumers.hpp"
 #include "core/byte_array/tokenizer/tokenizer.hpp"
 #include "core/commandline/vt100.hpp"
+#include "core/serializers/group_definitions.hpp"
 
 #include <vector>
 
@@ -45,44 +46,20 @@ public:
   };
 
   ErrorMessage(ConstByteArray filename, ConstByteArray source, ConstByteArray message, Token token,
-               Type type = SYNTAX_ERROR)
-    : filename_(std::move(filename))
-    , source_(std::move(source))
-    , message_(std::move(message))
-    , token_(std::move(token))
-    , type_(type)
-  {}
+               Type type = SYNTAX_ERROR);
 
-  ConstByteArray filename() const
-  {
-    return filename_;
-  }
-  ConstByteArray source() const
-  {
-    return source_;
-  }
-  ConstByteArray message() const
-  {
-    return message_;
-  }
-  Token token() const
-  {
-    return token_;
-  }
-  Type type() const
-  {
-    return type_;
-  }
-  int line() const
-  {
-    return token_.line();
-  }
-  uint64_t character() const
-  {
-    return token_.character();
-  }
+  ConstByteArray filename() const;
+  ConstByteArray source() const;
+  ConstByteArray message() const;
+  Token          token() const;
+  Type           type() const;
+  int            line() const;
+  uint64_t       character() const;
 
 private:
+  template <typename T, typename D>
+  friend struct serializers::MapSerializer;
+
   ConstByteArray filename_;
   ConstByteArray source_;
   ConstByteArray message_;
@@ -91,4 +68,36 @@ private:
 };
 
 }  // namespace semanticsearch
+
+namespace serializers {
+
+template <typename D>
+struct MapSerializer<semanticsearch::ErrorMessage, D>
+{
+public:
+  using Type       = semanticsearch::ErrorMessage;
+  using DriverType = D;
+
+  static constexpr uint8_t TOKEN = 1;
+  static constexpr uint8_t TYPE  = 2;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &input)
+  {
+    auto map = map_constructor(3);
+    map.Append(TOKEN, input.token_);
+    map.Append(TYPE, static_cast<int32_t>(input.type_));
+  }
+
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &output)
+  {
+    int32_t type;
+    map.ExpectKeyGetValue(TOKEN, output.token_);
+    map.ExpectKeyGetValue(TYPE, type);
+    output.type_ = static_cast<semanticsearch::ErrorMessage::Type>(type);
+  }
+};
+
+}  // namespace serializers
 }  // namespace fetch

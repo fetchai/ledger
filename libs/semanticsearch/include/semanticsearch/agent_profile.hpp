@@ -38,9 +38,9 @@ struct AgentProfile
     return Agent(new AgentProfile(id));
   }
 
-  void RegisterVocabularyLocation(std::string model, SemanticPosition position)
+  void RegisterModelInstanceLocation(std::string model, SemanticPosition position)
   {
-    VocabularyLocation loc;
+    ModelInstanceLocation loc;
 
     loc.model    = std::move(model);
     loc.position = std::move(position);
@@ -48,9 +48,9 @@ struct AgentProfile
     locations.insert(std::move(loc));
   }
 
-  Identity                     identity;
-  AgentId                      id;
-  std::set<VocabularyLocation> locations;
+  Identity                        identity;
+  AgentId                         id;
+  std::set<ModelInstanceLocation> locations;
 
 private:
   explicit AgentProfile(AgentId i)

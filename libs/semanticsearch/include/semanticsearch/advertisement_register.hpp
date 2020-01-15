@@ -17,38 +17,38 @@
 //
 //------------------------------------------------------------------------------
 
-#include "semanticsearch/schema/model_register.hpp"
+#include "semanticsearch/schema/abstract_vocabulary_register.hpp"
 #include "semanticsearch/vocabular_advertisement.hpp"
 
 namespace fetch {
 namespace semanticsearch {
 
-class AdvertisementRegister : public ModelRegister
+class AdvertisementRegister : public AbstractModelRegister
 {
 public:
-  using Vocabulary          = std::shared_ptr<VocabularyInstance>;
-  using SharedModel         = std::shared_ptr<VocabularyAdvertisement>;
-  using SharedModelRegister = ModelRegister::SharedModelRegister;
-  using Index               = VocabularyAdvertisement::Index;
-  using AgentId             = VocabularyAdvertisement::AgentId;
-  using AgentIdSet          = VocabularyAdvertisement::AgentIdSet;
+  using ModelInstancePtr              = std::shared_ptr<ModelInstance>;
+  using ModelInstanceAdvertisementPtr = std::shared_ptr<ModelInstanceAdvertisement>;
+  using AbstractModelRegisterPtr      = AbstractModelRegister::AbstractModelRegisterPtr;
+  using Index                         = ModelInstanceAdvertisement::Index;
+  using AgentId                       = ModelInstanceAdvertisement::AgentId;
+  using AgentIdSetPtr                 = ModelInstanceAdvertisement::AgentIdSetPtr;
 
   AdvertisementRegister() = default;
 
-  bool        CreateModel(std::string const &name, VocabularySchema const &object);
-  SharedModel GetAdvertisementModel(std::string const &name);
-  void       AdvertiseAgent(AgentId aid, std::string const &name, SemanticPosition const &position);
-  AgentIdSet FindAgents(std::string const &name, SemanticPosition const &position,
-                        SemanticCoordinateType depth);
-  AgentIdSet FindAgents(std::string const &name, Vocabulary const &object,
-                        SemanticCoordinateType depth);
+  bool CreateModel(SchemaIdentifier const &name, ObjectSchemaFieldPtr const &object);
+  ModelInstanceAdvertisementPtr GetAdvertisementModel(SchemaIdentifier const &name);
+  void AdvertiseAgent(AgentId aid, SchemaIdentifier const &name, SemanticPosition const &position);
+  AgentIdSetPtr FindAgents(SchemaIdentifier const &name, SemanticPosition const &position,
+                           DepthParameterType depth);
+  AgentIdSetPtr FindAgents(SchemaIdentifier const &name, ModelInstancePtr const &object,
+                           DepthParameterType depth);
 
-  void OnAddModel(std::string const &name, VocabularySchema const &object) override;
+  void OnAddModel(SchemaIdentifier const &name, ObjectSchemaFieldPtr const &object) override;
 
 private:
-  bool CreateModelInternal(std::string const &name, VocabularySchema const &object);
+  bool CreateModelInternal(SchemaIdentifier const &name, ObjectSchemaFieldPtr const &object);
 
-  std::map<std::string, SharedModel> model_advertisement_;
+  std::map<SchemaIdentifier, ModelInstanceAdvertisementPtr> model_advertisement_;
 };
 
 }  // namespace semanticsearch

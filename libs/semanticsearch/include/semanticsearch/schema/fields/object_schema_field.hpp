@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "semanticsearch/index/base_types.hpp"
-#include "semanticsearch/schema/subspace_map_interface.hpp"
+#include "semanticsearch/schema/fields/abstract_schema_field.hpp"
 #include "semanticsearch/schema/vocabulary_instance.hpp"
 
 #include <functional>
@@ -27,27 +27,27 @@
 
 namespace fetch {
 namespace semanticsearch {
-class PropertiesToSubspace : public VocabularyToSubspaceMapInterface
+class ObjectSchemaField : public AbstractSchemaField
 {
 public:
-  using Vocabulary = std::shared_ptr<VocabularyInstance>;
-  using Type       = std::map<std::string, Vocabulary>;
+  using ModelInstancePtr = std::shared_ptr<ModelInstance>;
+  using Type             = std::map<std::string, ModelInstancePtr>;
 
-  using ModelInterface = std::shared_ptr<VocabularyToSubspaceMapInterface>;
-  using FieldModel     = std::shared_ptr<PropertiesToSubspace>;
+  using ModelInterface = std::shared_ptr<AbstractSchemaField>;
+  using FieldModel     = std::shared_ptr<ObjectSchemaField>;
   using ModelMap       = std::map<std::string, ModelInterface>;
-
-  PropertiesToSubspace(PropertiesToSubspace const &) = delete;
-  PropertiesToSubspace &operator=(PropertiesToSubspace const &) = delete;
+  using FieldVisitor   = std::function<void(std::string, std::string, ModelInstancePtr)>;
+  ObjectSchemaField(ObjectSchemaField const &) = delete;
+  ObjectSchemaField &operator=(ObjectSchemaField const &) = delete;
 
   static FieldModel New(ModelMap m = {})
   {
-    FieldModel ret = FieldModel(new PropertiesToSubspace(std::move(m)));
+    FieldModel ret = FieldModel(new ObjectSchemaField(std::move(m)));
 
     return ret;
   }
 
-  SemanticPosition Reduce(Vocabulary const &v) override
+  SemanticPosition Reduce(ModelInstancePtr const &v) override
   {
     SemanticPosition ret{};
     if (std::type_index(typeid(Type)) != v->type())
@@ -69,7 +69,7 @@ public:
       auto entries = it1->second->Reduce(it2->second);
       for (auto &e : entries)
       {
-        ret.push_back(e);
+        ret.PushBack(e);
       }
       ++it1, ++it2;
     }
@@ -77,11 +77,11 @@ public:
     return ret;
   }
 
-  bool Validate(Vocabulary const &v) override
+  bool Validate(ModelInstancePtr const &v, std::string &error) override
   {
-
     if (std::type_index(typeid(Type)) != v->type())
     {
+      error = "Type mismatch.";
       return false;
     }
 
@@ -89,6 +89,7 @@ public:
 
     if (array_.size() != data.size())
     {
+      error = "Size mismatch.";  // TODO: Could be more informative
       return false;
     }
 
@@ -99,10 +100,11 @@ public:
     {
       if (it1->first != it2->first)
       {
+        error = "Type mismatch of key: " + it1->first + " vs  " + it2->first;
         return false;
       }
 
-      if (!it1->second->Validate(it2->second))
+      if (!it1->second->Validate(it2->second, error))
       {
         return false;
       }
@@ -117,9 +119,7 @@ public:
     return rank_;
   }
 
-  bool VisitSubmodelsWithVocabulary(
-      std::function<void(std::string, std::string, Vocabulary)> callback, Vocabulary obj,
-      std::string name = "") override
+  bool VisitFields(FieldVisitor callback, ModelInstancePtr obj, std::string name = "") override
   {
 
     if (type() != obj->type())
@@ -146,7 +146,7 @@ public:
         return false;
       }
 
-      if (!it1->second->VisitSubmodelsWithVocabulary(callback, it2->second, it1->first))
+      if (!it1->second->VisitFields(callback, it2->second, it1->first))
       {
         return false;
       }
@@ -174,7 +174,7 @@ public:
       return false;
     }
 
-    PropertiesToSubspace const &other = *reinterpret_cast<PropertiesToSubspace const *>(optr.get());
+    ObjectSchemaField const &other = *reinterpret_cast<ObjectSchemaField const *>(optr.get());
 
     if (array_.size() != other.array_.size())
     {
@@ -201,7 +201,7 @@ public:
   }
 
 private:
-  explicit PropertiesToSubspace(ModelMap m)
+  explicit ObjectSchemaField(ModelMap m)
     : array_(std::move(m))
   {
     rank_ = 0;

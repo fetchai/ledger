@@ -55,6 +55,17 @@ AgentDirectory::Agent AgentDirectory::GetAgent(ConstByteArray const &pk)
   return agents_[id];
 }
 
+AgentDirectory::Agent AgentDirectory::GetAgent(AgentId const &id)
+{
+  auto it = agents_.find(id);
+  if (it == agents_.end())
+  {
+    return nullptr;
+  }
+
+  return it->second;
+}
+
 bool AgentDirectory::UnregisterAgent(ConstByteArray const &pk)
 {
   // We treat non-register agent as successful unregisters
@@ -85,8 +96,8 @@ bool AgentDirectory::UnregisterAgent(ConstByteArray const &pk)
   return true;
 }
 
-bool AgentDirectory::RegisterVocabularyLocation(AgentId id, std::string model,
-                                                SemanticPosition position)
+bool AgentDirectory::RegisterModelInstanceLocation(AgentId id, std::string model,
+                                                   SemanticPosition position)
 {
   // We can only register a vocabulary location for existing agents
   if (agents_.find(id) == agents_.end())
@@ -95,7 +106,7 @@ bool AgentDirectory::RegisterVocabularyLocation(AgentId id, std::string model,
   }
 
   // The model and position is added to the agents register.
-  agents_[id]->RegisterVocabularyLocation(std::move(model), std::move(position));
+  agents_[id]->RegisterModelInstanceLocation(std::move(model), std::move(position));
 
   return true;
 }

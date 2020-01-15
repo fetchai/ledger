@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2020 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -18,15 +18,49 @@
 //------------------------------------------------------------------------------
 
 #include "semanticsearch/index/base_types.hpp"
+#include "semanticsearch/schema/scope_identifier.hpp"
+
+#include <ostream>
+#include <sstream>
 
 namespace fetch {
 namespace semanticsearch {
 
-struct SemanticSubscription
+struct SchemaIdentifier
 {
-  SemanticPosition position{};  ///< Position in semantic space
-  DBIndexType      index{};     ///< Database index containing the record for the subscription
+  ScopeIdentifier scope{};
+  std::string     model_name{""};
+
+  explicit operator std::string() const;
+
+  bool operator<(SchemaIdentifier const &other) const
+  {
+    if (scope == other.scope)
+    {
+      return model_name < other.model_name;
+    }
+
+    return scope < other.scope;
+  }
+
+  bool operator==(SchemaIdentifier const &other) const
+  {
+    return (scope == other.scope) && (model_name == other.model_name);
+  }
 };
+
+inline std::ostream &operator<<(std::ostream &s, SchemaIdentifier const &n)
+{
+  s << n.scope.address << "@" << n.scope.version << ":" << n.model_name;
+  return s;
+}
+
+inline SchemaIdentifier::operator std::string() const
+{
+  std::stringstream ss{""};
+  ss << *this;
+  return ss.str();
+}
 
 }  // namespace semanticsearch
 }  // namespace fetch

@@ -25,12 +25,12 @@
 namespace fetch {
 namespace semanticsearch {
 
-struct VocabularyLocation
+struct ModelInstanceLocation
 {
   std::string      model;
   SemanticPosition position;
 
-  bool operator<(VocabularyLocation const &other) const
+  bool operator<(ModelInstanceLocation const &other) const
   {
     if (model == other.model)
     {

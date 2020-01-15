@@ -1,31 +1,58 @@
-model IntPair {
-  key1: IntegerRange(8, 20,4),
-  key2: Int
+specification ai.fetch.weatherstation version 2.1;
+
+model Position { 
+  latitude: Number(-90, 90),
+  longitude: Number(0, 180)  
 };
 
-model Advanced {
-  arr: IntPair,
-  i: Int
+model WeatherStation
+{
+  position: Position,
+  temperature: Number(-180, 300)
 };
 
-// Let's make an instance
-var y : IntPair = {
-    key1: 9,
-    key2: 4
+
+using ai.fetch.weatherstation version 2.1;
+
+instance x : WeatherStation = {
+  position: {
+    latitude: -90,
+    longitude: 0
+  },
+  temperature: -180
 };
 
-var x : Advanced = {
-  arr: y,
-  i: 7
+advertise x until_block 2020;
+advertise x until_block 2020;
+advertise x until_block 2020;
+
+instance y : Position = {
+    latitude: 0,
+    longitude: 1
 };
 
-var z : IntPair = {
-    key1: 1,
-    key2: 8  
+instance g : Position = {
+    latitude: 0,
+    longitude: 20
 };
 
-// advertise x for 0xF12;
-store x;
-store x;
-// reduce y = x;
+vector q : WeatherStation = {
+  position : g,
+  temperature: 2
+};
 
+vector z : WeatherStation = {
+  position : g,
+  temperature: 2.001
+};
+
+vector p : Position = {
+  latitude: 0,
+  longitude: 1
+};
+
+find_agents g;
+find_agents (0.5 * 5.0)*(q - z) granularity 20 max_depth 2 limit 10;
+find_agents (0.5 * 5.0)*(q - z) max_depth 2 limit 10;
+find_agents (0.5 * 5.0)*(q - z) granularity 12 max_depth 5 limit 0;
+find_agents (0.5 * 5.0)*(q - z) granularity 12 max_depth 5 limit 1;

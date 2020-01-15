@@ -23,17 +23,21 @@
 namespace fetch {
 namespace semanticsearch {
 
-bool SemanticReducer::Validate(void *data)
+SemanticReducer::SemanticReducer(std::string const &uid)
+  : unique_identifier_{uid}
+{}
+
+bool SemanticReducer::Validate(void const *data, std::string &error) const
 {
   if (constraints_validation_)
   {
-    return constraints_validation_(data);
+    return constraints_validation_(data, error);
   }
 
   return true;
 }
 
-SemanticPosition SemanticReducer::Reduce(void *data)
+SemanticPosition SemanticReducer::Reduce(void const *data) const
 {
   if (reducer_)
   {
@@ -41,6 +45,31 @@ SemanticPosition SemanticReducer::Reduce(void *data)
   }
 
   return {};
+}
+
+bool SemanticReducer::operator==(SemanticReducer const &other) const
+{
+  return unique_identifier_ == other.unique_identifier_;
+}
+
+bool SemanticReducer::operator<=(SemanticReducer const &other) const
+{
+  return unique_identifier_ <= other.unique_identifier_;
+}
+
+bool SemanticReducer::operator<(SemanticReducer const &other) const
+{
+  return unique_identifier_ < other.unique_identifier_;
+}
+
+bool SemanticReducer::operator>=(SemanticReducer const &other) const
+{
+  return unique_identifier_ >= other.unique_identifier_;
+}
+
+bool SemanticReducer::operator>(SemanticReducer const &other) const
+{
+  return unique_identifier_ > other.unique_identifier_;
 }
 
 int SemanticReducer::rank() const

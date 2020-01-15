@@ -52,6 +52,11 @@ QueryVariant BuiltinQueryFunction::operator()(std::vector<void const *> &args)
   return nullptr;
 }
 
+std::vector<std::type_index> BuiltinQueryFunction::arguments() const
+{
+  return arguments_;
+}
+
 std::type_index BuiltinQueryFunction::return_type() const
 {
   return return_type_;

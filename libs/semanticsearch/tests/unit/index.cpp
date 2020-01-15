@@ -23,14 +23,14 @@ using namespace fetch::semanticsearch;
 TEST(SemanticSearchIndex, BasicOperations1D)
 {
   InMemoryDBIndex        database_index{1};
-  SemanticCoordinateType width = static_cast<SemanticCoordinateType>(-1) / 16;
+  SemanticCoordinateType width = SubscriptionGroup::CalculateWidthFromDepth(4);
 
-  for (SemanticCoordinateType i = 0; i < 16; ++i)
+  for (DBIndexType i = 0; i < 16; ++i)
   {
-    SemanticSubscription rel;
-    rel.position.push_back(width * i + (width >> 1));
-    rel.index = i;
-    database_index.AddRelation(rel);
+    SemanticPosition position;
+    position.PushBack(width * i + width / 2);
+
+    database_index.AddRelation(i, position);
   }
 
   auto group0 = database_index.Find(0, {width * 8});
@@ -71,18 +71,17 @@ TEST(SemanticSearchIndex, BasicOperations1D)
 TEST(SemanticSearchIndex, BasicOperations2D)
 {
   InMemoryDBIndex        database_index{2};
-  SemanticCoordinateType width = static_cast<SemanticCoordinateType>(-1) / 4;
+  SemanticCoordinateType width = SubscriptionGroup::CalculateWidthFromDepth(2);
 
   // Adding points in a grid
-  for (SemanticCoordinateType i = 0; i < 4; ++i)
+  for (DBIndexType i = 0; i < 4; ++i)
   {
-    for (SemanticCoordinateType j = 0; j < 4; ++j)
+    for (DBIndexType j = 0; j < 4; ++j)
     {
-      SemanticSubscription rel;
-      rel.position.push_back(width * i + (width >> 1));
-      rel.position.push_back(width * j + (width >> 1));
-      rel.index = i * 4 + j;
-      database_index.AddRelation(rel);
+      SemanticPosition position;
+      position.PushBack(width * i + width / 2);
+      position.PushBack(width * j + width / 2);
+      database_index.AddRelation(i * 4 + j, position);
     }
   }
 
@@ -107,17 +106,17 @@ TEST(SemanticSearchIndex, BasicOperations2D)
   EXPECT_EQ(group1->size(), 4);
   EXPECT_EQ(*group1, std::set<DBIndexType>({0, 1, 4, 5}));
 
-  auto group2 = database_index.Find(1, {width, 3 * width});
+  auto group2 = database_index.Find(1, {width, width * 3});
   EXPECT_NE(group2, nullptr);
   EXPECT_EQ(group2->size(), 4);
   EXPECT_EQ(*group2, std::set<DBIndexType>({2, 3, 6, 7}));
 
-  auto group3 = database_index.Find(1, {3 * width, width});
+  auto group3 = database_index.Find(1, {width * 3, width});
   EXPECT_NE(group3, nullptr);
   EXPECT_EQ(group3->size(), 4);
   EXPECT_EQ(*group3, std::set<DBIndexType>({8, 9, 12, 13}));
 
-  auto group4 = database_index.Find(1, {3 * width, 3 * width});
+  auto group4 = database_index.Find(1, {width * 3, width * 3});
   EXPECT_NE(group4, nullptr);
   EXPECT_EQ(group4->size(), 4);
   EXPECT_EQ(*group4, std::set<DBIndexType>({10, 11, 14, 15}));

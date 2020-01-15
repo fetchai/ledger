@@ -25,18 +25,19 @@
 namespace fetch {
 namespace semanticsearch {
 
-ModelInterfaceBuilder::ModelInterfaceBuilder(VocabularySchema model, SemanticSearchModule *factory)
+SchemaBuilderInterface::SchemaBuilderInterface(ObjectSchemaFieldPtr  model,
+                                               SemanticSearchModule *factory)
   : model_{std::move(model)}
   , factory_(factory)
 {}
 
-ModelInterfaceBuilder::operator bool() const
+SchemaBuilderInterface::operator bool() const
 {
   return model_ != nullptr;
 }
 
-ModelInterfaceBuilder &ModelInterfaceBuilder::Field(std::string const &name,
-                                                    std::string const &type)
+SchemaBuilderInterface &SchemaBuilderInterface::Field(std::string const &     name,
+                                                      SchemaIdentifier const &type)
 {
   assert(factory_);
   auto field_model = factory_->GetField(type);
@@ -44,28 +45,20 @@ ModelInterfaceBuilder &ModelInterfaceBuilder::Field(std::string const &name,
   return *this;
 }
 
-ModelInterfaceBuilder &ModelInterfaceBuilder::Field(std::string const &   name,
-                                                    ModelInterfaceBuilder proxy)
+SchemaBuilderInterface &SchemaBuilderInterface::Field(std::string const &    name,
+                                                      SchemaBuilderInterface proxy)
 {
   assert(proxy.model_ != nullptr);
   model_->Insert(name, proxy.model_);
   return *this;
 }
 
-ModelInterfaceBuilder &ModelInterfaceBuilder::Field(std::string const &name,
-                                                    ModelField const & model)
+SchemaBuilderInterface &SchemaBuilderInterface::Field(std::string const &name,
+                                                      SchemaField const &model)
 {
   assert(model != nullptr);
   model_->Insert(name, model);
   return *this;
-}
-
-ModelInterfaceBuilder ModelInterfaceBuilder::Vocabulary(std::string const &name)
-{
-  auto new_model = PropertiesToSubspace::New();
-  model_->Insert(name, new_model);
-
-  return ModelInterfaceBuilder(new_model, factory_);
 }
 
 }  // namespace semanticsearch

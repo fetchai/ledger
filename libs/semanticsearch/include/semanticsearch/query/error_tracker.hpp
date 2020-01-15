@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/serializers/group_definitions.hpp"
 #include "semanticsearch/query/error_message.hpp"
 
 #include <core/byte_array/byte_array.hpp>
@@ -37,7 +38,7 @@ public:
 
   ErrorTracker() = default;
 
-  explicit operator bool()
+  explicit operator bool() const
   {
     return !errors_.empty();
   }
@@ -45,12 +46,17 @@ public:
   void Print();
   void RaiseSyntaxError(ConstByteArray message, Token token);
   void RaiseRuntimeError(ConstByteArray message, Token token);
+  void Append(ConstByteArray message, Token token);
+
   void RaiseInternalError(ConstByteArray message, Token token);
   void SetSource(ConstByteArray source, ConstByteArray filename);
   void ClearErrors();
   bool HasErrors() const;
 
 private:
+  template <typename T, typename D>
+  friend struct serializers::MapSerializer;
+
   void PrintLine(int line, uint64_t character, uint64_t char_end = uint64_t(-1)) const;
   void PrintErrorMessage(ErrorMessage const &error);
 
@@ -60,4 +66,34 @@ private:
 };
 
 }  // namespace semanticsearch
+
+namespace serializers {
+
+template <typename D>
+struct MapSerializer<semanticsearch::ErrorTracker, D>
+{
+public:
+  using Type       = semanticsearch::ErrorTracker;
+  using DriverType = D;
+
+  static constexpr uint8_t FILENAME = 1;
+  static constexpr uint8_t ERRORS   = 2;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &input)
+  {
+    auto map = map_constructor(2);
+    map.Append(FILENAME, input.filename_);
+    map.Append(ERRORS, input.errors_);
+  }
+
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &output)
+  {
+    map.ExpectKeyGetValue(FILENAME, output.filename_);
+    map.ExpectKeyGetValue(ERRORS, output.errors_);
+  }
+};
+
+}  // namespace serializers
 }  // namespace fetch

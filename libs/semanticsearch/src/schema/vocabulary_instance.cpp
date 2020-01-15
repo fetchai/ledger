@@ -16,15 +16,28 @@
 //
 //------------------------------------------------------------------------------
 
-#include "semanticsearch/schema/model_register.hpp"
+#include "semanticsearch/schema/abstract_vocabulary_register.hpp"
 
 #include <cassert>
 
 namespace fetch {
 namespace semanticsearch {
 
-void VocabularyInstance::Walk(std::function<void(std::string, Vocabulary)> const &callback,
-                              std::string const &                                 name)
+ModelInstance::ModelInstance(std::type_index type, void *data)
+  : type_(type)
+  , data_(data)
+{}
+
+ModelInstance::~ModelInstance()
+{
+  // Invoking detructor
+  if ((destructor_ != nullptr) && (data_ != nullptr))
+  {
+    destructor_(data_);
+  }
+}
+
+void ModelInstance::Walk(ModelInstance::PropertyVisitor const &callback, std::string const &name)
 {
   if (std::type_index(typeid(PropertyMap)) != type_)
   {
@@ -39,12 +52,12 @@ void VocabularyInstance::Walk(std::function<void(std::string, Vocabulary)> const
   }
 }
 
-VocabularyInstance::Vocabulary &VocabularyInstance::operator[](std::string const &name)
+ModelInstance::ModelInstancePtr &ModelInstance::operator[](std::string const &name)
 {
   if (std::type_index(typeid(PropertyMap)) != type_)
   {
     throw std::runtime_error(
-        "VocabularyInstance index operator error: Vocabulary does not have keys");
+        "ModelInstance index operator error: ModelInstancePtr does not have keys");
   }
 
   PropertyMap &map = *reinterpret_cast<PropertyMap *>(data_);
@@ -52,17 +65,21 @@ VocabularyInstance::Vocabulary &VocabularyInstance::operator[](std::string const
   return map[name];
 }
 
-void VocabularyInstance::Insert(std::string const &name, Vocabulary const &value)
+void ModelInstance::Insert(std::string const &name, ModelInstance::ModelInstancePtr const &value)
 {
   if (std::type_index(typeid(PropertyMap)) != type_)
   {
     throw std::runtime_error(
-        "VocabularyInstance index operator error: Vocabulary does not have keys");
+        "ModelInstance index operator error: ModelInstancePtr does not have keys");
   }
 
   PropertyMap &map = *reinterpret_cast<PropertyMap *>(data_);
   map[name]        = value;
 }
 
+std::type_index ModelInstance::type() const
+{
+  return type_;
+}
 }  // namespace semanticsearch
 }  // namespace fetch

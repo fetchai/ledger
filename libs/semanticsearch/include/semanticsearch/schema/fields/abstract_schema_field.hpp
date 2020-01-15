@@ -27,33 +27,47 @@
 namespace fetch {
 namespace semanticsearch {
 
-class VocabularyToSubspaceMapInterface
+class AbstractSchemaField
 {
 public:
-  using Vocabulary     = std::shared_ptr<VocabularyInstance>;
-  using ModelInterface = std::shared_ptr<VocabularyToSubspaceMapInterface>;
+  using ModelInstancePtr = std::shared_ptr<ModelInstance>;
+  using ModelInterface   = std::shared_ptr<AbstractSchemaField>;
+  using FieldVisitor     = std::function<void(std::string, std::string, ModelInstancePtr)>;
 
-  virtual ~VocabularyToSubspaceMapInterface() = default;
+  virtual ~AbstractSchemaField() = default;
 
-  virtual SemanticPosition Reduce(Vocabulary const &v)   = 0;
-  virtual bool             Validate(Vocabulary const &v) = 0;
-  virtual int              rank() const                  = 0;
-
-  virtual bool VisitSubmodelsWithVocabulary(
-      std::function<void(std::string, std::string, Vocabulary)> callback, Vocabulary,
-      std::string                                               name = "")                                   = 0;
-  virtual bool            IsSame(ModelInterface const &) const = 0;
-  virtual std::type_index type() const                         = 0;
-
+  /// Setup
+  /// @{
   void SetModelName(std::string name)
   {
     model_name_ = std::move(name);
+  }
+  /// @}
+
+  /// Used for reduction and validation
+  /// @{
+  virtual SemanticPosition Reduce(ModelInstancePtr const &v)                       = 0;
+  virtual bool             Validate(ModelInstancePtr const &v, std::string &error) = 0;
+  /// @}
+
+  virtual bool VisitFields(FieldVisitor callback, ModelInstancePtr instance,
+                           std::string name = "")   = 0;
+  virtual bool IsSame(ModelInterface const &) const = 0;
+
+  /// Properties
+  /// @{
+  virtual int             rank() const = 0;
+  virtual std::type_index type() const = 0;
+  virtual std::string     cdr_uid() const
+  {
+    return "";
   }
 
   std::string model_name() const
   {
     return model_name_;
   }
+  /// @}
 
 private:
   std::string model_name_;

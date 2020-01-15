@@ -20,6 +20,7 @@
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/byte_array/tokenizer/tokenizer.hpp"
+#include "semanticsearch/schema/vocabulary_instance.hpp"
 
 #include <memory>
 #include <stdexcept>
@@ -31,10 +32,12 @@ namespace semanticsearch {
 class AbstractQueryVariant
 {
 public:
-  using Token = fetch::byte_array::Token;
+  using Token            = fetch::byte_array::Token;
+  using ModelInstancePtr = ModelInstance::ModelInstancePtr;
 
-  virtual ~AbstractQueryVariant()  = default;
-  virtual void const *data() const = 0;
+  virtual ~AbstractQueryVariant()        = default;
+  virtual void const *     data() const  = 0;
+  virtual ModelInstancePtr NewInstance() = 0;
 
   void            SetType(int type);
   int             type() const;
@@ -43,33 +46,13 @@ public:
   std::type_index type_index() const;
 
   template <typename T>
-  explicit operator T() const
-  {
-    if (std::type_index(typeid(T)) != type_index_)
-    {
-      throw std::runtime_error("Type mismatch in QueryVariant.");
-    }
-    return *reinterpret_cast<T *>(data());
-  }
+  explicit operator T() const;
 
   template <typename T>
-  bool IsType() const
-  {
-    return std::type_index(typeid(T)) == type_index_;
-  }
+  bool IsType() const;
 
   template <typename T>
-  T const &As() const
-  {
-    if (std::type_index(typeid(T)) != type_index_)
-    {
-      auto t = std::type_index(typeid(T));
-      throw std::runtime_error("Type mismatch in QueryVariant: stored " +
-                               std::string(type_index_.name()) + " vs. requested " +
-                               std::string(t.name()));
-    }
-    return *reinterpret_cast<T const *>(data());
-  }
+  T const &As() const;
 
   template <typename T>
   friend class SpecialisedQueryVariant;
@@ -87,6 +70,37 @@ private:
 };
 
 template <typename T>
+AbstractQueryVariant::operator T() const
+{
+  if (std::type_index(typeid(T)) != type_index_)
+  {
+
+    throw std::runtime_error("Type mismatch in QueryVariant.");
+  }
+  return *reinterpret_cast<T *>(data());
+}
+
+template <typename T>
+bool AbstractQueryVariant::IsType() const
+{
+  return std::type_index(typeid(T)) == type_index_;
+}
+
+template <typename T>
+T const &AbstractQueryVariant::As() const
+{
+  if (std::type_index(typeid(T)) != type_index_)
+  {
+    auto t = std::type_index(typeid(T));
+    abort();
+    throw std::runtime_error("Type mismatch in QueryVariant: stored " +
+                             std::string(type_index_.name()) + " vs. requested " +
+                             std::string(t.name()));
+  }
+  return *reinterpret_cast<T const *>(data());
+}
+
+template <typename T>
 class SpecialisedQueryVariant final : public AbstractQueryVariant
 {
 public:
@@ -102,6 +116,11 @@ public:
   void const *data() const override
   {
     return reinterpret_cast<void const *>(&value_);
+  }
+
+  ModelInstancePtr NewInstance() override
+  {
+    return ModelInstance::New<T>(value_);
   }
 
 private:

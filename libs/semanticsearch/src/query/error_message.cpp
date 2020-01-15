@@ -1,7 +1,6 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2020 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -21,26 +20,60 @@
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/byte_array/consumers.hpp"
 #include "core/byte_array/tokenizer/tokenizer.hpp"
-#include "semanticsearch/semantic_constants.hpp"
+#include "core/commandline/vt100.hpp"
+#include "semanticsearch/query/error_message.hpp"
 
 #include <vector>
 
 namespace fetch {
 namespace semanticsearch {
 
-struct QueryInstruction
+using ConstByteArray = fetch::byte_array::ConstByteArray;
+using Token          = fetch::byte_array::Token;
+
+ErrorMessage::ErrorMessage(ConstByteArray filename, ConstByteArray source, ConstByteArray message,
+                           Token token, Type type)
+  : filename_(std::move(filename))
+  , source_(std::move(source))
+  , message_(std::move(message))
+  , token_(std::move(token))
+  , type_(type)
+{}
+
+ConstByteArray ErrorMessage::filename() const
 {
-  using ConstByteArray = fetch::byte_array::ConstByteArray;
-  using ByteArray      = fetch::byte_array::ByteArray;
-  using Token          = fetch::byte_array::Token;
+  return filename_;
+}
 
-  int32_t  type{Constants::UNKNOWN};
-  uint64_t properties{Properties::NONE};
-  int      consumes{2};
-  Token    token;
-};
+ConstByteArray ErrorMessage::source() const
+{
+  return source_;
+}
 
-using CompiledStatement = std::vector<QueryInstruction>;
+ConstByteArray ErrorMessage::message() const
+{
+  return message_;
+}
+
+Token ErrorMessage::token() const
+{
+  return token_;
+}
+
+ErrorMessage::Type ErrorMessage::type() const
+{
+  return type_;
+}
+
+int ErrorMessage::line() const
+{
+  return token_.line();
+}
+
+uint64_t ErrorMessage::character() const
+{
+  return token_.character();
+}
 
 }  // namespace semanticsearch
 }  // namespace fetch

@@ -195,7 +195,7 @@ int StringConsumer(byte_array::ConstByteArray const &str, uint64_t &pos)
 }
 
 template <int STRING>
-int StringConsumer(byte_array::ConstByteArray const &str, uint64_t &pos, char quoteChar)
+int StringConsumerWithQuote(byte_array::ConstByteArray const &str, uint64_t &pos, char quoteChar)
 {
   if (str[pos] != quoteChar)
   {
@@ -256,6 +256,35 @@ int Token(byte_array::ConstByteArray const &str, uint64_t &pos)
   }
   c = str[pos];
   while (std::isalnum(c))
+  {
+    ++pos;
+    if (pos >= str.size())
+    {
+      break;
+    }
+    c = str[pos];
+  }
+  return TOKEN;
+}
+
+template <int TOKEN>
+int TokensWithDot(byte_array::ConstByteArray const &str, uint64_t &pos)
+{
+  uint8_t c = str[pos];
+
+  if (!(std::isalpha(c)))
+  {
+    return -1;
+  }
+  ++pos;
+
+  if (pos >= str.size())
+  {
+    return TOKEN;
+  }
+
+  c = str[pos];
+  while (std::isalnum(c) || (c == '.'))
   {
     ++pos;
     if (pos >= str.size())

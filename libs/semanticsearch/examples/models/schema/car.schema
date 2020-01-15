@@ -1,15 +1,15 @@
-model GeoVocabularyLocation {
+model GeoModelInstanceLocation {
   lat: BoundedFloat(0., 90.),
   lng: BoundedFloat(0., 180.)
 };
 
 model CarAgent {
-  location: GeoVocabularyLocation, 
+  location: GeoModelInstanceLocation, 
   type: BoundedInteger(0, 10)
 };
 
 model CarAgent {
-  location: GeoVocabularyLocation, 
+  location: GeoModelInstanceLocation, 
   type: Int
 };
 

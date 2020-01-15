@@ -36,59 +36,6 @@ MessengerAPI::MessengerAPI(muddle::MuddlePtr &messenger_muddle, MailboxInterface
 
   // Adding routing function for direct delivery
   mailbox_.SetDeliveryFunction([this](Message const &message) { AttemptDirectDelivery(message); });
-
-  // TODO(private issue AEA-126): Move somewhere else
-  using Int        = int;
-  using Float      = double;
-  using String     = std::string;
-  using ModelField = QueryExecutor::ModelField;
-
-  semantic_search_module_->RegisterType<Int>("Int");
-  semantic_search_module_->RegisterType<Float>("Float");
-  semantic_search_module_->RegisterType<String>("String");
-  semantic_search_module_->RegisterType<ModelField>("ModelField", true);
-  semantic_search_module_->RegisterFunction<ModelField, Int, Int>(
-      "BoundedInteger", [](Int from, Int to) -> ModelField {
-        auto            span = static_cast<uint64_t>(to - from);
-        SemanticReducer cdr;
-        cdr.SetReducer<Int>(1, [span, from](Int x) {
-          SemanticPosition ret;
-          uint64_t         multiplier = uint64_t(-1) / span;
-          ret.push_back(static_cast<uint64_t>(x + from) * multiplier);
-
-          return ret;
-        });
-
-        cdr.SetValidator<Int>([from, to](Int x) { return (from <= x) && (x <= to); });
-
-        auto instance = DataToSubspaceMap<Int>::New();
-        instance->SetSemanticReducer(cdr);
-
-        return instance;
-      });
-
-  semantic_search_module_->RegisterFunction<ModelField, Float, Float>(
-      "BoundedFloat", [](Float from, Float to) -> ModelField {
-        auto            span = static_cast<Float>(to - from);
-        SemanticReducer cdr;
-        cdr.SetReducer<Float>(1, [span, from](Float x) {
-          SemanticPosition ret;
-
-          Float multiplier = static_cast<Float>(uint64_t(-1)) / span;
-          ret.push_back(static_cast<uint64_t>((x + from) * multiplier));
-
-          return ret;
-        });
-
-        cdr.SetValidator<Float>([from, to](Float x) { return (from <= x) && (x <= to); });
-
-        auto instance = DataToSubspaceMap<Float>::New();
-        instance->SetSemanticReducer(cdr);
-
-        return instance;
-      });
-
-  /// TODO(private issue AEA-126): End
 }
 
 void MessengerAPI::RegisterMessenger(service::CallContext const &call_context, bool setup_mailbox)
@@ -108,6 +55,7 @@ void MessengerAPI::RegisterMessenger(service::CallContext const &call_context, b
 void MessengerAPI::UnregisterMessenger(service::CallContext const &call_context)
 {
   mailbox_.UnregisterMailbox(call_context.sender_address);
+  semantic_search_module_->UnregisterAgent(call_context.sender_address);
 }
 
 void MessengerAPI::SendMessage(service::CallContext const & /*call_context*/, Message msg)
@@ -132,16 +80,69 @@ MessengerAPI::ConstByteArray MessengerAPI::GetAddress() const
   return messenger_endpoint_.GetAddress();
 }
 
-MessengerAPI::ResultList MessengerAPI::FindAgents(service::CallContext const & /*call_context*/,
-                                                  ConstByteArray const & /*query_type*/,
-                                                  ConstByteArray const & /*query*/)
+QueryResult MessengerAPI::Query(service::CallContext const &call_context,
+                                ConstByteArray const &query_type, ConstByteArray const &query)
 {
+  QueryResult ret;
+  auto        agent = semantic_search_module_->GetAgent(call_context.sender_address);
 
-  return {"Hello world"};
+  if (agent == nullptr)
+  {
+    ret.message = "Agent not registered";
+
+    // Agent not registered
+    return ret;
+  }
+
+  // Right now we only support semantic search
+  if ((query_type != "semanticsearch") && (query_type != "semanticmodel"))
+  {
+    ret.message = "Unsupported search type";
+
+    return ret;
+  }
+
+  semanticsearch::QueryCompiler compiler(ret.error_tracker, semantic_search_module_);
+  auto                          compiled_query = compiler(query, "query.s");
+  if (ret.error_tracker)
+  {
+    ret.message = "Errors during compilation";
+
+    return ret;
+  }
+
+  // TODO: Enforce execution mode.
+  semanticsearch::QueryExecutor exe(semantic_search_module_, ret.error_tracker);
+
+  // Executing query on behalf of agent
+  auto results = exe.Execute(compiled_query, agent);
+
+  if (ret.error_tracker)
+  {
+    ret.message = "Errors during execution";
+
+    return ret;
+  }
+
+  for (auto &subscription_id : *results)
+  {
+    auto a = semantic_search_module_->GetAgent(subscription_id);
+
+    if (a != nullptr)
+    {
+      ret.agents.push_back(a->identity.identifier());
+    }
+  }
+
+  return ret;
 }
 
-void MessengerAPI::Advertise(service::CallContext const & /*call_context*/)
-{}
+MessengerAPI::JSONDocument MessengerAPI::ListModels() const
+{
+  JSONDocument doc;
+
+  return doc;
+}
 
 }  // namespace messenger
 }  // namespace fetch

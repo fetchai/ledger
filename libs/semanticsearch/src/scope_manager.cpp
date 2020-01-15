@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2020 Fetch.AI Limited
@@ -17,32 +16,37 @@
 //
 //------------------------------------------------------------------------------
 
-#include "semanticsearch/schema/properties_map.hpp"
-
-#include <memory>
-#include <unordered_map>
+#include "semanticsearch/scope_manager.hpp"
 
 namespace fetch {
 namespace semanticsearch {
 
-class ModelRegister
+ScopeManagerPtr ScopeManager::New(ScopeManagerPtr const &parent)
 {
-public:
-  using VocabularySchema    = std::shared_ptr<PropertiesToSubspace>;
-  using SharedModelRegister = std::shared_ptr<ModelRegister>;
+  return ScopeManagerPtr(new ScopeManager(parent));
+}
 
-  ModelRegister()          = default;
-  virtual ~ModelRegister() = default;
+ScopeManager::ScopeManager(ScopeManagerPtr const &parent)
+  : parent_{parent}
+{}
 
-  void             AddModel(std::string const &name, VocabularySchema const &object);
-  VocabularySchema GetModel(std::string const &name);
-  bool             HasModel(std::string const &name);
+bool ScopeManager::HasUniqueID(std::string const /*uid*/) const
+{
+  return false;
+}
 
-  virtual void OnAddModel(std::string const &name, VocabularySchema const &object) = 0;
+UniqueIdentifierPtr ScopeManager::GetUniqueID(std::string const /*uid*/) const
+{
+  return {};
+}
 
-private:
-  std::unordered_map<std::string, VocabularySchema> models_;
-};
+void ScopeManager::RegisterUniqueID(UniqueIdentifierPtr /*ptr*/)
+{}
+
+ScopeManagerPtr ScopeManager::NewScope()
+{
+  return {};
+}
 
 }  // namespace semanticsearch
 }  // namespace fetch

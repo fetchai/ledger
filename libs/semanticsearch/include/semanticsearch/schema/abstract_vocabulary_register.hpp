@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2020 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -17,39 +17,40 @@
 //
 //------------------------------------------------------------------------------
 
-#include "semanticsearch/schema/fields/abstract_schema_field.hpp"
 #include "semanticsearch/schema/fields/object_schema_field.hpp"
 #include "semanticsearch/schema/model_identifier.hpp"
 
+#include <map>
 #include <memory>
 
 namespace fetch {
 namespace semanticsearch {
 
-class SemanticSearchModule;
-
-class SchemaBuilderInterface
+class AbstractModelRegister
 {
 public:
-  using SchemaField          = std::shared_ptr<AbstractSchemaField>;
-  using ObjectSchemaFieldPtr = std::shared_ptr<ObjectSchemaField>;
+  using ObjectSchemaFieldPtr     = std::shared_ptr<ObjectSchemaField>;
+  using AbstractModelRegisterPtr = std::shared_ptr<AbstractModelRegister>;
 
-  explicit SchemaBuilderInterface(ObjectSchemaFieldPtr  model   = nullptr,
-                                  SemanticSearchModule *factory = nullptr);
+  /// Constructors and destructors
+  /// @{
+  AbstractModelRegister()          = default;
+  virtual ~AbstractModelRegister() = default;
+  /// @}
 
-  explicit                operator bool() const;
-  SchemaBuilderInterface &Field(std::string const &name, SchemaIdentifier const &type);
-  SchemaBuilderInterface &Field(std::string const &name, SchemaBuilderInterface proxy);
-  SchemaBuilderInterface &Field(std::string const &name, SchemaField const &model);
+  /// Register methods
+  /// @{
+  void                 AddModel(SchemaIdentifier const &name, ObjectSchemaFieldPtr const &object);
+  ObjectSchemaFieldPtr GetModel(SchemaIdentifier const &name);
+  bool                 HasModel(SchemaIdentifier const &name);
+  /// @}
 
-  ObjectSchemaFieldPtr const &schema() const
-  {
-    return model_;
-  }
-
+  /// Virtual event handlers
+  /// @{
+  virtual void OnAddModel(SchemaIdentifier const &name, ObjectSchemaFieldPtr const &object) = 0;
+  /// @}
 private:
-  ObjectSchemaFieldPtr  model_;
-  SemanticSearchModule *factory_;
+  std::map<SchemaIdentifier, ObjectSchemaFieldPtr> models_;
 };
 
 }  // namespace semanticsearch

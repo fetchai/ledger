@@ -19,8 +19,10 @@
 
 #include "semanticsearch/query/error_tracker.hpp"
 #include "semanticsearch/query/execution_context.hpp"
+#include "semanticsearch/schema/scope_identifier.hpp"
 #include "semanticsearch/schema/vocabulary_instance.hpp"
 #include "semanticsearch/semantic_search_module.hpp"
+#include "semanticsearch/vocabular_advertisement.hpp"
 
 namespace fetch {
 namespace semanticsearch {
@@ -28,40 +30,50 @@ namespace semanticsearch {
 class QueryExecutor
 {
 public:
-  using VocabularySchema    = SemanticSearchModule::VocabularySchema;
-  using ModelField          = SemanticSearchModule::ModelField;
-  using Token               = fetch::byte_array::Token;
-  using Vocabulary          = std::shared_ptr<VocabularyInstance>;
-  using SharedModelRegister = ModelRegister::SharedModelRegister;
+  using ObjectSchemaFieldPtr     = SemanticSearchModule::ObjectSchemaFieldPtr;
+  using SchemaField              = SemanticSearchModule::SchemaField;
+  using Token                    = fetch::byte_array::Token;
+  using ModelInstancePtr         = std::shared_ptr<ModelInstance>;
+  using AbstractModelRegisterPtr = AbstractModelRegister::AbstractModelRegisterPtr;
+  using AgentIdSet               = ModelInstanceAdvertisement::AgentIdSet;
+  using AgentIdSetPtr            = ModelInstanceAdvertisement::AgentIdSetPtr;
+  using LocalNumbers             = std::unordered_map<uint64_t, SemanticCoordinateType>;
 
-  using Int    = int;  // TODO(private issue AEA-126): Get rid of these
-  using Float  = double;
-  using String = std::string;
-
-  QueryExecutor(SharedSemanticSearchModule instance, ErrorTracker &error_tracker);
-  void       Execute(Query const &query, Agent agent);
-  Vocabulary GetInstance(std::string const &name);
+  QueryExecutor(SemanticSearchModulePtr instance, ErrorTracker &error_tracker);
+  AgentIdSetPtr    Execute(Query const &query, Agent agent);
+  ModelInstancePtr GetInstance(std::string const &name);
 
 private:
-  using PropertyMap = std::map<std::string, std::shared_ptr<VocabularyInstance>>;
-
+  using PropertyMap = std::map<std::string, std::shared_ptr<ModelInstance>>;
   enum
   {
-    TYPE_NONE  = 0,
-    TYPE_MODEL = 10,
-    TYPE_INSTANCE,
-    TYPE_KEY,
-    TYPE_STRING,
-    TYPE_INTEGER,
-    TYPE_FLOAT,
-
-    TYPE_FUNCTION_NAME
+    LOCAL_GRANULARITY,
+    LOCAL_BLOCK_EXPIRY,
+    LOCAL_VERSION,
+    LOCAL_MAX_DEPTH,
+    LOCAL_LIMIT
   };
 
-  // TODO(private issue AEA-128): combine these three into a single execute statement.
-  void ExecuteStore(CompiledStatement const &stmt);
-  void ExecuteSet(CompiledStatement const &stmt);
-  void ExecuteDefine(CompiledStatement const &stmt);
+  enum Mode
+  {
+    SPECIFICATION,
+    INSTANTIATION
+  };
+
+  SemanticCoordinateType GetLocal(
+      uint64_t name, SemanticCoordinateType const &default_value = SemanticCoordinateType{0}) const
+  {
+    auto it = locals_numbers_.find(name);
+    if (it == locals_numbers_.end())
+    {
+      return default_value;
+    }
+
+    return it->second;
+  }
+
+  AgentIdSetPtr NewExecute(CompiledStatement const &stmt);
+  AgentIdSetPtr ExecuteDefine(CompiledStatement const &stmt);
 
   template <typename T>
   bool TypeMismatch(QueryVariant const &var, Token token)
@@ -70,18 +82,31 @@ private:
     {
       auto type_a = semantic_search_module_->GetName<T>();
       auto type_b = semantic_search_module_->GetName(var->type_index());
-      error_tracker_.RaiseInternalError("Expected " + type_a + ", but found other type " + type_b,
+      error_tracker_.RaiseInternalError("Expected " + static_cast<std::string>(type_a) +
+                                            ", but found other type " +
+                                            static_cast<std::string>(type_b),
                                         std::move(token));
       return true;
     }
     return false;
   }
 
-  ErrorTracker &             error_tracker_;
-  std::vector<QueryVariant>  stack_;
-  ExecutionContext           context_;
-  SharedSemanticSearchModule semantic_search_module_;
-  Agent                      agent_{nullptr};
+  ErrorTracker &            error_tracker_;
+  std::vector<QueryVariant> definition_stack_;
+  ExecutionContext          context_;
+  SemanticSearchModulePtr   semantic_search_module_;
+
+  LocalNumbers    locals_numbers_;
+  Mode            mode_{INSTANTIATION};
+  ScopeIdentifier scope_;
+
+  uint64_t current_block_time_{0};  //< TODO: create a periodic maintainance to update this
+  SemanticCoordinateType default_advertisement_length_{100};
+  SemanticCoordinateType default_limit_{10};
+  SemanticCoordinateType default_max_depth_{20};
+  SemanticCoordinateType default_granularity_{20};
+
+  Agent agent_{nullptr};
 };
 
 }  // namespace semanticsearch

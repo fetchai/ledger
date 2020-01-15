@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2020 Fetch.AI Limited
+//   Copyright 2018-2019 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -17,27 +17,43 @@
 //
 //------------------------------------------------------------------------------
 
-#include "semanticsearch/index/base_types.hpp"
+#include <functional>
+#include <typeindex>
+#include <vector>
 
 namespace fetch {
 namespace semanticsearch {
 
-class DatabaseIndexInterface
+namespace details {
+/* This code converts C++ arguments into a
+ * vector of types
+ */
+template <typename R, typename A, typename... Args>
+struct ArgumentsToTypeVector
 {
-public:
-  virtual ~DatabaseIndexInterface() = default;
-
-  /// Methods to manage the database
-  /// @{
-  virtual void          AddRelation(DBIndexType const &index, SemanticPosition const &position) = 0;
-  virtual DBIndexSetPtr Find(DepthParameterType depth, SemanticPosition position) const         = 0;
-  /// @}
-
-  /// Properties
-  /// @{
-  virtual std::size_t rank() const = 0;
-  /// @}
+  static void Apply(std::vector<std::type_index> &args)
+  {
+    args.push_back(std::type_index(typeid(A)));
+    ArgumentsToTypeVector<R, Args...>::Apply(args);
+  }
 };
+
+template <typename R, typename A>
+struct ArgumentsToTypeVector<R, A>
+{
+  static void Apply(std::vector<std::type_index> &args)
+  {
+    args.push_back(std::type_index(typeid(A)));
+  }
+};
+
+template <typename R>
+struct ArgumentsToTypeVector<R, void>
+{
+  static void Apply(std::vector<std::type_index> & /*args*/)
+  {}
+};
+}  // namespace details
 
 }  // namespace semanticsearch
 }  // namespace fetch

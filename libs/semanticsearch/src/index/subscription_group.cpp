@@ -23,13 +23,14 @@
 namespace fetch {
 namespace semanticsearch {
 
-SubscriptionGroup::SubscriptionGroup(SemanticCoordinateType d, SemanticPosition position)
+SubscriptionGroup::SubscriptionGroup(DepthParameterType d, SemanticPosition position)
   : depth(d)
 {
   auto cs = CalculateWidthFromDepth(depth);
+
   for (auto const &p : position)
   {
-    indices.push_back(p / cs);
+    indices.PushBack(p / cs);
   }
 }
 
@@ -46,7 +47,7 @@ bool SubscriptionGroup::operator<(SubscriptionGroup const &other) const
   }
 
   std::size_t i = 0;
-  while ((i != indices.size()) && (indices[i] == other.indices[i]))
+  while ((i != indices.size()) && (indices[i].Integer() == other.indices[i].Integer()))
   {
     ++i;
   }

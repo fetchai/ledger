@@ -1,3 +1,4 @@
+#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2020 Fetch.AI Limited
@@ -16,46 +17,31 @@
 //
 //------------------------------------------------------------------------------
 
-#include "semanticsearch/schema/abstract_vocabulary_register.hpp"
-
-#include <cassert>
+#include "semanticsearch/index/base_types.hpp"
 
 namespace fetch {
 namespace semanticsearch {
 
-void AbstractModelRegister::AddModel(SchemaIdentifier const &    name,
-                                     ObjectSchemaFieldPtr const &object)
+struct ScopeIdentifier
 {
-  if (models_.find(name) != models_.end())
+  std::string            address{""};
+  SemanticCoordinateType version{-1};
+
+  bool operator<(ScopeIdentifier const &other) const
   {
-    if (object->IsSame(models_[name]))
+    if (address == other.address)
     {
-      return;
+      return version < other.version;
     }
 
-    throw std::runtime_error("Model '" + static_cast<std::string>(name) +
-                             "' already exists, but definition mismatch.");
+    return address < other.address;
   }
 
-  object->SetModelName(name.model_name);
-  models_[name] = object;
-  OnAddModel(name, object);
-}
-
-AbstractModelRegister::ObjectSchemaFieldPtr AbstractModelRegister::GetModel(
-    SchemaIdentifier const &name)
-{
-  if (models_.find(name) == models_.end())
+  bool operator==(ScopeIdentifier const &other) const
   {
-    return nullptr;
+    return (address == other.address) && (version == other.version);
   }
-  return models_[name];
-}
-
-bool AbstractModelRegister::HasModel(SchemaIdentifier const &name)
-{
-  return models_.find(name) != models_.end();
-}
+};
 
 }  // namespace semanticsearch
 }  // namespace fetch

@@ -17,7 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "semanticsearch/module/args_resolver.hpp"
+#include "semanticsearch/module/arguments_to_type_vector.hpp"
+#include "semanticsearch/module/vector_to_arguments.hpp"
 #include "semanticsearch/query/abstract_query_variant.hpp"
 
 #include <functional>
@@ -58,8 +59,10 @@ public:
   }
 
   bool ValidateSignature(std::type_index const &ret, std::vector<std::type_index> const &args);
-  QueryVariant    operator()(std::vector<void const *> &args);
-  std::type_index return_type() const;
+  QueryVariant operator()(std::vector<void const *> &args);
+
+  std::vector<std::type_index> arguments() const;
+  std::type_index              return_type() const;
 
 private:
   explicit BuiltinQueryFunction(std::type_index return_type)

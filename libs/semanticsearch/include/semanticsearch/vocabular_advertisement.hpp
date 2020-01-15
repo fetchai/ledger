@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "semanticsearch/index/in_memory_db_index.hpp"
-#include "semanticsearch/schema/properties_map.hpp"
+#include "semanticsearch/schema/fields/object_schema_field.hpp"
 #include "semanticsearch/schema/vocabulary_instance.hpp"
 
 #include <string>
@@ -26,42 +26,39 @@
 namespace fetch {
 namespace semanticsearch {
 
-class VocabularyAdvertisement
+class ModelInstanceAdvertisement
 {
 public:
-  using Vocabulary       = std::shared_ptr<VocabularyInstance>;
-  using Index            = uint64_t;
-  using VocabularySchema = std::shared_ptr<PropertiesToSubspace>;
-  using AgentId          = uint64_t;
-  using AgentIdSet       = std::shared_ptr<std::set<AgentId>>;
+  using ModelInstancePtr     = std::shared_ptr<ModelInstance>;
+  using Index                = uint64_t;
+  using ObjectSchemaFieldPtr = std::shared_ptr<ObjectSchemaField>;
+  using AgentId              = uint64_t;
+  using AgentIdSet           = std::set<AgentId>;
+  using AgentIdSetPtr        = std::shared_ptr<AgentIdSet>;
 
-  explicit VocabularyAdvertisement(VocabularySchema vocabulary_schema)
-    : vocabulary_schema_(std::move(vocabulary_schema))
-    , index_{static_cast<std::size_t>(vocabulary_schema->rank())}
+  explicit ModelInstanceAdvertisement(ObjectSchemaFieldPtr const &schema)
+    : schema_(schema)
+    , index_{static_cast<std::size_t>(schema->rank())}
   {}
 
   void SubscribeAgent(AgentId aid, SemanticPosition position)
   {
-    SemanticSubscription rel;
-    rel.position = std::move(position);
-    rel.index    = aid;  // TODO(private issue AEA-129): Change to agent id
-
-    index_.AddRelation(rel);
+    index_.AddRelation(aid, std::move(position));
   }
 
-  AgentIdSet FindAgents(SemanticPosition position, SemanticCoordinateType depth)
+  AgentIdSetPtr FindAgents(SemanticPosition position, DepthParameterType depth)
   {
     return index_.Find(depth, std::move(position));
   }
 
-  VocabularySchema const &vocabulary_schema() const
+  ObjectSchemaFieldPtr const &schema() const
   {
-    return vocabulary_schema_;
+    return schema_;
   }
 
 private:
-  VocabularySchema vocabulary_schema_;
-  InMemoryDBIndex  index_;
+  ObjectSchemaFieldPtr schema_;
+  InMemoryDBIndex      index_;
 };
 
 }  // namespace semanticsearch
