@@ -160,12 +160,23 @@ void BeaconService::SaveState()
     return;
   }
 
+  MilliTimer const timer{"SaveState ", 10};
+
   try
   {
     serializers::LargeObjectSerializeHelper serializer{};
-    serializer << *this;
+    serializer << BeaconServiceSerializeWrapper{*this, static_cast<uint16_t>(state_machine_->state())};
 
-    old_state_.Set(storage::ResourceAddress("HEAD"), serializer.data());
+    {
+      serializers::LargeObjectSerializeHelper serializer_test{};
+      serializer << signatures_being_built_;
+
+      FETCH_LOG_INFO(LOGGING_NAME, "Sigs being build: ", signatures_being_built_.size(), " serialized size: ", signatures_being_built_.size());
+    }
+
+    FETCH_LOG_INFO(LOGGING_NAME, "Total ser size: ", serializer.size());
+
+    saved_state_.Set(storage::ResourceAddress("HEAD"), serializer.data());
   }
   catch (std::exception const &ex)
   {
@@ -173,31 +184,46 @@ void BeaconService::SaveState()
   }
 }
 
-void BeaconService::ReloadState()
+void BeaconService::ReloadState(State &next_state)
 {
-  old_state_.Load("beacon_state.db", "beacon_state.index.db");
+  old_state_.Load("beacon_state.db", "beacon_state.index.db"); // Legacy/depreciated
+  saved_state_.Load("beacon_state_v2.db", "beacon_state_v2.index.db");
 
   if (!load_and_reload_on_crash_)
   {
     return;
   }
 
+  bool loaded_state = false;
+
   try
   {
     ConstByteArray ret;
 
-    if (old_state_.Get(storage::ResourceAddress("HEAD"), ret))
+    if (saved_state_.Get(storage::ResourceAddress("HEAD"), ret))
     {
       FETCH_LOG_INFO(LOGGING_NAME, "Re-loading beacon service state...");
 
       serializers::LargeObjectSerializeHelper serializer{ret};
-      serializer >> *this;
+
+      BeaconServiceSerializeWrapper wrapper{*this, 0};
+
+      serializer >> wrapper;
+      next_state = static_cast<State>(wrapper.current_state);
+
+      FETCH_LOG_INFO(LOGGING_NAME, "After re-load state is: ", wrapper.current_state);
 
       // Note, since certificates are not serialized, we must set the beacon managers in the aeon
       // to have the correct one
       if (active_exe_unit_)
       {
         active_exe_unit_->manager.SetCertificate(certificate_);
+
+        // For performance, make connections to all of qual
+        for (auto const &address_in_qual : active_exe_unit_->manager.qual())
+        {
+          muddle_.ConnectTo(address_in_qual);
+        }
       }
 
       for (auto const &i : aeon_exe_queue_)
@@ -207,11 +233,38 @@ void BeaconService::ReloadState()
           i->manager.SetCertificate(certificate_);
         }
       }
+
+      loaded_state = true;
     }
   }
   catch (std::exception const &ex)
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Failed to load beacon service from storage: ", ex.what());
+  }
+
+  if(!loaded_state)
+  {
+    FETCH_LOG_INFO(LOGGING_NAME, "Failed to load state. Attempting to load legacy file.");
+
+    SharedAeonExecutionUnit ret = std::make_shared<AeonExecutionUnit>();
+
+    FETCH_LOG_INFO(LOGGING_NAME, "Reloading... Size: ", old_state_.size());
+
+    if (old_state_.Get(storage::ResourceAddress("HEAD"), *ret))
+    {
+      FETCH_LOG_INFO(LOGGING_NAME,
+                     "Found aeon keys during beacon construction, recovering. Valid from: ",
+                     ret->aeon.round_start, " to ", ret->aeon.round_end);
+
+      for (auto const &address_in_qual : ret->manager.qual())
+      {
+        muddle_.ConnectTo(address_in_qual);
+      }
+
+      ret->manager.SetCertificate(certificate_);
+
+      aeon_exe_queue_.push_back(ret);
+    }
   }
 }
 
@@ -222,14 +275,14 @@ void BeaconService::ReloadState()
 BeaconService::State BeaconService::OnReloadOnStartup()
 {
   // Default starting state, will be overwritten on successful load
-  state_after_reload_ = State::WAIT_FOR_SETUP_COMPLETION;
+  State state_after_reload = State::WAIT_FOR_SETUP_COMPLETION;
 
-  ReloadState();
+  ReloadState(state_after_reload);
 
   FETCH_LOG_INFO(LOGGING_NAME, "After reloading state, we have ", completed_block_entropy_.size(),
                  " completed block entropy");
 
-  return state_after_reload_;
+  return state_after_reload;
 }
 
 BeaconService::Status BeaconService::GenerateEntropy(uint64_t block_number, BlockEntropy &entropy)
@@ -306,7 +359,7 @@ BeaconService::State BeaconService::OnPrepareEntropyGeneration()
 
   // Save state to disk in case of crash - it should return to this
   // state in the state machine with all relevant items setup
-  if ((index % save_periodicity_) == 0 ||
+  if ((index % SAVE_PERIODICITY) == 0 ||
       state_machine_->previous_state() == State::WAIT_FOR_SETUP_COMPLETION)
   {
     FETCH_LOG_INFO(LOGGING_NAME, "Periodically saving the entropy information. Index: ", index);
