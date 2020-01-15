@@ -1430,8 +1430,6 @@ BlockStatus MainChain::InsertBlock(IntBlockPtr const &block, bool evaluate_loose
   uint64_t const time_now =
       GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM));
 
-  FETCH_MILLI_TIMER_EX("MainChain::InsertBlock", 10);
-
   FETCH_LOCK(lock_);
 
   if (dirty_block_functionality_ && dirty_map_.find(block->hash) != dirty_map_.end())
@@ -1472,8 +1470,6 @@ BlockStatus MainChain::InsertBlock(IntBlockPtr const &block, bool evaluate_loose
 
     return BlockStatus::INVALID;
   }
-
-  FETCH_MILLI_TIMER_EX("MainChain::InsertBlock:Stage2", 10);
 
   // Assume for the moment that this block is not loose. The validity of this statement will be
   // checked below
@@ -1545,8 +1541,6 @@ BlockStatus MainChain::InsertBlock(IntBlockPtr const &block, bool evaluate_loose
   // update the final (total) weight for this block
   block->total_weight = prev_block->total_weight + block->weight;
 
-  FETCH_MILLI_TIMER_EX("MainChain::InsertBlock:Stage3", 10);
-
   // At this point we can proceed knowing that the block is building upon existing tip
 
   // At this point we have a new block with a prev that's known and not loose. Update tips
@@ -1569,7 +1563,6 @@ BlockStatus MainChain::InsertBlock(IntBlockPtr const &block, bool evaluate_loose
     CompleteLooseBlocks(block);
   }
 
-  FETCH_MILLI_TIMER_EX("MainChain::InsertBlock:Stage4", 10);
   AddBlockToBloomFilter(*block);
 
   return BlockStatus::ADDED;
