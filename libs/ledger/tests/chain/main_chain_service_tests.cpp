@@ -125,7 +125,7 @@ private:
   template <template <class...> class Container, class... ContainerArgs,
             class... NamesAndContainers>
   static Patterns KeepPatterns(
-      Patterns patterns, std::string name,
+      Patterns patterns, std::string const &name,
       Container<fetch::ledger::BlockPtr, ContainerArgs...> const &container,
       NamesAndContainers &&... names_and_containers);
 
