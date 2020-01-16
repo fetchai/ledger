@@ -36,18 +36,18 @@ public:
 
   ScaledDotProductAttention() = default;
   explicit ScaledDotProductAttention(SizeType dk,
-                                     DataType dropout = fetch::math::Type<DataType>("0.9"));
+                                     DataType dropout = fetch::math::Type<DataType>("0.1"));
 
   std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override;
 
   void SetOpSaveableParams(SPType const &sp);
 
-  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
+  inline std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
   {
     return {inputs.at(2)->shape(0), inputs.front()->shape(1), inputs.front()->shape(2)};
   }
 
-  static constexpr OpType OpCode()
+  inline static constexpr OpType OpCode()
   {
     return OpType::LAYER_SCALED_DOT_PRODUCT_ATTENTION;
   }

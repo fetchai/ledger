@@ -50,7 +50,6 @@ inline VectorRegister<T, 8 * sizeof(T)> Max(VectorRegister<T, 8 * sizeof(T)> con
 template <typename T, std::size_t N>
 inline T Max(VectorRegister<T, N> const &a)
 {
-
   constexpr std::size_t                            size = N / (8 * sizeof(T));
   alignas(VectorRegister<T, N>::E_REGISTER_SIZE) T A[size];
   a.Store(A);

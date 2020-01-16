@@ -93,9 +93,6 @@ public:
       vm::Ptr<vm::String> const &loss, vm::Ptr<vm::String> const &optimiser,
       vm::Ptr<vm::Array<vm::Ptr<fetch::vm::String>>> const &metrics);
 
-  ChargeAmount CompileSimple(fetch::vm::Ptr<fetch::vm::String> const &        optimiser,
-                             fetch::vm::Ptr<vm::Array<math::SizeType>> const &in_layers);
-
   ChargeAmount Fit(vm::Ptr<vm_modules::math::VMTensor> const &data,
                    vm::Ptr<vm_modules::math::VMTensor> const &labels,
                    ::fetch::math::SizeType const &            batch_size);
