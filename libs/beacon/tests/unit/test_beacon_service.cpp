@@ -260,6 +260,11 @@ public:
     return signatures_being_built_;
   }
 
+  BlockEntropyPtr &block_entropy_being_created()
+  {
+    return block_entropy_being_created_;
+  }
+
   void Reload()
   {
     State dummy;
@@ -274,6 +279,8 @@ public:
 
 TEST(beacon_service, correctly_recovers_state)
 {
+  fetch::crypto::mcl::details::MCLInitialiser();
+
   // Create dummy values to construct the service with - since we
   // do not attach the reactor it will do nothing beyond construction
   EventManager::SharedEventManager dummy_event_manager;
@@ -295,9 +302,12 @@ TEST(beacon_service, correctly_recovers_state)
 
     // Set some specific state for the variable we expect to be saved. For ease
     // we just use its default constructors and check the size is correct afterwards
-    initial.signatures_being_built()[0];
-    initial.signatures_being_built()[1];
-    initial.signatures_being_built()[2];
+    initial.signatures_being_built()[0].round = 0;
+    initial.signatures_being_built()[1].round = 1;
+    initial.signatures_being_built()[2].round = 2;
+
+    initial.block_entropy_being_created()               = std::make_shared<BlockEntropy>();
+    initial.block_entropy_being_created()->block_number = 99;
 
     initial.Save();
   }
@@ -308,4 +318,5 @@ TEST(beacon_service, correctly_recovers_state)
   recovered.Reload();
 
   ASSERT_EQ(recovered.signatures_being_built().size(), 3);
+  ASSERT_EQ(recovered.block_entropy_being_created()->block_number, 99);
 }

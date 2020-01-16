@@ -184,7 +184,7 @@ protected:
   SignaturesBeingBuilt signatures_being_built_;
 
   // Important this is ordered for trimming - populated for external use
-  // when creating blocks
+  // when creating blocks (not saved to disk)
   CompletedBlockEntropy completed_block_entropy_;
 
   ActiveExeUnit   active_exe_unit_;
