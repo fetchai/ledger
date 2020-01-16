@@ -21,11 +21,6 @@
 #include "ml/ops/convolution_2d.hpp"
 #include "ml/ops/placeholder.hpp"
 
-#include <functional>
-#include <memory>
-#include <string>
-#include <vector>
-
 namespace fetch {
 namespace ml {
 namespace layers {

@@ -20,7 +20,7 @@
 #include "ml/ops/activations/sigmoid.hpp"
 #include "ml/ops/flatten.hpp"
 #include "ml/ops/matrix_multiply.hpp"
-#include "ml/ops/transpose.hpp"
+#include "ml/ops/placeholder.hpp"
 
 namespace fetch {
 namespace ml {

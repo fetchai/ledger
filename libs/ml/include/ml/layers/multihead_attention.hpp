@@ -17,13 +17,16 @@
 //
 //------------------------------------------------------------------------------
 
-
 #include "ml/core/subgraph.hpp"
 #include "ml/ops/activation.hpp"
 #include "ml/ops/weights.hpp"
 
 namespace fetch {
 namespace ml {
+
+template <class T>
+class SubGraph;
+
 namespace layers {
 
 template <class T>

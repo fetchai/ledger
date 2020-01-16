@@ -19,10 +19,6 @@
 
 #include "ml/core/subgraph.hpp"
 
-#include "ml/ops/layer_norm.hpp"
-
-#include "ml/ops/placeholder.hpp"
-
 namespace fetch {
 namespace ml {
 namespace layers {

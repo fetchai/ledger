@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "ml/core/graph.hpp"
+#include "ml/ops/constant.hpp"
 #include "ml/ops/metrics/categorical_accuracy.hpp"
 
 #include "ml/layers/PRelu.hpp"
@@ -25,6 +26,7 @@
 #include "ml/layers/convolution_2d.hpp"
 #include "ml/layers/fully_connected.hpp"
 #include "ml/layers/multihead_attention.hpp"
+#include "ml/layers/normalisation/layer_norm.hpp"
 #include "ml/layers/scaled_dot_product_attention.hpp"
 #include "ml/layers/self_attention_encoder.hpp"
 #include "ml/layers/skip_gram.hpp"
@@ -52,6 +54,7 @@
 #include "ml/ops/embeddings.hpp"
 #include "ml/ops/exp.hpp"
 #include "ml/ops/flatten.hpp"
+#include "ml/ops/layer_norm.hpp"
 #include "ml/ops/log.hpp"
 #include "ml/ops/loss_functions/cross_entropy_loss.hpp"
 #include "ml/ops/loss_functions/mean_square_error_loss.hpp"
@@ -65,6 +68,7 @@
 #include "ml/ops/multiply.hpp"
 #include "ml/ops/one_hot.hpp"
 #include "ml/ops/placeholder.hpp"
+#include "ml/ops/prelu_op.hpp"
 #include "ml/ops/reduce_mean.hpp"
 #include "ml/ops/reshape.hpp"
 #include "ml/ops/slice.hpp"

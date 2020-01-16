@@ -19,6 +19,7 @@
 
 #include "ml/core/node.hpp"
 #include "ml/meta/ml_type_traits.hpp"
+#include "ml/ops/constant.hpp"
 #include "ml/ops/weights.hpp"
 #include "ml/state_dict.hpp"
 

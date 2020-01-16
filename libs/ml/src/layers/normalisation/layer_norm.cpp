@@ -19,7 +19,9 @@
 #include "ml/layers/normalisation/layer_norm.hpp"
 #include "ml/meta/ml_type_traits.hpp"
 #include "ml/ops/add.hpp"
+#include "ml/ops/layer_norm.hpp"
 #include "ml/ops/multiply.hpp"
+#include "ml/ops/placeholder.hpp"
 #include "ml/ops/weights.hpp"
 
 namespace fetch {

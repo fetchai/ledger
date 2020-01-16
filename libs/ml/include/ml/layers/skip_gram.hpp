@@ -19,13 +19,15 @@
 
 #include "ml/core/subgraph.hpp"
 #include "ml/ops/embeddings.hpp"
-#include "ml/ops/placeholder.hpp"
 
 namespace fetch {
 namespace ml {
 
 template <typename T>
 class Ops;
+
+template <class T>
+class SubGraph;
 
 namespace layers {
 

@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/layers/fully_connected.hpp"
-#include "ml/ops/prelu_op.hpp"
+#include "ml/core/subgraph.hpp"
+#include "ml/ops/weights.hpp"
 
 namespace fetch {
 namespace ml {

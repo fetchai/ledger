@@ -17,16 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/layers/fully_connected.hpp"
-#include "ml/layers/multihead_attention.hpp"
-#include "ml/layers/normalisation/layer_norm.hpp"
-#include "ml/ops/placeholder.hpp"
-
-//#include <cmath>
-//#include <cstdint>
-//#include <memory>
-//#include <random>
-//#include <string>
+#include "ml/core/subgraph.hpp"
+#include "ml/ops/activation.hpp"
+#include "ml/ops/weights.hpp"
 
 namespace fetch {
 namespace ml {

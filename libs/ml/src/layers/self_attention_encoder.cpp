@@ -17,10 +17,14 @@
 //------------------------------------------------------------------------------
 
 #include "math/standard_functions/sqrt.hpp"
+#include "ml/layers/fully_connected.hpp"
+#include "ml/layers/multihead_attention.hpp"
+#include "ml/layers/normalisation/layer_norm.hpp"
 #include "ml/layers/self_attention_encoder.hpp"
 #include "ml/ops/activations/dropout.hpp"
 #include "ml/ops/add.hpp"
 #include "ml/ops/concatenate.hpp"
+#include "ml/ops/placeholder.hpp"
 
 namespace fetch {
 namespace ml {

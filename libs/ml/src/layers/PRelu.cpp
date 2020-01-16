@@ -19,13 +19,7 @@
 #include "math/tensor/tensor.hpp"
 #include "ml/layers/PRelu.hpp"
 #include "ml/ops/placeholder.hpp"
-#include "vectorise/fixed_point/fixed_point.hpp"
-
-#include <cmath>
-#include <cstdint>
-#include <random>
-#include <string>
-#include <vector>
+#include "ml/ops/prelu_op.hpp"
 
 namespace fetch {
 namespace ml {

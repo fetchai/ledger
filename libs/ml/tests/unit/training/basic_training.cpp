@@ -23,10 +23,10 @@
 #include "ml/ops/activations/relu.hpp"
 #include "ml/ops/activations/sigmoid.hpp"
 #include "ml/ops/activations/softmax.hpp"
-#include "ml/ops/placeholder.hpp"
 #include "ml/ops/loss_functions/cross_entropy_loss.hpp"
 #include "ml/ops/loss_functions/mean_square_error_loss.hpp"
 #include "ml/ops/loss_functions/softmax_cross_entropy_loss.hpp"
+#include "ml/ops/placeholder.hpp"
 #include "test_types.hpp"
 
 namespace fetch {

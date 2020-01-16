@@ -19,7 +19,6 @@
 
 #include "ml/core/subgraph.hpp"
 #include "ml/ops/activation.hpp"
-//#include "ml/ops/placeholder.hpp"
 #include "ml/ops/weights.hpp"
 
 namespace fetch {

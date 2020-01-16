@@ -18,8 +18,6 @@
 //------------------------------------------------------------------------------
 
 #include "ml/core/subgraph.hpp"
-#include "ml/ops/constant.hpp"
-#include "ml/ops/placeholder.hpp"
 
 namespace fetch {
 namespace ml {
