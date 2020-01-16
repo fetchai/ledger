@@ -61,7 +61,7 @@ void Blas<S, Signature(_C <= _alpha, _A, _B, _beta, _C),
       {
         for (i = 0; i < c.height(); ++i)
         {
-          c(i, j) = beta * c(i, j);
+          c(i, j) = static_cast<Type>(beta * c(i, j));
         }
       }
     }
@@ -73,31 +73,29 @@ void Blas<S, Signature(_C <= _alpha, _A, _B, _beta, _C),
   {
     for (i = 0; i < c.height(); ++i)
     {
-      Type        temp;
+      auto        temp = Type{0};
       std::size_t l;
-      temp = Type{0};
       for (l = 0; l < a.height(); ++l)
       {
-        temp = temp + a(l, i) * b(l, j);
+        temp = static_cast<Type>(temp + a(l, i) * b(l, j));
       }
 
       if (beta == Type{0})
       {
-        c(i, j) = alpha * temp;
+        c(i, j) = static_cast<Type>(alpha * temp);
       }
       else
       {
-        c(i, j) = alpha * temp + beta * c(i, j);
+        c(i, j) = static_cast<Type>(alpha * temp + beta * c(i, j));
       }
     }
   }
 }
-
-template class Blas<double, Signature(_C <= _alpha, _A, _B, _beta, _C),
+template class Blas<uint8_t, Signature(_C <= _alpha, _A, _B, _beta, _C),
                     Computes(_C <= _alpha * T(_A) * _B + _beta * _C),
                     platform::Parallelisation::NOT_PARALLEL>;
 
-template class Blas<float, Signature(_C <= _alpha, _A, _B, _beta, _C),
+template class Blas<uint16_t, Signature(_C <= _alpha, _A, _B, _beta, _C),
                     Computes(_C <= _alpha * T(_A) * _B + _beta * _C),
                     platform::Parallelisation::NOT_PARALLEL>;
 
@@ -109,11 +107,27 @@ template class Blas<uint64_t, Signature(_C <= _alpha, _A, _B, _beta, _C),
                     Computes(_C <= _alpha * T(_A) * _B + _beta * _C),
                     platform::Parallelisation::NOT_PARALLEL>;
 
+template class Blas<int8_t, Signature(_C <= _alpha, _A, _B, _beta, _C),
+                    Computes(_C <= _alpha * T(_A) * _B + _beta * _C),
+                    platform::Parallelisation::NOT_PARALLEL>;
+
+template class Blas<int16_t, Signature(_C <= _alpha, _A, _B, _beta, _C),
+                    Computes(_C <= _alpha * T(_A) * _B + _beta * _C),
+                    platform::Parallelisation::NOT_PARALLEL>;
+
 template class Blas<int32_t, Signature(_C <= _alpha, _A, _B, _beta, _C),
                     Computes(_C <= _alpha * T(_A) * _B + _beta * _C),
                     platform::Parallelisation::NOT_PARALLEL>;
 
 template class Blas<int64_t, Signature(_C <= _alpha, _A, _B, _beta, _C),
+                    Computes(_C <= _alpha * T(_A) * _B + _beta * _C),
+                    platform::Parallelisation::NOT_PARALLEL>;
+
+template class Blas<double, Signature(_C <= _alpha, _A, _B, _beta, _C),
+                    Computes(_C <= _alpha * T(_A) * _B + _beta * _C),
+                    platform::Parallelisation::NOT_PARALLEL>;
+
+template class Blas<float, Signature(_C <= _alpha, _A, _B, _beta, _C),
                     Computes(_C <= _alpha * T(_A) * _B + _beta * _C),
                     platform::Parallelisation::NOT_PARALLEL>;
 
