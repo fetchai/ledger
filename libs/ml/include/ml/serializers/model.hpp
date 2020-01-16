@@ -42,7 +42,7 @@ template <typename TensorType>
 class AdamOptimiser;
 }  // namespace optimisers
 
-} // ml
+}  // namespace ml
 
 namespace serializers {
 
@@ -248,7 +248,7 @@ struct MapSerializer<ml::model::Model<TensorType>, D>
     map.ExpectKeyGetValue(GRAPH, gsp);
 
     auto new_graph_ptr = std::make_shared<fetch::ml::Graph<TensorType>>();
-    sp.graph_ptr_ = new_graph_ptr;
+    sp.graph_ptr_      = new_graph_ptr;
     ml::utilities::BuildGraph(gsp, new_graph_ptr);
 
     map.ExpectKeyGetValue(MODEL_CONFIG, sp.model_config_);
@@ -271,7 +271,5 @@ struct MapSerializer<ml::model::Model<TensorType>, D>
   }
 };
 
-
-} // serializers
-} // fetch
-
+}  // namespace serializers
+}  // namespace fetch

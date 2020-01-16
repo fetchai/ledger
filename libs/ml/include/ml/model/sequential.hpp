@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "ml/model/model.hpp"
-
+#include "ml/serializers/sequential.hpp"
 #include <string>
 
 namespace fetch {
