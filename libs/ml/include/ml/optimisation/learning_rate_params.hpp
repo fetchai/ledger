@@ -41,8 +41,8 @@ struct LearningRateParam
   };
   LearningRateDecay mode                   = LearningRateDecay::NONE;
   DataType          starting_learning_rate = fetch::math::Type<DataType>("0.001");
-  DataType          ending_learning_rate   = starting_learning_rate / DataType{10000};
-  DataType          linear_decay_rate      = starting_learning_rate / DataType{10000};
+  DataType          ending_learning_rate   = starting_learning_rate / static_cast<DataType>(10000);
+  DataType          linear_decay_rate      = starting_learning_rate / static_cast<DataType>(10000);
   DataType          exponential_decay_rate = fetch::math::Type<DataType>("0.999");
 };
 }  // namespace optimisers

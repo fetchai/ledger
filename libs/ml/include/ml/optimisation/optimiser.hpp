@@ -355,8 +355,8 @@ typename T::Type Optimiser<T>::RunImplementation(
     // Set Label
     graph_->SetInputReference(label_node_name_, input.first);
 
-    auto loss_tensor = graph_->ForwardPropagate(output_node_name_);
-    loss_ += *(loss_tensor.begin());
+    TensorType const loss_tensor = graph_->ForwardPropagate(output_node_name_);
+    loss_            = static_cast<DataType>(loss_ + *(loss_tensor.begin()));
     graph_->BackPropagate(output_node_name_);
 
     // Compute and apply gradient
@@ -369,7 +369,7 @@ typename T::Type Optimiser<T>::RunImplementation(
     step_ += batch_size;
     cumulative_step_ += batch_size;
     // reset loss
-    loss_sum_ += loss_;
+    loss_sum_ = static_cast<DataType>(loss_sum_ + loss_);
     i++;
     loss_ = DataType{0};
     // update learning rate
@@ -380,7 +380,7 @@ typename T::Type Optimiser<T>::RunImplementation(
   }
 
   epoch_++;
-  return loss_sum_ / static_cast<DataType>(i);
+  return static_cast<DataType>(loss_sum_ / static_cast<DataType>(i));
 }
 
 template <typename T>
@@ -425,16 +425,17 @@ void Optimiser<T>::UpdateLearningRate()
   {
   case LearningRateParam<DataType>::LearningRateDecay::EXPONENTIAL:
   {
-    learning_rate_ = learning_rate_param_.starting_learning_rate *
-                     fetch::math::Pow(learning_rate_param_.exponential_decay_rate,
-                                      static_cast<DataType>(epoch_ + 1));
+    learning_rate_ =
+        static_cast<DataType>(learning_rate_param_.starting_learning_rate *
+                              fetch::math::Pow(learning_rate_param_.exponential_decay_rate,
+                                               static_cast<DataType>(epoch_ + 1)));
     break;
   }
   case LearningRateParam<DataType>::LearningRateDecay::LINEAR:
   {
-    learning_rate_ = learning_rate_param_.starting_learning_rate *
-                     (DataType{1} - learning_rate_param_.linear_decay_rate *
-                                        static_cast<DataType>(cumulative_step_));
+    learning_rate_ = static_cast<DataType>(
+        learning_rate_param_.starting_learning_rate * DataType{1} -
+        learning_rate_param_.linear_decay_rate * static_cast<DataType>(cumulative_step_));
     if (learning_rate_ < learning_rate_param_.ending_learning_rate)
     {
       learning_rate_ = learning_rate_param_.ending_learning_rate;

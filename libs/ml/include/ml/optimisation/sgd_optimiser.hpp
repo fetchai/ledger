@@ -98,7 +98,7 @@ void SGDOptimiser<T>::ApplyGradients(SizeType batch_size)
 
   // this part of the computation does not change within the while loop, so execute it once
   DataType neg_learning_rate_div_batch_size =
-      (-this->learning_rate_) / static_cast<DataType>(batch_size);
+      static_cast<DataType>((-this->learning_rate_) / static_cast<DataType>(batch_size));
 
   std::vector<SizeSet> rows;
 
