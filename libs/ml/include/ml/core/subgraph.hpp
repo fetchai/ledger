@@ -80,11 +80,11 @@ template <typename TensorType>
 void SubGraph<TensorType>::Forward(VecTensorType const &inputs, TensorType &output)
 {
   assert(inputs.size() == this->input_node_names_.size());
-  for (uint64_t i(0); i < inputs.size(); ++i)
+  for (std::size_t i(0); i < inputs.size(); ++i)
   {
-    this->SetInput(input_node_names_[i], *(inputs.at(i)));
+    this->SetInput(input_node_names_.at(i), *(inputs.at(i)));
   }
-  output = *(this->nodes_[output_node_name_]->Evaluate(this->is_training_));
+  output = *(this->nodes_.at(output_node_name_)->Evaluate(this->is_training_));
 }
 
 /**

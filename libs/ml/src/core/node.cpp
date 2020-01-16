@@ -78,7 +78,7 @@ static std::string InputShapesAsString(const std::vector<math::SizeVector> &in_s
  * @return
  */
 template <typename TensorType>
-OpType Node<TensorType>::OperationType()
+OpType Node<TensorType>::OperationType() const
 {
   if (operation_type_ != op_ptr_->OperationType())
   {
@@ -86,13 +86,12 @@ OpType Node<TensorType>::OperationType()
                                              std::to_string(static_cast<int>(operation_type_)) +
                                              ") and underlying Ops operation code (" +
                                              std::string(op_ptr_->Descriptor()) + ") mismatch!");
-    operation_type_ = op_ptr_->OperationType();
   }
   return operation_type_;
 }
 
 template <typename TensorType>
-bool Node<TensorType>::HasValidCache()
+bool Node<TensorType>::HasValidCache() const
 {
   return static_cast<bool>(cached_output_status_ == CachedOutputState::VALID_CACHE);
 }

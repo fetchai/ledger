@@ -56,6 +56,8 @@ public:
   std::shared_ptr<fetch::ml::ops::Ops<TensorType>> MakeSharedCopy(
       std::shared_ptr<fetch::ml::ops::Ops<TensorType>> me) override;
 
+  bool SetData(TensorType const &data) override;
+
   static constexpr OpType OpCode()
   {
     return OpType::OP_PLACEHOLDER;
@@ -63,14 +65,8 @@ public:
 
   static constexpr char const *DESCRIPTOR = "PlaceHolder";
 
-  OpType OperationType() const override  // TODO(ML-466) : move implementation to .cpp
-  {
-    return this->OpCode();
-  }
-  char const *Descriptor() const override  // TODO(ML-466) : move implementation to .cpp
-  {
-    return DESCRIPTOR;
-  }
+  OpType      OperationType() const override;
+  char const *Descriptor() const override;
 };
 
 }  // namespace ops

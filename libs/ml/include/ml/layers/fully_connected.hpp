@@ -143,7 +143,7 @@ public:
 
     assert(!this->batch_input_shapes_.empty());
     assert(!this->batch_output_shape_.empty());
-    FETCH_LOG_INFO(Descriptor(), "-- Compiling sub-graph ... --");
+    FETCH_LOG_INFO(Descriptor(), "-- Completing FullyConnected initialisation ... --");
     this->nodes_.at(input_)->SetBatchInputShapes(this->batch_input_shapes_);
     this->nodes_.at(input_)->SetBatchOutputShape(this->batch_input_shapes_.front());
 
@@ -193,7 +193,7 @@ public:
     this->SetRegularisation(fetch::ml::details::CreateRegulariser<T>(regulariser_),
                             regularisation_rate_);
     this->Compile();
-    FETCH_LOG_INFO(Descriptor(), "-- Sub-graph compiled. --");
+    FETCH_LOG_INFO(Descriptor(), "-- FullyConnected initialisation completed. --");
     is_initialised_ = true;
   }
 
@@ -245,7 +245,7 @@ public:
     if (!time_distributed_)
     {
       SizeType total_in_size = 1;
-      for (std::size_t i = 0; i < inputs.front()->shape().size() - 1; i++)
+      for (SizeType i = 0; i < inputs.front()->shape().size() - 1; i++)
       {
         total_in_size *= inputs.front()->shape(i);
       }

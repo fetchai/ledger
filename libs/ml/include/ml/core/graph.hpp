@@ -1041,7 +1041,7 @@ void Graph<TensorType>::LinkNodesInGraph(std::string const &             node_na
                                          std::vector<std::string> const &inputs)
 {
   // assign inputs and outputs
-  for (auto const &i : inputs)
+  for (std::string const &i : inputs)
   {
     nodes_.at(node_name)->AddInput(nodes_.at(i));
     nodes_[i]->AddOutput(nodes_[node_name]);

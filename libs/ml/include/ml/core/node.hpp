@@ -118,7 +118,7 @@ public:
   void                                ResetCache(bool input_size_changed);
   void                                ResetInputsAndOutputs();
 
-  std::string const &GetNodeName()
+  std::string const &GetNodeName() const
   {
     return name_;
   }
@@ -128,9 +128,9 @@ public:
     return op_ptr_;
   }
 
-  OpType OperationType();
+  OpType OperationType() const;
 
-  bool HasValidCache();
+  bool HasValidCache() const;
 
   void SetBatchOutputShape(fetch::math::SizeVector const &new_shape);
 
@@ -208,6 +208,7 @@ std::shared_ptr<TensorType> Node<TensorType>::Evaluate(bool is_training)
 
   if (cached_output_status_ != CachedOutputState::VALID_CACHE)
   {
+
     VecTensorType inputs = GatherInputs();
 
     if (cached_output_status_ == CachedOutputState::CHANGED_SIZE)
