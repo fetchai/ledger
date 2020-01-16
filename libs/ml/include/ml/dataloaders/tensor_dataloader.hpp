@@ -19,11 +19,7 @@
 
 #include "core/serializers/group_definitions.hpp"
 #include "ml/dataloaders/dataloader.hpp"
-#include "ml/exceptions/exceptions.hpp"
 #include "ml/meta/ml_type_traits.hpp"
-
-#include <stdexcept>
-#include <utility>
 
 namespace fetch {
 namespace ml {
@@ -32,8 +28,6 @@ namespace dataloaders {
 template <typename TensorType>
 class TensorDataLoader : public DataLoader<TensorType>
 {
-  using DataType = typename TensorType::Type;
-
   using SizeType     = fetch::math::SizeType;
   using SizeVector   = fetch::math::SizeVector;
   using ReturnType   = std::pair<TensorType, std::vector<TensorType>>;
@@ -53,8 +47,8 @@ public:
   void     Reset() override;
   bool     IsModeAvailable(DataLoaderMode mode) override;
 
-  void SetTestRatio(DataType new_test_ratio) override;
-  void SetValidationRatio(DataType new_validation_ratio) override;
+  void SetTestRatio(fixed_point::fp32_t new_test_ratio) override;
+  void SetValidationRatio(fixed_point::fp32_t new_validation_ratio) override;
 
   template <typename X, typename D>
   friend struct fetch::serializers::MapSerializer;
@@ -82,8 +76,8 @@ protected:
 
   SizeVector              one_sample_label_shape_;
   std::vector<SizeVector> one_sample_data_shapes_;
-  DataType                test_to_train_ratio_       = DataType{0};
-  DataType                validation_to_train_ratio_ = DataType{0};
+  fixed_point::fp32_t     test_to_train_ratio_       = fixed_point::fp32_t{0};
+  fixed_point::fp32_t     validation_to_train_ratio_ = fixed_point::fp32_t{0};
 
   SizeType batch_label_dim_ = fetch::math::numeric_max<SizeType>();
   SizeType batch_data_dim_  = fetch::math::numeric_max<SizeType>();
@@ -96,215 +90,6 @@ protected:
   void UpdateRanges();
   void UpdateCursor() override;
 };
-
-template <typename TensorType>
-typename TensorDataLoader<TensorType>::ReturnType TensorDataLoader<TensorType>::GetNext()
-{
-  std::vector<TensorType> ret_data;
-  TensorType ret_labels = labels_.View(*this->current_cursor_).Copy(one_sample_label_shape_);
-
-  for (SizeType i{0}; i < data_.size(); i++)
-  {
-    ret_data.emplace_back(
-        data_.at(i).View(*this->current_cursor_).Copy(one_sample_data_shapes_.at(i)));
-  }
-
-  if (this->random_mode_)
-  {
-    *this->current_cursor_ = this->current_min_ + SizeType{this->rand()} % this->current_size_;
-    ++(*count_);
-  }
-  else
-  {
-    (*this->current_cursor_)++;
-  }
-
-  return ReturnType(ret_labels, ret_data);
-}
-
-template <typename TensorType>
-bool TensorDataLoader<TensorType>::AddData(std::vector<TensorType> const &data,
-                                           TensorType const &             labels)
-{
-  one_sample_label_shape_                                        = labels.shape();
-  one_sample_label_shape_.at(one_sample_label_shape_.size() - 1) = 1;
-  labels_                                                        = labels.Copy();
-
-  // Resize data vector
-  if (data_.size() < data.size())
-  {
-    data_.resize(data.size());
-    one_sample_data_shapes_.resize(data.size());
-  }
-
-  // Add data to data vector
-  for (SizeType i{0}; i < data.size(); i++)
-  {
-    data_.at(i)                                                                = data.at(i).Copy();
-    one_sample_data_shapes_.at(i)                                              = data.at(i).shape();
-    one_sample_data_shapes_.at(i).at(one_sample_data_shapes_.at(i).size() - 1) = 1;
-  }
-
-  n_samples_ = data_.at(0).shape().at(data_.at(0).shape().size() - 1);
-
-  UpdateRanges();
-
-  return true;
-}
-
-template <typename TensorType>
-typename TensorDataLoader<TensorType>::SizeType TensorDataLoader<TensorType>::Size() const
-{
-  return this->current_size_;
-}
-
-template <typename TensorType>
-bool TensorDataLoader<TensorType>::IsDone() const
-{
-  if (this->random_mode_)
-  {
-    return (*count_ > (this->current_max_ - this->current_min_));
-  }
-
-  return *(this->current_cursor_) >= this->current_max_;
-}
-
-template <typename TensorType>
-void TensorDataLoader<TensorType>::Reset()
-{
-  *count_                  = 0;
-  *(this->current_cursor_) = this->current_min_;
-}
-
-template <typename TensorType>
-void TensorDataLoader<TensorType>::SetTestRatio(DataType new_test_ratio)
-{
-  test_to_train_ratio_ = new_test_ratio;
-  UpdateRanges();
-}
-
-template <typename TensorType>
-void TensorDataLoader<TensorType>::SetValidationRatio(DataType new_validation_ratio)
-{
-  validation_to_train_ratio_ = new_validation_ratio;
-  UpdateRanges();
-}
-
-template <typename TensorType>
-void TensorDataLoader<TensorType>::UpdateRanges()
-{
-  DataType test_percentage       = DataType{1} - test_to_train_ratio_ - validation_to_train_ratio_;
-  DataType validation_percentage = test_percentage + test_to_train_ratio_;
-
-  // Define where test set starts
-  test_offset_ = static_cast<uint32_t>(test_percentage * static_cast<DataType>(n_samples_));
-
-  if (test_offset_ == static_cast<SizeType>(0))
-  {
-    test_offset_ = static_cast<SizeType>(1);
-  }
-
-  // Define where validation set starts
-  validation_offset_ =
-      static_cast<uint32_t>(validation_percentage * static_cast<DataType>(n_samples_));
-
-  if (validation_offset_ <= test_offset_)
-  {
-    validation_offset_ = test_offset_ + 1;
-  }
-
-  // boundary check and fix
-  if (validation_offset_ > n_samples_)
-  {
-    validation_offset_ = n_samples_;
-  }
-
-  if (test_offset_ > n_samples_)
-  {
-    test_offset_ = n_samples_;
-  }
-
-  n_validation_samples_ = n_samples_ - validation_offset_;
-  n_test_samples_       = validation_offset_ - test_offset_;
-  n_train_samples_      = test_offset_;
-
-  *train_cursor_      = 0;
-  *test_cursor_       = test_offset_;
-  *validation_cursor_ = validation_offset_;
-
-  UpdateCursor();
-}
-
-template <typename TensorType>
-void TensorDataLoader<TensorType>::UpdateCursor()
-{
-  switch (this->mode_)
-  {
-  case DataLoaderMode::TRAIN:
-  {
-    this->current_cursor_ = train_cursor_;
-    this->current_min_    = 0;
-    this->current_max_    = test_offset_;
-    this->current_size_   = n_train_samples_;
-    count_                = train_count_;
-    break;
-  }
-  case DataLoaderMode::TEST:
-  {
-    if (test_to_train_ratio_ == 0)
-    {
-      throw exceptions::InvalidMode("Dataloader has no test set.");
-    }
-    this->current_cursor_ = test_cursor_;
-    this->current_min_    = test_offset_;
-    this->current_max_    = validation_offset_;
-    this->current_size_   = n_test_samples_;
-    count_                = test_count_;
-    break;
-  }
-  case DataLoaderMode::VALIDATE:
-  {
-    if (validation_to_train_ratio_ == 0)
-    {
-      throw exceptions::InvalidMode("Dataloader has no validation set.");
-    }
-    this->current_cursor_ = validation_cursor_;
-    this->current_min_    = validation_offset_;
-    this->current_max_    = n_samples_;
-    this->current_size_   = n_validation_samples_;
-    count_                = validation_count_;
-    break;
-  }
-  default:
-  {
-    throw exceptions::InvalidMode("Unsupported dataloader mode.");
-  }
-  }
-}
-
-template <typename TensorType>
-bool TensorDataLoader<TensorType>::IsModeAvailable(DataLoaderMode mode)
-{
-  switch (mode)
-  {
-  case DataLoaderMode::TRAIN:
-  {
-    return test_offset_ > 0;
-  }
-  case DataLoaderMode::TEST:
-  {
-    return test_offset_ < validation_offset_;
-  }
-  case DataLoaderMode::VALIDATE:
-  {
-    return validation_offset_ < n_samples_;
-  }
-  default:
-  {
-    throw exceptions::InvalidMode("Unsupported dataloader mode.");
-  }
-  }
-}
 
 }  // namespace dataloaders
 }  // namespace ml
