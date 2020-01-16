@@ -356,7 +356,7 @@ typename T::Type Optimiser<T>::RunImplementation(
     graph_->SetInputReference(label_node_name_, input.first);
 
     TensorType const loss_tensor = graph_->ForwardPropagate(output_node_name_);
-    loss_            = static_cast<DataType>(loss_ + *(loss_tensor.begin()));
+    loss_                        = static_cast<DataType>(loss_ + *(loss_tensor.begin()));
     graph_->BackPropagate(output_node_name_);
 
     // Compute and apply gradient
