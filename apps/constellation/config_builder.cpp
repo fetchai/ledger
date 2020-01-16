@@ -336,6 +336,14 @@ Constellation::Config BuildConstellationConfig(Settings const &settings)
     contents << config;
 
     cfg.genesis_file_contents = contents.str();
+
+    // In case of standalone local network, there must always be a non-zero
+    // block interval as the chain otherwise does nothing/
+    if (cfg.block_interval_ms == 0)
+    {
+      cfg.block_interval_ms = 3000;
+    }
+
     return cfg;
   }
 
