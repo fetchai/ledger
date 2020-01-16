@@ -35,7 +35,7 @@ class Model;
 }
 
 namespace dataloaders {
-template <typename LabelType, typename InputType>
+template <typename TensorType>
 class TensorDataLoader;
 }
 
