@@ -801,8 +801,10 @@ struct MapSerializer<ml::OpsSaveableParams, D>
   using Type       = ml::OpsSaveableParams;
   using DriverType = D;
 
-  static uint8_t const OP_CODE     = 1;
-  static uint8_t const IS_TRAINING = 2;
+  static uint8_t const OP_CODE            = 1;
+  static uint8_t const IS_TRAINING        = 2;
+  static uint8_t const BATCH_INPUT_SHAPES = 3;
+  static uint8_t const BATCH_OUTPUT_SHAPE = 4;
 
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &osp)
@@ -810,6 +812,8 @@ struct MapSerializer<ml::OpsSaveableParams, D>
     auto map = map_constructor(2);
     map.Append(OP_CODE, osp.op_type);
     map.Append(IS_TRAINING, osp.is_training);
+    map.Append(BATCH_INPUT_SHAPES, osp.batch_input_shapes);
+    map.Append(BATCH_OUTPUT_SHAPE, osp.batch_output_shape);
   }
 
   template <typename MapDeserializer>
@@ -817,6 +821,8 @@ struct MapSerializer<ml::OpsSaveableParams, D>
   {
     map.ExpectKeyGetValue(OP_CODE, osp.op_type);
     map.ExpectKeyGetValue(IS_TRAINING, osp.is_training);
+    map.ExpectKeyGetValue(BATCH_INPUT_SHAPES, osp.batch_input_shapes);
+    map.ExpectKeyGetValue(BATCH_OUTPUT_SHAPE, osp.batch_output_shape);
   }
 };
 
