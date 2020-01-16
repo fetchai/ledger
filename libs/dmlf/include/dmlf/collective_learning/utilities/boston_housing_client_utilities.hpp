@@ -38,9 +38,8 @@ namespace details {
  * @return
  */
 template <typename TensorType>
-std::shared_ptr<fetch::ml::model::Sequential<TensorType>> MakeBostonModel(TensorType &data,
-                                                                          TensorType &labels,
-                                                                          float test_set_ratio)
+std::shared_ptr<fetch::ml::model::Sequential<TensorType>> MakeBostonModel(
+    TensorType &data, TensorType &labels, fetch::fixed_point::fp32_t test_set_ratio)
 {
   // Initialise model
   auto model_ptr = std::make_shared<fetch::ml::model::Sequential<TensorType>>();
@@ -52,8 +51,7 @@ std::shared_ptr<fetch::ml::model::Sequential<TensorType>> MakeBostonModel(Tensor
   model_ptr->template Add<fetch::ml::layers::FullyConnected<TensorType>>(10u, 1u);
 
   // Initialise DataLoader
-  auto dataloader_ptr =
-      std::make_unique<fetch::ml::dataloaders::TensorDataLoader<TensorType, TensorType>>();
+  auto dataloader_ptr = std::make_unique<fetch::ml::dataloaders::TensorDataLoader<TensorType>>();
   dataloader_ptr->AddData({data}, labels);
   dataloader_ptr->SetTestRatio(test_set_ratio);
   dataloader_ptr->SetRandomMode(true);
@@ -70,7 +68,7 @@ std::shared_ptr<fetch::dmlf::collective_learning::CollectiveLearningClient<Tenso
 MakeBostonClient(
     std::string                                                                id,
     fetch::dmlf::collective_learning::ClientParams<typename TensorType::Type> &client_params,
-    TensorType &data, TensorType &labels, float test_set_ratio,
+    TensorType &data, TensorType &labels, fetch::fixed_point::fp32_t test_set_ratio,
     std::shared_ptr<deprecated_AbstractLearnerNetworker> networker,
     std::shared_ptr<std::mutex>                          console_mutex_ptr)
 {

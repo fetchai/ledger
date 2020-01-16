@@ -16,9 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ml/exceptions/exceptions.hpp"
 #include "ml/ops/variable.hpp"
-#include "ml/regularisers/regulariser.hpp"
-#include "ml/saveparams/saveable_params.hpp"
+#include "ml/regularisers/regularisation.hpp"
 #include "ml/utilities/sparse_tensor_utilities.hpp"
 
 namespace fetch {

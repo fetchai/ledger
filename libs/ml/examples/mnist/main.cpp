@@ -37,7 +37,7 @@ using TensorType = fetch::math::Tensor<DataType>;
 
 using GraphType      = typename fetch::ml::Graph<TensorType>;
 using OptimiserType  = typename fetch::ml::optimisers::AdamOptimiser<TensorType>;
-using DataLoaderType = typename fetch::ml::dataloaders::TensorDataLoader<TensorType, TensorType>;
+using DataLoaderType = typename fetch::ml::dataloaders::TensorDataLoader<TensorType>;
 
 int main(int ac, char **av)
 {

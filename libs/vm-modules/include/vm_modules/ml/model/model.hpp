@@ -47,8 +47,6 @@ enum class ModelCategory : uint8_t
 {
   NONE,
   SEQUENTIAL,
-  REGRESSOR,
-  CLASSIFIER
 };
 
 enum class SupportedLayerType : uint8_t
@@ -74,7 +72,7 @@ public:
   using ModelConfigType     = fetch::ml::model::ModelConfig<DataType>;
   using ModelConfigPtrType  = std::shared_ptr<fetch::ml::model::ModelConfig<DataType>>;
   using GraphType           = fetch::ml::Graph<TensorType>;
-  using TensorDataloader    = fetch::ml::dataloaders::TensorDataLoader<TensorType, TensorType>;
+  using TensorDataloader    = fetch::ml::dataloaders::TensorDataLoader<TensorType>;
   using TensorDataloaderPtr = std::shared_ptr<TensorDataloader>;
   using VMTensor            = fetch::vm_modules::math::VMTensor;
   using ModelEstimator      = fetch::vm_modules::ml::model::ModelEstimator;
@@ -107,9 +105,6 @@ public:
   void CompileSequentialImplementation(fetch::vm::Ptr<fetch::vm::String> const &      loss,
                                        fetch::vm::Ptr<fetch::vm::String> const &      optimiser,
                                        std::vector<fetch::ml::ops::MetricType> const &metrics);
-
-  void CompileSimple(fetch::vm::Ptr<fetch::vm::String> const &        optimiser,
-                     fetch::vm::Ptr<vm::Array<math::SizeType>> const &layer_shapes);
 
   void Fit(vm::Ptr<VMTensor> const &data, vm::Ptr<VMTensor> const &labels,
            ::fetch::math::SizeType const &batch_size);

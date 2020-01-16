@@ -18,7 +18,6 @@
 
 #include "gtest/gtest.h"
 #include "ml/layers/scaled_dot_product_attention.hpp"
-#include "ml/regularisers/regulariser.hpp"
 #include "test_types.hpp"
 
 namespace fetch {
@@ -107,7 +106,7 @@ TYPED_TEST(ScaledDotProductAttention,
   using SizeType = fetch::math::SizeType;
 
   fetch::ml::layers::ScaledDotProductAttention<TypeParam> att(static_cast<SizeType>(3),
-                                                              DataType{1});
+                                                              DataType{0});
 
   TypeParam query_data = TypeParam::FromString("1, 2, 0.5, 0.1; 2, 1, 0.3, -0.2;2, 4, 0, 1");
   query_data.Reshape({3, 2, 2});
@@ -209,7 +208,7 @@ TYPED_TEST(ScaledDotProductAttention,
   using SizeType = fetch::math::SizeType;
 
   fetch::ml::layers::ScaledDotProductAttention<TypeParam> att(static_cast<SizeType>(3),
-                                                              DataType{1});
+                                                              DataType{0});
 
   TypeParam query_data =
       TypeParam::FromString("1, 2, 0.5, 0.1, 5, 3; 2, 1, 0.3, -0.2, -2, 0.5; 2, 4, 0, 1, 1.1, -3");
