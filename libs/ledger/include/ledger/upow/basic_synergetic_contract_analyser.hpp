@@ -38,7 +38,8 @@ public:
   BasicSynergeticContractAnalyser(StorageInterface& storage, crypto::Identity miner, std::size_t num_lanes);
   virtual ~BasicSynergeticContractAnalyser() = default;
 
-  SynergeticJobPtr AnalyseContract(chain::Address const &contract_address, ProblemData const &problem_data) override;
+  SynergeticJobPtr AnalyseContract(chain::Address const &contract_address, ProblemData const &problem_data,
+      uint64_t const &charge_limit) override;
 
 private:
   StorageInterface  &storage_;
@@ -46,7 +47,7 @@ private:
   std::size_t num_lanes_;
 
 
-  std::unique_ptr<SynergeticContract> GetContract(chain::Address const &contract_address);
+  std::unique_ptr<SynergeticContract> GetContract(chain::Address const &contract_address, uint64_t const &charge_limit);
 
 };
 

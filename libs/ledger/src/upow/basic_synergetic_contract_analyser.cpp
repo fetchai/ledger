@@ -35,8 +35,6 @@ namespace {
 using UInt256  = vectorise::UInt<256>;
 
 constexpr char const *LOGGING_NAME = "BasicSynergeticContractAnalyser";
-constexpr uint64_t const CHARGE_LIMIT = 1000000000;
-
 std::random_device random_device;
 
 }
@@ -49,11 +47,12 @@ BasicSynergeticContractAnalyser::BasicSynergeticContractAnalyser(fetch::ledger::
 }
 
 
-std::unique_ptr<SynergeticContract> BasicSynergeticContractAnalyser::GetContract(chain::Address const &contract_address)
+std::unique_ptr<SynergeticContract> BasicSynergeticContractAnalyser::GetContract(chain::Address const &contract_address,
+    uint64_t const &charge_limit)
 {
   auto contract = CreateSmartContract<SynergeticContract>(contract_address, storage_);
 
-  contract->SetChargeLimit(CHARGE_LIMIT);
+  contract->SetChargeLimit(charge_limit);
 
   // if no contract can be loaded then simple return
   if (!contract)
@@ -68,9 +67,9 @@ std::unique_ptr<SynergeticContract> BasicSynergeticContractAnalyser::GetContract
 
 
 BasicSynergeticContractAnalyser::SynergeticJobPtr BasicSynergeticContractAnalyser::AnalyseContract(
-    chain::Address const &contract_address, ProblemData const &problem_data)
+    chain::Address const &contract_address, ProblemData const &problem_data, uint64_t const &charge_limit)
 {
-  auto contract = GetContract(contract_address);
+  auto contract = GetContract(contract_address, charge_limit);
 
   if (!contract)
   {

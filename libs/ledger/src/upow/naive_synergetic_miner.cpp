@@ -40,6 +40,9 @@ namespace {
 constexpr char const *LOGGING_NAME = "NaiveSynMiner";
 
 constexpr uint64_t const CHARGE_LIMIT = 10000000000;
+constexpr uint64_t const ANALYSER_CHARGE_LIMIT = 100000;
+constexpr uint64_t const ANALYSER_CHARGE_LIMIT_INC = 10;
+constexpr uint8_t  const ANALYSER_CHARGE_LIMIT_LOOP = 3;
 
 using UInt256  = vectorise::UInt<256>;
 using DagNodes = NaiveSynergeticMiner::DagNodes;
@@ -153,9 +156,20 @@ void NaiveSynergeticMiner::Mine()
   std::size_t id = 0;
   for (auto const &problem : problem_spaces)
   {
-    auto res = contract_analyser_->AnalyseContract(problem.first, problem.second);
+    SynergeticContractAnalyserInterface::SynergeticJobPtr res{};
+    auto charge_limit = ANALYSER_CHARGE_LIMIT;
+    for(uint8_t i = 0; i<ANALYSER_CHARGE_LIMIT_LOOP; ++i)
+    {
+      res = contract_analyser_->AnalyseContract(problem.first, problem.second, charge_limit);
+      if (res)
+      {
+        break;
+      }
+      charge_limit *= ANALYSER_CHARGE_LIMIT_INC;
+    }
     if (!res)
     {
+      FETCH_LOG_INFO(LOGGING_NAME, "Failed to analyse contract ", problem.first.display(), "!");
       continue;
     }
     res->set_id(id);
