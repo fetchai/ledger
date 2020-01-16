@@ -16,6 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/random/lfg.hpp"
+#include "math/standard_functions/sqrt.hpp"
 #include "ml/ops/weights.hpp"
 #include "ml/state_dict.hpp"
 

@@ -192,7 +192,7 @@ typename TensorType::Type Optimiser<TensorType>::Run(std::vector<TensorType> con
  */
 template <class TensorType>
 typename TensorType::Type Optimiser<TensorType>::Run(
-    fetch::ml::dataloaders::DataLoader<TensorType, TensorType> &loader,
+    fetch::ml::dataloaders::DataLoader<TensorType> &loader,
     LearningRateParam<DataType> learning_rate_param, SizeType batch_size, SizeType subset_size)
 {
   // setting up learning_rate_param_
@@ -208,7 +208,7 @@ typename TensorType::Type Optimiser<TensorType>::Run(
 
 template <class TensorType>
 typename TensorType::Type Optimiser<TensorType>::Run(
-    fetch::ml::dataloaders::DataLoader<TensorType, TensorType> &loader, SizeType batch_size,
+    fetch::ml::dataloaders::DataLoader<TensorType> &loader, SizeType batch_size,
     SizeType subset_size)
 {
   return RunImplementation(loader, batch_size, subset_size);
@@ -216,7 +216,7 @@ typename TensorType::Type Optimiser<TensorType>::Run(
 
 template <class TensorType>
 typename TensorType::Type Optimiser<TensorType>::RunImplementation(
-    fetch::ml::dataloaders::DataLoader<TensorType, TensorType> &loader, SizeType batch_size,
+    fetch::ml::dataloaders::DataLoader<TensorType> &loader, SizeType batch_size,
     SizeType subset_size)
 {
   if (loader.IsDone())

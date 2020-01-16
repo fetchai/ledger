@@ -66,9 +66,9 @@ public:
                SizeType batch_size = SIZE_NOT_SET);
 
   /// DATALOADER RUN INTERFACES ///
-  DataType Run(fetch::ml::dataloaders::DataLoader<TensorType, TensorType> &loader,
+  DataType Run(fetch::ml::dataloaders::DataLoader<TensorType> &loader,
                SizeType batch_size = SIZE_NOT_SET, SizeType subset_size = SIZE_NOT_SET);
-  DataType Run(fetch::ml::dataloaders::DataLoader<TensorType, TensorType> &loader,
+  DataType Run(fetch::ml::dataloaders::DataLoader<TensorType> &loader,
                LearningRateParam<DataType> learning_rate_param, SizeType batch_size = SIZE_NOT_SET,
                SizeType subset_size = SIZE_NOT_SET);
 
@@ -117,7 +117,7 @@ private:
 
   void Init();
 
-  DataType RunImplementation(fetch::ml::dataloaders::DataLoader<TensorType, TensorType> &loader,
+  DataType RunImplementation(fetch::ml::dataloaders::DataLoader<TensorType> &loader,
                              SizeType batch_size  = SIZE_NOT_SET,
                              SizeType subset_size = SIZE_NOT_SET);
 };
