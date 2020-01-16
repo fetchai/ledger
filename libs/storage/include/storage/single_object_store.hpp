@@ -97,6 +97,7 @@ public:
   void Close();
 
 private:
+  std::string file_name_;
   uint16_t version_{1};
   mutable std::fstream file_handle_;
 };

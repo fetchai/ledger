@@ -46,6 +46,8 @@ struct FileMetadata
 
 void SingleObjectStore::Load(std::string const &file_name)
 {
+  file_name_ = file_name;
+
   file_handle_.open(file_name, std::fstream::in | std::fstream::out | std::fstream::binary);
 
   // If does not exist
@@ -145,6 +147,10 @@ void SingleObjectStore::SetRaw(ByteArray &data)
 
     FETCH_LOG_INFO(LOGGING_NAME, "Filesize is now ", file_size);
   }
+
+  // Wipe the file since there is no easy way to truncate/resize
+  file_handle_.close();
+  file_handle_.open(file_name_, std::fstream::in | std::fstream::out | std::fstream::binary | std::fstream::trunc);
 
   file_handle_.seekg(0, std::fstream::beg);
   file_handle_.write(reinterpret_cast<char *>(&meta), sizeof(meta));
