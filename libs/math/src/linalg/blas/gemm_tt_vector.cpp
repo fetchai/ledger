@@ -101,6 +101,14 @@ void Blas<S, Signature(_C <= _alpha, _A, _B, _beta, _C),
   }
 }
 
+template class Blas<int32_t, Signature(_C <= _alpha, _A, _B, _beta, _C),
+                    Computes(_C <= _alpha * T(_A) * T(_B) + _beta * _C),
+                    platform::Parallelisation::VECTORISE>;
+
+template class Blas<int64_t, Signature(_C <= _alpha, _A, _B, _beta, _C),
+                    Computes(_C <= _alpha * T(_A) * T(_B) + _beta * _C),
+                    platform::Parallelisation::VECTORISE>;
+
 template class Blas<double, Signature(_C <= _alpha, _A, _B, _beta, _C),
                     Computes(_C <= _alpha * T(_A) * T(_B) + _beta * _C),
                     platform::Parallelisation::VECTORISE>;
