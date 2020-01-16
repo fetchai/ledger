@@ -68,11 +68,11 @@ struct TrainingParams
   // (https://www.aclweb.org/anthology/Q15-1016) which has state-of-the-art scores for word
   // embedding and uses the wikipedia dataset (documents_utf8_filtered_20pageviews.csv)
   SizeType max_word_count = fetch::math::numeric_max<SizeType>();  // maximum number to be trained
-  SizeType negative_sample_size = 5;  // number of negative sample per word-context pair
-  SizeType window_size          = 2;  // window size for context sampling
-  DataType freq_thresh =
-      fetch::math::Type<DataType>("0.001");  // frequency threshold for subsampling
-  SizeType min_count = 100;                  // infrequent word removal threshold
+  SizeType negative_sample_size          = 5;  // number of negative sample per word-context pair
+  SizeType window_size                   = 2;  // window size for context sampling
+  fetch::fixed_point::fp64_t freq_thresh = fetch::math::Type<fetch::fixed_point::fp64_t>(
+      "0.001");              // frequency threshold for subsampling
+  SizeType min_count = 100;  // infrequent word removal threshold
 
   SizeType batch_size            = 10000;  // training data batch size
   SizeType embedding_size        = 500;    // dimension of embedding vec
@@ -147,7 +147,7 @@ int main(int argc, char **argv)
   tp.learning_rate_param.ending_learning_rate   = tp.ending_learning_rate;
 
   // calc the compatiable linear lr decay
-  DataType est_total_samples               = data_loader.EstimatedSampleNumber();
+  SizeType est_total_samples               = data_loader.EstimatedSampleNumber();
   tp.learning_rate_param.linear_decay_rate = static_cast<DataType>(1) / est_total_samples;
   // this decay rate gurantees that the lr is reduced to zero by the
   // end of an epoch (despite capping by ending learning rate)

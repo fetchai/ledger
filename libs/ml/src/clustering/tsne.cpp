@@ -103,12 +103,12 @@ void TSNE<TensorType>::Optimise(DataType const &learning_rate, SizeType const &m
       {
         if ((gradient.At(i, j) > DataType{0}) != (i_y.At(i, j) > DataType{0}))
         {
-          gains(i, j) = gains.At(i, j) + fetch::math::Type<DataType>("0.2");
+          gains(i, j) = static_cast<DataType>(gains.At(i, j) + fetch::math::Type<DataType>("0.2"));
         }
 
         if ((gradient.At(i, j) > DataType{0}) == (i_y.At(i, j) > DataType{0}))
         {
-          gains(i, j) = gains.At(i, j) * fetch::math::Type<DataType>("0.8");
+          gains(i, j) = static_cast<DataType>(gains.At(i, j) * fetch::math::Type<DataType>("0.8"));
         }
       }
     }
@@ -235,7 +235,7 @@ void TSNE<TensorType>::Hbeta(TensorType const &d, TensorType &p, DataType &entro
   // entropy = log(sum_p) + beta * sum(d * p) / sum_p
   DataType sum_d_p = fetch::math::Sum(fetch::math::Multiply(p, d));
 
-  entropy = fetch::math::Log(sum_p) + beta * sum_d_p / sum_p;
+  entropy = static_cast<DataType>(fetch::math::Log(sum_p) + beta * sum_d_p / sum_p);
 
   // p = p / sum_p
   p = fetch::math::Divide(p, sum_p);
@@ -298,7 +298,7 @@ void TSNE<TensorType>::CalculatePairwiseAffinitiesP(TensorType const &input_matr
     Hbeta(d.Slice(i).Copy(), this_P, current_entropy, beta.At(i), i);
 
     // Evaluate whether the perplexity is within tolerance
-    DataType entropy_diff = current_entropy - target_entropy;
+    auto     entropy_diff = static_cast<DataType>(current_entropy - target_entropy);
     SizeType tries        = 0;
 
     while (fetch::math::Abs(entropy_diff) > tolerance && tries < max_tries)
@@ -332,7 +332,7 @@ void TSNE<TensorType>::CalculatePairwiseAffinitiesP(TensorType const &input_matr
 
       // Recompute the values
       Hbeta(d.Slice(i).Copy(), this_P, current_entropy, beta.At(i), i);
-      entropy_diff = current_entropy - target_entropy;
+      entropy_diff = static_cast<DataType>(current_entropy - target_entropy);
       tries++;
     }
 
@@ -437,7 +437,7 @@ TensorType TSNE<TensorType>::ComputeGradient(TensorType const &output_matrix,
       DataType q_i_j = output_symmetric_affinities.At(i, j);
 
       // (Pij-Qij)
-      DataType val = p_i_j - q_i_j;
+      auto val = static_cast<DataType>(p_i_j - q_i_j);
 
       // /(1+||yi-yj||^2)
       fetch::math::Multiply(num.At(i, j), val, val);
@@ -480,13 +480,12 @@ void TSNE<TensorType>::LimitMin(TensorType &matrix, DataType const &min)
 /// EXPLICIT INSTANTIATIONS ///
 ///////////////////////////////
 
-// TODO (ML-438)
-// template class TSNE<math::Tensor<int8_t>>;
-// template class TSNE<math::Tensor<int16_t>>;
+template class TSNE<math::Tensor<int8_t>>;
+template class TSNE<math::Tensor<int16_t>>;
 template class TSNE<math::Tensor<int32_t>>;
 template class TSNE<math::Tensor<int64_t>>;
-// template class TSNE<math::Tensor<uint8_t>>;
-// template class TSNE<math::Tensor<uint16_t>>;
+template class TSNE<math::Tensor<uint8_t>>;
+template class TSNE<math::Tensor<uint16_t>>;
 template class TSNE<math::Tensor<uint32_t>>;
 template class TSNE<math::Tensor<uint64_t>>;
 template class TSNE<math::Tensor<float>>;
