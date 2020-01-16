@@ -33,6 +33,7 @@
 #include "beacon/public_key_message.hpp"
 #include "core/digest.hpp"
 #include "storage/object_store.hpp"
+#include "storage/single_object_store.hpp"
 
 #include "telemetry/counter.hpp"
 #include "telemetry/gauge.hpp"
@@ -121,7 +122,7 @@ public:
   using BlockEntropyPtr         = std::shared_ptr<beacon::BlockEntropy>;
   using DeadlineTimer           = fetch::moment::DeadlineTimer;
   using OldStateStore           = fetch::storage::ObjectStore<AeonExecutionUnit>;
-  using StateStore              = fetch::storage::ObjectStore<byte_array::ConstByteArray>;
+  using StateStore              = fetch::storage::SingleObjectStore;
   using AllSigsStore            = fetch::storage::ObjectStore<SignatureInformation>;
   using SignaturesBeingBuilt    = std::map<uint64_t, SignatureInformation>;
   using CompletedBlockEntropy   = std::map<uint64_t, BlockEntropyPtr>;
@@ -145,11 +146,6 @@ public:
   std::weak_ptr<core::Runnable> GetWeakRunnable();
   void                          MostRecentSeen(uint64_t round);
   /// @}
-
-  friend class BeaconServiceProtocol;
-
-  template <typename T, typename D>
-  friend struct serializers::MapSerializer;
 
 protected:
   /// State methods
@@ -246,14 +242,11 @@ private:
   telemetry::GaugePtr<uint64_t> beacon_most_recent_round_seen_;
   telemetry::HistogramPtr       beacon_collect_time_;
   telemetry::HistogramPtr       beacon_verify_time_;
-};
 
-// Since it is annoying to serialize the state, an enum,
-// we create a wrapper for serializing the beacon service
-struct BeaconServiceSerializeWrapper
-{
-  BeaconService &beacon_service;
-  uint16_t       current_state{0};
+  friend class BeaconServiceProtocol;
+
+  template <typename T, typename D>
+  friend struct serializers::MapSerializer;
 };
 
 }  // namespace beacon
@@ -284,66 +277,6 @@ public:
   }
 };
 
-// Note that this serializer saves the current state, and on deser will
-// populate state_after_reload_
-template <typename D>
-struct MapSerializer<beacon::BeaconService, D>
-{
-public:
-  using Type       = beacon::BeaconService;
-  using DriverType = D;
-
-  static uint8_t const ACTIVE_EXE_UNIT             = 1;
-  static uint8_t const AEON_EXE_QUEUE              = 2;
-  static uint8_t const BLOCK_ENTROPY_PREVIOUS      = 3;
-  static uint8_t const BLOCK_ENTROPY_BEING_CREATED = 4;
-
-  template <typename Constructor>
-  static void Serialize(Constructor &map_constructor, Type const &beacon_service)
-  {
-    auto map = map_constructor(4);
-    map.Append(ACTIVE_EXE_UNIT, beacon_service.active_exe_unit_);
-    map.Append(AEON_EXE_QUEUE, beacon_service.aeon_exe_queue_);
-    map.Append(BLOCK_ENTROPY_PREVIOUS, beacon_service.block_entropy_previous_);
-    map.Append(BLOCK_ENTROPY_BEING_CREATED, beacon_service.block_entropy_being_created_);
-  }
-
-  template <typename MapDeserializer>
-  static void Deserialize(MapDeserializer &map, Type &beacon_service)
-  {
-    map.ExpectKeyGetValue(ACTIVE_EXE_UNIT, beacon_service.active_exe_unit_);
-    map.ExpectKeyGetValue(AEON_EXE_QUEUE, beacon_service.aeon_exe_queue_);
-
-    map.ExpectKeyGetValue(BLOCK_ENTROPY_PREVIOUS, beacon_service.block_entropy_previous_);
-    map.ExpectKeyGetValue(BLOCK_ENTROPY_BEING_CREATED, beacon_service.block_entropy_being_created_);
-  }
-};
-
-template <typename D>
-struct MapSerializer<beacon::BeaconServiceSerializeWrapper, D>
-{
-public:
-  using Type       = beacon::BeaconServiceSerializeWrapper;
-  using DriverType = D;
-
-  static uint8_t const BEACON_SERVICE = 1;
-  static uint8_t const CURRENT_STATE  = 2;
-
-  template <typename Constructor>
-  static void Serialize(Constructor &map_constructor, Type const &wrapper)
-  {
-    auto map = map_constructor(2);
-    map.Append(BEACON_SERVICE, wrapper.beacon_service);
-    map.Append(CURRENT_STATE, wrapper.current_state);
-  }
-
-  template <typename MapDeserializer>
-  static void Deserialize(MapDeserializer &map, Type &wrapper)
-  {
-    map.ExpectKeyGetValue(BEACON_SERVICE, wrapper.beacon_service);
-    map.ExpectKeyGetValue(CURRENT_STATE, wrapper.current_state);
-  }
-};
 
 }  // namespace serializers
 }  // namespace fetch

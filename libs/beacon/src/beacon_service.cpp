@@ -19,7 +19,6 @@
 #include "beacon/aeon.hpp"
 #include "beacon/beacon_service.hpp"
 #include "core/byte_array/byte_array.hpp"
-#include "core/serializers/main_serializer.hpp"
 #include "crypto/hash.hpp"
 #include "crypto/sha256.hpp"
 #include "muddle/muddle_interface.hpp"
@@ -39,6 +38,9 @@ using namespace std::chrono_literals;
 using fetch::generics::MilliTimer;
 
 namespace fetch {
+
+
+
 namespace beacon {
 namespace {
 
@@ -81,6 +83,14 @@ T ChooseRandomlyFrom(T &container, std::size_t items)
 }  // namespace
 
 char const *ToString(BeaconService::State state);
+
+// Since it is annoying to serialize the state, an enum,
+// we create a wrapper for serializing the beacon service
+struct BeaconServiceSerializeWrapper
+{
+  BeaconService &beacon_service;
+  uint16_t       current_state{0};
+};
 
 BeaconService::BeaconService(MuddleInterface &muddle, const CertificatePtr &certificate,
                              BeaconSetupService &beacon_setup, SharedEventManager event_manager,
@@ -212,11 +222,12 @@ void BeaconService::SaveState()
 
   try
   {
-    serializers::LargeObjectSerializeHelper serializer{};
-    serializer << BeaconServiceSerializeWrapper{*this,
-                                                static_cast<uint16_t>(state_machine_->state())};
+    //serializers::LargeObjectSerializeHelper serializer{};
+    //serializer << BeaconServiceSerializeWrapper{*this,
+    //                                            static_cast<uint16_t>(state_machine_->state())};
 
-    saved_state_.Set(storage::ResourceAddress("HEAD"), serializer.data());
+    //saved_state_.Set(storage::ResourceAddress("HEAD"), serializer.data());
+    saved_state_.Set(BeaconServiceSerializeWrapper{*this, static_cast<uint16_t>(state_machine_->state())});
   }
   catch (std::exception const &ex)
   {
@@ -227,7 +238,6 @@ void BeaconService::SaveState()
 void BeaconService::ReloadState(State &next_state)
 {
   old_state_.Load("beacon_state.db", "beacon_state.index.db");  // Legacy/depreciated
-  saved_state_.Load("beacon_state_v2.db", "beacon_state_v2.index.db");
   saved_state_all_sigs_.Load("beacon_state_sigs_v2.db", "beacon_state_sigs_v2.index.db");
 
   if (!load_and_reload_on_crash_)
@@ -239,6 +249,9 @@ void BeaconService::ReloadState(State &next_state)
 
   try
   {
+    // Note this load could throw
+    saved_state_.Load("beacon_state_v2.db");
+
     // Load all signatures from the file
     for (auto const &siginfo : saved_state_all_sigs_)
     {
@@ -246,44 +259,77 @@ void BeaconService::ReloadState(State &next_state)
       signatures_being_built_[siginfo.round] = siginfo;
     }
 
-    ConstByteArray ret;
+    FETCH_LOG_INFO(LOGGING_NAME, "Loaded signatures. Attemping loading of the rest of the class.");
 
-    if (saved_state_.Get(storage::ResourceAddress("HEAD"), ret))
+    BeaconServiceSerializeWrapper wrapper{*this, 0};
+
+    saved_state_.Get(wrapper);
+
+    next_state = static_cast<State>(wrapper.current_state);
+
+    FETCH_LOG_INFO(LOGGING_NAME, "After re-load state is: ", wrapper.current_state);
+
+    // Note, since certificates are not serialized, we must set the beacon managers in the aeon
+    // to have the correct one
+    if (active_exe_unit_)
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "Re-loading beacon service state...");
+      active_exe_unit_->manager.SetCertificate(certificate_);
 
-      serializers::LargeObjectSerializeHelper serializer{ret};
-
-      BeaconServiceSerializeWrapper wrapper{*this, 0};
-
-      serializer >> wrapper;
-      next_state = static_cast<State>(wrapper.current_state);
-
-      FETCH_LOG_INFO(LOGGING_NAME, "After re-load state is: ", wrapper.current_state);
-
-      // Note, since certificates are not serialized, we must set the beacon managers in the aeon
-      // to have the correct one
-      if (active_exe_unit_)
+      // For performance, make connections to all of qual
+      for (auto const &address_in_qual : active_exe_unit_->manager.qual())
       {
-        active_exe_unit_->manager.SetCertificate(certificate_);
-
-        // For performance, make connections to all of qual
-        for (auto const &address_in_qual : active_exe_unit_->manager.qual())
-        {
-          muddle_.ConnectTo(address_in_qual);
-        }
+        muddle_.ConnectTo(address_in_qual);
       }
-
-      for (auto const &i : aeon_exe_queue_)
-      {
-        if (i)
-        {
-          i->manager.SetCertificate(certificate_);
-        }
-      }
-
-      loaded_state = true;
     }
+
+    for (auto const &i : aeon_exe_queue_)
+    {
+      if (i)
+      {
+        i->manager.SetCertificate(certificate_);
+      }
+    }
+
+    loaded_state = true;
+
+    //ConstByteArray ret;
+
+    //if (saved_state_.Get(storage::ResourceAddress("HEAD"), ret))
+    //{
+    //  FETCH_LOG_INFO(LOGGING_NAME, "Re-loading beacon service state...");
+
+    //  serializers::LargeObjectSerializeHelper serializer{ret};
+
+    //  BeaconServiceSerializeWrapper wrapper{*this, 0};
+
+    //  serializer >> wrapper;
+    //  next_state = static_cast<State>(wrapper.current_state);
+
+    //  FETCH_LOG_INFO(LOGGING_NAME, "After re-load state is: ", wrapper.current_state);
+
+    //  // Note, since certificates are not serialized, we must set the beacon managers in the aeon
+    //  // to have the correct one
+    //  if (active_exe_unit_)
+    //  {
+    //    active_exe_unit_->manager.SetCertificate(certificate_);
+
+    //    // For performance, make connections to all of qual
+    //    for (auto const &address_in_qual : active_exe_unit_->manager.qual())
+    //    {
+    //      muddle_.ConnectTo(address_in_qual);
+    //    }
+    //  }
+
+    //  for (auto const &i : aeon_exe_queue_)
+    //  {
+    //    if (i)
+    //    {
+    //      i->manager.SetCertificate(certificate_);
+    //    }
+    //  }
+
+    //  loaded_state = true;
+    //}
   }
   catch (std::exception const &ex)
   {
@@ -768,4 +814,72 @@ char const *ToString(BeaconService::State state)
 }
 
 }  // namespace beacon
+
+// We put this serializer in the cpp since it is serializing itself
+namespace serializers
+{
+
+// Note that this serializer saves the current state, and on deser will
+// populate state_after_reload_
+template <typename D>
+struct MapSerializer<beacon::BeaconService, D>
+{
+public:
+  using Type       = beacon::BeaconService;
+  using DriverType = D;
+
+  static uint8_t const ACTIVE_EXE_UNIT             = 1;
+  static uint8_t const AEON_EXE_QUEUE              = 2;
+  static uint8_t const BLOCK_ENTROPY_PREVIOUS      = 3;
+  static uint8_t const BLOCK_ENTROPY_BEING_CREATED = 4;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &beacon_service)
+  {
+    auto map = map_constructor(4);
+    map.Append(ACTIVE_EXE_UNIT, beacon_service.active_exe_unit_);
+    map.Append(AEON_EXE_QUEUE, beacon_service.aeon_exe_queue_);
+    map.Append(BLOCK_ENTROPY_PREVIOUS, beacon_service.block_entropy_previous_);
+    map.Append(BLOCK_ENTROPY_BEING_CREATED, beacon_service.block_entropy_being_created_);
+  }
+
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &beacon_service)
+  {
+    map.ExpectKeyGetValue(ACTIVE_EXE_UNIT, beacon_service.active_exe_unit_);
+    map.ExpectKeyGetValue(AEON_EXE_QUEUE, beacon_service.aeon_exe_queue_);
+
+    map.ExpectKeyGetValue(BLOCK_ENTROPY_PREVIOUS, beacon_service.block_entropy_previous_);
+    map.ExpectKeyGetValue(BLOCK_ENTROPY_BEING_CREATED, beacon_service.block_entropy_being_created_);
+  }
+};
+
+template <typename D>
+struct MapSerializer<beacon::BeaconServiceSerializeWrapper, D>
+{
+public:
+  using Type       = beacon::BeaconServiceSerializeWrapper;
+  using DriverType = D;
+
+  static uint8_t const BEACON_SERVICE = 1;
+  static uint8_t const CURRENT_STATE  = 2;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &wrapper)
+  {
+    auto map = map_constructor(2);
+    map.Append(BEACON_SERVICE, wrapper.beacon_service);
+    map.Append(CURRENT_STATE, wrapper.current_state);
+  }
+
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &wrapper)
+  {
+    map.ExpectKeyGetValue(BEACON_SERVICE, wrapper.beacon_service);
+    map.ExpectKeyGetValue(CURRENT_STATE, wrapper.current_state);
+  }
+};
+
+}  // namespace serializers
+
 }  // namespace fetch
