@@ -32,9 +32,11 @@ namespace dataloaders {
  * @param negative_samples the number of total samples (all but one being negative)
  */
 template <typename TensorType>
-GraphW2VLoader<TensorType>::GraphW2VLoader(SizeType window_size, SizeType negative_samples,
-                                           fixed_point::fp64_t freq_thresh, SizeType max_word_count,
-                                           SizeType seed)
+GraphW2VLoader<TensorType>::GraphW2VLoader(SizeType const &           window_size,
+                                           SizeType const &           negative_samples,
+                                           fixed_point::fp64_t const &freq_thresh,
+                                           SizeType const &           max_word_count,
+                                           SizeType const &           seed)
   : DataLoader<TensorType>()  // no random mode specified
   , current_sentence_(0)
   , current_word_(0)

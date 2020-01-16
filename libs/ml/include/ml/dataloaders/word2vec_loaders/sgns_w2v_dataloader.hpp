@@ -44,8 +44,9 @@ public:
   const int8_t   BufferPositionUnusedDataType = fetch::math::numeric_max<int8_t>();
   const SizeType BufferPositionUnusedSizeType = fetch::math::numeric_max<SizeType>();
 
-  GraphW2VLoader(SizeType window_size, SizeType negative_samples, fixed_point::fp64_t freq_thresh,
-                 SizeType max_word_count, SizeType seed = 1337);
+  GraphW2VLoader(SizeType const &window_size, SizeType const &negative_samples,
+                 fixed_point::fp64_t const &freq_thresh, SizeType const &max_word_count,
+                 SizeType const &seed = 1337);
 
   bool       IsDone() const override;
   void       Reset() override;
