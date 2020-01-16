@@ -19,6 +19,7 @@
 
 #include "ml/model/model_config.hpp"
 #include "ml/ops/loss_functions/types.hpp"
+#include "ml/serializers/model.hpp"
 
 #include <string>
 #include <utility>
