@@ -46,7 +46,6 @@ public:
   MultiheadAttention(SizeType n_heads, SizeType model_dim,
                      DataType dropout = fetch::math::Type<DataType>("0.1"));
 
-
   std::string create_one_attention_head(std::string const &head_name, std::string const &query,
                                         std::string const &key, std::string const &value,
                                         std::string const &mask);
