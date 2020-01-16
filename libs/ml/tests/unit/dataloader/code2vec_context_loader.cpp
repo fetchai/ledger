@@ -20,6 +20,7 @@
 #include "math/matrix_operations.hpp"
 #include "math/tensor/tensor.hpp"
 #include "ml/dataloaders/code2vec_context_loaders/context_loader.hpp"
+#include "test_types.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 #include <string>
 
@@ -27,10 +28,16 @@ namespace fetch {
 namespace ml {
 namespace test {
 
-TEST(C2vLoaderTest, loader_test)
+template <typename T>
+class C2vLoaderTest : public ::testing::Test
 {
-  using TensorType = fetch::math::Tensor<fetch::math::SizeType>;
-  using SizeType   = fetch::math::SizeType;
+};
+
+TYPED_TEST_CASE(C2vLoaderTest, math::test::TensorIntAndFloatingTypes);
+
+TYPED_TEST(C2vLoaderTest, loader_test)
+{
+  using SizeType = fetch::math::SizeType;
 
   std::string training_data =
       "get|timestamp override,-726273290,long override,-733851942,METHOD_NAME "
@@ -54,7 +61,7 @@ TEST(C2vLoaderTest, loader_test)
 
   SizeType max_contexts = 10;
 
-  dataloaders::C2VLoader<TensorType> loader(max_contexts);
+  dataloaders::C2VLoader<TypeParam> loader(max_contexts);
 
   loader.AddDataAsString(training_data);
 
@@ -71,7 +78,8 @@ TEST(C2vLoaderTest, loader_test)
   EXPECT_EQ(loader.umap_idx_to_functionname()[6], "");
   EXPECT_EQ(loader.umap_idx_to_functionname()[7], "");
 
-  dataloaders::C2VLoader<TensorType>::ContextTensorsLabelPair training_pair = loader.GetNext();
+  typename dataloaders::C2VLoader<TypeParam>::ContextTensorsLabelPair training_pair =
+      loader.GetNext();
 
   EXPECT_EQ(training_pair.second.at(0).size(), max_contexts);
   EXPECT_EQ(training_pair.second.at(1).size(), max_contexts);
