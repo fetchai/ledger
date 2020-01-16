@@ -401,13 +401,13 @@ void BuildNodeAndInsertTrainables(NodeSaveableParams<T> const &nsp, std::string 
     throw ml::exceptions::NotImplemented("unknown node type");
   }
 
+  node->SetNodeSaveableParams(nsp, op_ptr);
+  g->AddTrainable(node, name);
+
   if (!(g->InsertNode(name, node)))
   {
     throw ml::exceptions::InvalidMode("BuildGraph unable to insert node");
   }
-
-  node->SetNodeSaveableParams(nsp, op_ptr);
-  g->AddTrainable(node, name);
 }
 
 ///////////////////////////////
