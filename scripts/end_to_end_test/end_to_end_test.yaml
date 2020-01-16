@@ -478,4 +478,123 @@ setup_conditions:
 steps:
   - sleep: 5
   - run_python_test: { "script": ".smart_contract_tests.action_nonexistent_contract" }
+---
+test_description: >
+  Transactions sync and are executed across nodes when using POS
+
+setup_conditions:
+  test_name: "basic_multinode_POS"
+  number_of_nodes: 3
+  node_connections: [[0, 1], [0, 2], [1, 2]]
+  mining_nodes: [0, 1, 2]
+  pos_mode: True
+  max_test_time: 600
+
+steps:
+  - send_txs: { "name": "batch1", "amount": 10, "nodes": [1] }
+  - verify_txs: { "name": "batch1", "nodes": [0, 1, 2] }
+...
+
+---
+test_description: >
+  Transactions sync and are executed across nodes when using POS
+
+setup_conditions:
+  test_name: "basic_multinode_POS"
+  number_of_nodes: 3
+  node_connections: [[0, 1], [0, 2], [1, 2]]
+  mining_nodes: [0, 1, 2]
+  pos_mode: True
+  max_test_time: 600
+
+steps:
+  - send_txs: { "name": "batch1", "amount": 10, "nodes": [1] }
+  - verify_txs: { "name": "batch1", "nodes": [0, 1, 2] }
+...
+
+---
+test_description: >
+  Transactions sync and are executed across nodes when using POS
+
+setup_conditions:
+  test_name: "basic_multinode_POS"
+  number_of_nodes: 3
+  node_connections: [[0, 1], [0, 2], [1, 2]]
+  mining_nodes: [0, 1, 2]
+  pos_mode: True
+  max_test_time: 600
+
+steps:
+  - send_txs: { "name": "batch1", "amount": 10, "nodes": [1] }
+  - verify_txs: { "name": "batch1", "nodes": [0, 1, 2] }
+...
+
+---
+test_description: >
+  Transactions sync and are executed across nodes when using POS
+
+setup_conditions:
+  test_name: "basic_multinode_POS"
+  number_of_nodes: 3
+  node_connections: [[0, 1], [0, 2], [1, 2]]
+  mining_nodes: [0, 1, 2]
+  pos_mode: True
+  max_test_time: 600
+
+steps:
+  - send_txs: { "name": "batch1", "amount": 10, "nodes": [1] }
+  - verify_txs: { "name": "batch1", "nodes": [0, 1, 2] }
+...
+
+---
+test_description: >
+  Transactions sync and are executed across nodes when using POS
+
+setup_conditions:
+  test_name: "basic_multinode_POS"
+  number_of_nodes: 3
+  node_connections: [[0, 1], [0, 2], [1, 2]]
+  mining_nodes: [0, 1, 2]
+  pos_mode: True
+  max_test_time: 600
+
+steps:
+  - send_txs: { "name": "batch1", "amount": 10, "nodes": [1] }
+  - verify_txs: { "name": "batch1", "nodes": [0, 1, 2] }
+...
+
+---
+test_description: >
+  Transactions sync and are executed across nodes when using POS
+
+setup_conditions:
+  test_name: "basic_multinode_POS"
+  number_of_nodes: 3
+  node_connections: [[0, 1], [0, 2], [1, 2]]
+  mining_nodes: [0, 1, 2]
+  pos_mode: True
+  max_test_time: 600
+
+steps:
+  - send_txs: { "name": "batch1", "amount": 10, "nodes": [1] }
+  - verify_txs: { "name": "batch1", "nodes": [0, 1, 2] }
+...
+
+---
+test_description: >
+  Transactions sync and are executed across nodes when using POS
+
+setup_conditions:
+  test_name: "basic_multinode_POS"
+  number_of_nodes: 3
+  node_connections: [[0, 1], [0, 2], [1, 2]]
+  mining_nodes: [0, 1, 2]
+  pos_mode: True
+  max_test_time: 600
+
+steps:
+  - send_txs: { "name": "batch1", "amount": 10, "nodes": [1] }
+  - verify_txs: { "name": "batch1", "nodes": [0, 1, 2] }
+...
+
 ...
