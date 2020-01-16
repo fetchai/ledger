@@ -128,7 +128,7 @@ public:
   // Make sure that the dag has all nodes for a certain epoch
   bool SatisfyEpoch(DAGEpoch const &epoch) override;
 
-  std::vector<DAGNode> GetLatest(bool previous_epoch_only) override;
+  std::vector<DAGNode> GetLatest(bool previous_epoch_only, uint64_t& epoch) override;
 
   ///////////////////////////////////////
   // Fns used for syncing

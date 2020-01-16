@@ -66,7 +66,7 @@ public:
   virtual uint64_t             CurrentEpoch() const                = 0;
   virtual bool                 HasEpoch(EpochHash const &hash)     = 0;
   virtual bool                 SatisfyEpoch(DAGEpoch const &)      = 0;
-  virtual std::vector<DAGNode> GetLatest(bool previous_epoch_only) = 0;
+  virtual std::vector<DAGNode> GetLatest(bool previous_epoch_only, uint64_t& epoch) = 0;
 
   // Functions used for syncing
   virtual std::vector<DAGNode> GetRecentlyAdded()                             = 0;

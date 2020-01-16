@@ -26,6 +26,7 @@
 #include "vm/module.hpp"
 #include "vm/vm.hpp"
 #include "core/digest.hpp"
+#include "vm_modules/ledger/forward_decl.hpp"
 
 #include <memory>
 #include <string>
@@ -120,11 +121,11 @@ private:
 
   std::unique_ptr<ContractContext> context_{};
 
-  Digest        digest_;
-  ModulePtr     module_;
-  CompilerPtr   compiler_;
-  IRPtr         ir_;
-  ExecutablePtr executable_;
+  Digest         digest_;
+  ModulePtr      module_;
+  CompilerPtr    compiler_;
+  IRPtr          ir_;
+  ExecutablePtr  executable_;
 
   std::string problem_function_;
   std::string work_function_;

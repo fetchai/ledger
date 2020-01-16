@@ -20,6 +20,7 @@
 #include "chain/address.hpp"
 #include "ledger/fees/chargeable.hpp"
 #include "ledger/upow/synergetic_base_types.hpp"
+#include "ledger/upow/synergetic_job.hpp"
 #include "vm/analyser.hpp"
 #include "vm/common.hpp"
 #include "vm/compiler.hpp"
@@ -60,8 +61,7 @@ class SynergeticMinerScript
 {
 public:
   using ConstByteArray = byte_array::ConstByteArray;
-  using SynergeticJob  = variant::Variant;
-  using SynergeticJobs = std::vector<SynergeticJob>;
+  using SynergeticJobs = std::vector<std::unique_ptr<SynergeticJob>>;
   using JobList        = std::vector<uint64_t>;
 
   enum class Status

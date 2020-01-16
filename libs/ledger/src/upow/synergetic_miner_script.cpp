@@ -30,6 +30,7 @@
 #include "vm_modules/core/structured_data.hpp"
 #include "vm_modules/math/bignumber.hpp"
 #include "vm_modules/vm_factory.hpp"
+#include "vm_modules/ledger/synergetic_job.hpp"
 
 #include <sstream>
 #include <stdexcept>
@@ -48,10 +49,9 @@ using crypto::Hash;
 using crypto::SHA256;
 
 using Status                = SynergeticMinerScript::Status;
-using SynergeticJob         = SynergeticMinerScript::SynergeticJob;
 using SynergeticJobs        = SynergeticMinerScript::SynergeticJobs;
-using VmStructuredData      = vm::Ptr<vm_modules::StructuredData>;
-using VmStructuredDataArray = vm::Ptr<vm::Array<VmStructuredData>>;
+using VmSynergeticJob       = vm::Ptr<vm_modules::ledger::SynergeticJob>;
+using VmSynergeticJobArray  = vm::Ptr<vm::Array<VmSynergeticJob>>;
 
 constexpr char const *LOGGING_NAME = "SynergeticMinerScript";
 
@@ -67,15 +67,19 @@ std::string ErrorsToLog(std::vector<std::string> const &errors)
   return oss.str();
 }
 
-VmStructuredData CreateSynergeticJobData(vm::VM *vm, SynergeticJob const &job)
+VmSynergeticJob CreateSynergeticJobData(vm::VM *vm, SynergeticJob const &job)
 {
-  VmStructuredData data{};
+  VmSynergeticJob data{};
 
   try
   {
-    // create the structured data
-    data =
-        StructuredData::ConstructorFromVariant(vm, vm->GetTypeId<VmStructuredData>(), job);
+    data = vm->CreateNewObject<vm_modules::ledger::SynergeticJob>();
+    data->set_contract_address(vm->CreateNewObject<vm::Address>(job.contract_address()));
+    data->set_id(job.id());
+    data->set_epoch(job.epoch());
+    data->set_problem_charge(job.problem_charge());
+    data->set_work_charge(job.work_charge());
+    data->set_clear_charge(job.clear_charge());
   }
   catch (std::exception const &ex)
   {
@@ -85,9 +89,9 @@ VmStructuredData CreateSynergeticJobData(vm::VM *vm, SynergeticJob const &job)
   return data;
 }
 
-VmStructuredDataArray CreateSynergeticJobData(vm::VM *vm, SynergeticJobs const &jobs)
+VmSynergeticJobArray CreateSynergeticJobData(vm::VM *vm, SynergeticJobs const &jobs)
 {
-  using UnderlyingArrayElement = vm::Array<VmStructuredData>::ElementType;
+  using UnderlyingArrayElement = vm::Array<VmSynergeticJob>::ElementType;
   using UnderlyingArray        = std::vector<UnderlyingArrayElement>;
 
   UnderlyingArray elements{};
@@ -96,7 +100,7 @@ VmStructuredDataArray CreateSynergeticJobData(vm::VM *vm, SynergeticJobs const &
   for (auto const &job : jobs)
   {
     // convert the problem data
-    auto data = CreateSynergeticJobData(vm, job);
+    auto data = CreateSynergeticJobData(vm, *job);
 
     if (data)
     {
@@ -105,14 +109,14 @@ VmStructuredDataArray CreateSynergeticJobData(vm::VM *vm, SynergeticJobs const &
   }
 
   // create the array
-  auto *ret = new vm::Array<VmStructuredData>(vm, vm->GetTypeId<vm::IArray>(),
-                                              vm->GetTypeId<VmStructuredData>(),
+  auto *ret = new vm::Array<VmSynergeticJob >(vm, vm->GetTypeId<vm::IArray>(),
+                                              vm->GetTypeId<VmSynergeticJob>(),
                                               static_cast<int32_t>(elements.size()));
 
   // move the constructed elements over to the array
   ret->elements = std::move(elements);
 
-  return VmStructuredDataArray{ret};
+  return VmSynergeticJobArray{ret};
 }
 
 }  // namespace
@@ -125,6 +129,8 @@ SynergeticMinerScript::SynergeticMinerScript(ConstByteArray const &source)
   {
     throw std::runtime_error("Empty source for synergetic miner script");
   }
+
+  vm_modules::ledger::SynergeticJob::Bind(*module_);
 
   FETCH_LOG_DEBUG(LOGGING_NAME, "Synergetic miner script source\n", source);
 

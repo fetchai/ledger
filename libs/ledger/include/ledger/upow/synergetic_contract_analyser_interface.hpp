@@ -19,6 +19,7 @@
 
 #include "ledger/upow/synergetic_contract.hpp"
 #include "variant/variant.hpp"
+#include "ledger/upow/synergetic_job.hpp"
 
 #include <cstdint>
 #include <vector>
@@ -29,8 +30,8 @@ namespace ledger {
 class SynergeticContractAnalyserInterface
 {
 public:
-  using Variant     = variant::Variant;
-  using ProblemData = ledger::SynergeticContract::ProblemData;
+  using SynergeticJobPtr = std::unique_ptr<SynergeticJob>;
+  using ProblemData      = ledger::SynergeticContract::ProblemData;
 
   // Construction / Destruction
   SynergeticContractAnalyserInterface()          = default;
@@ -38,7 +39,7 @@ public:
 
   /// @name Contract Analyser Interface
   /// @{
-  virtual Variant AnalyseContract(chain::Address const &contract_address, ProblemData const &problem_data) = 0;
+  virtual SynergeticJobPtr AnalyseContract(chain::Address const &contract_address, ProblemData const &problem_data) = 0;
   /// @}
 };
 

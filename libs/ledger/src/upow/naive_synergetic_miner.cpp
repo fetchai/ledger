@@ -28,6 +28,7 @@
 #include "ledger/upow/work.hpp"
 #include "logging/logging.hpp"
 #include "vm_modules/math/bignumber.hpp"
+#include "ledger/upow/synergetic_job.hpp"
 
 #include <random>
 #include <unordered_set>
@@ -111,7 +112,8 @@ void NaiveSynergeticMiner::Mine()
   // iterate through the latest DAG nodes and build a complete set of addresses to mine solutions
   // for
   // TODO(HUT): would be nicer to specify here what we want by type
-  auto dag_nodes = dag_->GetLatest(true);
+  uint64_t previous_epoch;
+  auto dag_nodes = dag_->GetLatest(true, previous_epoch);
 
   // loop through the data that is available for the previous epoch
   ProblemSpaces problem_spaces{};
@@ -146,21 +148,23 @@ void NaiveSynergeticMiner::Mine()
 #endif  // FETCH_LOG_DEBUG_ENABLED
 
   //Anlyise the problem space
-  std::vector<variant::Variant> job_descriptions{};
+  std::vector<SynergeticContractAnalyserInterface::SynergeticJobPtr> job_descriptions{};
   std::unordered_map<std::size_t, chain::Address> address_lookup{};
   std::size_t id = 0;
   for (auto const &problem : problem_spaces)
   {
     auto res = contract_analyser_->AnalyseContract(problem.first, problem.second);
-    if (res.IsUndefined())
+    if (!res)
     {
       continue;
     }
-    res["id"] = id;
+    res->set_id(id);
+    res->set_contract_address(problem.first);
+    res->set_epoch(previous_epoch);
     address_lookup[id] = problem.first;
     ++id;
-    FETCH_LOG_INFO(LOGGING_NAME, "Contract ", res["id"], " analysis: problem=", res["problem"], ", work=", res["work"],
-        ", clear=", res["clear"]);
+    FETCH_LOG_INFO(LOGGING_NAME, "Contract ", res->id(), " analysis: problem=", res->problem_charge(), ", work=", res->work_charge(),
+        ", clear=", res->clear_charge());
     job_descriptions.push_back(std::move(res));
   }
 

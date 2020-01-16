@@ -17,36 +17,41 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/upow/synergetic_contract_analyser_interface.hpp"
-
-#include <cstdint>
-#include <vector>
+#include "chain/address.hpp"
 
 namespace fetch {
 namespace ledger {
 
-class StorageInterface;
-
-
-class BasicSynergeticContractAnalyser : public SynergeticContractAnalyserInterface
+class SynergeticJob
 {
 public:
-  using SynergeticJobPtr = SynergeticContractAnalyserInterface::SynergeticJobPtr;
-  using ProblemData      = SynergeticContractAnalyserInterface::ProblemData;
+  using Address = chain::Address;
+  SynergeticJob() = default;
+  virtual ~SynergeticJob() = default;
 
-  // Construction / Destruction
-  BasicSynergeticContractAnalyser(StorageInterface& storage, crypto::Identity miner, std::size_t num_lanes);
-  virtual ~BasicSynergeticContractAnalyser() = default;
+  void set_id(uint64_t const &id);
+  void set_epoch(uint64_t const &epoch);
+  void set_problem_charge(uint64_t const &charge);
+  void set_work_charge(uint64_t const &charge);
+  void set_clear_charge(uint64_t const &charge);
+  void set_contract_address(Address address);
 
-  SynergeticJobPtr AnalyseContract(chain::Address const &contract_address, ProblemData const &problem_data) override;
+  uint64_t const &id() const;
+  uint64_t const &epoch() const;
+  uint64_t const &problem_charge() const;
+  uint64_t const &work_charge() const;
+  uint64_t const &clear_charge() const;
+  uint64_t const &total_charge() const;
+  Address  const &contract_address() const;
+
 
 private:
-  StorageInterface  &storage_;
-  crypto::Identity miner_;
-  std::size_t num_lanes_;
-
-
-  std::unique_ptr<SynergeticContract> GetContract(chain::Address const &contract_address);
+  uint64_t   id_{0};
+  Address    contract_address_;
+  uint64_t   epoch_{0};
+  uint64_t   problem_charge_{0};
+  uint64_t   work_charge_{0};
+  uint64_t   clear_charge_{0};
 
 };
 

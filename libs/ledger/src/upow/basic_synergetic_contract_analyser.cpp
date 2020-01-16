@@ -67,10 +67,9 @@ std::unique_ptr<SynergeticContract> BasicSynergeticContractAnalyser::GetContract
 }
 
 
-BasicSynergeticContractAnalyser::Variant BasicSynergeticContractAnalyser::AnalyseContract(chain::Address const &contract_address, ProblemData const &problem_data)
+BasicSynergeticContractAnalyser::SynergeticJobPtr BasicSynergeticContractAnalyser::AnalyseContract(
+    chain::Address const &contract_address, ProblemData const &problem_data)
 {
-  auto analysis_result{Variant::Object()};
-
   auto contract = GetContract(contract_address);
 
   if (!contract)
@@ -88,9 +87,10 @@ BasicSynergeticContractAnalyser::Variant BasicSynergeticContractAnalyser::Analys
     FETCH_LOG_WARN(LOGGING_NAME, "Analysis failed: unable to define the problem. Reason: ", ToString(status));
     return {};
   }
+  auto analysis_result = std::make_unique<SynergeticJob>();
 
   auto c = contract->CalculateFee();
-  analysis_result["problem"] = c;
+  analysis_result->set_problem_charge(c);
   charge = c;
 
   //Charge for work execution
@@ -106,7 +106,7 @@ BasicSynergeticContractAnalyser::Variant BasicSynergeticContractAnalyser::Analys
   }
 
   c = contract->CalculateFee();
-  analysis_result["work"] = c - charge;
+  analysis_result->set_work_charge(c - charge);
   charge = c;
 
   //complete function charge
@@ -125,7 +125,7 @@ BasicSynergeticContractAnalyser::Variant BasicSynergeticContractAnalyser::Analys
     return {};
   }
 
-  analysis_result["clear"] = contract->CalculateFee() - charge;
+  analysis_result->set_clear_charge(contract->CalculateFee() - charge);
 
   return analysis_result;
 }

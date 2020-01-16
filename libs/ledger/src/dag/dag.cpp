@@ -131,11 +131,12 @@ DAG::DAG(std::string db_name, bool load, CertificatePtr certificate)
   }
 }
 
-std::vector<DAGNode> DAG::GetLatest(bool previous_epoch_only)
+std::vector<DAGNode> DAG::GetLatest(bool previous_epoch_only, uint64_t& previous_epoch)
 {
   std::vector<DAGNode> ret;
   FETCH_LOCK(mutex_);
 
+  previous_epoch = previous_epoch_.block_number;
   for (auto const &node_hash : previous_epoch_.all_nodes)
   {
     bool dummy;
