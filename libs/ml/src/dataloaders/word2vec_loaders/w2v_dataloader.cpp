@@ -382,9 +382,6 @@ bool W2VLoader<T>::IsModeAvailable(DataLoaderMode mode)
   return mode == DataLoaderMode::TRAIN;
 }
 
-template <typename T>
-T const W2VLoader<T>::WindowContextUnused = static_cast<T>(-1);
-
 ///////////////////////////////
 /// EXPLICIT INSTANTIATIONS ///
 ///////////////////////////////

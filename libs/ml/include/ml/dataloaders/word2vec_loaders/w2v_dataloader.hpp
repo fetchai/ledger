@@ -92,6 +92,9 @@ private:
   void                     UpdateCursor() override;
 };
 
+template <typename T>
+T const W2VLoader<T>::WindowContextUnused = static_cast<T>(-1);
+
 }  // namespace dataloaders
 }  // namespace ml
 }  // namespace fetch
