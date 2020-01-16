@@ -19,6 +19,7 @@
 #include "gtest/gtest.h"
 #include "ml/layers/PRelu.hpp"
 #include "ml/meta/ml_type_traits.hpp"
+#include "ml/ops/loss_functions/mean_square_error_loss.hpp"
 #include "ml/serializers/ml_types.hpp"
 #include "ml/utilities/graph_builder.hpp"
 #include "test_types.hpp"
