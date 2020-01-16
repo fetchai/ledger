@@ -26,10 +26,6 @@
 #include "ml/ops/metrics/categorical_accuracy.hpp"
 #include "ml/ops/metrics/types.hpp"
 
-#include "ml/ops/loss_functions/cross_entropy_loss.hpp"
-#include "ml/ops/loss_functions/mean_square_error_loss.hpp"
-#include "ml/ops/loss_functions/softmax_cross_entropy_loss.hpp"
-
 #include "ml/optimisation/optimiser.hpp"
 #include "ml/optimisation/types.hpp"
 
