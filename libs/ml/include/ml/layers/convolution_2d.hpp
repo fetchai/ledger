@@ -23,10 +23,6 @@
 
 namespace fetch {
 namespace ml {
-
-template <class T>
-class SubGraph;
-
 namespace layers {
 
 template <class T>

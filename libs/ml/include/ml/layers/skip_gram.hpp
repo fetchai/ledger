@@ -26,9 +26,6 @@ namespace ml {
 template <typename T>
 class Ops;
 
-template <class T>
-class SubGraph;
-
 namespace layers {
 
 template <class T>

@@ -22,9 +22,7 @@
 #include "ml/ops/weights.hpp"
 
 namespace fetch {
-
 namespace ml {
-
 namespace layers {
 
 template <class T>
