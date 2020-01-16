@@ -106,7 +106,7 @@ MainChainRpcService::MainChainRpcService(MuddleEndpoint &             endpoint,
         "ledger_mainchain_service_state_complete_sync_with_peer_total",
         "The number of times in the complete sync with peer state")}
   , state_current_{telemetry::Registry::Instance().CreateGauge<uint32_t>(
-        "ledger_mainchain_service_state_complete_sync_with_peer_total",
+        "ledger_mainchain_service_state",
         "The number of times in the complete sync with peer state")}
   , new_block_duration_{telemetry::Registry::Instance().CreateHistogram(
         {1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1, 1.0, 1e1, 1e2, 1e3},
@@ -260,6 +260,8 @@ void MainChainRpcService::HandleChainResponse(Address const &address, BlockList 
 template <class Begin, class End>
 void MainChainRpcService::HandleChainResponse(Address const &address, Begin begin, End end)
 {
+  FETCH_MILLI_TIMER("MainChainRpc:HandleChainResposne");
+
   std::size_t added{0};
   std::size_t loose{0};
   std::size_t duplicate{0};
@@ -280,7 +282,7 @@ void MainChainRpcService::HandleChainResponse(Address const &address, Begin begi
     // add the block
     if (!ValidBlock(*it, "during fwd sync"))
     {
-      FETCH_LOG_DEBUG(LOGGING_NAME, "Synced bad proof block: 0x", it->hash.ToHex(),
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Synced invalid block: 0x", it->hash.ToHex(),
                       " from: muddle://", ToBase64(address));
       ++invalid;
       continue;
