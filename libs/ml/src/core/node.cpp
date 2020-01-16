@@ -106,7 +106,7 @@ void Node<TensorType>::SetBatchInputShapes(const ShapeVector &new_shapes)
 }
 
 template <typename TensorType>
-const ShapeVector &Node<TensorType>::BatchInputShapes()
+const ShapeVector &Node<TensorType>::BatchInputShapes() const
 {
   return op_ptr_->BatchInputShapes();
 }

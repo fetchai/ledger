@@ -140,7 +140,7 @@ public:
 
   void SetBatchInputShapes(std::vector<fetch::math::SizeVector> const &new_shapes);
 
-  std::vector<fetch::math::SizeVector> const &BatchInputShapes();
+  std::vector<fetch::math::SizeVector> const &BatchInputShapes() const;
 
   fetch::math::SizeVector BatchOutputShape();
 

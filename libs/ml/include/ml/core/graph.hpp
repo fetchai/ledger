@@ -271,5 +271,67 @@ std::string Graph<TensorType>::AddNode(std::string const &             node_name
   return updated_name;
 }
 
+/**
+ * generates a new variable name if necessary to ensure uniqueness within graph
+ * @param pre_string
+ * @return
+ */
+template <typename TensorType>
+template <typename OperationType>
+bool Graph<TensorType>::UpdateVariableName(std::string const &name, std::string &ret)
+{
+  ret                       = name;
+  std::string op_descriptor = (OperationType::DESCRIPTOR);
+  bool        is_duplicate  = false;
+  // search graph for existing variable names
+  if (ret.empty())
+  {  // if no name is specified, generate a default name
+    uint64_t name_idx = 0;
+    ret               = op_descriptor + "_" + std::to_string(name_idx);
+    while (!(nodes_.find(ret) == nodes_.end()))
+    {
+      ++name_idx;
+      ret = op_descriptor + "_" + std::to_string(name_idx);
+    }
+  }
+  else if (nodes_.find(ret) != nodes_.end())
+  {  // if a duplicated name is specified, shared weight is assumed
+    is_duplicate      = true;
+    uint64_t name_idx = 1;
+    ret               = name + "_Copy_" + std::to_string(name_idx);
+    while (!(nodes_.find(ret) == nodes_.end()))
+    {
+      ++name_idx;
+      ret = name + "_Copy_" + std::to_string(name_idx);
+    }
+  }
+
+  return is_duplicate;
+}
+
+template <typename TensorType>
+template <class OperationType, typename... Params>
+meta::IfIsShareable<TensorType, OperationType, typename Graph<TensorType>::NodePtrType>
+Graph<TensorType>::DuplicateNode(std::string const &node_name, std::string &updated_name)
+{
+  // if name is duplicated then shared node is required
+  NodePtrType target_node = GetNode(node_name);
+
+  // get a copy (shared when appropriate) of the target node Op
+  auto op_copyshare = target_node->GetOp()->MakeSharedCopy(target_node->GetOp());
+
+  // make a new node by giving it the copied op
+  return std::make_shared<Node<TensorType>>(OperationType::OpCode(), updated_name, op_copyshare);
+}
+
+template <typename TensorType>
+template <class OperationType, typename... Params>
+meta::IfIsNotShareable<TensorType, OperationType, typename Graph<TensorType>::NodePtrType>
+Graph<TensorType>::DuplicateNode(std::string const &node_name, std::string & /* updated_name */)
+{
+  throw ml::exceptions::InvalidMode(
+      "OperationType is not shareable. Cannot make duplicate of node named: " + node_name);
+}
+
 }  // namespace ml
 }  // namespace fetch
