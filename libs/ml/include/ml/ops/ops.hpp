@@ -55,18 +55,19 @@ public:
   virtual std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const = 0;
 
   /**
-   * @brief ComputeBatchOutputShape is expensive function and should be used only for initialisation
-   * or in ASSERT. On Forward you can use output.shape() and on Backward there is
-   * error_signal.shape()
+   * @brief ComputeBatchOutputShape is expensive function and should be used only for
+   * initialisation. This is a default naive implementation that is intended to be overriden in
+   * derived classes for better efficiency.
    * @param input_shapes
    * @return
    */
   virtual std::vector<SizeType> ComputeBatchOutputShape(ShapeVector const &input_shapes)
   {
     VecTensorType dummies;
+    dummies.reserve(input_shapes.size());
     for (auto &shape : input_shapes)
     {
-      dummies.push_back(std::make_shared<TensorType>(shape));
+      dummies.emplace_back(std::make_shared<TensorType>(shape));
     }
     SetBatchOutputShape(ComputeOutputShape(dummies));
     SetBatchInputShapes(input_shapes);
