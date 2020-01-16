@@ -20,7 +20,9 @@
 #include "dmlf/collective_learning/collective_learning_client.hpp"
 #include "dmlf/deprecated/abstract_learner_networker.hpp"
 #include "ml/dataloaders/tensor_dataloader.hpp"
+#include "ml/layers/fully_connected.hpp"
 #include "ml/meta/ml_type_traits.hpp"
+#include "ml/ops/activation.hpp"
 
 namespace fetch {
 namespace dmlf {
@@ -39,7 +41,7 @@ namespace details {
  */
 template <typename TensorType>
 std::shared_ptr<fetch::ml::model::Sequential<TensorType>> MakeBostonModel(
-    TensorType &data, TensorType &labels, typename TensorType::Type test_set_ratio)
+    TensorType &data, TensorType &labels, fetch::fixed_point::fp32_t test_set_ratio)
 {
   // Initialise model
   auto model_ptr = std::make_shared<fetch::ml::model::Sequential<TensorType>>();
@@ -68,7 +70,7 @@ std::shared_ptr<fetch::dmlf::collective_learning::CollectiveLearningClient<Tenso
 MakeBostonClient(
     std::string                                                                id,
     fetch::dmlf::collective_learning::ClientParams<typename TensorType::Type> &client_params,
-    TensorType &data, TensorType &labels, typename TensorType::Type test_set_ratio,
+    TensorType &data, TensorType &labels, fetch::fixed_point::fp32_t test_set_ratio,
     std::shared_ptr<deprecated_AbstractLearnerNetworker> networker,
     std::shared_ptr<std::mutex>                          console_mutex_ptr)
 {

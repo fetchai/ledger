@@ -131,6 +131,9 @@ int main(int argc, char **argv)
     return -2;
   }
 
+  // disable charge limit
+  vm.SetChargeLimit(0);
+
   // Setting VM up and running
   std::string        error;
   fetch::vm::Variant output;
