@@ -187,7 +187,9 @@ void BasicMiner::GenerateBlock(Block &block, std::size_t num_lanes, std::size_t 
 
       auto start = mining_pool_.begin();
       auto end   = start;
-      std::advance(end, std::min(num_tx_per_thread, mining_pool_.size()));
+      // NB: Clang's libc++ incorrectly requires the second argument to be of difference_type
+      // (it is of deduced type in the Standard)
+      std::advance(end, static_cast<int32_t>(std::min(num_tx_per_thread, mining_pool_.size())));
 
       // TODO(private issue XXX): While this efficiently breaks up the transaction queue into even
       //  chunks it assumes that the fees of the transactions are roughly the same. This algorithm
