@@ -22,6 +22,11 @@
 #include "ml/exceptions/exceptions.hpp"
 #include "ml/regularisers/reg_types.hpp"
 #include "ml/saveparams/saveable_params.hpp"
+#include "ml/utilities/graph_builder.hpp"
+#include "ml/optimisation/adam_optimiser.hpp"
+#include "ml/optimisation/lazy_adam_optimiser.hpp"
+#include "ml/optimisation/learning_rate_params.hpp"
+
 
 namespace fetch {
 namespace ml {
@@ -3487,6 +3492,272 @@ struct MapSerializer<ml::LayerSkipGramSaveableParams<TensorType>, D>
     map.ExpectKeyGetValue(IN_SIZE, sp.in_size);
     map.ExpectKeyGetValue(OUT_SIZE, sp.out_size);
     map.ExpectKeyGetValue(EMBED_IN, sp.embed_in);
+  }
+};
+
+/**
+ * serializer for Optimiser
+ * @tparam TensorType
+ */
+template <typename TensorType, typename D>
+struct MapSerializer<ml::optimisers::Optimiser<TensorType>, D>
+{
+  using Type       = ml::optimisers::Optimiser<TensorType>;
+  using DriverType = D;
+
+  // public member variables
+  static uint8_t const GRAPH               = 1;
+  static uint8_t const INPUT_NODE_NAMES    = 2;
+  static uint8_t const LABEL_NODE_NAME     = 3;
+  static uint8_t const OUTPUT_NODE_NAME    = 4;
+  static uint8_t const LEARNING_RATE       = 5;
+  static uint8_t const LEARNING_RATE_PARAM = 6;
+  static uint8_t const EPOCH               = 7;
+
+  // private member variables
+  static uint8_t const LOSS            = 8;
+  static uint8_t const LOSS_SUM        = 9;
+  static uint8_t const STEP            = 10;
+  static uint8_t const CUMULATIVE_STEP = 11;
+  static uint8_t const INPUT_FIRST     = 12;
+  static uint8_t const INPUT_SECOND    = 13;
+  static uint8_t const CUR_LABEL       = 14;
+  static uint8_t const PRED_LABEL      = 15;
+  static uint8_t const CUR_TIME        = 16;
+  static uint8_t const START_TIME      = 17;
+  static uint8_t const TIME_SPAN       = 18;
+  static uint8_t const STAT_STRING     = 19;
+  static uint8_t const BATCH_DATA      = 20;
+  static uint8_t const BATCH_LABELS    = 21;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &sp)
+  {
+    auto map = map_constructor(21);
+
+    // serialize the graph first
+    map.Append(GRAPH, sp.graph_->GetGraphSaveableParams());
+
+    map.Append(INPUT_NODE_NAMES, sp.input_node_names_);
+    map.Append(LABEL_NODE_NAME, sp.label_node_name_);
+    map.Append(OUTPUT_NODE_NAME, sp.output_node_name_);
+    map.Append(LEARNING_RATE, sp.learning_rate_);
+    map.Append(LEARNING_RATE_PARAM, sp.learning_rate_param_);
+
+    map.Append(EPOCH, sp.epoch_);
+    map.Append(LOSS, sp.loss_);
+    map.Append(LOSS_SUM, sp.loss_sum_);
+    map.Append(STEP, sp.step_);
+    map.Append(CUMULATIVE_STEP, sp.cumulative_step_);
+
+    map.Append(INPUT_FIRST, sp.input_.first);
+    map.Append(INPUT_SECOND, sp.input_.second);
+
+    map.Append(CUR_LABEL, sp.cur_label_);
+    map.Append(PRED_LABEL, sp.pred_label_);
+
+    map.Append(STAT_STRING, sp.stat_string_);
+    map.Append(BATCH_DATA, sp.batch_data_);
+    map.Append(BATCH_LABELS, sp.batch_labels_);
+  }
+
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &sp)
+  {
+    // deserialize the graph first
+    fetch::ml::GraphSaveableParams<TensorType> gsp;
+    map.ExpectKeyGetValue(GRAPH, gsp);
+    auto graph_ptr = std::make_shared<fetch::ml::Graph<TensorType>>();
+    ml::utilities::BuildGraph(gsp, graph_ptr);
+    sp.graph_ = graph_ptr;
+
+    map.ExpectKeyGetValue(INPUT_NODE_NAMES, sp.input_node_names_);
+    map.ExpectKeyGetValue(LABEL_NODE_NAME, sp.label_node_name_);
+    map.ExpectKeyGetValue(OUTPUT_NODE_NAME, sp.output_node_name_);
+    map.ExpectKeyGetValue(LEARNING_RATE, sp.learning_rate_);
+    map.ExpectKeyGetValue(LEARNING_RATE_PARAM, sp.learning_rate_param_);
+
+    // recover gradients and gradient trainables from graph
+    sp.Init();
+
+    map.ExpectKeyGetValue(EPOCH, sp.epoch_);
+    map.ExpectKeyGetValue(LOSS, sp.loss_);
+    map.ExpectKeyGetValue(LOSS_SUM, sp.loss_sum_);
+    map.ExpectKeyGetValue(STEP, sp.step_);
+    map.ExpectKeyGetValue(CUMULATIVE_STEP, sp.cumulative_step_);
+
+    map.ExpectKeyGetValue(INPUT_FIRST, sp.input_.first);
+    map.ExpectKeyGetValue(INPUT_SECOND, sp.input_.second);
+
+    map.ExpectKeyGetValue(CUR_LABEL, sp.cur_label_);
+    map.ExpectKeyGetValue(PRED_LABEL, sp.pred_label_);
+
+    map.ExpectKeyGetValue(STAT_STRING, sp.stat_string_);
+    map.ExpectKeyGetValue(BATCH_DATA, sp.batch_data_);
+    map.ExpectKeyGetValue(BATCH_LABELS, sp.batch_labels_);
+  }
+};
+
+/**
+ * serializer for SGDOptimiser
+ * @tparam TensorType
+ */
+template <typename TensorType, typename D>
+struct MapSerializer<ml::optimisers::AdamOptimiser<TensorType>, D>
+{
+  using Type                          = ml::optimisers::AdamOptimiser<TensorType>;
+  using DriverType                    = D;
+  static uint8_t const BASE_OPTIMISER = 1;
+  static uint8_t const CACHE          = 2;
+  static uint8_t const MOMENTUM       = 3;
+  static uint8_t const MT             = 4;
+  static uint8_t const VT             = 5;
+  static uint8_t const BETA1          = 6;
+  static uint8_t const BETA2          = 7;
+  static uint8_t const BETA1_T        = 8;
+  static uint8_t const BETA2_T        = 9;
+  static uint8_t const EPSILON        = 10;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &sp)
+  {
+    auto map = map_constructor(10);
+
+    // serialize the optimiser parent class
+    auto base_pointer = static_cast<ml::optimisers::Optimiser<TensorType> const *>(&sp);
+    map.Append(BASE_OPTIMISER, *base_pointer);
+
+    map.Append(CACHE, sp.cache_);
+    map.Append(MOMENTUM, sp.momentum_);
+    map.Append(MT, sp.mt_);
+    map.Append(VT, sp.vt_);
+    map.Append(BETA1, sp.beta1_);
+    map.Append(BETA2, sp.beta2_);
+    map.Append(BETA1_T, sp.beta1_t_);
+    map.Append(BETA2_T, sp.beta2_t_);
+    map.Append(EPSILON, sp.epsilon_);
+  }
+
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &sp)
+  {
+    auto base_pointer = static_cast<ml::optimisers::Optimiser<TensorType> *>(&sp);
+    map.ExpectKeyGetValue(BASE_OPTIMISER, *base_pointer);
+
+    map.ExpectKeyGetValue(CACHE, sp.cache_);
+    map.ExpectKeyGetValue(MOMENTUM, sp.momentum_);
+    map.ExpectKeyGetValue(MT, sp.mt_);
+    map.ExpectKeyGetValue(VT, sp.vt_);
+    map.ExpectKeyGetValue(BETA1, sp.beta1_);
+    map.ExpectKeyGetValue(BETA2, sp.beta2_);
+    map.ExpectKeyGetValue(BETA1_T, sp.beta1_t_);
+    map.ExpectKeyGetValue(BETA2_T, sp.beta2_t_);
+    map.ExpectKeyGetValue(EPSILON, sp.epsilon_);
+  }
+};
+
+/**
+ * serializer for LazyAdamOptimiser
+ * @tparam TensorType
+ */
+template <typename TensorType, typename D>
+struct MapSerializer<ml::optimisers::LazyAdamOptimiser<TensorType>, D>
+{
+  using Type                              = ml::optimisers::LazyAdamOptimiser<TensorType>;
+  using DriverType                        = D;
+  static uint8_t const BASE_OPTIMISER     = 1;
+  static uint8_t const CACHE              = 2;
+  static uint8_t const MOMENTUM           = 3;
+  static uint8_t const MT                 = 4;
+  static uint8_t const VT                 = 5;
+  static uint8_t const BETA1              = 6;
+  static uint8_t const BETA2              = 7;
+  static uint8_t const BETA1_T            = 8;
+  static uint8_t const BETA2_T            = 9;
+  static uint8_t const SPARSITY_THRESHOLD = 10;
+  static uint8_t const EPSILON            = 11;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &sp)
+  {
+    auto map = map_constructor(11);
+
+    // serialize the optimiser parent class
+    auto base_pointer = static_cast<ml::optimisers::Optimiser<TensorType> const *>(&sp);
+    map.Append(BASE_OPTIMISER, *base_pointer);
+
+    map.Append(CACHE, sp.cache_);
+    map.Append(MOMENTUM, sp.momentum_);
+    map.Append(MT, sp.mt_);
+    map.Append(VT, sp.vt_);
+    map.Append(BETA1, sp.beta1_);
+    map.Append(BETA2, sp.beta2_);
+    map.Append(BETA1_T, sp.beta1_t_);
+    map.Append(BETA2_T, sp.beta2_t_);
+    map.Append(SPARSITY_THRESHOLD, sp.sparsity_threshold);
+    map.Append(EPSILON, sp.epsilon_);
+  }
+
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &sp)
+  {
+    auto base_pointer = static_cast<ml::optimisers::Optimiser<TensorType> *>(&sp);
+    map.ExpectKeyGetValue(BASE_OPTIMISER, *base_pointer);
+
+    map.ExpectKeyGetValue(CACHE, sp.cache_);
+    map.ExpectKeyGetValue(MOMENTUM, sp.momentum_);
+    map.ExpectKeyGetValue(MT, sp.mt_);
+    map.ExpectKeyGetValue(VT, sp.vt_);
+    map.ExpectKeyGetValue(BETA1, sp.beta1_);
+    map.ExpectKeyGetValue(BETA2, sp.beta2_);
+    map.ExpectKeyGetValue(BETA1_T, sp.beta1_t_);
+    map.ExpectKeyGetValue(BETA2_T, sp.beta2_t_);
+    map.ExpectKeyGetValue(SPARSITY_THRESHOLD, sp.sparsity_threshold);
+    map.ExpectKeyGetValue(EPSILON, sp.epsilon_);
+  }
+};
+
+/**
+ * serializer for Learning Rate Params
+ * @tparam TensorType
+ */
+template <typename T, typename D>
+struct MapSerializer<ml::optimisers::LearningRateParam<T>, D>
+{
+  using Type       = ml::optimisers::LearningRateParam<T>;
+  using DriverType = D;
+
+  static uint8_t const LEARNING_RATE_DECAY_MODE = 1;
+  static uint8_t const STARTING_LEARNING_RATE   = 2;
+  static uint8_t const ENDING_LEARNING_RATE     = 3;
+  static uint8_t const LINEAR_DECAY_RATE        = 4;
+  static uint8_t const EXPONENTIAL_DECAY_RATE   = 5;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &sp)
+  {
+    auto map = map_constructor(5);
+
+    map.Append(LEARNING_RATE_DECAY_MODE, static_cast<uint8_t>(sp.mode));
+
+    map.Append(STARTING_LEARNING_RATE, sp.starting_learning_rate);
+    map.Append(ENDING_LEARNING_RATE, sp.ending_learning_rate);
+    map.Append(LINEAR_DECAY_RATE, sp.linear_decay_rate);
+    map.Append(EXPONENTIAL_DECAY_RATE, sp.exponential_decay_rate);
+  }
+
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &sp)
+  {
+    uint8_t lrdm;
+    map.ExpectKeyGetValue(LEARNING_RATE_DECAY_MODE, lrdm);
+    sp.mode =
+        static_cast<typename fetch::ml::optimisers::LearningRateParam<T>::LearningRateDecay>(lrdm);
+
+    map.ExpectKeyGetValue(STARTING_LEARNING_RATE, sp.starting_learning_rate);
+    map.ExpectKeyGetValue(ENDING_LEARNING_RATE, sp.ending_learning_rate);
+    map.ExpectKeyGetValue(LINEAR_DECAY_RATE, sp.linear_decay_rate);
+    map.ExpectKeyGetValue(EXPONENTIAL_DECAY_RATE, sp.exponential_decay_rate);
   }
 };
 

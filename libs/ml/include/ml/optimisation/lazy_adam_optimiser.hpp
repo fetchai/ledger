@@ -17,12 +17,14 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/core/graph.hpp"
 #include "ml/optimisation/adam_optimiser.hpp"
 
 namespace fetch {
 namespace ml {
 namespace optimisers {
+
+template <typename T>
+struct LearningRateParam;
 
 /**
  * LazyAdam is a variant of the Adam optimizer that handles sparse updates more efficiently.
@@ -72,7 +74,7 @@ public:
   template <typename X, typename D>
   friend struct serializers::MapSerializer;
 
-  OptimiserType OptimiserCode() override
+  inline OptimiserType OptimiserCode() override
   {
     return OptimiserType::LAZY_ADAM;
   }
@@ -89,68 +91,4 @@ private:
 
 }  // namespace optimisers
 }  // namespace ml
-
-namespace serializers {
-/**
- * serializer for LazyAdamOptimiser
- * @tparam TensorType
- */
-template <typename TensorType, typename D>
-struct MapSerializer<ml::optimisers::LazyAdamOptimiser<TensorType>, D>
-{
-  using Type                              = ml::optimisers::LazyAdamOptimiser<TensorType>;
-  using DriverType                        = D;
-  static uint8_t const BASE_OPTIMISER     = 1;
-  static uint8_t const CACHE              = 2;
-  static uint8_t const MOMENTUM           = 3;
-  static uint8_t const MT                 = 4;
-  static uint8_t const VT                 = 5;
-  static uint8_t const BETA1              = 6;
-  static uint8_t const BETA2              = 7;
-  static uint8_t const BETA1_T            = 8;
-  static uint8_t const BETA2_T            = 9;
-  static uint8_t const SPARSITY_THRESHOLD = 10;
-  static uint8_t const EPSILON            = 11;
-
-  template <typename Constructor>
-  static void Serialize(Constructor &map_constructor, Type const &sp)
-  {
-    auto map = map_constructor(11);
-
-    // serialize the optimiser parent class
-    auto base_pointer = static_cast<ml::optimisers::Optimiser<TensorType> const *>(&sp);
-    map.Append(BASE_OPTIMISER, *base_pointer);
-
-    map.Append(CACHE, sp.cache_);
-    map.Append(MOMENTUM, sp.momentum_);
-    map.Append(MT, sp.mt_);
-    map.Append(VT, sp.vt_);
-    map.Append(BETA1, sp.beta1_);
-    map.Append(BETA2, sp.beta2_);
-    map.Append(BETA1_T, sp.beta1_t_);
-    map.Append(BETA2_T, sp.beta2_t_);
-    map.Append(SPARSITY_THRESHOLD, sp.sparsity_threshold);
-    map.Append(EPSILON, sp.epsilon_);
-  }
-
-  template <typename MapDeserializer>
-  static void Deserialize(MapDeserializer &map, Type &sp)
-  {
-    auto base_pointer = static_cast<ml::optimisers::Optimiser<TensorType> *>(&sp);
-    map.ExpectKeyGetValue(BASE_OPTIMISER, *base_pointer);
-
-    map.ExpectKeyGetValue(CACHE, sp.cache_);
-    map.ExpectKeyGetValue(MOMENTUM, sp.momentum_);
-    map.ExpectKeyGetValue(MT, sp.mt_);
-    map.ExpectKeyGetValue(VT, sp.vt_);
-    map.ExpectKeyGetValue(BETA1, sp.beta1_);
-    map.ExpectKeyGetValue(BETA2, sp.beta2_);
-    map.ExpectKeyGetValue(BETA1_T, sp.beta1_t_);
-    map.ExpectKeyGetValue(BETA2_T, sp.beta2_t_);
-    map.ExpectKeyGetValue(SPARSITY_THRESHOLD, sp.sparsity_threshold);
-    map.ExpectKeyGetValue(EPSILON, sp.epsilon_);
-  }
-};
-}  // namespace serializers
-
 }  // namespace fetch

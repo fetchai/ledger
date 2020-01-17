@@ -17,6 +17,10 @@
 //------------------------------------------------------------------------------
 
 #include "ml/optimisation/rmsprop_optimiser.hpp"
+#include "math/standard_functions/sqrt.hpp"
+#include "math/standard_functions/pow.hpp"
+#include "ml/core/graph.hpp"
+#include "ml/ops/trainable.hpp"
 
 namespace fetch {
 namespace ml {

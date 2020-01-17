@@ -17,9 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/standard_functions/sqrt.hpp"
-#include "ml/core/graph.hpp"
-#include "optimiser.hpp"
+#include "ml/optimisation/optimiser.hpp"
 
 namespace fetch {
 namespace ml {
@@ -55,7 +53,7 @@ public:
 
   ~RMSPropOptimiser() override = default;
 
-  OptimiserType OptimiserCode() override
+  inline OptimiserType OptimiserCode() override
   {
     return OptimiserType::RMSPROP;
   }

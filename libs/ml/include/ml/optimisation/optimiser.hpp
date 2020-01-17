@@ -17,18 +17,20 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/base_types.hpp"
-#include "math/standard_functions/pow.hpp"
-#include "math/statistics/mean.hpp"
-#include "ml/core/graph.hpp"
+#include "math/tensor/tensor.hpp"
 #include "ml/dataloaders/dataloader.hpp"
-#include "ml/meta/ml_type_traits.hpp"
 #include "ml/optimisation/learning_rate_params.hpp"
-#include "ml/utilities/graph_builder.hpp"
+
 
 namespace fetch {
 namespace ml {
+
+
+template <class T>
+class Graph;
+
 namespace optimisers {
+
 
 static constexpr fetch::math::SizeType SIZE_NOT_SET = fetch::math::numeric_max<math::SizeType>();
 
@@ -56,7 +58,7 @@ public:
 
   virtual ~Optimiser() = default;
 
-  void SetGraph(std::shared_ptr<Graph<T>> graph)
+  inline void SetGraph(std::shared_ptr<Graph<T>> graph)
   {
     graph_ = graph;
   }
@@ -124,110 +126,4 @@ private:
 
 }  // namespace optimisers
 }  // namespace ml
-
-namespace serializers {
-/**
- * serializer for Optimiser
- * @tparam TensorType
- */
-template <typename TensorType, typename D>
-struct MapSerializer<ml::optimisers::Optimiser<TensorType>, D>
-{
-  using Type       = ml::optimisers::Optimiser<TensorType>;
-  using DriverType = D;
-
-  // public member variables
-  static uint8_t const GRAPH               = 1;
-  static uint8_t const INPUT_NODE_NAMES    = 2;
-  static uint8_t const LABEL_NODE_NAME     = 3;
-  static uint8_t const OUTPUT_NODE_NAME    = 4;
-  static uint8_t const LEARNING_RATE       = 5;
-  static uint8_t const LEARNING_RATE_PARAM = 6;
-  static uint8_t const EPOCH               = 7;
-
-  // private member variables
-  static uint8_t const LOSS            = 8;
-  static uint8_t const LOSS_SUM        = 9;
-  static uint8_t const STEP            = 10;
-  static uint8_t const CUMULATIVE_STEP = 11;
-  static uint8_t const INPUT_FIRST     = 12;
-  static uint8_t const INPUT_SECOND    = 13;
-  static uint8_t const CUR_LABEL       = 14;
-  static uint8_t const PRED_LABEL      = 15;
-  static uint8_t const CUR_TIME        = 16;
-  static uint8_t const START_TIME      = 17;
-  static uint8_t const TIME_SPAN       = 18;
-  static uint8_t const STAT_STRING     = 19;
-  static uint8_t const BATCH_DATA      = 20;
-  static uint8_t const BATCH_LABELS    = 21;
-
-  template <typename Constructor>
-  static void Serialize(Constructor &map_constructor, Type const &sp)
-  {
-    auto map = map_constructor(21);
-
-    // serialize the graph first
-    map.Append(GRAPH, sp.graph_->GetGraphSaveableParams());
-
-    map.Append(INPUT_NODE_NAMES, sp.input_node_names_);
-    map.Append(LABEL_NODE_NAME, sp.label_node_name_);
-    map.Append(OUTPUT_NODE_NAME, sp.output_node_name_);
-    map.Append(LEARNING_RATE, sp.learning_rate_);
-    map.Append(LEARNING_RATE_PARAM, sp.learning_rate_param_);
-
-    map.Append(EPOCH, sp.epoch_);
-    map.Append(LOSS, sp.loss_);
-    map.Append(LOSS_SUM, sp.loss_sum_);
-    map.Append(STEP, sp.step_);
-    map.Append(CUMULATIVE_STEP, sp.cumulative_step_);
-
-    map.Append(INPUT_FIRST, sp.input_.first);
-    map.Append(INPUT_SECOND, sp.input_.second);
-
-    map.Append(CUR_LABEL, sp.cur_label_);
-    map.Append(PRED_LABEL, sp.pred_label_);
-
-    map.Append(STAT_STRING, sp.stat_string_);
-    map.Append(BATCH_DATA, sp.batch_data_);
-    map.Append(BATCH_LABELS, sp.batch_labels_);
-  }
-
-  template <typename MapDeserializer>
-  static void Deserialize(MapDeserializer &map, Type &sp)
-  {
-    // deserialize the graph first
-    fetch::ml::GraphSaveableParams<TensorType> gsp;
-    map.ExpectKeyGetValue(GRAPH, gsp);
-    auto graph_ptr = std::make_shared<fetch::ml::Graph<TensorType>>();
-    ml::utilities::BuildGraph(gsp, graph_ptr);
-    sp.graph_ = graph_ptr;
-
-    map.ExpectKeyGetValue(INPUT_NODE_NAMES, sp.input_node_names_);
-    map.ExpectKeyGetValue(LABEL_NODE_NAME, sp.label_node_name_);
-    map.ExpectKeyGetValue(OUTPUT_NODE_NAME, sp.output_node_name_);
-    map.ExpectKeyGetValue(LEARNING_RATE, sp.learning_rate_);
-    map.ExpectKeyGetValue(LEARNING_RATE_PARAM, sp.learning_rate_param_);
-
-    // recover gradients and gradient trainables from graph
-    sp.Init();
-
-    map.ExpectKeyGetValue(EPOCH, sp.epoch_);
-    map.ExpectKeyGetValue(LOSS, sp.loss_);
-    map.ExpectKeyGetValue(LOSS_SUM, sp.loss_sum_);
-    map.ExpectKeyGetValue(STEP, sp.step_);
-    map.ExpectKeyGetValue(CUMULATIVE_STEP, sp.cumulative_step_);
-
-    map.ExpectKeyGetValue(INPUT_FIRST, sp.input_.first);
-    map.ExpectKeyGetValue(INPUT_SECOND, sp.input_.second);
-
-    map.ExpectKeyGetValue(CUR_LABEL, sp.cur_label_);
-    map.ExpectKeyGetValue(PRED_LABEL, sp.pred_label_);
-
-    map.ExpectKeyGetValue(STAT_STRING, sp.stat_string_);
-    map.ExpectKeyGetValue(BATCH_DATA, sp.batch_data_);
-    map.ExpectKeyGetValue(BATCH_LABELS, sp.batch_labels_);
-  }
-};
-}  // namespace serializers
-
 }  // namespace fetch

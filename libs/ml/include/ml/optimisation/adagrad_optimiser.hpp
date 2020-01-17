@@ -16,8 +16,6 @@
 //   limitations under the License.
 //
 //------------------------------------------------------------------------------
-
-#include "ml/core/graph.hpp"
 #include "ml/optimisation/optimiser.hpp"
 
 namespace fetch {
@@ -52,7 +50,7 @@ public:
 
   ~AdaGradOptimiser() override = default;
 
-  OptimiserType OptimiserCode() override
+  inline OptimiserType OptimiserCode() override
   {
     return OptimiserType::ADAGRAD;
   }

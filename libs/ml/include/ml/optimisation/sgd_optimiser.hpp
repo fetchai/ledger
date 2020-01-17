@@ -17,8 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/core/graph.hpp"
-#include "optimiser.hpp"
+#include "ml/optimisation/optimiser.hpp"
 
 namespace fetch {
 namespace ml {
@@ -52,7 +51,7 @@ public:
   template <typename X, typename D>
   friend struct serializers::MapSerializer;
 
-  OptimiserType OptimiserCode() override
+  inline OptimiserType OptimiserCode() override
   {
     return OptimiserType::SGD;
   }

@@ -17,7 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/core/graph.hpp"
 #include "ml/optimisation/optimiser.hpp"
 
 namespace fetch {
@@ -60,7 +59,7 @@ public:
   template <typename X, typename D>
   friend struct serializers::MapSerializer;
 
-  OptimiserType OptimiserCode() override
+  inline OptimiserType OptimiserCode() override
   {
     return OptimiserType::ADAM;
   }
@@ -83,65 +82,5 @@ protected:
 
 }  // namespace optimisers
 }  // namespace ml
-
-namespace serializers {
-/**
- * serializer for SGDOptimiser
- * @tparam TensorType
- */
-template <typename TensorType, typename D>
-struct MapSerializer<ml::optimisers::AdamOptimiser<TensorType>, D>
-{
-  using Type                          = ml::optimisers::AdamOptimiser<TensorType>;
-  using DriverType                    = D;
-  static uint8_t const BASE_OPTIMISER = 1;
-  static uint8_t const CACHE          = 2;
-  static uint8_t const MOMENTUM       = 3;
-  static uint8_t const MT             = 4;
-  static uint8_t const VT             = 5;
-  static uint8_t const BETA1          = 6;
-  static uint8_t const BETA2          = 7;
-  static uint8_t const BETA1_T        = 8;
-  static uint8_t const BETA2_T        = 9;
-  static uint8_t const EPSILON        = 10;
-
-  template <typename Constructor>
-  static void Serialize(Constructor &map_constructor, Type const &sp)
-  {
-    auto map = map_constructor(10);
-
-    // serialize the optimiser parent class
-    auto base_pointer = static_cast<ml::optimisers::Optimiser<TensorType> const *>(&sp);
-    map.Append(BASE_OPTIMISER, *base_pointer);
-
-    map.Append(CACHE, sp.cache_);
-    map.Append(MOMENTUM, sp.momentum_);
-    map.Append(MT, sp.mt_);
-    map.Append(VT, sp.vt_);
-    map.Append(BETA1, sp.beta1_);
-    map.Append(BETA2, sp.beta2_);
-    map.Append(BETA1_T, sp.beta1_t_);
-    map.Append(BETA2_T, sp.beta2_t_);
-    map.Append(EPSILON, sp.epsilon_);
-  }
-
-  template <typename MapDeserializer>
-  static void Deserialize(MapDeserializer &map, Type &sp)
-  {
-    auto base_pointer = static_cast<ml::optimisers::Optimiser<TensorType> *>(&sp);
-    map.ExpectKeyGetValue(BASE_OPTIMISER, *base_pointer);
-
-    map.ExpectKeyGetValue(CACHE, sp.cache_);
-    map.ExpectKeyGetValue(MOMENTUM, sp.momentum_);
-    map.ExpectKeyGetValue(MT, sp.mt_);
-    map.ExpectKeyGetValue(VT, sp.vt_);
-    map.ExpectKeyGetValue(BETA1, sp.beta1_);
-    map.ExpectKeyGetValue(BETA2, sp.beta2_);
-    map.ExpectKeyGetValue(BETA1_T, sp.beta1_t_);
-    map.ExpectKeyGetValue(BETA2_T, sp.beta2_t_);
-    map.ExpectKeyGetValue(EPSILON, sp.epsilon_);
-  }
-};
-}  // namespace serializers
 
 }  // namespace fetch

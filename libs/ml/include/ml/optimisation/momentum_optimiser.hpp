@@ -17,12 +17,12 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/core/graph.hpp"
 #include "ml/optimisation/optimiser.hpp"
 
 namespace fetch {
 namespace ml {
 namespace optimisers {
+
 
 /**
  * Adaptive Momentum optimiser
@@ -52,7 +52,7 @@ public:
 
   ~MomentumOptimiser() override = default;
 
-  OptimiserType OptimiserCode() override
+  inline OptimiserType OptimiserCode() override
   {
     return OptimiserType::MOMENTUM;
   }
