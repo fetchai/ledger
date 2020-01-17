@@ -221,7 +221,7 @@ LogRegistry::Logger &LogRegistry::GetLogger(char const *name)
 
     auto logger = std::make_shared<spdlog::logger>(name, dup_filter);
 
-    logger->set_level(ConvertFromLevel(DEFAULT_LEVEL));
+    logger->set_level(ConvertFromLevel(global_level()));
     logger->set_pattern("%^[%L]%$ %Y/%m/%d %T | %-30n : %v");
 
     // keep a reference of it

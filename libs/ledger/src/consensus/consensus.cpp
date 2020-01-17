@@ -786,7 +786,6 @@ Status Consensus::ValidBlock(Block const &current) const
 {
   MilliTimer const timer{"ValidBlock ", 1000};
   FETCH_LOCK(mutex_);
-  Status ret = Status::YES;
 
   // TODO(HUT): more thorough checks for genesis needed
   if (current.block_number == 0)
@@ -963,7 +962,7 @@ Status Consensus::ValidBlock(Block const &current) const
     return Status::NO;
   }
 
-  return ret;
+  return Status::YES;
 }
 
 void Consensus::Reset(StakeSnapshot const &snapshot, StorageInterface &storage)

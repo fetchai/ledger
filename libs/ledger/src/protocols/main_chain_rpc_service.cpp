@@ -188,7 +188,7 @@ void MainChainRpcService::OnNewBlock(Address const &from, Block &block, Address 
 
   trust_.AddFeedback(transmitter, p2p::TrustSubject::BLOCK, p2p::TrustQuality::NEW_INFORMATION);
 
-  if (!ValidBlock(block, "new block"))
+  if (!ValidBlock(block))
   {
 
     ++loose_blocks_seen_;
@@ -270,7 +270,7 @@ void MainChainRpcService::HandleChainResponse(Address const &address, Begin begi
     block->UpdateDigest();
 
     // add the block
-    if (!ValidBlock(*block, "during fwd sync"))
+    if (!ValidBlock(*block))
     {
       FETCH_LOG_DEBUG(LOGGING_NAME, "Synced bad proof block 0x", block->hash.ToHex(),
                       " from muddle://", ToBase64(address));
@@ -507,17 +507,9 @@ State MainChainRpcService::OnCompleteSyncWithPeer()
   return State::SYNCHRONISED;
 }
 
-bool MainChainRpcService::ValidBlock(Block const &block, char const *action) const
+bool MainChainRpcService::ValidBlock(Block const &block) const
 {
-  try
-  {
-    return !consensus_ || consensus_->ValidBlock(block) == ConsensusInterface::Status::YES;
-  }
-  catch (std::runtime_error const &ex)
-  {
-    FETCH_LOG_WARN(LOGGING_NAME, "Exception in consensus on validating ", action, ": ", ex.what());
-    return false;
-  }
+  return !consensus_ || consensus_->ValidBlock(block) == ConsensusInterface::Status::YES;
 }
 
 }  // namespace ledger
