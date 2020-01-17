@@ -144,7 +144,7 @@ public:
 
   /// Should be called after shape linking in Graph to complete all initialisations, that depends
   /// on layer shapes (like trainable parameter tensors init. and so on)
-  virtual void CompleteInitialisation()
+  virtual void CompleteConstruction()
   {
     // Empty deafult implementation for non-trainable Ops.
   }

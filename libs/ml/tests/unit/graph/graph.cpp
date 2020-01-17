@@ -715,12 +715,12 @@ TYPED_TEST(GraphTest, compute_shapes_dense_layers)
   fetch::ml::Graph<TensorType> g;
 
   std::string input   = g.template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Input", {});
-  std::string layer_1 = g.template AddNode<Dense>("FC1", {"Input"}, Dense::AUTODETECT_INPUT_SHAPE,
+  std::string layer_1 = g.template AddNode<Dense>("FC1", {"Input"}, Dense::AUTODETECT_INPUTS_COUNT,
                                                   FIRST_LAYER_OUTPUTS);
-  std::string layer_2 = g.template AddNode<Dense>("FC2", {"FC1"}, Dense::AUTODETECT_INPUT_SHAPE,
+  std::string layer_2 = g.template AddNode<Dense>("FC2", {"FC1"}, Dense::AUTODETECT_INPUTS_COUNT,
                                                   SECOND_LAYER_OUTPUTS);
-  std::string output =
-      g.template AddNode<Dense>("FC3", {"FC2"}, Dense::AUTODETECT_INPUT_SHAPE, THIRD_LAYER_OUTPUTS);
+  std::string output  = g.template AddNode<Dense>("FC3", {"FC2"}, Dense::AUTODETECT_INPUTS_COUNT,
+                                                 THIRD_LAYER_OUTPUTS);
 
   g.SetInput(input, data);
   g.Compile();
@@ -755,23 +755,31 @@ TYPED_TEST(GraphTest, compute_shapes_two_outputs)
 
   fetch::ml::Graph<TensorType> g;
 
-  //     input {4, 1}
-  //       |
-  //   d_e_n_s_e{21, 1}
-  //   /       \
-  // dense    dense
-  //{13, 1}  {9, 1}
+  //          ┌───────────────┐
+  //          │ input {4, 1}  │
+  //          └───────┐───────┘
+  //                  │
+  //                  ▼
+  //          ┌───────────────┐
+  //          │ dense {21, 1} │
+  //          └───────┐───────┘
+  //                  │
+  //         ┌────────┴─────────┐
+  //         ▼                  ▼
+  // ┌───────────────┐  ┌───────────────┐
+  // │ dense {13, 1} │  │ dense {9, 1}  │
+  // └───────────────┘  └───────────────┘
 
   std::string left_input =
       g.template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("LeftInput", {});
 
   std::string center = g.template AddNode<Dense>("Center", {"LeftInput"},
-                                                 Dense::AUTODETECT_INPUT_SHAPE, CENTER_OUTPUTS);
+                                                 Dense::AUTODETECT_INPUTS_COUNT, CENTER_OUTPUTS);
 
   std::string left_output  = g.template AddNode<Dense>("LeftOutput", {"Center"},
-                                                      Dense::AUTODETECT_INPUT_SHAPE, LEFT_OUTPUTS);
+                                                      Dense::AUTODETECT_INPUTS_COUNT, LEFT_OUTPUTS);
   std::string right_output = g.template AddNode<Dense>(
-      "RightOutput", {"Center"}, Dense::AUTODETECT_INPUT_SHAPE, RIGHT_OUTPUTS);
+      "RightOutput", {"Center"}, Dense::AUTODETECT_INPUTS_COUNT, RIGHT_OUTPUTS);
 
   g.SetInput(left_input, data);
   g.Compile();
@@ -813,13 +821,13 @@ TYPED_TEST(GraphTest, compute_shapes_two_inputs_two_outputs)
 
   //{4,1} {4,1}  {4,1} {4,1}
   //  li     ri   (li)  (ri)
-  //   \     /      \     /
+  //   |     |      |     |
   //  A_D_D{4,1}   S_U_B{4,1}
-  //      \         /
+  //      |         |
   //    M_U_L_T_I_P_L_Y {??}
   //         |
   //    Dense{21, 1}
-  //      /       \
+  //      |       |
   //    Dense    Dense
   //   {13, 1}  {9, 1}
 
@@ -838,12 +846,12 @@ TYPED_TEST(GraphTest, compute_shapes_two_inputs_two_outputs)
       "Multiply", {"AddInputs", "SubInputs"});
 
   std::string center = g.template AddNode<Dense>("Center", {"Multiply"},
-                                                 Dense::AUTODETECT_INPUT_SHAPE, CENTER_OUTPUTS);
+                                                 Dense::AUTODETECT_INPUTS_COUNT, CENTER_OUTPUTS);
 
   std::string left_output  = g.template AddNode<Dense>("LeftOutput", {"Center"},
-                                                      Dense::AUTODETECT_INPUT_SHAPE, LEFT_OUTPUTS);
+                                                      Dense::AUTODETECT_INPUTS_COUNT, LEFT_OUTPUTS);
   std::string right_output = g.template AddNode<Dense>(
-      "RightOutput", {"Center"}, Dense::AUTODETECT_INPUT_SHAPE, RIGHT_OUTPUTS);
+      "RightOutput", {"Center"}, Dense::AUTODETECT_INPUTS_COUNT, RIGHT_OUTPUTS);
 
   g.SetInput(left_input, left_data);
   g.SetInput(right_input, left_data);
@@ -897,7 +905,7 @@ TYPED_TEST(GraphTest, DISABLED_compute_shapes_sequential_denses_with_shared_ops)
       g.template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Input", {});
 
   std::string const dense_1 =
-      g.template AddNode<Dense>("SharedDense", {"Input"}, Dense::AUTODETECT_INPUT_SHAPE, NEURONS);
+      g.template AddNode<Dense>("SharedDense", {"Input"}, Dense::AUTODETECT_INPUTS_COUNT, NEURONS);
 
   std::string const dense_2 = g.template AddNode<Dense>("SharedDense", {dense_1});
   std::string const output  = g.template AddNode<Dense>("SharedDense", {dense_2});
@@ -926,21 +934,21 @@ TYPED_TEST(GraphTest, DISABLED_compute_shapes_two_diamonds_with_shared_ops)
   // Note: all 4 Dense nodes share the same single Op.
   //     {4,1}
   //    i_n_p_u_t
-  //    /       \
+  //    |       |
   //  Dense1  Dense1_copy
   //{42, 1}    {42, 1}
-  //    \         /
+  //    |         |
   //  M_U_L_T_I_P_L_Y
-  //    /         \
+  //    |         |
   // Dense2   Dense2_copy
   //{42, 1}    {42, 1}
-  //    \         /
+  //    |         |
   //  M_U_L_T_I_P_L_Y
 
   std::string input = g.template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Input", {});
 
   std::string dense_top_left =
-      g.template AddNode<Dense>("SharedDense", {"Input"}, Dense::AUTODETECT_INPUT_SHAPE, NEURONS);
+      g.template AddNode<Dense>("SharedDense", {"Input"}, Dense::AUTODETECT_INPUTS_COUNT, NEURONS);
 
   std::string dense_top_right = g.template AddNode<Dense>("SharedDense", {"Input"});
 
@@ -948,7 +956,7 @@ TYPED_TEST(GraphTest, DISABLED_compute_shapes_two_diamonds_with_shared_ops)
       "Multiply1", {dense_top_left, dense_top_right});
 
   std::string dense_bottom_left = g.template AddNode<Dense>(
-      "SharedDense2", {multiply1}, Dense::AUTODETECT_INPUT_SHAPE, NEURONS + 1);
+      "SharedDense2", {multiply1}, Dense::AUTODETECT_INPUTS_COUNT, NEURONS + 1);
 
   std::string dense_bottom_right = g.template AddNode<Dense>("SharedDense2", {"Multiply1"});
 

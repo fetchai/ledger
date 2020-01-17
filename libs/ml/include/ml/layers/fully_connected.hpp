@@ -75,7 +75,7 @@ public:
 
   OpPtrType MakeSharedCopy(OpPtrType me) override;
 
-  void CompleteInitialisation() override;
+  void CompleteConstruction() override;
 
   std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override;
 
@@ -98,35 +98,21 @@ public:
     return DESCRIPTOR;
   }
 
-  static constexpr SizeType AUTODETECT_INPUT_SHAPE = 0;
-  static constexpr bool     TIME_DISTRIBUTED       = true;
+  static constexpr SizeType AUTODETECT_INPUTS_COUNT = 0;
+  static constexpr bool     TIME_DISTRIBUTED        = true;
 
 private:
-  // Saveable params
-  SizeType in_size_          = fetch::math::numeric_max<SizeType>();
-  SizeType out_size_         = fetch::math::numeric_max<SizeType>();
-  bool     time_distributed_ = false;
+  SizeType    total_inputs_     = AUTODETECT_INPUTS_COUNT;
+  SizeType    total_outputs_    = 0;
+  bool        time_distributed_ = false;
+  bool        is_initialised_   = false;
+  std::string input_name_{};
+  std::string flattened_input_name_{};
+  std::string weights_name_{};
+  std::string bias_name_{};
+  WeightsInit init_mode_ = WeightsInit::XAVIER_GLOROT;
 
-  // Non-saveable params
-  bool                          is_initialised_ = false;
-  std::string                   input_;
-  std::string                   flattened_input_;
-  std::string                   weights_;
-  std::string                   bias_;
-  std::string                   output_;
-  fetch::ml::RegularisationType regulariser_;
-  DataType                      regularisation_rate_;
-  WeightsInit                   init_mode_;
-
-  std::string GetName()
-  {
-    std::string name = DESCRIPTOR;
-    if (time_distributed_)
-    {
-      name = "TimeDistributed_" + name;
-    }
-    return name;
-  }
+  std::string GetName();
 };
 
 }  // namespace layers

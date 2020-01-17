@@ -79,15 +79,11 @@ void Graph<TensorType>::Compile()
       LinkNodesInGraph(node_name, node_inputs);
     }
 
-    if (!connections_.empty())
-    {
-      ComputeAllNodeShapes();
-    }
-
     // TODO(1467) - implement validity checks on graph compilation - e.g. loss function should not
     // appear in middle of graph
     if (valid)
     {
+      ComputeAllNodeShapes();
       graph_state_ = GraphState::COMPILED;
     }
     else
@@ -217,6 +213,12 @@ TensorType Graph<TensorType>::ForwardImplementation(std::string const &node_name
 template <typename TensorType>
 void Graph<TensorType>::ComputeAllNodeShapes()
 {
+  if (connections_.empty())
+  {
+    FETCH_LOG_ERROR(DESCRIPTOR,
+                    " Batch output shape computing is impossible : connection list is empty");
+    return;
+  }
   for (auto const &node_name_and_ptr : nodes_)
   {
     NodePtrType node = node_name_and_ptr.second;
@@ -317,7 +319,7 @@ template <typename TensorType>
 bool Graph<TensorType>::SetRegularisation(std::string const &node_name, RegPtrType regulariser,
                                           DataType regularisation_rate)
 {
-  Compile();
+  // Compile();
   NodePtrType t             = trainable_lookup_.at(node_name);
   auto        trainable_ptr = std::dynamic_pointer_cast<ops::Trainable<TensorType>>(t->GetOp());
   trainable_ptr->SetRegularisation(regulariser, regularisation_rate);

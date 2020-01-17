@@ -105,6 +105,7 @@ public:
 
   void ResetCompile();
   void Compile();
+  void ComputeAllNodeShapes();
 
   void AddTrainable(NodePtrType node_ptr, std::string const &node_name);
   void AddTrainable(NodePtrType node_ptr, std::string const &node_name,
@@ -163,7 +164,6 @@ protected:
   void       SetInputReference(std::string const &node_name, TensorType const &data);
   void       InsertSharedCopy(std::shared_ptr<Graph<TensorType>> output_ptr);
   TensorType ForwardPropagate(std::string const &node_name, bool is_training = true);
-  void       ComputeAllNodeShapes();
 
 private:
   GraphState graph_state_ = GraphState::NOT_COMPILED;

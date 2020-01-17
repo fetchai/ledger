@@ -236,7 +236,7 @@ void Model<TensorType>::Compile(OptimiserType optimiser_type, ops::LossType loss
             optimiser_type, optimiser_ptr_, graph_ptr_, std::vector<std::string>{input_}, label_,
             error_, model_config_.learning_rate_param)))
     {
-      throw ml::exceptions::InvalidMode("DNNClassifier initialised with unrecognised optimiser");
+      throw ml::exceptions::InvalidMode("Model initialised with unrecognised optimiser");
     }
     optimiser_set_ = true;
   }

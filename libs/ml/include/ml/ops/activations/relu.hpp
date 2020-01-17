@@ -61,11 +61,11 @@ public:
   }
   static constexpr char const *DESCRIPTOR = "Relu";
 
-  OpType OperationType() const override  // TODO(ML-466) : move implementation to .cpp
+  inline OpType OperationType() const override
   {
     return this->OpCode();
   }
-  char const *Descriptor() const override  // TODO(ML-466) : move implementation to .cpp
+  inline char const *Descriptor() const override
   {
     return DESCRIPTOR;
   }
