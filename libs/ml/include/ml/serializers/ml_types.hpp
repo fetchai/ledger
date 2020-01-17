@@ -827,7 +827,7 @@ struct MapSerializer<ml::OpsSaveableParams, D>
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &osp)
   {
-    auto map = map_constructor(2);
+    auto map = map_constructor(4);
     map.Append(OP_CODE, osp.op_type);
     map.Append(IS_TRAINING, osp.is_training);
     map.Append(BATCH_INPUT_SHAPES, osp.batch_input_shapes);
