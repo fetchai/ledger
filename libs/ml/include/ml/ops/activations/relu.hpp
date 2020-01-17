@@ -59,7 +59,6 @@ public:
   {
     return OpType::OP_RELU;
   }
-
   static constexpr char const *DESCRIPTOR = "Relu";
 
   OpType OperationType() const override  // TODO(ML-466) : move implementation to .cpp

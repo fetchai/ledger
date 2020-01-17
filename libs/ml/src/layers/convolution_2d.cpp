@@ -54,8 +54,11 @@ Convolution2D<TensorType>::Convolution2D(SizeType const output_channels,
   output = fetch::ml::details::AddActivationNode<TensorType>(activation_type, this,
                                                              name + "_Activation", output);
 
+  // A temporary fix to prevent Conv2d shape computing crash. Dummy width (32) and height (32).
+  // TODO(VH): Split initialisation as in FullyConnected to prevent dummies.
   this->GetNode(weights)->SetBatchOutputShape(
       {output_channels_, input_channels_, kernel_size_, kernel_size_, 1});
+  this->GetNode(input)->SetBatchOutputShape({output_channels_, 32, 32, 1});
 
   this->AddInputNode(input);
   this->SetOutputNode(output);

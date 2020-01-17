@@ -73,6 +73,7 @@ public:
   {
     return OpType::OP_DATAHOLDER;
   }
+
   static constexpr char const *DESCRIPTOR = "DataHolder";
 
   OpType OperationType() const override  // TODO(ML-466) : move implementation to .cpp
