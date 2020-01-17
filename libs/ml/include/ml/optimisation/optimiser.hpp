@@ -21,6 +21,8 @@
 #include "ml/dataloaders/dataloader.hpp"
 #include "ml/optimisation/learning_rate_params.hpp"
 
+#include <chrono>
+
 namespace fetch {
 namespace ml {
 
