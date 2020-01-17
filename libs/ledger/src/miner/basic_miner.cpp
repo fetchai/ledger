@@ -62,10 +62,11 @@ T Clip3(T value, T min_value, T max_value)
  * @param log2_num_lanes Log2 of the number of lanes
  * @param num_slices The number of slices
  */
-BasicMiner::BasicMiner(uint32_t log2_num_lanes)
+BasicMiner::BasicMiner(uint32_t log2_num_lanes, StorageInterface &storage)
   : log2_num_lanes_{log2_num_lanes}
   , max_num_threads_{std::thread::hardware_concurrency()}
   , thread_pool_{max_num_threads_, "Miner"}
+  , storage_{storage}
   , mining_pool_size_{telemetry::Registry::Instance().CreateGauge<uint64_t>(
         "ledger_miner_mining_pool_size", "The current size of the mining pool")}
   , max_mining_pool_size_{telemetry::Registry::Instance().CreateGauge<uint64_t>(
@@ -138,10 +139,13 @@ void BasicMiner::GenerateBlock(Block &block, std::size_t num_lanes, std::size_t 
     mining_pool_.Splice(pending_);
   }
 
-  std::remove_if(mining_pool_.begin(), mining_pool_.end(), [&block](auto const &tx_layout) {
-    return fetch::chain::GetValidity(tx_layout, block.block_number) !=
-           chain::Transaction::Validity::VALID;
-  });
+  mining_pool_.Erase(std::remove_if(mining_pool_.begin(), mining_pool_.end(),
+                                    [&block](auto const &tx_layout) {
+                                      return fetch::chain::GetValidity(tx_layout,
+                                                                       block.block_number) !=
+                                             chain::Transaction::Validity::VALID;
+                                    }),
+                     mining_pool_.cend());
 
   // detect the transactions which have already been incorporated into previous blocks
   auto const duplicates =
@@ -184,7 +188,7 @@ void BasicMiner::GenerateBlock(Block &block, std::size_t num_lanes, std::size_t 
 
       auto start = mining_pool_.begin();
       auto end   = start;
-      std::advance(end, static_cast<int32_t>(std::min(num_tx_per_thread, mining_pool_.size())));
+      std::advance(end, std::min(num_tx_per_thread, mining_pool_.size()));
 
       // TODO(private issue XXX): While this efficiently breaks up the transaction queue into even
       //  chunks it assumes that the fees of the transactions are roughly the same. This algorithm

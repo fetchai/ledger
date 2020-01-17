@@ -64,7 +64,8 @@ public:
   std::size_t Remove(DigestSet const &digests);
   void        Splice(TransactionLayoutQueue &other);
   void        Splice(TransactionLayoutQueue &other, Iterator start, Iterator end);
-  Iterator    Erase(Iterator const &iterator);
+  Iterator    Erase(ConstIterator iterator);
+  Iterator    Erase(ConstIterator first, ConstIterator last);
 
   template <typename SortPredicate>
   void Sort(SortPredicate &&predicate);
