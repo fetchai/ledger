@@ -25,6 +25,7 @@
 #include "ml/ops/activation.hpp"
 #include "ml/ops/activations/dropout.hpp"
 #include "ml/ops/loss_functions/mean_square_error_loss.hpp"
+#include "ml/ops/placeholder.hpp"
 #include "ml/optimisation/adam_optimiser.hpp"
 #include "ml/utilities/graph_saver.hpp"
 #include "ml/utilities/min_max_scaler.hpp"
