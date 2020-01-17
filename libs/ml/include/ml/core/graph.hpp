@@ -19,6 +19,7 @@
 
 #include "ml/core/node.hpp"
 #include "ml/exceptions/exceptions.hpp"
+#include "ml/ops/constant.hpp"
 #include "ml/ops/trainable.hpp"
 #include "ml/state_dict.hpp"
 

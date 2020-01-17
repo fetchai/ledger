@@ -30,6 +30,7 @@
 #include "ml/ops/activation.hpp"
 #include "ml/ops/activations/dropout.hpp"
 #include "ml/ops/activations/softmax.hpp"
+#include "ml/ops/placeholder.hpp"
 
 #include "ml/ops/loss_functions/mean_square_error_loss.hpp"
 
