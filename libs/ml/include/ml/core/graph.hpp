@@ -155,8 +155,8 @@ public:
 
   void ResetGradients();
 
-  std::vector<std::string> GetTrainableNames() const;
-  std::vector<std::string> GetNodeNames() const;
+  std::vector<std::string> GetTrainableNames();
+  std::vector<std::string> GetNodeNames();
   NodePtrType              GetNodeByName(std::string const &name) const;
 
 protected:
@@ -222,10 +222,14 @@ private:
   template <typename Val1Type, typename Val2Type, typename GraphFunc>
   void RecursiveApplyTwo(Val1Type &val_1, Val2Type &val_2, GraphFunc graph_func) const;
 
-  void GetTrainableNames(std::vector<std::string> &ret, std::string level = "") const;
-  void GetNodeNames(std::vector<std::string> &ret, std::string level = "") const;
-
   bool IsValidNodeName(std::string const &node_name) const;
+
+  std::map<std::string, NodePtrType> &GetTrainableLookup();
+  std::map<std::string, NodePtrType> &GetNodesLookup();
+
+  template <typename LookupFunction>
+  void GetNamesRecursively(std::vector<std::string> &ret, LookupFunction const lookup_function,
+                           std::string level = "");
 };
 
 //////////////////////
