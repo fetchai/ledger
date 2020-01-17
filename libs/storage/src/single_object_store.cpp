@@ -114,7 +114,7 @@ void SingleObjectStore::GetRaw(ByteArray &data) const
 
   if (!file_handle_)
   {
-    throw StorageException("Attempted to Set before loading");
+    throw StorageException("Attempted to Get before loading");
   }
 
   file_handle_.seekg(0, std::fstream::beg);
@@ -130,7 +130,6 @@ void SingleObjectStore::GetRaw(ByteArray &data) const
   data.Resize(meta.object_size);
 
   file_handle_.read(data.char_pointer(), static_cast<int64_t>(meta.object_size));
-  file_handle_.flush();
 }
 
 void SingleObjectStore::SetRaw(ByteArray &data)
