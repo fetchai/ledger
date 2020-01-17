@@ -18,10 +18,9 @@
 //------------------------------------------------------------------------------
 
 #include "ml/model/model.hpp"
-#include "ml/serializers/sequential.hpp"
 #include "ml/model/model_config.hpp"
 #include "ml/ops/placeholder.hpp"
-
+#include "ml/serializers/sequential.hpp"
 
 #include <string>
 
@@ -33,11 +32,8 @@ template <typename TensorType>
 class Sequential : public Model<TensorType>
 {
 public:
-  using SizeType          = fetch::math::SizeType;
-  using DataType          = typename TensorType::Type;
-  using CostFunctionType  = fetch::ml::ops::CrossEntropyLoss<TensorType>;
-  using OptimiserType     = fetch::ml::OptimiserType;
-  using DataLoaderPtrType = typename Model<TensorType>::DataLoaderPtrType;
+  using SizeType = fetch::math::SizeType;
+  using DataType = typename TensorType::Type;
 
   Sequential();
   Sequential(Sequential const &other) = default;
