@@ -23,7 +23,6 @@ namespace fetch {
 namespace ml {
 namespace optimisers {
 
-
 /**
  * Adaptive Momentum optimiser
  * i.e.  Stochastic gradient descent with momentum

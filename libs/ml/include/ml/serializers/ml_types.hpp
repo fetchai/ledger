@@ -20,19 +20,36 @@
 #include "core/serializers/base_types.hpp"
 #include "core/serializers/main_serializer.hpp"
 #include "ml/exceptions/exceptions.hpp"
-#include "ml/regularisers/reg_types.hpp"
-#include "ml/saveparams/saveable_params.hpp"
-#include "ml/utilities/graph_builder.hpp"
 #include "ml/optimisation/adam_optimiser.hpp"
 #include "ml/optimisation/lazy_adam_optimiser.hpp"
 #include "ml/optimisation/learning_rate_params.hpp"
-
+#include "ml/regularisers/reg_types.hpp"
+#include "ml/saveparams/saveable_params.hpp"
+#include "ml/utilities/graph_builder.hpp"
 
 namespace fetch {
 namespace ml {
 
 template <typename T>
 struct StateDict;
+
+namespace model {
+template <typename TensorType>
+class Model;
+}
+
+namespace dataloaders {
+template <typename TensorType>
+class TensorDataLoader;
+}
+
+namespace optimisers {
+template <typename TensorType>
+class SGDOptimiser;
+
+template <typename TensorType>
+class AdamOptimiser;
+}  // namespace optimisers
 
 }  // namespace ml
 

@@ -16,11 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/core/graph.hpp"
-#include "ml/optimisation/adam_optimiser.hpp"
-#include "math/standard_functions/sqrt.hpp"
 #include "math/standard_functions/pow.hpp"
+#include "math/standard_functions/sqrt.hpp"
+#include "ml/core/graph.hpp"
 #include "ml/ops/trainable.hpp"
+#include "ml/optimisation/adam_optimiser.hpp"
 
 namespace fetch {
 namespace ml {

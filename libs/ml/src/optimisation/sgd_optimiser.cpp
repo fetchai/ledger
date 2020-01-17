@@ -16,9 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/optimisation/sgd_optimiser.hpp"
 #include "ml/core/graph.hpp"
 #include "ml/ops/trainable.hpp"
+#include "ml/optimisation/sgd_optimiser.hpp"
 
 namespace fetch {
 namespace ml {

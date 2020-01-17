@@ -21,16 +21,13 @@
 #include "ml/dataloaders/dataloader.hpp"
 #include "ml/optimisation/learning_rate_params.hpp"
 
-
 namespace fetch {
 namespace ml {
-
 
 template <class T>
 class Graph;
 
 namespace optimisers {
-
 
 static constexpr fetch::math::SizeType SIZE_NOT_SET = fetch::math::numeric_max<math::SizeType>();
 

@@ -19,6 +19,8 @@
 #include "gtest/gtest.h"
 #include "ml/layers/scaled_dot_product_attention.hpp"
 #include "ml/ops/loss_functions/mean_square_error_loss.hpp"
+#include "ml/ops/placeholder.hpp"
+#include "ml/ops/prelu_op.hpp"
 #include "ml/optimisation/sgd_optimiser.hpp"
 #include "ml/regularisers/regulariser.hpp"
 #include "ml/serializers/ml_types.hpp"

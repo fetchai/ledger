@@ -16,6 +16,7 @@
 //   limitations under the License.
 //
 //------------------------------------------------------------------------------
+
 #include "ml/optimisation/optimiser.hpp"
 
 namespace fetch {

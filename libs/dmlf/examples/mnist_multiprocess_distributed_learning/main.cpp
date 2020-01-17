@@ -58,11 +58,12 @@ int main(int argc, char **argv)
       fetch::dmlf::collective_learning::utilities::ClientParamsFromJson<TensorType>(
           std::string(argv[1]), doc);
 
-  auto data_file      = doc["data"].As<std::string>();
-  auto labels_file    = doc["labels"].As<std::string>();
-  auto n_rounds       = doc["n_rounds"].As<SizeType>();
-  auto n_peers        = doc["n_peers"].As<SizeType>();
-  auto test_set_ratio = fetch::math::AsType<DataType>(doc["test_set_ratio"].As<float>());
+  auto data_file   = doc["data"].As<std::string>();
+  auto labels_file = doc["labels"].As<std::string>();
+  auto n_rounds    = doc["n_rounds"].As<SizeType>();
+  auto n_peers     = doc["n_peers"].As<SizeType>();
+  auto test_set_ratio =
+      fetch::math::AsType<fetch::fixed_point::fp32_t>(doc["test_set_ratio"].As<float>());
 
   // get the network config file
   fetch::json::JSONDocument network_doc;

@@ -17,7 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-
 namespace fetch {
 namespace ml {
 namespace optimisers {
