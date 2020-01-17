@@ -73,10 +73,10 @@ public:
 }  // namespace serializers
 }  // namespace fetch
 
-TEST(single_object_store, load_and_expect_throw)
+TEST(single_object_store, load_and_expect_false)
 {
   SingleObjectStore store;
-  store.Load("single_obj_store_test1.db");
+  EXPECT_TRUE(store.Load("single_obj_store_test1.db"));
   store.Clear();
 
   // Expect a throw if attempt to get from an empty file
@@ -87,7 +87,7 @@ TEST(single_object_store, load_and_expect_throw)
 TEST(single_object_store, load_and_expect_throw_wrong_data)
 {
   SingleObjectStore store;
-  store.Load("single_obj_store_test2.db");
+  EXPECT_TRUE(store.Load("single_obj_store_test2.db"));
   store.Clear();
 
   // Set a string
@@ -102,7 +102,7 @@ TEST(single_object_store, save_reload_expect_success)
 {
   {
     SingleObjectStore store;
-    store.Load("single_obj_store_test3.db");
+    EXPECT_TRUE(store.Load("single_obj_store_test3.db"));
     store.Clear();
 
     // Set a string
@@ -137,7 +137,7 @@ TEST(single_object_store, load_and_write_to_variable_sizes)
 
     {
       SingleObjectStore store;
-      store.Load("single_obj_store_test4.db");
+      EXPECT_TRUE(store.Load("single_obj_store_test4.db"));
 
       uint64_t random = lfg();
       ref.value1      = static_cast<uint64_t>(random);
@@ -148,7 +148,7 @@ TEST(single_object_store, load_and_write_to_variable_sizes)
     }
 
     SingleObjectStore store;
-    store.Load("single_obj_store_test4.db");
+    EXPECT_TRUE(store.Load("single_obj_store_test4.db"));
     store.Get(ref2);
 
     EXPECT_EQ(ref, ref2);
