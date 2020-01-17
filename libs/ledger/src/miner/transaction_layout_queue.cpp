@@ -203,13 +203,26 @@ void TransactionLayoutQueue::Splice(TransactionLayoutQueue &other, Iterator star
   list_.splice(list_.end(), other.list_, begin, end);
 }
 
-TransactionLayoutQueue::Iterator TransactionLayoutQueue::Erase(Iterator const &iterator)
+TransactionLayoutQueue::Iterator TransactionLayoutQueue::Erase(ConstIterator iterator)
 {
   // remove the associated digest from the set
   digests_.erase(iterator->digest());
 
   // remove the list element
   return list_.erase(iterator);
+}
+
+TransactionLayoutQueue::Iterator TransactionLayoutQueue::Erase(ConstIterator first,
+                                                               ConstIterator last)
+{
+  // remove the associated digests from the set
+  for (auto itr = first; itr != last; ++itr)
+  {
+    digests_.erase(itr->digest());
+  }
+
+  // remove the list elements
+  return list_.erase(first, last);
 }
 
 TransactionLayoutQueue::ConstIterator TransactionLayoutQueue::cbegin() const

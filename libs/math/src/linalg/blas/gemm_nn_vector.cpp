@@ -100,7 +100,7 @@ void Blas<S, Signature(_C <= _alpha, _A, _B, _beta, _C),
 
     for (l = 0; l < a.width(); ++l)
     {
-      Type temp = alpha * b(l, j);
+      auto temp = static_cast<Type>(alpha * b(l, j));
 
       auto ret_slice = c.data().slice(c.padded_height() * j, c.height());
       auto slice_c_j = c.data().slice(c.padded_height() * std::size_t(j), c.padded_height());
@@ -115,6 +115,14 @@ void Blas<S, Signature(_C <= _alpha, _A, _B, _beta, _C),
     }
   }
 }
+
+template class Blas<int32_t, Signature(_C <= _alpha, _A, _B, _beta, _C),
+                    Computes(_C <= _alpha * _A * _B + _beta * _C),
+                    platform::Parallelisation::VECTORISE>;
+
+template class Blas<int64_t, Signature(_C <= _alpha, _A, _B, _beta, _C),
+                    Computes(_C <= _alpha * _A * _B + _beta * _C),
+                    platform::Parallelisation::VECTORISE>;
 
 template class Blas<double, Signature(_C <= _alpha, _A, _B, _beta, _C),
                     Computes(_C <= _alpha * _A * _B + _beta * _C),

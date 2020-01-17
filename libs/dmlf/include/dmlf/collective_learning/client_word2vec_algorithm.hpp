@@ -92,7 +92,7 @@ ClientWord2VecAlgorithm<TensorType>::ClientWord2VecAlgorithm(
   // calculate the compatible linear lr decay
   // this decay rate guarantees that the lr is reduced to zero by the
   // end of an epoch (despite capping by ending learning rate)
-  DataType est_samples                      = w2v_data_loader_ptr_->EstimatedSampleNumber();
+  SizeType est_samples                      = w2v_data_loader_ptr_->EstimatedSampleNumber();
   tp_.learning_rate_param.linear_decay_rate = DataType{1} / est_samples;
   std::cout << "id: " << id << ", dataloader_.EstimatedSampleNumber(): " << est_samples
             << std::endl;
