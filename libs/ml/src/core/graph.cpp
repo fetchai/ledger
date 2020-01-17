@@ -1024,6 +1024,18 @@ void Graph<TensorType>::RecursiveApplyTwo(Val1Type &val_1, Val2Type &val_2,
 }
 
 /**
+ * Return list of all trainable node names in format GRAPH1/...SUBGRAPHS../LEAF
+ * @return std::vector<std::string> list of names of all trainables in all subgraphs
+ */
+template <typename TensorType>
+std::vector<std::string> Graph<TensorType>::GetTrainableNames() const
+{
+  std::vector<std::string> ret;
+  GetTrainableNames(ret);
+  return ret;
+}
+
+/**
  * Recursive list of all trainable nodes in a graph
  * @param ret
  * @param level
@@ -1033,7 +1045,14 @@ void Graph<TensorType>::GetTrainableNames(std::vector<std::string> &ret, std::st
 {
   for (auto const &t : trainable_lookup_)
   {
-    ret.push_back(level + "/" + t.first);
+    if (level == "")
+    {
+      ret.push_back(t.first);
+    }
+    else
+    {
+      ret.push_back(level + "/" + t.first);
+    }
   }
 
   // Recursive apply on all subgraphs
@@ -1062,15 +1081,60 @@ void Graph<TensorType>::GetTrainableNames(std::vector<std::string> &ret, std::st
 }
 
 /**
- * Return list of all trainable node names in format GRAPH1/...SUBGRAPHS../LEAF
- * @return std::vector<std::string> list of names of all trainables in all subgraphs
+ * Return list of all node names in format GRAPH1/...SUBGRAPHS../LEAF
+ * @return std::vector<std::string> list of names of all nodes in all subgraphs
  */
 template <typename TensorType>
-std::vector<std::string> Graph<TensorType>::GetTrainableNames() const
+std::vector<std::string> Graph<TensorType>::GetNodeNames() const
 {
   std::vector<std::string> ret;
-  GetTrainableNames(ret);
+  GetNodeNames(ret);
   return ret;
+}
+
+/**
+ * Recursive list of all nodes in a graph
+ * @param ret
+ * @param level
+ */
+template <typename TensorType>
+void Graph<TensorType>::GetNodeNames(std::vector<std::string> &ret, std::string level) const
+{
+  for (auto const &t : nodes_)
+  {
+    if (level == "")
+    {
+      ret.push_back(t.first);
+    }
+    else
+    {
+      ret.push_back(level + "/" + t.first);
+    }
+  }
+
+  // Recursive apply on all subgraphs
+  for (auto &node_pair : nodes_)
+  {
+    auto op_ptr = node_pair.second->GetOp();
+
+    auto graph_ptr = std::dynamic_pointer_cast<Graph<TensorType>>(op_ptr);
+
+    // if it's a graph
+    if (graph_ptr)
+    {
+      std::string next_level;
+      if (level == "")
+      {
+        next_level = node_pair.first;
+      }
+      else
+      {
+        next_level = level + "/" + node_pair.first;
+      }
+
+      ((*graph_ptr).GetNodeNames)(ret, next_level);
+    }
+  }
 }
 
 /**

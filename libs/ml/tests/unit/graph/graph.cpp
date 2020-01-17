@@ -707,7 +707,8 @@ TYPED_TEST(GraphTest, graph_getTrainableNames)
 
   std::vector<std::string> names = g->GetTrainableNames();
 
-  // Test weights
+  // Test names
+  ASSERT_EQ(names.size(), 6);
   EXPECT_EQ(names.at(0), "FC1/FullyConnected_Bias");
   EXPECT_EQ(names.at(1), "FC1/FullyConnected_Weights");
   EXPECT_EQ(names.at(2), "FC2/FullyConnected_Bias");
@@ -716,7 +717,7 @@ TYPED_TEST(GraphTest, graph_getTrainableNames)
   EXPECT_EQ(names.at(5), "FC3/FullyConnected_Weights");
 }
 
-TYPED_TEST(GraphTest, graph_getNodeByName)
+TYPED_TEST(GraphTest, graph_getNodeByName_as_weight)
 {
   using TensorType = TypeParam;
 
@@ -739,6 +740,27 @@ TYPED_TEST(GraphTest, graph_getNodeByName)
   EXPECT_EQ(weight.shape().at(1), 1);
 }
 
+TYPED_TEST(GraphTest, graph_getNodeByName_as_graph)
+{
+  using TensorType = TypeParam;
+
+  // Create graph
+  auto g = MakeGraph<TensorType>();
+
+  auto node_ptr = g->GetNodeByName("FC1");
+
+  ASSERT_TRUE(node_ptr);
+  EXPECT_EQ(node_ptr->GetNodeName(), "FC1");
+
+  auto graph_ptr = std::dynamic_pointer_cast<Graph<TensorType>>(node_ptr->GetOp());
+  ASSERT_TRUE(graph_ptr);
+
+  std::vector<std::string> names = graph_ptr->GetTrainableNames();
+
+  EXPECT_EQ(names.at(0), "FullyConnected_Bias");
+  EXPECT_EQ(names.at(1), "FullyConnected_Weights");
+}
+
 TYPED_TEST(GraphTest, graph_invalidName)
 {
   using TensorType = TypeParam;
@@ -748,6 +770,45 @@ TYPED_TEST(GraphTest, graph_invalidName)
 
   EXPECT_THROW(g.template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Input/", {}),
                std::runtime_error);
+}
+
+TYPED_TEST(GraphTest, graph_getNodeNames)
+{
+  using TensorType = TypeParam;
+
+  // Create graph
+  auto g = MakeGraph<TensorType>();
+
+  std::vector<std::string> names = g->GetNodeNames();
+
+  // Test names
+  ASSERT_EQ(names.size(), 26);
+  EXPECT_EQ(names.at(0), "FC1");
+  EXPECT_EQ(names.at(1), "FC2");
+  EXPECT_EQ(names.at(2), "FC3");
+  EXPECT_EQ(names.at(3), "Input");
+  EXPECT_EQ(names.at(4), "Label");
+  EXPECT_EQ(names.at(5), "FC1/FullyConnected_Activation");
+  EXPECT_EQ(names.at(6), "FC1/FullyConnected_Add");
+  EXPECT_EQ(names.at(7), "FC1/FullyConnected_Bias");
+  EXPECT_EQ(names.at(8), "FC1/FullyConnected_Flatten");
+  EXPECT_EQ(names.at(9), "FC1/FullyConnected_Input");
+  EXPECT_EQ(names.at(10), "FC1/FullyConnected_MatrixMultiply");
+  EXPECT_EQ(names.at(11), "FC1/FullyConnected_Weights");
+  EXPECT_EQ(names.at(12), "FC2/FullyConnected_Activation");
+  EXPECT_EQ(names.at(13), "FC2/FullyConnected_Add");
+  EXPECT_EQ(names.at(14), "FC2/FullyConnected_Bias");
+  EXPECT_EQ(names.at(15), "FC2/FullyConnected_Flatten");
+  EXPECT_EQ(names.at(16), "FC2/FullyConnected_Input");
+  EXPECT_EQ(names.at(17), "FC2/FullyConnected_MatrixMultiply");
+  EXPECT_EQ(names.at(18), "FC2/FullyConnected_Weights");
+  EXPECT_EQ(names.at(19), "FC3/FullyConnected_Activation");
+  EXPECT_EQ(names.at(20), "FC3/FullyConnected_Add");
+  EXPECT_EQ(names.at(21), "FC3/FullyConnected_Bias");
+  EXPECT_EQ(names.at(22), "FC3/FullyConnected_Flatten");
+  EXPECT_EQ(names.at(23), "FC3/FullyConnected_Input");
+  EXPECT_EQ(names.at(24), "FC3/FullyConnected_MatrixMultiply");
+  EXPECT_EQ(names.at(25), "FC3/FullyConnected_Weights");
 }
 
 }  // namespace test
