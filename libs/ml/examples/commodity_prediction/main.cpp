@@ -20,12 +20,20 @@
 #include "math/distance/cosine.hpp"
 #include "math/tensor/tensor.hpp"
 #include "math/utilities/ReadCSV.hpp"
+
 #include "ml/core/graph.hpp"
 #include "ml/dataloaders/tensor_dataloader.hpp"
 #include "ml/exceptions/exceptions.hpp"
+
 #include "ml/layers/fully_connected.hpp"
+
 #include "ml/ops/activation.hpp"
+#include "ml/ops/activations/dropout.hpp"
+#include "ml/ops/activations/softmax.hpp"
+#include "ml/ops/placeholder.hpp"
+
 #include "ml/ops/loss_functions/mean_square_error_loss.hpp"
+
 #include "ml/optimisation/adam_optimiser.hpp"
 
 #include <iostream>
