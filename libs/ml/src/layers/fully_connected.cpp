@@ -164,6 +164,10 @@ std::shared_ptr<fetch::ml::ops::Ops<TensorType>> FullyConnected<TensorType>::Mak
   copyshare->total_outputs_      = total_outputs_;
   copyshare->batch_output_shape_ = this->batch_output_shape_;
   copyshare->batch_input_shapes_ = this->batch_input_shapes_;
+  copyshare->is_initialised_     = is_initialised_;
+  copyshare->weights_name_       = weights_name_;
+  copyshare->bias_name_          = bias_name_;
+  copyshare->init_mode_          = init_mode_;
 
   SubGraph<TensorType>::InsertSharedCopy(copyshare);
 
@@ -183,9 +187,13 @@ std::shared_ptr<OpsSaveableParams> FullyConnected<TensorType>::GetOpSaveablePara
   *sg_ptr2     = *sg_ptr1;
 
   // asign layer specific params
-  ret->in_size          = total_inputs_;
-  ret->out_size         = total_outputs_;
+  ret->total_inputs_    = total_inputs_;
+  ret->total_outputs_   = total_outputs_;
   ret->time_distributed = time_distributed_;
+  ret->is_initialised   = is_initialised_;
+  ret->weights_name     = weights_name_;
+  ret->bias_name        = bias_name_;
+  ret->init_mode        = static_cast<int>(init_mode_);
 
   return ret;
 }
@@ -194,9 +202,13 @@ template <typename TensorType>
 void FullyConnected<TensorType>::SetOpSaveableParams(SPType const &sp)
 {
   // assign layer specific params
-  total_inputs_     = sp.in_size;
-  total_outputs_    = sp.out_size;
+  total_inputs_     = sp.total_inputs_;
+  total_outputs_    = sp.total_outputs_;
   time_distributed_ = sp.time_distributed;
+  is_initialised_   = sp.is_initialised;
+  weights_name_     = sp.weights_name;
+  bias_name_        = sp.bias_name;
+  init_mode_        = static_cast<WeightsInit>(sp.init_mode);
 }
 
 template <typename TensorType>
@@ -224,25 +236,25 @@ template <typename TensorType>
 math::SizeVector FullyConnected<TensorType>::ComputeBatchOutputShape(
     const std::vector<math::SizeVector> &input_shapes)
 {
-  if (time_distributed_)
+  if (!time_distributed_)
   {
-    assert((this->total_inputs_ == AUTODETECT_INPUTS_COUNT) ||
-           (input_shapes.front().at(0) == total_inputs_));
-
     this->SetBatchInputShapes(input_shapes);
-    if (input_shapes.front().size() == 3)
-    {
-      this->SetBatchOutputShape({this->total_outputs_, input_shapes.front().at(1), 1});
-    }
-    else
-    {
-      this->SetBatchOutputShape({this->total_outputs_, 1, 1});
-    }
+    this->SetBatchOutputShape({this->total_outputs_, 1});
     return this->batch_output_shape_;
   }
 
+  assert((this->total_inputs_ == AUTODETECT_INPUTS_COUNT) ||
+         (input_shapes.front().at(0) == total_inputs_));
+
   this->SetBatchInputShapes(input_shapes);
-  this->SetBatchOutputShape({this->total_outputs_, 1});
+  if (input_shapes.front().size() == 3)
+  {
+    this->SetBatchOutputShape({this->total_outputs_, input_shapes.front().at(1), 1});
+  }
+  else
+  {
+    this->SetBatchOutputShape({this->total_outputs_, 1, 1});
+  }
   return this->batch_output_shape_;
 }
 

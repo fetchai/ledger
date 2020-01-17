@@ -289,9 +289,13 @@ struct LayerFullyConnectedSaveableParams : SubGraphSaveableParams<TensorType>
 {
   using SizeType                     = typename TensorType::SizeType;
   fetch::ml::OpType op_type          = OpType::LAYER_FULLY_CONNECTED;
-  SizeType          in_size          = fetch::math::numeric_max<SizeType>();
-  SizeType          out_size         = fetch::math::numeric_max<SizeType>();
+  SizeType          total_inputs_    = 0;
+  SizeType          total_outputs_   = 0;
   bool              time_distributed = false;
+  bool              is_initialised   = false;
+  std::string       weights_name{};
+  std::string       bias_name{};
+  int               init_mode = 0;
 };
 
 /**

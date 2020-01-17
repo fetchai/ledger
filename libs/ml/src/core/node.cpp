@@ -121,12 +121,9 @@ template <typename TensorType>
 Shape Node<TensorType>::BatchOutputShape()
 {
   Shape const &candidate = op_ptr_->BatchOutputShape();
-  auto const   subgraph_ptr =
-      std::dynamic_pointer_cast<std::shared_ptr<SubGraph<TensorType>>>(op_ptr_);
 
-  // If the underlying Op is simple (e.g. not a SubGraph) and its shape is already known (cached)
-  // this shape can be returned immediately.
-  if (!candidate.empty() && !subgraph_ptr)
+  // If the underlying Op shape is already known (cached) this shape can be returned immediately.
+  if (!candidate.empty())
   {
     if (OperationType() == OpType::OP_PLACEHOLDER)
     {
@@ -141,21 +138,19 @@ Shape Node<TensorType>::BatchOutputShape()
     return candidate;
   }
 
-  // If there is no input nodes, shape deduction can not go further.
   if (input_nodes_.empty())
   {
-    if (candidate.empty())
-    {
-      // If there is no input nodes, but underlying Op's shape is not known - the Graph
-      // probably is incorrect; however, some nodes (like Label placeholder) could have
-      // empty shape without causing Graph malfunction or shape deduction failure.
-      FETCH_LOG_ERROR(
-          name_.c_str(),
-          " Shape deduction reached a leaf Node with empty/unknown shape : " + this->name_);
-    }
+    // If there is no input nodes, and underlying Op's shape is not known - the Graph,
+    // probably, is incorrect; however, some nodes (like Label placeholder) could have
+    // empty shape without causing Graph malfunction or shape deduction failure.
+    FETCH_LOG_ERROR(
+        name_.c_str(),
+        " Shape deduction reached a leaf Node with empty/unknown shape : " + this->name_);
+
     return candidate;
   }
 
+  // If Ops shape is unknown, but there are input nodes - they could be asked for their shapes.
   ShapeVector input_shapes;
   for (auto const &i : input_nodes_)
   {
@@ -191,7 +186,7 @@ Shape Node<TensorType>::BatchOutputShape()
   }
 
   // When all valid (non-empty) input shapes are collected, it is possbile to compute
-  // an output shape of this node.
+  // an output shape of this node's Ops.
   Shape const my_out_shape = op_ptr_->ComputeBatchOutputShape(input_shapes);
 
   if (my_out_shape.empty())
