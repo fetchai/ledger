@@ -18,16 +18,8 @@
 //------------------------------------------------------------------------------
 
 #include "ml/core/subgraph.hpp"
-#include "ml/meta/ml_type_traits.hpp"
 #include "ml/ops/activation.hpp"
-#include "ml/ops/convolution_1d.hpp"
-#include "ml/ops/placeholder.hpp"
 #include "ml/ops/weights.hpp"
-
-#include <functional>
-#include <memory>
-#include <string>
-#include <vector>
 
 namespace fetch {
 namespace ml {
@@ -57,77 +49,17 @@ public:
    * @param init_mode mode in which wights(kernel) will be initialised
    * @param seed random seed for weights(kernel) initialisation
    */
-  Convolution1D(SizeType const output_channels, SizeType const input_channels,
-                SizeType const kernel_size, SizeType const stride_size,
-                details::ActivationType const activation_type = details::ActivationType::NOTHING,
-                std::string const &           name            = "Conv1D",
-                WeightsInit const             init_mode       = WeightsInit::XAVIER_GLOROT,
-                SizeType const                seed            = 123456789)
-    : kernel_size_{kernel_size}
-    , input_channels_{input_channels}
-    , output_channels_{output_channels}
-    , stride_size_{stride_size}
-  {
-    std::string input =
-        this->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>(name + "_Input", {});
+  Convolution1D(SizeType output_channels, SizeType input_channels, SizeType kernel_size,
+                SizeType                stride_size,
+                details::ActivationType activation_type = details::ActivationType::NOTHING,
+                std::string const &     name            = "Conv1D",
+                WeightsInit init_mode = WeightsInit::XAVIER_GLOROT, SizeType seed = 123456789);
 
-    std::string weights =
-        this->template AddNode<fetch::ml::ops::Weights<TensorType>>(name + "_Weights", {});
+  std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override;
 
-    TensorType weights_data(
-        std::vector<SizeType>{{output_channels_, input_channels_, kernel_size_, 1}});
-    fetch::ml::ops::Weights<TensorType>::Initialise(weights_data, 1, 1, init_mode, seed);
-    this->SetInput(weights, weights_data);
+  void SetOpSaveableParams(SPType const &sp);
 
-    std::string output = this->template AddNode<fetch::ml::ops::Convolution1D<TensorType>>(
-        name + "_Conv1D", {input, weights}, stride_size_);
-
-    output = fetch::ml::details::AddActivationNode<T>(activation_type, this, name + "_Activation",
-                                                      output);
-
-    this->AddInputNode(input);
-    this->SetOutputNode(output);
-
-    this->Compile();
-  }
-
-  std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override
-  {
-    // get all base classes saveable params
-    std::shared_ptr<OpsSaveableParams> sgsp = SubGraph<TensorType>::GetOpSaveableParams();
-
-    auto ret = std::make_shared<SPType>();
-
-    // copy subgraph saveable params over
-    auto sg_ptr1 = std::dynamic_pointer_cast<typename SubGraph<TensorType>::SPType>(sgsp);
-    auto sg_ptr2 = std::dynamic_pointer_cast<typename SubGraph<TensorType>::SPType>(ret);
-    *sg_ptr2     = *sg_ptr1;
-
-    // asign layer specific params
-    ret->kernel_size     = kernel_size_;
-    ret->input_channels  = input_channels_;
-    ret->output_channels = output_channels_;
-    ret->stride_size     = stride_size_;
-
-    return ret;
-  }
-
-  void SetOpSaveableParams(SPType const &sp)
-  {
-    // assign layer specific params
-    kernel_size_     = sp.kernel_size;
-    input_channels_  = sp.input_channels;
-    output_channels_ = sp.output_channels;
-    stride_size_     = sp.stride_size;
-  }
-
-  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
-  {
-    TensorType weights_data(
-        std::vector<SizeType>{{output_channels_, input_channels_, kernel_size_, 1}});
-    return fetch::ml::ops::Convolution1D<TensorType>(stride_size_)
-        .ComputeOutputShape({inputs.at(0), std::make_shared<TensorType>(weights_data)});
-  }
+  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override;
 
   static constexpr OpType OpCode()
   {

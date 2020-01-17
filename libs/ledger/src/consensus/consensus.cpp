@@ -19,6 +19,7 @@
 #include "beacon/block_entropy.hpp"
 #include "core/mutex.hpp"
 #include "core/random/lcg.hpp"
+#include "ledger/chain/block.hpp"
 #include "ledger/consensus/consensus.hpp"
 #include "network/generics/milli_timer.hpp"
 
@@ -67,13 +68,13 @@ constexpr char const *LOGGING_NAME = "Consensus";
 const std::size_t     DIGEST_LENGTH_BYTES{32};
 constexpr char const *unknown_exception = "something wenth wrong";
 
-using Consensus       = fetch::ledger::Consensus;
+using fetch::ledger::Consensus;
 using NextBlockPtr    = Consensus::NextBlockPtr;
 using Status          = Consensus::Status;
 using StakeManagerPtr = Consensus::StakeManagerPtr;
-using BlockPtr        = Consensus::BlockPtr;
 
 using fetch::ledger::Block;
+using fetch::ledger::BlockPtr;
 using fetch::ledger::MainChain;
 
 using DRNG = fetch::random::LinearCongruentialGenerator;
