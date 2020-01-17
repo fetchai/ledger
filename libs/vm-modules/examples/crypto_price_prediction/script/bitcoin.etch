@@ -44,6 +44,17 @@ function build_graph(graph : Graph)
 
 endfunction
 
+// This function changes the size from [x, y] to [1, x, y]
+// which is required for the input to the conv layer
+function add_leading_dim(tensor : Tensor)
+    var shape = tensor.shape();
+    var newshape = Array<UInt64>(3);
+    newshape[0] = 1u64;
+    newshape[1] = shape[0];
+    newshape[2] = shape[1];
+    tensor.reshape(newshape);
+endfunction
+
 function main()
 
 if (System.Argc() != 5) print("Usage: VM SCRIPT_FILE PATH/TO/TRAIN_DATA.CSV /PATH/TO/TRAIN_LABEL.CSV PATH/TO/TEST_DATA.CSV /PATH/TO/TEST_LABEL.CSV");
@@ -56,10 +67,10 @@ var orig_train_labels = readCSV(System.Argv(2));
 var orig_test_data = readCSV(System.Argv(3));
 var orig_test_labels = readCSV(System.Argv(4));
 
-orig_train_data = orig_train_data.unsqueeze();
-orig_train_labels = orig_train_labels.unsqueeze();
-orig_test_data = orig_test_data.unsqueeze();
-orig_test_labels = orig_test_labels.unsqueeze();
+add_leading_dim(orig_train_data);
+add_leading_dim(orig_train_labels);
+add_leading_dim(orig_test_data);
+add_leading_dim(orig_test_labels);
 
 // NORMALISE ALL DATA TO THE MAX RANGE OF THE TRAINING DATA
 var scaler = Scaler();

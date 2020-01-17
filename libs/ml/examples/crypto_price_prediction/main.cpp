@@ -23,6 +23,7 @@
 #include "ml/dataloaders/tensor_dataloader.hpp"
 #include "ml/layers/convolution_1d.hpp"
 #include "ml/ops/activation.hpp"
+#include "ml/ops/activations/dropout.hpp"
 #include "ml/ops/loss_functions/mean_square_error_loss.hpp"
 #include "ml/optimisation/adam_optimiser.hpp"
 #include "ml/utilities/graph_saver.hpp"
@@ -95,17 +96,20 @@ std::vector<TensorType> LoadData(std::string const &train_data_filename,
 {
 
   std::cout << "loading train data...: " << std::endl;
-  auto train_data_tensor = fetch::math::utilities::ReadCSV<TensorType>(train_data_filename, 0, 0);
+  auto train_data_tensor =
+      fetch::math::utilities::ReadCSV<TensorType>(train_data_filename, 0, 0, true);
 
   std::cout << "loading train labels...: " << std::endl;
   auto train_labels_tensor =
-      fetch::math::utilities::ReadCSV<TensorType>(train_labels_filename, 0, 0);
+      fetch::math::utilities::ReadCSV<TensorType>(train_labels_filename, 0, 0, true);
 
   std::cout << "loading test data...: " << std::endl;
-  auto test_data_tensor = fetch::math::utilities::ReadCSV<TensorType>(test_data_filename, 0, 0);
+  auto test_data_tensor =
+      fetch::math::utilities::ReadCSV<TensorType>(test_data_filename, 0, 0, true);
 
   std::cout << "loading test labels...: " << std::endl;
-  auto test_labels_tensor = fetch::math::utilities::ReadCSV<TensorType>(test_labels_filename, 0, 0);
+  auto test_labels_tensor =
+      fetch::math::utilities::ReadCSV<TensorType>(test_labels_filename, 0, 0, true);
 
   train_data_tensor.Reshape({1, train_data_tensor.shape().at(0), train_data_tensor.shape().at(1)});
   train_labels_tensor.Reshape(
