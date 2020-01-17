@@ -229,6 +229,7 @@ TYPED_TEST(GraphRebuildTest, graph_rebuild_every_op)
   std::string layer_fc1    = AddOp<layers::FullyConnected<TensorType>>(g, {input_1}, 1, 1);
   std::string layer_mh     = AddOp<layers::MultiheadAttention<TensorType>>(
       g, {input_query, input_key, input_value, input_mask}, 4, 12);
+  std::string layer_prelu = AddOp<layers::PRelu<TensorType>>(g, {input_1}, 1);
   std::string layer_scaleddotproductattention =
       AddOp<layers::ScaledDotProductAttention<TensorType>>(
           g, {input_query, input_key, input_value, input_mask}, 4);
@@ -236,7 +237,6 @@ TYPED_TEST(GraphRebuildTest, graph_rebuild_every_op)
       AddOp<layers::SelfAttentionEncoder<TensorType>>(g, {input_query, input_mask}, 4, 12, 24);
   std::string layer_skipgram =
       AddOp<layers::SkipGram<TensorType>>(g, {input_1, input_1}, 1, 1, 10, 10);
-  std::string layer_prelu = AddOp<layers::PRelu<TensorType>>(g, {input_1}, 1);
 
   // assign input data
   g->SetInput(input_1, data1);
