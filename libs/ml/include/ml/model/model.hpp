@@ -18,15 +18,29 @@
 //------------------------------------------------------------------------------
 
 #include "ml/model/model_config.hpp"
+
 #include "ml/ops/loss_functions/types.hpp"
+
 #include "ml/serializers/model.hpp"
+
+#include "ml/ops/metrics/categorical_accuracy.hpp"
+#include "ml/ops/metrics/types.hpp"
+
+#include "ml/ops/loss_functions/cross_entropy_loss.hpp"
+#include "ml/ops/loss_functions/mean_square_error_loss.hpp"
+#include "ml/ops/loss_functions/softmax_cross_entropy_loss.hpp"
+
+#include "ml/optimisation/optimiser.hpp"
+#include "ml/optimisation/types.hpp"
+
+#include "ml/utilities/graph_builder.hpp"
+#include "ml/utilities/graph_saver.hpp"
 
 #include <string>
 #include <utility>
 #include <vector>
 
 namespace fetch {
-
 namespace vm_modules {
 namespace ml {
 namespace model {
