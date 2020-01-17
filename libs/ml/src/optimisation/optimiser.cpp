@@ -435,7 +435,7 @@ std::shared_ptr<Graph<TensorType>> Optimiser<TensorType>::GetGraph()
 
 // TODO (ML-464)
 // template class Optimiser<math::Tensor<std::int8_t>>;
-template class Optimiser<math::Tensor<std::int16_t>>;
+//template class Optimiser<math::Tensor<std::int16_t>>;
 template class Optimiser<math::Tensor<std::int32_t>>;
 template class Optimiser<math::Tensor<std::int64_t>>;
 template class Optimiser<math::Tensor<float>>;

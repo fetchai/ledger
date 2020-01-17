@@ -113,7 +113,7 @@ void MomentumOptimiser<T>::ResetMomentum()
 
 // TODO (ML-464)
 // template class MomentumOptimiser<math::Tensor<std::int8_t>>;
-template class MomentumOptimiser<math::Tensor<std::int16_t>>;
+//template class MomentumOptimiser<math::Tensor<std::int16_t>>;
 template class MomentumOptimiser<math::Tensor<std::int32_t>>;
 template class MomentumOptimiser<math::Tensor<std::int64_t>>;
 template class MomentumOptimiser<math::Tensor<float>>;

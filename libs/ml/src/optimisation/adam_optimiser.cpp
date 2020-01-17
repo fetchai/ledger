@@ -163,7 +163,7 @@ void AdamOptimiser<T>::ResetCache()
 
 // TODO (ML-464)
 // template class AdamOptimiser<math::Tensor<std::int8_t>>;
-template class AdamOptimiser<math::Tensor<std::int16_t>>;
+//template class AdamOptimiser<math::Tensor<std::int16_t>>;
 template class AdamOptimiser<math::Tensor<std::int32_t>>;
 template class AdamOptimiser<math::Tensor<std::int64_t>>;
 template class AdamOptimiser<math::Tensor<float>>;
