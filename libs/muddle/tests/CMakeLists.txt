@@ -12,4 +12,4 @@ setup_compiler()
 
 # define the test target
 fetch_add_slow_test(muddle-unit-tests fetch-muddle unit/)
-# fetch_add_integration_test(muddle-integration-tests fetch-muddle integration/)
+fetch_add_integration_test(muddle-integration-tests fetch-muddle integration/)

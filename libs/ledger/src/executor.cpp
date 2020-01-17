@@ -84,7 +84,7 @@ Executor::Result Executor::Execute(Digest const &digest, BlockIndex block, Slice
 {
   telemetry::FunctionTimer const timer{*overall_duration_};
 
-  FETCH_LOG_DEBUG(LOGGING_NAME, "Executing tx ", byte_array::ToBase64(digest));
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Executing tx 0x", digest.ToHex());
 
   Result result{Status::INEXPLICABLE_FAILURE};
 

@@ -48,7 +48,8 @@ namespace ledger {
 
 namespace {
 constexpr char const *BLOOM_FILTER_STORE = "chain.bloom.db";
-}
+constexpr uint64_t    OVERLAP            = 400000;
+}  // namespace
 
 const uint64_t DIRTY_TIMEOUT{600};
 
@@ -60,7 +61,7 @@ const uint64_t DIRTY_TIMEOUT{600};
 MainChain::MainChain(Mode mode, bool dirty_block_functionality)
   : mode_{mode}
   , dirty_block_functionality_{dirty_block_functionality}
-  , bloom_filter_{1 + chain::Transaction::MAXIMUM_TX_VALIDITY_PERIOD / 2}
+  , bloom_filter_{OVERLAP}
   , bloom_filter_queried_bit_count_(telemetry::Registry::Instance().CreateGauge<std::size_t>(
         "ledger_main_chain_bloom_filter_queried_bit_number",
         "Total number of bits checked during each query to the Ledger Main Chain Bloom filter"))
@@ -97,7 +98,7 @@ MainChain::MainChain(Mode mode, bool dirty_block_functionality)
 MainChain::~MainChain()
 {
   // ensure the chain has been flushed to disk
-  FlushToDisk();
+  FlushToDisk(true);
 }
 
 void MainChain::Reset()
@@ -130,6 +131,12 @@ void MainChain::Reset()
 
   // add the tip for this block
   AddTip(genesis);
+}
+
+void MainChain::Flush()
+{
+  FETCH_LOCK(lock_);
+  FlushToDisk(true);
 }
 
 /**
@@ -1618,7 +1625,7 @@ bool MainChain::LookupBlock(BlockHash const &hash, BlockPtr &block, BlockHash *n
 
 /**
  * Attempt to locate a block stored in the in memory cache
-
+ *
  * @param hash The hash of the block to search for
  * @param block The output block to be populated
  * @return true if successful, otherwise false
@@ -2039,7 +2046,7 @@ DigestSet MainChain::DetectDuplicateTransactions(BlockHash const &           sta
   return duplicates;
 }
 
-void MainChain::FlushToDisk()
+void MainChain::FlushToDisk(bool flush_bloom)
 {
   using namespace fetch::serializers;
 
@@ -2048,7 +2055,7 @@ void MainChain::FlushToDisk()
     block_store_->Flush(false);
   }
 
-  if (mode_ != Mode::IN_MEMORY_DB)
+  if (flush_bloom && (mode_ != Mode::IN_MEMORY_DB))
   {
     try
     {

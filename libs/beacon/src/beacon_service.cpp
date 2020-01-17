@@ -281,7 +281,6 @@ BeaconService::State BeaconService::OnPrepareEntropyGeneration()
 
 BeaconService::State BeaconService::OnCollectSignaturesState()
 {
-  // Otherwise we collect the signatures
   beacon_state_gauge_->set(static_cast<uint64_t>(state_machine_->state()));
 
   started_request_for_sigs_ = Clock::now();
@@ -361,7 +360,7 @@ BeaconService::State BeaconService::OnCollectSignaturesState()
 BeaconService::State BeaconService::OnVerifySignaturesState()
 {
   beacon_state_gauge_->set(static_cast<uint64_t>(state_machine_->state()));
-  SignatureInformation ret;
+  SignatureInformation ret{};
   uint64_t             index = 0;
 
   {
