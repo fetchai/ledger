@@ -30,7 +30,7 @@ class FullyConnected : public SubGraph<T>
 {
 public:
   using TensorType    = T;
-  using ArrayPtrType  = std::shared_ptr<TensorType>;
+  using NodePtrType   = std::shared_ptr<fetch::ml::Node<TensorType>>;
   using SizeType      = fetch::math::SizeType;
   using DataType      = typename TensorType::Type;
   using WeightsInit   = fetch::ml::ops::WeightsInitialisation;
@@ -106,13 +106,13 @@ private:
   SizeType    total_outputs_    = 0;
   bool        time_distributed_ = false;
   bool        is_initialised_   = false;
-  std::string input_name_{};
-  std::string flattened_input_name_{};
   std::string weights_name_{};
   std::string bias_name_{};
   WeightsInit init_mode_ = WeightsInit::XAVIER_GLOROT;
 
   std::string GetName();
+
+  typename std::shared_ptr<fetch::ml::Node<TensorType>> FindNodeByOpCode(OpType code);
 };
 
 }  // namespace layers

@@ -41,39 +41,39 @@ FullyConnected<TensorType>::FullyConnected(SizeType in, SizeType out,
   , time_distributed_(time_distributed)
   , init_mode_(init_mode)
 {
+  using namespace fetch::ml::ops;
+  using namespace fetch::ml::details;
+
   // get correct name for the layer
   std::string const name = GetName();
 
   // start to set up the structure
-  input_name_ =
-      this->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>(name + "_Input", {});
+  std::string const input_name =
+      this->template AddNode<PlaceHolder<TensorType>>(name + "_Input", {});
   // for non time distributed layer, flatten the input
-  flattened_input_name_ = input_name_;
+  std::string flattened_input_name = input_name;
   if (!time_distributed_)
   {
-    flattened_input_name_ = this->template AddNode<fetch::ml::ops::Flatten<TensorType>>(
-        name + "_Flatten", {input_name_});
+    flattened_input_name =
+        this->template AddNode<Flatten<TensorType>>(name + "_Flatten", {input_name});
   }
 
-  weights_name_ =
-      this->template AddNode<fetch::ml::ops::Weights<TensorType>>(name + "_Weights", {});
+  weights_name_ = this->template AddNode<Weights<TensorType>>(name + "_Weights", {});
 
-  std::string weights_matmul_name =
-      this->template AddNode<fetch::ml::ops::MatrixMultiply<TensorType>>(
-          name + "_MatrixMultiply", {weights_name_, flattened_input_name_});
+  std::string const weights_matmul_name = this->template AddNode<MatrixMultiply<TensorType>>(
+      name + "_MatrixMultiply", {weights_name_, flattened_input_name});
 
-  bias_name_ = this->template AddNode<fetch::ml::ops::Weights<TensorType>>(name + "_Bias", {});
+  bias_name_ = this->template AddNode<Weights<TensorType>>(name + "_Bias", {});
 
-  std::string add = this->template AddNode<fetch::ml::ops::Add<TensorType>>(
-      name + "_Add", {weights_matmul_name, bias_name_});
+  std::string const add =
+      this->template AddNode<Add<TensorType>>(name + "_Add", {weights_matmul_name, bias_name_});
 
-  std::string output_name = fetch::ml::details::AddActivationNode<TensorType>(
-      activation_type, this, name + "_Activation", add);
+  std::string const output_name =
+      AddActivationNode<TensorType>(activation_type, this, name + "_Activation", add);
 
-  this->SetRegularisation(fetch::ml::details::CreateRegulariser<TensorType>(regulariser),
-                          regularisation_rate);
+  this->SetRegularisation(CreateRegulariser<TensorType>(regulariser), regularisation_rate);
 
-  this->AddInputNode(input_name_);
+  this->AddInputNode(input_name);
   this->SetOutputNode(output_name);
 
   // If inputs count is known, the initialisation can be completed immediately.
@@ -102,52 +102,46 @@ void FullyConnected<TensorType>::CompleteConstruction()
 
   assert(!this->batch_input_shapes_.empty());
   assert(!this->batch_output_shape_.empty());
+  assert(this->input_node_names_.size() == 1);  // Only 1 input node is allowed
+  assert(total_outputs_ = this->batch_output_shape_.front());
   FETCH_LOG_INFO(Descriptor(), "-- Completing FullyConnected initialisation ... --");
-  this->nodes_.at(input_name_)->SetBatchInputShapes(this->batch_input_shapes_);
-  this->nodes_.at(input_name_)->SetBatchOutputShape(this->batch_input_shapes_.front());
+
+  NodePtrType input_node = this->nodes_.at(this->input_node_names_.front());
+  input_node->SetBatchInputShapes(this->batch_input_shapes_);
+  input_node->SetBatchOutputShape(this->batch_input_shapes_.front());
 
   if (total_inputs_ == AUTODETECT_INPUTS_COUNT)
   {
     if (time_distributed_)
     {
-      math::SizeVector const &first_input_shape = this->batch_input_shapes_.front();
       // An input size of a time-distributed layer is equal to a first dimension in
       // the input shape.
-      total_inputs_ = first_input_shape.front();
+      total_inputs_ = this->batch_input_shapes_.front().at(0);
     }
     else
     {
       // An input size of a non-time-distributed layer is equal to total elements
       // in input tensor, e.g. equal to a flattened input output size.
-      this->nodes_.at(flattened_input_name_)
-          ->GetOp()
-          ->ComputeBatchOutputShape(this->batch_input_shapes_);
-      total_inputs_ = this->nodes_.at(flattened_input_name_)->BatchOutputShape().front();
+      NodePtrType flatten_node = FindNodeByOpCode(OpType::OP_FLATTEN);
+      total_inputs_ =
+          flatten_node->GetOp()->ComputeBatchOutputShape(this->batch_input_shapes_).at(0);
     }
   }
-  total_outputs_ = this->batch_output_shape_.front();
 
+  math::SizeVector const weights_shape = {total_outputs_, total_inputs_};
   // At this point we know everything necessary to directly assign shapes to
   // leaf nodes such as Weights and Bias.
-  this->nodes_.at(weights_name_)->SetBatchOutputShape({total_outputs_, total_inputs_});
+  this->nodes_.at(weights_name_)->SetBatchOutputShape(weights_shape);
   this->nodes_.at(bias_name_)->SetBatchOutputShape(this->batch_output_shape_);
 
   // initialize weight with specified method.
-  TensorType weights_data(std::vector<SizeType>({total_outputs_, total_inputs_}));
+  TensorType weights_data(weights_shape);
   fetch::ml::ops::Weights<TensorType>::Initialise(weights_data, total_inputs_, total_outputs_,
                                                   init_mode_);
   this->SetInput(weights_name_, weights_data);
 
-  // initialize bias with right shape and set to all zero.
-  TensorType bias_data;
-  if (time_distributed_)
-  {
-    bias_data = TensorType(std::vector<SizeType>({total_outputs_, 1, 1}));
-  }
-  else
-  {
-    bias_data = TensorType(std::vector<SizeType>({total_outputs_, 1}));
-  }
+  TensorType bias_data = TensorType(this->batch_output_shape_);
+
   this->SetInput(bias_name_, bias_data);
 
   this->Compile();
@@ -260,6 +254,21 @@ std::string FullyConnected<TensorType>::GetName()
     return std::string("TimeDistributed_") + DESCRIPTOR;
   }
   return DESCRIPTOR;
+}
+
+template <class TensorType>
+std::shared_ptr<fetch::ml::Node<TensorType>> FullyConnected<TensorType>::FindNodeByOpCode(
+    OpType code)
+{
+  for (const auto &node_name_and_ptr : this->nodes_)
+  {
+    NodePtrType candidate = node_name_and_ptr.second;
+    if (candidate->OperationType() == code)
+    {
+      return candidate;
+    }
+  }
+  return nullptr;
 }
 
 ///////////////////////////////
