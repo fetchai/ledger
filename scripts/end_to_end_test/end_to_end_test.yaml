@@ -478,4 +478,4 @@ setup_conditions:
 steps:
   - sleep: 5
   - run_python_test: { "script": ".smart_contract_tests.action_nonexistent_contract" }
----
+...
