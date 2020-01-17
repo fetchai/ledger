@@ -19,6 +19,7 @@
 #include "gtest/gtest.h"
 #include "ml/layers/fully_connected.hpp"
 #include "ml/ops/loss_functions/mean_square_error_loss.hpp"
+#include "ml/ops/placeholder.hpp"
 #include "ml/optimisation/sgd_optimiser.hpp"
 #include "ml/serializers/ml_types.hpp"
 #include "test_types.hpp"

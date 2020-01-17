@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "ml/dataloaders/tensor_dataloader.hpp"
+#include "ml/layers/fully_connected.hpp"
 #include "ml/model/sequential.hpp"
 #include "ml/ops/activation.hpp"
 #include "ml/optimisation/types.hpp"

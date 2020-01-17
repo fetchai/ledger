@@ -1575,9 +1575,9 @@ TYPED_TEST(SaveParamsTest, conv2d_op_saveparams_backward_3x3x3x2_5x3x3x3x2)
       fetch::math::function_tolerance<typename TypeParam::Type>()));
 }
 
-//////////////////
-/// EMBEDDINGS ///
-//////////////////
+//////////////
+/// DIVIDE ///
+//////////////
 
 TYPED_TEST(SaveParamsTest, divide_saveparams_test)
 {

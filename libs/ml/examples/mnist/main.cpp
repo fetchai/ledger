@@ -22,6 +22,7 @@
 #include "ml/layers/fully_connected.hpp"
 #include "ml/ops/activation.hpp"
 #include "ml/ops/loss_functions/cross_entropy_loss.hpp"
+#include "ml/ops/placeholder.hpp"
 #include "ml/optimisation/adam_optimiser.hpp"
 #include "ml/utilities/mnist_utilities.hpp"
 

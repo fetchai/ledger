@@ -18,7 +18,9 @@
 
 #include "gtest/gtest.h"
 #include "ml/layers/convolution_1d.hpp"
+#include "ml/ops/convolution_1d.hpp"
 #include "ml/ops/loss_functions/mean_square_error_loss.hpp"
+#include "ml/ops/placeholder.hpp"
 #include "ml/serializers/ml_types.hpp"
 #include "test_types.hpp"
 
