@@ -70,7 +70,7 @@ ScaledDotProductAttention<TensorType>::ScaledDotProductAttention(SizeType dk, Da
   // masking: make sure you mask along the feature dimension if the mask is to be broadcasted
   std::string masked_scaled_kq_matmul =
       this->template AddNode<fetch::ml::ops::MaskFill<TensorType>>(
-          name + "_Masking", {mask, scaled_kq_matmul}, DataType{-1000000000});
+          name + "_Masking", {mask, scaled_kq_matmul}, static_cast<DataType>(-1000000000));
 
   // softmax
   std::string attention_weight = this->template AddNode<fetch::ml::ops::Softmax<TensorType>>(
@@ -125,8 +125,8 @@ void ScaledDotProductAttention<TensorType>::SetOpSaveableParams(SPType const &sp
 /// EXPLICIT INSTANTIATIONS ///
 ///////////////////////////////
 
-// template class ScaledDotProductAttention<math::Tensor<int8_t>>;
-// template class ScaledDotProductAttention<math::Tensor<int16_t>>;
+template class ScaledDotProductAttention<math::Tensor<int8_t>>;
+template class ScaledDotProductAttention<math::Tensor<int16_t>>;
 template class ScaledDotProductAttention<math::Tensor<int32_t>>;
 template class ScaledDotProductAttention<math::Tensor<int64_t>>;
 template class ScaledDotProductAttention<math::Tensor<float>>;

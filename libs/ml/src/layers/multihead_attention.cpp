@@ -157,8 +157,8 @@ std::vector<math::SizeType> MultiheadAttention<TensorType>::ComputeOutputShape(
 /// EXPLICIT INSTANTIATIONS ///
 ///////////////////////////////
 
-// template class MultiheadAttention<math::Tensor<int8_t>>;
-// template class MultiheadAttention<math::Tensor<int16_t>>;
+template class MultiheadAttention<math::Tensor<int8_t>>;
+template class MultiheadAttention<math::Tensor<int16_t>>;
 template class MultiheadAttention<math::Tensor<int32_t>>;
 template class MultiheadAttention<math::Tensor<int64_t>>;
 template class MultiheadAttention<math::Tensor<float>>;

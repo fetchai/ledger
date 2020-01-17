@@ -167,8 +167,8 @@ std::string SelfAttentionEncoder<TensorType>::residual_connection(
 /// EXPLICIT INSTANTIATIONS ///
 ///////////////////////////////
 
-// template class SelfAttentionEncoder<math::Tensor<int8_t>>;
-// template class SelfAttentionEncoder<math::Tensor<int16_t>>;
+template class SelfAttentionEncoder<math::Tensor<int8_t>>;
+template class SelfAttentionEncoder<math::Tensor<int16_t>>;
 template class SelfAttentionEncoder<math::Tensor<int32_t>>;
 template class SelfAttentionEncoder<math::Tensor<int64_t>>;
 template class SelfAttentionEncoder<math::Tensor<float>>;

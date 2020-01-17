@@ -96,8 +96,8 @@ void SkipGram<TensorType>::SetOpSaveableParams(SPType const &sp)
   vocab_size_ = sp.vocab_size;
 }
 
-// template class SkipGram<math::Tensor<int8_t>>;
-// template class SkipGram<math::Tensor<int16_t>>;
+template class SkipGram<math::Tensor<int8_t>>;
+template class SkipGram<math::Tensor<int16_t>>;
 template class SkipGram<math::Tensor<int32_t>>;
 template class SkipGram<math::Tensor<int64_t>>;
 template class SkipGram<math::Tensor<float>>;

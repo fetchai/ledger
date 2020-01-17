@@ -109,8 +109,8 @@ void LayerNorm<TensorType>::SetOpSaveableParams(SPType const &sp)
   epsilon_    = sp.epsilon;
 }
 
-// template class LayerNorm<math::Tensor<int8_t>>;
-// template class LayerNorm<math::Tensor<int16_t>>;
+template class LayerNorm<math::Tensor<int8_t>>;
+template class LayerNorm<math::Tensor<int16_t>>;
 template class LayerNorm<math::Tensor<int32_t>>;
 template class LayerNorm<math::Tensor<int64_t>>;
 template class LayerNorm<math::Tensor<float>>;
