@@ -62,11 +62,10 @@ T Clip3(T value, T min_value, T max_value)
  * @param log2_num_lanes Log2 of the number of lanes
  * @param num_slices The number of slices
  */
-BasicMiner::BasicMiner(uint32_t log2_num_lanes, StorageInterface &storage)
+BasicMiner::BasicMiner(uint32_t log2_num_lanes)
   : log2_num_lanes_{log2_num_lanes}
   , max_num_threads_{std::thread::hardware_concurrency()}
   , thread_pool_{max_num_threads_, "Miner"}
-  , storage_{storage}
   , mining_pool_size_{telemetry::Registry::Instance().CreateGauge<uint64_t>(
         "ledger_miner_mining_pool_size", "The current size of the mining pool")}
   , max_mining_pool_size_{telemetry::Registry::Instance().CreateGauge<uint64_t>(

@@ -37,8 +37,8 @@ public:
 
   enum class Status
   {
-    YES,
-    NO
+    NO,
+    YES
   };
 
   ConsensusInterface()          = default;

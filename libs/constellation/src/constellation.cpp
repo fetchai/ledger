@@ -573,7 +573,7 @@ bool Constellation::OnBringUpExternalNetwork(
     return false;
   }
 
-  block_packer_ = std::make_unique<BlockPackingAlgorithm>(cfg_.log2_num_lanes, *storage_);
+  block_packer_ = std::make_unique<BlockPackingAlgorithm>(cfg_.log2_num_lanes);
 
   block_coordinator_ = std::make_unique<ledger::BlockCoordinator>(
       *chain_, dag_, *execution_manager_, *storage_, *block_packer_, *this, external_identity_,

@@ -65,6 +65,7 @@ namespace {
 
 constexpr char const *LOGGING_NAME = "Consensus";
 const std::size_t     DIGEST_LENGTH_BYTES{32};
+constexpr char const *unknown_exception = "something wenth wrong";
 
 using Consensus       = fetch::ledger::Consensus;
 using NextBlockPtr    = Consensus::NextBlockPtr;
@@ -271,9 +272,15 @@ bool Consensus::VerifyNotarisation(Block const &block) const
                                      block.block_entropy.block_notarisation,
                                      ordered_notarisation_keys, threshold);
       }
+      catch (std::exception const &ex)
+      {
+        FETCH_LOG_ERROR(LOGGING_NAME, __func__, ": ", ex.what());
+        return {};
+      }
       catch (...)
       {
-        return false;
+        FETCH_LOG_ERROR(LOGGING_NAME, __func__, ": ", unknown_exception);
+        return {};
       }
     }
     if (result == NotarisationResult::FAIL_VERIFICATION)
@@ -292,9 +299,15 @@ uint64_t Consensus::GetBlockGenerationWeight(Block const &current, Identity cons
   {
     beginning_of_aeon = GetBeginningOfAeon(current, chain_);
   }
+  catch (std::exception const &ex)
+  {
+    FETCH_LOG_ERROR(LOGGING_NAME, __func__, ": ", ex.what());
+    return {};
+  }
   catch (...)
   {
-    return 0;
+    FETCH_LOG_ERROR(LOGGING_NAME, __func__, ": ", unknown_exception);
+    return {};
   }
 
   auto qualified_cabinet_weighted = QualWeightedByEntropy(beginning_of_aeon.block_entropy.qualified,
@@ -330,9 +343,15 @@ bool Consensus::ValidBlockTiming(Block const &previous, Block const &proposed) c
   {
     beginning_of_aeon = GetBeginningOfAeon(proposed, chain_);
   }
+  catch (std::exception const &ex)
+  {
+    FETCH_LOG_ERROR(LOGGING_NAME, __func__, ": ", ex.what());
+    return {};
+  }
   catch (...)
   {
-    return false;
+    FETCH_LOG_ERROR(LOGGING_NAME, __func__, ": ", unknown_exception);
+    return {};
   }
 
   BlockEntropy::Cabinet qualified_cabinet = beginning_of_aeon.block_entropy.qualified;
@@ -601,8 +620,14 @@ NextBlockPtr Consensus::GenerateNextBlock()
   {
     ret->weight = GetBlockGenerationWeight(*ret, mining_identity_);
   }
+  catch (std::exception const &ex)
+  {
+    FETCH_LOG_ERROR(LOGGING_NAME, __func__, ": ", ex.what());
+    return {};
+  }
   catch (...)
   {
+    FETCH_LOG_ERROR(LOGGING_NAME, __func__, ": ", unknown_exception);
     return {};
   }
 
@@ -867,9 +892,15 @@ Status Consensus::ValidBlock(Block const &current) const
         return Status::NO;
       }
     }
+    catch (std::exception const &ex)
+    {
+      FETCH_LOG_ERROR(LOGGING_NAME, __func__, ": ", ex.what());
+      return {};
+    }
     catch (...)
     {
-      return Status::NO;
+      FETCH_LOG_ERROR(LOGGING_NAME, __func__, ": ", unknown_exception);
+      return {};
     }
   }
 
@@ -883,9 +914,15 @@ Status Consensus::ValidBlock(Block const &current) const
       return Status::NO;
     }
   }
+  catch (std::exception const &ex)
+  {
+    FETCH_LOG_ERROR(LOGGING_NAME, __func__, ": ", ex.what());
+    return {};
+  }
   catch (...)
   {
-    return Status::NO;
+    FETCH_LOG_ERROR(LOGGING_NAME, __func__, ": ", unknown_exception);
+    return {};
   }
 
   if (!BlockSignedByQualMember(current))
