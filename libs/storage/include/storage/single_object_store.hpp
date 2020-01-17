@@ -33,19 +33,19 @@ class SingleObjectStore
 public:
   using ByteArray = byte_array::ByteArray;
 
-  SingleObjectStore()            = default;
- ~SingleObjectStore();
-  SingleObjectStore(SingleObjectStore const &rhs)            = delete;
-  SingleObjectStore(SingleObjectStore &&rhs)                 = delete;
+  SingleObjectStore() = default;
+  ~SingleObjectStore();
+  SingleObjectStore(SingleObjectStore const &rhs) = delete;
+  SingleObjectStore(SingleObjectStore &&rhs)      = delete;
   SingleObjectStore &operator=(SingleObjectStore const &rhs) = delete;
-  SingleObjectStore &operator=(SingleObjectStore&& rhs)      = delete;
+  SingleObjectStore &operator=(SingleObjectStore &&rhs) = delete;
 
   /**
-   * Load a file, creating it if it does not exist. Will throw
-   * if the file is not the correct version and format, or if
+   * Load a file, creating it if it does not exist. Will return
+   * false if the file is not the correct version and format, or if
    * loading fails due to corruption
    */
-  void Load(std::string const &doc_file);
+  bool Load(std::string const &doc_file);
 
   /**
    * Get the version of the file that has been loaded
@@ -96,9 +96,14 @@ public:
    */
   void Close();
 
+  /**
+   * Clear the file (as if opened for the first time)
+   */
+  void Clear();
+
 private:
-  std::string file_name_;
-  uint16_t version_{1};
+  std::string          file_name_;
+  uint16_t             version_{1};
   mutable std::fstream file_handle_;
 };
 

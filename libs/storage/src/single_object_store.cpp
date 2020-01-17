@@ -34,88 +34,107 @@ namespace storage {
 
 struct FileMetadata
 {
-  uint16_t magic   = platform::LITTLE_ENDIAN_MAGIC;
-  uint16_t version{0};
-  uint64_t object_size{0};
+  uint16_t magic;
+  uint16_t version;
+  uint64_t object_size;
 
   bool Valid() const
   {
     return magic == platform::LITTLE_ENDIAN_MAGIC;
   }
+
+  void Initialise(uint16_t version_to_set)
+  {
+    magic   = platform::LITTLE_ENDIAN_MAGIC;
+    version = version_to_set;
+  }
 };
 
-void SingleObjectStore::Load(std::string const &file_name)
+bool SingleObjectStore::Load(std::string const &file_name)
 {
   file_name_ = file_name;
 
   file_handle_.open(file_name, std::fstream::in | std::fstream::out | std::fstream::binary);
 
   // If does not exist
-  if(!file_handle_)
+  if (!file_handle_)
   {
-    file_handle_.open(file_name, std::fstream::in | std::fstream::out | std::fstream::binary | std::fstream::trunc);
+    file_handle_.open(file_name, std::fstream::in | std::fstream::out | std::fstream::binary |
+                                     std::fstream::trunc);
   }
 
   if (!(file_handle_ && file_handle_.is_open()))
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Failed to open: ", file_name);
-    throw StorageException("Could not open single object file");
+    return false;
   }
 
   file_handle_.seekg(0, std::fstream::end);
   uint64_t file_size = static_cast<uint64_t>(file_handle_.tellg());
 
+  // To remain POD, this must be initialized rather than constructed
   FileMetadata meta{};
+  meta.Initialise(version_);
+  static_assert(std::is_pod<FileMetadata>::value, "FileMetadata must be POD");
 
   // Check it is either empty or non-corrupted
-  if(file_size == 0)
+  if (file_size == 0)
   {
-    meta.version = version_;
+    // Write metadata to new file
     file_handle_.write(reinterpret_cast<char const *>(&meta), sizeof(meta));
     file_handle_.flush();
-    return;
+    return true;
   }
 
-  if(file_size < sizeof(meta))
+  if (file_size < sizeof(meta))
   {
-    throw StorageException("Attempted to open a file that had nonzero size but less than expected metadata");
+    FETCH_LOG_WARN(
+        LOGGING_NAME,
+        "Attempted to open a file that had nonzero size but less than expected metadata");
+    return false;
   }
 
   // Read the metadata
   file_handle_.seekg(0, std::fstream::beg);
   file_handle_.read(reinterpret_cast<char *>(&meta), sizeof(meta));
 
-  if(meta.version != version_)
+  if (meta.version != version_)
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Found version: ", meta.version, " when expecting: ", version_);
-    throw StorageException("Attempted to open a file that had incorrect version");
+    return false;
   }
 
-  if(!meta.Valid())
+  if (!meta.Valid())
   {
-    throw StorageException("After opening, file metadata was invalid!");
+    FETCH_LOG_INFO(LOGGING_NAME, "After opening, file metadata was invalid!");
+    return false;
   }
 
-  if((meta.object_size + sizeof(meta)) != file_size)
+  if ((meta.object_size + sizeof(meta)) != file_size)
   {
-    FETCH_LOG_ERROR(LOGGING_NAME, "mismatch in file sizes. Expected: ", (meta.object_size + sizeof(meta)), " got: ", file_size, " note: metadata is ", sizeof(meta), " while filesize is ", meta.object_size);
-    throw StorageException("After opening, file metadata size didn't match file size!");
+    FETCH_LOG_ERROR(LOGGING_NAME,
+                    "mismatch in file sizes. Expected: ", (meta.object_size + sizeof(meta)),
+                    " got: ", file_size, " note: metadata is ", sizeof(meta), " while filesize is ",
+                    meta.object_size);
+    return false;
   }
+
+  return true;
 }
 
 void SingleObjectStore::GetRaw(ByteArray &data) const
 {
   FileMetadata meta{};
 
-  if(!file_handle_)
+  if (!file_handle_)
   {
-    throw StorageException("Attempted to Set before loading");
+    throw StorageException("Attempted to Get before loading");
   }
 
   file_handle_.seekg(0, std::fstream::beg);
   file_handle_.read(reinterpret_cast<char *>(&meta), sizeof(meta));
 
-  if(meta.object_size == 0)
+  if (meta.object_size == 0)
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Attempted to get an object of size 0");
     throw StorageException("Attempt to get zero length object is invalid");
@@ -125,44 +144,33 @@ void SingleObjectStore::GetRaw(ByteArray &data) const
   data.Resize(meta.object_size);
 
   file_handle_.read(data.char_pointer(), static_cast<int64_t>(meta.object_size));
-  file_handle_.flush();
+
+  if (!file_handle_)
+  {
+    FETCH_LOG_ERROR(LOGGING_NAME, "Only able to read ", file_handle_.gcount(), " when expecting ",
+                    meta.object_size);
+    throw StorageException("After reading from file, the stream could not provide enough data");
+  }
 }
 
 void SingleObjectStore::SetRaw(ByteArray &data)
 {
   FileMetadata meta{};
-  meta.version     = version_;
+  meta.Initialise(version_);
   meta.object_size = data.size();
 
-  if(!file_handle_)
+  if (!file_handle_)
   {
     throw StorageException("Attempted to Set before loading");
   }
 
-  FETCH_LOG_INFO(LOGGING_NAME, "Setting file of size: ", data.size(), " plus metadata ", sizeof(meta));
-
-  {
-    file_handle_.seekg(0, std::fstream::end);
-    uint64_t file_size = static_cast<uint64_t>(file_handle_.tellg());
-
-    FETCH_LOG_INFO(LOGGING_NAME, "Filesize is now ", file_size);
-  }
-
   // Wipe the file since there is no easy way to truncate/resize
-  file_handle_.close();
-  file_handle_.open(file_name_, std::fstream::in | std::fstream::out | std::fstream::binary | std::fstream::trunc);
+  Clear();
 
   file_handle_.seekg(0, std::fstream::beg);
   file_handle_.write(reinterpret_cast<char *>(&meta), sizeof(meta));
   file_handle_.write(data.char_pointer(), static_cast<int64_t>(data.size()));
   file_handle_.flush();
-
-  {
-    file_handle_.seekg(0, std::fstream::end);
-    uint64_t file_size = static_cast<uint64_t>(file_handle_.tellg());
-
-    FETCH_LOG_INFO(LOGGING_NAME, "Filesize is now ", file_size);
-  }
 }
 
 SingleObjectStore::~SingleObjectStore()
@@ -181,6 +189,13 @@ void SingleObjectStore::Close()
 uint16_t SingleObjectStore::Version() const
 {
   return version_;
+}
+
+void SingleObjectStore::Clear()
+{
+  file_handle_.close();
+  file_handle_.open(file_name_, std::fstream::in | std::fstream::out | std::fstream::binary |
+                                    std::fstream::trunc);
 }
 
 }  // namespace storage
