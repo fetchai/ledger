@@ -39,8 +39,6 @@ using fetch::generics::MilliTimer;
 
 namespace fetch {
 
-
-
 namespace beacon {
 namespace {
 
@@ -222,12 +220,13 @@ void BeaconService::SaveState()
 
   try
   {
-    //serializers::LargeObjectSerializeHelper serializer{};
-    //serializer << BeaconServiceSerializeWrapper{*this,
+    // serializers::LargeObjectSerializeHelper serializer{};
+    // serializer << BeaconServiceSerializeWrapper{*this,
     //                                            static_cast<uint16_t>(state_machine_->state())};
 
-    //saved_state_.Set(storage::ResourceAddress("HEAD"), serializer.data());
-    saved_state_.Set(BeaconServiceSerializeWrapper{*this, static_cast<uint16_t>(state_machine_->state())});
+    // saved_state_.Set(storage::ResourceAddress("HEAD"), serializer.data());
+    saved_state_.Set(
+        BeaconServiceSerializeWrapper{*this, static_cast<uint16_t>(state_machine_->state())});
   }
   catch (std::exception const &ex)
   {
@@ -292,9 +291,9 @@ void BeaconService::ReloadState(State &next_state)
 
     loaded_state = true;
 
-    //ConstByteArray ret;
+    // ConstByteArray ret;
 
-    //if (saved_state_.Get(storage::ResourceAddress("HEAD"), ret))
+    // if (saved_state_.Get(storage::ResourceAddress("HEAD"), ret))
     //{
     //  FETCH_LOG_INFO(LOGGING_NAME, "Re-loading beacon service state...");
 
@@ -816,8 +815,7 @@ char const *ToString(BeaconService::State state)
 }  // namespace beacon
 
 // We put this serializer in the cpp since it is serializing itself
-namespace serializers
-{
+namespace serializers {
 
 // Note that this serializer saves the current state, and on deser will
 // populate state_after_reload_
