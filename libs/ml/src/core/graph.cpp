@@ -1135,6 +1135,18 @@ typename Graph<TensorType>::NodePtrType Graph<TensorType>::GetNodeByName(
   }
 }
 
+template <typename TensorType>
+bool Graph<TensorType>::IsValidNodeName(std::string const &node_name) const
+{
+  // Slash is used as special character for addressing subgraphs
+  if (node_name.find('/') != std::string::npos)
+  {
+    return false;
+  }
+
+  return true;
+}
+
 ///////////////////////////////
 /// EXPLICIT INSTANTIATIONS ///
 ///////////////////////////////

@@ -222,6 +222,8 @@ private:
   void RecursiveApplyTwo(Val1Type &val_1, Val2Type &val_2, GraphFunc graph_func) const;
 
   void GetTrainableNames(std::vector<std::string> &ret, std::string level = "") const;
+
+  bool IsValidNodeName(std::string const &node_name) const;
 };
 
 //////////////////////
@@ -245,6 +247,11 @@ template <class OperationType, typename... Params>
 std::string Graph<TensorType>::AddNode(std::string const &             node_name,
                                        std::vector<std::string> const &inputs, Params... params)
 {
+  if (!IsValidNodeName(node_name))
+  {
+    throw std::runtime_error{"Node name " + node_name + " contains invalid characters."};
+  }
+
   graph_state_ = GraphState::NOT_COMPILED;
 
   // guarantee unique op name

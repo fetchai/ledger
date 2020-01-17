@@ -698,7 +698,7 @@ TYPED_TEST(GraphTest, diamond_graph_getStateDict)
   EXPECT_EQ(sd.dict_["Diamond_Weight2"].weights_->shape(), data2.shape());
 }
 
-TYPED_TEST(GraphTest, graph_GetTrainableNames)
+TYPED_TEST(GraphTest, graph_getTrainableNames)
 {
   using TensorType = TypeParam;
 
@@ -716,7 +716,7 @@ TYPED_TEST(GraphTest, graph_GetTrainableNames)
   EXPECT_EQ(names.at(5), "FC3/FullyConnected_Weights");
 }
 
-TYPED_TEST(GraphTest, graph_GetNodeByName)
+TYPED_TEST(GraphTest, graph_getNodeByName)
 {
   using TensorType = TypeParam;
 
@@ -737,6 +737,17 @@ TYPED_TEST(GraphTest, graph_GetNodeByName)
   // Test weights
   EXPECT_EQ(weight.shape().at(0), 10);
   EXPECT_EQ(weight.shape().at(1), 1);
+}
+
+TYPED_TEST(GraphTest, graph_invalidName)
+{
+  using TensorType = TypeParam;
+
+  // Create graph
+  fetch::ml::Graph<TensorType> g;
+
+  EXPECT_THROW(g.template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Input/", {}),
+               std::runtime_error);
 }
 
 }  // namespace test
