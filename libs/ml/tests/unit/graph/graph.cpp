@@ -896,8 +896,8 @@ TYPED_TEST(GraphTest, DISABLED_compute_shapes_sequential_denses_with_shared_ops)
   std::string const input =
       g.template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Input", {});
 
-  std::string const dense_1 = g.template AddNode<Dense>(
-      "SharedDense", {"Input"}, 4u /*Dense::AUTODETECT_INPUT_SHAPE*/, NEURONS);
+  std::string const dense_1 =
+      g.template AddNode<Dense>("SharedDense", {"Input"}, Dense::AUTODETECT_INPUT_SHAPE, NEURONS);
 
   std::string const dense_2 = g.template AddNode<Dense>("SharedDense", {dense_1});
   std::string const output  = g.template AddNode<Dense>("SharedDense", {dense_2});
@@ -944,28 +944,19 @@ TYPED_TEST(GraphTest, DISABLED_compute_shapes_two_diamonds_with_shared_ops)
 
   std::string dense_top_right = g.template AddNode<Dense>("SharedDense", {"Input"});
 
-  std::string output = g.template AddNode<fetch::ml::ops::Multiply<TensorType>>(
+  std::string multiply1 = g.template AddNode<fetch::ml::ops::Multiply<TensorType>>(
       "Multiply1", {dense_top_left, dense_top_right});
 
-  //  std::string dense_bottom_left = g.template AddNode<Dense>(
-  //      "SharedDense2", {"Multiply1"}, Dense::AUTODETECT_INPUT_SHAPE, NEURONS + 1);
+  std::string dense_bottom_left = g.template AddNode<Dense>(
+      "SharedDense2", {multiply1}, Dense::AUTODETECT_INPUT_SHAPE, NEURONS + 1);
 
-  //  std::string dense_bottom_right = g.template AddNode<Dense>("SharedDense2", {"Multiply1"});
+  std::string dense_bottom_right = g.template AddNode<Dense>("SharedDense2", {"Multiply1"});
 
-  //  std::string output = g.template AddNode<fetch::ml::ops::Multiply<TensorType>>(
-  //      "Multiply2", {dense_bottom_left, dense_bottom_right});
+  std::string output = g.template AddNode<fetch::ml::ops::Multiply<TensorType>>(
+      "Multiply2", {dense_bottom_left, dense_bottom_right});
 
   g.SetInput(input, data);
   g.Compile();
-
-  //  math::SizeVector const center_out_batch_shape = g.GetNode(center)->BatchOutputShape();
-  //  EXPECT_EQ(center_out_batch_shape.at(0), NEURONS);
-
-  //  math::SizeVector const left_out_batch_shape = g.GetNode(left_output)->BatchOutputShape();
-  //  EXPECT_EQ(left_out_batch_shape.at(0), LEFT_OUTPUTS);
-
-  //  math::SizeVector const right_out_batch_shape = g.GetNode(right_output)->BatchOutputShape();
-  //  EXPECT_EQ(right_out_batch_shape.at(0), RIGHT_OUTPUTS);
 
   TensorType const result = g.Evaluate(output);
 
