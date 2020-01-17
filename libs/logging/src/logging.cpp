@@ -91,8 +91,6 @@ private:
   std::atomic<LogLevel> global_level_{LogLevel::TRACE};
 };
 
-constexpr LogLevel DEFAULT_LEVEL = LogLevel::INFO;
-
 LogRegistry                                          registry;
 std::shared_ptr<spdlog::sinks::stdout_color_sink_mt> COLOUR_SINK;
 
