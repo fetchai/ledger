@@ -27,8 +27,8 @@ using namespace fetch::storage;
 class TestClass
 {
 public:
-  uint64_t value1 = 0;
-  uint8_t  value2 = 0;
+  uint64_t    value1 = 0;
+  uint8_t     value2 = 0;
   std::string name;
 
   bool operator==(TestClass const &rhs) const
@@ -139,10 +139,10 @@ TEST(single_object_store, load_and_write_to_variable_sizes)
       SingleObjectStore store;
       store.Load("single_obj_store_test4.db");
 
-      uint64_t  random = lfg();
-      ref.value1 = static_cast<uint64_t>(random);
-      ref.value2 = static_cast<uint8_t>(random);
-      ref.name = std::to_string(i); // Variable serialized size due to this
+      uint64_t random = lfg();
+      ref.value1      = static_cast<uint64_t>(random);
+      ref.value2      = static_cast<uint8_t>(random);
+      ref.name        = std::to_string(i);  // Variable serialized size due to this
 
       store.Set(ref);
     }
