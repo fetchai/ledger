@@ -37,6 +37,7 @@
 #include "ml/ops/activations/relu.hpp"
 #include "ml/ops/activations/sigmoid.hpp"
 #include "ml/ops/activations/softmax.hpp"
+#include "ml/ops/flatten.hpp"
 
 #include "ml/ops/reshape.hpp"
 

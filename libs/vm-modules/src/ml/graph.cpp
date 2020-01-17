@@ -26,6 +26,7 @@
 #include "ml/ops/activations/relu.hpp"
 #include "ml/ops/activations/softmax.hpp"
 #include "ml/ops/exp.hpp"
+#include "ml/ops/placeholder.hpp"
 #include "ml/ops/transpose.hpp"
 
 #include "ml/ops/loss_functions/cross_entropy_loss.hpp"
