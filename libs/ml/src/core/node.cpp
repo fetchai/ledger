@@ -269,8 +269,8 @@ std::shared_ptr<TensorType> Node<TensorType>::Evaluate(bool is_training)
     {
       auto output_shape = op_ptr_->ComputeOutputShape(inputs);
 
-      if (cached_output_.shape() !=
-          output_shape)  // make shape compatible right before we do the forwarding
+      // make shape compatible right before we do the forwarding
+      if (cached_output_.shape() != output_shape)
       {
         cached_output_.Reshape(output_shape);
       }

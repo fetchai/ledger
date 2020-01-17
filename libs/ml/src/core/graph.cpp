@@ -300,7 +300,6 @@ void Graph<TensorType>::BackPropagate(std::string const &node_name, TensorType c
 template <typename TensorType>
 void Graph<TensorType>::SetRegularisation(RegPtrType regulariser, DataType regularisation_rate)
 {
-  Compile();
   for (auto &t : trainable_lookup_)
   {
     auto tmp = std::dynamic_pointer_cast<ops::Trainable<TensorType>>(t.second->GetOp());
@@ -319,7 +318,7 @@ template <typename TensorType>
 bool Graph<TensorType>::SetRegularisation(std::string const &node_name, RegPtrType regulariser,
                                           DataType regularisation_rate)
 {
-  // Compile();
+  Compile();
   NodePtrType t             = trainable_lookup_.at(node_name);
   auto        trainable_ptr = std::dynamic_pointer_cast<ops::Trainable<TensorType>>(t->GetOp());
   trainable_ptr->SetRegularisation(regulariser, regularisation_rate);
