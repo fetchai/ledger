@@ -1023,6 +1023,118 @@ void Graph<TensorType>::RecursiveApplyTwo(Val1Type &val_1, Val2Type &val_2,
   }
 }
 
+/**
+ * Recursive list of all trainable nodes in a graph
+ * @param ret
+ * @param level
+ */
+template <typename TensorType>
+void Graph<TensorType>::GetTrainableNames(std::vector<std::string> &ret, std::string level) const
+{
+  for (auto const &t : trainable_lookup_)
+  {
+    ret.push_back(level + "/" + t.first);
+  }
+
+  // Recursive apply on all subgraphs
+  for (auto &node_pair : nodes_)
+  {
+    auto op_ptr = node_pair.second->GetOp();
+
+    auto graph_ptr = std::dynamic_pointer_cast<Graph<TensorType>>(op_ptr);
+
+    // if it's a graph
+    if (graph_ptr)
+    {
+      std::string next_level;
+      if (level == "")
+      {
+        next_level = node_pair.first;
+      }
+      else
+      {
+        next_level = level + "/" + node_pair.first;
+      }
+
+      ((*graph_ptr).GetTrainableNames)(ret, next_level);
+    }
+  }
+}
+
+/**
+ * Return list of all trainable node names in format GRAPH1/...SUBGRAPHS../LEAF
+ * @return std::vector<std::string> list of names of all trainables in all subgraphs
+ */
+template <typename TensorType>
+std::vector<std::string> Graph<TensorType>::GetTrainableNames() const
+{
+  std::vector<std::string> ret;
+  GetTrainableNames(ret);
+  return ret;
+}
+
+/**
+ * Recursively search graph and return pointer to node
+ * @param name std::string name of node in format GRAPH1/...SUBGRAPHS../LEAF
+ * @return Node pointer
+ */
+template <typename TensorType>
+typename Graph<TensorType>::NodePtrType Graph<TensorType>::GetNodeByName(
+    std::string const &name) const
+{
+  std::string delimiter      = "/";
+  SizeType    next_delimiter = name.find(delimiter);
+
+  // false = Graph continues
+  bool leaf = false;
+
+  std::string token;
+
+  // If there is no slash in name, name is leaf node name
+  if (next_delimiter == fetch::math::numeric_max<SizeType>())
+  {
+    token = name;
+    leaf  = true;
+  }
+  // save name before first delimiter
+  else
+  {
+    token = name.substr(0, next_delimiter);
+  }
+
+  NodePtrType ret = nodes_.at(token);
+  if (!ret)
+  {
+    throw ml::exceptions::InvalidMode("couldn't find node [" + name + "] in graph!");
+  }
+
+  // Node address ends with leaf node
+  if (leaf)
+  {
+    return ret;
+  }
+
+  auto op_ptr    = ret->GetOp();
+  auto graph_ptr = std::dynamic_pointer_cast<Graph<TensorType>>(op_ptr);
+
+  // if current node is a graph
+  if (graph_ptr)
+  {
+    if (next_delimiter + 1 >= name.size() - 1)
+    {
+      throw ml::exceptions::InvalidMode("[" + name + "] has invalid format!");
+    }
+
+    // Continue recursive node search
+    return graph_ptr->GetNodeByName(name.substr(next_delimiter + 1, name.size() - 1));
+  }
+  // Node is not graph and node address continues
+  else
+  {
+    throw ml::exceptions::InvalidMode("[" + name + "] is not a graph!");
+  }
+}
+
 ///////////////////////////////
 /// EXPLICIT INSTANTIATIONS ///
 ///////////////////////////////

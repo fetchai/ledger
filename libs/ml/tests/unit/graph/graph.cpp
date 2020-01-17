@@ -41,6 +41,26 @@ class GraphTest : public ::testing::Test
 
 TYPED_TEST_CASE(GraphTest, math::test::TensorFloatingTypes);
 
+template <class TensorType>
+std::shared_ptr<fetch::ml::Graph<TensorType>> MakeGraph()
+{
+  // Create graph
+  std::shared_ptr<fetch::ml::Graph<TensorType>> g =
+      std::make_shared<fetch::ml::Graph<TensorType>>();
+
+  std::string input = g->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Input", {});
+  std::string label = g->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Label", {});
+
+  std::string layer_1 = g->template AddNode<layers::FullyConnected<TensorType>>(
+      "FC1", {input}, 28u * 28u, 10u, fetch::ml::details::ActivationType::RELU);
+  std::string layer_2 = g->template AddNode<layers::FullyConnected<TensorType>>(
+      "FC2", {layer_1}, 10u, 10u, fetch::ml::details::ActivationType::RELU);
+  std::string output = g->template AddNode<layers::FullyConnected<TensorType>>(
+      "FC3", {layer_2}, 10u, 10u, fetch::ml::details::ActivationType::SOFTMAX);
+
+  return g;
+}
+
 TYPED_TEST(GraphTest, node_placeholder)
 {
   using TensorType = TypeParam;
@@ -676,6 +696,47 @@ TYPED_TEST(GraphTest, diamond_graph_getStateDict)
 
   ASSERT_NE(sd.dict_["Diamond_Weight2"].weights_, nullptr);
   EXPECT_EQ(sd.dict_["Diamond_Weight2"].weights_->shape(), data2.shape());
+}
+
+TYPED_TEST(GraphTest, graph_GetTrainableNames)
+{
+  using TensorType = TypeParam;
+
+  // Create graph
+  auto g = MakeGraph<TensorType>();
+
+  std::vector<std::string> names = g->GetTrainableNames();
+
+  // Test weights
+  EXPECT_EQ(names.at(0), "FC1/FullyConnected_Bias");
+  EXPECT_EQ(names.at(1), "FC1/FullyConnected_Weights");
+  EXPECT_EQ(names.at(2), "FC2/FullyConnected_Bias");
+  EXPECT_EQ(names.at(3), "FC2/FullyConnected_Weights");
+  EXPECT_EQ(names.at(4), "FC3/FullyConnected_Bias");
+  EXPECT_EQ(names.at(5), "FC3/FullyConnected_Weights");
+}
+
+TYPED_TEST(GraphTest, graph_GetNodeByName)
+{
+  using TensorType = TypeParam;
+
+  // Create graph
+  auto g = MakeGraph<TensorType>();
+
+  auto node_ptr = g->GetNodeByName("FC3/FullyConnected_Bias");
+
+  ASSERT_TRUE(node_ptr);
+  EXPECT_EQ(node_ptr->GetNodeName(), "FullyConnected_Bias");
+
+  auto op_ptr = std::dynamic_pointer_cast<fetch::ml::ops::Weights<TensorType>>(node_ptr->GetOp());
+
+  ASSERT_TRUE(op_ptr);
+
+  auto weight = op_ptr->GetWeights();
+
+  // Test weights
+  EXPECT_EQ(weight.shape().at(0), 10);
+  EXPECT_EQ(weight.shape().at(1), 1);
 }
 
 }  // namespace test
