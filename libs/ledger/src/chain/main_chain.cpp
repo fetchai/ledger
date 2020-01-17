@@ -159,6 +159,11 @@ BlockStatus MainChain::AddBlock(Block block)
  */
 BlockStatus MainChain::AddBlock(BlockPtr const &block)
 {
+  if (!block->IsValid())
+  {
+    return BlockStatus::INVALID;
+  }
+
   assert(block);
   // At this point we assume that the weight has been correctly set by the miner
   block->total_weight = 1;
