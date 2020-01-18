@@ -91,6 +91,11 @@ protected:
                                              mining_identity_, aeon_period_, max_cabinet_size_,
                                              block_interval_ms_, notarisation_);
 
+    // A newly constructed chain is at genesis
+    auto const genesis = chain_.GetHeaviestBlock();
+
+    consensus_->UpdateCurrentBlock(*genesis);
+
     consensus_->Reset(*snapshot, storage_);
   }
 

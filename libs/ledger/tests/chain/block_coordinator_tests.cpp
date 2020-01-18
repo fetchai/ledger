@@ -389,11 +389,12 @@ TEST_F(BlockCoordinatorTests, CheckLongBlockStartUp)
     EXPECT_CALL(*execution_manager_, LastProcessedBlock());
     EXPECT_CALL(*storage_unit_, HashExists(genesis->merkle_hash, genesis->block_number));
     EXPECT_CALL(*storage_unit_, RevertToHash(genesis->merkle_hash, genesis->block_number));
+    EXPECT_CALL(*execution_manager_, SetLastProcessedBlock(genesis->hash));
 
     // pre block validation
     // none
 
-    // execute - B!
+    // execute - B1
     EXPECT_CALL(*execution_manager_, Execute(IsBlock(b1)));
 
     // wait for the execution to complete
@@ -410,6 +411,7 @@ TEST_F(BlockCoordinatorTests, CheckLongBlockStartUp)
     EXPECT_CALL(*execution_manager_, LastProcessedBlock());
     EXPECT_CALL(*storage_unit_, HashExists(_, 1));
     EXPECT_CALL(*storage_unit_, RevertToHash(_, 1));
+    EXPECT_CALL(*execution_manager_, SetLastProcessedBlock(b1->hash));
 
     // schedule of the next block
     EXPECT_CALL(*execution_manager_, Execute(IsBlock(b2)));
@@ -428,6 +430,7 @@ TEST_F(BlockCoordinatorTests, CheckLongBlockStartUp)
     EXPECT_CALL(*execution_manager_, LastProcessedBlock());
     EXPECT_CALL(*storage_unit_, HashExists(_, 2));
     EXPECT_CALL(*storage_unit_, RevertToHash(_, 2));
+    EXPECT_CALL(*execution_manager_, SetLastProcessedBlock(b2->hash));
 
     // schedule of the next block
     EXPECT_CALL(*execution_manager_, Execute(IsBlock(b3)));
@@ -453,6 +456,7 @@ TEST_F(BlockCoordinatorTests, CheckLongBlockStartUp)
     EXPECT_CALL(*execution_manager_, LastProcessedBlock());
     EXPECT_CALL(*storage_unit_, HashExists(_, 3));
     EXPECT_CALL(*storage_unit_, RevertToHash(_, 3));
+    EXPECT_CALL(*execution_manager_, SetLastProcessedBlock(b3->hash));
 
     // schedule of the next block
     EXPECT_CALL(*execution_manager_, Execute(IsBlock(b4)));
@@ -478,6 +482,7 @@ TEST_F(BlockCoordinatorTests, CheckLongBlockStartUp)
     EXPECT_CALL(*execution_manager_, LastProcessedBlock());
     EXPECT_CALL(*storage_unit_, HashExists(_, 4));
     EXPECT_CALL(*storage_unit_, RevertToHash(_, 4));
+    EXPECT_CALL(*execution_manager_, SetLastProcessedBlock(b4->hash));
 
     // schedule of the next block
     EXPECT_CALL(*execution_manager_, Execute(IsBlock(b5)));
@@ -718,8 +723,14 @@ TEST_F(BlockCoordinatorTests, CheckInvalidNumLanes)
     EXPECT_CALL(*storage_unit_, LastCommitHash());
     EXPECT_CALL(*storage_unit_, CurrentHash());
     EXPECT_CALL(*execution_manager_, LastProcessedBlock());
-    EXPECT_CALL(*storage_unit_, HashExists(genesis->merkle_hash, ::testing::_));
-    EXPECT_CALL(*storage_unit_, RevertToHash(genesis->merkle_hash, ::testing::_));
+    EXPECT_CALL(*storage_unit_, HashExists(genesis->merkle_hash, 0));
+    EXPECT_CALL(*storage_unit_, RevertToHash(genesis->merkle_hash, 0));
+    EXPECT_CALL(*execution_manager_, SetLastProcessedBlock(genesis->hash));
+
+    // block should be removed and reverted back to previous
+    EXPECT_CALL(*storage_unit_, HashExists(genesis->merkle_hash, 0));
+    EXPECT_CALL(*storage_unit_, RevertToHash(genesis->merkle_hash, 0));
+    EXPECT_CALL(*execution_manager_, SetLastProcessedBlock(genesis->hash));
 
     // syncing
     EXPECT_CALL(*storage_unit_, LastCommitHash());
@@ -809,8 +820,14 @@ TEST_F(BlockCoordinatorTests, CheckInvalidNumSlices)
     EXPECT_CALL(*storage_unit_, LastCommitHash());
     EXPECT_CALL(*storage_unit_, CurrentHash());
     EXPECT_CALL(*execution_manager_, LastProcessedBlock());
-    EXPECT_CALL(*storage_unit_, HashExists(genesis->merkle_hash, ::testing::_));
-    EXPECT_CALL(*storage_unit_, RevertToHash(genesis->merkle_hash, ::testing::_));
+    EXPECT_CALL(*storage_unit_, HashExists(genesis->merkle_hash, 0));
+    EXPECT_CALL(*storage_unit_, RevertToHash(genesis->merkle_hash, 0));
+    EXPECT_CALL(*execution_manager_, SetLastProcessedBlock(genesis->hash));
+
+    // block should be removed and reverted back to previous
+    EXPECT_CALL(*storage_unit_, HashExists(genesis->merkle_hash, 0));
+    EXPECT_CALL(*storage_unit_, RevertToHash(genesis->merkle_hash, 0));
+    EXPECT_CALL(*execution_manager_, SetLastProcessedBlock(genesis->hash));
 
     // syncing
     EXPECT_CALL(*storage_unit_, LastCommitHash());
@@ -1000,12 +1017,13 @@ TEST_F(NiceMockBlockCoordinatorTests, UnknownTransactionDoesNotBlockForever)
   // Fabricate unknown transaction
   b1->slices.begin()->push_back(layout);
 
-  EXPECT_CALL(*storage_unit_, RevertToHash(_, 0));
-
   // syncing - Genesis
   EXPECT_CALL(*storage_unit_, LastCommitHash()).Times(AnyNumber());
   EXPECT_CALL(*storage_unit_, CurrentHash()).Times(AnyNumber());
   EXPECT_CALL(*execution_manager_, LastProcessedBlock()).Times(AnyNumber());
+  EXPECT_CALL(*storage_unit_, HashExists(_, _)).Times(AnyNumber());
+  EXPECT_CALL(*storage_unit_, RevertToHash(_, _)).Times(AnyNumber());
+  EXPECT_CALL(*execution_manager_, SetLastProcessedBlock(_)).Times(AnyNumber());
 
   Tock(State::RELOAD_STATE, State::SYNCHRONISED);
 
