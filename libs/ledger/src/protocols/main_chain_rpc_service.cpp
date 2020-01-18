@@ -106,7 +106,7 @@ MainChainRpcService::MainChainRpcService(MuddleEndpoint &             endpoint,
         "ledger_mainchain_service_state_complete_sync_with_peer_total",
         "The number of times in the complete sync with peer state")}
   , state_current_{telemetry::Registry::Instance().CreateGauge<uint32_t>(
-        "ledger_mainchain_service_state_complete_sync_with_peer_total",
+        "ledger_mainchain_service_state",
         "The number of times in the complete sync with peer state")}
   , new_block_duration_{telemetry::Registry::Instance().CreateHistogram(
         {1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1, 1.0, 1e1, 1e2, 1e3},
