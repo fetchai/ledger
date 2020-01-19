@@ -63,7 +63,7 @@ fetch::math::SizeType Sequential<TensorType>::LayerCount() const
 ///////////////////////////////
 // ML-464
 // template class Sequential<math::Tensor<int8_t>>;
-template class Sequential<math::Tensor<int16_t>>;
+// template class Sequential<math::Tensor<int16_t>>;
 template class Sequential<math::Tensor<int32_t>>;
 template class Sequential<math::Tensor<int64_t>>;
 template class Sequential<math::Tensor<float>>;
