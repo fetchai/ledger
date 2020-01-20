@@ -27,8 +27,7 @@ namespace ledger {
 class MainChainRpcClientInterface
 {
 public:
-  using Travelogue        = TimeTravelogue<Block>;
-  using Blocks            = Travelogue::Blocks;
+  using Travelogue        = TimeTravelogue;
   using MuddleAddress     = muddle::Address;
   using BlocksPromise     = network::PromiseOf<Blocks>;
   using TraveloguePromise = network::PromiseOf<Travelogue>;
