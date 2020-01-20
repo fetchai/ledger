@@ -39,7 +39,7 @@ namespace ops {
  * @tparam T
  */
 
-template <class T>
+template <typename T>
 class DataHolder : public Ops<T>
 {
 public:

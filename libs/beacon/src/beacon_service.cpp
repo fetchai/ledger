@@ -360,7 +360,7 @@ BeaconService::State BeaconService::OnCollectSignaturesState()
 BeaconService::State BeaconService::OnVerifySignaturesState()
 {
   beacon_state_gauge_->set(static_cast<uint64_t>(state_machine_->state()));
-  SignatureInformation ret;
+  SignatureInformation ret{};
   uint64_t             index = 0;
 
   {

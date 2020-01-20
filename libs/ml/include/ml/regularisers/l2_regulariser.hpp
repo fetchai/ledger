@@ -17,8 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/assert.hpp"
-#include "math/tensor/tensor.hpp"
 #include "ml/regularisers/regulariser.hpp"
 
 namespace fetch {
@@ -35,29 +33,10 @@ public:
   using TensorType = T;
   using DataType   = typename TensorType::Type;
 
-  L2Regulariser()
-    : Regulariser<T>(RegularisationType::L2)
-  {}
+  L2Regulariser();
   ~L2Regulariser() override = default;
 
-  /**
-   * Applies regularisation gradient on specified tensor
-   * L2 regularisation gradient, where w=weight, a=regularisation_rate
-   * f'(w)=a*(2*w)
-   * @param weight tensor reference
-   * @param regularisation_rate
-   */
-  void ApplyRegularisation(TensorType &weight, DataType regularisation_rate) override
-  {
-    auto coef = static_cast<DataType>(2 * regularisation_rate);
-
-    auto it = weight.begin();
-    while (it.is_valid())
-    {
-      *it = static_cast<DataType>(*it - ((*it) * coef));
-      ++it;
-    }
-  }
+  void ApplyRegularisation(TensorType &weight, DataType regularisation_rate) override;
 };
 
 }  // namespace regularisers

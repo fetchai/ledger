@@ -325,6 +325,9 @@ int main(int argc, char **argv)
     module = VMFactory::GetModule(VMFactory::USE_SMART_CONTRACTS);
   }
 
+  // Enabling test annotations
+  module->EnableTestAnnotations();
+
   // additional module bindings
   module->CreateClassType<System>("System")
       .CreateStaticMemberFunction("Argc", &Argc)

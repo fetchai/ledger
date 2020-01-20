@@ -52,7 +52,7 @@ ModelType SetupModel(fetch::ml::OptimiserType                 optimiser_type,
                      TypeParam &gt)
 {
   // setup dataloader
-  using DataLoaderType = fetch::ml::dataloaders::TensorDataLoader<TypeParam, TypeParam>;
+  using DataLoaderType = fetch::ml::dataloaders::TensorDataLoader<TypeParam>;
   auto data_loader_ptr = std::make_unique<DataLoaderType>();
   data_loader_ptr->AddData({data}, gt);
 

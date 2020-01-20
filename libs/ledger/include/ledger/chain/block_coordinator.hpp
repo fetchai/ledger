@@ -231,9 +231,6 @@ public:
     });
   }
 
-  void Reset();
-  void ResetGenesis();
-
   // Operators
   BlockCoordinator &operator=(BlockCoordinator const &) = delete;
   BlockCoordinator &operator=(BlockCoordinator &&) = delete;
@@ -249,7 +246,6 @@ private:
 
   static constexpr uint64_t COMMON_PATH_TO_ANCESTOR_LENGTH_LIMIT = 5000;
 
-  using BlockPtr          = MainChain::BlockPtr;
   using NextBlockPtr      = std::unique_ptr<Block>;
   using PendingBlocks     = std::deque<BlockPtr>;
   using PendingStack      = std::vector<BlockPtr>;
@@ -291,7 +287,10 @@ private:
   bool            ScheduleNextBlock();
   bool            ScheduleBlock(Block const &block);
   ExecutionStatus QueryExecutorStatus();
-  void            RemoveBlock(MainChain::BlockHash const &hash);
+  template <typename BlockPtrType>
+  void RemoveBlock(BlockPtrType &block);
+  bool RevertToBlock(Block const &block);
+  void Panic();
 
   static char const *ToString(ExecutionStatus state);
 
@@ -305,8 +304,8 @@ private:
   BlockPackerInterface &     block_packer_;       ///< Ref to the block packer
   BlockSinkInterface &       block_sink_;         ///< Ref to the output sink interface
   PeriodicAction             periodic_print_;
-  MainChain::Blocks blocks_to_common_ancestor_;  ///< Partial vector of blocks from main chain HEAD
-                                                 ///< to block coord. last executed block.
+  Blocks blocks_to_common_ancestor_;  ///< Partial vector of blocks from main chain HEAD
+                                      ///< to block coord. last executed block.
   /// @}
 
   /// @name Status

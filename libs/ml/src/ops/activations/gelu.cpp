@@ -20,6 +20,8 @@
 #include "math/trigonometry.hpp"
 #include "ml/ops/activations/gelu.hpp"
 
+#include <cassert>
+
 namespace fetch {
 namespace ml {
 namespace ops {

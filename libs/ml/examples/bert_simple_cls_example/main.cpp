@@ -21,6 +21,7 @@
 #include "ml/layers/fully_connected.hpp"
 #include "ml/ops/loss_functions/cross_entropy_loss.hpp"
 #include "ml/ops/slice.hpp"
+#include "ml/ops/placeholder.hpp"
 #include "ml/optimisation/adam_optimiser.hpp"
 #include "ml/utilities/bert_utilities.hpp"
 
@@ -67,7 +68,7 @@ int main()
   config.ff_dims           = 12u;
   config.vocab_size        = 4u;
   config.segment_size      = 1u;
-  config.dropout_keep_prob = fetch::math::Type<DataType>("0.9");
+  config.dropout_drop_prob = fetch::math::Type<DataType>("0.1");
 
   BERTInterface<TensorType> interface(config);
 

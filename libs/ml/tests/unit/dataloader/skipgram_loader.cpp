@@ -28,16 +28,15 @@ namespace fetch {
 namespace ml {
 namespace test {
 
-template <typename TensorType>
 struct TrainingParams
 {
   using SizeType                = fetch::math::SizeType;
-  using DataType                = typename TensorType::Type;
-  SizeType max_word_count       = 15;           // maximum number to be trained
-  SizeType negative_sample_size = 0;            // number of negative sample per word-context pair
-  SizeType window_size          = 1;            // window size for context sampling
-  DataType freq_thresh          = DataType{1};  // frequency threshold for subsampling
-  SizeType min_count            = 0;            // infrequent word removal threshold
+  SizeType max_word_count       = 15;  // maximum number to be trained
+  SizeType negative_sample_size = 0;   // number of negative sample per word-context pair
+  SizeType window_size          = 1;   // window size for context sampling
+  fetch::fixed_point::fp64_t freq_thresh =
+      fetch::fixed_point::fp64_t{1};  // frequency threshold for subsampling
+  SizeType min_count = 0;             // infrequent word removal threshold
 };
 
 template <typename T>
@@ -52,7 +51,7 @@ TYPED_TEST(SkipGramDataloaderTest, loader_test)
   using TensorType = TypeParam;
   using SizeType   = fetch::math::SizeType;
 
-  TrainingParams<TensorType> tp;
+  TrainingParams tp;
   tp.max_word_count = 9;
 
   std::string training_data = "This is a test sentence of total length ten words.";
@@ -112,7 +111,7 @@ TYPED_TEST(SkipGramDataloaderTest, test_save_load_vocab)
   using TensorType = TypeParam;
   using SizeType   = fetch::math::SizeType;
 
-  TrainingParams<TensorType> tp;
+  TrainingParams tp;
   tp.max_word_count      = 100;
   std::string vocab_file = "/tmp/test_vocab.txt";
 

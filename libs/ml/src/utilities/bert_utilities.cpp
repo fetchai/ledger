@@ -25,6 +25,7 @@
 #include "ml/layers/fully_connected.hpp"
 #include "ml/layers/normalisation/layer_norm.hpp"
 #include "ml/layers/self_attention_encoder.hpp"
+#include "ml/ops/placeholder.hpp"
 #include "ml/ops/add.hpp"
 #include "ml/ops/embeddings.hpp"
 #include "ml/ops/loss_functions/cross_entropy_loss.hpp"
@@ -109,7 +110,7 @@ std::pair<std::vector<std::string>, std::vector<std::string>> MakeBertModel(
   SizeType vocab_size        = config.vocab_size;
   SizeType segment_size      = config.segment_size;
   DataType epsilon           = config.epsilon;
-  DataType dropout_keep_prob = config.dropout_keep_prob;
+  DataType dropout_drop_prob = config.dropout_drop_prob;
 
   // initiate graph
   std::string segment = g.template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Segment", {});
@@ -145,7 +146,7 @@ std::pair<std::vector<std::string>, std::vector<std::string>> MakeBertModel(
     // create the encoding layer first
     layer_output = g.template AddNode<fetch::ml::layers::SelfAttentionEncoder<TensorType>>(
         "SelfAttentionEncoder_No_" + std::to_string(i), {layer_output, mask}, n_heads, model_dims,
-        ff_dims, dropout_keep_prob, dropout_keep_prob, dropout_keep_prob, epsilon);
+        ff_dims, dropout_drop_prob, dropout_drop_prob, dropout_drop_prob, epsilon);
     // store layer output names
     encoder_outputs.emplace_back(layer_output);
   }
@@ -281,7 +282,7 @@ std::pair<std::vector<std::string>, std::vector<std::string>> LoadPretrainedBert
   SizeType vocab_size        = config.vocab_size;
   SizeType segment_size      = config.segment_size;
   DataType epsilon           = config.epsilon;
-  DataType dropout_keep_prob = config.dropout_keep_prob;
+  DataType dropout_drop_prob = config.dropout_drop_prob;
 
   // for release version
   FETCH_UNUSED(vocab_size);
@@ -361,7 +362,7 @@ std::pair<std::vector<std::string>, std::vector<std::string>> LoadPretrainedBert
     // create the encoding layer first
     layer_output = g.template AddNode<fetch::ml::layers::SelfAttentionEncoder<TensorType>>(
         "SelfAttentionEncoder_No_" + std::to_string(i), {layer_output, mask}, n_heads, model_dims,
-        ff_dims, dropout_keep_prob, dropout_keep_prob, dropout_keep_prob, epsilon);
+        ff_dims, dropout_drop_prob, dropout_drop_prob, dropout_drop_prob, epsilon);
 
     // store layer output
     encoder_outputs.emplace_back(layer_output);

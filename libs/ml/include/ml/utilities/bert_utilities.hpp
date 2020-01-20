@@ -17,6 +17,23 @@
 //
 //------------------------------------------------------------------------------
 
+/*
+#include "core/filesystem/read_file_contents.hpp"
+#include "core/serializers/base_types.hpp"
+#include "core/serializers/main_serializer.hpp"
+#include "math/metrics/cross_entropy.hpp"
+#include "math/tensor/tensor.hpp"
+#include "ml/core/graph.hpp"
+#include "ml/layers/fully_connected.hpp"
+#include "ml/layers/normalisation/layer_norm.hpp"
+#include "ml/layers/self_attention_encoder.hpp"
+#include "ml/ops/add.hpp"
+#include "ml/ops/embeddings.hpp"
+#include "ml/ops/loss_functions/cross_entropy_loss.hpp"
+#include "ml/ops/placeholder.hpp"
+#include "ml/serializers/ml_types.hpp"
+#include "ml/utilities/graph_builder.hpp"
+*/
 
 #include "ml/core/graph.hpp"
 
@@ -39,7 +56,7 @@ struct BERTConfig
   SizeType vocab_size        = 30522u;
   SizeType segment_size      = 2u;
   DataType epsilon           = fetch::math::Type<DataType>("0.000000000001");
-  DataType dropout_keep_prob = fetch::math::Type<DataType>("0.9");
+  DataType dropout_drop_prob = fetch::math::Type<DataType>("0.1");
 };
 
 template <class TensorType>
@@ -98,6 +115,7 @@ template <class TensorType>
 std::pair<std::vector<std::string>, std::vector<std::string>> LoadPretrainedBertModel(
     std::string const &file_path, BERTConfig<TensorType> const &config,
     fetch::ml::Graph<TensorType> &g);
+
 
 template <class TensorType>
 TensorType RunPseudoForwardPass(std::vector<std::string> input_nodes, std::string output_node,

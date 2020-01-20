@@ -21,18 +21,24 @@
 #include "ml/dataloaders/tensor_dataloader.hpp"
 #include "ml/meta/ml_type_traits.hpp"
 #include "ml/model/model_config.hpp"
+
 #include "ml/ops/loss_functions/types.hpp"
 #include "ml/ops/metrics/categorical_accuracy.hpp"
 #include "ml/ops/metrics/types.hpp"
+
+#include "ml/ops/loss_functions/cross_entropy_loss.hpp"
+#include "ml/ops/loss_functions/mean_square_error_loss.hpp"
+#include "ml/ops/loss_functions/softmax_cross_entropy_loss.hpp"
+
 #include "ml/optimisation/optimiser.hpp"
 #include "ml/optimisation/types.hpp"
+
 #include "ml/utilities/graph_builder.hpp"
 #include "ml/utilities/graph_saver.hpp"
 
 #include <utility>
 
 namespace fetch {
-
 namespace vm_modules {
 namespace ml {
 namespace model {
@@ -60,7 +66,7 @@ public:
   using DataType           = typename TensorType::Type;
   using SizeType           = fetch::math::SizeType;
   using GraphType          = Graph<TensorType>;
-  using DataLoaderType     = dataloaders::DataLoader<TensorType, TensorType>;
+  using DataLoaderType     = dataloaders::DataLoader<TensorType>;
   using ModelOptimiserType = optimisers::Optimiser<TensorType>;
   using GraphPtrType       = typename std::shared_ptr<GraphType>;
   using DataLoaderPtrType  = typename std::shared_ptr<DataLoaderType>;
@@ -517,6 +523,7 @@ bool Model<TensorType>::DataLoaderIsSet()
 }  // namespace ml
 
 namespace serializers {
+
 /**
  * serializer for Model
  * @tparam TensorType
@@ -555,9 +562,8 @@ struct MapSerializer<ml::model::Model<TensorType>, D>
     {
     case ml::LoaderType::TENSOR:
     {
-      auto *loader_ptr =
-          static_cast<fetch::ml::dataloaders::TensorDataLoader<TensorType, TensorType> *>(
-              sp.dataloader_ptr_.get());
+      auto *loader_ptr = static_cast<fetch::ml::dataloaders::TensorDataLoader<TensorType> *>(
+          sp.dataloader_ptr_.get());
       map.Append(DATALOADER_PTR, *loader_ptr);
       break;
     }
@@ -624,7 +630,7 @@ struct MapSerializer<ml::model::Model<TensorType>, D>
     {
     case ml::LoaderType::TENSOR:
     {
-      auto loader_ptr = new ml::dataloaders::TensorDataLoader<TensorType, TensorType>();
+      auto loader_ptr = new ml::dataloaders::TensorDataLoader<TensorType>();
       map.ExpectKeyGetValue(DATALOADER_PTR, *loader_ptr);
       sp.dataloader_ptr_.reset(loader_ptr);
       break;
@@ -741,6 +747,6 @@ struct MapSerializer<ml::model::Model<TensorType>, D>
     map.ExpectKeyGetValue(COMPILED_FLAG, sp.compiled_);
   }
 };
-
 }  // namespace serializers
+
 }  // namespace fetch

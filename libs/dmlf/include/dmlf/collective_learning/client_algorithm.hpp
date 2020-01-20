@@ -25,6 +25,7 @@
 #include "math/matrix_operations.hpp"
 #include "math/tensor/tensor.hpp"
 #include "ml/model/sequential.hpp"
+#include "ml/ops/weights.hpp"
 #include "ml/utilities/sparse_tensor_utilities.hpp"
 #include "ml/utilities/utils.hpp"
 
@@ -44,18 +45,17 @@ namespace collective_learning {
 template <class TensorType>
 class ClientAlgorithm
 {
-  using DataType         = typename TensorType::Type;
-  using SizeType         = fetch::math::SizeType;
-  using VectorTensorType = std::vector<TensorType>;
-  using VectorSizeVector = std::vector<std::vector<SizeType>>;
-  using TimestampType    = int64_t;
-  using UpdateType       = fetch::dmlf::deprecated_Update<TensorType>;
-  using DataloaderPtrType =
-      std::shared_ptr<fetch::ml::dataloaders::DataLoader<TensorType, TensorType>>;
-  using GraphPtrType               = std::shared_ptr<fetch::ml::Graph<TensorType>>;
-  using OptimiserPtrType           = std::shared_ptr<fetch::ml::optimisers::Optimiser<TensorType>>;
-  using ModelPtrType               = std::shared_ptr<fetch::ml::model::Sequential<TensorType>>;
-  using AlgorithmControllerType    = ClientAlgorithmController<TensorType>;
+  using DataType                = typename TensorType::Type;
+  using SizeType                = fetch::math::SizeType;
+  using VectorTensorType        = std::vector<TensorType>;
+  using VectorSizeVector        = std::vector<std::vector<SizeType>>;
+  using TimestampType           = int64_t;
+  using UpdateType              = fetch::dmlf::deprecated_Update<TensorType>;
+  using DataloaderPtrType       = std::shared_ptr<fetch::ml::dataloaders::DataLoader<TensorType>>;
+  using GraphPtrType            = std::shared_ptr<fetch::ml::Graph<TensorType>>;
+  using OptimiserPtrType        = std::shared_ptr<fetch::ml::optimisers::Optimiser<TensorType>>;
+  using ModelPtrType            = std::shared_ptr<fetch::ml::model::Sequential<TensorType>>;
+  using AlgorithmControllerType = ClientAlgorithmController<TensorType>;
   using AlgorithmControllerPtrType = std::shared_ptr<ClientAlgorithmController<TensorType>>;
 
 public:

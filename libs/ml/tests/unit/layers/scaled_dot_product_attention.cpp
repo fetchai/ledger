@@ -19,6 +19,8 @@
 #include "gtest/gtest.h"
 #include "ml/layers/scaled_dot_product_attention.hpp"
 #include "ml/ops/loss_functions/mean_square_error_loss.hpp"
+#include "ml/ops/placeholder.hpp"
+#include "ml/ops/prelu_op.hpp"
 #include "ml/optimisation/sgd_optimiser.hpp"
 #include "ml/regularisers/regulariser.hpp"
 #include "ml/serializers/ml_types.hpp"
@@ -111,7 +113,7 @@ TYPED_TEST(ScaledDotProductAttention,
   using SizeType = fetch::math::SizeType;
 
   fetch::ml::layers::ScaledDotProductAttention<TypeParam> att(static_cast<SizeType>(3),
-                                                              DataType{1});
+                                                              DataType{0});
 
   TypeParam query_data = TypeParam::FromString("1, 2, 0.5, 0.1; 2, 1, 0.3, -0.2;2, 4, 0, 1");
   query_data.Reshape({3, 2, 2});
@@ -213,7 +215,7 @@ TYPED_TEST(ScaledDotProductAttention,
   using SizeType = fetch::math::SizeType;
 
   fetch::ml::layers::ScaledDotProductAttention<TypeParam> att(static_cast<SizeType>(3),
-                                                              DataType{1});
+                                                              DataType{0});
 
   TypeParam query_data =
       TypeParam::FromString("1, 2, 0.5, 0.1, 5, 3; 2, 1, 0.3, -0.2, -2, 0.5; 2, 4, 0, 1, 1.1, -3");
@@ -302,7 +304,7 @@ TYPED_TEST(ScaledDotProductAttention, saveparams_test)
   labels.FillUniformRandom();
 
   // Create layer
-  LayerType layer(key_dim, DataType{1});
+  LayerType layer(key_dim, DataType{0});
 
   // add label node
   std::string label_name =
