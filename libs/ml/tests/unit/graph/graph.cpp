@@ -757,6 +757,37 @@ TYPED_TEST(GraphTest, graph_getNodeNames)
   EXPECT_EQ(names.at(25), "FC3/FullyConnected_Weights");
 }
 
+TYPED_TEST(GraphTest, graph_setWeight)
+{
+  using TensorType = TypeParam;
+  using DataType   = typename TensorType::Type;
+
+  TensorType gt({10, 1});
+  gt.Fill(fetch::math::Type<DataType>("1.23"));
+
+  // Create graph
+  auto g = MakeGraph<TensorType>();
+
+  // Assign weight
+  g->SetWeight("FC3/FullyConnected_Bias", gt);
+
+  // Get weight from graph
+  auto node_ptr = g->GetNode("FC3/FullyConnected_Bias");
+  ASSERT_TRUE(node_ptr);
+  EXPECT_EQ(node_ptr->GetNodeName(), "FullyConnected_Bias");
+  auto op_ptr = std::dynamic_pointer_cast<fetch::ml::ops::Weights<TensorType>>(node_ptr->GetOp());
+  ASSERT_TRUE(op_ptr);
+  auto weight = op_ptr->GetWeights();
+
+  // Test size
+  EXPECT_EQ(weight.shape().at(0), 10);
+  EXPECT_EQ(weight.shape().at(1), 1);
+
+  // Test values
+  ASSERT_TRUE(weight.AllClose(gt, fetch::math::function_tolerance<DataType>(),
+                              fetch::math::function_tolerance<DataType>()));
+}
+
 }  // namespace test
 }  // namespace ml
 }  // namespace fetch

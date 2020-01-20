@@ -125,6 +125,7 @@ public:
   void       BackPropagate(std::string const &node_name, TensorType const &error_signal = {});
   void       ApplyGradients(std::vector<TensorType> &grad);
   void       ApplySparseGradients(std::vector<TensorType> &grad, std::vector<SizeSet> &update_rows);
+  void       SetWeight(std::string const &node_name, TensorType const &data);
 
   //////////////////////////////////////////////////////
   /// public serialisation & weight export functions ///

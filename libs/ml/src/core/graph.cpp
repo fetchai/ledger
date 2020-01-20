@@ -1107,6 +1107,24 @@ std::map<std::string, typename Graph<TensorType>::NodePtrType> &Graph<TensorType
   return nodes_;
 }
 
+/**
+ * Assign tensor to weight addressed by node_name
+ * @tparam TensorType
+ * @param node_name std::string name of weight in format GRAPH1/...SUBGRAPHS../LEAF
+ * @param data tensor which will be assigned to target weight
+ */
+template <class TensorType>
+void Graph<TensorType>::SetWeight(std::string const &node_name, TensorType const &data)
+{
+  auto node_ptr = GetNode(node_name);
+  auto op_ptr   = std::dynamic_pointer_cast<fetch::ml::ops::Weights<TensorType>>(node_ptr->GetOp());
+  if (!op_ptr)
+  {
+    throw ml::exceptions::InvalidMode("[" + node_name + "] is not Weight type!");
+  }
+  op_ptr->SetWeights(data);
+}
+
 ///////////////////////////////
 /// EXPLICIT INSTANTIATIONS ///
 ///////////////////////////////

@@ -63,6 +63,11 @@ void VMGraph::SetInput(VMPtrString const &name, Ptr<VMTensorType> const &input)
   graph_.SetInput(name->string(), (*input).GetTensor());
 }
 
+void VMGraph::SetWeight(VMPtrString const &name, Ptr<VMTensorType> const &input)
+{
+  graph_.SetWeight(name->string(), (*input).GetTensor());
+}
+
 Ptr<VMTensorType> VMGraph::Evaluate(VMPtrString const &name)
 {
   MathTensorType    t   = graph_.Evaluate(name->string(), false);
@@ -175,7 +180,8 @@ void VMGraph::Bind(Module &module, bool const enable_experimental)
         .CreateMemberFunction("addExp", &VMGraph::AddExp, vm::MAXIMUM_CHARGE)
         .CreateMemberFunction("serializeToString", &VMGraph::SerializeToString, vm::MAXIMUM_CHARGE)
         .CreateMemberFunction("deserializeFromString", &VMGraph::DeserializeFromString,
-                              vm::MAXIMUM_CHARGE);
+                              vm::MAXIMUM_CHARGE)
+        .CreateMemberFunction("setWeight", &VMGraph::SetWeight, vm::MAXIMUM_CHARGE);
   }
 }
 

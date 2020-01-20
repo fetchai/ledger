@@ -139,15 +139,6 @@ std::pair<std::vector<std::string>, std::vector<std::string>> MakeBertModel(
 }
 
 template <class TensorType>
-void SetWeightByName(fetch::ml::Graph<TensorType> &g, std::string const &node_name,
-                     TensorType const &data)
-{
-  auto node_ptr = g.GetNode(node_name);
-  auto op_ptr   = std::dynamic_pointer_cast<fetch::ml::ops::Weights<TensorType>>(node_ptr->GetOp());
-  return op_ptr->SetWeights(data);
-}
-
-template <class TensorType>
 void EvaluateGraph(fetch::ml::Graph<TensorType> &g, std::vector<std::string> input_nodes,
                    std::string const &output_node, std::vector<TensorType> input_data,
                    TensorType output_data, bool verbose = true)
@@ -225,8 +216,8 @@ void PutWeightInLayerNorm(fetch::ml::Graph<TensorType> &g, SizeType model_dims,
   layernorm_gamma.Reshape({model_dims, 1, 1});
 
   // load weights to layernorm layer
-  SetWeightByName(g, gamma_weight_name, layernorm_gamma);
-  SetWeightByName(g, beta_weight_name, layernorm_beta);
+  g.SetWeight(gamma_weight_name, layernorm_gamma);
+  g.SetWeight(beta_weight_name, layernorm_beta);
 }
 
 template <class TensorType>
@@ -245,8 +236,8 @@ void PutWeightInFullyConnected(fetch::ml::Graph<TensorType> &g, SizeType in_size
   bias.Reshape({out_size, 1, 1});
 
   // load weights to layernorm layer
-  SetWeightByName(g, weights_name, weights);
-  SetWeightByName(g, bias_name, bias);
+  g.SetWeight(weights_name, weights);
+  g.SetWeight(bias_name, bias);
 }
 
 template <class TensorType>
@@ -300,12 +291,12 @@ void PutWeightInMultiheadAttention(
     assert(sliced_key_bias.shape() == typename TensorType::SizeVector({attn_head_size, 1, 1}));
 
     // put the weights into each head
-    SetWeightByName(g, layer + "/" + this_attn_prefix + query_weights_name, sliced_query_weights);
-    SetWeightByName(g, layer + "/" + this_attn_prefix + query_bias_name, sliced_query_bias);
-    SetWeightByName(g, layer + "/" + this_attn_prefix + key_weights_name, sliced_key_weights);
-    SetWeightByName(g, layer + "/" + this_attn_prefix + key_bias_name, sliced_key_bias);
-    SetWeightByName(g, layer + "/" + this_attn_prefix + value_weights_name, sliced_value_weights);
-    SetWeightByName(g, layer + "/" + this_attn_prefix + value_bias_name, sliced_value_bias);
+    g.SetWeight(layer + "/" + this_attn_prefix + query_weights_name, sliced_query_weights);
+    g.SetWeight(layer + "/" + this_attn_prefix + query_bias_name, sliced_query_bias);
+    g.SetWeight(layer + "/" + this_attn_prefix + key_weights_name, sliced_key_weights);
+    g.SetWeight(layer + "/" + this_attn_prefix + key_bias_name, sliced_key_bias);
+    g.SetWeight(layer + "/" + this_attn_prefix + value_weights_name, sliced_value_weights);
+    g.SetWeight(layer + "/" + this_attn_prefix + value_bias_name, sliced_value_bias);
   }
 }
 
