@@ -76,6 +76,15 @@ public:
 
   static constexpr char const *DESCRIPTOR = "DataHolder";
 
+  OpType OperationType() const override  // TODO(ML-466) : move implementation to .cpp
+  {
+    return this->OpCode();
+  }
+  char const *Descriptor() const override  // TODO(ML-466) : move implementation to .cpp
+  {
+    return DESCRIPTOR;
+  }
+
 protected:
   TensorPtrType data_;
 };

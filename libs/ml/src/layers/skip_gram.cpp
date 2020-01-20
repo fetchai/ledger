@@ -60,6 +60,9 @@ SkipGram<TensorType>::SkipGram(SizeType in_size, SizeType out, SizeType embeddin
   std::string output = this->template AddNode<fetch::ml::ops::Sigmoid<TensorType>>(
       name + "_Sigmoid", {in_ctx_matmul_flat});
 
+  this->nodes_.at(embed_in_)->SetBatchOutputShape({embedding_size, 1, 1});
+  this->nodes_.at(embed_ctx)->SetBatchOutputShape({embedding_size, 1, 1});
+
   this->AddInputNode(input);
   this->AddInputNode(context);
   this->SetOutputNode(output);

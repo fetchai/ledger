@@ -104,6 +104,7 @@ public:
 
   void ResetCompile();
   void Compile();
+  void ComputeAllNodeShapes();
 
   void AddTrainable(NodePtrType node_ptr, std::string const &node_name);
   void AddTrainable(NodePtrType node_ptr, std::string const &node_name,
@@ -155,6 +156,8 @@ public:
   void ResetGradients();
 
   std::vector<std::string> GetTrainableNames();
+
+  std::vector<std::pair<std::string, std::vector<std::string>>> Connections();
 
 protected:
   std::map<std::string, NodePtrType>                            nodes_;

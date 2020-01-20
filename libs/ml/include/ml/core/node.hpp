@@ -17,6 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include "math/base_types.hpp"
+
 #include <functional>
 #include <memory>
 #include <string>
@@ -88,7 +90,7 @@ public:
   Node(Node &old_node, std::string name, std::shared_ptr<ops::Ops<TensorType>> op_ptr)
     : name_(std::move(name))
     , cached_output_status_(CachedOutputState::CHANGED_SIZE)
-    , operation_type_(old_node.get_op_type())
+    , operation_type_(old_node.OperationType())
     , op_ptr_(std::move(op_ptr))
   {
     cached_output_ = old_node.cached_output_.Copy();
@@ -102,8 +104,8 @@ public:
 
   std::shared_ptr<SPType> GetNodeSaveableParams() const;
 
-  void SetNodeSaveableParams(NodeSaveableParams<TensorType> const &nsp,
-                             std::shared_ptr<ops::Ops<TensorType>> op_ptr);
+  void SetNodeSaveableParams(NodeSaveableParams<TensorType> const &       nsp,
+                             std::shared_ptr<ops::Ops<TensorType>> const &op_ptr);
 
   ///////////////////////////////////
   /// FORWARD/BACKWARD OPERATIONS ///
@@ -121,7 +123,7 @@ public:
   void                                ResetCache(bool input_size_changed);
   void                                ResetInputsAndOutputs();
 
-  inline std::string const &GetNodeName()
+  inline std::string const &GetNodeName() const
   {
     return name_;
   }
@@ -131,16 +133,17 @@ public:
     return op_ptr_;
   }
 
-  /**
-   * returns the stored operation type
-   * @return
-   */
-  inline OpType const &get_op_type()
-  {
-    return operation_type_;
-  }
+  OpType OperationType() const;
 
-  inline bool HasValidCache()
+  void SetBatchOutputShape(fetch::math::SizeVector const &new_shape);
+
+  void SetBatchInputShapes(std::vector<fetch::math::SizeVector> const &new_shapes);
+
+  std::vector<fetch::math::SizeVector> const &BatchInputShapes() const;
+
+  fetch::math::SizeVector BatchOutputShape();
+
+  inline bool HasValidCache() const
   {
     return static_cast<bool>(cached_output_status_ == CachedOutputState::VALID_CACHE);
   }

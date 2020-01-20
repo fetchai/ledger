@@ -36,59 +36,118 @@ FullyConnected<TensorType>::FullyConnected(SizeType in, SizeType out,
                                            fetch::ml::RegularisationType regulariser,
                                            DataType regularisation_rate, WeightsInit init_mode,
                                            bool time_distributed)
-  : in_size_(in)
-  , out_size_(out)
+  : total_inputs_(in)
+  , total_outputs_(out)
   , time_distributed_(time_distributed)
+  , init_mode_(init_mode)
 {
+  using namespace fetch::ml::ops;
+  using namespace fetch::ml::details;
+
   // get correct name for the layer
-  std::string name = GetName();
+  std::string const name = GetName();
 
   // start to set up the structure
-  std::string input =
-      this->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>(name + "_Input", {});
-
+  std::string const input_name =
+      this->template AddNode<PlaceHolder<TensorType>>(name + "_Input", {});
   // for non time distributed layer, flatten the input
-  std::string flat_input = input;
+  std::string flattened_input_name = input_name;
   if (!time_distributed_)
   {
-    flat_input =
-        this->template AddNode<fetch::ml::ops::Flatten<TensorType>>(name + "_Flatten", {input});
+    flattened_input_name =
+        this->template AddNode<Flatten<TensorType>>(name + "_Flatten", {input_name});
   }
 
-  std::string weights =
-      this->template AddNode<fetch::ml::ops::Weights<TensorType>>(name + "_Weights", {});
-  std::string weights_matmul = this->template AddNode<fetch::ml::ops::MatrixMultiply<TensorType>>(
-      name + "_MatrixMultiply", {weights, flat_input});
-  std::string bias =
-      this->template AddNode<fetch::ml::ops::Weights<TensorType>>(name + "_Bias", {});
-  std::string output = this->template AddNode<fetch::ml::ops::Add<TensorType>>(
-      name + "_Add", {weights_matmul, bias});
+  weights_name_ = this->template AddNode<Weights<TensorType>>(name + "_Weights", {});
 
-  output = fetch::ml::details::AddActivationNode<TensorType>(activation_type, this,
-                                                             name + "_Activation", output);
+  std::string const weights_matmul_name = this->template AddNode<MatrixMultiply<TensorType>>(
+      name + "_MatrixMultiply", {weights_name_, flattened_input_name});
 
-  this->AddInputNode(input);
-  this->SetOutputNode(output);
-  this->SetRegularisation(fetch::ml::details::CreateRegulariser<TensorType>(regulariser),
-                          regularisation_rate);
+  bias_name_ = this->template AddNode<Weights<TensorType>>(name + "_Bias", {});
 
-  // initialize weight with specified method
-  TensorType weights_data(std::vector<SizeType>({out_size_, in_size_}));
-  this->Initialise(weights_data, init_mode);
-  this->SetInput(name + "_Weights", weights_data);
+  std::string const add =
+      this->template AddNode<Add<TensorType>>(name + "_Add", {weights_matmul_name, bias_name_});
 
-  // initialize bias with right shape and set to all zero
-  TensorType bias_data;
-  if (time_distributed_)
+  std::string const output_name =
+      AddActivationNode<TensorType>(activation_type, this, name + "_Activation", add);
+
+  this->SetRegularisation(CreateRegulariser<TensorType>(regulariser), regularisation_rate);
+
+  this->AddInputNode(input_name);
+  this->SetOutputNode(output_name);
+
+  // If inputs count is known, the initialisation can be completed immediately.
+  if (total_inputs_ != AUTODETECT_INPUTS_COUNT)
   {
-    bias_data = TensorType(std::vector<SizeType>({out_size_, 1, 1}));
+    if (time_distributed_)
+    {
+      this->batch_input_shapes_ = {{total_inputs_, 1, 1}};
+    }
+    else
+    {
+      this->batch_input_shapes_ = {{total_inputs_, 1}};
+    }
+    this->ComputeBatchOutputShape(this->batch_input_shapes_);
+    CompleteConstruction();
   }
-  else
+}
+
+template <typename TensorType>
+void FullyConnected<TensorType>::CompleteConstruction()
+{
+  if (is_initialised_)
   {
-    bias_data = TensorType(std::vector<SizeType>({out_size_, 1}));
+    return;
   }
-  this->SetInput(name + "_Bias", bias_data);
+
+  assert(!this->batch_input_shapes_.empty());
+  assert(!this->batch_output_shape_.empty());
+  assert(this->input_node_names_.size() == 1);  // Only 1 input node is allowed
+  assert(total_outputs_ == this->batch_output_shape_.front());
+  FETCH_LOG_INFO(Descriptor(), "-- Completing FullyConnected initialisation ... --");
+
+  NodePtrType input_node = this->nodes_.at(this->input_node_names_.front());
+  input_node->SetBatchInputShapes(this->batch_input_shapes_);
+  input_node->SetBatchOutputShape(this->batch_input_shapes_.front());
+
+  if (total_inputs_ == AUTODETECT_INPUTS_COUNT)
+  {
+    if (time_distributed_)
+    {
+      // An input size of a time-distributed layer is equal to a first dimension in
+      // the input shape.
+      total_inputs_ = this->batch_input_shapes_.front().at(0);
+    }
+    else
+    {
+      // An input size of a non-time-distributed layer is equal to total elements
+      // in input tensor, e.g. equal to a flattened input output size.
+      NodePtrType flatten_node = FindNodeByOpCode(OpType::OP_FLATTEN);
+      total_inputs_ =
+          flatten_node->GetOp()->ComputeBatchOutputShape(this->batch_input_shapes_).at(0);
+    }
+  }
+
+  math::SizeVector const weights_shape = {total_outputs_, total_inputs_};
+  // At this point we know everything necessary to directly assign shapes to
+  // leaf nodes such as Weights and Bias.
+  this->nodes_.at(weights_name_)->SetBatchOutputShape(weights_shape);
+  this->nodes_.at(bias_name_)->SetBatchOutputShape(this->batch_output_shape_);
+
+  // initialize weight with specified method.
+  TensorType weights_data(weights_shape);
+  fetch::ml::ops::Weights<TensorType>::Initialise(weights_data, total_inputs_, total_outputs_,
+                                                  init_mode_);
+  this->SetInput(weights_name_, weights_data);
+
+  TensorType bias_data = TensorType(this->batch_output_shape_);
+
+  this->SetInput(bias_name_, bias_data);
+
   this->Compile();
+
+  FETCH_LOG_INFO(Descriptor(), "-- FullyConnected initialisation completed. --");
+  is_initialised_ = true;
 }
 
 template <typename TensorType>
@@ -96,13 +155,21 @@ std::shared_ptr<fetch::ml::ops::Ops<TensorType>> FullyConnected<TensorType>::Mak
     OpPtrType me)
 {
   FETCH_UNUSED(me);
-  assert(me.get() == this);  // used for compatability
+  assert(me.get() == this);  // used for compatibility
 
   auto copyshare = std::make_shared<FullyConnected<TensorType>>();
 
-  copyshare->time_distributed_ = time_distributed_;
-  copyshare->in_size_          = in_size_;
-  copyshare->out_size_         = out_size_;
+  copyshare->time_distributed_   = time_distributed_;
+  copyshare->total_inputs_       = total_inputs_;
+  copyshare->total_outputs_      = total_outputs_;
+  copyshare->batch_output_shape_ = this->batch_output_shape_;
+  copyshare->batch_input_shapes_ = this->batch_input_shapes_;
+  copyshare->is_initialised_     = is_initialised_;
+  copyshare->weights_name_       = weights_name_;
+  copyshare->bias_name_          = bias_name_;
+  copyshare->init_mode_          = init_mode_;
+
+  copyshare->connections_ = this->Connections();
 
   SubGraph<TensorType>::InsertSharedCopy(copyshare);
 
@@ -122,9 +189,13 @@ std::shared_ptr<OpsSaveableParams> FullyConnected<TensorType>::GetOpSaveablePara
   *sg_ptr2     = *sg_ptr1;
 
   // asign layer specific params
-  ret->in_size          = in_size_;
-  ret->out_size         = out_size_;
+  ret->total_inputs_    = total_inputs_;
+  ret->total_outputs_   = total_outputs_;
   ret->time_distributed = time_distributed_;
+  ret->is_initialised   = is_initialised_;
+  ret->weights_name     = weights_name_;
+  ret->bias_name        = bias_name_;
+  ret->init_mode        = static_cast<int>(init_mode_);
 
   return ret;
 }
@@ -133,14 +204,17 @@ template <typename TensorType>
 void FullyConnected<TensorType>::SetOpSaveableParams(SPType const &sp)
 {
   // assign layer specific params
-  in_size_          = sp.in_size;
-  out_size_         = sp.out_size;
+  total_inputs_     = sp.total_inputs_;
+  total_outputs_    = sp.total_outputs_;
   time_distributed_ = sp.time_distributed;
+  is_initialised_   = sp.is_initialised;
+  weights_name_     = sp.weights_name;
+  bias_name_        = sp.bias_name;
+  init_mode_        = static_cast<WeightsInit>(sp.init_mode);
 }
 
 template <typename TensorType>
-std::vector<math::SizeType> FullyConnected<TensorType>::ComputeOutputShape(
-    VecTensorType const &inputs) const
+math::SizeVector FullyConnected<TensorType>::ComputeOutputShape(VecTensorType const &inputs) const
 {
   if (!time_distributed_)
   {
@@ -149,14 +223,67 @@ std::vector<math::SizeType> FullyConnected<TensorType>::ComputeOutputShape(
     {
       total_in_size *= inputs.front()->shape(i);
     }
-    assert(total_in_size == this->in_size_);
-    return {this->out_size_, inputs.front()->shape(inputs.front()->shape().size() - 1)};
+    assert((this->total_inputs_ == AUTODETECT_INPUTS_COUNT) ||
+           (total_in_size == this->total_inputs_));
+    return {this->total_outputs_, inputs.front()->shape(inputs.front()->shape().size() - 1)};
   }
 
   assert(inputs.front()->shape().size() == 3);
-  assert(inputs.front()->shape(0) == in_size_);
-  return {this->out_size_, inputs.front()->shape(inputs.front()->shape().size() - 2),
+  assert(inputs.front()->shape(0) == total_inputs_);
+  return {this->total_outputs_, inputs.front()->shape(inputs.front()->shape().size() - 2),
           inputs.front()->shape(inputs.front()->shape().size() - 1)};
+}
+
+template <typename TensorType>
+math::SizeVector FullyConnected<TensorType>::ComputeBatchOutputShape(
+    const std::vector<math::SizeVector> &input_shapes)
+{
+  if (!time_distributed_)
+  {
+    this->SetBatchInputShapes(input_shapes);
+    this->SetBatchOutputShape({this->total_outputs_, 1});
+    return this->batch_output_shape_;
+  }
+
+  assert((this->total_inputs_ == AUTODETECT_INPUTS_COUNT) ||
+         (input_shapes.front().at(0) == total_inputs_));
+
+  this->SetBatchInputShapes(input_shapes);
+  if (input_shapes.front().size() == 3)
+  {
+    this->SetBatchOutputShape({this->total_outputs_, input_shapes.front().at(1), 1});
+  }
+  else
+  {
+    this->SetBatchOutputShape({this->total_outputs_, 1, 1});
+  }
+  return this->batch_output_shape_;
+}
+
+template <class TensorType>
+std::string FullyConnected<TensorType>::GetName()
+{
+  if (time_distributed_)
+  {
+    return std::string("TimeDistributed_") + DESCRIPTOR;
+  }
+  return DESCRIPTOR;
+}
+
+template <class TensorType>
+std::shared_ptr<fetch::ml::Node<TensorType>> FullyConnected<TensorType>::FindNodeByOpCode(
+    OpType code)
+{
+  for (const auto &node_name_and_ptr : this->nodes_)
+  {
+    NodePtrType candidate = node_name_and_ptr.second;
+    if (candidate->OperationType() == code)
+    {
+      return candidate;
+    }
+  }
+  throw std::runtime_error("There is no node with op type " +
+                           std::to_string(static_cast<int>(code)) + " in this graph.");
 }
 
 ///////////////////////////////
