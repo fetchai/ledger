@@ -65,6 +65,15 @@ public:
 
   static constexpr char const *DESCRIPTOR = "SelfAttentionEncoder";
 
+  OpType OperationType() const override  // TODO(ML-466) : move implementation to .cpp
+  {
+    return this->OpCode();
+  }
+  char const *Descriptor() const override  // TODO(ML-466) : move implementation to .cpp
+  {
+    return DESCRIPTOR;
+  }
+
 private:
   SizeType       n_heads_{};
   SizeType       model_dim_{};

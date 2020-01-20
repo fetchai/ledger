@@ -17,12 +17,196 @@
 //------------------------------------------------------------------------------
 
 #include "ml/core/node.hpp"
+#include "ml/core/subgraph.hpp"
 #include "ml/ops/ops.hpp"
 #include "ml/ops/weights.hpp"
 #include "ml/saveparams/saveable_params.hpp"
 
 namespace fetch {
 namespace ml {
+
+using Shape       = fetch::math::SizeVector;
+using ShapeVector = std::vector<fetch::math::SizeVector>;
+
+/**
+ * @brief A helper function for printing node's output shape
+ */
+static std::string OutputShapeAsString(const math::SizeVector &out_shape)
+{
+  std::stringstream ss;
+  ss << " (out ";
+  if (out_shape.empty())
+  {
+    ss << "[??] )";
+    return ss.str();
+  }
+  ss << "[";
+  for (auto const &dim : out_shape)
+  {
+    ss << " " << dim;
+  }
+  ss << " ])";
+  return ss.str();
+}
+
+/**
+ * @brief A helper function for printing node's input shape(s)
+ */
+static std::string InputShapesAsString(const std::vector<math::SizeVector> &in_shapes)
+{
+  std::stringstream ss;
+  ss << " (in ";
+  if (in_shapes.empty())
+  {
+    ss << "[[??]] )";
+    return ss.str();
+  }
+  ss << "[";
+  for (auto const &shape : in_shapes)
+  {
+    ss << "[";
+    for (auto const &dim : shape)
+    {
+      ss << " " << dim;
+    }
+    ss << " ]";
+  }
+  ss << "])";
+  return ss.str();
+}
+
+/**
+ * returns the stored operation type and syncs it with operation type of
+ * underlying Ops.
+ * @return
+ */
+template <typename TensorType>
+OpType Node<TensorType>::OperationType() const
+{
+  if (operation_type_ != op_ptr_->OperationType())
+  {
+    FETCH_LOG_ERROR(this->name_.c_str(), "Node operation type (" +
+                                             std::to_string(static_cast<int>(operation_type_)) +
+                                             ") and underlying Ops operation code (" +
+                                             std::string(op_ptr_->Descriptor()) + ") mismatch!");
+  }
+  return operation_type_;
+}
+
+template <typename TensorType>
+void Node<TensorType>::SetBatchOutputShape(const Shape &new_shape)
+{
+  op_ptr_->SetBatchOutputShape(new_shape);
+}
+
+template <typename TensorType>
+void Node<TensorType>::SetBatchInputShapes(const ShapeVector &new_shapes)
+{
+  op_ptr_->SetBatchInputShapes(new_shapes);
+}
+
+template <typename TensorType>
+const ShapeVector &Node<TensorType>::BatchInputShapes() const
+{
+  return op_ptr_->BatchInputShapes();
+}
+
+/**
+ * @brief BatchOutputShape computes an output shape of the Node, if only 1 data slice (e.g.
+ * with batch size == 1) is provided to the Graph input. If there is no cached output shape,
+ * the method is recursively called until either a cached shape or input Node is encountered.
+ * @return vector of SizeType.
+ */
+template <typename TensorType>
+Shape Node<TensorType>::BatchOutputShape()
+{
+  Shape return_shape = op_ptr_->BatchOutputShape();
+
+  // If the underlying Op shape is already known (cached) this shape can be returned immediately.
+  if (!return_shape.empty())
+  {
+    if (OperationType() == OpType::OP_PLACEHOLDER)
+    {
+      FETCH_LOG_INFO(name_.c_str(), "Shape deduction reached a placeholder input node : " +
+                                        this->name_ + " " + OutputShapeAsString(return_shape));
+    }
+    if (OperationType() == OpType::OP_WEIGHTS)
+    {
+      FETCH_LOG_INFO(name_.c_str(), "Shape deduction reached weights node : " + this->name_ + " " +
+                                        OutputShapeAsString(return_shape));
+    }
+  }
+  else
+  {
+    if (input_nodes_.empty())
+    {
+      // If there is no input node, and underlying Op's shape is not known - the Graph,
+      // probably, is incorrect; however, some nodes (like Label placeholder) could have
+      // empty shape without causing Graph malfunction or shape deduction failure.
+      FETCH_LOG_ERROR(
+          name_.c_str(),
+          " Shape deduction reached a leaf Node with empty/unknown shape : " + this->name_);
+
+      return return_shape;
+    }
+
+    // If Ops shape is unknown, but there are input nodes - they could be asked for their shapes.
+    ShapeVector input_shapes;
+    for (auto const &i : input_nodes_)
+    {
+      auto input_node_ptr = i.lock();
+      if (!input_node_ptr)
+      {
+        throw std::runtime_error("Unable to lock weak pointer.");
+      }
+
+      // If there are valid input nodes, make a deeper recursive call to each of the previous nodes.
+      Shape const in_shape = input_node_ptr->BatchOutputShape();
+
+      if (in_shape.empty())
+      {
+        if (input_node_ptr->OperationType() != OpType::OP_PLACEHOLDER)
+        {
+          FETCH_LOG_INFO(name_.c_str(),
+                         "Got an empty shape as return from non-placeholder layer! : " +
+                             input_node_ptr->GetNodeName());
+        }
+        continue;
+      }
+
+      input_shapes.emplace_back(in_shape);
+    }
+
+    // If there is no one valid (non-empty) input shape, shape deduction can not go further.
+    if (input_shapes.empty())
+    {
+      FETCH_LOG_ERROR(name_.c_str(), "Shape deduction failed on " + this->name_ +
+                                         " : only empty shapes were received as Input ones.");
+      return return_shape;
+    }
+
+    // When all valid (non-empty) input shapes are collected, it is possbile to compute
+    // an output shape of this node's Ops.
+    return_shape = op_ptr_->ComputeBatchOutputShape(input_shapes);
+
+    if (return_shape.empty())
+    {
+      FETCH_LOG_ERROR(name_.c_str(), "Shape deduction failed on " + this->name_ +
+                                         " : unable to compute underlying Ops output shape.");
+    }
+    else
+    {
+      FETCH_LOG_INFO(name_.c_str(), InputShapesAsString(op_ptr_->BatchInputShapes()) + "->" +
+                                        OutputShapeAsString(op_ptr_->BatchOutputShape()));
+    }
+  }
+
+  // After all shapes for current Node are deduced, shape-dependent Ops could be
+  // updated and their initialisation completed.
+  op_ptr_->CompleteConstruction();
+
+  return return_shape;
+}
 
 /**
  * Constructs and returns a NodeSaveableParams object allowing serialisation
@@ -86,8 +270,8 @@ std::shared_ptr<TensorType> Node<TensorType>::Evaluate(bool is_training)
     {
       auto output_shape = op_ptr_->ComputeOutputShape(inputs);
 
-      if (cached_output_.shape() !=
-          output_shape)  // make shape compatible right before we do the forwarding
+      // make shape compatible right before we do the forwarding
+      if (cached_output_.shape() != output_shape)
       {
         cached_output_.Reshape(output_shape);
       }
@@ -268,8 +452,8 @@ void Node<TensorType>::ResetCache(bool input_size_changed)
  * @param op_ptr
  */
 template <typename TensorType>
-void Node<TensorType>::SetNodeSaveableParams(NodeSaveableParams<TensorType> const &nsp,
-                                             std::shared_ptr<ops::Ops<TensorType>> op_ptr)
+void Node<TensorType>::SetNodeSaveableParams(NodeSaveableParams<TensorType> const &       nsp,
+                                             std::shared_ptr<ops::Ops<TensorType>> const &op_ptr)
 {
   name_                 = nsp.name;
   cached_output_status_ = CachedOutputState::CHANGED_SIZE;
