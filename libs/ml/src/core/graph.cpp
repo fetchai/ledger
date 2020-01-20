@@ -1078,7 +1078,7 @@ void Graph<TensorType>::GetNamesRecursively(std::vector<std::string> &ret,
                                             LookupFunction            lookup_function,
                                             std::string const &       level)
 {
-  for (auto const &t : ((*this).*lookup_function)())
+  for (auto const &t : (this->*lookup_function)())
   {
     if (level.empty())
     {
