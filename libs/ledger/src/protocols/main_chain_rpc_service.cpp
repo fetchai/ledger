@@ -436,7 +436,7 @@ State MainChainRpcService::OnWaitForBlocks()
 
     state_machine_->Delay(std::chrono::milliseconds{100 * consecutive_failures_});
     return State::REQUEST_NEXT_BLOCKS;
-  default:;
+  case PromiseState::SUCCESS:;
   }
 
   // If we have passed all these checks then we have successfully retrieved a travelogue from our
