@@ -62,7 +62,6 @@ private:
 
   void ApplyGradients(SizeType batch_size) override;
 };
-
 }  // namespace optimisers
 }  // namespace ml
 

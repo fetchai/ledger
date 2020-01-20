@@ -122,7 +122,6 @@ private:
                              SizeType batch_size  = SIZE_NOT_SET,
                              SizeType subset_size = SIZE_NOT_SET);
 };
-
 }  // namespace optimisers
 }  // namespace ml
 }  // namespace fetch
