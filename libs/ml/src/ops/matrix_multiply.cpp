@@ -450,8 +450,8 @@ std::shared_ptr<fetch::ml::ops::Ops<TensorType>> MatrixMultiply<TensorType>::Mak
 ///////////////////////////////
 
 // TODO(ML-438)
-// template class MatrixMultiply<math::Tensor<int8_t>>;
-// template class MatrixMultiply<math::Tensor<int16_t>>;
+template class MatrixMultiply<math::Tensor<int8_t>>;
+template class MatrixMultiply<math::Tensor<int16_t>>;
 template class MatrixMultiply<math::Tensor<int32_t>>;
 template class MatrixMultiply<math::Tensor<int64_t>>;
 // template class MatrixMultiply<math::Tensor<uint8_t>>;

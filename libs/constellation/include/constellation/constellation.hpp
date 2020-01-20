@@ -136,7 +136,7 @@ private:
   using MuddlePtr                = muddle::MuddlePtr;
   using NetworkManager           = network::NetworkManager;
   using BlockPackingAlgorithm    = ledger::BasicMiner;
-  using BlockPackingAlgorithmPtr = std::unique_ptr<ledger::BasicMiner>;
+  using BlockPackingAlgorithmPtr = std::unique_ptr<BlockPackerInterface>;
   using BlockCoordinator         = ledger::BlockCoordinator;
   using BlockCoordinatorPtr      = std::unique_ptr<ledger::BlockCoordinator>;
   using MainChainPtr             = std::unique_ptr<ledger::MainChain>;

@@ -159,6 +159,7 @@ public:
   ~MainChain();
 
   void Reset();
+  void Flush();
 
   /// @name Block Management
   /// @{
@@ -302,7 +303,7 @@ private:
 
   bool RemoveTree(BlockHash const &removed_hash, BlockHashSet &invalidated_blocks);
 
-  void FlushToDisk();
+  void FlushToDisk(bool flush_bloom = false);
 
   Mode          mode_{Mode::IN_MEMORY_DB};
   bool const    dirty_block_functionality_;

@@ -22,7 +22,9 @@
 #include "core/mutex.hpp"
 #include "ledger/block_packer_interface.hpp"
 #include "ledger/chain/block.hpp"
+#include "ledger/chaincode/token_contract.hpp"
 #include "ledger/miner/transaction_layout_queue.hpp"
+#include "ledger/transaction_validator.hpp"
 #include "meta/log2.hpp"
 #include "telemetry/telemetry.hpp"
 #include "vectorise/threading/pool.hpp"
@@ -52,7 +54,7 @@ public:
   using TransactionLayout = chain::TransactionLayout;
 
   // Construction / Destruction
-  explicit BasicMiner(uint32_t log2_num_lanes);
+  explicit BasicMiner(uint32_t log2_num_lanes, StorageInterface &storage);
   BasicMiner(BasicMiner const &) = delete;
   BasicMiner(BasicMiner &&)      = delete;
   ~BasicMiner() override         = default;
@@ -100,6 +102,13 @@ private:
   /// @{
   mutable Mutex mining_pool_lock_;  ///< Mining pool lock (priority 0)
   Queue         mining_pool_;       ///< The main mining queue for the node
+  /// @}
+
+  /// @name Transaction Validation
+  /// @{
+  StorageInterface &   storage_;
+  TokenContract        token_contract_{};
+  TransactionValidator tx_validator_{storage_, token_contract_};
   /// @}
 
   /// @name Telemetry

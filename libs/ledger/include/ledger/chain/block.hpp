@@ -88,6 +88,7 @@ public:
   void        UpdateDigest();
   void        UpdateTimestamp();
   bool        IsGenesis() const;
+  bool        IsValid() const;
 
 private:
   SystemClock clock_ = moment::GetClock("block:body", moment::ClockType::SYSTEM);
@@ -125,7 +126,7 @@ public:
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &block)
   {
-    auto map = map_constructor(14);
+    auto map = map_constructor(13);
     map.Append(WEIGHT, block.weight);
     map.Append(TOTAL_WEIGHT, block.total_weight);
     map.Append(MINER_SIGNATURE, block.miner_signature);

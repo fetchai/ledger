@@ -57,6 +57,27 @@ VMTensor::VMTensor(VM *vm, TypeId type_id)
   , estimator_(*this)
 {}
 
+VMTensor::VMTensor(VM *vm, TypeId type_id, std::string const &str)
+  : Object(vm, type_id)
+  , estimator_(*this)
+{
+  try
+  {
+    tensor_ = TensorType::FromString(str);
+  }
+  catch (std::exception const &ex)
+  {
+    // TODO(issue 1094): Support for nested runtime error(s) and/or exception(s)
+    vm_->RuntimeError("An exception has been thrown from State<...>::FlushIO(). Desc.: " +
+                      std::string(ex.what()));
+  }
+  catch (...)
+  {
+    // TODO(issue 1094): Support for nested runtime error(s) and/or exception(s)
+    vm_->RuntimeError("An exception has been thrown from State<...>::FlushIO().");
+  }
+}
+
 Ptr<VMTensor> VMTensor::Constructor(VM *vm, TypeId type_id, Ptr<Array<SizeType>> const &shape)
 {
   for (SizeType axis_size : shape->elements)
@@ -70,6 +91,11 @@ Ptr<VMTensor> VMTensor::Constructor(VM *vm, TypeId type_id, Ptr<Array<SizeType>>
   return Ptr<VMTensor>{new VMTensor(vm, type_id, shape->elements)};
 }
 
+Ptr<VMTensor> VMTensor::StringConstructor(VM *vm, TypeId type_id, Ptr<String> const &str)
+{
+  return Ptr<VMTensor>{new VMTensor(vm, type_id, str->string())};
+}
+
 Ptr<VMTensor> VMTensor::EmptyConstructor(VM *vm, TypeId type_id)
 {
   return Ptr<VMTensor>{new VMTensor(vm, type_id)};
@@ -79,7 +105,8 @@ void VMTensor::Bind(Module &module, bool const enable_experimental)
 {
   using Index = fetch::math::SizeType;
 
-  auto tensor_constructor_charge_estimate = [](Ptr<Array<SizeType>> const &shape) -> ChargeAmount {
+  auto const tensor_constructor_charge_estimate =
+      [](Ptr<Array<SizeType>> const &shape) -> ChargeAmount {
     DataType padded_size =
         static_cast<DataType>(fetch::math::Tensor<DataType>::PaddedSizeFromShape(shape->elements));
 
@@ -88,6 +115,16 @@ void VMTensor::Bind(Module &module, bool const enable_experimental)
            COMPUTE_CHARGE_COST;
   };
 
+  auto const tensor_string_constructor_charge_estimate =
+      [](Ptr<String> const &str) -> ChargeAmount {
+    auto size = static_cast<DataType>(str->string().size());
+
+    return static_cast<ChargeAmount>(CONSTRUCTION_STRING_SIZE_COEF * size +
+                                     CONSTRUCTION_STRING_CONST_COEF) *
+           COMPUTE_CHARGE_COST;
+  };
+
+  // Non-experimental features
   auto interface =
       module.CreateClassType<VMTensor>("Tensor")
           .CreateConstructor(&VMTensor::Constructor, tensor_constructor_charge_estimate)
@@ -147,8 +184,11 @@ void VMTensor::Bind(Module &module, bool const enable_experimental)
           .CreateMemberFunction("toString", &VMTensor::ToString,
                                 UseEstimator(&TensorEstimator::ToString));
 
+  // experimental features are bound only if the VMFactory given the flag to do so
   if (enable_experimental)
   {
+    interface.CreateConstructor(&VMTensor::StringConstructor,
+                                tensor_string_constructor_charge_estimate);
     interface.CreateConstructor(&VMTensor::EmptyConstructor, []() -> ChargeAmount {
       return static_cast<ChargeAmount>(CONSTRUCTION_CONST_COEF);
     });
@@ -543,6 +583,9 @@ TensorEstimator &VMTensor::Estimator()
 
 fixed_point::fp64_t const VMTensor::CONSTRUCTION_PADDED_SIZE_COEF = fixed_point::fp64_t("0.0028");
 fixed_point::fp64_t const VMTensor::CONSTRUCTION_CONST_COEF       = fixed_point::fp64_t("22");
+
+fixed_point::fp64_t const VMTensor::CONSTRUCTION_STRING_SIZE_COEF  = fixed_point::fp64_t("0.12");
+fixed_point::fp64_t const VMTensor::CONSTRUCTION_STRING_CONST_COEF = fixed_point::fp64_t("25");
 
 }  // namespace math
 }  // namespace vm_modules
