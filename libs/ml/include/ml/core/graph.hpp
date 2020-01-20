@@ -228,8 +228,8 @@ private:
   std::map<std::string, NodePtrType> &GetNodesLookup();
 
   template <typename LookupFunction>
-  void GetNamesRecursively(std::vector<std::string> &ret, LookupFunction const lookup_function,
-                           std::string level = "");
+  void GetNamesRecursively(std::vector<std::string> &ret, LookupFunction lookup_function,
+                           std::string const &level = "");
 };
 
 //////////////////////

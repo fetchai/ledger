@@ -1067,22 +1067,19 @@ typename Graph<TensorType>::NodePtrType Graph<TensorType>::GetNodeByName(
   auto op_ptr    = ret->GetOp();
   auto graph_ptr = std::dynamic_pointer_cast<Graph<TensorType>>(op_ptr);
 
-  // if current node is a graph
-  if (graph_ptr)
-  {
-    if (next_delimiter + 1 >= name.size() - 1)
-    {
-      throw ml::exceptions::InvalidMode("[" + name + "] has invalid format!");
-    }
-
-    // Continue recursive node search
-    return graph_ptr->GetNodeByName(name.substr(next_delimiter + 1, name.size() - 1));
-  }
   // Node is not graph and node address continues
-  else
+  if (!graph_ptr)
   {
     throw ml::exceptions::InvalidMode("[" + name + "] is not a graph!");
   }
+
+  if (next_delimiter + 1 >= name.size() - 1)
+  {
+    throw ml::exceptions::InvalidMode("[" + name + "] has invalid format!");
+  }
+
+  // Continue recursive node search
+  return graph_ptr->GetNodeByName(name.substr(next_delimiter + 1, name.size() - 1));
 }
 
 /**
@@ -1096,11 +1093,12 @@ typename Graph<TensorType>::NodePtrType Graph<TensorType>::GetNodeByName(
 template <typename TensorType>
 template <typename LookupFunction>
 void Graph<TensorType>::GetNamesRecursively(std::vector<std::string> &ret,
-                                            LookupFunction const lookup_function, std::string level)
+                                            LookupFunction            lookup_function,
+                                            std::string const &       level)
 {
   for (auto const &t : ((*this).*lookup_function)())
   {
-    if (level == "")
+    if (level.empty())
     {
       ret.push_back(t.first);
     }
@@ -1121,7 +1119,7 @@ void Graph<TensorType>::GetNamesRecursively(std::vector<std::string> &ret,
     if (graph_ptr)
     {
       std::string next_level;
-      if (level == "")
+      if (level.empty())
       {
         next_level = node_pair.first;
       }
@@ -1167,12 +1165,7 @@ template <typename TensorType>
 bool Graph<TensorType>::IsValidNodeName(std::string const &node_name) const
 {
   // Slash is used as special character for addressing subgraphs
-  if (node_name.find('/') != std::string::npos)
-  {
-    return false;
-  }
-
-  return true;
+  return node_name.find('/') == std::string::npos;
 }
 
 template <typename TensorType>
