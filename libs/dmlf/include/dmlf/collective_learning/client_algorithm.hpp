@@ -25,6 +25,7 @@
 #include "math/matrix_operations.hpp"
 #include "math/tensor/tensor.hpp"
 #include "ml/model/sequential.hpp"
+#include "ml/ops/weights.hpp"
 #include "ml/utilities/sparse_tensor_utilities.hpp"
 #include "ml/utilities/utils.hpp"
 

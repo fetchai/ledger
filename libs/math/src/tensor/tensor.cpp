@@ -815,6 +815,11 @@ Tensor<T, C> Tensor<T, C>::FromString(byte_array::ConstByteArray const &c)
     throw exceptions::WrongShape(s.str());
   }
 
+  if (n == 0)
+  {
+    throw exceptions::WrongShape("Shape cannot contain zeroes");
+  }
+
   SizeType m = elems.size() / n;
 
   if ((m * n) != elems.size())

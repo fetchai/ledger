@@ -16,6 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "chain/address.hpp"
 #include "config_builder.hpp"
 #include "core/filesystem/read_file_contents.hpp"
 #include "ledger/chaincode/contract_context.hpp"
@@ -317,7 +318,30 @@ Constellation::Config BuildConstellationConfig(Settings const &settings)
       core::ReadContentsOfFile(settings.syn_miner_script_path.value().c_str());
 
   // evaluate our hard coded genesis files
-  auto const &network_name = settings.network_name.value();
+  std::string network_name = settings.network_name.value();
+
+  // Setting the network to local if it is a standalone node
+  if (settings.standalone.value() && network_name == "local")
+  {
+    auto mainaccount       = variant::Variant::Object();
+    mainaccount["address"] = settings.initial_address.value();
+    mainaccount["balance"] = 1152997575;
+    mainaccount["stake"]   = 0;
+
+    auto accounts = variant::Variant::Array(1);
+    accounts[0]   = mainaccount;
+
+    variant::Variant config = variant::Variant::Object();
+    config["version"]       = 4;
+    config["accounts"]      = accounts;
+
+    std::stringstream contents{""};
+    contents << config;
+
+    cfg.genesis_file_contents = contents.str();
+    return cfg;
+  }
+
   if (cfg.genesis_file_contents.empty() && !network_name.empty())
   {
     for (auto const &genesis : HARD_CODED_CONFIGS)

@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "ml/dataloaders/tensor_dataloader.hpp"
+#include "ml/layers/fully_connected.hpp"
 #include "ml/model/sequential.hpp"
 #include "ml/ops/activation.hpp"
 #include "ml/optimisation/types.hpp"
@@ -67,7 +68,7 @@ int main(int ac, char **av)
 
   auto data_loader_ptr = std::make_unique<DataLoaderType>();
   data_loader_ptr->AddData({mnist_images}, mnist_labels);
-  data_loader_ptr->SetTestRatio(DataType{"0.2"});
+  data_loader_ptr->SetTestRatio(fetch::fixed_point::fp32_t{"0.2"});
 
   // setup model and pass dataloader
   ModelType model(model_config);

@@ -201,7 +201,7 @@ private:
     return block_list;
   }
 
-  void PopulateJsonFromBlock(Variant &output, MainChain::BlockPtr const &block,
+  void PopulateJsonFromBlock(Variant &output, ledger::BlockPtr const &block,
                              bool include_transactions)
   {
     // format the block number

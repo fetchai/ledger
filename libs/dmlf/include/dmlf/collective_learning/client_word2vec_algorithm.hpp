@@ -22,6 +22,7 @@
 #include "dmlf/collective_learning/translator.hpp"
 #include "dmlf/collective_learning/word2vec_training_params.hpp"
 #include "math/clustering/knn.hpp"
+#include "ml/ops/loss_functions/cross_entropy_loss.hpp"
 #include "ml/optimisation/lazy_adam_optimiser.hpp"
 #include "ml/utilities/word2vec_utilities.hpp"
 
@@ -92,7 +93,7 @@ ClientWord2VecAlgorithm<TensorType>::ClientWord2VecAlgorithm(
   // calculate the compatible linear lr decay
   // this decay rate guarantees that the lr is reduced to zero by the
   // end of an epoch (despite capping by ending learning rate)
-  DataType est_samples                      = w2v_data_loader_ptr_->EstimatedSampleNumber();
+  SizeType est_samples                      = w2v_data_loader_ptr_->EstimatedSampleNumber();
   tp_.learning_rate_param.linear_decay_rate = DataType{1} / est_samples;
   std::cout << "id: " << id << ", dataloader_.EstimatedSampleNumber(): " << est_samples
             << std::endl;

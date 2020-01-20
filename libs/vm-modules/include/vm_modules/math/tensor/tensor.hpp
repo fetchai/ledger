@@ -54,10 +54,14 @@ public:
 
   VMTensor(fetch::vm::VM *vm, fetch::vm::TypeId type_id);
 
+  VMTensor(fetch::vm::VM *vm, fetch::vm::TypeId type_id, std::string const &str);
+
   static fetch::vm::Ptr<VMTensor> Constructor(
       fetch::vm::VM *vm, fetch::vm::TypeId type_id,
       fetch::vm::Ptr<fetch::vm::Array<TensorType::SizeType>> const &shape);
 
+  static fetch::vm::Ptr<VMTensor> StringConstructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id,
+                                                    fetch::vm::Ptr<fetch::vm::String> const &str);
   static fetch::vm::Ptr<VMTensor> EmptyConstructor(fetch::vm::VM *vm, fetch::vm::TypeId type_id);
 
   static void Bind(fetch::vm::Module &module, bool enable_experimental);
@@ -201,6 +205,9 @@ private:
   // Tensor construction constants for estimate
   static const fixed_point::fp64_t CONSTRUCTION_PADDED_SIZE_COEF;
   static const fixed_point::fp64_t CONSTRUCTION_CONST_COEF;
+
+  static const fixed_point::fp64_t CONSTRUCTION_STRING_SIZE_COEF;
+  static const fixed_point::fp64_t CONSTRUCTION_STRING_CONST_COEF;
 };
 
 }  // namespace math

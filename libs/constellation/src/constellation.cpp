@@ -795,6 +795,10 @@ void Constellation::OnTearDownExternalNetwork()
 
   if (http_)
   {
+    // TODO(LDGR-695): There is a logical flaw in the http server that causes
+    // catastrophic failure on shutdown. The key problem has to do with
+    // the order in which objects are destructed and the fact, that
+    // connections are not shutdown by calling Stop.
     http_->Stop();
     ResetItem(http_);
   }
@@ -857,6 +861,9 @@ void Constellation::OnTearDownExternalNetwork()
 
 void Constellation::OnTearDownLaneServices()
 {
+  // not strictly necessary but make sure that chain has completely flushed to disk
+  chain_->Flush();
+
   ResetItem(chain_);
   ResetItem(lane_control_);
   ResetItem(storage_);

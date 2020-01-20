@@ -212,7 +212,7 @@ public:
         scalar_tmp =
             details::MatrixReduceFreeFunction<ScalarRegisterType>::template Unroll<Args...>::Apply(
                 scalar_self, scalar_regs, kernel);
-        ret = op(ret, scalar_tmp.data());
+        ret = static_cast<type>(op(ret, scalar_tmp.data()));
       }
     }
 
@@ -228,7 +228,7 @@ public:
                 self, regs, kernel);
         vc = op(vc, tmp);
       }
-      ret += hkernel(vc);
+      ret = static_cast<type>(ret + hkernel(vc));
     }
 
     if (STU != ST)
@@ -249,7 +249,7 @@ public:
         scalar_tmp =
             details::MatrixReduceFreeFunction<ScalarRegisterType>::template Unroll<Args...>::Apply(
                 scalar_self, scalar_regs, kernel);
-        ret = op(ret, scalar_tmp.data());
+        ret = static_cast<type>(op(ret, scalar_tmp.data()));
       }
     }
 
