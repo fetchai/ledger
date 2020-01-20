@@ -98,6 +98,7 @@ public:
     {
       return true;
     }
+    *listener << Show(actual);
     if (static_cast<bool>(patterns_))
     {
       Identify(actual, listener);
@@ -157,6 +158,11 @@ private:
   Patterns const *patterns_ = nullptr;
 };
 
+auto ExpectedHash(fetch::byte_array::ConstByteArray expected)
+{
+  return MakeMatcher(new DigestMatcher(std::move(expected)));
+}
+
 template <template <class...> class Container, class... ContainerArgs, class... NamesAndContainers>
 DigestMatcher::Patterns DigestMatcher::KeepPatterns(
     Patterns patterns, std::string const &name,
@@ -203,7 +209,6 @@ protected:
     fetch::chain::InitialiseTestConstants();
   }
 
-  void Tick(State persistent_state, int line);
   void Tick(State current_state, State next_state, int line);
 
   template <class... States>
@@ -234,12 +239,6 @@ protected:
                                    CreateNonOwning(consensus_)};
 };
 
-void MainChainServiceTests::Tick(State persistent_state, int line)
-{
-  // the machine should stay in this same state
-  Tick(persistent_state, persistent_state, line);
-}
-
 namespace {
 
 void AssertEq(char const *tick_phase, State actual, State expected, int line)
@@ -269,193 +268,210 @@ TEST_F(MainChainServiceTests, CheckNoPeersCase)
   Tick(State::SYNCHRONISING, State::SYNCHRONISED);
 
   // should stay in sync'ed state
-  Tick(State::SYNCHRONISED);
-  Tick(State::SYNCHRONISED);
-  Tick(State::SYNCHRONISED);
+  Tick(State::SYNCHRONISED, State::SYNCHRONISED);
+  Tick(State::SYNCHRONISED, State::SYNCHRONISED);
+  Tick(State::SYNCHRONISED, State::SYNCHRONISED);
 }
 
 TEST_F(MainChainServiceTests, CheckSimpleCatchUpFromSinglePeer)
 {
-  auto gen    = block_generator_();
-  auto blocks = block_generator_(4, std::move(gen));
+  auto gen = block_generator_();
+  auto b1  = block_generator_(gen);
+  auto b2  = block_generator_(b1);
+  auto b3  = block_generator_(b2);
+  auto b4  = block_generator_(b3);
 
   MainChain         other1_chain;
   MainChainProtocol other1_proto{other1_chain};
-  for (auto const &block : blocks)
-  {
-    EXPECT_EQ(BlockStatus::ADDED, other1_chain.AddBlock(*block))
-        << " when adding block #" << block->block_number;
-  }
+  EXPECT_EQ(BlockStatus::ADDED, other1_chain.AddBlock(*b1));
+  EXPECT_EQ(BlockStatus::ADDED, other1_chain.AddBlock(*b2));
+  EXPECT_EQ(BlockStatus::ADDED, other1_chain.AddBlock(*b3));
+  EXPECT_EQ(BlockStatus::ADDED, other1_chain.AddBlock(*b4));
 
   auto travelogue = other1_proto.TimeTravel(GetGenesisDigest());
 
   EXPECT_CALL(endpoint_, GetDirectlyConnectedPeers()).WillRepeatedly(Return(AddressList{other1_}));
-  EXPECT_CALL(rpc_client_, TimeTravel(other1_, GetGenesisDigest()))
+  EXPECT_CALL(rpc_client_, TimeTravel(other1_, ExpectedHash(GetGenesisDigest())))
       .WillOnce(Return(CreatePromise(travelogue)));
 
-  FollowPath(State::SYNCHRONISING, State::START_SYNC_WITH_PEER, State::REQUEST_NEXT_BLOCKS,
-             State::WAIT_FOR_NEXT_BLOCKS, State::REQUEST_NEXT_BLOCKS,
-             State::COMPLETE_SYNC_WITH_PEER, State::SYNCHRONISED);
+  Tick(State::SYNCHRONISING, State::START_SYNC_WITH_PEER);
+  Tick(State::START_SYNC_WITH_PEER, State::REQUEST_NEXT_BLOCKS);
+  Tick(State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS);
+  Tick(State::WAIT_FOR_NEXT_BLOCKS, State::REQUEST_NEXT_BLOCKS);
+  Tick(State::REQUEST_NEXT_BLOCKS, State::COMPLETE_SYNC_WITH_PEER);
+  Tick(State::COMPLETE_SYNC_WITH_PEER, State::SYNCHRONISED);
 
-  EXPECT_EQ(chain_.GetHeaviestBlockHash(), blocks.back()->hash);
+  EXPECT_EQ(chain_.GetHeaviestBlockHash(), b4->hash);
 }
 
 TEST_F(MainChainServiceTests, ChecIncrementalCatchUp)
 {
-  auto gen    = block_generator_();
-  auto blocks = block_generator_(4, std::move(gen));
+  auto gen = block_generator_();
+  auto b1  = block_generator_(gen);
+  auto b2  = block_generator_(b1);
+  auto b3  = block_generator_(b2);
+  auto b4  = block_generator_(b3);
 
   MainChain         other1_chain;
   MainChainProtocol other1_proto{other1_chain};
-  for (auto const &block : blocks)
-  {
-    EXPECT_EQ(BlockStatus::ADDED, other1_chain.AddBlock(*block))
-        << " when adding block #" << block->block_number;
-  }
+  EXPECT_EQ(BlockStatus::ADDED, other1_chain.AddBlock(*b1));
+  EXPECT_EQ(BlockStatus::ADDED, other1_chain.AddBlock(*b2));
+  EXPECT_EQ(BlockStatus::ADDED, other1_chain.AddBlock(*b3));
+  EXPECT_EQ(BlockStatus::ADDED, other1_chain.AddBlock(*b4));
 
   auto travelogue1 = other1_proto.TimeTravel(GetGenesisDigest());
   travelogue1.blocks.resize(2);  // simulate large sync forward in time
 
   EXPECT_CALL(endpoint_, GetDirectlyConnectedPeers()).WillRepeatedly(Return(AddressList{other1_}));
-  EXPECT_CALL(rpc_client_, TimeTravel(other1_, GetGenesisDigest()))
+  EXPECT_CALL(rpc_client_, TimeTravel(other1_, ExpectedHash(GetGenesisDigest())))
       .WillOnce(Return(CreatePromise(travelogue1)));
 
-  FollowPath(State::SYNCHRONISING, State::START_SYNC_WITH_PEER, State::REQUEST_NEXT_BLOCKS,
-             State::WAIT_FOR_NEXT_BLOCKS, State::REQUEST_NEXT_BLOCKS);
+  Tick(State::SYNCHRONISING, State::START_SYNC_WITH_PEER);
+  Tick(State::START_SYNC_WITH_PEER, State::REQUEST_NEXT_BLOCKS);
+  Tick(State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS);
+  Tick(State::WAIT_FOR_NEXT_BLOCKS, State::REQUEST_NEXT_BLOCKS);
 
-  EXPECT_EQ(chain_.GetHeaviestBlockHash(), blocks[1]->hash);
+  EXPECT_EQ(chain_.GetHeaviestBlockHash(), b2->hash);
 
-  auto travelogue2 = other1_proto.TimeTravel(blocks[1]->hash);
-  EXPECT_CALL(rpc_client_, TimeTravel(other1_, blocks[1]->hash))
+  auto travelogue2 = other1_proto.TimeTravel(b2->hash);
+  EXPECT_CALL(rpc_client_, TimeTravel(other1_, ExpectedHash(b2->hash)))
       .WillOnce(Return(CreatePromise(travelogue2)));
 
-  FollowPath(State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS, State::REQUEST_NEXT_BLOCKS,
-             State::COMPLETE_SYNC_WITH_PEER, State::SYNCHRONISED);
+  Tick(State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS);
+  Tick(State::WAIT_FOR_NEXT_BLOCKS, State::REQUEST_NEXT_BLOCKS);
+  Tick(State::REQUEST_NEXT_BLOCKS, State::COMPLETE_SYNC_WITH_PEER);
+  Tick(State::COMPLETE_SYNC_WITH_PEER, State::SYNCHRONISED);
 
-  Tick(State::SYNCHRONISED);
-  Tick(State::SYNCHRONISED);
-  Tick(State::SYNCHRONISED);
+  Tick(State::SYNCHRONISED, State::SYNCHRONISED);
+  Tick(State::SYNCHRONISED, State::SYNCHRONISED);
+  Tick(State::SYNCHRONISED, State::SYNCHRONISED);
 
-  EXPECT_EQ(chain_.GetHeaviestBlockHash(), blocks.back()->hash);
+  EXPECT_EQ(chain_.GetHeaviestBlockHash(), b4->hash);
 }
 
 TEST_F(MainChainServiceTests, ForkWhenPeerHasLongerChain)
 {
+  auto gen  = block_generator_();
+  auto b1   = block_generator_(gen);
+  auto b2   = block_generator_(b1);
+  auto b3   = block_generator_(b2);
+  auto b4   = block_generator_(b3);
+  auto b5_1 = block_generator_(b4);
+  auto b6_1 = block_generator_(b5_1);
+
+  ASSERT_EQ(BlockStatus::ADDED, chain_.AddBlock(*b1));
+  ASSERT_EQ(BlockStatus::ADDED, chain_.AddBlock(*b2));
+  ASSERT_EQ(BlockStatus::ADDED, chain_.AddBlock(*b3));
+  ASSERT_EQ(BlockStatus::ADDED, chain_.AddBlock(*b4));
+  ASSERT_EQ(BlockStatus::ADDED, chain_.AddBlock(*b5_1));
+  ASSERT_EQ(BlockStatus::ADDED, chain_.AddBlock(*b6_1));
+
+  auto b5_2 = block_generator_(b4);
+  auto b6_2 = block_generator_(b5_2);
+  auto b7_2 = block_generator_(b6_2);
+
   MainChain         other1_chain;
   MainChainProtocol other1_proto{other1_chain};
-
-  auto gen           = block_generator_();
-  auto common_root   = block_generator_(4, gen);
-  auto local_branch  = block_generator_(2, common_root.back());
-  auto remote_branch = block_generator_(3, common_root.back());
-
-  for (auto const &block : common_root)
-  {
-    ASSERT_EQ(BlockStatus::ADDED, chain_.AddBlock(*block))
-        << " when adding block #" << block->block_number;
-    ASSERT_EQ(BlockStatus::ADDED, other1_chain.AddBlock(*block))
-        << " when adding block #" << block->block_number;
-  }
-
-  for (auto const &block : local_branch)
-  {
-    ASSERT_EQ(BlockStatus::ADDED, chain_.AddBlock(*block))
-        << " when adding block #" << block->block_number;
-  }
-
-  for (auto const &block : remote_branch)
-  {
-    ASSERT_EQ(BlockStatus::ADDED, other1_chain.AddBlock(*block))
-        << " when adding block #" << block->block_number;
-  }
+  ASSERT_EQ(BlockStatus::ADDED, other1_chain.AddBlock(*b1));
+  ASSERT_EQ(BlockStatus::ADDED, other1_chain.AddBlock(*b2));
+  ASSERT_EQ(BlockStatus::ADDED, other1_chain.AddBlock(*b3));
+  ASSERT_EQ(BlockStatus::ADDED, other1_chain.AddBlock(*b4));
+  ASSERT_EQ(BlockStatus::ADDED, other1_chain.AddBlock(*b5_2));
+  ASSERT_EQ(BlockStatus::ADDED, other1_chain.AddBlock(*b6_2));
+  ASSERT_EQ(BlockStatus::ADDED, other1_chain.AddBlock(*b7_2));
 
   EXPECT_CALL(endpoint_, GetDirectlyConnectedPeers()).WillRepeatedly(Return(AddressList{other1_}));
 
-  auto const log1 = other1_proto.TimeTravel(local_branch.front()->hash);
-  EXPECT_CALL(rpc_client_, TimeTravel(other1_, local_branch.front()->hash))
+  auto const log1 = other1_proto.TimeTravel(b5_1->hash);
+  EXPECT_CALL(rpc_client_, TimeTravel(other1_, ExpectedHash(b5_1->hash)))
       .WillOnce(Return(CreatePromise(log1)));
 
-  FollowPath(State::SYNCHRONISING, State::START_SYNC_WITH_PEER, State::REQUEST_NEXT_BLOCKS,
-             State::WAIT_FOR_NEXT_BLOCKS, State::REQUEST_NEXT_BLOCKS);
+  Tick(State::SYNCHRONISING, State::START_SYNC_WITH_PEER);
+  Tick(State::START_SYNC_WITH_PEER, State::REQUEST_NEXT_BLOCKS);
+  Tick(State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS);
+  Tick(State::WAIT_FOR_NEXT_BLOCKS, State::REQUEST_NEXT_BLOCKS);
 
-  Teack(State::SYNCHRONISING, State::START_SYNC_WITH_PEER);
-  Teack(State::START_SYNC_WITH_PEER, State::REQUEST_NEXT_BLOCKS);
-  Teack(State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS);
-  Teack(State::WAIT_FOR_NEXT_BLOCKS, State::REQUEST_NEXT_BLOCKS);
-
-  auto const log2 = other1_proto.TimeTravel(common_root.back()->hash);
-  EXPECT_CALL(rpc_client_, TimeTravel(other1_, common_root.back()->hash))
+  auto const log2 = other1_proto.TimeTravel(b4->hash);
+  EXPECT_CALL(rpc_client_, TimeTravel(other1_, ExpectedHash(b4->hash)))
       .WillOnce(Return(CreatePromise(log2)));
 
-  FollowPath(State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS, State::REQUEST_NEXT_BLOCKS);
+  Tick(State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS);
+  Tick(State::WAIT_FOR_NEXT_BLOCKS, State::REQUEST_NEXT_BLOCKS);
 
-  FollowPath(State::REQUEST_NEXT_BLOCKS, State::COMPLETE_SYNC_WITH_PEER, State::SYNCHRONISED);
+  Tick(State::REQUEST_NEXT_BLOCKS, State::COMPLETE_SYNC_WITH_PEER);
+  Tick(State::COMPLETE_SYNC_WITH_PEER, State::SYNCHRONISED);
 
-  EXPECT_EQ(chain_.GetHeaviestBlockHash(), remote_branch.back()->hash);
+  EXPECT_EQ(chain_.GetHeaviestBlockHash(), b7_2->hash);
 
-  Tick(State::SYNCHRONISED);
-  Tick(State::SYNCHRONISED);
-  Tick(State::SYNCHRONISED);
+  Tick(State::SYNCHRONISED, State::SYNCHRONISED);
+  Tick(State::SYNCHRONISED, State::SYNCHRONISED);
+  Tick(State::SYNCHRONISED, State::SYNCHRONISED);
 }
 
 TEST_F(MainChainServiceTests, ForkWhenPeerHasShorterChain)
 {
+  auto gen  = block_generator_();
+  auto b1   = block_generator_(gen);
+  auto b2   = block_generator_(b1);
+  auto b3   = block_generator_(b2);
+  auto b4   = block_generator_(b3);
+  auto b5_1 = block_generator_(b4);
+  auto b6_1 = block_generator_(b5_1);
+
   MainChain         other1_chain;
   MainChainProtocol other1_proto{other1_chain};
+  ASSERT_EQ(BlockStatus::ADDED, other1_chain.AddBlock(*b1));
+  ASSERT_EQ(BlockStatus::ADDED, other1_chain.AddBlock(*b2));
+  ASSERT_EQ(BlockStatus::ADDED, other1_chain.AddBlock(*b3));
+  ASSERT_EQ(BlockStatus::ADDED, other1_chain.AddBlock(*b4));
+  ASSERT_EQ(BlockStatus::ADDED, other1_chain.AddBlock(*b5_1));
+  ASSERT_EQ(BlockStatus::ADDED, other1_chain.AddBlock(*b6_1));
 
-  auto gen           = block_generator_();
-  auto common_root   = block_generator_(4, gen);
-  auto remote_branch = block_generator_(2, common_root.back());
-  auto local_branch  = block_generator_(3, common_root.back());
+  auto b5_2 = block_generator_(b4);
+  auto b6_2 = block_generator_(b5_2);
+  auto b7_2 = block_generator_(b6_2);
 
-  for (auto const &block : common_root)
-  {
-    ASSERT_EQ(BlockStatus::ADDED, other1_chain.AddBlock(*block))
-        << " when adding block #" << block->block_number;
-    ASSERT_EQ(BlockStatus::ADDED, chain_.AddBlock(*block))
-        << " when adding block #" << block->block_number;
-  }
-
-  for (auto const &block : remote_branch)
-  {
-    ASSERT_EQ(BlockStatus::ADDED, other1_chain.AddBlock(*block))
-        << " when adding block #" << block->block_number;
-  }
-
-  for (auto const &block : local_branch)
-  {
-    ASSERT_EQ(BlockStatus::ADDED, chain_.AddBlock(*block))
-        << " when adding block #" << block->block_number;
-  }
+  ASSERT_EQ(BlockStatus::ADDED, chain_.AddBlock(*b1));
+  ASSERT_EQ(BlockStatus::ADDED, chain_.AddBlock(*b2));
+  ASSERT_EQ(BlockStatus::ADDED, chain_.AddBlock(*b3));
+  ASSERT_EQ(BlockStatus::ADDED, chain_.AddBlock(*b4));
+  ASSERT_EQ(BlockStatus::ADDED, chain_.AddBlock(*b5_2));
+  ASSERT_EQ(BlockStatus::ADDED, chain_.AddBlock(*b6_2));
+  ASSERT_EQ(BlockStatus::ADDED, chain_.AddBlock(*b7_2));
 
   EXPECT_CALL(endpoint_, GetDirectlyConnectedPeers()).WillRepeatedly(Return(AddressList{other1_}));
 
-  auto const log1 = other1_proto.TimeTravel(local_branch[1]->hash);
-  EXPECT_CALL(rpc_client_, TimeTravel(other1_, local_branch[1]->hash))
+  auto const log1 = other1_proto.TimeTravel(b6_2->hash);
+  EXPECT_CALL(rpc_client_, TimeTravel(other1_, ExpectedHash(b6_2->hash)))
       .WillOnce(Return(CreatePromise(log1)));
 
-  FollowPath(State::SYNCHRONISING, State::START_SYNC_WITH_PEER, State::REQUEST_NEXT_BLOCKS,
-             State::WAIT_FOR_NEXT_BLOCKS, State::REQUEST_NEXT_BLOCKS);
+  Tick(State::SYNCHRONISING, State::START_SYNC_WITH_PEER);
+  Tick(State::START_SYNC_WITH_PEER, State::REQUEST_NEXT_BLOCKS);
+  Tick(State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS);
+  Tick(State::WAIT_FOR_NEXT_BLOCKS, State::REQUEST_NEXT_BLOCKS);
 
-  auto const log2 = other1_proto.TimeTravel(local_branch[0]->hash);
-  EXPECT_CALL(rpc_client_, TimeTravel(other1_, local_branch[0]->hash))
-      .WillOnce(Return(CreatePromise(log1)));
+  auto const log2 = other1_proto.TimeTravel(b5_2->hash);
+  EXPECT_CALL(rpc_client_, TimeTravel(other1_, ExpectedHash(b5_2->hash)))
+      .WillOnce(Return(CreatePromise(log2)));
 
-  FollowPath(State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS, State::REQUEST_NEXT_BLOCKS);
+  Tick(State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS);
+  Tick(State::WAIT_FOR_NEXT_BLOCKS, State::REQUEST_NEXT_BLOCKS);
 
-  auto const log3 = other1_proto.TimeTravel(common_root[2]->hash);
-  EXPECT_CALL(rpc_client_, TimeTravel(other1_, common_root[2]->hash))
+  auto const log3 = other1_proto.TimeTravel(b3->hash);
+  EXPECT_CALL(rpc_client_, TimeTravel(other1_, ExpectedHash(b3->hash)))
       .WillOnce(Return(CreatePromise(log3)));
 
-  FollowPath(State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS, State::REQUEST_NEXT_BLOCKS);
+  Tick(State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS);
+  Tick(State::WAIT_FOR_NEXT_BLOCKS, State::REQUEST_NEXT_BLOCKS);
 
-  FollowPath(State::REQUEST_NEXT_BLOCKS, State::COMPLETE_SYNC_WITH_PEER, State::SYNCHRONISED);
+  Tick(State::REQUEST_NEXT_BLOCKS, State::COMPLETE_SYNC_WITH_PEER);
+  Tick(State::COMPLETE_SYNC_WITH_PEER, State::SYNCHRONISED);
 
-  EXPECT_EQ(chain_.GetHeaviestBlockHash(), local_branch.back()->hash);
+  EXPECT_EQ(chain_.GetHeaviestBlockHash(), b7_2->hash);
 
-  Tick(State::SYNCHRONISED);
-  Tick(State::SYNCHRONISED);
-  Tick(State::SYNCHRONISED);
+  Tick(State::SYNCHRONISED, State::SYNCHRONISED);
+  Tick(State::SYNCHRONISED, State::SYNCHRONISED);
+  Tick(State::SYNCHRONISED, State::SYNCHRONISED);
 }
 
 TEST_F(MainChainServiceTests, CheckWaitingToFullfilResponse)
@@ -464,18 +480,19 @@ TEST_F(MainChainServiceTests, CheckWaitingToFullfilResponse)
 
   auto promise = fetch::service::MakePromise();
 
-  EXPECT_CALL(rpc_client_, TimeTravel(other1_, GetGenesisDigest()))
+  EXPECT_CALL(rpc_client_, TimeTravel(other1_, ExpectedHash(GetGenesisDigest())))
       .WillOnce(Return(TraveloguePromise{promise}));
 
-  FollowPath(State::SYNCHRONISING, State::START_SYNC_WITH_PEER, State::REQUEST_NEXT_BLOCKS,
-             State::WAIT_FOR_NEXT_BLOCKS);
+  Tick(State::SYNCHRONISING, State::START_SYNC_WITH_PEER);
+  Tick(State::START_SYNC_WITH_PEER, State::REQUEST_NEXT_BLOCKS);
+  Tick(State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS);
 
   // simulate the response taking time to arrive
-  Tick(State::WAIT_FOR_NEXT_BLOCKS);
-  Tick(State::WAIT_FOR_NEXT_BLOCKS);
-  Tick(State::WAIT_FOR_NEXT_BLOCKS);
-  Tick(State::WAIT_FOR_NEXT_BLOCKS);
-  Tick(State::WAIT_FOR_NEXT_BLOCKS);
+  Tick(State::WAIT_FOR_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS);
+  Tick(State::WAIT_FOR_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS);
+  Tick(State::WAIT_FOR_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS);
+  Tick(State::WAIT_FOR_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS);
+  Tick(State::WAIT_FOR_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS);
 
   // simulate a failure as that is easier
   promise->Fail();
@@ -492,11 +509,12 @@ TEST_F(MainChainServiceTests, CheckHandlingOfEmptyLog)
 
   EXPECT_CALL(endpoint_, GetDirectlyConnectedPeers()).WillRepeatedly(Return(AddressList{other1_}));
 
-  EXPECT_CALL(rpc_client_, TimeTravel(other1_, GetGenesisDigest()))
+  EXPECT_CALL(rpc_client_, TimeTravel(other1_, ExpectedHash(GetGenesisDigest())))
       .WillOnce(Return(CreatePromise(log)));
 
-  FollowPath(State::SYNCHRONISING, State::START_SYNC_WITH_PEER, State::REQUEST_NEXT_BLOCKS,
-             State::WAIT_FOR_NEXT_BLOCKS);
+  Tick(State::SYNCHRONISING, State::START_SYNC_WITH_PEER);
+  Tick(State::START_SYNC_WITH_PEER, State::REQUEST_NEXT_BLOCKS);
+  Tick(State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS);
 
   // upon invalid message from the peer we simply conclude our sync with them
   Tick(State::WAIT_FOR_NEXT_BLOCKS, State::COMPLETE_SYNC_WITH_PEER);
@@ -509,11 +527,12 @@ TEST_F(MainChainServiceTests, CheckHandlingOfUnserialisablePayload)
 
   EXPECT_CALL(endpoint_, GetDirectlyConnectedPeers()).WillRepeatedly(Return(AddressList{other1_}));
 
-  EXPECT_CALL(rpc_client_, TimeTravel(other1_, GetGenesisDigest()))
+  EXPECT_CALL(rpc_client_, TimeTravel(other1_, ExpectedHash(GetGenesisDigest())))
       .WillOnce(Return(TraveloguePromise{promise}));
 
-  FollowPath(State::SYNCHRONISING, State::START_SYNC_WITH_PEER, State::REQUEST_NEXT_BLOCKS,
-             State::WAIT_FOR_NEXT_BLOCKS);
+  Tick(State::SYNCHRONISING, State::START_SYNC_WITH_PEER);
+  Tick(State::START_SYNC_WITH_PEER, State::REQUEST_NEXT_BLOCKS);
+  Tick(State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS);
 
   // upon invalid message from the peer we simply conclude our sync with them
   Tick(State::WAIT_FOR_NEXT_BLOCKS, State::COMPLETE_SYNC_WITH_PEER);
@@ -526,19 +545,23 @@ TEST_F(MainChainServiceTests, CheckRetryMechanism)
 
   EXPECT_CALL(endpoint_, GetDirectlyConnectedPeers()).WillRepeatedly(Return(AddressList{other1_}));
 
-  EXPECT_CALL(rpc_client_, TimeTravel(other1_, GetGenesisDigest()))
+  EXPECT_CALL(rpc_client_, TimeTravel(other1_, ExpectedHash(GetGenesisDigest())))
       .WillRepeatedly(Return(TraveloguePromise{failed}));
 
-  FollowPath(State::SYNCHRONISING, State::START_SYNC_WITH_PEER, State::REQUEST_NEXT_BLOCKS);
+  Tick(State::SYNCHRONISING, State::START_SYNC_WITH_PEER);
+  Tick(State::START_SYNC_WITH_PEER, State::REQUEST_NEXT_BLOCKS);
 
   // attempt 1
-  FollowPath(State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS, State::REQUEST_NEXT_BLOCKS);
+  Tick(State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS);
+  Tick(State::WAIT_FOR_NEXT_BLOCKS, State::REQUEST_NEXT_BLOCKS);
 
   // attempt 2
-  FollowPath(State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS, State::REQUEST_NEXT_BLOCKS);
+  Tick(State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS);
+  Tick(State::WAIT_FOR_NEXT_BLOCKS, State::REQUEST_NEXT_BLOCKS);
 
   // attempt 3
-  FollowPath(State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS, State::REQUEST_NEXT_BLOCKS);
+  Tick(State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS);
+  Tick(State::WAIT_FOR_NEXT_BLOCKS, State::REQUEST_NEXT_BLOCKS);
 
   Tick(State::REQUEST_NEXT_BLOCKS, State::COMPLETE_SYNC_WITH_PEER);
 }
@@ -550,18 +573,19 @@ TEST_F(MainChainServiceTests, CheckPeriodicResync)
   Tick(State::SYNCHRONISING, State::SYNCHRONISED);
 
   // should stay in sync'ed state
-  Tick(State::SYNCHRONISED);
-  Tick(State::SYNCHRONISED);
-  Tick(State::SYNCHRONISED);
+  Tick(State::SYNCHRONISED, State::SYNCHRONISED);
+  Tick(State::SYNCHRONISED, State::SYNCHRONISED);
+  Tick(State::SYNCHRONISED, State::SYNCHRONISED);
 
   clock_->AddOffset(std::chrono::seconds{30});
 
-  FollowPath(State::SYNCHRONISED, State::SYNCHRONISING, State::SYNCHRONISED);
+  Tick(State::SYNCHRONISED, State::SYNCHRONISING);
+  Tick(State::SYNCHRONISING, State::SYNCHRONISED);
 
   // should stay in sync'ed state
-  Tick(State::SYNCHRONISED);
-  Tick(State::SYNCHRONISED);
-  Tick(State::SYNCHRONISED);
+  Tick(State::SYNCHRONISED, State::SYNCHRONISED);
+  Tick(State::SYNCHRONISED, State::SYNCHRONISED);
+  Tick(State::SYNCHRONISED, State::SYNCHRONISED);
 }
 
 TEST_F(MainChainServiceTests, CheckLooseBlocksTrigger)
@@ -573,26 +597,26 @@ TEST_F(MainChainServiceTests, CheckLooseBlocksTrigger)
   EXPECT_CALL(endpoint_, GetDirectlyConnectedPeers()).WillRepeatedly(Return(AddressList{}));
 
   Tick(State::SYNCHRONISING, State::SYNCHRONISED);
-  Tick(State::SYNCHRONISED);
+  Tick(State::SYNCHRONISED, State::SYNCHRONISED);
 
   // simulate the blocks being ahead of consensus prompting a resync
   EXPECT_CALL(consensus_, ValidBlock(*b2)).WillRepeatedly(Return(ConsensusInterface::Status::NO));
 
   // simulate the arrival of gossiped blocks
   rpc_service_.OnNewBlock(other1_, *b2, other1_);
-  Tick(State::SYNCHRONISED);
+  Tick(State::SYNCHRONISED, State::SYNCHRONISED);
 
   rpc_service_.OnNewBlock(other1_, *b2, other1_);
-  Tick(State::SYNCHRONISED);
+  Tick(State::SYNCHRONISED, State::SYNCHRONISED);
 
   rpc_service_.OnNewBlock(other1_, *b2, other1_);
-  Tick(State::SYNCHRONISED);
+  Tick(State::SYNCHRONISED, State::SYNCHRONISED);
 
   rpc_service_.OnNewBlock(other1_, *b2, other1_);
-  Tick(State::SYNCHRONISED);
+  Tick(State::SYNCHRONISED, State::SYNCHRONISED);
 
   rpc_service_.OnNewBlock(other1_, *b2, other1_);
-  Tick(State::SYNCHRONISED);
+  Tick(State::SYNCHRONISED, State::SYNCHRONISED);
 
   rpc_service_.OnNewBlock(other1_, *b2, other1_);
   Tick(State::SYNCHRONISED, State::SYNCHRONISING);
@@ -604,11 +628,13 @@ TEST_F(MainChainServiceTests, CheckWhenGenesisAppearsToBeInvalid)
   log.status = fetch::ledger::TravelogueStatus::NOT_FOUND;
 
   EXPECT_CALL(endpoint_, GetDirectlyConnectedPeers()).WillRepeatedly(Return(AddressList{other1_}));
-  EXPECT_CALL(rpc_client_, TimeTravel(other1_, GetGenesisDigest()))
+  EXPECT_CALL(rpc_client_, TimeTravel(other1_, ExpectedHash(GetGenesisDigest())))
       .WillOnce(Return(CreatePromise(log)));
 
-  FollowPath(State::SYNCHRONISING, State::START_SYNC_WITH_PEER, State::REQUEST_NEXT_BLOCKS,
-             State::WAIT_FOR_NEXT_BLOCKS, State::COMPLETE_SYNC_WITH_PEER);
+  Tick(State::SYNCHRONISING, State::START_SYNC_WITH_PEER);
+  Tick(State::START_SYNC_WITH_PEER, State::REQUEST_NEXT_BLOCKS);
+  Tick(State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS);
+  Tick(State::WAIT_FOR_NEXT_BLOCKS, State::COMPLETE_SYNC_WITH_PEER);
 }
 
 namespace {
@@ -635,11 +661,6 @@ TEST_F(MainChainServiceTests, CheckExponentialBackStep)
 
   auto        fake_heaviest    = block_generator_(fake_branch.back());
   auto const &genuine_heaviest = genuine_branch.back();
-
-  PrintTo(fake_heaviest->hash, &(std::cerr << "Fake heaviest: "));
-  std::cerr << ", " << fake_heaviest->block_number << '\n';
-  PrintTo(fake_branch.back()->hash, &(std::cerr << "Fake latest: "));
-  std::cerr << ", " << fake_branch.back()->block_number << '\n';
 
   auto known_hashes = DigestMatcher::MakePatterns("common_part", common_part, "fake_branch",
                                                   fake_branch, "genuine_branch", genuine_branch);
@@ -722,12 +743,10 @@ TEST_F(MainChainServiceTests, CheckExponentialBackStep)
   // build a fake chain
   FollowPath(State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS,
              State::REQUEST_NEXT_BLOCKS);  // common_part
-  FollowPath(State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS,
-             State::REQUEST_NEXT_BLOCKS);  // fake_branch
 
   // denounce fake chain
-  FollowPath(State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS, State::REQUEST_NEXT_BLOCKS,
-             State::WAIT_FOR_NEXT_BLOCKS,                              // fake_branch[-1]
+  FollowPath(State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS,  // fake_branch
+             State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS,  // fake_branch[-1]
              State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS,  // fake_branch[-2]
              State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS,  // fake_branch[-4]
              State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS,  // fake_branch[-8]
