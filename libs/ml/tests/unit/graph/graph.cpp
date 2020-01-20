@@ -788,6 +788,136 @@ TYPED_TEST(GraphTest, graph_setWeight)
                               fetch::math::function_tolerance<DataType>()));
 }
 
+TYPED_TEST(GraphTest, graph_getWeightsOrder_1)
+{
+  // Tests if weight values in GetWeightsReferences are always in alphabetical order
+
+  using TensorType = TypeParam;
+  using DataType   = typename TensorType::Type;
+
+  // Create graph
+  std::shared_ptr<fetch::ml::Graph<TensorType>> g =
+      std::make_shared<fetch::ml::Graph<TensorType>>();
+
+  std::string input = g->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Input", {});
+  std::string label = g->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Label", {});
+
+  std::string layer_1 = g->template AddNode<layers::FullyConnected<TensorType>>(
+      "B", {input}, 5u, 10u, fetch::ml::details::ActivationType::RELU);
+  std::string layer_2 = g->template AddNode<layers::FullyConnected<TensorType>>(
+      "C", {layer_1}, 10u, 10u, fetch::ml::details::ActivationType::RELU);
+  std::string output = g->template AddNode<layers::FullyConnected<TensorType>>(
+      "A", {layer_2}, 10u, 5u, fetch::ml::details::ActivationType::SOFTMAX);
+
+  TensorType gt_a_bias({5, 1});
+  gt_a_bias.Fill(DataType{1});
+  TensorType gt_a_weight({10, 5});
+  gt_a_weight.Fill(DataType{2});
+
+  TensorType gt_b_bias({10, 1});
+  gt_b_bias.Fill(DataType{3});
+  TensorType gt_b_weight({5, 10});
+  gt_b_weight.Fill(DataType{4});
+
+  TensorType gt_c_bias({10, 1});
+  gt_c_bias.Fill(DataType{5});
+  TensorType gt_c_weight({10, 10});
+  gt_c_weight.Fill(DataType{6});
+
+  g->SetWeight("A/FullyConnected_Bias", gt_a_bias);
+  g->SetWeight("A/FullyConnected_Weights", gt_a_weight);
+
+  g->SetWeight("B/FullyConnected_Bias", gt_b_bias);
+  g->SetWeight("B/FullyConnected_Weights", gt_b_weight);
+
+  g->SetWeight("C/FullyConnected_Bias", gt_c_bias);
+  g->SetWeight("C/FullyConnected_Weights", gt_c_weight);
+
+  auto weights = g->GetWeightsReferences();
+
+  // Test values
+  ASSERT_EQ(weights.size(), 6);
+  ASSERT_TRUE(weights.at(0).AllClose(gt_a_bias, fetch::math::function_tolerance<DataType>(),
+                                     fetch::math::function_tolerance<DataType>()));
+  ASSERT_TRUE(weights.at(1).AllClose(gt_a_weight, fetch::math::function_tolerance<DataType>(),
+                                     fetch::math::function_tolerance<DataType>()));
+
+  ASSERT_TRUE(weights.at(2).AllClose(gt_b_bias, fetch::math::function_tolerance<DataType>(),
+                                     fetch::math::function_tolerance<DataType>()));
+  ASSERT_TRUE(weights.at(3).AllClose(gt_b_weight, fetch::math::function_tolerance<DataType>(),
+                                     fetch::math::function_tolerance<DataType>()));
+
+  ASSERT_TRUE(weights.at(4).AllClose(gt_c_bias, fetch::math::function_tolerance<DataType>(),
+                                     fetch::math::function_tolerance<DataType>()));
+  ASSERT_TRUE(weights.at(5).AllClose(gt_c_weight, fetch::math::function_tolerance<DataType>(),
+                                     fetch::math::function_tolerance<DataType>()));
+}
+
+TYPED_TEST(GraphTest, graph_getWeightsOrder_2)
+{
+  // Tests if weight values in GetWeightsReferences are always in alphabetical order
+
+  using TensorType = TypeParam;
+  using DataType   = typename TensorType::Type;
+
+  // Create graph
+  std::shared_ptr<fetch::ml::Graph<TensorType>> g =
+      std::make_shared<fetch::ml::Graph<TensorType>>();
+
+  std::string input = g->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Input", {});
+  std::string label = g->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Label", {});
+
+  std::string layer_1 = g->template AddNode<layers::FullyConnected<TensorType>>(
+      "C", {input}, 5u, 10u, fetch::ml::details::ActivationType::RELU);
+  std::string layer_2 = g->template AddNode<layers::FullyConnected<TensorType>>(
+      "A", {layer_1}, 10u, 10u, fetch::ml::details::ActivationType::RELU);
+  std::string output = g->template AddNode<layers::FullyConnected<TensorType>>(
+      "B", {layer_2}, 10u, 5u, fetch::ml::details::ActivationType::SOFTMAX);
+
+  TensorType gt_a_bias({10, 1});
+  gt_a_bias.Fill(DataType{5});
+  TensorType gt_a_weight({10, 10});
+  gt_a_weight.Fill(DataType{6});
+
+  TensorType gt_b_bias({5, 1});
+  gt_b_bias.Fill(DataType{1});
+  TensorType gt_b_weight({10, 5});
+  gt_b_weight.Fill(DataType{2});
+
+  TensorType gt_c_bias({10, 1});
+  gt_c_bias.Fill(DataType{3});
+  TensorType gt_c_weight({5, 10});
+  gt_c_weight.Fill(DataType{4});
+
+  g->SetWeight("A/FullyConnected_Bias", gt_a_bias);
+  g->SetWeight("A/FullyConnected_Weights", gt_a_weight);
+
+  g->SetWeight("B/FullyConnected_Bias", gt_b_bias);
+  g->SetWeight("B/FullyConnected_Weights", gt_b_weight);
+
+  g->SetWeight("C/FullyConnected_Bias", gt_c_bias);
+  g->SetWeight("C/FullyConnected_Weights", gt_c_weight);
+
+  auto weights = g->GetWeightsReferences();
+
+  // Test values
+  ASSERT_EQ(weights.size(), 6);
+  ASSERT_TRUE(weights.at(0).AllClose(gt_a_bias, fetch::math::function_tolerance<DataType>(),
+                                     fetch::math::function_tolerance<DataType>()));
+  ASSERT_TRUE(weights.at(1).AllClose(gt_a_weight, fetch::math::function_tolerance<DataType>(),
+                                     fetch::math::function_tolerance<DataType>()));
+
+  ASSERT_TRUE(weights.at(2).AllClose(gt_b_bias, fetch::math::function_tolerance<DataType>(),
+                                     fetch::math::function_tolerance<DataType>()));
+  ASSERT_TRUE(weights.at(3).AllClose(gt_b_weight, fetch::math::function_tolerance<DataType>(),
+                                     fetch::math::function_tolerance<DataType>()));
+
+  ASSERT_TRUE(weights.at(4).AllClose(gt_c_bias, fetch::math::function_tolerance<DataType>(),
+                                     fetch::math::function_tolerance<DataType>()));
+  ASSERT_TRUE(weights.at(5).AllClose(gt_c_weight, fetch::math::function_tolerance<DataType>(),
+                                     fetch::math::function_tolerance<DataType>()));
+}
+
 }  // namespace test
 }  // namespace ml
 }  // namespace fetch
