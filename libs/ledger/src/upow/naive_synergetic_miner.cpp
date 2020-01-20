@@ -79,9 +79,11 @@ NaiveSynergeticMiner::NaiveSynergeticMiner(DAGPtr dag, StorageInterface &storage
   , state_machine_{std::make_shared<core::StateMachine<State>>("NaiveSynMiner", State::INITIAL)}
   , job_script_{script}
   , contract_analyser_{std::move(contract_analyser)}
+  , miner_address_{prover_->identity()}
 {
   state_machine_->RegisterHandler(State::INITIAL, this, &NaiveSynergeticMiner::OnInitial);
   state_machine_->RegisterHandler(State::MINE, this, &NaiveSynergeticMiner::OnMine);
+  job_script_.set_balance(GetBalance());
 }
 
 core::WeakRunnable NaiveSynergeticMiner::GetWeakRunnable()
@@ -183,7 +185,7 @@ void NaiveSynergeticMiner::Mine()
   }
 
   std::vector<uint64_t> selected_jobs{};
-  auto status = job_script_.GenerateJobList(job_descriptions, selected_jobs);
+  auto status = job_script_.GenerateJobList(job_descriptions, selected_jobs, GetBalance());
 
   if (status != SynergeticMinerScript::Status::SUCCESS)
   {
@@ -195,6 +197,7 @@ void NaiveSynergeticMiner::Mine()
     }
   }
 
+  uint64_t expected_charge{0};
   for(auto const& job : selected_jobs)
   {
     auto it = address_lookup.find(job);
@@ -206,17 +209,21 @@ void NaiveSynergeticMiner::Mine()
     FETCH_LOG_WARN(LOGGING_NAME, "Job with ", job, " id is selected!");
     auto const &problem = problem_spaces[it->second];
 
+    uint64_t job_expected_charge;
     // attempt to mine a solution to this problem
-    auto const solution = MineSolution(it->second, problem);
+    auto const solution = MineSolution(it->second, problem, job_expected_charge);
 
     // check to see if a solution was generated
     if (solution)
     {
       dag_->AddWork(*solution);
+      expected_charge += job_expected_charge;
 
       FETCH_LOG_DEBUG(LOGGING_NAME, "Mined and added work! Epoch number: ", dag_->CurrentEpoch());
     }
   }
+
+  job_script_.set_back_expected_charge(static_cast<int64_t>(expected_charge));
 }
 
 void NaiveSynergeticMiner::EnableMining(bool enable)
@@ -225,7 +232,8 @@ void NaiveSynergeticMiner::EnableMining(bool enable)
 }
 
 WorkPtr NaiveSynergeticMiner::MineSolution(chain::Address const &contract_address,
-                                           ProblemData const &   problem_data)
+                                           ProblemData const &   problem_data,
+                                           uint64_t &expected_charge)
 {
   StateAdapter storage_adapter{storage_, "fetch.token"};
 
@@ -288,9 +296,9 @@ WorkPtr NaiveSynergeticMiner::MineSolution(chain::Address const &contract_addres
 
     if (i == 0)
     {
-      auto const fee = contract->CalculateFee();
+      expected_charge = contract->CalculateFee();
       // TODO(AB): scaling? charge approx search_length_*one
-      if (fee >= balance)
+      if (expected_charge >= balance)
       {
         // not enough balance, stop using contract
         return {};
@@ -302,6 +310,15 @@ WorkPtr NaiveSynergeticMiner::MineSolution(chain::Address const &contract_addres
 
   // Returning the best work from this round
   return best_work;
+}
+
+
+uint64_t NaiveSynergeticMiner::GetBalance()
+{
+  StateAdapter storage_adapter{storage_, "fetch.token"};
+  ContractContext         context{&token_contract_, miner_address_, nullptr, &storage_adapter, 0};
+  ContractContextAttacher raii(token_contract_, context);
+  return token_contract_.GetBalance(miner_address_);
 }
 
 }  // namespace ledger

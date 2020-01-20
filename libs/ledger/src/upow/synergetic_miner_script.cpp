@@ -48,12 +48,14 @@ using byte_array::ConstByteArray;
 using crypto::Hash;
 using crypto::SHA256;
 
-using Status                = SynergeticMinerScript::Status;
-using SynergeticJobs        = SynergeticMinerScript::SynergeticJobs;
-using VmSynergeticJob       = vm::Ptr<vm_modules::ledger::SynergeticJob>;
-using VmSynergeticJobArray  = vm::Ptr<vm::Array<VmSynergeticJob>>;
+using Status                        = SynergeticMinerScript::Status;
+using SynergeticJobs                = SynergeticMinerScript::SynergeticJobs;
+using VmSynergeticJob               = vm::Ptr<vm_modules::ledger::SynergeticJob>;
+using VmSynergeticJobArray          = vm::Ptr<vm::Array<VmSynergeticJob>>;
 
 constexpr char const *LOGGING_NAME = "SynergeticMinerScript";
+
+constexpr uint64_t const HISTORY_SIZE = 10;
 
 std::string ErrorsToLog(std::vector<std::string> const &errors)
 {
@@ -67,28 +69,6 @@ std::string ErrorsToLog(std::vector<std::string> const &errors)
   return oss.str();
 }
 
-VmSynergeticJob CreateSynergeticJobData(vm::VM *vm, SynergeticJob const &job)
-{
-  VmSynergeticJob data{};
-
-  try
-  {
-    data = vm->CreateNewObject<vm_modules::ledger::SynergeticJob>();
-    data->set_contract_address(vm->CreateNewObject<vm::Address>(job.contract_address()));
-    data->set_id(job.id());
-    data->set_epoch(job.epoch());
-    data->set_problem_charge(job.problem_charge());
-    data->set_work_charge(job.work_charge());
-    data->set_clear_charge(job.clear_charge());
-  }
-  catch (std::exception const &ex)
-  {
-    FETCH_LOG_WARN(LOGGING_NAME, "Failed to parse input jobs data: ", ex.what());
-  }
-
-  return data;
-}
-
 VmSynergeticJobArray CreateSynergeticJobData(vm::VM *vm, SynergeticJobs const &jobs)
 {
   using UnderlyingArrayElement = vm::Array<VmSynergeticJob>::ElementType;
@@ -100,7 +80,7 @@ VmSynergeticJobArray CreateSynergeticJobData(vm::VM *vm, SynergeticJobs const &j
   for (auto const &job : jobs)
   {
     // convert the problem data
-    auto data = CreateSynergeticJobData(vm, *job);
+    auto data = job->ToVMType(vm);
 
     if (data)
     {
@@ -113,7 +93,7 @@ VmSynergeticJobArray CreateSynergeticJobData(vm::VM *vm, SynergeticJobs const &j
                                               vm->GetTypeId<VmSynergeticJob>(),
                                               static_cast<int32_t>(elements.size()));
 
-  // move the constructed elements over to the array
+  // mov e the constructed elements over to the array
   ret->elements = std::move(elements);
 
   return VmSynergeticJobArray{ret};
@@ -123,6 +103,7 @@ VmSynergeticJobArray CreateSynergeticJobData(vm::VM *vm, SynergeticJobs const &j
 
 SynergeticMinerScript::SynergeticMinerScript(ConstByteArray const &source)
   : module_{VMFactory::GetModule(VMFactory::USE_SMART_CONTRACTS)}
+  , history_{HISTORY_SIZE}
 {
   // ensure the source has size
   if (source.empty())
@@ -131,6 +112,7 @@ SynergeticMinerScript::SynergeticMinerScript(ConstByteArray const &source)
   }
 
   vm_modules::ledger::SynergeticJob::Bind(*module_);
+  vm_modules::ledger::SynergeticJobHistoryElement::Bind(*module_);
 
   FETCH_LOG_DEBUG(LOGGING_NAME, "Synergetic miner script source\n", source);
 
@@ -197,32 +179,60 @@ SynergeticMinerScript::SynergeticMinerScript(ConstByteArray const &source)
       *function = f.name;
     }
   }
+  
+  vm_ = std::make_unique<vm::VM>(module_.get());
 }
 
-Status SynergeticMinerScript::GenerateJobList(SynergeticJobs const &jobs, JobList &generated_job_list)
+void SynergeticMinerScript::set_balance(uint64_t const &balance)
 {
+  current_balance_ = balance;
+}
+
+void SynergeticMinerScript::set_back_expected_charge(int64_t const &charge)
+{
+  history_.back()->set_expected_charge(charge);
+}
+
+Status SynergeticMinerScript::GenerateJobList(SynergeticJobs const &jobs, JobList &generated_job_list, uint64_t balance)
+{
+  if (history_.size()>0)
+  {
+    auto increment = static_cast<int64_t>(balance - current_balance_); // < 0 then miner moved founds out
+    //we are not handling found transfer in and out to the miner address
+    history_.back()->set_actual_charge(increment);
+  }
+  current_balance_ = balance;
+
   // create the VM
-  auto vm  = std::make_unique<vm::VM>(module_.get());
   vm::Variant result;
 
   // create the problem data
-  auto jobs_vm = CreateSynergeticJobData(vm.get(), jobs);
+  auto jobs_vm = CreateSynergeticJobData(vm_.get(), jobs);
 
   // execute the problem definition function
   std::string error{};
-  if (!vm->Execute(*executable_, mine_jobs_function_, error, result, jobs_vm))
+  if (!vm_->Execute(*executable_, mine_jobs_function_, error, result, jobs_vm, history_.Get(vm_.get())))
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Problem definition error: ", error);
     return Status::VM_EXECUTION_ERROR;
   }
 
-  auto array{result.Get<vm::Ptr<vm::IArray>>()};
+  auto array{result.Get<vm::Ptr<vm::Array<uint64_t>>>()};
+
+  FETCH_LOG_WARN(LOGGING_NAME, "Miner contract executed! Selected: ", array->Count());
+
 
   generated_job_list.clear();
-  for(int32_t i=0;i<array->Count();++i)
+  //int64_t expected_charge = 0;
+  for (vm::AnyInteger i(0, vm::TypeIds::Int32); i.primitive.i32 < array->Count();++i.primitive.i32)
   {
-    generated_job_list.push_back(array->PopFrontOne().Get<uint64_t>());
+    uint64_t id = array->GetIndexedValue(i).Get<uint64_t>();
+    //expected_charge += static_cast<int64_t>(jobs[id]->total_charge());
+    generated_job_list.push_back(id);
+    FETCH_LOG_WARN(LOGGING_NAME, "Selected:  ", id);
   }
+
+  history_.AddElement(vm_.get(), jobs_vm, array);
 
   return Status::SUCCESS;
 }

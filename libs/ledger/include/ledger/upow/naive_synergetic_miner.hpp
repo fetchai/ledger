@@ -84,7 +84,8 @@ private:
 
   /// @name Utils
   /// @{
-  WorkPtr MineSolution(chain::Address const &contract_address, ProblemData const &problem_data);
+  WorkPtr MineSolution(chain::Address const &contract_address, ProblemData const &problem_data, uint64_t &expected_charge);
+  uint64_t GetBalance();
   /// @}
 
   DAGPtr                        dag_;
@@ -96,6 +97,7 @@ private:
   TokenContract                 token_contract_{};
   SynergeticMinerScript         job_script_;
   ContractAnalyserPtr           contract_analyser_;
+  chain::Address                miner_address_;
 };
 
 }  // namespace ledger

@@ -21,6 +21,7 @@
 #include "ledger/fees/chargeable.hpp"
 #include "ledger/upow/synergetic_base_types.hpp"
 #include "ledger/upow/synergetic_job.hpp"
+#include "ledger/upow/synergetic_job_history.hpp"
 #include "vm/analyser.hpp"
 #include "vm/common.hpp"
 #include "vm/compiler.hpp"
@@ -77,10 +78,13 @@ public:
   // Accessors
   std::string const &mine_jobs_function() const;
 
+  // Setters
+  void set_balance(uint64_t const &balance);
+  void set_back_expected_charge(int64_t const &charge);
 
   /// @name Actions to be taken on the synergetic contract
   /// @{
-  Status GenerateJobList(SynergeticJobs const &jobs, JobList &generated_job_list);
+  Status GenerateJobList(SynergeticJobs const &jobs, JobList &generated_job_list, uint64_t balance);
   /// @}
 
 private:
@@ -90,12 +94,17 @@ private:
   using ExecutablePtr = std::shared_ptr<vm::Executable>;
   using VariantPtr    = std::shared_ptr<vm::Variant>;
 
-  ModulePtr     module_;
-  CompilerPtr   compiler_;
-  IRPtr         ir_;
-  ExecutablePtr executable_;
+  ModulePtr               module_;
+  CompilerPtr             compiler_;
+  IRPtr                   ir_;
+  ExecutablePtr           executable_;
+  std::unique_ptr<vm::VM> vm_;
+
+  SynergeticJobHistory history_;
 
   std::string mine_jobs_function_;
+
+  uint64_t current_balance_{0};
 
 };
 

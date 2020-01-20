@@ -21,6 +21,10 @@
 namespace fetch {
 namespace ledger {
 
+namespace {
+  constexpr char const *LOGGING_NAME = "SynergeticJob";
+}
+
 void SynergeticJob::set_id(uint64_t const &id)
 {
   id_ = id;
@@ -81,6 +85,32 @@ uint64_t const &SynergeticJob::clear_charge() const
   return clear_charge_;
 }
 
+uint64_t SynergeticJob::total_charge() const
+{
+  return problem_charge_ + work_charge_ + clear_charge_;
+}
+
+SynergeticJob::VmType SynergeticJob::ToVMType(fetch::vm::VM *vm)
+{
+  VmType data{};
+
+  try
+  {
+    data = vm->CreateNewObject<vm_modules::ledger::SynergeticJob>();
+    data->set_contract_address(vm->CreateNewObject<vm::Address>(contract_address_));
+    data->set_id(id_);
+    data->set_epoch(epoch_);
+    data->set_problem_charge(problem_charge_);
+    data->set_work_charge(work_charge_);
+    data->set_clear_charge(clear_charge_);
+  }
+  catch (std::exception const &ex)
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Failed to parse input jobs data: ", ex.what());
+  }
+
+  return data;
+}
 
 }  // namespace ledger
 }  // namespace fetch

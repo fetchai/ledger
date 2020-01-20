@@ -18,6 +18,8 @@
 //------------------------------------------------------------------------------
 
 #include "chain/address.hpp"
+#include "vm/vm.hpp"
+#include "vm_modules/ledger/synergetic_job.hpp"
 
 namespace fetch {
 namespace ledger {
@@ -26,6 +28,8 @@ class SynergeticJob
 {
 public:
   using Address = chain::Address;
+  using VmType  = vm::Ptr<vm_modules::ledger::SynergeticJob>;
+
   SynergeticJob() = default;
   virtual ~SynergeticJob() = default;
 
@@ -41,9 +45,10 @@ public:
   uint64_t const &problem_charge() const;
   uint64_t const &work_charge() const;
   uint64_t const &clear_charge() const;
-  uint64_t const &total_charge() const;
+  uint64_t        total_charge() const;
   Address  const &contract_address() const;
 
+  VmType ToVMType(vm::VM *vm);
 
 private:
   uint64_t   id_{0};
