@@ -36,7 +36,7 @@ public:
   // Construction / Destruction
   BasicSynergeticContractAnalyser(StorageInterface &storage, crypto::Identity miner,
                                   std::size_t num_lanes);
-  virtual ~BasicSynergeticContractAnalyser() = default;
+  ~BasicSynergeticContractAnalyser() override = default;
 
   SynergeticJobPtr AnalyseContract(chain::Address const &contract_address,
                                    ProblemData const &   problem_data,

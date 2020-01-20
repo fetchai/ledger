@@ -37,7 +37,7 @@ public:
   using VmHistoryElement     = vm::Ptr<VmHistoryElementType>;
   using VmType               = vm::Ptr<vm::Array<VmHistoryElement>>;
 
-  SynergeticJobHistory(uint64_t const &cache_size);
+  explicit SynergeticJobHistory(uint64_t const &cache_size);
   virtual ~SynergeticJobHistory() = default;
 
   void AddElement(vm::VM *vm, VmSynergeticJobArray &jobs, VmSelectedJobs &selected_jobs);

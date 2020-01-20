@@ -41,12 +41,7 @@ namespace ledger {
 namespace {
 
 using vm::FunctionDecoratorKind;
-using vm_modules::math::UInt256Wrapper;
 using vm_modules::VMFactory;
-using vm_modules::StructuredData;
-using byte_array::ConstByteArray;
-using crypto::Hash;
-using crypto::SHA256;
 
 using Status               = SynergeticMinerScript::Status;
 using SynergeticJobs       = SynergeticMinerScript::SynergeticJobs;
