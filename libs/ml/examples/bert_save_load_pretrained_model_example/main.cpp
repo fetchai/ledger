@@ -69,6 +69,15 @@ int main(int ac, char **av)
             << pretrained_model_dir << std::endl;
   LoadPretrainedBertModel(pretrained_model_dir, config, *g);
 
+  auto nodes = g->GetTrainableNames();
+
+  for(auto &node : nodes)
+  {
+    std::cout<<node<<std::endl;
+  }
+
+  return 0;
+
   std::cout << "get an output for the bert loaded from txt files" << std::endl;
   TensorType first_output =
       RunPseudoForwardPass(interface.inputs, interface.outputs[interface.outputs.size() - 1],

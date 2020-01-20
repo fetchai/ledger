@@ -138,6 +138,14 @@ std::pair<std::vector<std::string>, std::vector<std::string>> MakeBertModel(
                         encoder_outputs);
 }
 
+    template <class TensorType>
+    void SetWeightByName(fetch::ml::Graph<TensorType> &g, std::string const &node_name, TensorType const &data)
+    {
+      auto node_ptr = g.GetNode(node_name);
+      auto op_ptr = std::dynamic_pointer_cast<fetch::ml::ops::Weights<TensorType>>(node_ptr->GetOp());
+     return op_ptr->SetWeights(data);
+    }
+
 template <class TensorType>
 void EvaluateGraph(fetch::ml::Graph<TensorType> &g, std::vector<std::string> input_nodes,
                    std::string const &output_node, std::vector<TensorType> input_data,
@@ -203,7 +211,7 @@ TensorType LoadTensorFromFile(std::string const &file_name)
 }
 
 template <class TensorType>
-void PutWeightInLayerNorm(fetch::ml::StateDict<TensorType> &state_dict, SizeType model_dims,
+void PutWeightInLayerNorm(fetch::ml::Graph<TensorType> &g, SizeType model_dims,
                           std::string const &gamma_file_name, std::string const &beta_file_name,
                           std::string const &gamma_weight_name, std::string const &beta_weight_name)
 {
@@ -216,12 +224,12 @@ void PutWeightInLayerNorm(fetch::ml::StateDict<TensorType> &state_dict, SizeType
   layernorm_gamma.Reshape({model_dims, 1, 1});
 
   // load weights to layernorm layer
-  *(state_dict.dict_[gamma_weight_name].weights_) = layernorm_gamma;
-  *(state_dict.dict_[beta_weight_name].weights_)  = layernorm_beta;
+  SetWeightByName(g,gamma_weight_name,layernorm_gamma);
+  SetWeightByName(g,beta_weight_name,layernorm_beta);
 }
 
 template <class TensorType>
-void PutWeightInFullyConnected(fetch::ml::StateDict<TensorType> &state_dict, SizeType in_size,
+void PutWeightInFullyConnected(fetch::ml::Graph<TensorType> &g, SizeType in_size,
                                SizeType out_size, std::string const &weights_file_name,
                                std::string const &bias_file_name, std::string const &weights_name,
                                std::string const &bias_name)
@@ -236,8 +244,8 @@ void PutWeightInFullyConnected(fetch::ml::StateDict<TensorType> &state_dict, Siz
   bias.Reshape({out_size, 1, 1});
 
   // load weights to layernorm layer
-  *(state_dict.dict_[weights_name].weights_) = weights;
-  *(state_dict.dict_[bias_name].weights_)    = bias;
+  SetWeightByName(g,weights_name,weights);
+  SetWeightByName(g,bias_name,bias);
 }
 
 template <class TensorType>
@@ -373,14 +381,11 @@ std::pair<std::vector<std::string>, std::vector<std::string>> LoadPretrainedBert
   // create layernorm layer and get statedict
   std::string norm_embed = g.template AddNode<fetch::ml::layers::LayerNorm<TensorType>>(
       "norm_embed", {sum_embed}, SizeVector({model_dims, 1}), 0u, epsilon);
-  state_dict =
-      std::dynamic_pointer_cast<fetch::ml::Graph<TensorType>>(g.GetNode(norm_embed)->GetOp())
-          ->StateDict();
 
   // load embedding layernorm gamma beta weights
-  PutWeightInLayerNorm(state_dict, model_dims, file_path + "bert_embeddings_LayerNorm_gamma",
-                       file_path + "bert_embeddings_LayerNorm_beta", "LayerNorm_Gamma",
-                       "LayerNorm_Beta");
+  PutWeightInLayerNorm(g, model_dims, file_path + "bert_embeddings_LayerNorm_gamma",
+                       file_path + "bert_embeddings_LayerNorm_beta", norm_embed + "/LayerNorm_Gamma",
+                       norm_embed+"/LayerNorm_Beta");
 
   // load weights to self attention encoding layers
   // ###############################################################################################################
@@ -408,34 +413,36 @@ std::pair<std::vector<std::string>, std::vector<std::string>> LoadPretrainedBert
     // get file path prefix
     std::string file_prefix = file_path + "bert_encoder_layer_" + std::to_string(i) + "_";
 
+    auto nodes=g.GetNodeNames();
+
     // put weights in 2 layer norms
-    PutWeightInLayerNorm(state_dict, model_dims, file_prefix + "attention_output_LayerNorm_gamma",
+    PutWeightInLayerNorm(g, model_dims, file_prefix + "attention_output_LayerNorm_gamma",
                          file_prefix + "attention_output_LayerNorm_beta",
-                         "SelfAttentionEncoder_Attention_Residual_LayerNorm_LayerNorm_Gamma",
-                         "SelfAttentionEncoder_Attention_Residual_LayerNorm_LayerNorm_Beta");
-    PutWeightInLayerNorm(state_dict, model_dims, file_prefix + "output_LayerNorm_gamma",
+                         layer_output+"/SelfAttentionEncoder_Attention_Residual_LayerNorm/LayerNorm_Gamma",
+                         layer_output+"/SelfAttentionEncoder_Attention_Residual_LayerNorm/LayerNorm_Beta");
+    PutWeightInLayerNorm(g, model_dims, file_prefix + "output_LayerNorm_gamma",
                          file_prefix + "output_LayerNorm_beta",
-                         "SelfAttentionEncoder_Feedforward_Residual_LayerNorm_LayerNorm_Gamma",
-                         "SelfAttentionEncoder_Feedforward_Residual_LayerNorm_LayerNorm_Beta");
+                         layer_output+"/SelfAttentionEncoder_Feedforward_Residual_LayerNorm/LayerNorm_Gamma",
+                         layer_output+"/SelfAttentionEncoder_Feedforward_Residual_LayerNorm/LayerNorm_Beta");
 
     // put weights in ff block and attention linear conversion part
     PutWeightInFullyConnected(
-        state_dict, model_dims, ff_dims, file_prefix + "intermediate_dense_weight",
+        g, model_dims, ff_dims, file_prefix + "intermediate_dense_weight",
         file_prefix + "intermediate_dense_bias",
-        "SelfAttentionEncoder_Feedforward_Feedforward_No_1_TimeDistributed_FullyConnected_Weights",
-        "SelfAttentionEncoder_Feedforward_Feedforward_No_1_TimeDistributed_FullyConnected_Bias");
+        layer_output+"/SelfAttentionEncoder_Feedforward_Feedforward_No_1/TimeDistributed_FullyConnected_Weights",
+        layer_output+"/SelfAttentionEncoder_Feedforward_Feedforward_No_1/TimeDistributed_FullyConnected_Bias");
     PutWeightInFullyConnected(
-        state_dict, ff_dims, model_dims, file_prefix + "output_dense_weight",
+        g, ff_dims, model_dims, file_prefix + "output_dense_weight",
         file_prefix + "output_dense_bias",
-        "SelfAttentionEncoder_Feedforward_Feedforward_No_2_TimeDistributed_FullyConnected_Weights",
-        "SelfAttentionEncoder_Feedforward_Feedforward_No_2_TimeDistributed_FullyConnected_Bias");
-    PutWeightInFullyConnected(state_dict, model_dims, model_dims,
+        layer_output+"/SelfAttentionEncoder_Feedforward_Feedforward_No_2/TimeDistributed_FullyConnected_Weights",
+        layer_output+"/SelfAttentionEncoder_Feedforward_Feedforward_No_2/TimeDistributed_FullyConnected_Bias");
+    PutWeightInFullyConnected(g, model_dims, model_dims,
                               file_prefix + "attention_output_dense_weight",
                               file_prefix + "attention_output_dense_bias",
-                              "SelfAttentionEncoder_Multihead_Attention_MultiheadAttention_"
-                              "Final_Transformation_TimeDistributed_FullyConnected_Weights",
-                              "SelfAttentionEncoder_Multihead_Attention_MultiheadAttention_"
-                              "Final_Transformation_TimeDistributed_FullyConnected_Bias");
+                              layer_output+"/SelfAttentionEncoder_Multihead_Attention/MultiheadAttention_"
+                              "Final_Transformation/TimeDistributed_FullyConnected_Weights",
+                              layer_output+"/SelfAttentionEncoder_Multihead_Attention/MultiheadAttention_"
+                              "Final_Transformation/TimeDistributed_FullyConnected_Bias");
 
     // put weights to multi head attention
     PutWeightInMultiheadAttention(
