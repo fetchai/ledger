@@ -70,6 +70,15 @@ public:
   }
   static constexpr char const *DESCRIPTOR = "Convolution2D";
 
+  OpType OperationType() const override  // TODO(ML-466) : move implementation to .cpp
+  {
+    return this->OpCode();
+  }
+  char const *Descriptor() const override  // TODO(ML-466) : move implementation to .cpp
+  {
+    return DESCRIPTOR;
+  }
+
 private:
   void FillVerticalStride(TensorType &input, TensorType &vertical_stride, SizeType output_channels,
                           SizeType input_channels, SizeType kernel_height, SizeType kernel_width);

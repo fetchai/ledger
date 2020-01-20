@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "chain/constants.hpp"
+#include "core/containers/is_in.hpp"
 #include "core/serializers/main_serializer.hpp"
 #include "crypto/merkle_tree.hpp"
 #include "crypto/sha256.hpp"
@@ -118,6 +119,30 @@ void Block::UpdateTimestamp()
 bool Block::IsGenesis() const
 {
   return previous_hash == chain::ZERO_HASH;
+}
+
+bool Block::IsValid() const
+{
+  DigestSet txs{};
+
+  for (auto const &slice : slices)
+  {
+    for (auto const &layout : slice)
+    {
+      auto const &digest = layout.digest();
+
+      // Check 1: Duplicate txs
+      if (core::IsIn(txs, digest))
+      {
+        return false;
+      }
+
+      // update the transaction set
+      txs.emplace(digest);
+    }
+  }
+
+  return true;
 }
 
 }  // namespace ledger

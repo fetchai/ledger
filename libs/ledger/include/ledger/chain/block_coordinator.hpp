@@ -231,9 +231,6 @@ public:
     });
   }
 
-  void Reset();
-  void ResetGenesis();
-
   // Operators
   BlockCoordinator &operator=(BlockCoordinator const &) = delete;
   BlockCoordinator &operator=(BlockCoordinator &&) = delete;
@@ -290,7 +287,10 @@ private:
   bool            ScheduleNextBlock();
   bool            ScheduleBlock(Block const &block);
   ExecutionStatus QueryExecutorStatus();
-  void            RemoveBlock(BlockHash const &hash);
+  template <typename BlockPtrType>
+  void RemoveBlock(BlockPtrType &block);
+  bool RevertToBlock(Block const &block);
+  void Panic();
 
   static char const *ToString(ExecutionStatus state);
 

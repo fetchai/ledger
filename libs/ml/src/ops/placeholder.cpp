@@ -57,6 +57,32 @@ std::shared_ptr<fetch::ml::ops::Ops<TensorType>> PlaceHolder<TensorType>::MakeSh
   return copyshare;
 }
 
+template <typename TensorType>
+bool PlaceHolder<TensorType>::SetData(const PlaceHolder::TensorType &data)
+{
+  if (this->batch_output_shape_.empty())
+  {
+    math::SizeVector batch_shape = data.shape();
+    batch_shape.back()           = 1;  // Because default batch size is 1.
+    this->SetBatchInputShapes({batch_shape});
+    this->SetBatchOutputShape(batch_shape);
+  }
+
+  return DataHolder<TensorType>::SetData(data);
+}
+
+template <typename TensorType>
+OpType PlaceHolder<TensorType>::OperationType() const
+{
+  return this->OpCode();
+}
+
+template <typename TensorType>
+const char *PlaceHolder<TensorType>::Descriptor() const
+{
+  return DESCRIPTOR;
+}
+
 ///////////////////////////////
 /// EXPLICIT INSTANTIATIONS ///
 ///////////////////////////////
