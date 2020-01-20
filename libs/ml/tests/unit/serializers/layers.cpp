@@ -547,7 +547,7 @@ TYPED_TEST(LayersSaveParamsTest, scaled_dot_product_attention_saveparams_test)
   labels.FillUniformRandom();
 
   // Create layer
-  LayerType layer(key_dim, DataType{1});
+  LayerType layer(key_dim, DataType{0});
 
   // add label node
   std::string label_name =
@@ -572,12 +572,6 @@ TYPED_TEST(LayersSaveParamsTest, scaled_dot_product_attention_saveparams_test)
   layer2.SetInput("ScaledDotProductAttention_Value", value_data);
   layer2.SetInput("ScaledDotProductAttention_Mask", mask_data);
   TypeParam prediction2 = layer2.Evaluate(output_name, true);
-
-  for (std::size_t i = 0; i < prediction.size(); ++i)
-  {
-    std::cout << "prediction[i]: " << prediction[i] << std::endl;
-    std::cout << "prediction2[i]: " << prediction2[i] << std::endl;
-  }
 
   EXPECT_TRUE(prediction.AllClose(prediction2, ::fetch::math::function_tolerance<DataType>(),
                                   ::fetch::math::function_tolerance<DataType>()));
@@ -621,13 +615,6 @@ TYPED_TEST(LayersSaveParamsTest, scaled_dot_product_attention_saveparams_test)
   layer2.SetInput("ScaledDotProductAttention_Value", value_data);
   layer2.SetInput("ScaledDotProductAttention_Mask", mask_data);
   TypeParam prediction4 = layer2.Evaluate(output_name);
-
-  for (std::size_t i = 0; i < prediction.size(); ++i)
-  {
-    std::cout << "prediction3[i]: " << prediction3[i] << std::endl;
-    std::cout << "prediction[i]: " << prediction[i] << std::endl;
-    std::cout << "prediction4[i]: " << prediction4[i] << std::endl;
-  }
 
   EXPECT_FALSE(prediction.AllClose(prediction3, ::fetch::math::function_tolerance<DataType>(),
                                    ::fetch::math::function_tolerance<DataType>()));
