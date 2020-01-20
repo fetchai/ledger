@@ -29,6 +29,7 @@
 #include "beacon/event_manager.hpp"
 
 #include "ledger/consensus/stake_manager.hpp"
+
 #include "telemetry/telemetry.hpp"
 
 #include <cmath>
