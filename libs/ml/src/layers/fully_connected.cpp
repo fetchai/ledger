@@ -169,6 +169,8 @@ std::shared_ptr<fetch::ml::ops::Ops<TensorType>> FullyConnected<TensorType>::Mak
   copyshare->bias_name_          = bias_name_;
   copyshare->init_mode_          = init_mode_;
 
+  copyshare->connections_ = this->Connections();
+
   SubGraph<TensorType>::InsertSharedCopy(copyshare);
 
   return copyshare;

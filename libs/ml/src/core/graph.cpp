@@ -213,10 +213,11 @@ TensorType Graph<TensorType>::ForwardImplementation(std::string const &node_name
 template <typename TensorType>
 void Graph<TensorType>::ComputeAllNodeShapes()
 {
-  if (connections_.empty())
+  if (nodes_.empty() || connections_.empty())
   {
-    FETCH_LOG_ERROR(DESCRIPTOR,
-                    " Batch output shape computing is impossible : connection list is empty");
+    FETCH_LOG_ERROR(
+        DESCRIPTOR,
+        " Batch output shape computing is impossible : connection list empty or no nodes");
     return;
   }
   for (auto const &node_name_and_ptr : nodes_)
@@ -1158,6 +1159,12 @@ std::vector<std::string> Graph<TensorType>::GetTrainableNames()
   std::vector<std::string> ret;
   GetNamesRecursively<graph_func_signature>(ret, &Graph<TensorType>::GetTrainableLookup);
   return ret;
+}
+
+template <typename TensorType>
+std::vector<std::pair<std::string, std::vector<std::string>>> Graph<TensorType>::Connections()
+{
+  return connections_;
 }
 
 /**

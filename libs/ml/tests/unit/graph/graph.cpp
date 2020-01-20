@@ -897,7 +897,7 @@ TYPED_TEST(GraphTest, compute_shapes_two_inputs_two_outputs)
 }
 
 // (VH): Disabled because shared Dense layers do not work if created with auto-detected inputs.
-TYPED_TEST(GraphTest, DISABLED_compute_shapes_sequential_denses_with_shared_ops)
+TYPED_TEST(GraphTest, compute_shapes_sequential_denses_with_shared_ops)
 {
   using TensorType = TypeParam;
   using Dense      = fetch::ml::layers::FullyConnected<TensorType>;
@@ -940,7 +940,7 @@ TYPED_TEST(GraphTest, DISABLED_compute_shapes_sequential_denses_with_shared_ops)
 }
 
 // (VH): Disabled because shared Dense layers do not work if created with auto-detected inputs.
-TYPED_TEST(GraphTest, DISABLED_compute_shapes_two_diamonds_with_shared_ops)
+TYPED_TEST(GraphTest, compute_shapes_two_diamonds_with_shared_ops)
 {
   using TensorType = TypeParam;
   using Dense      = fetch::ml::layers::FullyConnected<TensorType>;
@@ -976,7 +976,7 @@ TYPED_TEST(GraphTest, DISABLED_compute_shapes_two_diamonds_with_shared_ops)
       "Multiply1", {dense_top_left, dense_top_right});
 
   std::string dense_bottom_left = g.template AddNode<Dense>(
-      "SharedDense2", {multiply1}, Dense::AUTODETECT_INPUTS_COUNT, NEURONS + 1);
+      "SharedDense2", {multiply1}, Dense::AUTODETECT_INPUTS_COUNT, NEURONS);
 
   std::string dense_bottom_right = g.template AddNode<Dense>("SharedDense2", {"Multiply1"});
 

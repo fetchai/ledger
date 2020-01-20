@@ -159,6 +159,8 @@ public:
 
   std::vector<std::string> GetTrainableNames();
 
+  std::vector<std::pair<std::string, std::vector<std::string>>> Connections();
+
 protected:
   std::map<std::string, NodePtrType>                            nodes_;
   std::map<std::string, NodePtrType>                            trainable_lookup_;
