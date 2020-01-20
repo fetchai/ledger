@@ -170,19 +170,6 @@ TYPED_TEST(PReluTest, graph_forward_test)  // Use the class as a Node
   ASSERT_EQ(prediction.shape()[2], input_dim_2);
 }
 
-TYPED_TEST(PReluTest, getStateDict)
-{
-  fetch::ml::layers::PRelu<TypeParam> fc(50, "PReluTest");
-  fetch::ml::StateDict<TypeParam>     sd = fc.StateDict();
-
-  EXPECT_EQ(sd.weights_, nullptr);
-  EXPECT_EQ(sd.dict_.size(), 1);
-
-  ASSERT_NE(sd.dict_["PReluTest_Alpha"].weights_, nullptr);
-  EXPECT_EQ(sd.dict_["PReluTest_Alpha"].weights_->shape(),
-            std::vector<typename TypeParam::SizeType>({50, 1}));
-}
-
 TYPED_TEST(PReluTest, saveparams_test)
 {
   using DataType  = typename TypeParam::Type;

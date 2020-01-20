@@ -98,17 +98,6 @@ TYPED_TEST(GraphTest, node_relu)
   ASSERT_TRUE(prediction.AllClose(gt));
 }
 
-TYPED_TEST(GraphTest, get_state_dict)
-{
-  using TensorType = TypeParam;
-
-  fetch::ml::Graph<TensorType>     g;
-  fetch::ml::StateDict<TensorType> sd = g.StateDict();
-
-  EXPECT_EQ(sd.weights_, nullptr);
-  EXPECT_TRUE(sd.dict_.empty());
-}
-
 TYPED_TEST(GraphTest, no_such_node_test)  // Use the class as a Node
 {
   using TensorType = TypeParam;

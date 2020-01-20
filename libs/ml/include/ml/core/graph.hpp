@@ -134,8 +134,6 @@ public:
   bool                            InsertNode(std::string const &node_name, NodePtrType node_ptr);
   GraphSaveableParams<TensorType> GetGraphSaveableParams();
   void                            SetGraphSaveableParams(GraphSaveableParams<TensorType> const &sp);
-  virtual fetch::ml::StateDict<TensorType> StateDict();
-  virtual void                             LoadStateDict(fetch::ml::StateDict<T> const &dict);
 
   ////////////////////////////////////
   /// public setters and accessors ///
@@ -196,7 +194,6 @@ private:
   /// recursive implementation functions ///
   //////////////////////////////////////////
 
-  void StateDict(fetch::ml::StateDict<TensorType> &state_dict);
   void GetTrainables(std::vector<TrainablePtrType> &ret);
   void GetWeightsReferences(std::vector<TensorType> &ret) const;
   void GetGradientsReferences(std::vector<TensorType> &ret) const;

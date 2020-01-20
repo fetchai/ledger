@@ -43,30 +43,6 @@ class SerializersTestNoInt : public ::testing::Test
 TYPED_TEST_CASE(SerializersTestWithInt, math::test::TensorIntAndFloatingTypes);
 TYPED_TEST_CASE(SerializersTestNoInt, math::test::TensorFloatingTypes);
 
-TYPED_TEST(SerializersTestWithInt, serialize_empty_state_dict)
-{
-  fetch::ml::StateDict<TypeParam>       sd1;
-  fetch::serializers::MsgPackSerializer b;
-  b << sd1;
-  b.seek(0);
-  fetch::ml::StateDict<TypeParam> sd2;
-  b >> sd2;
-  EXPECT_EQ(sd1, sd2);
-}
-
-TYPED_TEST(SerializersTestNoInt, serialize_state_dict)
-{
-  // Generate a plausible state dict out of a fully connected layer
-  fetch::ml::layers::FullyConnected<TypeParam> fc(10, 10);
-  struct fetch::ml::StateDict<TypeParam>       sd1 = fc.StateDict();
-  fetch::serializers::MsgPackSerializer        b;
-  b << sd1;
-  b.seek(0);
-  fetch::ml::StateDict<TypeParam> sd2;
-  b >> sd2;
-  EXPECT_EQ(sd1, sd2);
-}
-
 TYPED_TEST(SerializersTestWithInt, serialize_empty_graph_saveable_params)
 {
   fetch::ml::GraphSaveableParams<TypeParam> gsp1;

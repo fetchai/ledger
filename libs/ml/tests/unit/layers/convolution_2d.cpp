@@ -307,39 +307,6 @@ TYPED_TEST(Convolution2DTest, graph_forward_test)  // Use the class as a Node
                                   math::function_tolerance<DataType>()));
 }
 
-TYPED_TEST(Convolution2DTest, getStateDict)
-{
-  using TensorType = TypeParam;
-  using DataType   = typename TypeParam::Type;
-  using SizeType   = fetch::math::SizeType;
-
-  SizeType const input_channels  = 3;
-  SizeType const output_channels = 5;
-  SizeType const kernel_height   = 3;
-  SizeType const stride_size     = 1;
-
-  // Initialise weights
-  fetch::ml::layers::Convolution2D<TensorType> conv(
-      output_channels, input_channels, kernel_height, stride_size,
-      fetch::ml::details::ActivationType::NOTHING, "ConvTest");
-  fetch::ml::StateDict<TensorType> sd = conv.StateDict();
-
-  // Get weights
-  EXPECT_EQ(sd.weights_, nullptr);
-  EXPECT_EQ(sd.dict_.size(), 1);
-  auto weights_ptr = sd.dict_["ConvTest_Weights"].weights_;
-
-  // Get ground truth
-  TensorType gt_weights = conv.GetWeights()[0];
-
-  // Test correct values
-  ASSERT_NE(weights_ptr, nullptr);
-  EXPECT_TRUE(weights_ptr->AllClose(gt_weights, math::function_tolerance<DataType>(),
-                                    math::function_tolerance<DataType>()));
-  EXPECT_EQ(weights_ptr->shape(), std::vector<SizeType>({output_channels, input_channels,
-                                                         kernel_height, kernel_height, 1}));
-}
-
 TYPED_TEST(Convolution2DTest, saveparams_test)
 {
   using TensorType = TypeParam;

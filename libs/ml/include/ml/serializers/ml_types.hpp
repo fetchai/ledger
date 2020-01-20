@@ -30,9 +30,6 @@
 namespace fetch {
 namespace ml {
 
-template <typename T>
-struct StateDict;
-
 namespace model {
 template <typename TensorType>
 class Model;
@@ -839,68 +836,6 @@ struct MapSerializer<ml::OpsSaveableParams, D>
   {
     map.ExpectKeyGetValue(OP_CODE, osp.op_type);
     map.ExpectKeyGetValue(IS_TRAINING, osp.is_training);
-  }
-};
-
-template <typename V, typename D>
-struct MapSerializer<ml::StateDict<V>, D>
-{
-public:
-  using Type       = ml::StateDict<V>;
-  using DriverType = D;
-
-  constexpr static uint8_t WEIGHTS = 1;
-  constexpr static uint8_t DICT    = 2;
-
-  template <typename Constructor>
-  static void Serialize(Constructor &map_constructor, Type const &sd)
-  {
-    uint64_t n = 0;
-    if (sd.weights_)
-    {
-      ++n;
-    }
-    if (!sd.dict_.empty())
-    {
-      ++n;
-    }
-    auto map = map_constructor(n);
-    if (sd.weights_)
-    {
-      map.Append(WEIGHTS, *sd.weights_);
-    }
-    if (!sd.dict_.empty())
-    {
-      map.Append(DICT, sd.dict_);
-    }
-  }
-
-  template <typename MapDeserializer>
-  static void Deserialize(MapDeserializer &map, Type &output)
-  {
-    for (uint64_t i = 0; i < map.size(); ++i)
-    {
-      uint8_t key;
-      map.GetKey(key);
-      switch (key)
-      {
-      case WEIGHTS:
-      {
-        output.weights_ = std::make_shared<V>();
-        map.GetValue(*output.weights_);
-        break;
-      }
-      case DICT:
-      {
-        map.GetValue(output.dict_);
-        break;
-      }
-      default:
-      {
-        throw ml::exceptions::InvalidMode("unsupported key in statemap deserialization");
-      }
-      }
-    }
   }
 };
 

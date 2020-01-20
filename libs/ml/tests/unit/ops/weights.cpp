@@ -81,36 +81,6 @@ TYPED_TEST(WeightsTest, gradient_step_test)
   ASSERT_TRUE(prediction.AllClose(gt));  // with new values
 }
 
-TYPED_TEST(WeightsTest, stateDict)
-{
-  fetch::ml::ops::Weights<TypeParam> w;
-  fetch::ml::StateDict<TypeParam>    sd = w.StateDict();
-
-  EXPECT_EQ(sd.weights_, nullptr);
-  EXPECT_TRUE(sd.dict_.empty());
-
-  TypeParam data(8);
-  w.SetData(data);
-  sd = w.StateDict();
-  EXPECT_EQ(*(sd.weights_), data);
-  EXPECT_TRUE(sd.dict_.empty());
-}
-
-TYPED_TEST(WeightsTest, loadStateDict)
-{
-  fetch::ml::ops::Weights<TypeParam> w;
-
-  std::shared_ptr<TypeParam>      data = std::make_shared<TypeParam>(8);
-  fetch::ml::StateDict<TypeParam> sd;
-  sd.weights_ = data;
-  w.LoadStateDict(sd);
-
-  TypeParam prediction(w.ComputeOutputShape({}));
-  w.Forward({}, prediction);
-
-  EXPECT_EQ(prediction, *data);
-}
-
 TYPED_TEST(WeightsTest, saveparams_test)
 {
   using TensorType = TypeParam;

@@ -168,23 +168,6 @@ TYPED_TEST(LayerNormTest, graph_forward_test_exact_value_2D)  // Use the class a
 // TODO (#1458) enable large dimension test once Add and Multiply layers can handle input of more
 // than 3 dims
 
-TYPED_TEST(LayerNormTest, getStateDict)
-{
-  fetch::ml::layers::LayerNorm<TypeParam> ln({50, 10});
-  fetch::ml::StateDict<TypeParam>         sd = ln.StateDict();
-
-  EXPECT_EQ(sd.weights_, nullptr);
-  EXPECT_EQ(sd.dict_.size(), 2);
-
-  ASSERT_NE(sd.dict_["LayerNorm_Gamma"].weights_, nullptr);
-  EXPECT_EQ(sd.dict_["LayerNorm_Gamma"].weights_->shape(),
-            std::vector<typename TypeParam::SizeType>({50, 1, 1}));
-
-  ASSERT_NE(sd.dict_["LayerNorm_Beta"].weights_, nullptr);
-  EXPECT_EQ(sd.dict_["LayerNorm_Beta"].weights_->shape(),
-            std::vector<typename TypeParam::SizeType>({50, 1, 1}));
-}
-
 TYPED_TEST(LayerNormTest, saveparams_test)
 {
   using DataType  = typename TypeParam::Type;

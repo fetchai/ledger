@@ -26,9 +26,6 @@
 namespace fetch {
 namespace ml {
 
-template <typename TensorType>
-struct StateDict;
-
 namespace regularisers {
 template <typename TensorType>
 class Regulariser;
@@ -50,8 +47,6 @@ public:
   using DataType     = typename TensorType::Type;
   using RegPtrType   = std::shared_ptr<fetch::ml::regularisers::Regulariser<T>>;
 
-  virtual fetch::ml::StateDict<T> StateDict() const                                        = 0;
-  virtual void                    LoadStateDict(fetch::ml::StateDict<T> const &dict)       = 0;
   virtual TensorType const &      GetWeights() const                                       = 0;
   virtual void                    SetWeights(TensorType const &new_value)                  = 0;
   virtual TensorType const &      GetGradientsReferences() const                           = 0;
