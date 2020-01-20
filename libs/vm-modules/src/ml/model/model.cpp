@@ -16,15 +16,36 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vm_modules/ml/model/model.hpp"
-
+#include "core/byte_array/decoders.hpp"
 #include "core/serializers/counter.hpp"
+#include "ml/dataloaders/tensor_dataloader.hpp"
 #include "ml/layers/fully_connected.hpp"
+
 #include "ml/model/sequential.hpp"
+
+#include "ml/layers/convolution_1d.hpp"
+#include "ml/layers/convolution_2d.hpp"
+
 #include "ml/ops/loss_functions/mean_square_error_loss.hpp"
 #include "ml/ops/loss_functions/types.hpp"
+
+#include "ml/ops/metrics/types.hpp"
+#include "ml/serializers/ml_types.hpp"
+
+#include "ml/ops/activations/dropout.hpp"
+#include "ml/ops/activations/gelu.hpp"
+#include "ml/ops/activations/leaky_relu.hpp"
+#include "ml/ops/activations/logsigmoid.hpp"
+#include "ml/ops/activations/logsoftmax.hpp"
+#include "ml/ops/activations/relu.hpp"
+#include "ml/ops/activations/sigmoid.hpp"
+#include "ml/ops/activations/softmax.hpp"
+#include "ml/ops/flatten.hpp"
+
+#include "ml/ops/reshape.hpp"
+
 #include "vm/module.hpp"
-#include "vm_modules/ml/model/model_estimator.hpp"
+#include "vm_modules/ml/model/model.hpp"
 #include "vm_modules/use_estimator.hpp"
 
 using namespace fetch::vm;
@@ -693,6 +714,7 @@ void VMModel::PrepareDataloader()
   data_loader->SetRandomMode(true);
   model_->SetDataloader(std::move(data_loader));
 }
+
 }  // namespace model
 }  // namespace ml
 }  // namespace vm_modules

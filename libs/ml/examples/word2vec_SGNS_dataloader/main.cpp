@@ -22,6 +22,7 @@
 #include "ml/dataloaders/word2vec_loaders/sgns_w2v_dataloader.hpp"
 #include "ml/layers/skip_gram.hpp"
 #include "ml/ops/loss_functions/cross_entropy_loss.hpp"
+#include "ml/ops/placeholder.hpp"
 #include "ml/optimisation/lazy_adam_optimiser.hpp"
 #include "ml/optimisation/sgd_optimiser.hpp"
 #include "ml/utilities/graph_saver.hpp"

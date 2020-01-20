@@ -29,6 +29,7 @@
 #include "beacon/event_manager.hpp"
 
 #include "ledger/consensus/stake_manager.hpp"
+
 #include "telemetry/telemetry.hpp"
 
 #include <cmath>
@@ -52,7 +53,7 @@ public:
   using BlockEntropy          = ledger::Block::BlockEntropy;
   using NotarisationPtr       = std::shared_ptr<ledger::NotarisationService>;
   using NotarisationResult    = NotarisationService::NotarisationResult;
-  using BlockPtr              = MainChain::BlockPtr;
+  using ConsensusInterface::NextBlockPtr;
 
   // Construction / Destruction
   Consensus(StakeManagerPtr stake, BeaconSetupServicePtr beacon_setup, BeaconServicePtr beacon,

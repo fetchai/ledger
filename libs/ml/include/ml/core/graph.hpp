@@ -19,6 +19,7 @@
 
 #include "ml/core/node.hpp"
 #include "ml/exceptions/exceptions.hpp"
+#include "ml/ops/constant.hpp"
 #include "ml/ops/trainable.hpp"
 #include "ml/state_dict.hpp"
 
@@ -141,6 +142,7 @@ public:
   ////////////////////////////////////
 
   NodePtrType                   GetNode(std::string const &node_name) const;
+  std::vector<std::string>      GetNodeNames();
   std::vector<TensorType>       GetWeightsReferences() const;
   std::vector<TensorType>       GetWeights() const;
   std::vector<TensorType>       GetGradientsReferences() const;
@@ -153,6 +155,8 @@ public:
   ////////////////////////////////////
 
   void ResetGradients();
+
+  std::vector<std::string> GetTrainableNames();
 
 protected:
   std::map<std::string, NodePtrType>                            nodes_;
@@ -216,6 +220,15 @@ private:
 
   template <typename Val1Type, typename Val2Type, typename GraphFunc>
   void RecursiveApplyTwo(Val1Type &val_1, Val2Type &val_2, GraphFunc graph_func) const;
+
+  bool IsValidNodeName(std::string const &node_name) const;
+
+  std::map<std::string, NodePtrType> &GetTrainableLookup();
+  std::map<std::string, NodePtrType> &GetNodesLookup();
+
+  template <typename LookupFunction>
+  void GetNamesRecursively(std::vector<std::string> &ret, LookupFunction lookup_function,
+                           std::string const &level = "");
 };
 
 //////////////////////
@@ -239,6 +252,11 @@ template <class OperationType, typename... Params>
 std::string Graph<TensorType>::AddNode(std::string const &             node_name,
                                        std::vector<std::string> const &inputs, Params... params)
 {
+  if (!IsValidNodeName(node_name))
+  {
+    throw std::runtime_error{"Node name " + node_name + " contains invalid characters."};
+  }
+
   graph_state_ = GraphState::NOT_COMPILED;
 
   // guarantee unique op name

@@ -29,6 +29,7 @@
 #include "ml/ops/add.hpp"
 #include "ml/ops/embeddings.hpp"
 #include "ml/ops/loss_functions/cross_entropy_loss.hpp"
+#include "ml/ops/placeholder.hpp"
 #include "ml/serializers/ml_types.hpp"
 #include "ml/utilities/graph_builder.hpp"
 

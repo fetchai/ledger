@@ -20,7 +20,9 @@
 #include "dmlf/collective_learning/collective_learning_client.hpp"
 #include "dmlf/deprecated/abstract_learner_networker.hpp"
 #include "ml/dataloaders/tensor_dataloader.hpp"
+#include "ml/layers/fully_connected.hpp"
 #include "ml/meta/ml_type_traits.hpp"
+#include "ml/ops/activation.hpp"
 
 namespace fetch {
 namespace dmlf {

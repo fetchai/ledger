@@ -513,24 +513,6 @@ void Graph<TensorType>::SetGraphSaveableParams(GraphSaveableParams<TensorType> c
 }
 
 /**
- * returns ptr to node if node_name refers to a node in the graph
- * @tparam TensorType
- * @param node_name
- * @return
- */
-template <typename TensorType>
-typename Graph<TensorType>::NodePtrType Graph<TensorType>::GetNode(
-    std::string const &node_name) const
-{
-  NodePtrType ret = nodes_.at(node_name);
-  if (!ret)
-  {
-    throw ml::exceptions::InvalidMode("couldn't find node [" + node_name + "] in graph!");
-  }
-  return ret;
-}
-
-/**
  * Assigns data to a dataholder if the node can be found in the graph.
  * Also resets the graph cache to avoid erroneous leftover outputs
  * @param node_name name of the placeholder node in the graph (must be unique)
@@ -1021,6 +1003,164 @@ void Graph<TensorType>::RecursiveApplyTwo(Val1Type &val_1, Val2Type &val_2,
       ((*graph_ptr).*graph_func)(val_1, val_2);
     }
   }
+}
+
+/**
+ * Recursively search graph and return pointer to node
+ * @param name std::string name of node in format GRAPH1/...SUBGRAPHS../LEAF
+ * @return Node pointer
+ */
+template <typename TensorType>
+typename Graph<TensorType>::NodePtrType Graph<TensorType>::GetNode(
+    std::string const &node_name) const
+{
+  std::string delimiter      = "/";
+  SizeType    next_delimiter = node_name.find(delimiter);
+
+  // false = Graph continues
+  bool leaf = false;
+
+  std::string token;
+
+  // If there is no slash in name, name is leaf node name
+  if (next_delimiter == fetch::math::numeric_max<SizeType>())
+  {
+    token = node_name;
+    leaf  = true;
+  }
+  // save name before first delimiter
+  else
+  {
+    token = node_name.substr(0, next_delimiter);
+  }
+
+  NodePtrType ret = nodes_.at(token);
+  if (!ret)
+  {
+    throw ml::exceptions::InvalidMode("couldn't find node [" + node_name + "] in graph!");
+  }
+
+  // Node address ends with leaf node
+  if (leaf)
+  {
+    return ret;
+  }
+
+  auto op_ptr    = ret->GetOp();
+  auto graph_ptr = std::dynamic_pointer_cast<Graph<TensorType>>(op_ptr);
+
+  // Node is not graph and node address continues
+  if (!graph_ptr)
+  {
+    throw ml::exceptions::InvalidMode("[" + node_name + "] is not a graph!");
+  }
+
+  if (next_delimiter + 1 >= node_name.size() - 1)
+  {
+    throw ml::exceptions::InvalidMode("[" + node_name + "] has invalid format!");
+  }
+
+  // Continue recursive node search
+  return graph_ptr->GetNode(node_name.substr(next_delimiter + 1, node_name.size() - 1));
+}
+
+/**
+ * Recursively search graph and return list of all specific node names
+ * @tparam TensorType
+ * @tparam LookupFunction Function that returns list of current graph's nodes (trainable or all)
+ * @param ret std::string name of node in format GRAPH1/...SUBGRAPHS../LEAF
+ * @param lookup_function
+ * @param level helper variable to remember on which level in graph function is
+ */
+template <typename TensorType>
+template <typename LookupFunction>
+void Graph<TensorType>::GetNamesRecursively(std::vector<std::string> &ret,
+                                            LookupFunction            lookup_function,
+                                            std::string const &       level)
+{
+  for (auto const &t : (this->*lookup_function)())
+  {
+    if (level.empty())
+    {
+      ret.push_back(t.first);
+    }
+    else
+    {
+      ret.push_back(level + "/" + t.first);
+    }
+  }
+
+  // Recursive apply on all subgraphs
+  for (auto &node_pair : nodes_)
+  {
+    auto op_ptr = node_pair.second->GetOp();
+
+    auto graph_ptr = std::dynamic_pointer_cast<Graph<TensorType>>(op_ptr);
+
+    // if it's a graph
+    if (graph_ptr)
+    {
+      std::string next_level;
+      if (level.empty())
+      {
+        next_level = node_pair.first;
+      }
+      else
+      {
+        next_level = level + "/" + node_pair.first;
+      }
+
+      ((*graph_ptr).GetNamesRecursively)(ret, lookup_function, next_level);
+    }
+  }
+}
+
+/**
+ * Return list of all trainable node names in format GRAPH1/...SUBGRAPHS../LEAF
+ * @return std::vector<std::string> list of names of all trainables in all subgraphs
+ */
+template <typename TensorType>
+std::vector<std::string> Graph<TensorType>::GetTrainableNames()
+{
+  using graph_func_signature = std::map<std::string, NodePtrType> &(Graph<TensorType>::*)();
+
+  std::vector<std::string> ret;
+  GetNamesRecursively<graph_func_signature>(ret, &Graph<TensorType>::GetTrainableLookup);
+  return ret;
+}
+
+/**
+ * Return list of all node names in format GRAPH1/...SUBGRAPHS../LEAF
+ * @return std::vector<std::string> list of names of all nodes in all subgraphs
+ */
+template <typename TensorType>
+std::vector<std::string> Graph<TensorType>::GetNodeNames()
+{
+  using graph_func_signature = std::map<std::string, NodePtrType> &(Graph<TensorType>::*)();
+
+  std::vector<std::string> ret;
+  GetNamesRecursively<graph_func_signature>(ret, &Graph<TensorType>::GetNodesLookup);
+  return ret;
+}
+
+template <typename TensorType>
+bool Graph<TensorType>::IsValidNodeName(std::string const &node_name) const
+{
+  // Slash is used as special character for addressing subgraphs
+  return node_name.find('/') == std::string::npos;
+}
+
+template <typename TensorType>
+std::map<std::string, typename Graph<TensorType>::NodePtrType>
+    &Graph<TensorType>::GetTrainableLookup()
+{
+  return trainable_lookup_;
+}
+
+template <typename TensorType>
+std::map<std::string, typename Graph<TensorType>::NodePtrType> &Graph<TensorType>::GetNodesLookup()
+{
+  return nodes_;
 }
 
 ///////////////////////////////
