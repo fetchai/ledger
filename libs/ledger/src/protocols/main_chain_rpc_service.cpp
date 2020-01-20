@@ -467,6 +467,7 @@ State MainChainRpcService::OnWaitForBlocks()
 
   // If we have passed all these checks then we have successfully retrieved a travelogue from our
   // peer
+  healthy_ = true;
   MainChainProtocol::Travelogue log{};
   if (!current_request_->GetResult(log))
   {
@@ -546,6 +547,15 @@ bool MainChainRpcService::ValidBlock(Block const &block, char const *action) con
     FETCH_LOG_WARN(LOGGING_NAME, "Exception in consensus on validating ", action, ": ", ex.what());
     return false;
   }
+}
+
+/**
+ * Return whether the service is healthy or not. Currently it is considered
+ * healthy when it has made at least one successful RPC call to a peer
+ */
+bool MainChainRpcService::IsHealthy() const
+{
+  return healthy_;
 }
 
 }  // namespace ledger
