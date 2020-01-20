@@ -378,6 +378,11 @@ TEST_F(MainChainServiceTests, ForkWhenPeerHasLongerChain)
   FollowPath(State::SYNCHRONISING, State::START_SYNC_WITH_PEER, State::REQUEST_NEXT_BLOCKS,
              State::WAIT_FOR_NEXT_BLOCKS, State::REQUEST_NEXT_BLOCKS);
 
+  Teack(State::SYNCHRONISING, State::START_SYNC_WITH_PEER);
+  Teack(State::START_SYNC_WITH_PEER, State::REQUEST_NEXT_BLOCKS);
+  Teack(State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS);
+  Teack(State::WAIT_FOR_NEXT_BLOCKS, State::REQUEST_NEXT_BLOCKS);
+
   auto const log2 = other1_proto.TimeTravel(common_root.back()->hash);
   EXPECT_CALL(rpc_client_, TimeTravel(other1_, common_root.back()->hash))
       .WillOnce(Return(CreatePromise(log2)));
@@ -721,47 +726,28 @@ TEST_F(MainChainServiceTests, CheckExponentialBackStep)
              State::REQUEST_NEXT_BLOCKS);  // fake_branch
 
   // denounce fake chain
-  FollowPath(State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS,
-             State::REQUEST_NEXT_BLOCKS);  // fake_branch[5 * pack_size - 1]
-  FollowPath(State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS,
-             State::REQUEST_NEXT_BLOCKS);  // fake_branch[5 * pack_size - 2]
-  FollowPath(State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS,
-             State::REQUEST_NEXT_BLOCKS);  // fake_branch[5 * pack_size - 4]
-  FollowPath(State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS,
-             State::REQUEST_NEXT_BLOCKS);  // fake_branch[5 * pack_size - 8]
-  FollowPath(State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS,
-             State::REQUEST_NEXT_BLOCKS);  // fake_branch[5 * pack_size - 16]
-  FollowPath(State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS,
-             State::REQUEST_NEXT_BLOCKS);  // fake_branch[5 * pack_size - 32]
-  FollowPath(State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS,
-             State::REQUEST_NEXT_BLOCKS);  // fake_branch[5 * pack_size - 64]
-  FollowPath(State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS,
-             State::REQUEST_NEXT_BLOCKS);  // fake_branch[5 * pack_size - 128]
-  FollowPath(State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS,
-             State::REQUEST_NEXT_BLOCKS);  // fake_branch[5 * pack_size - 256]
-  FollowPath(State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS,
-             State::REQUEST_NEXT_BLOCKS);  // fake_branch[5 * pack_size - 512]
-  FollowPath(State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS,
-             State::REQUEST_NEXT_BLOCKS);  // fake_branch[5 * pack_size - 1024]
-  FollowPath(State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS,
-             State::REQUEST_NEXT_BLOCKS);  // fake_branch[5 * pack_size - 2048]
-  FollowPath(State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS,
-             State::REQUEST_NEXT_BLOCKS);  // fake_branch[5 * pack_size - 4096]
-  FollowPath(State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS,
-             State::REQUEST_NEXT_BLOCKS);  // fake_branch[5 * pack_size - 8192]
-  FollowPath(State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS,
-             State::REQUEST_NEXT_BLOCKS);  // fake_branch[5 * pack_size - 16384]
-  FollowPath(State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS,
-             State::REQUEST_NEXT_BLOCKS);  // fake_branch[5 * pack_size - 32768]
-  FollowPath(State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS,
-             State::REQUEST_NEXT_BLOCKS);  // fake_branch[5 * pack_size - 49152]
-
-  // now build the genuine chain
-  FollowPath(State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS,
-             State::REQUEST_NEXT_BLOCKS);  // common_part[2 * pack_size - 15536]
-  FollowPath(State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS,
-             State::REQUEST_NEXT_BLOCKS);                            // common_part.back()
-  Tick(State::REQUEST_NEXT_BLOCKS, State::COMPLETE_SYNC_WITH_PEER);  // and here it ends
+  FollowPath(State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS, State::REQUEST_NEXT_BLOCKS,
+             State::WAIT_FOR_NEXT_BLOCKS,                              // fake_branch[-1]
+             State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS,  // fake_branch[-2]
+             State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS,  // fake_branch[-4]
+             State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS,  // fake_branch[-8]
+             State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS,  // fake_branch[-16]
+             State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS,  // fake_branch[-32]
+             State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS,  // fake_branch[-64]
+             State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS,  // fake_branch[-128]
+             State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS,  // fake_branch[-256]
+             State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS,  // fake_branch[-512]
+             State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS,  // fake_branch[-1024]
+             State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS,  // fake_branch[-2048]
+             State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS,  // fake_branch[-4096]
+             State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS,  // fake_branch[-8192]
+             State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS,  // fake_branch[-16384]
+             State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS,  // fake_branch[-32768]
+             State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS,  // fake_branch[-49152]
+             // now build the genuine chain
+             State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS,      // common_part[-15536]
+             State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS,      // common_part.back()
+             State::REQUEST_NEXT_BLOCKS, State::COMPLETE_SYNC_WITH_PEER);  // and here it ends
 
   EXPECT_EQ(chain_.GetHeaviestBlockHash(), genuine_heaviest->hash);
 }
