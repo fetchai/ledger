@@ -318,7 +318,7 @@ class ConstellationTestCase(TestCase):
 
         # build up all the node instances
         for index in range(self._number_of_nodes):
-            self.append_node(index, self..)
+            self.append_node(index, self._node_load_directory)
 
         # Now connect the nodes as specified
         if self._node_connections:
