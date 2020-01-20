@@ -18,9 +18,6 @@
 
 #include "ml/ops/embeddings.hpp"
 
-#include "ml/ops/variable.hpp"
-#include "ml/ops/weights.hpp"
-
 namespace fetch {
 namespace ml {
 namespace ops {
