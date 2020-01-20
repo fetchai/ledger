@@ -37,7 +37,6 @@ using TensorType = fetch::math::Tensor<DataType>;
 using SizeVector = typename TensorType::SizeVector;
 
 using GraphType     = typename fetch::ml::Graph<TensorType>;
-using StateDictType = typename fetch::ml::StateDict<TensorType>;
 using OptimiserType = typename fetch::ml::optimisers::AdamOptimiser<TensorType>;
 
 using RegType         = fetch::ml::RegularisationType;
@@ -68,15 +67,6 @@ int main(int ac, char **av)
   std::cout << "load pretrained pytorch bert model from folder: \n"
             << pretrained_model_dir << std::endl;
   LoadPretrainedBertModel(pretrained_model_dir, config, *g);
-
-  auto nodes = g->GetTrainableNames();
-
-  for(auto &node : nodes)
-  {
-    std::cout<<node<<std::endl;
-  }
-
-  return 0;
 
   std::cout << "get an output for the bert loaded from txt files" << std::endl;
   TensorType first_output =
