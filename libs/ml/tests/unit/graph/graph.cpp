@@ -644,49 +644,6 @@ TYPED_TEST(GraphTest, diamond_graph_backward)  // output=(input1*input2)-(input1
                                      fetch::math::function_tolerance<DataType>()));
 }
 
-TYPED_TEST(GraphTest, diamond_graph_getStateDict)
-{
-  using TensorType = TypeParam;
-
-  // Generate input
-  TensorType data1 = TensorType::FromString(R"(-1,0,1,2,3,4)");
-  TensorType data2 = TensorType::FromString(R"(-20,-10, 0, 10, 20, 30)");
-
-  // Create graph
-  std::string                 name = "Diamond";
-  fetch::ml::Graph<TypeParam> g;
-
-  std::string input_name1 =
-      g.template AddNode<fetch::ml::ops::Weights<TensorType>>(name + "_Weight1", {});
-
-  std::string input_name2 =
-      g.template AddNode<fetch::ml::ops::Weights<TensorType>>(name + "_Weight2", {});
-
-  std::string op1_name = g.template AddNode<fetch::ml::ops::Multiply<TensorType>>(
-      name + "_Op1", {input_name1, input_name1});
-  std::string op2_name = g.template AddNode<fetch::ml::ops::Multiply<TensorType>>(
-      name + "_Op2", {input_name1, input_name2});
-
-  std::string output_name =
-      g.template AddNode<fetch::ml::ops::Subtract<TensorType>>(name + "_Op3", {op2_name, op1_name});
-
-  g.SetInput(input_name1, data1);
-  g.SetInput(input_name2, data2);
-
-  // Get statedict
-  fetch::ml::StateDict<TypeParam> sd = g.StateDict();
-
-  // Test weights
-  EXPECT_EQ(sd.weights_, nullptr);
-  EXPECT_EQ(sd.dict_.size(), 2);
-
-  ASSERT_NE(sd.dict_["Diamond_Weight1"].weights_, nullptr);
-  EXPECT_EQ(sd.dict_["Diamond_Weight1"].weights_->shape(), data1.shape());
-
-  ASSERT_NE(sd.dict_["Diamond_Weight2"].weights_, nullptr);
-  EXPECT_EQ(sd.dict_["Diamond_Weight2"].weights_->shape(), data2.shape());
-}
-
 TYPED_TEST(GraphTest, graph_getTrainableNames)
 {
   using TensorType = TypeParam;

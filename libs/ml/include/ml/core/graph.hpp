@@ -21,7 +21,6 @@
 #include "ml/exceptions/exceptions.hpp"
 #include "ml/ops/constant.hpp"
 #include "ml/ops/trainable.hpp"
-#include "ml/state_dict.hpp"
 
 // TODO(#1554) - we should only reset the cache for trained nodes, not all nodes
 // TODO(1467) - implement validity checks on graph compilation - e.g. loss function should not
