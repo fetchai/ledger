@@ -25,13 +25,13 @@ namespace ledger {
 
 namespace {
 
-uint32_t GetGeneratorResetValue(std::mt19937 & generator)
+uint32_t GetGeneratorResetValue(std::mt19937 &generator)
 {
-  std::uniform_int_distribution<uint32_t>  distr(50, 10000);
+  std::uniform_int_distribution<uint32_t> distr(50, 10000);
   return distr(generator);
 }
 
-} // namespace
+}  // namespace
 
 using namespace fetch::vm;
 
@@ -39,13 +39,14 @@ RandomUniform::RandomUniform(VM *vm, vm::TypeId type_id)
   : Object{vm, type_id}
   , generator_{random_device_()}
 {
-  reset_ = GetGeneratorResetValue(generator_);
+  reset_   = GetGeneratorResetValue(generator_);
   counter_ = 0;
 }
 
 void RandomUniform::Bind(vm::Module &module)
 {
-  module.CreateClassType<RandomUniform>("RandomUniform").CreateMemberFunction("rand", &RandomUniform::rand);
+  module.CreateClassType<RandomUniform>("RandomUniform")
+      .CreateMemberFunction("rand", &RandomUniform::rand);
 }
 
 int32_t RandomUniform::rand(int32_t low, int32_t high)
@@ -54,10 +55,10 @@ int32_t RandomUniform::rand(int32_t low, int32_t high)
   {
     generator_.seed(random_device_());
     counter_ = 0;
-    reset_ = GetGeneratorResetValue(generator_);
+    reset_   = GetGeneratorResetValue(generator_);
   }
   ++counter_;
-  std::uniform_int_distribution<int32_t>  distr(low, high);
+  std::uniform_int_distribution<int32_t> distr(low, high);
   return distr(generator_);
 }
 

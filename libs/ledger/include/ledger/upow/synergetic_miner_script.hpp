@@ -109,7 +109,6 @@ private:
   uint64_t current_balance_{0};
 
   VmRandomUniform random_unfiform_;
-
 };
 
 }  // namespace ledger

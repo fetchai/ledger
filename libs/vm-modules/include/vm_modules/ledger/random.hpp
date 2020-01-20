@@ -36,9 +36,9 @@ public:
 
 private:
   std::random_device random_device_;
-  std::mt19937 generator_;
-  uint32_t reset_;
-  uint32_t counter_;
+  std::mt19937       generator_;
+  uint32_t           reset_;
+  uint32_t           counter_;
 };
 
 }  // namespace ledger

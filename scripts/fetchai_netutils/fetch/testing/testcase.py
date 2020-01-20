@@ -153,7 +153,8 @@ class ConstellationTestCase(TestCase):
         # Possibly soon to be deprecated functionality - set the block interval
         instance.block_interval = self._block_interval
         instance.feature_flags = ['synergetic']
-        instance.append_to_cmd(['-synergetic-miner-script', './scripts/synergetic/simple_miner.etch'])
+        instance.append_to_cmd(
+            ['-synergetic-miner-script', './scripts/synergetic/simple_miner.etch'])
 
         # configure the lanes and slices
         instance.lanes = self._lanes
