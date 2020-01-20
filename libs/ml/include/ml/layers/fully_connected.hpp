@@ -30,7 +30,7 @@ class FullyConnected : public SubGraph<T>
 {
 public:
   using TensorType    = T;
-  using ArrayPtrType  = std::shared_ptr<TensorType>;
+  using NodePtrType   = std::shared_ptr<fetch::ml::Node<TensorType>>;
   using SizeType      = fetch::math::SizeType;
   using DataType      = typename TensorType::Type;
   using WeightsInit   = fetch::ml::ops::WeightsInitialisation;
@@ -43,7 +43,15 @@ public:
   using WeightsType    = fetch::ml::ops::Weights<TensorType>;
   using WeightsPtrType = std::shared_ptr<WeightsType>;
 
-  FullyConnected() = default;
+  /**
+   * @brief FullyConnected default constructor without parameters is used to create an empty
+   * object during deserialisation. After deserialisation the object is treated as an initialised
+   * one.
+   */
+  FullyConnected()
+    : SubGraph<T>()
+    , is_initialised_(true)
+  {}
 
   /**
    * Normal fully connected layer constructor
@@ -58,15 +66,21 @@ public:
                  details::ActivationType       activation_type = details::ActivationType::NOTHING,
                  fetch::ml::RegularisationType regulariser = fetch::ml::RegularisationType::NONE,
                  DataType                      regularisation_rate = DataType{0},
-                 WeightsInit init_mode = WeightsInit::XAVIER_GLOROT, bool time_distributed = false);
-
-  OpPtrType MakeSharedCopy(OpPtrType me) override;
+                 WeightsInit                   init_mode           = WeightsInit::XAVIER_GLOROT,
+                 bool                          time_distributed    = !TIME_DISTRIBUTED);
 
   std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override;
 
   void SetOpSaveableParams(SPType const &sp);
 
+  OpPtrType MakeSharedCopy(OpPtrType me) override;
+
+  void CompleteConstruction() override;
+
   std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override;
+
+  math::SizeVector ComputeBatchOutputShape(
+      std::vector<math::SizeVector> const &input_shapes) override;
 
   static constexpr OpType OpCode()
   {
@@ -75,25 +89,30 @@ public:
 
   static constexpr char const *DESCRIPTOR = "FullyConnected";
 
+  inline OpType OperationType() const override
+  {
+    return this->OpCode();
+  }
+  inline char const *Descriptor() const override
+  {
+    return DESCRIPTOR;
+  }
+
+  static constexpr SizeType AUTODETECT_INPUTS_COUNT = 0;
+  static constexpr bool     TIME_DISTRIBUTED        = true;
+
 private:
-  SizeType in_size_          = fetch::math::numeric_max<SizeType>();
-  SizeType out_size_         = fetch::math::numeric_max<SizeType>();
-  bool     time_distributed_ = false;
+  SizeType    total_inputs_     = AUTODETECT_INPUTS_COUNT;
+  SizeType    total_outputs_    = 0;
+  bool        time_distributed_ = false;
+  bool        is_initialised_   = false;
+  std::string weights_name_{};
+  std::string bias_name_{};
+  WeightsInit init_mode_ = WeightsInit::XAVIER_GLOROT;
 
-  void Initialise(TensorType &weights, WeightsInit init_mode)
-  {
-    fetch::ml::ops::Weights<TensorType>::Initialise(weights, in_size_, out_size_, init_mode);
-  }
+  std::string GetName();
 
-  std::string GetName()
-  {
-    std::string name = DESCRIPTOR;
-    if (time_distributed_)
-    {
-      name = "TimeDistributed_" + name;
-    }
-    return name;
-  }
+  typename std::shared_ptr<fetch::ml::Node<TensorType>> FindNodeByOpCode(OpType code);
 };
 
 }  // namespace layers

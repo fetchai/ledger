@@ -62,6 +62,15 @@ public:
   }
   static constexpr char const *DESCRIPTOR = "MatrixMultiply";
 
+  OpType OperationType() const override  // TODO(ML-466) : move implementation to .cpp
+  {
+    return this->OpCode();
+  }
+  char const *Descriptor() const override  // TODO(ML-466) : move implementation to .cpp
+  {
+    return DESCRIPTOR;
+  }
+
 private:
   // caching tensors and shapes
   TensorType error_signal_1_;

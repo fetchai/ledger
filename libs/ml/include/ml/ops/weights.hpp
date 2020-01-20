@@ -107,6 +107,9 @@ public:
 
   static constexpr char const *DESCRIPTOR = "Weights";
 
+  OpType      OperationType() const override;
+  char const *Descriptor() const override;
+
 private:
   static void XavierInitialisation(TensorType &array, DataType normalising_factor,
                                    SizeType seed = 123456789);

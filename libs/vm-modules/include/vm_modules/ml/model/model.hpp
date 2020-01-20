@@ -64,7 +64,8 @@ enum class SupportedLayerType : uint8_t
   FLATTEN,
   DROPOUT,
   ACTIVATION,
-  RESHAPE
+  RESHAPE,
+  INPUT
 };
 
 class VMModel : public fetch::vm::Object
@@ -137,6 +138,8 @@ public:
 
   void LayerAddDense(fetch::vm::Ptr<fetch::vm::String> const &layer, math::SizeType const &inputs,
                      math::SizeType const &hidden_nodes);
+  void LayerAddDenseAutoInputs(fetch::vm::Ptr<fetch::vm::String> const &layer,
+                               math::SizeType const &                   hidden_nodes);
   void LayerAddDenseActivation(fetch::vm::Ptr<fetch::vm::String> const &layer,
                                math::SizeType const &inputs, math::SizeType const &hidden_nodes,
                                fetch::vm::Ptr<fetch::vm::String> const &activation);
@@ -163,6 +166,9 @@ public:
                           fetch::vm::Ptr<fetch::vm::String> const &activation_name);
   void LayerAddReshape(fetch::vm::Ptr<fetch::vm::String> const &                     layer,
                        fetch::vm::Ptr<fetch::vm::Array<TensorType::SizeType>> const &shape);
+
+  void LayerAddInput(fetch::vm::Ptr<fetch::vm::String> const &        layer,
+                     fetch::vm::Ptr<vm::Array<math::SizeType>> const &shape);
 
 private:
   ModelPtrType       model_;
