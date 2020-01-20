@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ml/ops/dataholder.hpp"
 #include <cassert>
 #include <memory>
 #include <vector>
