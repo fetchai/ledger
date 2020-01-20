@@ -1,5 +1,5 @@
 @minerjobs
-function generateSynergeticJobListNaive(jobs: Array<SynergeticJob>, history: Array<SynergeticJobHistoryElement>): Array<UInt64>
+function generateSynergeticJobListNaive(jobs: Array<SynergeticJob>, history: Array<SynergeticJobHistoryElement>, uniform: RandomUniform): Array<UInt64>
     var result = Array<UInt64>(jobs.count());
     for (i in 0:jobs.count())
         result[i] = jobs[i].id();

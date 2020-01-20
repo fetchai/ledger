@@ -52,6 +52,7 @@ using Status               = SynergeticMinerScript::Status;
 using SynergeticJobs       = SynergeticMinerScript::SynergeticJobs;
 using VmSynergeticJob      = vm::Ptr<vm_modules::ledger::SynergeticJob>;
 using VmSynergeticJobArray = vm::Ptr<vm::Array<VmSynergeticJob>>;
+using VmRandomUniform      = vm::Ptr<vm_modules::ledger::RandomUniform>;
 
 constexpr char const *LOGGING_NAME = "SynergeticMinerScript";
 
@@ -113,6 +114,7 @@ SynergeticMinerScript::SynergeticMinerScript(ConstByteArray const &source)
 
   vm_modules::ledger::SynergeticJob::Bind(*module_);
   vm_modules::ledger::SynergeticJobHistoryElement::Bind(*module_);
+  vm_modules::ledger::RandomUniform::Bind(*module_);
 
   FETCH_LOG_DEBUG(LOGGING_NAME, "Synergetic miner script source\n", source);
 
@@ -181,6 +183,8 @@ SynergeticMinerScript::SynergeticMinerScript(ConstByteArray const &source)
   }
 
   vm_ = std::make_unique<vm::VM>(module_.get());
+
+  random_unfiform_ = vm_->CreateNewObject<vm_modules::ledger::RandomUniform>();
 }
 
 void SynergeticMinerScript::set_balance(uint64_t const &balance)
@@ -214,7 +218,7 @@ Status SynergeticMinerScript::GenerateJobList(SynergeticJobs const &jobs,
   // execute the problem definition function
   std::string error{};
   if (!vm_->Execute(*executable_, mine_jobs_function_, error, result, jobs_vm,
-                    history_.Get(vm_.get())))
+                    history_.Get(vm_.get()), random_unfiform_))
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Problem definition error: ", error);
     return Status::VM_EXECUTION_ERROR;

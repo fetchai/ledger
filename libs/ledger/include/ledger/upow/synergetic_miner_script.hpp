@@ -28,6 +28,7 @@
 #include "vm/compiler.hpp"
 #include "vm/module.hpp"
 #include "vm/vm.hpp"
+#include "vm_modules/ledger/random.hpp"
 
 #include <memory>
 #include <string>
@@ -88,11 +89,12 @@ public:
   /// @}
 
 private:
-  using ModulePtr     = std::shared_ptr<vm::Module>;
-  using CompilerPtr   = std::shared_ptr<vm::Compiler>;
-  using IRPtr         = std::shared_ptr<vm::IR>;
-  using ExecutablePtr = std::shared_ptr<vm::Executable>;
-  using VariantPtr    = std::shared_ptr<vm::Variant>;
+  using ModulePtr       = std::shared_ptr<vm::Module>;
+  using CompilerPtr     = std::shared_ptr<vm::Compiler>;
+  using IRPtr           = std::shared_ptr<vm::IR>;
+  using ExecutablePtr   = std::shared_ptr<vm::Executable>;
+  using VariantPtr      = std::shared_ptr<vm::Variant>;
+  using VmRandomUniform = vm::Ptr<vm_modules::ledger::RandomUniform>;
 
   ModulePtr               module_;
   CompilerPtr             compiler_;
@@ -105,6 +107,9 @@ private:
   std::string mine_jobs_function_;
 
   uint64_t current_balance_{0};
+
+  VmRandomUniform random_unfiform_;
+
 };
 
 }  // namespace ledger

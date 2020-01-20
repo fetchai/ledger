@@ -1,0 +1,66 @@
+@minerjobs
+function generateSynergeticJobListNaive(jobs: Array<SynergeticJob>, history: Array<SynergeticJobHistoryElement>, uniform: RandomUniform): Array<UInt64>
+    if (jobs.count()==0)
+        return Array<UInt64>(jobs.count());
+    endif
+    var do_random: Bool = false;
+    var counter = 0i32;
+    if (history.count()>5)
+        var avg = 0fp64;
+        for(i in 0:history.count())
+            var e = toFixed64(history[i].expectedCharge());
+            var a = toFixed64(history[i].actualCharge());
+            if (e==0fp64 || e<a)
+                continue;
+            endif
+            avg += (e-a)/e;
+            ++counter;
+        endfor
+        avg /= toFixed64(counter);
+
+        if (avg==1fp64)
+            do_random = true;
+        endif
+
+        if (!do_random)
+            do_random = avg/(1fp64-avg) > 12fp64;
+        endif
+    endif
+
+    if (!do_random)
+        var result = Array<UInt64>(jobs.count());
+        for (i in 0:jobs.count())
+            result[i] = jobs[i].id();
+        endfor
+
+        return result;
+    endif
+
+    var low_end = 1i32;
+    if (jobs.count()>20)
+        low_end = toInt32(toFixed64(jobs.count())*0.05fp64);
+        if (low_end==0i32)
+            low_end = 1i32;
+        endif
+    endif
+    var n_jobs = jobs.count();
+    var n = uniform.rand(low_end, n_jobs);
+
+    var result = Array<UInt64>(n);
+    var selected = Array<Bool>(n_jobs);
+    for(i in 0:jobs.count())
+        selected[i] = false;
+    endfor
+
+    counter = 0i32;
+    var idx: Int32 = 0i32;
+    while(counter<n)
+        idx = uniform.rand(0i32, n_jobs);
+        if (!selected[idx])
+            selected[idx] = true;
+            result[counter] = jobs[idx].id();
+            ++counter;
+        endif
+    endwhile
+    return result;
+endfunction
