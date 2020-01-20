@@ -17,13 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/core/graph.hpp"
-#include "ml/ops/activation.hpp"
-#include "ml/ops/loss_functions/mean_square_error_loss.hpp"
-#include "ml/ops/placeholder.hpp"
-
 #include "ml/serializers/ml_types.hpp"
-#include "ml/utilities/graph_builder.hpp"
 
 #include "gtest/gtest.h"
 #include "test_types.hpp"

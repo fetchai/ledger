@@ -17,31 +17,22 @@
 //------------------------------------------------------------------------------
 
 #include "serializer_test_utils.hpp"
-
-#include "ml/layers/PRelu.hpp"
-#include "ml/layers/convolution_1d.hpp"
-#include "ml/layers/convolution_2d.hpp"
-#include "ml/layers/fully_connected.hpp"
-#include "ml/layers/multihead_attention.hpp"
-#include "ml/layers/normalisation/layer_norm.hpp"
-#include "ml/layers/scaled_dot_product_attention.hpp"
-#include "ml/layers/self_attention_encoder.hpp"
-#include "ml/layers/skip_gram.hpp"
+#include "serializer_includes.hpp"
 
 namespace {
 
 template <typename T>
-class SaveParamsTest : public ::testing::Test
+class LayersSaveParamsTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(SaveParamsTest, ::fetch::math::test::TensorFloatingTypes);
+TYPED_TEST_CASE(LayersSaveParamsTest, ::fetch::math::test::TensorFloatingTypes);
 
 //////////////
 /// LAYERS ///
 //////////////
 
-TYPED_TEST(SaveParamsTest, conv1d_saveparams_test)
+TYPED_TEST(LayersSaveParamsTest, conv1d_saveparams_test)
 {
   using TensorType = TypeParam;
   using DataType   = typename TypeParam::Type;
@@ -131,7 +122,7 @@ TYPED_TEST(SaveParamsTest, conv1d_saveparams_test)
                                    ::fetch::math::function_tolerance<DataType>()));
 }
 
-TYPED_TEST(SaveParamsTest, conv2d_saveparams_test)
+TYPED_TEST(LayersSaveParamsTest, conv2d_saveparams_test)
 {
   using TensorType = TypeParam;
   using DataType   = typename TypeParam::Type;
@@ -221,7 +212,7 @@ TYPED_TEST(SaveParamsTest, conv2d_saveparams_test)
                                    ::fetch::math::function_tolerance<DataType>()));
 }
 
-TYPED_TEST(SaveParamsTest, fully_connected_saveparams_test)
+TYPED_TEST(LayersSaveParamsTest, fully_connected_saveparams_test)
 {
   using DataType  = typename TypeParam::Type;
   using SizeType  = ::fetch::math::SizeType;
@@ -306,7 +297,7 @@ TYPED_TEST(SaveParamsTest, fully_connected_saveparams_test)
                                    ::fetch::math::function_tolerance<DataType>()));
 }
 
-TYPED_TEST(SaveParamsTest, layer_norm_saveparams_test)
+TYPED_TEST(LayersSaveParamsTest, layer_norm_saveparams_test)
 {
   using DataType  = typename TypeParam::Type;
   using LayerType = fetch::ml::layers::LayerNorm<TypeParam>;
@@ -387,7 +378,7 @@ TYPED_TEST(SaveParamsTest, layer_norm_saveparams_test)
                                    ::fetch::math::function_tolerance<DataType>()));
 }
 
-TYPED_TEST(SaveParamsTest, multi_head_attention_saveparams_test)
+TYPED_TEST(LayersSaveParamsTest, multi_head_attention_saveparams_test)
 {
   using LayerType = typename fetch::ml::layers::MultiheadAttention<TypeParam>;
   using SPType    = typename LayerType::SPType;
@@ -449,7 +440,7 @@ TYPED_TEST(SaveParamsTest, multi_head_attention_saveparams_test)
                                    ::fetch::math::function_tolerance<DataType>()));
 }
 
-TYPED_TEST(SaveParamsTest, prelu_saveparams_test)
+TYPED_TEST(LayersSaveParamsTest, prelu_saveparams_test)
 {
   using DataType  = typename TypeParam::Type;
   using LayerType = typename fetch::ml::layers::PRelu<TypeParam>;
@@ -530,7 +521,7 @@ TYPED_TEST(SaveParamsTest, prelu_saveparams_test)
                                    ::fetch::math::function_tolerance<DataType>()));
 }
 
-TYPED_TEST(SaveParamsTest, scaled_dot_product_attention_saveparams_test)
+TYPED_TEST(LayersSaveParamsTest, scaled_dot_product_attention_saveparams_test)
 {
   using DataType  = typename TypeParam::Type;
   using SizeType  = ::fetch::math::SizeType;
@@ -625,6 +616,10 @@ TYPED_TEST(SaveParamsTest, scaled_dot_product_attention_saveparams_test)
   layer2.SetInput("ScaledDotProductAttention_Mask", mask_data);
   TypeParam prediction4 = layer2.Evaluate(output_name);
 
+  std::cout << "prediction3.ToString(): " << prediction3.ToString() << std::endl;  
+  std::cout << "prediction.ToString(): " << prediction.ToString() << std::endl;
+  std::cout << "prediction4.ToString(): " << prediction4.ToString() << std::endl;
+  
   EXPECT_FALSE(prediction.AllClose(prediction3, ::fetch::math::function_tolerance<DataType>(),
                                    ::fetch::math::function_tolerance<DataType>()));
 
@@ -632,7 +627,7 @@ TYPED_TEST(SaveParamsTest, scaled_dot_product_attention_saveparams_test)
                                    ::fetch::math::function_tolerance<DataType>()));
 }
 
-TYPED_TEST(SaveParamsTest, self_attention_saveparams_test)
+TYPED_TEST(LayersSaveParamsTest, self_attention_saveparams_test)
 {
   using SizeType  = ::fetch::math::SizeType;
   using LayerType = typename fetch::ml::layers::SelfAttentionEncoder<TypeParam>;
@@ -689,7 +684,7 @@ TYPED_TEST(SaveParamsTest, self_attention_saveparams_test)
                                    ::fetch::math::function_tolerance<DataType>()));
 }
 
-TYPED_TEST(SaveParamsTest, skipgram_saveparams_test)
+TYPED_TEST(LayersSaveParamsTest, skipgram_saveparams_test)
 {
   using DataType  = typename TypeParam::Type;
   using SizeType  = ::fetch::math::SizeType;

@@ -17,53 +17,16 @@
 //------------------------------------------------------------------------------
 
 #include "serializer_test_utils.hpp"
-
-// ops includes
-#include "ml/ops/abs.hpp"
-#include "ml/ops/add.hpp"
-#include "ml/ops/avg_pool_1d.hpp"
-#include "ml/ops/avg_pool_2d.hpp"
-#include "ml/ops/concatenate.hpp"
-#include "ml/ops/constant.hpp"
-#include "ml/ops/convolution_1d.hpp"
-#include "ml/ops/convolution_2d.hpp"
-#include "ml/ops/divide.hpp"
-#include "ml/ops/embeddings.hpp"
-#include "ml/ops/exp.hpp"
-#include "ml/ops/flatten.hpp"
-#include "ml/ops/layer_norm.hpp"
-#include "ml/ops/log.hpp"
-#include "ml/ops/mask_fill.hpp"
-#include "ml/ops/matrix_multiply.hpp"
-#include "ml/ops/max_pool.hpp"
-#include "ml/ops/max_pool_1d.hpp"
-#include "ml/ops/max_pool_2d.hpp"
-#include "ml/ops/maximum.hpp"
-#include "ml/ops/multiply.hpp"
-#include "ml/ops/one_hot.hpp"
-#include "ml/ops/placeholder.hpp"
-#include "ml/ops/prelu_op.hpp"
-#include "ml/ops/reduce_mean.hpp"
-#include "ml/ops/reshape.hpp"
-#include "ml/ops/slice.hpp"
-#include "ml/ops/sqrt.hpp"
-#include "ml/ops/squeeze.hpp"
-#include "ml/ops/strided_slice.hpp"
-#include "ml/ops/subtract.hpp"
-#include "ml/ops/switch.hpp"
-#include "ml/ops/tanh.hpp"
-#include "ml/ops/top_k.hpp"
-#include "ml/ops/transpose.hpp"
-#include "ml/ops/weights.hpp"
+#include "serializer_includes.hpp"
 
 namespace {
 
 template <typename T>
-class SaveParamsTest : public ::testing::Test
+class OpsSaveParamsTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(SaveParamsTest, ::fetch::math::test::TensorFloatingTypes);
+TYPED_TEST_CASE(OpsSaveParamsTest, ::fetch::math::test::TensorFloatingTypes);
 
 ///////////
 /// OPS ///
@@ -73,7 +36,7 @@ TYPED_TEST_CASE(SaveParamsTest, ::fetch::math::test::TensorFloatingTypes);
 /// ABS ///
 ///////////
 
-TYPED_TEST(SaveParamsTest, abs_saveparams_test)
+TYPED_TEST(OpsSaveParamsTest, abs_saveparams_test)
 {
   using TensorType    = TypeParam;
   using DataType      = typename TypeParam::Type;
@@ -107,7 +70,7 @@ TYPED_TEST(SaveParamsTest, abs_saveparams_test)
   EXPECT_TRUE(new_prediction.AllClose(prediction, DataType{0}, DataType{0}));
 }
 
-TYPED_TEST(SaveParamsTest, abs_saveparams_backward_test)
+TYPED_TEST(OpsSaveParamsTest, abs_saveparams_backward_test)
 {
   using TensorType = TypeParam;
   using OpKind     = fetch::ml::ops::Abs<TensorType>;
@@ -144,7 +107,7 @@ TYPED_TEST(SaveParamsTest, abs_saveparams_backward_test)
 /// ADD ///
 ///////////
 
-TYPED_TEST(SaveParamsTest, add_saveparams_test)
+TYPED_TEST(OpsSaveParamsTest, add_saveparams_test)
 {
   using TensorType    = TypeParam;
   using DataType      = typename TypeParam::Type;
@@ -181,7 +144,7 @@ TYPED_TEST(SaveParamsTest, add_saveparams_test)
   EXPECT_TRUE(new_prediction.AllClose(prediction, DataType{0}, DataType{0}));
 }
 
-TYPED_TEST(SaveParamsTest, add_saveparams_backward_2D_broadcast_test)
+TYPED_TEST(OpsSaveParamsTest, add_saveparams_backward_2D_broadcast_test)
 {
   using DataType   = typename TypeParam::Type;
   using TensorType = TypeParam;
@@ -224,7 +187,7 @@ TYPED_TEST(SaveParamsTest, add_saveparams_backward_2D_broadcast_test)
 /// AvgPool1D OP ///
 ////////////////////
 
-TYPED_TEST(SaveParamsTest, avg_pool_1d_saveparams_test)
+TYPED_TEST(OpsSaveParamsTest, avg_pool_1d_saveparams_test)
 {
   using TensorType    = TypeParam;
   using DataType      = typename TypeParam::Type;
@@ -266,7 +229,7 @@ TYPED_TEST(SaveParamsTest, avg_pool_1d_saveparams_test)
   EXPECT_TRUE(new_prediction.AllClose(prediction, DataType{0}, DataType{0}));
 }
 
-TYPED_TEST(SaveParamsTest, avg_pool_1d_saveparams_backward_test_2_channels)
+TYPED_TEST(OpsSaveParamsTest, avg_pool_1d_saveparams_backward_test_2_channels)
 {
   using TensorType = TypeParam;
   using SizeType   = ::fetch::math::SizeType;
@@ -315,7 +278,7 @@ TYPED_TEST(SaveParamsTest, avg_pool_1d_saveparams_backward_test_2_channels)
 /// AvgPool2D OP ///
 ////////////////////
 
-TYPED_TEST(SaveParamsTest, avg_pool_2d_saveparams_test)
+TYPED_TEST(OpsSaveParamsTest, avg_pool_2d_saveparams_test)
 {
   using TensorType    = TypeParam;
   using DataType      = typename TypeParam::Type;
@@ -361,7 +324,7 @@ TYPED_TEST(SaveParamsTest, avg_pool_2d_saveparams_test)
   EXPECT_TRUE(new_prediction.AllClose(prediction, DataType{0}, DataType{0}));
 }
 
-TYPED_TEST(SaveParamsTest, avg_pool_2d_saveparams_backward_2_channels_test)
+TYPED_TEST(OpsSaveParamsTest, avg_pool_2d_saveparams_backward_2_channels_test)
 {
   using DataType   = typename TypeParam::Type;
   using TensorType = TypeParam;
@@ -422,7 +385,7 @@ TYPED_TEST(SaveParamsTest, avg_pool_2d_saveparams_backward_2_channels_test)
 /// CONCATENATE OP ///
 //////////////////////
 
-TYPED_TEST(SaveParamsTest, concatenate_saveparams_test)
+TYPED_TEST(OpsSaveParamsTest, concatenate_saveparams_test)
 {
   using TensorType    = TypeParam;
   using DataType      = typename TypeParam::Type;
@@ -456,7 +419,7 @@ TYPED_TEST(SaveParamsTest, concatenate_saveparams_test)
   EXPECT_TRUE(new_prediction.AllClose(prediction, DataType{0}, DataType{0}));
 }
 
-TYPED_TEST(SaveParamsTest, concatenate_saveparams_backward_test)
+TYPED_TEST(OpsSaveParamsTest, concatenate_saveparams_backward_test)
 {
   using TensorType = TypeParam;
   using OpKind     = fetch::ml::ops::Concatenate<TensorType>;
@@ -495,7 +458,7 @@ TYPED_TEST(SaveParamsTest, concatenate_saveparams_backward_test)
 /// CONV1D OP ///
 /////////////////
 
-TYPED_TEST(SaveParamsTest, constant_saveable_test)
+TYPED_TEST(OpsSaveParamsTest, constant_saveable_test)
 {
   using TensorType = TypeParam;
   using DataType   = typename TypeParam::Type;
@@ -526,7 +489,7 @@ TYPED_TEST(SaveParamsTest, constant_saveable_test)
 /// CONV1D OP ///
 /////////////////
 
-TYPED_TEST(SaveParamsTest, conv1c_op_saveparams_test)
+TYPED_TEST(OpsSaveParamsTest, conv1c_op_saveparams_test)
 {
   using TensorType    = TypeParam;
   using DataType      = typename TypeParam::Type;
@@ -561,7 +524,7 @@ TYPED_TEST(SaveParamsTest, conv1c_op_saveparams_test)
   EXPECT_TRUE(new_prediction.AllClose(prediction, DataType{0}, DataType{0}));
 }
 
-TYPED_TEST(SaveParamsTest, conv1d_op_saveparams_backward_3x3x2_5x3x3x2)
+TYPED_TEST(OpsSaveParamsTest, conv1d_op_saveparams_backward_3x3x2_5x3x3x2)
 {
   using DataType   = typename TypeParam::Type;
   using TensorType = TypeParam;
@@ -641,7 +604,7 @@ TYPED_TEST(SaveParamsTest, conv1d_op_saveparams_backward_3x3x2_5x3x3x2)
 /// CONV2D OP ///
 /////////////////
 
-TYPED_TEST(SaveParamsTest, conv2d_op_saveparams_test)
+TYPED_TEST(OpsSaveParamsTest, conv2d_op_saveparams_test)
 {
   using TensorType    = TypeParam;
   using DataType      = typename TypeParam::Type;
@@ -687,7 +650,7 @@ TYPED_TEST(SaveParamsTest, conv2d_op_saveparams_test)
   EXPECT_TRUE(new_prediction.AllClose(prediction, DataType{0}, DataType{0}));
 }
 
-TYPED_TEST(SaveParamsTest, conv2d_op_saveparams_backward_3x3x3x2_5x3x3x3x2)
+TYPED_TEST(OpsSaveParamsTest, conv2d_op_saveparams_backward_3x3x3x2_5x3x3x3x2)
 {
   using DataType   = typename TypeParam::Type;
   using TensorType = TypeParam;
@@ -783,7 +746,7 @@ TYPED_TEST(SaveParamsTest, conv2d_op_saveparams_backward_3x3x3x2_5x3x3x3x2)
 /// DIVIDE ///
 //////////////
 
-TYPED_TEST(SaveParamsTest, divide_saveparams_test)
+TYPED_TEST(OpsSaveParamsTest, divide_saveparams_test)
 {
   using TensorType    = TypeParam;
   using DataType      = typename TypeParam::Type;
@@ -820,7 +783,7 @@ TYPED_TEST(SaveParamsTest, divide_saveparams_test)
   EXPECT_TRUE(new_prediction.AllClose(prediction, DataType{0}, DataType{0}));
 }
 
-TYPED_TEST(SaveParamsTest, divide_saveparams_backward_test)
+TYPED_TEST(OpsSaveParamsTest, divide_saveparams_backward_test)
 {
   using TensorType = TypeParam;
   using OpKind     = fetch::ml::ops::Divide<TensorType>;
@@ -862,7 +825,7 @@ TYPED_TEST(SaveParamsTest, divide_saveparams_backward_test)
 /// EMBEDDINGS ///
 //////////////////
 
-TYPED_TEST(SaveParamsTest, embeddings_saveparams_test)
+TYPED_TEST(OpsSaveParamsTest, embeddings_saveparams_test)
 {
   using TensorType = TypeParam;
   using DataType   = typename TypeParam::Type;
@@ -901,7 +864,7 @@ TYPED_TEST(SaveParamsTest, embeddings_saveparams_test)
   EXPECT_TRUE(new_prediction.AllClose(prediction, DataType{0}, DataType{0}));
 }
 
-TYPED_TEST(SaveParamsTest, embeddings_saveparams_backward)
+TYPED_TEST(OpsSaveParamsTest, embeddings_saveparams_backward)
 {
   using TensorType = TypeParam;
   using DataType   = typename TypeParam::Type;
@@ -956,7 +919,7 @@ TYPED_TEST(SaveParamsTest, embeddings_saveparams_backward)
 /// EXP ///
 ///////////
 
-TYPED_TEST(SaveParamsTest, exp_saveparams_test)
+TYPED_TEST(OpsSaveParamsTest, exp_saveparams_test)
 {
   using TensorType    = TypeParam;
   using DataType      = typename TypeParam::Type;
@@ -986,7 +949,7 @@ TYPED_TEST(SaveParamsTest, exp_saveparams_test)
   EXPECT_TRUE(new_prediction.AllClose(prediction, DataType{0}, DataType{0}));
 }
 
-TYPED_TEST(SaveParamsTest, exp_saveparams_backward_test)
+TYPED_TEST(OpsSaveParamsTest, exp_saveparams_backward_test)
 {
   using TensorType = TypeParam;
   using OpKind     = fetch::ml::ops::Exp<TensorType>;
@@ -1017,7 +980,7 @@ TYPED_TEST(SaveParamsTest, exp_saveparams_backward_test)
       ::fetch::math::function_tolerance<typename TypeParam::Type>()));
 }
 
-TYPED_TEST(SaveParamsTest, flatten_saveparams_test)
+TYPED_TEST(OpsSaveParamsTest, flatten_saveparams_test)
 {
   using TensorType    = TypeParam;
   using DataType      = typename TypeParam::Type;
@@ -1063,7 +1026,7 @@ TYPED_TEST(SaveParamsTest, flatten_saveparams_test)
   EXPECT_TRUE(new_prediction.AllClose(prediction, DataType{0}, DataType{0}));
 }
 
-TYPED_TEST(SaveParamsTest, flatten_saveparams_backward_test)
+TYPED_TEST(OpsSaveParamsTest, flatten_saveparams_backward_test)
 {
   using SizeType   = ::fetch::math::SizeType;
   using DataType   = typename TypeParam::Type;
@@ -1115,7 +1078,7 @@ TYPED_TEST(SaveParamsTest, flatten_saveparams_backward_test)
 /// LAYER NORM OP ///
 /////////////////////
 
-TYPED_TEST(SaveParamsTest, layer_norm_op_saveparams_test)
+TYPED_TEST(OpsSaveParamsTest, layer_norm_op_saveparams_test)
 {
   using TensorType = TypeParam;
   using DataType   = typename TypeParam::Type;
@@ -1147,7 +1110,7 @@ TYPED_TEST(SaveParamsTest, layer_norm_op_saveparams_test)
   EXPECT_TRUE(new_prediction.AllClose(prediction, DataType{0}, DataType{0}));
 }
 
-TYPED_TEST(SaveParamsTest, layer_norm_op_saveparams_backward_test_3d)
+TYPED_TEST(OpsSaveParamsTest, layer_norm_op_saveparams_backward_test_3d)
 {
   using TensorType = TypeParam;
   using OpKind     = fetch::ml::ops::LayerNorm<TensorType>;
@@ -1185,7 +1148,7 @@ TYPED_TEST(SaveParamsTest, layer_norm_op_saveparams_backward_test_3d)
 /// LOG ///
 ///////////
 
-TYPED_TEST(SaveParamsTest, log_saveparams_test)
+TYPED_TEST(OpsSaveParamsTest, log_saveparams_test)
 {
   using TensorType    = TypeParam;
   using DataType      = typename TypeParam::Type;
@@ -1214,7 +1177,7 @@ TYPED_TEST(SaveParamsTest, log_saveparams_test)
   ::fetch::math::state_clear<DataType>();
 }
 
-TYPED_TEST(SaveParamsTest, log_saveparams_backward_test)
+TYPED_TEST(OpsSaveParamsTest, log_saveparams_backward_test)
 {
   using TensorType = TypeParam;
   using DataType   = typename TypeParam::Type;
@@ -1247,7 +1210,7 @@ TYPED_TEST(SaveParamsTest, log_saveparams_backward_test)
 /// MASK FILL ///
 /////////////////
 
-TYPED_TEST(SaveParamsTest, mask_fill_saveparams_test)
+TYPED_TEST(OpsSaveParamsTest, mask_fill_saveparams_test)
 {
   using DataType   = typename TypeParam::Type;
   using TensorType = TypeParam;
@@ -1283,7 +1246,7 @@ TYPED_TEST(SaveParamsTest, mask_fill_saveparams_test)
   EXPECT_TRUE(new_prediction.AllClose(prediction, DataType{0}, DataType{0}));
 }
 
-TYPED_TEST(SaveParamsTest, mask_fill_saveparams_back_test_broadcast_mask)
+TYPED_TEST(OpsSaveParamsTest, mask_fill_saveparams_back_test_broadcast_mask)
 {
   using TensorType = TypeParam;
   using DataType   = typename TypeParam::Type;
@@ -1323,7 +1286,7 @@ TYPED_TEST(SaveParamsTest, mask_fill_saveparams_back_test_broadcast_mask)
 /// MATRIX MULTIPLY ///
 ///////////////////////
 
-TYPED_TEST(SaveParamsTest, matrix_multiply_saveparams_test)
+TYPED_TEST(OpsSaveParamsTest, matrix_multiply_saveparams_test)
 {
   using TensorType    = TypeParam;
   using DataType      = typename TypeParam::Type;
@@ -1356,7 +1319,7 @@ TYPED_TEST(SaveParamsTest, matrix_multiply_saveparams_test)
   EXPECT_TRUE(new_prediction.AllClose(prediction, DataType{0}, DataType{0}));
 }
 
-TYPED_TEST(SaveParamsTest, matrix_multiply_saveparams_backward_batch_test)
+TYPED_TEST(OpsSaveParamsTest, matrix_multiply_saveparams_backward_batch_test)
 {
   using TensorType = TypeParam;
   using OpKind     = typename fetch::ml::ops::MatrixMultiply<TensorType>;
@@ -1394,7 +1357,7 @@ TYPED_TEST(SaveParamsTest, matrix_multiply_saveparams_backward_batch_test)
 /// MAX POOL ///
 ///////////////////
 
-TYPED_TEST(SaveParamsTest, maxpool_saveparams_test_1d)
+TYPED_TEST(OpsSaveParamsTest, maxpool_saveparams_test_1d)
 {
   using TensorType    = TypeParam;
   using DataType      = typename TypeParam::Type;
@@ -1447,7 +1410,7 @@ TYPED_TEST(SaveParamsTest, maxpool_saveparams_test_1d)
   EXPECT_TRUE(new_prediction.AllClose(prediction, DataType{0}, DataType{0}));
 }
 
-TYPED_TEST(SaveParamsTest, maxpool_saveparams_backward_test_1d_2_channels)
+TYPED_TEST(OpsSaveParamsTest, maxpool_saveparams_backward_test_1d_2_channels)
 {
   using DataType   = typename TypeParam::Type;
   using TensorType = TypeParam;
@@ -1493,7 +1456,7 @@ TYPED_TEST(SaveParamsTest, maxpool_saveparams_backward_test_1d_2_channels)
       ::fetch::math::function_tolerance<typename TypeParam::Type>()));
 }
 
-TYPED_TEST(SaveParamsTest, maxpool_saveparams_test_2d)
+TYPED_TEST(OpsSaveParamsTest, maxpool_saveparams_test_2d)
 {
   using TensorType    = TypeParam;
   using DataType      = typename TypeParam::Type;
@@ -1539,7 +1502,7 @@ TYPED_TEST(SaveParamsTest, maxpool_saveparams_test_2d)
   EXPECT_TRUE(new_prediction.AllClose(prediction, DataType{0}, DataType{0}));
 }
 
-TYPED_TEST(SaveParamsTest, maxpool_saveparams_backward_2_channels_test_2d)
+TYPED_TEST(OpsSaveParamsTest, maxpool_saveparams_backward_2_channels_test_2d)
 {
   using DataType   = typename TypeParam::Type;
   using TensorType = TypeParam;
@@ -1600,7 +1563,7 @@ TYPED_TEST(SaveParamsTest, maxpool_saveparams_backward_2_channels_test_2d)
 /// MAX POOL 1D ///
 ///////////////////
 
-TYPED_TEST(SaveParamsTest, maxpool_1d_saveparams_test)
+TYPED_TEST(OpsSaveParamsTest, maxpool_1d_saveparams_test)
 {
   using TensorType    = TypeParam;
   using DataType      = typename TypeParam::Type;
@@ -1642,7 +1605,7 @@ TYPED_TEST(SaveParamsTest, maxpool_1d_saveparams_test)
   EXPECT_TRUE(new_prediction.AllClose(prediction, DataType{0}, DataType{0}));
 }
 
-TYPED_TEST(SaveParamsTest, maxpool_1d_saveparams_backward_test_2_channels)
+TYPED_TEST(OpsSaveParamsTest, maxpool_1d_saveparams_backward_test_2_channels)
 {
   using DataType   = typename TypeParam::Type;
   using TensorType = TypeParam;
@@ -1692,7 +1655,7 @@ TYPED_TEST(SaveParamsTest, maxpool_1d_saveparams_backward_test_2_channels)
 /// MAX POOL 2D ///
 ///////////////////
 
-TYPED_TEST(SaveParamsTest, maxpool_2d_saveparams_test)
+TYPED_TEST(OpsSaveParamsTest, maxpool_2d_saveparams_test)
 {
   using TensorType    = TypeParam;
   using DataType      = typename TypeParam::Type;
@@ -1738,7 +1701,7 @@ TYPED_TEST(SaveParamsTest, maxpool_2d_saveparams_test)
   EXPECT_TRUE(new_prediction.AllClose(prediction, DataType{0}, DataType{0}));
 }
 
-TYPED_TEST(SaveParamsTest, maxpool_2d_saveparams_backward_2_channels_test)
+TYPED_TEST(OpsSaveParamsTest, maxpool_2d_saveparams_backward_2_channels_test)
 {
   using DataType   = typename TypeParam::Type;
   using TensorType = TypeParam;
@@ -1799,7 +1762,7 @@ TYPED_TEST(SaveParamsTest, maxpool_2d_saveparams_backward_2_channels_test)
 /// MAXIMUM ///
 ///////////////
 
-TYPED_TEST(SaveParamsTest, maximum_saveparams_test)
+TYPED_TEST(OpsSaveParamsTest, maximum_saveparams_test)
 {
   using TensorType    = TypeParam;
   using DataType      = typename TypeParam::Type;
@@ -1836,7 +1799,7 @@ TYPED_TEST(SaveParamsTest, maximum_saveparams_test)
   EXPECT_TRUE(new_prediction.AllClose(prediction, DataType{0}, DataType{0}));
 }
 
-TYPED_TEST(SaveParamsTest, maximum_saveparams_backward_test)
+TYPED_TEST(OpsSaveParamsTest, maximum_saveparams_backward_test)
 {
   using TensorType = TypeParam;
   using OpKind     = typename fetch::ml::ops::Maximum<TensorType>;
@@ -1878,7 +1841,7 @@ TYPED_TEST(SaveParamsTest, maximum_saveparams_backward_test)
 /// MULTIPLY ///
 ////////////////
 
-TYPED_TEST(SaveParamsTest, multiply_saveparams_test)
+TYPED_TEST(OpsSaveParamsTest, multiply_saveparams_test)
 {
   using TensorType    = TypeParam;
   using DataType      = typename TypeParam::Type;
@@ -1915,7 +1878,7 @@ TYPED_TEST(SaveParamsTest, multiply_saveparams_test)
   EXPECT_TRUE(new_prediction.AllClose(prediction, DataType{0}, DataType{0}));
 }
 
-TYPED_TEST(SaveParamsTest, multiply_saveparams_backward_test_NB_NB)
+TYPED_TEST(OpsSaveParamsTest, multiply_saveparams_backward_test_NB_NB)
 {
   using TensorType = TypeParam;
   using OpKind     = typename fetch::ml::ops::Multiply<TensorType>;
@@ -1960,7 +1923,7 @@ TYPED_TEST(SaveParamsTest, multiply_saveparams_backward_test_NB_NB)
 /// ONE-HOT ///
 ///////////////
 
-TYPED_TEST(SaveParamsTest, one_hot_saveparams_test)
+TYPED_TEST(OpsSaveParamsTest, one_hot_saveparams_test)
 {
   using TensorType    = TypeParam;
   using DataType      = typename TypeParam::Type;
@@ -1999,7 +1962,7 @@ TYPED_TEST(SaveParamsTest, one_hot_saveparams_test)
 /// PLACEHOLDER ///
 ///////////////////
 
-TYPED_TEST(SaveParamsTest, placeholder_saveable_test)
+TYPED_TEST(OpsSaveParamsTest, placeholder_saveable_test)
 {
   using TensorType = TypeParam;
   using DataType   = typename TypeParam::Type;
@@ -2033,7 +1996,7 @@ TYPED_TEST(SaveParamsTest, placeholder_saveable_test)
 /// PRELU_OP ///
 ////////////////
 
-TYPED_TEST(SaveParamsTest, prelu_op_saveparams_test)
+TYPED_TEST(OpsSaveParamsTest, prelu_op_saveparams_test)
 {
   using TensorType    = TypeParam;
   using DataType      = typename TypeParam::Type;
@@ -2066,7 +2029,7 @@ TYPED_TEST(SaveParamsTest, prelu_op_saveparams_test)
   EXPECT_TRUE(new_prediction.AllClose(prediction, DataType{0}, DataType{0}));
 }
 
-TYPED_TEST(SaveParamsTest, prelu_op_saveparams_backward_test)
+TYPED_TEST(OpsSaveParamsTest, prelu_op_saveparams_backward_test)
 {
   using TensorType = TypeParam;
   using OpKind     = fetch::ml::ops::PReluOp<TensorType>;
@@ -2104,7 +2067,7 @@ TYPED_TEST(SaveParamsTest, prelu_op_saveparams_backward_test)
 /// REDUCE MEAN TESTS ///
 /////////////////////////
 
-TYPED_TEST(SaveParamsTest, reduce_mean_saveparams_test)
+TYPED_TEST(OpsSaveParamsTest, reduce_mean_saveparams_test)
 {
   using TensorType    = TypeParam;
   using DataType      = typename TypeParam::Type;
@@ -2134,7 +2097,7 @@ TYPED_TEST(SaveParamsTest, reduce_mean_saveparams_test)
   ::fetch::math::state_clear<DataType>();
 }
 
-TYPED_TEST(SaveParamsTest, reduce_mean_saveparams_backward_test)
+TYPED_TEST(OpsSaveParamsTest, reduce_mean_saveparams_backward_test)
 {
   using TensorType = TypeParam;
   using DataType   = typename TypeParam::Type;
@@ -2165,7 +2128,7 @@ TYPED_TEST(SaveParamsTest, reduce_mean_saveparams_backward_test)
   ::fetch::math::state_clear<DataType>();
 }
 
-TYPED_TEST(SaveParamsTest, ReduceMean_graph_serialization_test)
+TYPED_TEST(OpsSaveParamsTest, ReduceMean_graph_serialization_test)
 {
   using TensorType = TypeParam;
   using DataType   = typename TypeParam::Type;
@@ -2211,7 +2174,7 @@ TYPED_TEST(SaveParamsTest, ReduceMean_graph_serialization_test)
 /// RESHAPE TESTS ///
 /////////////////////
 
-TYPED_TEST(SaveParamsTest, Reshape_graph_serialisation_test)
+TYPED_TEST(OpsSaveParamsTest, Reshape_graph_serialisation_test)
 {
   using TensorType = TypeParam;
   using DataType   = typename TypeParam::Type;
@@ -2255,7 +2218,7 @@ TYPED_TEST(SaveParamsTest, Reshape_graph_serialisation_test)
                               ::fetch::math::function_tolerance<DataType>()));
 }
 
-TYPED_TEST(SaveParamsTest, reshape_saveparams_test)
+TYPED_TEST(OpsSaveParamsTest, reshape_saveparams_test)
 {
   using TensorType    = TypeParam;
   using DataType      = typename TypeParam::Type;
@@ -2284,7 +2247,7 @@ TYPED_TEST(SaveParamsTest, reshape_saveparams_test)
   EXPECT_TRUE(new_prediction.AllClose(prediction, DataType{0}, DataType{0}));
 }
 
-TYPED_TEST(SaveParamsTest, reshape_saveparams_backward_test)
+TYPED_TEST(OpsSaveParamsTest, reshape_saveparams_backward_test)
 {
   using TensorType = TypeParam;
   using DataType   = typename TypeParam::Type;
@@ -2323,7 +2286,7 @@ TYPED_TEST(SaveParamsTest, reshape_saveparams_backward_test)
 /// SLICE ///
 /////////////
 
-TYPED_TEST(SaveParamsTest, slice_single_axis_saveparams_test)
+TYPED_TEST(OpsSaveParamsTest, slice_single_axis_saveparams_test)
 {
   using TensorType    = TypeParam;
   using DataType      = typename TypeParam::Type;
@@ -2354,7 +2317,7 @@ TYPED_TEST(SaveParamsTest, slice_single_axis_saveparams_test)
   EXPECT_TRUE(new_prediction.AllClose(prediction, DataType{0}, DataType{0}));
 }
 
-TYPED_TEST(SaveParamsTest, slice_single_axis_saveparams_backward_test)
+TYPED_TEST(OpsSaveParamsTest, slice_single_axis_saveparams_backward_test)
 {
   using TensorType = TypeParam;
   using DataType   = typename TypeParam::Type;
@@ -2392,7 +2355,7 @@ TYPED_TEST(SaveParamsTest, slice_single_axis_saveparams_backward_test)
   ::fetch::math::state_clear<DataType>();
 }
 
-TYPED_TEST(SaveParamsTest, slice_ranged_saveparams_test)
+TYPED_TEST(OpsSaveParamsTest, slice_ranged_saveparams_test)
 {
   using TensorType    = TypeParam;
   using DataType      = typename TypeParam::Type;
@@ -2426,7 +2389,7 @@ TYPED_TEST(SaveParamsTest, slice_ranged_saveparams_test)
   EXPECT_TRUE(new_prediction.AllClose(prediction, DataType{0}, DataType{0}));
 }
 
-TYPED_TEST(SaveParamsTest, slice_ranged_saveparams_backward_test)
+TYPED_TEST(OpsSaveParamsTest, slice_ranged_saveparams_backward_test)
 {
   using TensorType   = TypeParam;
   using DataType     = typename TypeParam::Type;
@@ -2470,7 +2433,7 @@ TYPED_TEST(SaveParamsTest, slice_ranged_saveparams_backward_test)
 /// SLICE TESTS ///
 ///////////////////
 
-TYPED_TEST(SaveParamsTest, slice_multi_axes_saveparams_test)
+TYPED_TEST(OpsSaveParamsTest, slice_multi_axes_saveparams_test)
 {
   using TensorType    = TypeParam;
   using DataType      = typename TypeParam::Type;
@@ -2506,7 +2469,7 @@ TYPED_TEST(SaveParamsTest, slice_multi_axes_saveparams_test)
 /// SQRT ///
 ////////////
 
-TYPED_TEST(SaveParamsTest, sqrt_saveparams_test)
+TYPED_TEST(OpsSaveParamsTest, sqrt_saveparams_test)
 {
   using TensorType    = TypeParam;
   using DataType      = typename TypeParam::Type;
@@ -2534,7 +2497,7 @@ TYPED_TEST(SaveParamsTest, sqrt_saveparams_test)
   EXPECT_TRUE(new_prediction.AllClose(prediction, DataType{0}, DataType{0}));
 }
 
-TYPED_TEST(SaveParamsTest, sqrt_saveparams_backward_all_positive_test)
+TYPED_TEST(OpsSaveParamsTest, sqrt_saveparams_backward_all_positive_test)
 {
   using TensorType = TypeParam;
   using OpKind     = typename fetch::ml::ops::Sqrt<TensorType>;
@@ -2566,7 +2529,7 @@ TYPED_TEST(SaveParamsTest, sqrt_saveparams_backward_all_positive_test)
 /// SQUEEZE TESTS ///
 /////////////////////
 
-TYPED_TEST(SaveParamsTest, saveparams_test)
+TYPED_TEST(OpsSaveParamsTest, saveparams_test)
 {
   using TensorType    = TypeParam;
   using DataType      = typename TypeParam::Type;
@@ -2596,7 +2559,7 @@ TYPED_TEST(SaveParamsTest, saveparams_test)
   ::fetch::math::state_clear<DataType>();
 }
 
-TYPED_TEST(SaveParamsTest, saveparams_backward_test)
+TYPED_TEST(OpsSaveParamsTest, saveparams_backward_test)
 {
   using TensorType = TypeParam;
   using DataType   = typename TypeParam::Type;
@@ -2627,7 +2590,7 @@ TYPED_TEST(SaveParamsTest, saveparams_backward_test)
   ::fetch::math::state_clear<DataType>();
 }
 
-TYPED_TEST(SaveParamsTest, squeeze_graph_serialization_test)
+TYPED_TEST(OpsSaveParamsTest, squeeze_graph_serialization_test)
 {
   using TensorType = TypeParam;
   using DataType   = typename TypeParam::Type;
@@ -2673,7 +2636,7 @@ TYPED_TEST(SaveParamsTest, squeeze_graph_serialization_test)
 /// STRIDED SLICE ///
 /////////////////////
 
-TYPED_TEST(SaveParamsTest, strided_slice_saveparams_test)
+TYPED_TEST(OpsSaveParamsTest, strided_slice_saveparams_test)
 {
   using TensorType    = TypeParam;
   using SizeType      = ::fetch::math::SizeType;
@@ -2737,7 +2700,7 @@ TYPED_TEST(SaveParamsTest, strided_slice_saveparams_test)
   EXPECT_TRUE(new_prediction.AllClose(prediction, DataType{0}, DataType{0}));
 }
 
-TYPED_TEST(SaveParamsTest, strided_slice_saveparams_backward_batch_test)
+TYPED_TEST(OpsSaveParamsTest, strided_slice_saveparams_backward_batch_test)
 {
   using TensorType = TypeParam;
   using OpKind     = typename fetch::ml::ops::StridedSlice<TensorType>;
@@ -2784,7 +2747,7 @@ TYPED_TEST(SaveParamsTest, strided_slice_saveparams_backward_batch_test)
 /// SUBTRACT ///
 ////////////////
 
-TYPED_TEST(SaveParamsTest, subtract_saveparams_test)
+TYPED_TEST(OpsSaveParamsTest, subtract_saveparams_test)
 {
   using TensorType    = TypeParam;
   using DataType      = typename TypeParam::Type;
@@ -2821,7 +2784,7 @@ TYPED_TEST(SaveParamsTest, subtract_saveparams_test)
   EXPECT_TRUE(new_prediction.AllClose(prediction, DataType{0}, DataType{0}));
 }
 
-TYPED_TEST(SaveParamsTest, subtract_saveparams_backward_test)
+TYPED_TEST(OpsSaveParamsTest, subtract_saveparams_backward_test)
 {
   using TensorType = TypeParam;
   using OpKind     = fetch::ml::ops::Subtract<TensorType>;
@@ -2863,7 +2826,7 @@ TYPED_TEST(SaveParamsTest, subtract_saveparams_backward_test)
 /// SWITCH ///
 //////////////
 
-TYPED_TEST(SaveParamsTest, switch_saveparams_back_test_broadcast_mask)
+TYPED_TEST(OpsSaveParamsTest, switch_saveparams_back_test_broadcast_mask)
 {
   using TensorType = TypeParam;
   using DataType   = typename TypeParam::Type;
@@ -2916,7 +2879,7 @@ TYPED_TEST(SaveParamsTest, switch_saveparams_back_test_broadcast_mask)
 /// TANH ///
 ////////////
 
-TYPED_TEST(SaveParamsTest, tanh_saveparams_test)
+TYPED_TEST(OpsSaveParamsTest, tanh_saveparams_test)
 {
   using TensorType    = TypeParam;
   using DataType      = typename TypeParam::Type;
@@ -2944,7 +2907,7 @@ TYPED_TEST(SaveParamsTest, tanh_saveparams_test)
   EXPECT_TRUE(new_prediction.AllClose(prediction, DataType{0}, DataType{0}));
 }
 
-TYPED_TEST(SaveParamsTest, tanh_saveparams_backward_all_negative_test)
+TYPED_TEST(OpsSaveParamsTest, tanh_saveparams_backward_all_negative_test)
 {
   using TensorType = TypeParam;
   using OpKind     = typename fetch::ml::ops::TanH<TensorType>;
@@ -2982,7 +2945,7 @@ TYPED_TEST(SaveParamsTest, tanh_saveparams_backward_all_negative_test)
 /// TOPK ///
 ////////////
 
-TYPED_TEST(SaveParamsTest, top_k_saveparams_test)
+TYPED_TEST(OpsSaveParamsTest, top_k_saveparams_test)
 {
   using TensorType    = TypeParam;
   using DataType      = typename TypeParam::Type;
@@ -3016,7 +2979,7 @@ TYPED_TEST(SaveParamsTest, top_k_saveparams_test)
   EXPECT_TRUE(new_prediction.AllClose(prediction, DataType{0}, DataType{0}));
 }
 
-TYPED_TEST(SaveParamsTest, top_k_saveparams_backward_test)
+TYPED_TEST(OpsSaveParamsTest, top_k_saveparams_backward_test)
 {
   using TensorType = TypeParam;
   using SizeType   = typename TypeParam::SizeType;
@@ -3062,7 +3025,7 @@ TYPED_TEST(SaveParamsTest, top_k_saveparams_backward_test)
 /// TRANSPOSE ///
 /////////////////
 
-TYPED_TEST(SaveParamsTest, transpose_saveparams_test)
+TYPED_TEST(OpsSaveParamsTest, transpose_saveparams_test)
 {
   using TensorType    = TypeParam;
   using DataType      = typename TypeParam::Type;
@@ -3090,7 +3053,7 @@ TYPED_TEST(SaveParamsTest, transpose_saveparams_test)
   EXPECT_TRUE(new_prediction.AllClose(prediction, DataType{0}, DataType{0}));
 }
 
-TYPED_TEST(SaveParamsTest, transpose_saveparams_backward_batch_test)
+TYPED_TEST(OpsSaveParamsTest, transpose_saveparams_backward_batch_test)
 {
   using TensorType = TypeParam;
   using OpKind     = typename fetch::ml::ops::Transpose<TensorType>;
@@ -3115,7 +3078,7 @@ TYPED_TEST(SaveParamsTest, transpose_saveparams_backward_batch_test)
       ::fetch::math::function_tolerance<typename TypeParam::Type>()));
 }
 
-TYPED_TEST(SaveParamsTest, weights_saveparams_test)
+TYPED_TEST(OpsSaveParamsTest, weights_saveparams_test)
 {
   using TensorType = TypeParam;
   using DataType   = typename TypeParam::Type;
@@ -3142,7 +3105,7 @@ TYPED_TEST(SaveParamsTest, weights_saveparams_test)
   EXPECT_TRUE(new_prediction.AllClose(prediction, DataType{0}, DataType{0}));
 }
 
-TYPED_TEST(SaveParamsTest, weights_saveparams_gradient_step_test)
+TYPED_TEST(OpsSaveParamsTest, weights_saveparams_gradient_step_test)
 {
   using TensorType = TypeParam;
   using DataType   = typename TypeParam::Type;
