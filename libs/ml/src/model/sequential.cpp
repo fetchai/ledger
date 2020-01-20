@@ -61,10 +61,10 @@ Sequential<TensorType>::Sequential(ModelConfig<DataType> model_config)
 template <typename TensorType>
 void Sequential<TensorType>::SetBatchInputShape(std::vector<SizeType> const &shape)
 {
-  std::vector<SizeType> slice_shape(shape);
-  slice_shape.back() = 1;  // Because a batch shape always presume batch size is 1.
-  this->graph_ptr_->GetNode(this->input_)->SetBatchOutputShape(slice_shape);
-  this->graph_ptr_->GetNode(this->input_)->SetBatchInputShapes({slice_shape});
+  std::vector<SizeType> batch_shape(shape);
+  batch_shape.back() = 1;  // Because a batch shape always presume batch size is 1.
+  this->graph_ptr_->GetNode(this->input_)->SetBatchOutputShape(batch_shape);
+  this->graph_ptr_->GetNode(this->input_)->SetBatchInputShapes({batch_shape});
 }
 
 template <typename TensorType>
