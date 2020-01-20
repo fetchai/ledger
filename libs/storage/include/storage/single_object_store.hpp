@@ -102,6 +102,8 @@ public:
   void Clear();
 
 private:
+  uint64_t FileSize() const;
+
   std::string          file_name_;
   uint16_t             version_{1};
   mutable std::fstream file_handle_;
