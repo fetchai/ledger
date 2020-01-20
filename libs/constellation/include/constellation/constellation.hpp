@@ -215,6 +215,7 @@ private:
   CertificatePtr external_identity_;
   MuddlePtr      internal_muddle_;  ///< The muddle networking service
   TrustSystem    trust_;            ///< The trust subsystem
+  bool standalone_mode_{false};
   /// @}
 
   /// @name Transaction and State Database shards
