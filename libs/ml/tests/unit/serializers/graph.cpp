@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "serializer_test_utils.hpp"
 #include "serializer_includes.hpp"
+#include "serializer_test_utils.hpp"
 
 namespace {
 
