@@ -103,7 +103,7 @@ void FullyConnected<TensorType>::CompleteConstruction()
   assert(!this->batch_input_shapes_.empty());
   assert(!this->batch_output_shape_.empty());
   assert(this->input_node_names_.size() == 1);  // Only 1 input node is allowed
-  assert(total_outputs_ = this->batch_output_shape_.front());
+  assert(total_outputs_ == this->batch_output_shape_.front());
   FETCH_LOG_INFO(Descriptor(), "-- Completing FullyConnected initialisation ... --");
 
   NodePtrType input_node = this->nodes_.at(this->input_node_names_.front());
