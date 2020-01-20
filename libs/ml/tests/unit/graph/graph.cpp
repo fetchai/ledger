@@ -717,14 +717,14 @@ TYPED_TEST(GraphTest, graph_getTrainableNames)
   EXPECT_EQ(names.at(5), "FC3/FullyConnected_Weights");
 }
 
-TYPED_TEST(GraphTest, graph_getNodeByName_as_weight)
+TYPED_TEST(GraphTest, graph_getNode_as_weight)
 {
   using TensorType = TypeParam;
 
   // Create graph
   auto g = MakeGraph<TensorType>();
 
-  auto node_ptr = g->GetNodeByName("FC3/FullyConnected_Bias");
+  auto node_ptr = g->GetNode("FC3/FullyConnected_Bias");
 
   ASSERT_TRUE(node_ptr);
   EXPECT_EQ(node_ptr->GetNodeName(), "FullyConnected_Bias");
@@ -740,14 +740,14 @@ TYPED_TEST(GraphTest, graph_getNodeByName_as_weight)
   EXPECT_EQ(weight.shape().at(1), 1);
 }
 
-TYPED_TEST(GraphTest, graph_getNodeByName_as_graph)
+TYPED_TEST(GraphTest, graph_getNode_as_graph)
 {
   using TensorType = TypeParam;
 
   // Create graph
   auto g = MakeGraph<TensorType>();
 
-  auto node_ptr = g->GetNodeByName("FC1");
+  auto node_ptr = g->GetNode("FC1");
 
   ASSERT_TRUE(node_ptr);
   EXPECT_EQ(node_ptr->GetNodeName(), "FC1");

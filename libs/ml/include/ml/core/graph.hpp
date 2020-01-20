@@ -142,6 +142,7 @@ public:
   ////////////////////////////////////
 
   NodePtrType                   GetNode(std::string const &node_name) const;
+  std::vector<std::string>      GetNodeNames();
   std::vector<TensorType>       GetWeightsReferences() const;
   std::vector<TensorType>       GetWeights() const;
   std::vector<TensorType>       GetGradientsReferences() const;
@@ -156,8 +157,6 @@ public:
   void ResetGradients();
 
   std::vector<std::string> GetTrainableNames();
-  std::vector<std::string> GetNodeNames();
-  NodePtrType              GetNodeByName(std::string const &name) const;
 
 protected:
   std::map<std::string, NodePtrType>                            nodes_;

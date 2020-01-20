@@ -513,24 +513,6 @@ void Graph<TensorType>::SetGraphSaveableParams(GraphSaveableParams<TensorType> c
 }
 
 /**
- * returns ptr to node if node_name refers to a node in the graph
- * @tparam TensorType
- * @param node_name
- * @return
- */
-template <typename TensorType>
-typename Graph<TensorType>::NodePtrType Graph<TensorType>::GetNode(
-    std::string const &node_name) const
-{
-  NodePtrType ret = nodes_.at(node_name);
-  if (!ret)
-  {
-    throw ml::exceptions::InvalidMode("couldn't find node [" + node_name + "] in graph!");
-  }
-  return ret;
-}
-
-/**
  * Assigns data to a dataholder if the node can be found in the graph.
  * Also resets the graph cache to avoid erroneous leftover outputs
  * @param node_name name of the placeholder node in the graph (must be unique)
@@ -1029,11 +1011,11 @@ void Graph<TensorType>::RecursiveApplyTwo(Val1Type &val_1, Val2Type &val_2,
  * @return Node pointer
  */
 template <typename TensorType>
-typename Graph<TensorType>::NodePtrType Graph<TensorType>::GetNodeByName(
-    std::string const &name) const
+typename Graph<TensorType>::NodePtrType Graph<TensorType>::GetNode(
+    std::string const &node_name) const
 {
   std::string delimiter      = "/";
-  SizeType    next_delimiter = name.find(delimiter);
+  SizeType    next_delimiter = node_name.find(delimiter);
 
   // false = Graph continues
   bool leaf = false;
@@ -1043,19 +1025,19 @@ typename Graph<TensorType>::NodePtrType Graph<TensorType>::GetNodeByName(
   // If there is no slash in name, name is leaf node name
   if (next_delimiter == fetch::math::numeric_max<SizeType>())
   {
-    token = name;
+    token = node_name;
     leaf  = true;
   }
   // save name before first delimiter
   else
   {
-    token = name.substr(0, next_delimiter);
+    token = node_name.substr(0, next_delimiter);
   }
 
   NodePtrType ret = nodes_.at(token);
   if (!ret)
   {
-    throw ml::exceptions::InvalidMode("couldn't find node [" + name + "] in graph!");
+    throw ml::exceptions::InvalidMode("couldn't find node [" + node_name + "] in graph!");
   }
 
   // Node address ends with leaf node
@@ -1070,16 +1052,16 @@ typename Graph<TensorType>::NodePtrType Graph<TensorType>::GetNodeByName(
   // Node is not graph and node address continues
   if (!graph_ptr)
   {
-    throw ml::exceptions::InvalidMode("[" + name + "] is not a graph!");
+    throw ml::exceptions::InvalidMode("[" + node_name + "] is not a graph!");
   }
 
-  if (next_delimiter + 1 >= name.size() - 1)
+  if (next_delimiter + 1 >= node_name.size() - 1)
   {
-    throw ml::exceptions::InvalidMode("[" + name + "] has invalid format!");
+    throw ml::exceptions::InvalidMode("[" + node_name + "] has invalid format!");
   }
 
   // Continue recursive node search
-  return graph_ptr->GetNodeByName(name.substr(next_delimiter + 1, name.size() - 1));
+  return graph_ptr->GetNode(node_name.substr(next_delimiter + 1, node_name.size() - 1));
 }
 
 /**
