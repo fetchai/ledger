@@ -28,7 +28,7 @@
 constexpr char const *LOGGING_NAME = "NodeExecutorFactory";
 
 template <class T>
-inline void hash_combine(std::size_t &seed, const T &v)
+void hash_combine(std::size_t &seed, const T &v)
 {
   seed ^= std::hash<T>{}(v) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
 }
@@ -45,7 +45,7 @@ struct IdentifierHash
   }
 };
 
-inline bool operator==(Identifier const &lhs, Identifier const &rhs)
+bool operator==(Identifier const &lhs, Identifier const &rhs)
 {
   return (lhs.agent() == rhs.agent()) && (lhs.core() == rhs.core()) && (lhs.uri() == rhs.uri()) &&
          (lhs.score() == rhs.score());

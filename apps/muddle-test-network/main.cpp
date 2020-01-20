@@ -170,7 +170,7 @@ private:
   uint64_t counter{0};
 };
 
-inline void MakeKademliaNetwork(std::unique_ptr<Network> &network)
+void MakeKademliaNetwork(std::unique_ptr<Network> &network)
 {
   for (auto &node : network->nodes)
   {
@@ -178,10 +178,10 @@ inline void MakeKademliaNetwork(std::unique_ptr<Network> &network)
   }
 }
 
-inline void LinearConnectivity(std::unique_ptr<Network> &               network,
-                               muddle::MuddleInterface::Duration const &expire =
-                                   std::chrono::duration_cast<muddle::MuddleInterface::Duration>(
-                                       std::chrono::hours(1024 * 24)))
+void LinearConnectivity(std::unique_ptr<Network> &               network,
+                        muddle::MuddleInterface::Duration const &expire =
+                            std::chrono::duration_cast<muddle::MuddleInterface::Duration>(
+                                std::chrono::hours(1024 * 24)))
 {
   auto N = network->nodes.size();
   for (std::size_t i = 1; i < N; ++i)
@@ -192,10 +192,10 @@ inline void LinearConnectivity(std::unique_ptr<Network> &               network,
   }
 }
 
-inline void AllToAllConnectivity(std::unique_ptr<Network> &               network,
-                                 muddle::MuddleInterface::Duration const &expire =
-                                     std::chrono::duration_cast<muddle::MuddleInterface::Duration>(
-                                         std::chrono::hours(1024 * 24)))
+void AllToAllConnectivity(std::unique_ptr<Network> &               network,
+                          muddle::MuddleInterface::Duration const &expire =
+                              std::chrono::duration_cast<muddle::MuddleInterface::Duration>(
+                                  std::chrono::hours(1024 * 24)))
 {
   auto N = network->nodes.size();
   for (std::size_t i = 0; i < N; ++i)

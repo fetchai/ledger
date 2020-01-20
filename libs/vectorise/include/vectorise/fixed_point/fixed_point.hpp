@@ -568,7 +568,7 @@ private:
 };
 
 template <typename T>
-static inline bool IsMinusZero(T n);
+bool IsMinusZero(T n);
 
 template <>
 inline bool IsMinusZero<float>(float const n)
@@ -780,7 +780,7 @@ inline std::ostream &operator<<(std::ostream &s, uint128_t const &x)
 }
 
 template <uint16_t I, uint16_t F>
-inline std::ostream &operator<<(std::ostream &s, FixedPoint<I, F> const &n)
+std::ostream &operator<<(std::ostream &s, FixedPoint<I, F> const &n)
 {
   std::ios_base::fmtflags f(s.flags());
   if (FixedPoint<I, F>::IsNaN(n))
@@ -2227,43 +2227,43 @@ constexpr FixedPoint<I, F> &FixedPoint<I, F>::operator<<=(int n)
 /////////////////////////////////////////////////////
 
 template <uint16_t I, uint16_t F, typename T>
-inline meta::IfIsInteger<T, FixedPoint<I, F>> operator+(T const &a, FixedPoint<I, F> const &n)
+meta::IfIsInteger<T, FixedPoint<I, F>> operator+(T const &a, FixedPoint<I, F> const &n)
 {
   return n + a;
 }
 
 template <uint16_t I, uint16_t F, typename T>
-inline meta::IfIsInteger<T, FixedPoint<I, F>> operator-(T const &a, FixedPoint<I, F> const &n)
+meta::IfIsInteger<T, FixedPoint<I, F>> operator-(T const &a, FixedPoint<I, F> const &n)
 {
   return FixedPoint<I, F>(a) - n;
 }
 
 template <uint16_t I, uint16_t F, typename T>
-inline meta::IfIsInteger<T, FixedPoint<I, F>> operator*(T const &a, FixedPoint<I, F> const &n)
+meta::IfIsInteger<T, FixedPoint<I, F>> operator*(T const &a, FixedPoint<I, F> const &n)
 {
   return n * a;
 }
 
 template <uint16_t I, uint16_t F, typename T>
-inline meta::IfIsInteger<T, FixedPoint<I, F>> operator/(T const &a, FixedPoint<I, F> const &n)
+meta::IfIsInteger<T, FixedPoint<I, F>> operator/(T const &a, FixedPoint<I, F> const &n)
 {
   return FixedPoint<I, F>(a) / n;
 }
 
 template <uint16_t I, uint16_t F, typename T>
-inline meta::IfIsInteger<T, FixedPoint<I, F>> operator&(T const &a, FixedPoint<I, F> const &n)
+meta::IfIsInteger<T, FixedPoint<I, F>> operator&(T const &a, FixedPoint<I, F> const &n)
 {
   return n & a;
 }
 
 template <uint16_t I, uint16_t F, typename T>
-inline meta::IfIsInteger<T, FixedPoint<I, F>> operator|(T const &a, FixedPoint<I, F> const &n)
+meta::IfIsInteger<T, FixedPoint<I, F>> operator|(T const &a, FixedPoint<I, F> const &n)
 {
   return n | a;
 }
 
 template <uint16_t I, uint16_t F, typename T>
-inline meta::IfIsInteger<T, FixedPoint<I, F>> operator^(T const &a, FixedPoint<I, F> const &n)
+meta::IfIsInteger<T, FixedPoint<I, F>> operator^(T const &a, FixedPoint<I, F> const &n)
 {
   return n ^ a;
 }

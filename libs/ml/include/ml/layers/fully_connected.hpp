@@ -91,11 +91,11 @@ public:
 
   static constexpr char const *DESCRIPTOR = "FullyConnected";
 
-  inline OpType OperationType() const override
+  OpType OperationType() const override
   {
     return this->OpCode();
   }
-  inline char const *Descriptor() const override
+  char const *Descriptor() const override
   {
     return DESCRIPTOR;
   }
