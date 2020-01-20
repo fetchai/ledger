@@ -19,7 +19,6 @@
 #include "vm/array.hpp"
 #include "vm/module.hpp"
 #include "vm_modules/ledger/synergetic_job.hpp"
-#include "vm/array.hpp"
 
 namespace fetch {
 namespace vm_modules {
@@ -109,7 +108,6 @@ void SynergeticJob::set_contract_address(AddressPtr address)
 {
   contract_address_ = std::move(address);
 }
-
 
 }  // namespace ledger
 }  // namespace vm_modules

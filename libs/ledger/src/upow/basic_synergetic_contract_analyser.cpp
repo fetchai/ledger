@@ -17,38 +17,35 @@
 //------------------------------------------------------------------------------
 
 #include "crypto/identity.hpp"
+#include "ledger/chaincode/smart_contract_factory.hpp"
+#include "ledger/state_adapter.hpp"
 #include "ledger/upow/basic_synergetic_contract_analyser.hpp"
 #include "ledger/upow/synergetic_contract.hpp"
-#include "ledger/state_adapter.hpp"
 #include "ledger/upow/work.hpp"
-#include "ledger/chaincode/smart_contract_factory.hpp"
-
 
 #include <random>
-
 
 namespace fetch {
 namespace ledger {
 
 namespace {
 
-using UInt256  = vectorise::UInt<256>;
+using UInt256 = vectorise::UInt<256>;
 
 constexpr char const *LOGGING_NAME = "BasicSynergeticContractAnalyser";
-std::random_device random_device;
+std::random_device    random_device;
 
-}
+}  // namespace
 
-BasicSynergeticContractAnalyser::BasicSynergeticContractAnalyser(fetch::ledger::StorageInterface &storage, crypto::Identity miner, std::size_t num_lanes)
+BasicSynergeticContractAnalyser::BasicSynergeticContractAnalyser(
+    fetch::ledger::StorageInterface &storage, crypto::Identity miner, std::size_t num_lanes)
   : storage_{storage}
   , miner_{std::move(miner)}
   , num_lanes_{num_lanes}
-{
-}
+{}
 
-
-std::unique_ptr<SynergeticContract> BasicSynergeticContractAnalyser::GetContract(chain::Address const &contract_address,
-    uint64_t const &charge_limit)
+std::unique_ptr<SynergeticContract> BasicSynergeticContractAnalyser::GetContract(
+    chain::Address const &contract_address, uint64_t const &charge_limit)
 {
   auto contract = CreateSmartContract<SynergeticContract>(contract_address, storage_);
 
@@ -65,9 +62,9 @@ std::unique_ptr<SynergeticContract> BasicSynergeticContractAnalyser::GetContract
   return contract;
 }
 
-
 BasicSynergeticContractAnalyser::SynergeticJobPtr BasicSynergeticContractAnalyser::AnalyseContract(
-    chain::Address const &contract_address, ProblemData const &problem_data, uint64_t const &charge_limit)
+    chain::Address const &contract_address, ProblemData const &problem_data,
+    uint64_t const &charge_limit)
 {
   auto contract = GetContract(contract_address, charge_limit);
 
@@ -79,11 +76,12 @@ BasicSynergeticContractAnalyser::SynergeticJobPtr BasicSynergeticContractAnalyse
 
   uint64_t charge = 0;
 
-  //Charge for problem definition
+  // Charge for problem definition
   auto status = contract->DefineProblem(problem_data);
   if (SynergeticContract::Status::SUCCESS != status)
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Analysis failed: unable to define the problem. Reason: ", ToString(status));
+    FETCH_LOG_WARN(LOGGING_NAME,
+                   "Analysis failed: unable to define the problem. Reason: ", ToString(status));
     return {};
   }
   auto analysis_result = std::make_unique<SynergeticJob>();
@@ -92,7 +90,7 @@ BasicSynergeticContractAnalyser::SynergeticJobPtr BasicSynergeticContractAnalyse
   analysis_result->set_problem_charge(c);
   charge = c;
 
-  //Charge for work execution
+  // Charge for work execution
   auto work = std::make_shared<Work>(contract_address, miner_);
   work->UpdateNonce(UInt256(random_device()));
   WorkScore score;
@@ -100,7 +98,8 @@ BasicSynergeticContractAnalyser::SynergeticJobPtr BasicSynergeticContractAnalyse
 
   if (SynergeticContract::Status::SUCCESS != status)
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Analysis failed: unable to execute work. Reason: ", ToString(status));
+    FETCH_LOG_WARN(LOGGING_NAME,
+                   "Analysis failed: unable to execute work. Reason: ", ToString(status));
     return {};
   }
 
@@ -108,18 +107,17 @@ BasicSynergeticContractAnalyser::SynergeticJobPtr BasicSynergeticContractAnalyse
   analysis_result->set_work_charge(c - charge);
   charge = c;
 
-  //complete function charge
+  // complete function charge
   BitVector shard_mask{num_lanes_};
   shard_mask.SetAllOne();
   contract->Attach(storage_);
 
-  status = contract->Complete(work->address(), shard_mask, []() -> bool {
-          return false;
-  });
+  status = contract->Complete(work->address(), shard_mask, []() -> bool { return false; });
 
   if (SynergeticContract::Status::VALIDATION_ERROR != status)
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Analysis failed: complete contract error: ", contract_address.display(),
+    FETCH_LOG_WARN(LOGGING_NAME,
+                   "Analysis failed: complete contract error: ", contract_address.display(),
                    " Reason: ", ToString(status));
     return {};
   }
@@ -129,5 +127,5 @@ BasicSynergeticContractAnalyser::SynergeticJobPtr BasicSynergeticContractAnalyse
   return analysis_result;
 }
 
-} // namespace ledger
-} // namespace fetch
+}  // namespace ledger
+}  // namespace fetch

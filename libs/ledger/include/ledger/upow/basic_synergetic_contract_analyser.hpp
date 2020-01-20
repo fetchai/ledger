@@ -27,7 +27,6 @@ namespace ledger {
 
 class StorageInterface;
 
-
 class BasicSynergeticContractAnalyser : public SynergeticContractAnalyserInterface
 {
 public:
@@ -35,20 +34,21 @@ public:
   using ProblemData      = SynergeticContractAnalyserInterface::ProblemData;
 
   // Construction / Destruction
-  BasicSynergeticContractAnalyser(StorageInterface& storage, crypto::Identity miner, std::size_t num_lanes);
+  BasicSynergeticContractAnalyser(StorageInterface &storage, crypto::Identity miner,
+                                  std::size_t num_lanes);
   virtual ~BasicSynergeticContractAnalyser() = default;
 
-  SynergeticJobPtr AnalyseContract(chain::Address const &contract_address, ProblemData const &problem_data,
-      uint64_t const &charge_limit) override;
+  SynergeticJobPtr AnalyseContract(chain::Address const &contract_address,
+                                   ProblemData const &   problem_data,
+                                   uint64_t const &      charge_limit) override;
 
 private:
-  StorageInterface  &storage_;
-  crypto::Identity miner_;
-  std::size_t num_lanes_;
+  StorageInterface &storage_;
+  crypto::Identity  miner_;
+  std::size_t       num_lanes_;
 
-
-  std::unique_ptr<SynergeticContract> GetContract(chain::Address const &contract_address, uint64_t const &charge_limit);
-
+  std::unique_ptr<SynergeticContract> GetContract(chain::Address const &contract_address,
+                                                  uint64_t const &      charge_limit);
 };
 
 }  // namespace ledger

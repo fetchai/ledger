@@ -29,7 +29,7 @@ class SynergeticJob : public vm::Object
 public:
   SynergeticJob(vm::VM *vm, vm::TypeId type_id);
 
-  static void        Bind(vm::Module &module);
+  static void Bind(vm::Module &module);
 
   uint64_t   id() const;
   uint64_t   epoch() const;
@@ -46,7 +46,6 @@ public:
   void set_clear_charge(uint64_t const &charge);
   void set_contract_address(AddressPtr address);
 
-
 private:
   uint64_t   id_{0};
   AddressPtr contract_address_;
@@ -54,7 +53,6 @@ private:
   uint64_t   problem_charge_{0};
   uint64_t   work_charge_{0};
   uint64_t   clear_charge_{0};
-
 };
 
 }  // namespace ledger

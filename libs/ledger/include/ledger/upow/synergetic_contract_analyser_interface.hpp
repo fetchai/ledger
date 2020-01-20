@@ -18,8 +18,8 @@
 //------------------------------------------------------------------------------
 
 #include "ledger/upow/synergetic_contract.hpp"
-#include "variant/variant.hpp"
 #include "ledger/upow/synergetic_job.hpp"
+#include "variant/variant.hpp"
 
 #include <cstdint>
 #include <vector>
@@ -39,8 +39,9 @@ public:
 
   /// @name Contract Analyser Interface
   /// @{
-  virtual SynergeticJobPtr AnalyseContract(chain::Address const &contract_address, ProblemData const &problem_data,
-      uint64_t const &charge_limit) = 0;
+  virtual SynergeticJobPtr AnalyseContract(chain::Address const &contract_address,
+                                           ProblemData const &   problem_data,
+                                           uint64_t const &      charge_limit) = 0;
   /// @}
 };
 

@@ -25,10 +25,10 @@
 #include "ledger/state_adapter.hpp"
 #include "ledger/upow/naive_synergetic_miner.hpp"
 #include "ledger/upow/synergetic_base_types.hpp"
+#include "ledger/upow/synergetic_job.hpp"
 #include "ledger/upow/work.hpp"
 #include "logging/logging.hpp"
 #include "vm_modules/math/bignumber.hpp"
-#include "ledger/upow/synergetic_job.hpp"
 
 #include <random>
 #include <unordered_set>
@@ -39,10 +39,10 @@ namespace {
 
 constexpr char const *LOGGING_NAME = "NaiveSynMiner";
 
-constexpr uint64_t const CHARGE_LIMIT = 10000000000;
-constexpr uint64_t const ANALYSER_CHARGE_LIMIT = 100000;
-constexpr uint64_t const ANALYSER_CHARGE_LIMIT_INC = 10;
-constexpr uint8_t  const ANALYSER_CHARGE_LIMIT_LOOP = 3;
+constexpr uint64_t const CHARGE_LIMIT               = 10000000000;
+constexpr uint64_t const ANALYSER_CHARGE_LIMIT      = 100000;
+constexpr uint64_t const ANALYSER_CHARGE_LIMIT_INC  = 10;
+constexpr uint8_t const  ANALYSER_CHARGE_LIMIT_LOOP = 3;
 
 using UInt256  = vectorise::UInt<256>;
 using DagNodes = NaiveSynergeticMiner::DagNodes;
@@ -72,7 +72,8 @@ void ExecuteWork(SynergeticContract &contract, WorkPtr const &work)
 }  // namespace
 
 NaiveSynergeticMiner::NaiveSynergeticMiner(DAGPtr dag, StorageInterface &storage, ProverPtr prover,
-    ConstByteArray const &script, ContractAnalyserPtr contract_analyser)
+                                           ConstByteArray const &script,
+                                           ContractAnalyserPtr   contract_analyser)
   : dag_{std::move(dag)}
   , storage_{storage}
   , prover_{std::move(prover)}
@@ -118,7 +119,7 @@ void NaiveSynergeticMiner::Mine()
   // for
   // TODO(HUT): would be nicer to specify here what we want by type
   uint64_t previous_epoch;
-  auto dag_nodes = dag_->GetLatest(true, previous_epoch);
+  auto     dag_nodes = dag_->GetLatest(true, previous_epoch);
 
   // loop through the data that is available for the previous epoch
   ProblemSpaces problem_spaces{};
@@ -152,15 +153,15 @@ void NaiveSynergeticMiner::Mine()
   }
 #endif  // FETCH_LOG_DEBUG_ENABLED
 
-  //Anlyise the problem space
+  // Anlyise the problem space
   std::vector<SynergeticContractAnalyserInterface::SynergeticJobPtr> job_descriptions{};
-  std::unordered_map<std::size_t, chain::Address> address_lookup{};
-  std::size_t id = 0;
+  std::unordered_map<std::size_t, chain::Address>                    address_lookup{};
+  std::size_t                                                        id = 0;
   for (auto const &problem : problem_spaces)
   {
     SynergeticContractAnalyserInterface::SynergeticJobPtr res{};
-    auto charge_limit = ANALYSER_CHARGE_LIMIT;
-    for(uint8_t i = 0; i<ANALYSER_CHARGE_LIMIT_LOOP; ++i)
+    auto                                                  charge_limit = ANALYSER_CHARGE_LIMIT;
+    for (uint8_t i = 0; i < ANALYSER_CHARGE_LIMIT_LOOP; ++i)
     {
       res = contract_analyser_->AnalyseContract(problem.first, problem.second, charge_limit);
       if (res)
@@ -179,8 +180,9 @@ void NaiveSynergeticMiner::Mine()
     res->set_epoch(previous_epoch);
     address_lookup[id] = problem.first;
     ++id;
-    FETCH_LOG_INFO(LOGGING_NAME, "Contract ", res->id(), " analysis: problem=", res->problem_charge(), ", work=", res->work_charge(),
-        ", clear=", res->clear_charge());
+    FETCH_LOG_INFO(LOGGING_NAME, "Contract ", res->id(),
+                   " analysis: problem=", res->problem_charge(), ", work=", res->work_charge(),
+                   ", clear=", res->clear_charge());
     job_descriptions.push_back(std::move(res));
   }
 
@@ -189,16 +191,18 @@ void NaiveSynergeticMiner::Mine()
 
   if (status != SynergeticMinerScript::Status::SUCCESS)
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Failed to generate job list using synergetic miner script! Falling back to naive version...");
+    FETCH_LOG_WARN(LOGGING_NAME,
+                   "Failed to generate job list using synergetic miner script! Falling back to "
+                   "naive version...");
     selected_jobs.clear();
-    for(std::size_t i=0;i<job_descriptions.size();++i)
+    for (std::size_t i = 0; i < job_descriptions.size(); ++i)
     {
       selected_jobs.push_back(i);
     }
   }
 
   uint64_t expected_charge{0};
-  for(auto const& job : selected_jobs)
+  for (auto const &job : selected_jobs)
   {
     auto it = address_lookup.find(job);
     if (it == address_lookup.end())
@@ -233,7 +237,7 @@ void NaiveSynergeticMiner::EnableMining(bool enable)
 
 WorkPtr NaiveSynergeticMiner::MineSolution(chain::Address const &contract_address,
                                            ProblemData const &   problem_data,
-                                           uint64_t &expected_charge)
+                                           uint64_t &            expected_charge)
 {
   StateAdapter storage_adapter{storage_, "fetch.token"};
 
@@ -312,10 +316,9 @@ WorkPtr NaiveSynergeticMiner::MineSolution(chain::Address const &contract_addres
   return best_work;
 }
 
-
 uint64_t NaiveSynergeticMiner::GetBalance()
 {
-  StateAdapter storage_adapter{storage_, "fetch.token"};
+  StateAdapter            storage_adapter{storage_, "fetch.token"};
   ContractContext         context{&token_contract_, miner_address_, nullptr, &storage_adapter, 0};
   ContractContextAttacher raii(token_contract_, context);
   return token_contract_.GetBalance(miner_address_);

@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "chain/address.hpp"
+#include "core/digest.hpp"
 #include "ledger/fees/chargeable.hpp"
 #include "ledger/upow/synergetic_base_types.hpp"
 #include "vm/analyser.hpp"
@@ -25,7 +26,6 @@
 #include "vm/compiler.hpp"
 #include "vm/module.hpp"
 #include "vm/vm.hpp"
-#include "core/digest.hpp"
 #include "vm_modules/ledger/forward_decl.hpp"
 
 #include <memory>
@@ -121,11 +121,11 @@ private:
 
   std::unique_ptr<ContractContext> context_{};
 
-  Digest         digest_;
-  ModulePtr      module_;
-  CompilerPtr    compiler_;
-  IRPtr          ir_;
-  ExecutablePtr  executable_;
+  Digest        digest_;
+  ModulePtr     module_;
+  CompilerPtr   compiler_;
+  IRPtr         ir_;
+  ExecutablePtr executable_;
 
   std::string problem_function_;
   std::string work_function_;

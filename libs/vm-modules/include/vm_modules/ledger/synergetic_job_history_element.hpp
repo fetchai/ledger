@@ -17,7 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-
 #include "vm_modules/ledger/synergetic_job.hpp"
 
 namespace fetch {
@@ -30,7 +29,8 @@ public:
   using SynergeticJobArray = vm::Ptr<vm::Array<vm::Ptr<SynergeticJob>>>;
   using SelectedJobArray   = vm::Ptr<vm::Array<uint64_t>>;
 
-  SynergeticJobHistoryElement(vm::VM *vm, vm::TypeId type_id, SynergeticJobArray jobs, SelectedJobArray selected_jobs);
+  SynergeticJobHistoryElement(vm::VM *vm, vm::TypeId type_id, SynergeticJobArray jobs,
+                              SelectedJobArray selected_jobs);
 
   static void Bind(vm::Module &module);
 
@@ -38,15 +38,15 @@ public:
   void set_actual_charge(int64_t const &charge);
 
   SynergeticJobArray jobs();
-  SelectedJobArray selected_jobs();
-  int64_t expected_charge();
-  int64_t actual_charge();
+  SelectedJobArray   selected_jobs();
+  int64_t            expected_charge();
+  int64_t            actual_charge();
 
 private:
   SynergeticJobArray jobs_;
-  SelectedJobArray selected_jobs_;
-  int64_t expected_charge_;
-  int64_t actual_charge_;
+  SelectedJobArray   selected_jobs_;
+  int64_t            expected_charge_;
+  int64_t            actual_charge_;
 };
 
 }  // namespace ledger

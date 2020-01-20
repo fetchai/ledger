@@ -30,28 +30,27 @@ namespace ledger {
 class SynergeticJobHistory
 {
 public:
-  using VmSynergeticJob        = vm::Ptr<vm_modules::ledger::SynergeticJob>;
-  using VmSynergeticJobArray   = vm::Ptr<vm::Array<VmSynergeticJob>>;
-  using VmSelectedJobs         = vm::Ptr<vm::Array<uint64_t>>;
-  using VmHistoryElementType   = vm_modules::ledger::SynergeticJobHistoryElement;
-  using VmHistoryElement       = vm::Ptr<VmHistoryElementType>;
-  using VmType                 = vm::Ptr<vm::Array<VmHistoryElement>>;
+  using VmSynergeticJob      = vm::Ptr<vm_modules::ledger::SynergeticJob>;
+  using VmSynergeticJobArray = vm::Ptr<vm::Array<VmSynergeticJob>>;
+  using VmSelectedJobs       = vm::Ptr<vm::Array<uint64_t>>;
+  using VmHistoryElementType = vm_modules::ledger::SynergeticJobHistoryElement;
+  using VmHistoryElement     = vm::Ptr<VmHistoryElementType>;
+  using VmType               = vm::Ptr<vm::Array<VmHistoryElement>>;
 
   SynergeticJobHistory(uint64_t const &cache_size);
   virtual ~SynergeticJobHistory() = default;
 
-  void                  AddElement(vm::VM *vm, VmSynergeticJobArray &jobs, VmSelectedJobs &selected_jobs);
+  void AddElement(vm::VM *vm, VmSynergeticJobArray &jobs, VmSelectedJobs &selected_jobs);
   VmHistoryElementType *back();
   std::size_t           size();
   VmType                Get(vm::VM *vm);
 
 private:
-  using UnderlyingArrayElement = vm::Array<VmHistoryElement >::ElementType;
+  using UnderlyingArrayElement = vm::Array<VmHistoryElement>::ElementType;
   using UnderlyingArray        = std::vector<UnderlyingArrayElement>;
 
-  uint64_t max_size_;
+  uint64_t        max_size_;
   UnderlyingArray history_;
-
 };
 
 }  // namespace ledger

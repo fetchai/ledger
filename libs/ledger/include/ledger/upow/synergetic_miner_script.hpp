@@ -22,12 +22,12 @@
 #include "ledger/upow/synergetic_base_types.hpp"
 #include "ledger/upow/synergetic_job.hpp"
 #include "ledger/upow/synergetic_job_history.hpp"
+#include "variant/variant.hpp"
 #include "vm/analyser.hpp"
 #include "vm/common.hpp"
 #include "vm/compiler.hpp"
 #include "vm/module.hpp"
 #include "vm/vm.hpp"
-#include "variant/variant.hpp"
 
 #include <memory>
 #include <string>
@@ -105,7 +105,6 @@ private:
   std::string mine_jobs_function_;
 
   uint64_t current_balance_{0};
-
 };
 
 }  // namespace ledger

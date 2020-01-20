@@ -28,9 +28,9 @@
 #include "vm/function_decorators.hpp"
 #include "vm/vm.hpp"
 #include "vm_modules/core/structured_data.hpp"
+#include "vm_modules/ledger/synergetic_job.hpp"
 #include "vm_modules/math/bignumber.hpp"
 #include "vm_modules/vm_factory.hpp"
-#include "vm_modules/ledger/synergetic_job.hpp"
 
 #include <sstream>
 #include <stdexcept>
@@ -48,10 +48,10 @@ using byte_array::ConstByteArray;
 using crypto::Hash;
 using crypto::SHA256;
 
-using Status                        = SynergeticMinerScript::Status;
-using SynergeticJobs                = SynergeticMinerScript::SynergeticJobs;
-using VmSynergeticJob               = vm::Ptr<vm_modules::ledger::SynergeticJob>;
-using VmSynergeticJobArray          = vm::Ptr<vm::Array<VmSynergeticJob>>;
+using Status               = SynergeticMinerScript::Status;
+using SynergeticJobs       = SynergeticMinerScript::SynergeticJobs;
+using VmSynergeticJob      = vm::Ptr<vm_modules::ledger::SynergeticJob>;
+using VmSynergeticJobArray = vm::Ptr<vm::Array<VmSynergeticJob>>;
 
 constexpr char const *LOGGING_NAME = "SynergeticMinerScript";
 
@@ -89,9 +89,9 @@ VmSynergeticJobArray CreateSynergeticJobData(vm::VM *vm, SynergeticJobs const &j
   }
 
   // create the array
-  auto *ret = new vm::Array<VmSynergeticJob >(vm, vm->GetTypeId<vm::IArray>(),
-                                              vm->GetTypeId<VmSynergeticJob>(),
-                                              static_cast<int32_t>(elements.size()));
+  auto *ret = new vm::Array<VmSynergeticJob>(vm, vm->GetTypeId<vm::IArray>(),
+                                             vm->GetTypeId<VmSynergeticJob>(),
+                                             static_cast<int32_t>(elements.size()));
 
   // mov e the constructed elements over to the array
   ret->elements = std::move(elements);
@@ -179,7 +179,7 @@ SynergeticMinerScript::SynergeticMinerScript(ConstByteArray const &source)
       *function = f.name;
     }
   }
-  
+
   vm_ = std::make_unique<vm::VM>(module_.get());
 }
 
@@ -193,12 +193,14 @@ void SynergeticMinerScript::set_back_expected_charge(int64_t const &charge)
   history_.back()->set_expected_charge(charge);
 }
 
-Status SynergeticMinerScript::GenerateJobList(SynergeticJobs const &jobs, JobList &generated_job_list, uint64_t balance)
+Status SynergeticMinerScript::GenerateJobList(SynergeticJobs const &jobs,
+                                              JobList &generated_job_list, uint64_t balance)
 {
-  if (history_.size()>0)
+  if (history_.size() > 0)
   {
-    auto increment = static_cast<int64_t>(balance - current_balance_); // < 0 then miner moved founds out
-    //we are not handling found transfer in and out to the miner address
+    auto increment =
+        static_cast<int64_t>(balance - current_balance_);  // < 0 then miner moved founds out
+    // we are not handling found transfer in and out to the miner address
     history_.back()->set_actual_charge(increment);
   }
   current_balance_ = balance;
@@ -211,7 +213,8 @@ Status SynergeticMinerScript::GenerateJobList(SynergeticJobs const &jobs, JobLis
 
   // execute the problem definition function
   std::string error{};
-  if (!vm_->Execute(*executable_, mine_jobs_function_, error, result, jobs_vm, history_.Get(vm_.get())))
+  if (!vm_->Execute(*executable_, mine_jobs_function_, error, result, jobs_vm,
+                    history_.Get(vm_.get())))
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Problem definition error: ", error);
     return Status::VM_EXECUTION_ERROR;
@@ -221,13 +224,12 @@ Status SynergeticMinerScript::GenerateJobList(SynergeticJobs const &jobs, JobLis
 
   FETCH_LOG_WARN(LOGGING_NAME, "Miner contract executed! Selected: ", array->Count());
 
-
   generated_job_list.clear();
-  //int64_t expected_charge = 0;
-  for (vm::AnyInteger i(0, vm::TypeIds::Int32); i.primitive.i32 < array->Count();++i.primitive.i32)
+  // int64_t expected_charge = 0;
+  for (vm::AnyInteger i(0, vm::TypeIds::Int32); i.primitive.i32 < array->Count(); ++i.primitive.i32)
   {
     uint64_t id = array->GetIndexedValue(i).Get<uint64_t>();
-    //expected_charge += static_cast<int64_t>(jobs[id]->total_charge());
+    // expected_charge += static_cast<int64_t>(jobs[id]->total_charge());
     generated_job_list.push_back(id);
     FETCH_LOG_WARN(LOGGING_NAME, "Selected:  ", id);
   }

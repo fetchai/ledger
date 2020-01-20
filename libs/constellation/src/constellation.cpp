@@ -40,9 +40,9 @@
 #include "ledger/storage_unit/lane_remote_control.hpp"
 #include "ledger/tx_query_http_interface.hpp"
 #include "ledger/tx_status_http_interface.hpp"
+#include "ledger/upow/basic_synergetic_contract_analyser.hpp"
 #include "ledger/upow/synergetic_execution_manager.hpp"
 #include "ledger/upow/synergetic_executor.hpp"
-#include "ledger/upow/basic_synergetic_contract_analyser.hpp"
 #include "muddle/rpc/client.hpp"
 #include "muddle/rpc/server.hpp"
 #include "network/generics/atomic_inflight_counter.hpp"
@@ -645,10 +645,11 @@ bool Constellation::OnBringUpExternalNetwork(
 
   if (cfg_.features.IsEnabled("synergetic") && dag_)
   {
-    auto contract_anlyser = std::make_unique<ledger::BasicSynergeticContractAnalyser>(*storage_,
-        external_identity_->identity(), cfg_.num_lanes());
+    auto contract_anlyser = std::make_unique<ledger::BasicSynergeticContractAnalyser>(
+        *storage_, external_identity_->identity(), cfg_.num_lanes());
     auto syn_miner = std::make_unique<NaiveSynergeticMiner>(dag_, *storage_, external_identity_,
-        cfg_.synergetic_miner_script_contents, std::move(contract_anlyser));
+                                                            cfg_.synergetic_miner_script_contents,
+                                                            std::move(contract_anlyser));
     if (!reactor_.Attach(syn_miner->GetWeakRunnable()))
     {
       FETCH_LOG_ERROR(LOGGING_NAME, "Failed to attach synergetic miner to reactor.");

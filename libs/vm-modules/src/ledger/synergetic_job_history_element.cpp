@@ -19,7 +19,6 @@
 #include "vm/array.hpp"
 #include "vm/module.hpp"
 #include "vm_modules/ledger/synergetic_job_history_element.hpp"
-#include "vm/array.hpp"
 
 namespace fetch {
 namespace vm_modules {
@@ -27,8 +26,9 @@ namespace ledger {
 
 using namespace fetch::vm;
 
-SynergeticJobHistoryElement::SynergeticJobHistoryElement(VM *vm, TypeId type_id, SynergeticJobArray jobs,
-    SelectedJobArray selected_jobs)
+SynergeticJobHistoryElement::SynergeticJobHistoryElement(VM *vm, TypeId type_id,
+                                                         SynergeticJobArray jobs,
+                                                         SelectedJobArray   selected_jobs)
   : Object{vm, type_id}
   , jobs_{std::move(jobs)}
   , selected_jobs_{std::move(selected_jobs)}
@@ -42,7 +42,8 @@ void SynergeticJobHistoryElement::Bind(Module &module)
       .CreateMemberFunction("expectedCharge", &SynergeticJobHistoryElement::expected_charge)
       .CreateMemberFunction("actualCharge", &SynergeticJobHistoryElement::actual_charge);
 
-  module.GetClassInterface<IArray>().CreateInstantiationType<Array<Ptr<SynergeticJobHistoryElement>>>();
+  module.GetClassInterface<IArray>()
+      .CreateInstantiationType<Array<Ptr<SynergeticJobHistoryElement>>>();
 }
 
 void SynergeticJobHistoryElement::set_actual_charge(int64_t const &charge)

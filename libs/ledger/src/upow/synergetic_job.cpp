@@ -22,7 +22,7 @@ namespace fetch {
 namespace ledger {
 
 namespace {
-  constexpr char const *LOGGING_NAME = "SynergeticJob";
+constexpr char const *LOGGING_NAME = "SynergeticJob";
 }
 
 void SynergeticJob::set_id(uint64_t const &id)

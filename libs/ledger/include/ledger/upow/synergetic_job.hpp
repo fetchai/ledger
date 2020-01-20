@@ -30,7 +30,7 @@ public:
   using Address = chain::Address;
   using VmType  = vm::Ptr<vm_modules::ledger::SynergeticJob>;
 
-  SynergeticJob() = default;
+  SynergeticJob()          = default;
   virtual ~SynergeticJob() = default;
 
   void set_id(uint64_t const &id);
@@ -46,18 +46,17 @@ public:
   uint64_t const &work_charge() const;
   uint64_t const &clear_charge() const;
   uint64_t        total_charge() const;
-  Address  const &contract_address() const;
+  Address const & contract_address() const;
 
   VmType ToVMType(vm::VM *vm);
 
 private:
-  uint64_t   id_{0};
-  Address    contract_address_;
-  uint64_t   epoch_{0};
-  uint64_t   problem_charge_{0};
-  uint64_t   work_charge_{0};
-  uint64_t   clear_charge_{0};
-
+  uint64_t id_{0};
+  Address  contract_address_;
+  uint64_t epoch_{0};
+  uint64_t problem_charge_{0};
+  uint64_t work_charge_{0};
+  uint64_t clear_charge_{0};
 };
 
 }  // namespace ledger

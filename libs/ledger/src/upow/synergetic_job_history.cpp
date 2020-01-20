@@ -21,45 +21,46 @@
 namespace fetch {
 namespace ledger {
 
-using VmSynergeticJob      = SynergeticJobHistory::VmSynergeticJob ;
-using VmSynergeticJobArray = SynergeticJobHistory::VmSynergeticJobArray ;
+using VmSynergeticJob      = SynergeticJobHistory::VmSynergeticJob;
+using VmSynergeticJobArray = SynergeticJobHistory::VmSynergeticJobArray;
 using VmSelectedJobs       = SynergeticJobHistory::VmSelectedJobs;
 using VmHistoryElement     = SynergeticJobHistory::VmHistoryElement;
 
 namespace {
 constexpr char const *LOGGING_NAME = "SynergeticJobHistory";
 
-
-VmHistoryElement CreateHistoryElement(fetch::vm::VM *vm, VmSynergeticJobArray &jobs, VmSelectedJobs &selected_jobs)
+VmHistoryElement CreateHistoryElement(fetch::vm::VM *vm, VmSynergeticJobArray &jobs,
+                                      VmSelectedJobs &selected_jobs)
 {
   VmHistoryElement data{};
   try
   {
-    data = vm->CreateNewObject<vm_modules::ledger::SynergeticJobHistoryElement>(jobs, selected_jobs);
+    data =
+        vm->CreateNewObject<vm_modules::ledger::SynergeticJobHistoryElement>(jobs, selected_jobs);
   }
   catch (std::exception const &ex)
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "CreateHistoryElement: Failed to parse input jobs data: ", ex.what());
+    FETCH_LOG_WARN(LOGGING_NAME,
+                   "CreateHistoryElement: Failed to parse input jobs data: ", ex.what());
   }
   return data;
 }
 
-} //namespace
-
+}  // namespace
 
 SynergeticJobHistory::SynergeticJobHistory(uint64_t const &cache_size)
   : max_size_{cache_size}
-{
-}
+{}
 
-void SynergeticJobHistory::AddElement(vm::VM *vm, VmSynergeticJobArray &jobs, VmSelectedJobs &selected_jobs)
+void SynergeticJobHistory::AddElement(vm::VM *vm, VmSynergeticJobArray &jobs,
+                                      VmSelectedJobs &selected_jobs)
 {
   auto data = CreateHistoryElement(vm, jobs, selected_jobs);
 
   if (data)
   {
     history_.emplace_back(std::move(data));
-    while(history_.size() > max_size_)
+    while (history_.size() > max_size_)
     {
       history_.erase(history_.begin());
     }
@@ -69,7 +70,7 @@ void SynergeticJobHistory::AddElement(vm::VM *vm, VmSynergeticJobArray &jobs, Vm
 SynergeticJobHistory::VmHistoryElementType *SynergeticJobHistory::back()
 {
   auto ptr = history_.back();
-  return dynamic_cast<VmHistoryElementType*>(&(*ptr));
+  return dynamic_cast<VmHistoryElementType *>(&(*ptr));
 }
 
 std::size_t SynergeticJobHistory::size()
@@ -79,7 +80,7 @@ std::size_t SynergeticJobHistory::size()
 
 SynergeticJobHistory::VmType SynergeticJobHistory::Get(vm::VM *vm)
 {
-// create the array
+  // create the array
   auto *ret = new vm::Array<VmHistoryElement>(vm, vm->GetTypeId<vm::IArray>(),
                                               vm->GetTypeId<VmHistoryElement>(),
                                               static_cast<int32_t>(history_.size()));
