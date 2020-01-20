@@ -83,6 +83,7 @@ void Graph<TensorType>::Compile()
     // appear in middle of graph
     if (valid)
     {
+      ComputeAllNodeShapes();
       graph_state_ = GraphState::COMPILED;
     }
     else
@@ -204,6 +205,38 @@ TensorType Graph<TensorType>::ForwardImplementation(std::string const &node_name
 }
 
 /**
+ * Computes and/or deduces layer output shapes, recursively traversing the Graph
+ * up to leaf (input) nodes. Layer output shape computation/deduction results
+ * are cached in each Node.
+ * @param node_name
+ */
+template <typename TensorType>
+void Graph<TensorType>::ComputeAllNodeShapes()
+{
+  if (nodes_.empty() || connections_.empty())
+  {
+    FETCH_LOG_ERROR(
+        DESCRIPTOR,
+        " Batch output shape computing is impossible : connection list empty or no nodes");
+    return;
+  }
+  for (auto const &node_name_and_ptr : nodes_)
+  {
+    NodePtrType node = node_name_and_ptr.second;
+
+    // A recursive call will trigger shape computing in all previous nodes or return
+    // a shape if it has been already computed.
+    math::SizeVector const output_shape = node->BatchOutputShape();
+
+    if (output_shape.empty())
+    {
+      FETCH_LOG_ERROR(DESCRIPTOR, " Batch output shape computing failed for node " +
+                                      node_name_and_ptr.first + ".");
+    }
+  }
+}
+
+/**
  * Backpropagate given error signal through the graph
  * If no error signal is given, an empty error signal is used
  * (which is valid when backpropagating from a loss function op
@@ -268,7 +301,6 @@ void Graph<TensorType>::BackPropagate(std::string const &node_name, TensorType c
 template <typename TensorType>
 void Graph<TensorType>::SetRegularisation(RegPtrType regulariser, DataType regularisation_rate)
 {
-  Compile();
   for (auto &t : trainable_lookup_)
   {
     auto tmp = std::dynamic_pointer_cast<ops::Trainable<TensorType>>(t.second->GetOp());
@@ -544,7 +576,7 @@ void Graph<TensorType>::SetInputReference(std::string const &node_name, TensorTy
 template <typename TensorType>
 void Graph<TensorType>::SetInput(std::string const &node_name, TensorType const &data)
 {
-  SetInputReference(node_name, data.Copy());
+  SetInputReference(node_name, data);
 }
 
 /**
@@ -1071,6 +1103,12 @@ std::vector<std::string> Graph<TensorType>::GetTrainableNames()
   std::vector<std::string> ret;
   GetNamesRecursively<graph_func_signature>(ret, &Graph<TensorType>::GetTrainableLookup);
   return ret;
+}
+
+template <typename TensorType>
+std::vector<std::pair<std::string, std::vector<std::string>>> Graph<TensorType>::Connections()
+{
+  return connections_;
 }
 
 /**
