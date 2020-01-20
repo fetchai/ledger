@@ -280,7 +280,8 @@ std::shared_ptr<fetch::ml::Node<TensorType>> FullyConnected<TensorType>::FindNod
       return candidate;
     }
   }
-  return nullptr;
+  throw std::runtime_error("There is no node with op type " +
+                           std::to_string(static_cast<int>(code)) + " in this graph.");
 }
 
 ///////////////////////////////
