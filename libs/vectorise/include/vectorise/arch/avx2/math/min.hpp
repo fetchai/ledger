@@ -22,6 +22,34 @@
 namespace fetch {
 namespace vectorise {
 
+inline VectorRegister<int8_t, 128> Min(VectorRegister<int8_t, 128> const &a,
+                                        VectorRegister<int8_t, 128> const &b)
+{
+  auto const ret = VectorRegister<int8_t, 128>(_mm_min_epi8(a.data(), b.data()));
+  return ret;
+}
+
+inline VectorRegister<int8_t, 256> Min(VectorRegister<int8_t, 256> const &a,
+                                        VectorRegister<int8_t, 256> const &b)
+{
+  auto const ret = VectorRegister<int8_t, 256>(_mm256_min_epi8(a.data(), b.data()));
+  return ret;
+}
+
+inline VectorRegister<int16_t, 128> Min(VectorRegister<int16_t, 128> const &a,
+                                        VectorRegister<int16_t, 128> const &b)
+{
+  auto const ret = VectorRegister<int16_t, 128>(_mm_min_epi16(a.data(), b.data()));
+  return ret;
+}
+
+inline VectorRegister<int16_t, 256> Min(VectorRegister<int16_t, 256> const &a,
+                                        VectorRegister<int16_t, 256> const &b)
+{
+  auto const ret = VectorRegister<int16_t, 256>(_mm256_min_epi16(a.data(), b.data()));
+  return ret;
+}
+
 inline VectorRegister<int32_t, 128> Min(VectorRegister<int32_t, 128> const &a,
                                         VectorRegister<int32_t, 128> const &b)
 {
