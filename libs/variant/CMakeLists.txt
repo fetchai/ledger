@@ -13,7 +13,6 @@ setup_compiler()
 setup_library(fetch-variant)
 target_link_libraries(fetch-variant
                       PUBLIC fetch-core
-                             fetch-crypto
                              fetch-meta
                              fetch-logging)
 
