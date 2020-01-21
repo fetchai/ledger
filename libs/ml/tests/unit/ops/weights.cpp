@@ -80,5 +80,3 @@ TYPED_TEST(WeightsTest, gradient_step_test)
 }
 
 }  // namespace
-}  // namespace ml
-}  // namespace fetch
