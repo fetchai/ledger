@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "math/base_types.hpp"
+#include "meta/vm_types.hpp"
 
 #include <functional>
 #include <memory>
@@ -147,6 +148,9 @@ public:
   {
     return static_cast<bool>(cached_output_status_ == CachedOutputState::VALID_CACHE);
   }
+
+  fetch::vm::ChargeAmount ForwardCost(std::vector<fetch::math::SizeVector> const &input_shapes);
+  fetch::vm::ChargeAmount BackwardCost(std::vector<fetch::math::SizeVector> const &input_shapes);
 
 private:
   std::vector<NodeWeakPtrType> input_nodes_;

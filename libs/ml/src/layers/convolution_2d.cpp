@@ -37,6 +37,7 @@ Convolution2D<TensorType>::Convolution2D(SizeType const output_channels,
   , output_channels_{output_channels}
   , stride_size_{stride_size}
 {
+  FETCH_LOG_INFO(Descriptor(), "-- Convolution2D initialisation ... --");
   std::string input =
       this->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>(name + "_Input", {});
 
@@ -54,16 +55,23 @@ Convolution2D<TensorType>::Convolution2D(SizeType const output_channels,
   output = fetch::ml::details::AddActivationNode<TensorType>(activation_type, this,
                                                              name + "_Activation", output);
 
-  // A temporary fix to prevent Conv2d shape computing crash. Dummy width (32) and height (32).
-  // TODO(VH): Split initialisation as in FullyConnected to prevent dummies.
   this->GetNode(weights)->SetBatchOutputShape(
       {output_channels_, input_channels_, kernel_size_, kernel_size_, 1});
-  this->GetNode(input)->SetBatchOutputShape({output_channels_, 32, 32, 1});
+
+  // TODO(ML-470): Preliminary batch shape of a Conv2d layer (channels x 32(h) x 32(w) x
+  // 1(batch) ), is used here now, however, real width and height are to be set later on graph
+  // compilation (when expected Input shape of the Model/Graph is already known). Thus the
+  // convolutional weight init can be done on constructions, but this->input shape has to be
+  // inited only in this->CompleteInitialisation() override.
+  static constexpr SizeType DEFAULT_HEIGHT = 32;
+  static constexpr SizeType DEFAULT_WIDTH  = 32;
+  this->GetNode(input)->SetBatchOutputShape({output_channels_, DEFAULT_HEIGHT, DEFAULT_WIDTH, 1});
 
   this->AddInputNode(input);
   this->SetOutputNode(output);
 
   this->Compile();
+  FETCH_LOG_INFO(Descriptor(), "-- Convolution2D initialisation completed. --");
 }
 
 template <typename TensorType>

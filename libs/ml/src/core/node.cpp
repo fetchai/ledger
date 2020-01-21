@@ -94,6 +94,20 @@ OpType Node<TensorType>::OperationType() const
 }
 
 template <typename TensorType>
+vm::ChargeAmount Node<TensorType>::ForwardCost(const std::vector<math::SizeVector> &input_shapes)
+{
+  FETCH_UNUSED(input_shapes);
+  // TODO(VH): impl. a recursive cost call until leaf node(s);
+}
+
+template <typename TensorType>
+vm::ChargeAmount Node<TensorType>::BackwardCost(const std::vector<math::SizeVector> &input_shapes)
+{
+  FETCH_UNUSED(input_shapes);
+  // TODO(VH): impl. a backward recursive cost call until output node(s);
+}
+
+template <typename TensorType>
 void Node<TensorType>::SetBatchOutputShape(const Shape &new_shape)
 {
   op_ptr_->SetBatchOutputShape(new_shape);
