@@ -50,6 +50,26 @@ struct FileMetadata
   }
 };
 
+// Helper function to read a file handle, throwing if the bytes read is not
+// what was asked or if the stream dies afterwards
+void ReadFile(std::fstream &stream, char *data, std::streamsize size)
+{
+  stream.read(data, size);
+
+  if (stream.gcount() != size)
+  {
+    FETCH_LOG_WARN("ReadFileHelper", "Failed to read enough bytes. Expected: ", size,
+                   " got: ", stream.gcount());
+    throw StorageException("Attempted to read file failed");
+  }
+
+  if (!stream)
+  {
+    FETCH_LOG_WARN("ReadFileHelper", "stream died.");
+    throw StorageException("File handle died after reading");
+  }
+}
+
 bool SingleObjectStore::Load(std::string const &file_name)
 {
   file_name_ = file_name;
@@ -93,7 +113,7 @@ bool SingleObjectStore::Load(std::string const &file_name)
 
   // Read the metadata
   file_handle_.seekg(0, std::fstream::beg);
-  file_handle_.read(reinterpret_cast<char *>(&meta), sizeof(meta));
+  ReadFile(file_handle_, reinterpret_cast<char *>(&meta), sizeof(meta));
 
   if (meta.version != version_)
   {
@@ -136,7 +156,7 @@ void SingleObjectStore::GetRaw(ByteArray &data) const
   }
 
   file_handle_.seekg(0, std::fstream::beg);
-  file_handle_.read(reinterpret_cast<char *>(&meta), sizeof(meta));
+  ReadFile(file_handle_, reinterpret_cast<char *>(&meta), sizeof(meta));
 
   if (meta.object_size == 0)
   {
@@ -146,7 +166,7 @@ void SingleObjectStore::GetRaw(ByteArray &data) const
 
   data.Resize(meta.object_size);
 
-  file_handle_.read(data.char_pointer(), static_cast<int64_t>(meta.object_size));
+  ReadFile(file_handle_, data.char_pointer(), static_cast<int64_t>(meta.object_size));
 
   if (!file_handle_)
   {
