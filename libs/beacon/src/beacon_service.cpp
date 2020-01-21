@@ -252,11 +252,22 @@ void BeaconService::ReloadState(State &next_state)
 
   try
   {
+    uint64_t max_iterations = 100000;
+
     // Load all signatures from the file
     for (auto const &siginfo : saved_state_all_sigs_)
     {
       FETCH_LOG_INFO(LOGGING_NAME, "Adding sigs for: ", siginfo.round);
       signatures_being_built_[siginfo.round] = siginfo;
+
+      max_iterations--;
+
+      // If the file is corrupted this might happen
+      if (max_iterations == 0)
+      {
+        FETCH_LOG_ERROR(LOGGING_NAME, "Seemingly infinite loop when reloading signatures!");
+        break;
+      }
     }
 
     FETCH_LOG_INFO(LOGGING_NAME, "Loaded signatures. Attempting loading of the rest of the class.");
@@ -331,6 +342,8 @@ BeaconService::State BeaconService::OnReloadOnStartup()
 {
   // Default starting state, will be overwritten on successful load
   State state_after_reload = State::WAIT_FOR_SETUP_COMPLETION;
+
+  FETCH_LOCK(mutex_);
 
   ReloadState(state_after_reload);
 
