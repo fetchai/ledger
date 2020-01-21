@@ -11,9 +11,6 @@ include(${FETCH_ROOT_CMAKE_DIR}/BuildTools.cmake)
 setup_compiler()
 
 setup_library(fetch-variant)
-target_link_libraries(fetch-variant
-                      PUBLIC fetch-core
-                             fetch-meta
-                             fetch-logging)
+target_link_libraries(fetch-variant PUBLIC fetch-core fetch-meta fetch-logging)
 
 add_test_target()
