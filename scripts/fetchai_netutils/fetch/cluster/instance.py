@@ -64,6 +64,7 @@ class ConstellationInstance(Instance):
         self._lanes = None
         self._slices = None
         self._entity = Entity()
+        self._extra_cmd = []
 
         # fake construct the instances
         super().__init__([], root)
@@ -92,7 +93,7 @@ class ConstellationInstance(Instance):
 
         print('Constellation instance {} on pid {}'.format(
             self._port_start, self._process.pid))
-        print(self._cmd)
+        print(' '.join(self._cmd))
 
     @property
     def p2p_address(self):
@@ -188,11 +189,14 @@ class ConstellationInstance(Instance):
         if self._feature_flags:
             cmd += ['-experimental', ','.join(self._feature_flags)]
 
+        if len(self._extra_cmd) > 0:
+            cmd = [*cmd, *self._extra_cmd]
+
         self._cmd = list(map(str, cmd))
 
     # Append arbitrary flags
     def append_to_cmd(self, extra):
-        self._cmd = [*self._cmd, *extra]
+        self._extra_cmd = [*self._extra_cmd, *extra]
 
 
 class DmlfEtchInstance(Instance):
@@ -208,6 +212,7 @@ class DmlfEtchInstance(Instance):
         super().__init__([], root)
 
         self._update_cmd()
+        self._extra_cmd = []
 
     def add_peer(self, peer):
         self._peers_uris.append(peer.uri)

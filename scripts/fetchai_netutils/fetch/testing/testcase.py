@@ -116,6 +116,7 @@ class ConstellationTestCase(TestCase):
         self._constellation_exe = os.path.abspath(constellation_exe)
         self._yaml_file = os.path.abspath(yaml_file)
         self._test_files_dir = os.path.dirname(self._yaml_file)
+        self._scripts_dir = os.path.abspath(os.path.join(build_directory, "../scripts"))
 
         verify_file(constellation_exe)
         verify_file(self._yaml_file)
@@ -154,7 +155,7 @@ class ConstellationTestCase(TestCase):
         instance.block_interval = self._block_interval
         instance.feature_flags = ['synergetic']
         instance.append_to_cmd(
-            ['-synergetic-miner-script', './scripts/synergetic/simple_miner.etch'])
+            ['-synergetic-miner-script', os.path.join(self._scripts_dir, 'synergetic/simple_miner.etch')])
 
         # configure the lanes and slices
         instance.lanes = self._lanes

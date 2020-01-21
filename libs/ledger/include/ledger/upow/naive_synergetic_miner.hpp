@@ -25,6 +25,7 @@
 #include "ledger/upow/synergetic_miner_interface.hpp"
 #include "ledger/upow/synergetic_miner_script.hpp"
 #include "ledger/upow/work.hpp"
+#include "telemetry/telemetry.hpp"
 
 #include <memory>
 
@@ -99,6 +100,8 @@ private:
   SynergeticMinerScript         job_script_;
   ContractAnalyserPtr           contract_analyser_;
   chain::Address                miner_address_;
+  uint64_t                      previous_epoch_block_index_{0};
+  telemetry::CounterPtr         num_work_executed_;
 };
 
 }  // namespace ledger

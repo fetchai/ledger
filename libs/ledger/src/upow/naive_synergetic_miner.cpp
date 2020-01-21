@@ -28,6 +28,7 @@
 #include "ledger/upow/synergetic_job.hpp"
 #include "ledger/upow/work.hpp"
 #include "logging/logging.hpp"
+#include "telemetry/counter.hpp"
 #include "vm_modules/math/bignumber.hpp"
 
 #include <random>
@@ -81,6 +82,8 @@ NaiveSynergeticMiner::NaiveSynergeticMiner(DAGPtr dag, StorageInterface &storage
   , job_script_{script}
   , contract_analyser_{std::move(contract_analyser)}
   , miner_address_{prover_->identity()}
+  , num_work_executed_{telemetry::Registry::Instance().CreateCounter(
+        "ledger_upow_syn_miner_work_executed_total", "The number of work executed by the miner!")}
 {
   state_machine_->RegisterHandler(State::INITIAL, this, &NaiveSynergeticMiner::OnInitial);
   state_machine_->RegisterHandler(State::MINE, this, &NaiveSynergeticMiner::OnMine);
@@ -118,8 +121,14 @@ void NaiveSynergeticMiner::Mine()
   // iterate through the latest DAG nodes and build a complete set of addresses to mine solutions
   // for
   // TODO(HUT): would be nicer to specify here what we want by type
-  uint64_t previous_epoch;
-  auto     dag_nodes = dag_->GetLatest(true, previous_epoch);
+  auto handled_block_index = previous_epoch_block_index_;
+  auto dag_nodes           = dag_->GetLatest(true, previous_epoch_block_index_);
+  if (handled_block_index == previous_epoch_block_index_)
+  {
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Data from block ", previous_epoch_block_index_,
+                    " already handled!");
+    return;
+  }
 
   // loop through the data that is available for the previous epoch
   ProblemSpaces problem_spaces{};
@@ -177,7 +186,7 @@ void NaiveSynergeticMiner::Mine()
     }
     res->set_id(id);
     res->set_contract_address(problem.first);
-    res->set_epoch(previous_epoch);
+    res->set_epoch(previous_epoch_block_index_);
     address_lookup[id] = problem.first;
     ++id;
     FETCH_LOG_INFO(LOGGING_NAME, "Contract ", res->id(),
@@ -264,6 +273,8 @@ WorkPtr NaiveSynergeticMiner::MineSolution(chain::Address const &contract_addres
 
     return {};
   }
+
+  num_work_executed_->increment();
 
   // build up a work instance
   auto work = std::make_shared<Work>(contract_address, prover_->identity());
