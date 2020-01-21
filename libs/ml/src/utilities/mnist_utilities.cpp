@@ -1,3 +1,4 @@
+//------------------------------------------------------------------------------
 //
 //   Copyright 2018-2020 Fetch.AI Limited
 //
@@ -14,13 +15,13 @@
 //   limitations under the License.
 //
 //------------------------------------------------------------------------------
-#include <ml/utilities/mnist_utilities.hpp>
+
 #include "math/tensor/tensor.hpp"
+#include <ml/utilities/mnist_utilities.hpp>
 
 #include "math/one_hot.hpp"
 #include "ml/exceptions/exceptions.hpp"
 #include "vectorise/platform.hpp"
-
 
 #include <fstream>
 #include <string>
@@ -129,33 +130,46 @@ TensorType convert_labels_to_onehot(TensorType labels)
   return one_hot.View().Copy();
 }
 
-
-template math::Tensor<int32_t> read_mnist_images<math::Tensor<int32_t>>(std::string const &full_path);
-template math::Tensor<int64_t> read_mnist_images<math::Tensor<int64_t>>(std::string const &full_path);
-template math::Tensor<float> read_mnist_images<math::Tensor<float>>(std::string const &full_path);
+template math::Tensor<int32_t> read_mnist_images<math::Tensor<int32_t>>(
+    std::string const &full_path);
+template math::Tensor<int64_t> read_mnist_images<math::Tensor<int64_t>>(
+    std::string const &full_path);
+template math::Tensor<float>  read_mnist_images<math::Tensor<float>>(std::string const &full_path);
 template math::Tensor<double> read_mnist_images<math::Tensor<double>>(std::string const &full_path);
-template math::Tensor<fixed_point::fp32_t> read_mnist_images<math::Tensor<fixed_point::fp32_t>>(std::string const &full_path);
-template math::Tensor<fixed_point::fp64_t> read_mnist_images<math::Tensor<fixed_point::fp64_t>>(std::string const &full_path);
-template math::Tensor<fixed_point::fp128_t> read_mnist_images<math::Tensor<fixed_point::fp128_t>>(std::string const &full_path);
+template math::Tensor<fixed_point::fp32_t> read_mnist_images<math::Tensor<fixed_point::fp32_t>>(
+    std::string const &full_path);
+template math::Tensor<fixed_point::fp64_t> read_mnist_images<math::Tensor<fixed_point::fp64_t>>(
+    std::string const &full_path);
+template math::Tensor<fixed_point::fp128_t> read_mnist_images<math::Tensor<fixed_point::fp128_t>>(
+    std::string const &full_path);
 
-		template math::Tensor<int32_t> read_mnist_labels<math::Tensor<int32_t>>(std::string const &full_path);
-		template math::Tensor<int64_t> read_mnist_labels<math::Tensor<int64_t>>(std::string const &full_path);
-		template math::Tensor<float> read_mnist_labels<math::Tensor<float>>(std::string const &full_path);
-		template math::Tensor<double> read_mnist_labels<math::Tensor<double>>(std::string const &full_path);
-		template math::Tensor<fixed_point::fp32_t> read_mnist_labels<math::Tensor<fixed_point::fp32_t>>(std::string const &full_path);
-		template math::Tensor<fixed_point::fp64_t> read_mnist_labels<math::Tensor<fixed_point::fp64_t>>(std::string const &full_path);
-		template math::Tensor<fixed_point::fp128_t> read_mnist_labels<math::Tensor<fixed_point::fp128_t>>(std::string const &full_path);
+template math::Tensor<int32_t> read_mnist_labels<math::Tensor<int32_t>>(
+    std::string const &full_path);
+template math::Tensor<int64_t> read_mnist_labels<math::Tensor<int64_t>>(
+    std::string const &full_path);
+template math::Tensor<float>  read_mnist_labels<math::Tensor<float>>(std::string const &full_path);
+template math::Tensor<double> read_mnist_labels<math::Tensor<double>>(std::string const &full_path);
+template math::Tensor<fixed_point::fp32_t> read_mnist_labels<math::Tensor<fixed_point::fp32_t>>(
+    std::string const &full_path);
+template math::Tensor<fixed_point::fp64_t> read_mnist_labels<math::Tensor<fixed_point::fp64_t>>(
+    std::string const &full_path);
+template math::Tensor<fixed_point::fp128_t> read_mnist_labels<math::Tensor<fixed_point::fp128_t>>(
+    std::string const &full_path);
 
-template math::Tensor<int32_t> convert_labels_to_onehot<math::Tensor<int32_t>>(math::Tensor<int32_t> labels);
-template math::Tensor<int64_t> convert_labels_to_onehot<math::Tensor<int64_t>>(math::Tensor<int64_t> labels);
-template math::Tensor<float> convert_labels_to_onehot<math::Tensor<float>>(math::Tensor<float> labels);
-template math::Tensor<double> convert_labels_to_onehot<math::Tensor<double>>(math::Tensor<double> labels);
-template math::Tensor<fixed_point::fp32_t> convert_labels_to_onehot<math::Tensor<fixed_point::fp32_t>>(math::Tensor<fixed_point::fp32_t> labels);
-template math::Tensor<fixed_point::fp64_t> convert_labels_to_onehot<math::Tensor<fixed_point::fp64_t>>(math::Tensor<fixed_point::fp64_t> labels);
-template math::Tensor<fixed_point::fp128_t> convert_labels_to_onehot<math::Tensor<fixed_point::fp128_t>>(math::Tensor<fixed_point::fp128_t> labels);
-}
-}
-}
-
-
-
+template math::Tensor<int32_t> convert_labels_to_onehot<math::Tensor<int32_t>>(
+    math::Tensor<int32_t> labels);
+template math::Tensor<int64_t> convert_labels_to_onehot<math::Tensor<int64_t>>(
+    math::Tensor<int64_t> labels);
+template math::Tensor<float> convert_labels_to_onehot<math::Tensor<float>>(
+    math::Tensor<float> labels);
+template math::Tensor<double> convert_labels_to_onehot<math::Tensor<double>>(
+    math::Tensor<double> labels);
+template math::Tensor<fixed_point::fp32_t> convert_labels_to_onehot<
+    math::Tensor<fixed_point::fp32_t>>(math::Tensor<fixed_point::fp32_t> labels);
+template math::Tensor<fixed_point::fp64_t> convert_labels_to_onehot<
+    math::Tensor<fixed_point::fp64_t>>(math::Tensor<fixed_point::fp64_t> labels);
+template math::Tensor<fixed_point::fp128_t> convert_labels_to_onehot<
+    math::Tensor<fixed_point::fp128_t>>(math::Tensor<fixed_point::fp128_t> labels);
+}  // namespace utilities
+}  // namespace ml
+}  // namespace fetch

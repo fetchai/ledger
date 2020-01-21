@@ -19,7 +19,6 @@
 
 #include "ml/core/subgraph.hpp"
 #include "ml/meta/ml_type_traits.hpp"
-
 #include "ml/saveparams/saveable_params.hpp"
 
 namespace fetch {

@@ -17,24 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-/*
-#include "core/filesystem/read_file_contents.hpp"
-#include "core/serializers/base_types.hpp"
-#include "core/serializers/main_serializer.hpp"
-#include "math/metrics/cross_entropy.hpp"
-#include "math/tensor/tensor.hpp"
-#include "ml/core/graph.hpp"
-#include "ml/layers/fully_connected.hpp"
-#include "ml/layers/normalisation/layer_norm.hpp"
-#include "ml/layers/self_attention_encoder.hpp"
-#include "ml/ops/add.hpp"
-#include "ml/ops/embeddings.hpp"
-#include "ml/ops/loss_functions/cross_entropy_loss.hpp"
-#include "ml/ops/placeholder.hpp"
-#include "ml/serializers/ml_types.hpp"
-#include "ml/utilities/graph_builder.hpp"
-*/
-
 #include "ml/core/graph.hpp"
 
 namespace fetch {
@@ -91,7 +73,8 @@ TensorType LoadTensorFromFile(std::string const &file_name);
 template <class TensorType>
 void PutWeightInLayerNorm(fetch::ml::StateDict<TensorType> &state_dict, SizeType model_dims,
                           std::string const &gamma_file_name, std::string const &beta_file_name,
-                          std::string const &gamma_weight_name, std::string const &beta_weight_name);
+                          std::string const &gamma_weight_name,
+                          std::string const &beta_weight_name);
 
 template <class TensorType>
 void PutWeightInFullyConnected(fetch::ml::StateDict<TensorType> &state_dict, SizeType in_size,
@@ -110,12 +93,10 @@ void PutWeightInMultiheadAttention(
     std::string const &value_weights_name, std::string const &value_bias_name,
     std::string const &mattn_prefix);
 
-
 template <class TensorType>
 std::pair<std::vector<std::string>, std::vector<std::string>> LoadPretrainedBertModel(
     std::string const &file_path, BERTConfig<TensorType> const &config,
     fetch::ml::Graph<TensorType> &g);
-
 
 template <class TensorType>
 TensorType RunPseudoForwardPass(std::vector<std::string> input_nodes, std::string output_node,

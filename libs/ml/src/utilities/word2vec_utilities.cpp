@@ -16,12 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/utilities/word2vec_utilities.hpp"
 #include "math/clustering/knn.hpp"
 #include "math/metrics/l2_norm.hpp"
 #include "math/tensor/tensor.hpp"
 #include "ml/dataloaders/word2vec_loaders/sgns_w2v_dataloader.hpp"
 #include "ml/layers/skip_gram.hpp"
+#include "ml/utilities/word2vec_utilities.hpp"
 
 #include <chrono>
 #include <cstring>
@@ -141,12 +141,10 @@ std::string KNNTest(dataloaders::Vocab const &vcb, TensorType const &embeddings,
   return outstream.str();
 }
 
-
 template <class TensorType>
 std::pair<std::string, float> AnalogiesFileTest(dataloaders::Vocab const &vcb,
                                                 TensorType const &        embeddings,
-                                                std::string const &       analogy_file,
-                                                bool                      verbose )
+                                                std::string const &analogy_file, bool verbose)
 {
   using SizeType = math::SizeType;
   using DataType = typename TensorType::Type;
@@ -238,7 +236,7 @@ void TestEmbeddings(Graph<TensorType> const &g, std::string const &skip_gram_nam
                     dataloaders::Vocab const &vcb, std::string const &word0,
                     std::string const &word1, std::string const &word2, std::string const &word3,
                     math::SizeType K, std::string const &analogies_test_file, bool verbose,
-                    std::string const &outfile )
+                    std::string const &outfile)
 {
   TensorType const &weights = utilities::GetEmbeddings(g, skip_gram_name);
 
@@ -267,7 +265,6 @@ void TestEmbeddings(Graph<TensorType> const &g, std::string const &skip_gram_nam
   }
 }
 
-
 std::string ReadFile(std::string const &path)
 {
   std::ifstream t(path);
@@ -279,132 +276,146 @@ std::string ReadFile(std::string const &path)
   return std::string((std::istreambuf_iterator<char>(t)), std::istreambuf_iterator<char>());
 }
 
-template math::Tensor<int32_t> const &GetEmbeddings(Graph<math::Tensor<int32_t>> const &g, std::string const &skip_gram_name);
-template math::Tensor<int64_t> const &GetEmbeddings(Graph<math::Tensor<int64_t>> const &g, std::string const &skip_gram_name);
-template math::Tensor<float> const &GetEmbeddings(Graph<math::Tensor<float>> const &g, std::string const &skip_gram_name);
-template math::Tensor<double> const &GetEmbeddings(Graph<math::Tensor<double>> const &g, std::string const &skip_gram_name);
-template math::Tensor<fixed_point::fp32_t> const &GetEmbeddings(Graph<math::Tensor<fixed_point::fp32_t>> const &g, std::string const &skip_gram_name);
-template math::Tensor<fixed_point::fp64_t> const &GetEmbeddings(Graph<math::Tensor<fixed_point::fp64_t>> const &g, std::string const &skip_gram_name);
-template math::Tensor<fixed_point::fp128_t> const &GetEmbeddings(Graph<math::Tensor<fixed_point::fp128_t>> const &g, std::string const &skip_gram_name);
+template math::Tensor<int32_t> const &GetEmbeddings(Graph<math::Tensor<int32_t>> const &g,
+                                                    std::string const &skip_gram_name);
+template math::Tensor<int64_t> const &GetEmbeddings(Graph<math::Tensor<int64_t>> const &g,
+                                                    std::string const &skip_gram_name);
+template math::Tensor<float> const &  GetEmbeddings(Graph<math::Tensor<float>> const &g,
+                                                    std::string const &               skip_gram_name);
+template math::Tensor<double> const & GetEmbeddings(Graph<math::Tensor<double>> const &g,
+                                                    std::string const &skip_gram_name);
+template math::Tensor<fixed_point::fp32_t> const &GetEmbeddings(
+    Graph<math::Tensor<fixed_point::fp32_t>> const &g, std::string const &skip_gram_name);
+template math::Tensor<fixed_point::fp64_t> const &GetEmbeddings(
+    Graph<math::Tensor<fixed_point::fp64_t>> const &g, std::string const &skip_gram_name);
+template math::Tensor<fixed_point::fp128_t> const &GetEmbeddings(
+    Graph<math::Tensor<fixed_point::fp128_t>> const &g, std::string const &skip_gram_name);
 
-template std::vector<std::pair<math::SizeType, typename math::Tensor<int32_t>::Type>> GetWordIDAnalogies<math::Tensor<int32_t>>(
-		math::Tensor<int32_t> const &embeddings, math::SizeType const &word1, math::SizeType const &word2,
-    math::SizeType const &word3, math::SizeType k);
-template std::vector<std::pair<math::SizeType, typename math::Tensor<int64_t>::Type>> GetWordIDAnalogies<math::Tensor<int64_t>>(
-		math::Tensor<int64_t> const &embeddings, math::SizeType const &word1, math::SizeType const &word2,
-    math::SizeType const &word3, math::SizeType k);
-template std::vector<std::pair<math::SizeType, typename math::Tensor<float>::Type>> GetWordIDAnalogies<math::Tensor<float>>(
-		math::Tensor<float> const &embeddings, math::SizeType const &word1, math::SizeType const &word2,
-    math::SizeType const &word3, math::SizeType k);
-template std::vector<std::pair<math::SizeType, typename math::Tensor<double>::Type>> GetWordIDAnalogies<math::Tensor<double>>(
-		math::Tensor<double> const &embeddings, math::SizeType const &word1, math::SizeType const &word2,
-    math::SizeType const &word3, math::SizeType k);
-template std::vector<std::pair<math::SizeType, typename math::Tensor<fixed_point::fp32_t>::Type>> GetWordIDAnalogies<math::Tensor<fixed_point::fp32_t>>(
-		math::Tensor<fixed_point::fp32_t> const &embeddings, math::SizeType const &word1, math::SizeType const &word2,
-    math::SizeType const &word3, math::SizeType k);
-template std::vector<std::pair<math::SizeType, typename math::Tensor<fixed_point::fp64_t>::Type>> GetWordIDAnalogies<math::Tensor<fixed_point::fp64_t>>(
-		math::Tensor<fixed_point::fp64_t> const &embeddings, math::SizeType const &word1, math::SizeType const &word2,
-    math::SizeType const &word3, math::SizeType k);
-template std::vector<std::pair<math::SizeType, typename math::Tensor<fixed_point::fp128_t>::Type>> GetWordIDAnalogies<math::Tensor<fixed_point::fp128_t>>(
-		math::Tensor<fixed_point::fp128_t> const &embeddings, math::SizeType const &word1, math::SizeType const &word2,
-    math::SizeType const &word3, math::SizeType k);
+template std::vector<std::pair<math::SizeType, typename math::Tensor<int32_t>::Type>>
+GetWordIDAnalogies<math::Tensor<int32_t>>(math::Tensor<int32_t> const &embeddings,
+                                          math::SizeType const &word1, math::SizeType const &word2,
+                                          math::SizeType const &word3, math::SizeType k);
+template std::vector<std::pair<math::SizeType, typename math::Tensor<int64_t>::Type>>
+GetWordIDAnalogies<math::Tensor<int64_t>>(math::Tensor<int64_t> const &embeddings,
+                                          math::SizeType const &word1, math::SizeType const &word2,
+                                          math::SizeType const &word3, math::SizeType k);
+template std::vector<std::pair<math::SizeType, typename math::Tensor<float>::Type>>
+GetWordIDAnalogies<math::Tensor<float>>(math::Tensor<float> const &embeddings,
+                                        math::SizeType const &word1, math::SizeType const &word2,
+                                        math::SizeType const &word3, math::SizeType k);
+template std::vector<std::pair<math::SizeType, typename math::Tensor<double>::Type>>
+GetWordIDAnalogies<math::Tensor<double>>(math::Tensor<double> const &embeddings,
+                                         math::SizeType const &word1, math::SizeType const &word2,
+                                         math::SizeType const &word3, math::SizeType k);
+template std::vector<std::pair<math::SizeType, typename math::Tensor<fixed_point::fp32_t>::Type>>
+GetWordIDAnalogies<math::Tensor<fixed_point::fp32_t>>(
+    math::Tensor<fixed_point::fp32_t> const &embeddings, math::SizeType const &word1,
+    math::SizeType const &word2, math::SizeType const &word3, math::SizeType k);
+template std::vector<std::pair<math::SizeType, typename math::Tensor<fixed_point::fp64_t>::Type>>
+GetWordIDAnalogies<math::Tensor<fixed_point::fp64_t>>(
+    math::Tensor<fixed_point::fp64_t> const &embeddings, math::SizeType const &word1,
+    math::SizeType const &word2, math::SizeType const &word3, math::SizeType k);
+template std::vector<std::pair<math::SizeType, typename math::Tensor<fixed_point::fp128_t>::Type>>
+GetWordIDAnalogies<math::Tensor<fixed_point::fp128_t>>(
+    math::Tensor<fixed_point::fp128_t> const &embeddings, math::SizeType const &word1,
+    math::SizeType const &word2, math::SizeType const &word3, math::SizeType k);
 
-template std::string WordAnalogyTest<math::Tensor<int32_t>>(dataloaders::Vocab const &vcb, math::Tensor<int32_t> const &embeddings,
-                            std::string const &word1, std::string const &word2,
-                            std::string const &word3, math::SizeType k);
-template std::string WordAnalogyTest<math::Tensor<int64_t>>(dataloaders::Vocab const &vcb, math::Tensor<int64_t> const &embeddings,
-                            std::string const &word1, std::string const &word2,
-                            std::string const &word3, math::SizeType k);
-template std::string WordAnalogyTest<math::Tensor<float>>(dataloaders::Vocab const &vcb, math::Tensor<float> const &embeddings,
-                            std::string const &word1, std::string const &word2,
-                            std::string const &word3, math::SizeType k);
-template std::string WordAnalogyTest<math::Tensor<double>>(dataloaders::Vocab const &vcb, math::Tensor<double> const &embeddings,
-                            std::string const &word1, std::string const &word2,
-                            std::string const &word3, math::SizeType k);
-template std::string WordAnalogyTest<math::Tensor<fixed_point::fp32_t>>(dataloaders::Vocab const &vcb, math::Tensor<fixed_point::fp32_t> const &embeddings,
-                            std::string const &word1, std::string const &word2,
-                            std::string const &word3, math::SizeType k);
-template std::string WordAnalogyTest<math::Tensor<fixed_point::fp64_t>>(dataloaders::Vocab const &vcb, math::Tensor<fixed_point::fp64_t> const &embeddings,
-                            std::string const &word1, std::string const &word2,
-                            std::string const &word3, math::SizeType k);
-template std::string WordAnalogyTest<math::Tensor<fixed_point::fp128_t>>(dataloaders::Vocab const &vcb, math::Tensor<fixed_point::fp128_t> const &embeddings,
-                            std::string const &word1, std::string const &word2,
-                            std::string const &word3, math::SizeType k);
+template std::string WordAnalogyTest<math::Tensor<int32_t>>(
+    dataloaders::Vocab const &vcb, math::Tensor<int32_t> const &embeddings,
+    std::string const &word1, std::string const &word2, std::string const &word3, math::SizeType k);
+template std::string WordAnalogyTest<math::Tensor<int64_t>>(
+    dataloaders::Vocab const &vcb, math::Tensor<int64_t> const &embeddings,
+    std::string const &word1, std::string const &word2, std::string const &word3, math::SizeType k);
+template std::string WordAnalogyTest<math::Tensor<float>>(
+    dataloaders::Vocab const &vcb, math::Tensor<float> const &embeddings, std::string const &word1,
+    std::string const &word2, std::string const &word3, math::SizeType k);
+template std::string WordAnalogyTest<math::Tensor<double>>(
+    dataloaders::Vocab const &vcb, math::Tensor<double> const &embeddings, std::string const &word1,
+    std::string const &word2, std::string const &word3, math::SizeType k);
+template std::string WordAnalogyTest<math::Tensor<fixed_point::fp32_t>>(
+    dataloaders::Vocab const &vcb, math::Tensor<fixed_point::fp32_t> const &embeddings,
+    std::string const &word1, std::string const &word2, std::string const &word3, math::SizeType k);
+template std::string WordAnalogyTest<math::Tensor<fixed_point::fp64_t>>(
+    dataloaders::Vocab const &vcb, math::Tensor<fixed_point::fp64_t> const &embeddings,
+    std::string const &word1, std::string const &word2, std::string const &word3, math::SizeType k);
+template std::string WordAnalogyTest<math::Tensor<fixed_point::fp128_t>>(
+    dataloaders::Vocab const &vcb, math::Tensor<fixed_point::fp128_t> const &embeddings,
+    std::string const &word1, std::string const &word2, std::string const &word3, math::SizeType k);
 
-template std::string KNNTest<math::Tensor<int32_t>>(dataloaders::Vocab const &vcb, math::Tensor<int32_t> const &embeddings,
-                    std::string const &word0, math::SizeType k);
-template std::string KNNTest<math::Tensor<int64_t>>(dataloaders::Vocab const &vcb, math::Tensor<int64_t> const &embeddings,
-                    std::string const &word0, math::SizeType k);
-template std::string KNNTest<math::Tensor<float>>(dataloaders::Vocab const &vcb, math::Tensor<float> const &embeddings,
-                    std::string const &word0, math::SizeType k);
-template std::string KNNTest<math::Tensor<double>>(dataloaders::Vocab const &vcb, math::Tensor<double> const &embeddings,
-                    std::string const &word0, math::SizeType k);
-template std::string KNNTest<math::Tensor<fixed_point::fp32_t>>(dataloaders::Vocab const &vcb, math::Tensor<fixed_point::fp32_t> const &embeddings,
-                    std::string const &word0, math::SizeType k);
-template std::string KNNTest<math::Tensor<fixed_point::fp64_t>>(dataloaders::Vocab const &vcb, math::Tensor<fixed_point::fp64_t> const &embeddings,
-                    std::string const &word0, math::SizeType k);
-template std::string KNNTest<math::Tensor<fixed_point::fp128_t>>(dataloaders::Vocab const &vcb, math::Tensor<fixed_point::fp128_t> const &embeddings,
-                    std::string const &word0, math::SizeType k);
+template std::string KNNTest<math::Tensor<int32_t>>(dataloaders::Vocab const &   vcb,
+                                                    math::Tensor<int32_t> const &embeddings,
+                                                    std::string const &word0, math::SizeType k);
+template std::string KNNTest<math::Tensor<int64_t>>(dataloaders::Vocab const &   vcb,
+                                                    math::Tensor<int64_t> const &embeddings,
+                                                    std::string const &word0, math::SizeType k);
+template std::string KNNTest<math::Tensor<float>>(dataloaders::Vocab const & vcb,
+                                                  math::Tensor<float> const &embeddings,
+                                                  std::string const &word0, math::SizeType k);
+template std::string KNNTest<math::Tensor<double>>(dataloaders::Vocab const &  vcb,
+                                                   math::Tensor<double> const &embeddings,
+                                                   std::string const &word0, math::SizeType k);
+template std::string KNNTest<math::Tensor<fixed_point::fp32_t>>(
+    dataloaders::Vocab const &vcb, math::Tensor<fixed_point::fp32_t> const &embeddings,
+    std::string const &word0, math::SizeType k);
+template std::string KNNTest<math::Tensor<fixed_point::fp64_t>>(
+    dataloaders::Vocab const &vcb, math::Tensor<fixed_point::fp64_t> const &embeddings,
+    std::string const &word0, math::SizeType k);
+template std::string KNNTest<math::Tensor<fixed_point::fp128_t>>(
+    dataloaders::Vocab const &vcb, math::Tensor<fixed_point::fp128_t> const &embeddings,
+    std::string const &word0, math::SizeType k);
 
-template std::pair<std::string, float> AnalogiesFileTest<math::Tensor<int32_t>>(dataloaders::Vocab const &vcb,
-		math::Tensor<int32_t> const &        embeddings,
-                                                std::string const &       analogy_file,
-                                                bool                      verbose = false);
-template std::pair<std::string, float> AnalogiesFileTest<math::Tensor<int64_t>>(dataloaders::Vocab const &vcb,
-		math::Tensor<int64_t> const &        embeddings,
-                                                std::string const &       analogy_file,
-                                                bool                      verbose = false);
-template std::pair<std::string, float> AnalogiesFileTest<math::Tensor<float>>(dataloaders::Vocab const &vcb,
-		math::Tensor<float> const &        embeddings,
-                                                std::string const &       analogy_file,
-                                                bool                      verbose = false);
-template std::pair<std::string, float> AnalogiesFileTest<math::Tensor<double>>(dataloaders::Vocab const &vcb,
-		math::Tensor<double> const &        embeddings,
-                                                std::string const &       analogy_file,
-                                                bool                      verbose = false);
-template std::pair<std::string, float> AnalogiesFileTest<math::Tensor<fixed_point::fp32_t>>(dataloaders::Vocab const &vcb,
-		math::Tensor<fixed_point::fp32_t> const &        embeddings,
-                                                std::string const &       analogy_file,
-                                                bool                      verbose = false);
-template std::pair<std::string, float> AnalogiesFileTest<math::Tensor<fixed_point::fp64_t>>(dataloaders::Vocab const &vcb,
-		math::Tensor<fixed_point::fp64_t> const &        embeddings,
-                                                std::string const &       analogy_file,
-                                                bool                      verbose = false);
-template std::pair<std::string, float> AnalogiesFileTest<math::Tensor<fixed_point::fp128_t>>(dataloaders::Vocab const &vcb,
-		math::Tensor<fixed_point::fp128_t> const &        embeddings,
-                                                std::string const &       analogy_file,
-                                                bool                      verbose = false);
+template std::pair<std::string, float> AnalogiesFileTest<math::Tensor<int32_t>>(
+    dataloaders::Vocab const &vcb, math::Tensor<int32_t> const &embeddings,
+    std::string const &analogy_file, bool verbose = false);
+template std::pair<std::string, float> AnalogiesFileTest<math::Tensor<int64_t>>(
+    dataloaders::Vocab const &vcb, math::Tensor<int64_t> const &embeddings,
+    std::string const &analogy_file, bool verbose = false);
+template std::pair<std::string, float> AnalogiesFileTest<math::Tensor<float>>(
+    dataloaders::Vocab const &vcb, math::Tensor<float> const &embeddings,
+    std::string const &analogy_file, bool verbose = false);
+template std::pair<std::string, float> AnalogiesFileTest<math::Tensor<double>>(
+    dataloaders::Vocab const &vcb, math::Tensor<double> const &embeddings,
+    std::string const &analogy_file, bool verbose = false);
+template std::pair<std::string, float> AnalogiesFileTest<math::Tensor<fixed_point::fp32_t>>(
+    dataloaders::Vocab const &vcb, math::Tensor<fixed_point::fp32_t> const &embeddings,
+    std::string const &analogy_file, bool verbose = false);
+template std::pair<std::string, float> AnalogiesFileTest<math::Tensor<fixed_point::fp64_t>>(
+    dataloaders::Vocab const &vcb, math::Tensor<fixed_point::fp64_t> const &embeddings,
+    std::string const &analogy_file, bool verbose = false);
+template std::pair<std::string, float> AnalogiesFileTest<math::Tensor<fixed_point::fp128_t>>(
+    dataloaders::Vocab const &vcb, math::Tensor<fixed_point::fp128_t> const &embeddings,
+    std::string const &analogy_file, bool verbose = false);
 
-template void TestEmbeddings<math::Tensor<int32_t>>(Graph<math::Tensor<int32_t>> const &g, std::string const &skip_gram_name,
-                    dataloaders::Vocab const &vcb, std::string const &word0,
-                    std::string const &word1, std::string const &word2, std::string const &word3,
-                    math::SizeType K, std::string const &analogies_test_file, bool verbose,
-                    std::string const &outfile);
-template void TestEmbeddings<math::Tensor<int64_t>>(Graph<math::Tensor<int64_t>> const &g, std::string const &skip_gram_name,
-                    dataloaders::Vocab const &vcb, std::string const &word0,
-                    std::string const &word1, std::string const &word2, std::string const &word3,
-                    math::SizeType K, std::string const &analogies_test_file, bool verbose,
-                    std::string const &outfile);
-template void TestEmbeddings<math::Tensor<float>>(Graph<math::Tensor<float>> const &g, std::string const &skip_gram_name,
-                    dataloaders::Vocab const &vcb, std::string const &word0,
-                    std::string const &word1, std::string const &word2, std::string const &word3,
-                    math::SizeType K, std::string const &analogies_test_file, bool verbose,
-                    std::string const &outfile);
-template void TestEmbeddings<math::Tensor<fixed_point::fp32_t>>(Graph<math::Tensor<fixed_point::fp32_t>> const &g, std::string const &skip_gram_name,
-                    dataloaders::Vocab const &vcb, std::string const &word0,
-                    std::string const &word1, std::string const &word2, std::string const &word3,
-                    math::SizeType K, std::string const &analogies_test_file, bool verbose,
-                    std::string const &outfile);
-template void TestEmbeddings<math::Tensor<fixed_point::fp64_t>>(Graph<math::Tensor<fixed_point::fp64_t>> const &g, std::string const &skip_gram_name,
-                    dataloaders::Vocab const &vcb, std::string const &word0,
-                    std::string const &word1, std::string const &word2, std::string const &word3,
-                    math::SizeType K, std::string const &analogies_test_file, bool verbose,
-                    std::string const &outfile);
-template void TestEmbeddings<math::Tensor<fixed_point::fp128_t>>(Graph<math::Tensor<fixed_point::fp128_t>> const &g, std::string const &skip_gram_name,
-                    dataloaders::Vocab const &vcb, std::string const &word0,
-                    std::string const &word1, std::string const &word2, std::string const &word3,
-                    math::SizeType K, std::string const &analogies_test_file, bool verbose,
-                    std::string const &outfile);
+template void TestEmbeddings<math::Tensor<int32_t>>(
+    Graph<math::Tensor<int32_t>> const &g, std::string const &skip_gram_name,
+    dataloaders::Vocab const &vcb, std::string const &word0, std::string const &word1,
+    std::string const &word2, std::string const &word3, math::SizeType K,
+    std::string const &analogies_test_file, bool verbose, std::string const &outfile);
+template void TestEmbeddings<math::Tensor<int64_t>>(
+    Graph<math::Tensor<int64_t>> const &g, std::string const &skip_gram_name,
+    dataloaders::Vocab const &vcb, std::string const &word0, std::string const &word1,
+    std::string const &word2, std::string const &word3, math::SizeType K,
+    std::string const &analogies_test_file, bool verbose, std::string const &outfile);
+template void TestEmbeddings<math::Tensor<float>>(
+    Graph<math::Tensor<float>> const &g, std::string const &skip_gram_name,
+    dataloaders::Vocab const &vcb, std::string const &word0, std::string const &word1,
+    std::string const &word2, std::string const &word3, math::SizeType K,
+    std::string const &analogies_test_file, bool verbose, std::string const &outfile);
+template void TestEmbeddings<math::Tensor<fixed_point::fp32_t>>(
+    Graph<math::Tensor<fixed_point::fp32_t>> const &g, std::string const &skip_gram_name,
+    dataloaders::Vocab const &vcb, std::string const &word0, std::string const &word1,
+    std::string const &word2, std::string const &word3, math::SizeType K,
+    std::string const &analogies_test_file, bool verbose, std::string const &outfile);
+template void TestEmbeddings<math::Tensor<fixed_point::fp64_t>>(
+    Graph<math::Tensor<fixed_point::fp64_t>> const &g, std::string const &skip_gram_name,
+    dataloaders::Vocab const &vcb, std::string const &word0, std::string const &word1,
+    std::string const &word2, std::string const &word3, math::SizeType K,
+    std::string const &analogies_test_file, bool verbose, std::string const &outfile);
+template void TestEmbeddings<math::Tensor<fixed_point::fp128_t>>(
+    Graph<math::Tensor<fixed_point::fp128_t>> const &g, std::string const &skip_gram_name,
+    dataloaders::Vocab const &vcb, std::string const &word0, std::string const &word1,
+    std::string const &word2, std::string const &word3, math::SizeType K,
+    std::string const &analogies_test_file, bool verbose, std::string const &outfile);
 
 }  // namespace utilities
 }  // namespace ml

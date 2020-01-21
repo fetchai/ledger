@@ -17,7 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-
 #include "ml/dataloaders/word2vec_loaders/sgns_w2v_dataloader.hpp"
 
 namespace fetch {

@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2020 Fetch.AI Limited
@@ -17,26 +16,29 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/tensor/tensor.hpp"
+/*
+ * scaler.cpp
+ *
+ *  Created on: Jan 20, 2020
+ *      Author: alex
+ */
+
+#include "math/base_types.hpp"
+#include "ml/utilities/scaler.hpp"
 
 namespace fetch {
 namespace ml {
 namespace utilities {
 
-template <typename TensorType>
-class Scaler
-{
-  using DataType = typename TensorType::Type;
-
-public:
-  Scaler()          = default;
-  virtual ~Scaler() = default;
-
-  virtual void SetScale(TensorType const &reference_tensor)                           = 0;
-  virtual void SetScale(DataType const &min_val, DataType const &max_val)             = 0;
-  virtual void Normalise(TensorType const &input_tensor, TensorType &output_tensor)   = 0;
-  virtual void DeNormalise(TensorType const &input_tensor, TensorType &output_tensor) = 0;
-};
+template class Scaler<math::Tensor<int8_t>>;
+template class Scaler<math::Tensor<int16_t>>;
+template class Scaler<math::Tensor<int32_t>>;
+template class Scaler<math::Tensor<int64_t>>;
+template class Scaler<math::Tensor<float>>;
+template class Scaler<math::Tensor<double>>;
+template class Scaler<math::Tensor<fixed_point::fp32_t>>;
+template class Scaler<math::Tensor<fixed_point::fp64_t>>;
+template class Scaler<math::Tensor<fixed_point::fp128_t>>;
 
 }  // namespace utilities
 }  // namespace ml

@@ -16,12 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/utilities/graph_saver.hpp"
 #include "core/byte_array/decoders.hpp"
 #include "core/filesystem/read_file_contents.hpp"
+#include "core/serializers/main_serializer.hpp"
 #include "ml/exceptions/exceptions.hpp"
 #include "ml/utilities/graph_builder.hpp"
-#include "core/serializers/main_serializer.hpp"
+#include "ml/utilities/graph_saver.hpp"
 
 #include <fstream>
 #include <iostream>
@@ -84,26 +84,36 @@ std::shared_ptr<GraphType> LoadGraph(std::string const &save_location)
   return graph_ptr;
 }
 
-template void SaveGraph<fetch::ml::Graph<math::Tensor<int32_t>>>(fetch::ml::Graph<math::Tensor<int32_t>> &g, std::string const &save_location);
-template void SaveGraph<fetch::ml::Graph<math::Tensor<int64_t>>>(fetch::ml::Graph<math::Tensor<int64_t>> &g, std::string const &save_location);
-template void SaveGraph<fetch::ml::Graph<math::Tensor<float>>>(fetch::ml::Graph<math::Tensor<float>> &g, std::string const &save_location);
-template void SaveGraph<fetch::ml::Graph<math::Tensor<double>>>(fetch::ml::Graph<math::Tensor<double>> &g, std::string const &save_location);
-template void SaveGraph<fetch::ml::Graph<math::Tensor<fixed_point::fp32_t>>>(fetch::ml::Graph<math::Tensor<fixed_point::fp32_t>> &g, std::string const &save_location);
-template void SaveGraph<fetch::ml::Graph<math::Tensor<fixed_point::fp64_t>>>(fetch::ml::Graph<math::Tensor<fixed_point::fp64_t>> &g, std::string const &save_location);
-template void SaveGraph<fetch::ml::Graph<math::Tensor<fixed_point::fp128_t>>>(fetch::ml::Graph<math::Tensor<fixed_point::fp128_t>> &g, std::string const &save_location);
+template void SaveGraph<fetch::ml::Graph<math::Tensor<int32_t>>>(
+    fetch::ml::Graph<math::Tensor<int32_t>> &g, std::string const &save_location);
+template void SaveGraph<fetch::ml::Graph<math::Tensor<int64_t>>>(
+    fetch::ml::Graph<math::Tensor<int64_t>> &g, std::string const &save_location);
+template void SaveGraph<fetch::ml::Graph<math::Tensor<float>>>(
+    fetch::ml::Graph<math::Tensor<float>> &g, std::string const &save_location);
+template void SaveGraph<fetch::ml::Graph<math::Tensor<double>>>(
+    fetch::ml::Graph<math::Tensor<double>> &g, std::string const &save_location);
+template void SaveGraph<fetch::ml::Graph<math::Tensor<fixed_point::fp32_t>>>(
+    fetch::ml::Graph<math::Tensor<fixed_point::fp32_t>> &g, std::string const &save_location);
+template void SaveGraph<fetch::ml::Graph<math::Tensor<fixed_point::fp64_t>>>(
+    fetch::ml::Graph<math::Tensor<fixed_point::fp64_t>> &g, std::string const &save_location);
+template void SaveGraph<fetch::ml::Graph<math::Tensor<fixed_point::fp128_t>>>(
+    fetch::ml::Graph<math::Tensor<fixed_point::fp128_t>> &g, std::string const &save_location);
 
-template std::shared_ptr<fetch::ml::Graph<math::Tensor<int32_t>>> LoadGraph<fetch::ml::Graph<math::Tensor<int32_t>>>(std::string const &save_location);
-template std::shared_ptr<fetch::ml::Graph<math::Tensor<int64_t>>> LoadGraph<fetch::ml::Graph<math::Tensor<int64_t>>>(std::string const &save_location);
-template std::shared_ptr<fetch::ml::Graph<math::Tensor<float>>> LoadGraph<fetch::ml::Graph<math::Tensor<float>>>(std::string const &save_location);
-template std::shared_ptr<fetch::ml::Graph<math::Tensor<double>>> LoadGraph<fetch::ml::Graph<math::Tensor<double>>>(std::string const &save_location);
-template std::shared_ptr<fetch::ml::Graph<math::Tensor<fixed_point::fp32_t>>> LoadGraph<fetch::ml::Graph<math::Tensor<fixed_point::fp32_t>>>(std::string const &save_location);
-template std::shared_ptr<fetch::ml::Graph<math::Tensor<fixed_point::fp64_t>>> LoadGraph<fetch::ml::Graph<math::Tensor<fixed_point::fp64_t>>>(std::string const &save_location);
-template std::shared_ptr<fetch::ml::Graph<math::Tensor<fixed_point::fp128_t>>> LoadGraph<fetch::ml::Graph<math::Tensor<fixed_point::fp128_t>>>(std::string const &save_location);
+template std::shared_ptr<fetch::ml::Graph<math::Tensor<int32_t>>>
+LoadGraph<fetch::ml::Graph<math::Tensor<int32_t>>>(std::string const &save_location);
+template std::shared_ptr<fetch::ml::Graph<math::Tensor<int64_t>>>
+LoadGraph<fetch::ml::Graph<math::Tensor<int64_t>>>(std::string const &save_location);
+template std::shared_ptr<fetch::ml::Graph<math::Tensor<float>>>
+LoadGraph<fetch::ml::Graph<math::Tensor<float>>>(std::string const &save_location);
+template std::shared_ptr<fetch::ml::Graph<math::Tensor<double>>>
+LoadGraph<fetch::ml::Graph<math::Tensor<double>>>(std::string const &save_location);
+template std::shared_ptr<fetch::ml::Graph<math::Tensor<fixed_point::fp32_t>>>
+LoadGraph<fetch::ml::Graph<math::Tensor<fixed_point::fp32_t>>>(std::string const &save_location);
+template std::shared_ptr<fetch::ml::Graph<math::Tensor<fixed_point::fp64_t>>>
+LoadGraph<fetch::ml::Graph<math::Tensor<fixed_point::fp64_t>>>(std::string const &save_location);
+template std::shared_ptr<fetch::ml::Graph<math::Tensor<fixed_point::fp128_t>>>
+LoadGraph<fetch::ml::Graph<math::Tensor<fixed_point::fp128_t>>>(std::string const &save_location);
 
-}
-}
-}
-
-
-
-
+}  // namespace utilities
+}  // namespace ml
+}  // namespace fetch

@@ -22,24 +22,11 @@
 #include "dmlf/collective_learning/translator.hpp"
 #include "dmlf/collective_learning/word2vec_training_params.hpp"
 #include "math/clustering/knn.hpp"
+#include "ml/layers/skip_gram.hpp"
 #include "ml/optimisation/lazy_adam_optimiser.hpp"
 #include "ml/utilities/word2vec_utilities.hpp"
-#include "ml/layers/skip_gram.hpp"
 
 namespace fetch {
-
-namespace ml {
-
-//template <typename T>
-//class Ops;
-
-namespace layers {
-
-//template <class T>
-//class SkipGram;
-}
-}
-
 namespace dmlf {
 namespace collective_learning {
 
