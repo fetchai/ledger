@@ -15,7 +15,11 @@ setup_compiler()
 # ------------------------------------------------------------------------------
 
 setup_library(fetch-bloomfilter)
-target_link_libraries(fetch-bloomfilter PUBLIC fetch-core fetch-crypto fetch-logging fetch-storage)
+target_link_libraries(fetch-bloomfilter
+                      PUBLIC fetch-core
+                             fetch-crypto
+                             fetch-logging
+                             fetch-storage)
 
 add_test_target()
 add_subdirectory(benchmark)

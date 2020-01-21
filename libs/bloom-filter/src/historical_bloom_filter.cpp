@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -16,11 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/containers/is_in.hpp"
-#include "core/byte_array/byte_array.hpp"
-#include "core/serializers/main_serializer.hpp"
 #include "bloom_filter/historical_bloom_filter.hpp"
 #include "bloom_filter/metadata_store.hpp"
+#include "core/byte_array/byte_array.hpp"
+#include "core/containers/is_in.hpp"
+#include "core/serializers/main_serializer.hpp"
 
 #include <set>
 
@@ -77,7 +77,7 @@ public:
 
     // read the complete bit vector into memory
     BitVector vector{vector_size * 8u};
-    auto *buffer = reinterpret_cast<uint8_t *>(vector.data().pointer());
+    auto *    buffer = reinterpret_cast<uint8_t *>(vector.data().pointer());
     bin.Read(buffer, vector_size);
 
     // finally build the cache entry
@@ -145,7 +145,7 @@ std::vector<uint64_t> GetOrderedKeys(std::unordered_map<uint64_t, T> const &valu
   return keys;
 }
 
-} // namespace
+}  // namespace
 
 /**
  * Constructs a historical bloom filter with desired window size
@@ -178,7 +178,8 @@ HistoricalBloomFilter::HistoricalBloomFilter(Mode mode, char const *store_path,
     store_.New(store_filename_, index_filename_, true);
     SaveMetadataToFile(metadata_path, metadata, METADATA_VERSION);
     break;
-  case Mode::LOAD_DATABASE: {
+  case Mode::LOAD_DATABASE:
+  {
 
     // before loading the database check that the meta data for the database is correct
     auto const status = LoadMetadataFromFile(metadata_path, metadata, METADATA_VERSION);
@@ -295,7 +296,7 @@ std::size_t HistoricalBloomFilter::TrimCache()
     {
       // locate the page
       auto const it = cache_.find(keys[i]);
-      assert(it != cache_.end()); // should not happen
+      assert(it != cache_.end());  // should not happen
 
       // flush the page if dirty
       if (it->second.dirty)
@@ -520,7 +521,6 @@ bool HistoricalBloomFilter::CacheEntry::Match(ConstByteArray const &element) con
 
   return false;
 }
-
 
 }  // namespace bloom
 }  // namespace fetch

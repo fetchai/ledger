@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -46,7 +46,7 @@ meta::IfIsPod<T> ReadFromStream(std::istream &stream, T &element)
   stream.read(raw, sizeof(T));
 }
 
-} // namespace details
+}  // namespace details
 
 enum class MetaReadStatus
 {
@@ -120,7 +120,7 @@ bool SaveMetadataToFile(char const *filename, T const &metadata, uint64_t versio
     // generate and update the header
     details::MetaDataHeader header{};
     header.version = version;
-    header.length = sizeof(T);
+    header.length  = sizeof(T);
 
     stream.seekp(0);
     details::WriteToStream(stream, header);
@@ -131,5 +131,5 @@ bool SaveMetadataToFile(char const *filename, T const &metadata, uint64_t versio
   return success;
 }
 
-} // namespace bloom
-} // namespace fetch
+}  // namespace bloom
+}  // namespace fetch

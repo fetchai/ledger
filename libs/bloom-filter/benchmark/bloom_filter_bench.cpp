@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -16,10 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "crypto/mcl_dkg.hpp"
-#include "bloom_filter/historical_bloom_filter.hpp"
 #include "benchmark/benchmark.h"
+#include "bloom_filter/historical_bloom_filter.hpp"
 #include "core/byte_array/byte_array.hpp"
+#include "crypto/mcl_dkg.hpp"
 
 using fetch::bloom::HistoricalBloomFilter;
 using fetch::byte_array::ByteArray;
@@ -35,7 +35,7 @@ void Historical_Bloom_AddHot(benchmark::State &state)
                               10000,
                               1};
 
-  uint64_t counter{0};
+  uint64_t  counter{0};
   ByteArray buffer;
   buffer.Resize(sizeof(counter));
 
@@ -49,7 +49,6 @@ void Historical_Bloom_AddHot(benchmark::State &state)
   }
 }
 
-
 void Historical_Bloom_WorstCase(benchmark::State &state)
 {
   fetch::crypto::mcl::details::MCLInitialiser();
@@ -61,12 +60,12 @@ void Historical_Bloom_WorstCase(benchmark::State &state)
                               1,
                               1};
 
-  uint64_t counter{0};
+  uint64_t  counter{0};
   ByteArray buffer;
   buffer.Resize(sizeof(counter));
 
   auto *buffer_as_counter = reinterpret_cast<uint64_t *>(buffer.pointer());
-  *buffer_as_counter = ++counter;
+  *buffer_as_counter      = ++counter;
 
   // add a load of pages to the file
   for (uint64_t i = 0; i < 128; ++i)
@@ -94,7 +93,7 @@ void Historical_Bloom_NormalCase(benchmark::State &state)
                               128,
                               1};
 
-  uint64_t counter{0};
+  uint64_t  counter{0};
   ByteArray buffer;
   buffer.Resize(sizeof(counter));
 

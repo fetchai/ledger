@@ -62,9 +62,7 @@ bloom::HistoricalBloomFilter::Mode SelectMode(MainChain::Mode mode)
   }
 }
 
-
 }  // namespace
-
 
 /**
  * Constructs the main chain
@@ -78,12 +76,8 @@ MainChain::MainChain(Mode mode, bool dirty_block_functionality)
 MainChain::MainChain(Mode mode, Config const &cfg)
   : mode_{mode}
   , dirty_block_functionality_{cfg.enable_dirty_blocks}
-  , bloom_filter_{SelectMode(mode),
-                  "chain.hbloom.db",
-                  "chain.hbloom.index.db",
-                  "chain.hbloom.meta.db",
-                  cfg.bloom_filter_window,
-                  cfg.bloom_filter_cached_buckets}
+  , bloom_filter_{SelectMode(mode),       "chain.hbloom.db",       "chain.hbloom.index.db",
+                  "chain.hbloom.meta.db", cfg.bloom_filter_window, cfg.bloom_filter_cached_buckets}
   , bloom_filter_queried_bit_count_(telemetry::Registry::Instance().CreateGauge<std::size_t>(
         "ledger_main_chain_bloom_filter_queried_bit_number",
         "Total number of bits checked during each query to the Ledger Main Chain Bloom filter"))

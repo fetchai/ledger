@@ -45,7 +45,8 @@ void BlockGenerator::Reset()
   block_count_ = 0;
 }
 
-BlockGenerator::BlockPtr BlockGenerator::Generate(BlockPtrConst const &from, uint64_t weight, std::size_t num_tx)
+BlockGenerator::BlockPtr BlockGenerator::Generate(BlockPtrConst const &from, uint64_t weight,
+                                                  std::size_t num_tx)
 {
   using fetch::byte_array::ByteArray;
 
@@ -95,10 +96,11 @@ BlockGenerator::BlockPtr BlockGenerator::Generate(BlockPtrConst const &from, uin
 
       // build the transaction hash from the previous hash mixed with the an index
       byte_array::ByteArray tx_digest = from->hash.Copy();
-      tx_digest[0] = i & 0xffu;
+      tx_digest[0]                    = i & 0xffu;
 
       // add the transaction into the block
-      slice.emplace_back(tx_digest, BitVector{}, 1u, block->block_number - 1u, block->block_number + 1u);
+      slice.emplace_back(tx_digest, BitVector{}, 1u, block->block_number - 1u,
+                         block->block_number + 1u);
     }
 
     block->UpdateTimestamp();
@@ -117,7 +119,8 @@ BlockGenerator::BlockPtr BlockGenerator::Generate(BlockPtrConst const &from, uin
   return block;
 }
 
-BlockGenerator::BlockPtr BlockGenerator::operator()(BlockPtrConst const &from, uint64_t weight, std::size_t num_tx)
+BlockGenerator::BlockPtr BlockGenerator::operator()(BlockPtrConst const &from, uint64_t weight,
+                                                    std::size_t num_tx)
 {
   return Generate(from, weight, num_tx);
 }

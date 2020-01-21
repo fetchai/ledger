@@ -1003,9 +1003,9 @@ TEST(AltMainChainTests, CheckRecoveryAfterCrash)
   MainChain::Config cfg{false, 4, 1};
 
   // build a chain of blocks
-  BlockGenerator gen{1,2};
-  auto const genesis = gen.Generate();
-  auto const branch{Generate(gen, genesis, 200, 1)};
+  BlockGenerator gen{1, 2};
+  auto const     genesis = gen.Generate();
+  auto const     branch{Generate(gen, genesis, 200, 1)};
 
   Digest orig_heaviest_block_digest{};
   {
@@ -1018,7 +1018,7 @@ TEST(AltMainChainTests, CheckRecoveryAfterCrash)
     }
 
     // cache the heaviest
-    auto const heaviest = chain1.GetHeaviestBlock();
+    auto const heaviest        = chain1.GetHeaviestBlock();
     orig_heaviest_block_digest = heaviest->hash;
   }
 

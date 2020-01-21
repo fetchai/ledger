@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -30,7 +30,6 @@ constexpr std::size_t MAX_CACHED  = 1;
 class HistoricalBloomFilterTests : public ::testing::Test
 {
 protected:
-
   HistoricalBloomFilter bloom_{HistoricalBloomFilter::Mode::NEW_DATABASE,
                                "h-bloom-tests.db",
                                "h-bloom-tests.index.db",
@@ -91,7 +90,7 @@ TEST_F(HistoricalBloomFilterTests, CheckUpdatesToFlushedPage)
 
   ASSERT_EQ(1, bloom_.TrimCache());
 
-  bloom_.Add("C", 2); // <- update to flushed page
+  bloom_.Add("C", 2);  // <- update to flushed page
 
   ASSERT_TRUE(bloom_.Match("A", 1, 20));
   ASSERT_TRUE(bloom_.Match("B", 1, 20));
@@ -107,7 +106,7 @@ TEST_F(HistoricalBloomFilterTests, CheckUpdatesToFlushedPageCanBeStoredAgain)
 
   bloom_.Add("C", 2);
 
-  ASSERT_EQ(1, bloom_.TrimCache()); // <- dropped from memory here
+  ASSERT_EQ(1, bloom_.TrimCache());  // <- dropped from memory here
 
   ASSERT_TRUE(bloom_.Match("A", 1, 20));
   ASSERT_TRUE(bloom_.Match("B", 1, 20));
@@ -128,8 +127,8 @@ TEST_F(HistoricalBloomFilterTests, CheckFlushingToDisk)
                                WINDOW_SIZE,
                                MAX_CACHED};
 
-  ASSERT_TRUE(bloom_.Match("A", 1, 1)); // this should already be in memory so it is fine
-  ASSERT_TRUE(loaded.Match("A", 1, 1)); // <- actual test
+  ASSERT_TRUE(bloom_.Match("A", 1, 1));  // this should already be in memory so it is fine
+  ASSERT_TRUE(loaded.Match("A", 1, 1));  // <- actual test
 }
 
 TEST_F(HistoricalBloomFilterTests, DetectLoadFailure)
@@ -139,14 +138,13 @@ TEST_F(HistoricalBloomFilterTests, DetectLoadFailure)
   // trigger the flush to disk
   bloom_.Flush();
 
-  ASSERT_THROW(HistoricalBloomFilter a(HistoricalBloomFilter::Mode::LOAD_DATABASE,
-                               "h-bloom-tests.db",
-                               "h-bloom-tests.index.db",
-                               "h-bloom-tests.meta.db",
-                               WINDOW_SIZE + 1, // <- the window size if different
-                               MAX_CACHED), std::runtime_error);
+  ASSERT_THROW(
+      HistoricalBloomFilter a(HistoricalBloomFilter::Mode::LOAD_DATABASE, "h-bloom-tests.db",
+                              "h-bloom-tests.index.db", "h-bloom-tests.meta.db",
+                              WINDOW_SIZE + 1,  // <- the window size if different
+                              MAX_CACHED),
+      std::runtime_error);
 }
-
 
 TEST(AltHistoricalBloomFilterTests, CheckIntegrityOnReload)
 {
@@ -177,7 +175,8 @@ TEST(AltHistoricalBloomFilterTests, CheckIntegrityOnReload)
   ASSERT_TRUE(bloom1.Add("F", 51));
 
   // simulate a crash by simply trying to restore the previous database from its current state on
-  // disk. In this case, we expect the last page that was flushed to be page 2 (index range [20-30) )
+  // disk. In this case, we expect the last page that was flushed to be page 2 (index range [20-30)
+  // )
   HistoricalBloomFilter bloom2{HistoricalBloomFilter::Mode::LOAD_DATABASE,
                                "h-bloom-tests.db",
                                "h-bloom-tests.index.db",
@@ -198,4 +197,4 @@ TEST(AltHistoricalBloomFilterTests, CheckIntegrityOnReload)
   ASSERT_FALSE(bloom2.Match("F", 1, 60));
 }
 
-}
+}  // namespace

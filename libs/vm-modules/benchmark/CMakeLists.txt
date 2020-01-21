@@ -10,5 +10,11 @@ include(${FETCH_ROOT_CMAKE_DIR}/BuildTools.cmake)
 # Compiler Configuration
 setup_compiler()
 
-add_fetch_gbench(benchmark_vm_modules_model fetch-vm-modules ../../vm-modules/benchmark/model GTEST)
-add_fetch_gbench(benchmark_vm_modules_tensor fetch-vm-modules ../../vm-modules/benchmark/tensor GTEST)
+add_fetch_gbench(benchmark_vm_modules_model
+                 fetch-vm-modules
+                 ../../vm-modules/benchmark/model
+                 GTEST)
+add_fetch_gbench(benchmark_vm_modules_tensor
+                 fetch-vm-modules
+                 ../../vm-modules/benchmark/tensor
+                 GTEST)

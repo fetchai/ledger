@@ -254,10 +254,10 @@ function (add_fetch_gbench
       endif ()
       if (arg STREQUAL "GTEST")
         set(include_gtest TRUE)
-      endif()
+      endif ()
       if (arg STREQUAL "NO_MAIN")
         set(include_main FALSE)
-      endif()
+      endif ()
     endforeach ()
 
     if (is_disabled)
@@ -271,9 +271,7 @@ function (add_fetch_gbench
       # define the target
       add_executable(${name} ${headers} ${srcs})
 
-      target_link_libraries(${name}
-                            PRIVATE ${library}
-                                    benchmark)
+      target_link_libraries(${name} PRIVATE ${library} benchmark)
 
       if (include_main)
         target_link_libraries(${name} PRIVATE benchmark_main)
@@ -283,10 +281,10 @@ function (add_fetch_gbench
         target_link_libraries(${name} PRIVATE gmock)
 
         target_include_directories(${name}
-          PRIVATE ${FETCH_ROOT_VENDOR_DIR}/googletest/googletest/include)
+                                   PRIVATE ${FETCH_ROOT_VENDOR_DIR}/googletest/googletest/include)
         target_include_directories(${name}
-          PRIVATE ${FETCH_ROOT_VENDOR_DIR}/googletest/googlemock/include)
-      endif()
+                                   PRIVATE ${FETCH_ROOT_VENDOR_DIR}/googletest/googlemock/include)
+      endif ()
 
       # CoreFoundation Support on MacOS
       if (APPLE)
