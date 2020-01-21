@@ -384,7 +384,6 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
   , http_network_manager_{"Http", HTTP_THREADS}
   , internal_identity_{std::make_shared<crypto::ECDSASigner>()}
   , external_identity_{std::move(certificate)}
-  , standalone_mode_{config.network_mode == NetworkMode::STANDALONE}
   , tx_status_cache_(TxStatusCache::factory())
   , uptime_{telemetry::Registry::Instance().CreateCounter(
         "ledger_uptime_ticks_total",
@@ -749,7 +748,7 @@ bool Constellation::OnRunning(core::WeakRunnable const &bootstrap_monitor)
     // immediately generating blocks on an old chain
     if (!attached_block_coord)
     {
-      if (standalone_mode_ || main_chain_service_->IsHealthy())
+      if (cfg_.network_mode == NetworkMode::STANDALONE || main_chain_service_->IsHealthy())
       {
         FETCH_LOG_INFO(LOGGING_NAME, "Starting the block coordinator.");
         reactor_.Attach(block_coordinator_->GetWeakRunnable());
@@ -796,6 +795,9 @@ bool Constellation::OnRunning(core::WeakRunnable const &bootstrap_monitor)
 void Constellation::OnTearDownExternalNetwork()
 {
   FETCH_LOG_INFO(LOGGING_NAME, "OnTearDownExternalNetwork()");
+
+  // not strictly necessary but make sure that chain has completely flushed to disk
+  chain_->Flush();
 
   if (http_)
   {
