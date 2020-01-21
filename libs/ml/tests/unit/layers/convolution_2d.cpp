@@ -16,7 +16,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/serializers/main_serializer.hpp"
 #include "gtest/gtest.h"
 #include "ml/layers/convolution_2d.hpp"
 #include "ml/meta/ml_type_traits.hpp"
@@ -24,7 +23,6 @@
 #include "ml/ops/loss_functions/mean_square_error_loss.hpp"
 #include "ml/ops/placeholder.hpp"
 #include "ml/serializers/ml_types.hpp"
-#include "ml/utilities/graph_builder.hpp"
 #include "test_types.hpp"
 
 #include <memory>
@@ -307,7 +305,7 @@ TYPED_TEST(Convolution2DTest, graph_forward_test)  // Use the class as a Node
                                   math::function_tolerance<DataType>()));
 }
 
-TYPED_TEST(Convolution2DTest, saveparams_test)
+TYPED_TEST(Convolution2DTest, getStateDict)
 {
   using TensorType = TypeParam;
   using DataType   = typename TypeParam::Type;
