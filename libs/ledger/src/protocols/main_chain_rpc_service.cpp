@@ -467,7 +467,6 @@ State MainChainRpcService::OnWaitForBlocks()
 
   // If we have passed all these checks then we have successfully retrieved a travelogue from our
   // peer
-  healthy_ = true;
   MainChainProtocol::Travelogue log{};
   if (!current_request_->GetResult(log))
   {
@@ -496,6 +495,9 @@ State MainChainRpcService::OnWaitForBlocks()
 
   // process all of the blocks that have been returned from the syncing process
   HandleChainResponse(current_peer_address_, log.blocks.begin(), log.blocks.end());
+
+  // count the RPC service as healthy
+  healthy_ = true;
 
   // we have now reached the heaviest tip
   auto const &latest_block = log.blocks.back();
