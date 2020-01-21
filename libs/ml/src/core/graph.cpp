@@ -1111,6 +1111,21 @@ std::vector<std::pair<std::string, std::vector<std::string>>> Graph<TensorType>:
   return connections_;
 }
 
+template <typename TensorType>
+fetch::ml::ops::OperationsCount Graph<TensorType>::ChargeForwardTo(const std::string &node_name)
+{
+  if (nodes_.find(node_name) == nodes_.end())
+  {
+    FETCH_LOG_ERROR(DESCRIPTOR, "The graph does not contain a node with name " + node_name);
+    return 0;
+  }
+
+  this->Compile();  // Without compiling and shape-computing charge estimation is not possible.
+
+  NodePtrType node = nodes_.at(node_name);
+  return node->ChargeForward();
+}
+
 /**
  * Return list of all node names in format GRAPH1/...SUBGRAPHS../LEAF
  * @return std::vector<std::string> list of names of all nodes in all subgraphs

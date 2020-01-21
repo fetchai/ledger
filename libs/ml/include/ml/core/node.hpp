@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "math/base_types.hpp"
-#include "meta/vm_types.hpp"
+#include "ml/ops/estimation/charge_constants.hpp"
 
 #include <functional>
 #include <memory>
@@ -149,8 +149,8 @@ public:
     return static_cast<bool>(cached_output_status_ == CachedOutputState::VALID_CACHE);
   }
 
-  fetch::vm::ChargeAmount ForwardCost(std::vector<fetch::math::SizeVector> const &input_shapes);
-  fetch::vm::ChargeAmount BackwardCost(std::vector<fetch::math::SizeVector> const &input_shapes);
+  fetch::ml::ops::OperationsCount ChargeForward();
+  fetch::ml::ops::OperationsCount BackwardCost();
 
 private:
   std::vector<NodeWeakPtrType> input_nodes_;

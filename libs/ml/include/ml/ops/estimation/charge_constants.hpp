@@ -17,25 +17,27 @@
 //
 //------------------------------------------------------------------------------
 
-#include "meta/vm_types.hpp"
+#include <cstdint>
 
 namespace fetch {
 namespace ml {
 namespace ops {
+
+using OperationsCount = std::uint64_t;
+
 namespace charge_cost {
 
-using fetch::vm::ChargeAmount;
-
-static constexpr ChargeAmount DROPOUT_PER_ELEMENT             = 3;
-static constexpr ChargeAmount RELU_PER_ELEMENT                = 1;
-static constexpr ChargeAmount SIGMOID_PER_ELEMENT             = 2;
-static constexpr ChargeAmount ADDITION_PER_ELEMENT            = 1;
-static constexpr ChargeAmount FLATTEN_PER_ELEMENT             = 1;
-static constexpr ChargeAmount MULTIPLICATION_PER_ELEMENT      = 3;
-static constexpr ChargeAmount PLACEHOLDER_READING_PER_ELEMENT = 0;
-static constexpr ChargeAmount WEIGHTS_READING_PER_ELEMENT     = 0;
+static constexpr OperationsCount DROPOUT_PER_ELEMENT             = 3;
+static constexpr OperationsCount RELU_PER_ELEMENT                = 1;
+static constexpr OperationsCount SIGMOID_PER_ELEMENT             = 2;
+static constexpr OperationsCount ADDITION_PER_ELEMENT            = 1;
+static constexpr OperationsCount FLATTEN_PER_ELEMENT             = 1;
+static constexpr OperationsCount MULTIPLICATION_PER_ELEMENT      = 3;
+static constexpr OperationsCount PLACEHOLDER_READING_PER_ELEMENT = 0;
+static constexpr OperationsCount WEIGHTS_READING_PER_ELEMENT     = 0;
 
 }  // namespace charge_cost
+
 }  // namespace ops
 }  // namespace ml
 }  // namespace fetch

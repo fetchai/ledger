@@ -68,6 +68,8 @@ public:
 
   OpType      OperationType() const override;
   char const *Descriptor() const override;
+
+  OperationsCount ForwardCost() override;
 };
 
 }  // namespace ops

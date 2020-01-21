@@ -19,7 +19,7 @@
 
 #include "core/assert.hpp"
 #include "math/tensor/tensor.hpp"
-#include "meta/vm_types.hpp"
+#include "ml/ops/estimation/charge_constants.hpp"
 #include "ml/saveparams/saveable_params.hpp"
 
 #include <functional>
@@ -156,9 +156,8 @@ public:
    * @return estimated charge amount, necessary for performing a forward pass on data of given
    * shapes.
    */
-  virtual fetch::vm::ChargeAmount ForwardCost(ShapeVector const &input_shapes)
+  virtual OperationsCount ForwardCost()
   {
-    FETCH_UNUSED(input_shapes);
     // TODO(VH): make a pure virtual call;
     std::cout << "Error: call to unexisting ForwardCost() implementation! returned 0." << std::endl;
     return 0;
@@ -170,13 +169,33 @@ public:
    * @return estimated charge amount, necessary for performing a backward pass on data of given
    * shapes.
    */
-  virtual fetch::vm::ChargeAmount BackwardCost(ShapeVector const &input_shapes)
+  virtual OperationsCount BackwardCost()
   {
-    FETCH_UNUSED(input_shapes);
     // TODO(VH): make a pure virtual call;
     std::cout << "Error: call to unexisting BackwardCost() implementation! returned 0."
               << std::endl;
     return 0;
+  }
+
+  static fetch::math::SizeType TotalElementsIn(std::vector<fetch::math::SizeVector> const &shapes)
+  {
+    if (shapes.empty())
+    {
+      return 0;
+    }
+    fetch::math::SizeType total_elements = 1;
+    for (auto const &shape : shapes)
+    {
+      for (auto const &dimension : shape)
+      {
+        if (dimension == 0)
+        {
+          std::runtime_error("A dimension of size 0 found in tensor shape!");
+        }
+        total_elements *= dimension;
+      }
+    }
+    return total_elements;
   }
 
 protected:
