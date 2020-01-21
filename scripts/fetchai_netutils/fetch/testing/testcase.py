@@ -70,7 +70,7 @@ class ConstellationTestCase(TestCase):
     Sets up an instance of a test, containing references to started nodes and other relevant data
     """
 
-    def __init__(self, build_directory, constellation_exe, yaml_file):
+    def __init__(self, build_directory, constellation_exe, yaml_file, block_interval=1000):
 
         self._number_of_nodes = 0
         self._node_load_directory = []
@@ -86,7 +86,7 @@ class ConstellationTestCase(TestCase):
         self._metadata = None
         self._watchdog = None
         self._creation_time = time.perf_counter()
-        self._block_interval = 1000
+        self._block_interval = block_interval
         self._genesis_file_location = ""
 
         # In order for the tests to have tokens, allocate

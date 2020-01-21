@@ -84,13 +84,15 @@ class TimerWatchdog():
 def create_test(setup_conditions, build_directory, node_exe, yaml_file):
     test_type = yaml_extract(
         setup_conditions, 'test_type', expected=False, expect_type=str)
+    block_interval = yaml_extract(setup_conditions, 'block_interval', expected=False, expect_type=int,
+                                  default=1000)
 
     # default case
     if test_type is None:
-        return ConstellationTestCase(build_directory, node_exe, yaml_file)
+        return ConstellationTestCase(build_directory, node_exe, yaml_file, block_interval)
 
     if test_type == "Constellation":
-        return ConstellationTestCase(build_directory, node_exe, yaml_file)
+        return ConstellationTestCase(build_directory, node_exe, yaml_file, block_interval)
     elif test_type == "DmlfEtch":
         return DmlfEtchTestCase(build_directory, node_exe, yaml_file)
     else:
@@ -438,7 +440,10 @@ def create_balance(parameters, test_instance):
         api = LedgerApi(node_host, node_port)
 
         # create the entity from the node's private key
-        entity = Entity(get_nodes_private_key(test_instance, node_index))
+        key = get_nodes_private_key(test_instance, node_index)
+        entity = Entity(key)
+        if key is None:
+            set_nodes_private_key(test_instance, node_index, entity)
 
         tx = api.tokens.transfer(
             test_instance._benefactor_entity, entity, amount, BASE_TX_FEE)
@@ -484,6 +489,7 @@ def run_contract(parameters, test_instance):
     nodes = parameters["nodes"]
     contract_name = parameters["contract_name"]
     wait_for_blocks_num = parameters["wait_for_blocks"]
+    fee_limit = parameters.get("fee_limit", 10000000)
     for node_index in nodes:
         node_host = "localhost"
         node_port = test_instance._nodes[node_index]._port_start
@@ -502,7 +508,7 @@ def run_contract(parameters, test_instance):
                 contract_name, api, entity, test_instance._workspace)
             contract_helper.load()
         output('Submit data, available balance: ', api.tokens.balance(entity))
-        contract_helper.submit_random_data(10, (0, 200))
+        contract_helper.submit_random_data(10, (0, 200), fee_limit)
         api.wait_for_blocks(wait_for_blocks_num)
         valid = contract_helper.validate_execution()
         if not valid:
