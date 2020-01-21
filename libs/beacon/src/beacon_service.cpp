@@ -128,6 +128,8 @@ BeaconService::BeaconService(MuddleInterface &muddle, const CertificatePtr &cert
         {0.000001, 0.00001, 0.0001, 0.001, 0.01, 0.1}, "beacon_verify_time",
         "Time taken to verify signatures")}
 {
+  FETCH_LOG_INFO(LOGGING_NAME, "Constructing.");
+
   // Attaching beacon ready callback handler
   beacon_setup.SetBeaconReadyCallback([this](SharedAeonExecutionUnit beacon) {
     FETCH_LOCK(mutex_);
@@ -231,9 +233,13 @@ void BeaconService::SaveState()
 
 void BeaconService::ReloadState(State &next_state)
 {
+  FETCH_LOG_INFO(LOGGING_NAME, "Loading signatures!");
+
   old_state_.Load("beacon_state.db", "beacon_state.index.db");  // Legacy/depreciated
   saved_state_all_sigs_.Load("beacon_state_sigs_v2.db", "beacon_state_sigs_v2.index.db");
   saved_state_.Load("beacon_state_v2.db");
+
+  FETCH_LOG_INFO(LOGGING_NAME, "Loaded save state!");
 
   if (!load_and_reload_on_crash_)
   {

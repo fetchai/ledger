@@ -97,7 +97,7 @@ struct BloomFilterMetadata
 };
 static_assert(meta::IsPOD<BloomFilterMetadata>, "Metadata must be POD");
 
-constexpr char const *LOGGING_NAME     = "HBloomFilter";
+constexpr char const *LOGGING_NAME = "HBloomFilter";
 
 /**
  * Convert a bucket into a resource ID for the storage engine
@@ -524,7 +524,6 @@ bool HistoricalBloomFilter::CacheEntry::Match(ConstByteArray const &element) con
 }
 
 }  // namespace bloom
-
 
 namespace serializers {
 

@@ -21,9 +21,9 @@
 #include "beacon/trusted_dealer.hpp"
 #include "beacon/trusted_dealer_beacon_service.hpp"
 #include "core/reactor.hpp"
+#include "muddle/create_muddle_fake.hpp"
 #include "muddle/muddle_interface.hpp"
 #include "shards/manifest_cache_interface.hpp"
-#include "muddle/create_muddle_fake.hpp"
 
 #include "gtest/gtest.h"
 
