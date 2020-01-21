@@ -74,7 +74,7 @@ void MinMaxScaler<TensorType>::Normalise(TensorType const &input_tensor, TensorT
     auto ret_it = output_tensor.View(i).begin();
     while (ret_it.is_valid())
     {
-      *ret_it = static_cast<DataType>(*in_it - x_min_) / static_cast<DataType>(x_range_);
+      *ret_it = static_cast<DataType>((*in_it - x_min_) / x_range_);
       ++in_it;
       ++ret_it;
     }
@@ -101,7 +101,7 @@ void MinMaxScaler<TensorType>::DeNormalise(TensorType const &input_tensor,
     auto ret_it = output_tensor.View(i).begin();
     while (ret_it.is_valid())
     {
-      *ret_it = static_cast<DataType>((*in_it) * x_range_) + static_cast<DataType>(x_min_);
+      *ret_it = static_cast<DataType>(((*in_it) * x_range_) + x_min_);
       ++in_it;
       ++ret_it;
     }
