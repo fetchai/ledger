@@ -150,7 +150,7 @@ protected:
     {
       using Backdoor = fetch::ledger::BorrowBlockGenerationWeight;
       ret->weight    = static_cast<Backdoor const &>(*consensus_)
-	      .GetBlockGenerationWeight(*ret, cabinet_[miner_index]);
+                        .GetBlockGenerationWeight(*ret, cabinet_[miner_index]);
     }
     catch (...)
     {
