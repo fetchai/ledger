@@ -70,6 +70,18 @@ void ReadFile(std::fstream &stream, char *data, std::streamsize size)
   }
 }
 
+// helper to write file, similar to read file
+void WriteFile(std::fstream &stream, char const *data, std::streamsize size)
+{
+  stream.write(data, size);
+
+  if (!stream)
+  {
+    FETCH_LOG_WARN("ReadFileHelper", "stream died.");
+    throw StorageException("File handle died after writing");
+  }
+}
+
 bool SingleObjectStore::Load(std::string const &file_name)
 {
   file_name_ = file_name;
@@ -98,7 +110,7 @@ bool SingleObjectStore::Load(std::string const &file_name)
   if (FileSize() == 0)
   {
     // Write metadata to new file
-    file_handle_.write(reinterpret_cast<char const *>(&meta), sizeof(meta));
+    WriteFile(file_handle_, reinterpret_cast<char const *>(&meta), sizeof(meta));
     file_handle_.flush();
     return true;
   }
@@ -191,8 +203,8 @@ void SingleObjectStore::SetRaw(ByteArray &data)
   Clear();
 
   file_handle_.seekg(0, std::fstream::beg);
-  file_handle_.write(reinterpret_cast<char *>(&meta), sizeof(meta));
-  file_handle_.write(data.char_pointer(), static_cast<int64_t>(data.size()));
+  WriteFile(file_handle_, reinterpret_cast<char *>(&meta), sizeof(meta));
+  WriteFile(file_handle_, data.char_pointer(), static_cast<int64_t>(data.size()));
   file_handle_.flush();
 }
 
