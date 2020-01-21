@@ -73,6 +73,15 @@ public:
 
   static constexpr char const *DESCRIPTOR = "CONSTANT";
 
+  OpType OperationType() const override  // TODO(ML-466) : move implementation to .cpp
+  {
+    return this->OpCode();
+  }
+  char const *Descriptor() const override  // TODO(ML-466) : move implementation to .cpp
+  {
+    return DESCRIPTOR;
+  }
+
 protected:
   bool data_set_once_ = false;
 };

@@ -20,21 +20,18 @@
 #include "ml/ops/concatenate.hpp"
 #include "test_types.hpp"
 
-#include "core/serializers/main_serializer_definition.hpp"
 #include "gtest/gtest.h"
-#include "ml/serializers/ml_types.hpp"
 #include <memory>
 #include <vector>
 
-namespace fetch {
-namespace ml {
-namespace test {
+namespace {
+
 template <typename T>
 class ConcatenateTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(ConcatenateTest, math::test::TensorIntAndFloatingTypes);
+TYPED_TEST_CASE(ConcatenateTest, fetch::math::test::TensorIntAndFloatingTypes);
 
 TYPED_TEST(ConcatenateTest, forward_test)
 {
@@ -85,108 +82,4 @@ TYPED_TEST(ConcatenateTest, backward_test)
   ASSERT_EQ(gradients[1].shape(), std::vector<typename TypeParam::SizeType>({8, 8}));
 }
 
-TYPED_TEST(ConcatenateTest, saveparams_test)
-{
-  using TensorType    = TypeParam;
-  using DataType      = typename TypeParam::Type;
-  using VecTensorType = typename fetch::ml::ops::Ops<TensorType>::VecTensorType;
-  using SPType        = typename fetch::ml::ops::Concatenate<TensorType>::SPType;
-  using OpType        = fetch::ml::ops::Concatenate<TensorType>;
-
-  TypeParam data1 = TypeParam::UniformRandom(64);
-  TypeParam data2 = TypeParam::UniformRandom(64);
-  data1.Reshape({8, 8});
-  data2.Reshape({8, 8});
-
-  OpType op(1);
-
-  TensorType    prediction(op.ComputeOutputShape(
-      {std::make_shared<const TensorType>(data1), std::make_shared<const TensorType>(data2)}));
-  VecTensorType vec_data(
-      {std::make_shared<const TensorType>(data1), std::make_shared<const TensorType>(data2)});
-
-  op.Forward(vec_data, prediction);
-
-  // extract saveparams
-  std::shared_ptr<fetch::ml::OpsSaveableParams> sp = op.GetOpSaveableParams();
-
-  // downcast to correct type
-  auto dsp = std::static_pointer_cast<SPType>(sp);
-
-  // serialize
-  fetch::serializers::MsgPackSerializer b;
-  b << *dsp;
-
-  // deserialize
-  b.seek(0);
-  auto dsp2 = std::make_shared<SPType>();
-  b >> *dsp2;
-
-  // rebuild node
-  OpType new_op(*dsp2);
-
-  // check that new predictions match the old
-  TensorType new_prediction(op.ComputeOutputShape(
-      {std::make_shared<const TensorType>(data1), std::make_shared<const TensorType>(data2)}));
-  new_op.Forward(vec_data, new_prediction);
-
-  // test correct values
-  EXPECT_TRUE(new_prediction.AllClose(prediction, DataType{0}, DataType{0}));
-}
-
-TYPED_TEST(ConcatenateTest, saveparams_backward_test)
-{
-  using TensorType = TypeParam;
-  using OpType     = fetch::ml::ops::Concatenate<TensorType>;
-  using SPType     = typename OpType::SPType;
-
-  TypeParam data1(std::vector<fetch::math::SizeType>({8, 8}));
-  TypeParam data2(std::vector<fetch::math::SizeType>({8, 8}));
-
-  fetch::ml::ops::Concatenate<TypeParam> op{1};
-
-  TypeParam prediction(op.ComputeOutputShape(
-      {std::make_shared<TypeParam>(data1), std::make_shared<TypeParam>(data2)}));
-  op.Forward({std::make_shared<TypeParam>(data1), std::make_shared<TypeParam>(data2)}, prediction);
-
-  TypeParam              error_signal(prediction.shape());
-  std::vector<TypeParam> gradients = op.Backward(
-      {std::make_shared<TypeParam>(data1), std::make_shared<TypeParam>(data2)}, error_signal);
-
-  // extract saveparams
-  std::shared_ptr<fetch::ml::OpsSaveableParams> sp = op.GetOpSaveableParams();
-
-  // downcast to correct type
-  auto dsp = std::dynamic_pointer_cast<SPType>(sp);
-
-  // serialize
-  fetch::serializers::MsgPackSerializer b;
-  b << *dsp;
-
-  // make another prediction with the original op
-  gradients = op.Backward({std::make_shared<TypeParam>(data1), std::make_shared<TypeParam>(data2)},
-                          error_signal);
-  // deserialize
-  b.seek(0);
-  auto dsp2 = std::make_shared<SPType>();
-  b >> *dsp2;
-
-  // rebuild node
-  OpType new_op(*dsp2);
-
-  // check that new predictions match the old
-  std::vector<TypeParam> new_gradients = new_op.Backward(
-      {std::make_shared<TypeParam>(data1), std::make_shared<TypeParam>(data2)}, error_signal);
-
-  // test correct values
-  EXPECT_TRUE(gradients.at(0).AllClose(
-      new_gradients.at(0), fetch::math::function_tolerance<typename TypeParam::Type>(),
-      fetch::math::function_tolerance<typename TypeParam::Type>()));
-  EXPECT_TRUE(gradients.at(1).AllClose(
-      new_gradients.at(1), fetch::math::function_tolerance<typename TypeParam::Type>(),
-      fetch::math::function_tolerance<typename TypeParam::Type>()));
-}
-
-}  // namespace test
-}  // namespace ml
-}  // namespace fetch
+}  // namespace

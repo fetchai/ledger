@@ -28,14 +28,6 @@
 // appear in middle of graph
 
 namespace fetch {
-
-namespace dmlf {
-namespace collective_learning {
-template <typename TensorType>
-class ClientAlgorithm;
-}  // namespace collective_learning
-}  // namespace dmlf
-
 namespace ml {
 
 ///////////////
@@ -105,6 +97,7 @@ public:
 
   void ResetCompile();
   void Compile();
+  void ComputeAllNodeShapes();
 
   void AddTrainable(NodePtrType node_ptr, std::string const &node_name);
   void AddTrainable(NodePtrType node_ptr, std::string const &node_name,
@@ -158,6 +151,8 @@ public:
 
   std::vector<std::string> GetTrainableNames();
 
+  std::vector<std::pair<std::string, std::vector<std::string>>> Connections();
+
 protected:
   std::map<std::string, NodePtrType>                            nodes_;
   std::map<std::string, NodePtrType>                            trainable_lookup_;
@@ -172,7 +167,6 @@ private:
 
   friend class optimisers::Optimiser<TensorType>;
   friend class model::ModelInterface<TensorType>;
-  friend class dmlf::collective_learning::ClientAlgorithm<TensorType>;
 
   TensorType ForwardImplementation(std::string const &node_name, bool is_training,
                                    bool evaluate_mode);
