@@ -179,7 +179,7 @@ void EvaluateGraph(fetch::ml::Graph<TensorType> &g, std::vector<std::string> inp
     TensorType model_output = g.Evaluate(output_node, false);
     DataType   val_loss =
         fetch::math::CrossEntropyLoss<TensorType>(model_output, output_data.View(b).Copy());
-    total_val_loss += val_loss;
+    total_val_loss = static_cast<DataType>(total_val_loss + val_loss);
 
     // count correct guesses
     if (model_output.At(0, 0) > fetch::math::Type<DataType>("0.5") &&

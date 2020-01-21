@@ -52,7 +52,7 @@ void MinMaxScaler<TensorType>::SetScale(TensorType const &reference_tensor)
     }
   }
 
-  x_range_ = x_max_ - x_min_;
+  x_range_ = static_cast<DataType>(x_max_ - x_min_);
 }
 
 /**
@@ -74,7 +74,7 @@ void MinMaxScaler<TensorType>::Normalise(TensorType const &input_tensor, TensorT
     auto ret_it = output_tensor.View(i).begin();
     while (ret_it.is_valid())
     {
-      *ret_it = (*in_it - x_min_) / (x_range_);
+      *ret_it = static_cast<DataType>(*in_it - x_min_) / static_cast<DataType>(x_range_);
       ++in_it;
       ++ret_it;
     }
@@ -101,7 +101,7 @@ void MinMaxScaler<TensorType>::DeNormalise(TensorType const &input_tensor,
     auto ret_it = output_tensor.View(i).begin();
     while (ret_it.is_valid())
     {
-      *ret_it = ((*in_it) * x_range_) + x_min_;
+      *ret_it = static_cast<DataType>((*in_it) * x_range_) + static_cast<DataType>(x_min_);
       ++in_it;
       ++ret_it;
     }
@@ -114,7 +114,7 @@ void MinMaxScaler<TensorType>::SetScale(DataType const &min_val, DataType const 
   assert(min_val <= max_val);
   x_min_   = min_val;
   x_max_   = max_val;
-  x_range_ = x_max_ - x_min_;
+  x_range_ = static_cast<DataType>(x_max_ - x_min_);
 }
 
 template class MinMaxScaler<math::Tensor<int8_t>>;

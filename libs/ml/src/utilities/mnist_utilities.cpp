@@ -74,7 +74,8 @@ TensorType read_mnist_images(std::string const &full_path)
       for (SizeType k{0}; k < n_cols; k++)
       {
         tensor_dataset.At(j, k, i) =
-            static_cast<DataType>(static_cast<uint8_t>(image_char[j * n_cols + k])) / DataType{256};
+            static_cast<DataType>(static_cast<uint8_t>(image_char[j * n_cols + k])) /
+            static_cast<DataType>(256);
       }
     }
   }
