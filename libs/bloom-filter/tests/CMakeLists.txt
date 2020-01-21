@@ -10,4 +10,4 @@ include(${FETCH_ROOT_CMAKE_DIR}/BuildTools.cmake)
 # Compiler Configuration
 setup_compiler()
 
-fetch_add_test(fetch-bloomfilter-unit-tests fetch-bloomfilter unit/)
+fetch_add_test(bloom-filter-unit-tests fetch-bloomfilter unit/)

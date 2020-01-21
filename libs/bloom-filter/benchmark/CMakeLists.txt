@@ -1,21 +1,17 @@
 #
-# F E T C H   B L O O M   F I L T E R   L I B R A R Y
+# F E T C H   B L O O M   B E N C H M A R K S
 #
 cmake_minimum_required(VERSION 3.10 FATAL_ERROR)
-project(fetch-bloomfilter)
+project(fetch-bloom)
 
-# CMake Configuration
+# CMake configuration
 include(${FETCH_ROOT_CMAKE_DIR}/BuildTools.cmake)
 
 # Compiler Configuration
 setup_compiler()
 
 # ------------------------------------------------------------------------------
-# Main Library Target
+# Benchmark Targets
 # ------------------------------------------------------------------------------
 
-setup_library(fetch-bloomfilter)
-target_link_libraries(fetch-bloomfilter PUBLIC fetch-core fetch-crypto fetch-logging fetch-storage)
-
-add_test_target()
-add_subdirectory(benchmark)
+add_fetch_gbench(bloom-filter-benchmarks fetch-bloomfilter .)
