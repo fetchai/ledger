@@ -45,7 +45,7 @@ public:
    * false if the file is not the correct version and format, or if
    * loading fails due to corruption
    */
-  bool Load(std::string const &doc_file);
+  bool Load(std::string const &file_name);
 
   /**
    * Get the version of the file that has been loaded
