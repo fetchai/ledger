@@ -22,6 +22,7 @@
 #include "ml/layers/fully_connected.hpp"
 #include "ml/ops/activations/relu.hpp"
 #include "ml/ops/add.hpp"
+#include "ml/ops/estimation/charge_constants.hpp"
 #include "ml/ops/loss_functions/mean_square_error_loss.hpp"
 #include "ml/ops/multiply.hpp"
 #include "ml/ops/placeholder.hpp"
@@ -1210,6 +1211,61 @@ TYPED_TEST(GraphTest, graph_getWeightsOrder_2)
                                      fetch::math::function_tolerance<DataType>()));
   ASSERT_TRUE(weights.at(5).AllClose(gt_c_weight, fetch::math::function_tolerance<DataType>(),
                                      fetch::math::function_tolerance<DataType>()));
+}
+
+TYPED_TEST(GraphTest, graph_charge_input_only)
+{
+  using TensorType = TypeParam;
+  using fetch::ml::ops::OperationsCount;
+
+  TensorType data = TensorType::FromString(R"(01,02,03,04; 11,12,13,14; 21,22,23,24; 31,32,33,34)");
+  math::SizeVector batch_shape = data.shape();
+  batch_shape.back()           = 1;  // Because default batch size is always 1.
+
+  fetch::ml::Graph<TensorType> g;
+
+  std::string input = g.template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Input", {});
+
+  g.SetInput(input, data);
+  g.Compile();
+
+  OperationsCount       charge          = g.ChargeForwardTo(input);
+  OperationsCount const expected_charge = 0;  // Placeholder reading is "free" in charge amount.
+
+  ASSERT_EQ(charge, expected_charge);
+}
+
+TYPED_TEST(GraphTest, graph_charge_subtraction)
+{
+  using TensorType = TypeParam;
+  using fetch::ml::ops::OperationsCount;
+
+  TensorType data = TensorType::FromString(R"(01,02,03,04; 11,12,13,14; 21,22,23,24; 31,32,33,34)");
+  math::SizeVector batch_shape = data.shape();
+  batch_shape.back()           = 1;  // Because default batch size is always 1.
+
+  fetch::ml::Graph<TensorType> g;
+
+  std::string left_input =
+      g.template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("LeftInput", {});
+  std::string right_input =
+      g.template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("RightInput", {});
+  std::string subtract = g.template AddNode<fetch::ml::ops::Subtract<TensorType>>(
+      "Subtract", {"LeftInput", "RightInput"});
+
+  g.SetInput(left_input, data);
+  g.SetInput(right_input, data);
+  g.Compile();
+
+  OperationsCount const charge       = g.ChargeForwardTo(subtract);
+  OperationsCount const batch_charge = charge * data.shape().back();
+
+  std::size_t const     total_elements_in_output = 4 * 4;
+  OperationsCount const expected_charge =
+      total_elements_in_output * fetch::ml::ops::charge_cost::ADDITION_PER_ELEMENT;
+
+  ASSERT_EQ(batch_charge, expected_charge);
+>>>>>>> PR comment fixes
 }
 
 }  // namespace test

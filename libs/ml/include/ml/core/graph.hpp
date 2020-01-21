@@ -20,6 +20,7 @@
 #include "ml/core/node.hpp"
 #include "ml/exceptions/exceptions.hpp"
 #include "ml/ops/constant.hpp"
+#include "ml/ops/estimation/charge_constants.hpp"
 #include "ml/ops/trainable.hpp"
 
 // TODO(#1554) - we should only reset the cache for trained nodes, not all nodes
@@ -150,6 +151,8 @@ public:
   std::vector<std::string> GetTrainableNames();
 
   std::vector<std::pair<std::string, std::vector<std::string>>> Connections();
+
+  fetch::ml::ops::OperationsCount ChargeForwardTo(std::string const &node_name);
 
 protected:
   std::map<std::string, NodePtrType>                            nodes_;

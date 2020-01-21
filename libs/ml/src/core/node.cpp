@@ -25,8 +25,9 @@
 namespace fetch {
 namespace ml {
 
-using Shape       = fetch::math::SizeVector;
-using ShapeVector = std::vector<fetch::math::SizeVector>;
+using Shape           = fetch::math::SizeVector;
+using ShapeVector     = std::vector<fetch::math::SizeVector>;
+using OperationsCount = fetch::ml::ops::OperationsCount;
 
 /**
  * @brief A helper function for printing node's output shape
@@ -94,17 +95,27 @@ OpType Node<TensorType>::OperationType() const
 }
 
 template <typename TensorType>
-vm::ChargeAmount Node<TensorType>::ForwardCost(const std::vector<math::SizeVector> &input_shapes)
+OperationsCount Node<TensorType>::ChargeForward()
 {
-  FETCH_UNUSED(input_shapes);
-  // TODO(VH): impl. a recursive cost call until leaf node(s);
-  return 0;
+  OperationsCount cost = op_ptr_->ForwardCost();
+
+  for (auto const &i : input_nodes_)
+  {
+    auto input_node_ptr = i.lock();
+    if (!input_node_ptr)
+    {
+      throw std::runtime_error("Unable to lock weak pointer.");
+    }
+
+    cost += input_node_ptr->ChargeForward();
+  }
+
+  return cost;
 }
 
 template <typename TensorType>
-vm::ChargeAmount Node<TensorType>::BackwardCost(const std::vector<math::SizeVector> &input_shapes)
+OperationsCount Node<TensorType>::BackwardCost()
 {
-  FETCH_UNUSED(input_shapes);
   // TODO(VH): impl. a backward recursive cost call until output node(s);
   return 0;
 }

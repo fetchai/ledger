@@ -58,6 +58,8 @@ public:
     return OpType::OP_SUBTRACT;
   }
   static constexpr char const *DESCRIPTOR = "Subtract";
+
+  OperationsCount ForwardCost() override;
 };
 
 }  // namespace ops
