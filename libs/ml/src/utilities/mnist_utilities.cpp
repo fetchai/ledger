@@ -81,7 +81,7 @@ TensorType read_mnist_images(std::string const &full_path)
   }
 
   return tensor_dataset;
-};
+}
 
 template <typename TensorType>
 TensorType read_mnist_labels(std::string const &full_path)
