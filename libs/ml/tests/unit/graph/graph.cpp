@@ -24,6 +24,7 @@
 #include "ml/ops/add.hpp"
 #include "ml/ops/estimation/charge_constants.hpp"
 #include "ml/ops/loss_functions/mean_square_error_loss.hpp"
+#include "ml/ops/matrix_multiply.hpp"
 #include "ml/ops/multiply.hpp"
 #include "ml/ops/placeholder.hpp"
 #include "ml/ops/subtract.hpp"
@@ -1241,8 +1242,6 @@ TYPED_TEST(GraphTest, graph_charge_subtraction)
   using fetch::ml::ops::OperationsCount;
 
   TensorType data = TensorType::FromString(R"(01,02,03,04; 11,12,13,14; 21,22,23,24; 31,32,33,34)");
-  math::SizeVector batch_shape = data.shape();
-  batch_shape.back()           = 1;  // Because default batch size is always 1.
 
   fetch::ml::Graph<TensorType> g;
 
@@ -1266,6 +1265,50 @@ TYPED_TEST(GraphTest, graph_charge_subtraction)
 
   ASSERT_EQ(batch_charge, expected_charge);
 >>>>>>> PR comment fixes
+}
+
+TYPED_TEST(GraphTest, graph_charge_matmul)
+{
+  using namespace fetch::ml::ops;
+  using TensorType = TypeParam;
+  using math::SizeType;
+
+  // MatMul here is intended to multiply 2D weights matrix [2; 4] to a 2D input matrix
+  // [4; n], resulting in 2D matrix of size [2; n]; n == batch_size == 6
+
+  TensorType weights_data = TensorType::FromString(R"(01,02,03,04; 11,12,13,14)");
+  TensorType input_data   = TensorType::FromString(
+      R"(01,02,03,04,05,06; 11,12,13,14,15,16; 21,22,23,24,25,26; 31,32,33,34,35,36)");
+  SizeType const weight_width  = weights_data.shape().front();
+  SizeType const weight_height = weights_data.shape().back();
+  SizeType const input_height  = input_data.shape().front();
+
+  ASSERT_EQ(weight_height, input_height);  // else MatMul is not possible
+
+  SizeType const batch_size = input_data.shape().back();
+
+  fetch::ml::Graph<TensorType> g;
+
+  std::string weights = g.template AddNode<PlaceHolder<TensorType>>("Weights", {});
+  std::string input   = g.template AddNode<PlaceHolder<TensorType>>("Input", {});
+  std::string matmul =
+      g.template AddNode<MatrixMultiply<TensorType>>("MatMul", {"Weights", "Input"});
+
+  g.SetInput(weights, weights_data);
+  g.SetInput(input, input_data);
+  g.Compile();
+
+  math::SizeVector const out_shape = g.GetNode(matmul)->BatchOutputShape();
+  ASSERT_EQ(out_shape.size(), 2);
+  ASSERT_EQ(out_shape.front(), 2);
+
+  OperationsCount const charge       = g.ChargeForwardTo(matmul);
+  OperationsCount const batch_charge = charge * batch_size;
+
+  SizeType const        matmul_ops      = weight_width * input_height * batch_size;
+  OperationsCount const expected_charge = matmul_ops * charge_cost::MULTIPLICATION_PER_ELEMENT;
+
+  ASSERT_EQ(batch_charge, expected_charge);
 }
 
 }  // namespace test
