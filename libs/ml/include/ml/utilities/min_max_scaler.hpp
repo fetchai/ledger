@@ -35,10 +35,10 @@ public:
 
   MinMaxScaler() = default;
 
-  virtual void SetScale(TensorType const &reference_tensor) override;
-  void         SetScale(DataType const &min_val, DataType const &max_val) override;
-  void         Normalise(TensorType const &input_tensor, TensorType &output_tensor) override;
-  void         DeNormalise(TensorType const &input_tensor, TensorType &output_tensor) override;
+  void SetScale(TensorType const &reference_tensor) override;
+  void SetScale(DataType const &min_val, DataType const &max_val) override;
+  void Normalise(TensorType const &input_tensor, TensorType &output_tensor) override;
+  void DeNormalise(TensorType const &input_tensor, TensorType &output_tensor) override;
 
   DataType x_min_   = fetch::math::numeric_max<DataType>();
   DataType x_max_   = fetch::math::numeric_lowest<DataType>();

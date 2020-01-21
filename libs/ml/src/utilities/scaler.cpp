@@ -16,13 +16,6 @@
 //
 //------------------------------------------------------------------------------
 
-/*
- * scaler.cpp
- *
- *  Created on: Jan 20, 2020
- *      Author: alex
- */
-
 #include "math/base_types.hpp"
 #include "ml/utilities/scaler.hpp"
 

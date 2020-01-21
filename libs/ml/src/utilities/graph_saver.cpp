@@ -84,6 +84,10 @@ std::shared_ptr<GraphType> LoadGraph(std::string const &save_location)
   return graph_ptr;
 }
 
+template void SaveGraph<fetch::ml::Graph<math::Tensor<int8_t>>>(
+    fetch::ml::Graph<math::Tensor<int8_t>> &g, std::string const &save_location);
+template void SaveGraph<fetch::ml::Graph<math::Tensor<int16_t>>>(
+    fetch::ml::Graph<math::Tensor<int16_t>> &g, std::string const &save_location);
 template void SaveGraph<fetch::ml::Graph<math::Tensor<int32_t>>>(
     fetch::ml::Graph<math::Tensor<int32_t>> &g, std::string const &save_location);
 template void SaveGraph<fetch::ml::Graph<math::Tensor<int64_t>>>(
@@ -99,6 +103,10 @@ template void SaveGraph<fetch::ml::Graph<math::Tensor<fixed_point::fp64_t>>>(
 template void SaveGraph<fetch::ml::Graph<math::Tensor<fixed_point::fp128_t>>>(
     fetch::ml::Graph<math::Tensor<fixed_point::fp128_t>> &g, std::string const &save_location);
 
+template std::shared_ptr<fetch::ml::Graph<math::Tensor<int8_t>>>
+LoadGraph<fetch::ml::Graph<math::Tensor<int8_t>>>(std::string const &save_location);
+template std::shared_ptr<fetch::ml::Graph<math::Tensor<int16_t>>>
+LoadGraph<fetch::ml::Graph<math::Tensor<int16_t>>>(std::string const &save_location);
 template std::shared_ptr<fetch::ml::Graph<math::Tensor<int32_t>>>
 LoadGraph<fetch::ml::Graph<math::Tensor<int32_t>>>(std::string const &save_location);
 template std::shared_ptr<fetch::ml::Graph<math::Tensor<int64_t>>>

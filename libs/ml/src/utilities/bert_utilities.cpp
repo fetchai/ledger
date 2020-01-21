@@ -527,6 +527,10 @@ std::vector<TensorType> PrepareTensorForBert(TensorType const &            data,
   return {segment_data, position_data, data, mask_data};
 }
 
+template math::Tensor<int8_t> LoadTensorFromFile<math::Tensor<int8_t>>(
+    std::string const &file_name);
+template math::Tensor<int16_t> LoadTensorFromFile<math::Tensor<int16_t>>(
+    std::string const &file_name);
 template math::Tensor<int32_t> LoadTensorFromFile<math::Tensor<int32_t>>(
     std::string const &file_name);
 template math::Tensor<int64_t> LoadTensorFromFile<math::Tensor<int64_t>>(
@@ -541,6 +545,14 @@ template math::Tensor<fixed_point::fp64_t> LoadTensorFromFile<math::Tensor<fixed
 template math::Tensor<fixed_point::fp128_t> LoadTensorFromFile<math::Tensor<fixed_point::fp128_t>>(
     std::string const &file_name);
 
+template void PutWeightInLayerNorm<math::Tensor<int8_t>>(
+    fetch::ml::StateDict<math::Tensor<int8_t>> &state_dict, SizeType model_dims,
+    std::string const &gamma_file_name, std::string const &beta_file_name,
+    std::string const &gamma_weight_name, std::string const &beta_weight_name);
+template void PutWeightInLayerNorm<math::Tensor<int16_t>>(
+    fetch::ml::StateDict<math::Tensor<int16_t>> &state_dict, SizeType model_dims,
+    std::string const &gamma_file_name, std::string const &beta_file_name,
+    std::string const &gamma_weight_name, std::string const &beta_weight_name);
 template void PutWeightInLayerNorm<math::Tensor<int32_t>>(
     fetch::ml::StateDict<math::Tensor<int32_t>> &state_dict, SizeType model_dims,
     std::string const &gamma_file_name, std::string const &beta_file_name,
@@ -570,6 +582,14 @@ template void PutWeightInLayerNorm<math::Tensor<fixed_point::fp128_t>>(
     std::string const &gamma_file_name, std::string const &beta_file_name,
     std::string const &gamma_weight_name, std::string const &beta_weight_name);
 
+template void PutWeightInFullyConnected<math::Tensor<int8_t>>(
+    fetch::ml::StateDict<math::Tensor<int8_t>> &state_dict, SizeType in_size, SizeType out_size,
+    std::string const &weights_file_name, std::string const &bias_file_name,
+    std::string const &weights_name, std::string const &bias_name);
+template void PutWeightInFullyConnected<math::Tensor<int16_t>>(
+    fetch::ml::StateDict<math::Tensor<int16_t>> &state_dict, SizeType in_size, SizeType out_size,
+    std::string const &weights_file_name, std::string const &bias_file_name,
+    std::string const &weights_name, std::string const &bias_name);
 template void PutWeightInFullyConnected<math::Tensor<int32_t>>(
     fetch::ml::StateDict<math::Tensor<int32_t>> &state_dict, SizeType in_size, SizeType out_size,
     std::string const &weights_file_name, std::string const &bias_file_name,
@@ -599,43 +619,45 @@ template void PutWeightInFullyConnected<math::Tensor<fixed_point::fp128_t>>(
     SizeType out_size, std::string const &weights_file_name, std::string const &bias_file_name,
     std::string const &weights_name, std::string const &bias_name);
 
-// template std::pair<std::vector<std::string>, std::vector<std::string>>
-// MakeBertModel<math::Tensor<int8_t>>( 		BERTConfig<math::Tensor<int8_t>> const &,
-// fetch::ml::Graph<math::Tensor<int8_t>> &);
-
-// template std::pair<std::vector<std::string>, std::vector<std::string>>
-// MakeBertModel<math::Tensor<int16_t>>( 		BERTConfig<math::Tensor<int16_t>> const &,
-// fetch::ml::Graph<math::Tensor<int16_t>> &);
-
+template std::pair<std::vector<std::string>, std::vector<std::string>>
+MakeBertModel<math::Tensor<int8_t>>(BERTConfig<math::Tensor<int8_t>> const &,
+                                    fetch::ml::Graph<math::Tensor<int8_t>> &);
+template std::pair<std::vector<std::string>, std::vector<std::string>>
+MakeBertModel<math::Tensor<int16_t>>(BERTConfig<math::Tensor<int16_t>> const &,
+                                     fetch::ml::Graph<math::Tensor<int16_t>> &);
 template std::pair<std::vector<std::string>, std::vector<std::string>>
 MakeBertModel<math::Tensor<int32_t>>(BERTConfig<math::Tensor<int32_t>> const &config,
                                      fetch::ml::Graph<math::Tensor<int32_t>> &g);
-
 template std::pair<std::vector<std::string>, std::vector<std::string>>
 MakeBertModel<math::Tensor<int64_t>>(BERTConfig<math::Tensor<int64_t>> const &config,
                                      fetch::ml::Graph<math::Tensor<int64_t>> &g);
-
 template std::pair<std::vector<std::string>, std::vector<std::string>>
 MakeBertModel<math::Tensor<float>>(BERTConfig<math::Tensor<float>> const &config,
                                    fetch::ml::Graph<math::Tensor<float>> &g);
-
 template std::pair<std::vector<std::string>, std::vector<std::string>>
-MakeBertModel<math::Tensor<double>>(BERTConfig<math::Tensor<double>> const &config,
+                                                                       MakeBertModel<math::Tensor<double>>(BERTConfig<math::Tensor<double>> const &config,
                                     fetch::ml::Graph<math::Tensor<double>> &g);
-
 template std::pair<std::vector<std::string>, std::vector<std::string>> MakeBertModel<
     math::Tensor<fixed_point::fp32_t>>(BERTConfig<math::Tensor<fixed_point::fp32_t>> const &config,
                                        fetch::ml::Graph<math::Tensor<fixed_point::fp32_t>> &g);
-
 template std::pair<std::vector<std::string>, std::vector<std::string>> MakeBertModel<
     math::Tensor<fixed_point::fp64_t>>(BERTConfig<math::Tensor<fixed_point::fp64_t>> const &config,
                                        fetch::ml::Graph<math::Tensor<fixed_point::fp64_t>> &g);
-
 template std::pair<std::vector<std::string>, std::vector<std::string>>
 MakeBertModel<math::Tensor<fixed_point::fp128_t>>(
     BERTConfig<math::Tensor<fixed_point::fp128_t>> const &config,
     fetch::ml::Graph<math::Tensor<fixed_point::fp128_t>> &g);
 
+template void EvaluateGraph<math::Tensor<int8_t>>(fetch::ml::Graph<math::Tensor<int8_t>> &g,
+                                                  std::vector<std::string>          input_nodes,
+                                                  std::string const &               output_node,
+                                                  std::vector<math::Tensor<int8_t>> input_data,
+                                                  math::Tensor<int8_t> output_data, bool verbose);
+template void EvaluateGraph<math::Tensor<int16_t>>(fetch::ml::Graph<math::Tensor<int16_t>> &g,
+                                                   std::vector<std::string>           input_nodes,
+                                                   std::string const &                output_node,
+                                                   std::vector<math::Tensor<int16_t>> input_data,
+                                                   math::Tensor<int16_t> output_data, bool verbose);
 template void EvaluateGraph<math::Tensor<int32_t>>(fetch::ml::Graph<math::Tensor<int32_t>> &g,
                                                    std::vector<std::string>           input_nodes,
                                                    std::string const &                output_node,
@@ -668,6 +690,26 @@ template void EvaluateGraph<math::Tensor<fixed_point::fp128_t>>(
     fetch::ml::Graph<math::Tensor<fixed_point::fp128_t>> &g, std::vector<std::string> input_nodes,
     std::string const &output_node, std::vector<math::Tensor<fixed_point::fp128_t>> input_data,
     math::Tensor<fixed_point::fp128_t> output_data, bool verbose);
+
+template void PutWeightInMultiheadAttention<math::Tensor<int8_t>>(
+    fetch::ml::StateDict<math::Tensor<int8_t>> &state_dict, SizeType n_heads, SizeType model_dims,
+    std::string const &query_weights_file_name, std::string const &query_bias_file_name,
+    std::string const &key_weights_file_name, std::string const &key_bias_file_name,
+    std::string const &value_weights_file_name, std::string const &value_bias_file_name,
+    std::string const &query_weights_name, std::string const &query_bias_name,
+    std::string const &key_weights_name, std::string const &key_bias_name,
+    std::string const &value_weights_name, std::string const &value_bias_name,
+    std::string const &mattn_prefix);
+
+template void PutWeightInMultiheadAttention<math::Tensor<int16_t>>(
+    fetch::ml::StateDict<math::Tensor<int16_t>> &state_dict, SizeType n_heads, SizeType model_dims,
+    std::string const &query_weights_file_name, std::string const &query_bias_file_name,
+    std::string const &key_weights_file_name, std::string const &key_bias_file_name,
+    std::string const &value_weights_file_name, std::string const &value_bias_file_name,
+    std::string const &query_weights_name, std::string const &query_bias_name,
+    std::string const &key_weights_name, std::string const &key_bias_name,
+    std::string const &value_weights_name, std::string const &value_bias_name,
+    std::string const &mattn_prefix);
 
 template void PutWeightInMultiheadAttention<math::Tensor<int32_t>>(
     fetch::ml::StateDict<math::Tensor<int32_t>> &state_dict, SizeType n_heads, SizeType model_dims,
@@ -740,6 +782,16 @@ template void PutWeightInMultiheadAttention<math::Tensor<fixed_point::fp128_t>>(
     std::string const &value_bias_name, std::string const &mattn_prefix);
 
 template std::pair<std::vector<std::string>, std::vector<std::string>>
+LoadPretrainedBertModel<math::Tensor<int8_t>>(std::string const &                     file_path,
+                                              BERTConfig<math::Tensor<int8_t>> const &config,
+                                              fetch::ml::Graph<math::Tensor<int8_t>> &g);
+
+template std::pair<std::vector<std::string>, std::vector<std::string>>
+LoadPretrainedBertModel<math::Tensor<int16_t>>(std::string const &                      file_path,
+                                               BERTConfig<math::Tensor<int16_t>> const &config,
+                                               fetch::ml::Graph<math::Tensor<int16_t>> &g);
+
+template std::pair<std::vector<std::string>, std::vector<std::string>>
 LoadPretrainedBertModel<math::Tensor<int32_t>>(std::string const &                      file_path,
                                                BERTConfig<math::Tensor<int32_t>> const &config,
                                                fetch::ml::Graph<math::Tensor<int32_t>> &g);
@@ -773,6 +825,16 @@ template std::pair<std::vector<std::string>, std::vector<std::string>>
 LoadPretrainedBertModel<math::Tensor<fixed_point::fp128_t>>(
     std::string const &file_path, BERTConfig<math::Tensor<fixed_point::fp128_t>> const &config,
     fetch::ml::Graph<math::Tensor<fixed_point::fp128_t>> &g);
+
+template math::Tensor<int8_t> RunPseudoForwardPass<math::Tensor<int8_t>>(
+    std::vector<std::string> input_nodes, std::string output_node,
+    BERTConfig<math::Tensor<int8_t>> const &config, fetch::ml::Graph<math::Tensor<int8_t>> g,
+    SizeType batch_size, bool verbose);
+
+template math::Tensor<int16_t> RunPseudoForwardPass<math::Tensor<int16_t>>(
+    std::vector<std::string> input_nodes, std::string output_node,
+    BERTConfig<math::Tensor<int16_t>> const &config, fetch::ml::Graph<math::Tensor<int16_t>> g,
+    SizeType batch_size, bool verbose);
 
 template math::Tensor<int32_t> RunPseudoForwardPass<math::Tensor<int32_t>>(
     std::vector<std::string> input_nodes, std::string output_node,
@@ -809,6 +871,12 @@ RunPseudoForwardPass<math::Tensor<fixed_point::fp128_t>>(
     std::vector<std::string> input_nodes, std::string output_node,
     BERTConfig<math::Tensor<fixed_point::fp128_t>> const &config,
     fetch::ml::Graph<math::Tensor<fixed_point::fp128_t>> g, SizeType batch_size, bool verbose);
+
+template std::vector<math::Tensor<int8_t>> PrepareTensorForBert(
+    math::Tensor<int8_t> const &data, BERTConfig<math::Tensor<int8_t>> const &config);
+
+template std::vector<math::Tensor<int16_t>> PrepareTensorForBert(
+    math::Tensor<int16_t> const &data, BERTConfig<math::Tensor<int16_t>> const &config);
 
 template std::vector<math::Tensor<int32_t>> PrepareTensorForBert(
     math::Tensor<int32_t> const &data, BERTConfig<math::Tensor<int32_t>> const &config);

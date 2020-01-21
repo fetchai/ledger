@@ -26,7 +26,6 @@
 #include "ml/regularisers/reg_types.hpp"
 #include "ml/saveparams/saveable_params.hpp"
 #include "ml/utilities/graph_builder.hpp"
-//#include "ml/utilities/min_max_scaler.hpp"
 
 namespace fetch {
 namespace ml {

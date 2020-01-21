@@ -276,6 +276,10 @@ std::string ReadFile(std::string const &path)
   return std::string((std::istreambuf_iterator<char>(t)), std::istreambuf_iterator<char>());
 }
 
+template math::Tensor<int8_t> const & GetEmbeddings(Graph<math::Tensor<int8_t>> const &g,
+                                                    std::string const &skip_gram_name);
+template math::Tensor<int16_t> const &GetEmbeddings(Graph<math::Tensor<int16_t>> const &g,
+                                                    std::string const &skip_gram_name);
 template math::Tensor<int32_t> const &GetEmbeddings(Graph<math::Tensor<int32_t>> const &g,
                                                     std::string const &skip_gram_name);
 template math::Tensor<int64_t> const &GetEmbeddings(Graph<math::Tensor<int64_t>> const &g,
@@ -291,6 +295,14 @@ template math::Tensor<fixed_point::fp64_t> const &GetEmbeddings(
 template math::Tensor<fixed_point::fp128_t> const &GetEmbeddings(
     Graph<math::Tensor<fixed_point::fp128_t>> const &g, std::string const &skip_gram_name);
 
+template std::vector<std::pair<math::SizeType, typename math::Tensor<int8_t>::Type>>
+GetWordIDAnalogies<math::Tensor<int8_t>>(math::Tensor<int8_t> const &embeddings,
+                                         math::SizeType const &word1, math::SizeType const &word2,
+                                         math::SizeType const &word3, math::SizeType k);
+template std::vector<std::pair<math::SizeType, typename math::Tensor<int16_t>::Type>>
+GetWordIDAnalogies<math::Tensor<int16_t>>(math::Tensor<int16_t> const &embeddings,
+                                          math::SizeType const &word1, math::SizeType const &word2,
+                                          math::SizeType const &word3, math::SizeType k);
 template std::vector<std::pair<math::SizeType, typename math::Tensor<int32_t>::Type>>
 GetWordIDAnalogies<math::Tensor<int32_t>>(math::Tensor<int32_t> const &embeddings,
                                           math::SizeType const &word1, math::SizeType const &word2,
@@ -320,6 +332,12 @@ GetWordIDAnalogies<math::Tensor<fixed_point::fp128_t>>(
     math::Tensor<fixed_point::fp128_t> const &embeddings, math::SizeType const &word1,
     math::SizeType const &word2, math::SizeType const &word3, math::SizeType k);
 
+template std::string WordAnalogyTest<math::Tensor<int8_t>>(
+    dataloaders::Vocab const &vcb, math::Tensor<int8_t> const &embeddings, std::string const &word1,
+    std::string const &word2, std::string const &word3, math::SizeType k);
+template std::string WordAnalogyTest<math::Tensor<int16_t>>(
+    dataloaders::Vocab const &vcb, math::Tensor<int16_t> const &embeddings,
+    std::string const &word1, std::string const &word2, std::string const &word3, math::SizeType k);
 template std::string WordAnalogyTest<math::Tensor<int32_t>>(
     dataloaders::Vocab const &vcb, math::Tensor<int32_t> const &embeddings,
     std::string const &word1, std::string const &word2, std::string const &word3, math::SizeType k);
@@ -342,6 +360,12 @@ template std::string WordAnalogyTest<math::Tensor<fixed_point::fp128_t>>(
     dataloaders::Vocab const &vcb, math::Tensor<fixed_point::fp128_t> const &embeddings,
     std::string const &word1, std::string const &word2, std::string const &word3, math::SizeType k);
 
+template std::string KNNTest<math::Tensor<int8_t>>(dataloaders::Vocab const &  vcb,
+                                                   math::Tensor<int8_t> const &embeddings,
+                                                   std::string const &word0, math::SizeType k);
+template std::string KNNTest<math::Tensor<int16_t>>(dataloaders::Vocab const &   vcb,
+                                                    math::Tensor<int16_t> const &embeddings,
+                                                    std::string const &word0, math::SizeType k);
 template std::string KNNTest<math::Tensor<int32_t>>(dataloaders::Vocab const &   vcb,
                                                     math::Tensor<int32_t> const &embeddings,
                                                     std::string const &word0, math::SizeType k);
@@ -364,6 +388,12 @@ template std::string KNNTest<math::Tensor<fixed_point::fp128_t>>(
     dataloaders::Vocab const &vcb, math::Tensor<fixed_point::fp128_t> const &embeddings,
     std::string const &word0, math::SizeType k);
 
+template std::pair<std::string, float> AnalogiesFileTest<math::Tensor<int8_t>>(
+    dataloaders::Vocab const &vcb, math::Tensor<int8_t> const &embeddings,
+    std::string const &analogy_file, bool verbose = false);
+template std::pair<std::string, float> AnalogiesFileTest<math::Tensor<int16_t>>(
+    dataloaders::Vocab const &vcb, math::Tensor<int16_t> const &embeddings,
+    std::string const &analogy_file, bool verbose = false);
 template std::pair<std::string, float> AnalogiesFileTest<math::Tensor<int32_t>>(
     dataloaders::Vocab const &vcb, math::Tensor<int32_t> const &embeddings,
     std::string const &analogy_file, bool verbose = false);
@@ -386,6 +416,16 @@ template std::pair<std::string, float> AnalogiesFileTest<math::Tensor<fixed_poin
     dataloaders::Vocab const &vcb, math::Tensor<fixed_point::fp128_t> const &embeddings,
     std::string const &analogy_file, bool verbose = false);
 
+template void TestEmbeddings<math::Tensor<int8_t>>(
+    Graph<math::Tensor<int8_t>> const &g, std::string const &skip_gram_name,
+    dataloaders::Vocab const &vcb, std::string const &word0, std::string const &word1,
+    std::string const &word2, std::string const &word3, math::SizeType K,
+    std::string const &analogies_test_file, bool verbose, std::string const &outfile);
+template void TestEmbeddings<math::Tensor<int16_t>>(
+    Graph<math::Tensor<int16_t>> const &g, std::string const &skip_gram_name,
+    dataloaders::Vocab const &vcb, std::string const &word0, std::string const &word1,
+    std::string const &word2, std::string const &word3, math::SizeType K,
+    std::string const &analogies_test_file, bool verbose, std::string const &outfile);
 template void TestEmbeddings<math::Tensor<int32_t>>(
     Graph<math::Tensor<int32_t>> const &g, std::string const &skip_gram_name,
     dataloaders::Vocab const &vcb, std::string const &word0, std::string const &word1,
