@@ -21,21 +21,12 @@
 #include "ml/exceptions/exceptions.hpp"
 #include "ml/ops/constant.hpp"
 #include "ml/ops/trainable.hpp"
-#include "ml/state_dict.hpp"
 
 // TODO(#1554) - we should only reset the cache for trained nodes, not all nodes
 // TODO(1467) - implement validity checks on graph compilation - e.g. loss function should not
 // appear in middle of graph
 
 namespace fetch {
-
-namespace dmlf {
-namespace collective_learning {
-template <typename TensorType>
-class ClientAlgorithm;
-}  // namespace collective_learning
-}  // namespace dmlf
-
 namespace ml {
 
 ///////////////
@@ -105,6 +96,7 @@ public:
 
   void ResetCompile();
   void Compile();
+  void ComputeAllNodeShapes();
 
   void AddTrainable(NodePtrType node_ptr, std::string const &node_name);
   void AddTrainable(NodePtrType node_ptr, std::string const &node_name,
@@ -126,6 +118,7 @@ public:
   void       BackPropagate(std::string const &node_name, TensorType const &error_signal = {});
   void       ApplyGradients(std::vector<TensorType> &grad);
   void       ApplySparseGradients(std::vector<TensorType> &grad, std::vector<SizeSet> &update_rows);
+  void       SetWeight(std::string const &node_name, TensorType const &data);
 
   //////////////////////////////////////////////////////
   /// public serialisation & weight export functions ///
@@ -134,14 +127,13 @@ public:
   bool                            InsertNode(std::string const &node_name, NodePtrType node_ptr);
   GraphSaveableParams<TensorType> GetGraphSaveableParams();
   void                            SetGraphSaveableParams(GraphSaveableParams<TensorType> const &sp);
-  virtual fetch::ml::StateDict<TensorType> StateDict();
-  virtual void                             LoadStateDict(fetch::ml::StateDict<T> const &dict);
 
   ////////////////////////////////////
   /// public setters and accessors ///
   ////////////////////////////////////
 
   NodePtrType                   GetNode(std::string const &node_name) const;
+  std::vector<std::string>      GetNodeNames();
   std::vector<TensorType>       GetWeightsReferences() const;
   std::vector<TensorType>       GetWeights() const;
   std::vector<TensorType>       GetGradientsReferences() const;
@@ -154,6 +146,10 @@ public:
   ////////////////////////////////////
 
   void ResetGradients();
+
+  std::vector<std::string> GetTrainableNames();
+
+  std::vector<std::pair<std::string, std::vector<std::string>>> Connections();
 
 protected:
   std::map<std::string, NodePtrType>                            nodes_;
@@ -169,7 +165,6 @@ private:
 
   friend class optimisers::Optimiser<TensorType>;
   friend class model::ModelInterface<TensorType>;
-  friend class dmlf::collective_learning::ClientAlgorithm<TensorType>;
 
   TensorType ForwardImplementation(std::string const &node_name, bool is_training,
                                    bool evaluate_mode);
@@ -193,7 +188,6 @@ private:
   /// recursive implementation functions ///
   //////////////////////////////////////////
 
-  void StateDict(fetch::ml::StateDict<TensorType> &state_dict);
   void GetTrainables(std::vector<TrainablePtrType> &ret);
   void GetWeightsReferences(std::vector<TensorType> &ret) const;
   void GetGradientsReferences(std::vector<TensorType> &ret) const;
@@ -217,6 +211,15 @@ private:
 
   template <typename Val1Type, typename Val2Type, typename GraphFunc>
   void RecursiveApplyTwo(Val1Type &val_1, Val2Type &val_2, GraphFunc graph_func) const;
+
+  bool IsValidNodeName(std::string const &node_name) const;
+
+  std::map<std::string, NodePtrType> &GetTrainableLookup();
+  std::map<std::string, NodePtrType> &GetNodesLookup();
+
+  template <typename LookupFunction>
+  void GetNamesRecursively(std::vector<std::string> &ret, LookupFunction lookup_function,
+                           std::string const &level = "");
 };
 
 //////////////////////
@@ -240,6 +243,11 @@ template <class OperationType, typename... Params>
 std::string Graph<TensorType>::AddNode(std::string const &             node_name,
                                        std::vector<std::string> const &inputs, Params... params)
 {
+  if (!IsValidNodeName(node_name))
+  {
+    throw std::runtime_error{"Node name " + node_name + " contains invalid characters."};
+  }
+
   graph_state_ = GraphState::NOT_COMPILED;
 
   // guarantee unique op name

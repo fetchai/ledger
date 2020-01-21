@@ -96,6 +96,8 @@ struct NotarisationNode
                 aeon_period,    cabinet_size,
                 1000,           notarisation_service}
   {
+    consensus.UpdateCurrentBlock(*chain.GetHeaviestBlock());
+
     network_manager.Start();
     muddle->Start({muddle_port});
   }
@@ -274,7 +276,7 @@ TEST(notarisation, notarise_blocks)
       for (auto &block : blocks_this_round)
       {
         node->chain.AddBlock(*block);
-        node->consensus.UpdateCurrentBlock(*block);
+        EXPECT_TRUE(node->consensus.UpdateCurrentBlock(*block));
       }
     }
   }
