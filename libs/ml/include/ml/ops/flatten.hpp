@@ -68,6 +68,15 @@ public:
   }
   static constexpr char const *DESCRIPTOR = "Flatten";
 
+  OpType OperationType() const override  // TODO(ML-466) : move implementation to .cpp
+  {
+    return this->OpCode();
+  }
+  char const *Descriptor() const override  // TODO(ML-466) : move implementation to .cpp
+  {
+    return DESCRIPTOR;
+  }
+
 private:
   std::vector<SizeType> input_shape_;
 };

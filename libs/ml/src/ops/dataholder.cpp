@@ -80,7 +80,11 @@ std::vector<math::SizeType> DataHolder<TensorType>::ComputeOutputShape(
     VecTensorType const &inputs) const
 {
   FETCH_UNUSED(inputs);
-  assert(data_);
+  if (!data_)
+  {
+    throw std::runtime_error("Data is not set for " + std ::string(Descriptor()) +
+                             ", shape computing is not possible.");
+  }
   return data_->shape();
 }
 

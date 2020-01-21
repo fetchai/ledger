@@ -45,6 +45,8 @@ public:
 
   SizeType LayerCount() const;
 
+  void SetBatchInputShape(std::vector<math::SizeType> const &shape);
+
   template <typename X, typename D>
   friend struct serializers::MapSerializer;
 
