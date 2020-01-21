@@ -384,6 +384,7 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
   , http_network_manager_{"Http", HTTP_THREADS}
   , internal_identity_{std::make_shared<crypto::ECDSASigner>()}
   , external_identity_{std::move(certificate)}
+  , standalone_mode_{config.network_mode == NetworkMode::STANDALONE}
   , tx_status_cache_(TxStatusCache::factory())
   , uptime_{telemetry::Registry::Instance().CreateCounter(
         "ledger_uptime_ticks_total",
@@ -556,7 +557,6 @@ bool Constellation::OnBringUpExternalNetwork(
 
   if (params.snapshot)
   {
-    consensus_->UpdateCurrentBlock(*chain_->GetHeaviestBlock());
     consensus_->Reset(*params.snapshot);
   }
   else
@@ -600,6 +600,8 @@ bool Constellation::OnBringUpExternalNetwork(
       std::make_shared<MuddleStatusModule>()};
 
   http_ = std::make_unique<HttpServer>(http_network_manager_);
+  // Display "/"
+  http_->AddDefaultRootModule();
 
   // print the start up log banner
   FETCH_LOG_INFO(LOGGING_NAME, "Constellation :: ", cfg_.num_lanes(), "x", cfg_.num_slices, "x",
@@ -732,20 +734,29 @@ bool Constellation::OnBringUpExternalNetwork(
   // Start the main syncing state machine for main chain service
   reactor_.Attach(main_chain_service_->GetWeakRunnable());
 
-  // The block coordinator needs to access correctly started lanes to recover state in the case of
-  // a crash.
-  reactor_.Attach(block_coordinator_->GetWeakRunnable());
-
   return true;
 }
 
 bool Constellation::OnRunning(core::WeakRunnable const &bootstrap_monitor)
 {
   bool start_up_in_progress{true};
+  bool attached_block_coord{false};
 
   // monitor loop
   while (active_)
   {
+    // The block coordinator needs to access correctly started lanes to recover state in the case of
+    // a crash. Additionally, delay starting it until the main chain sync has started to avoid
+    // immediately generating blocks on an old chain
+    if (!attached_block_coord)
+    {
+      if (standalone_mode_ || main_chain_service_->IsHealthy())
+      {
+        FETCH_LOG_INFO(LOGGING_NAME, "Starting the block coordinator.");
+        reactor_.Attach(block_coordinator_->GetWeakRunnable());
+      }
+    }
+
     // determine the status of the main chain server
     bool const is_in_sync = main_chain_service_->IsSynced() && block_coordinator_->IsSynced();
 
@@ -850,9 +861,6 @@ void Constellation::OnTearDownExternalNetwork()
 
 void Constellation::OnTearDownLaneServices()
 {
-  // not strictly necessary but make sure that chain has completely flushed to disk
-  chain_->Flush();
-
   ResetItem(chain_);
   ResetItem(lane_control_);
   ResetItem(storage_);
