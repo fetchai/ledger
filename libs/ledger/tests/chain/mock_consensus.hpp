@@ -27,7 +27,7 @@ public:
   using Block            = fetch::ledger::Block;
   using StorageInterface = fetch::ledger::StorageInterface;
 
-  MOCK_METHOD1(UpdateCurrentBlock, void(Block const &));
+  MOCK_METHOD1(UpdateCurrentBlock, bool(Block const &));
   MOCK_METHOD0(GenerateNextBlock, NextBlockPtr());
   MOCK_CONST_METHOD1(ValidBlock, Status(Block const &));
 
