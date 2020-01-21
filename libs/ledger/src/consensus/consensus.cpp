@@ -66,7 +66,7 @@ namespace {
 
 constexpr char const *LOGGING_NAME = "Consensus";
 const std::size_t     DIGEST_LENGTH_BYTES{32};
-constexpr char const *unknown_exception = "something wenth wrong";
+constexpr char const *FATAL_ERROR = "fatal error generated";
 
 using fetch::ledger::Consensus;
 using NextBlockPtr    = Consensus::NextBlockPtr;
@@ -287,7 +287,7 @@ bool Consensus::VerifyNotarisation(Block const &block) const
       }
       catch (...)
       {
-        FETCH_LOG_ERROR(LOGGING_NAME, __func__, ": ", unknown_exception);
+        FETCH_LOG_ERROR(LOGGING_NAME, __func__, ": ", FATAL_ERROR);
         return {};
       }
     }
@@ -302,21 +302,7 @@ bool Consensus::VerifyNotarisation(Block const &block) const
 uint64_t Consensus::GetBlockGenerationWeight(Block const &current, Identity const &identity) const
 {
   MilliTimer const timer{"GetBlockGenerationWeight ", 1000};
-  Block            beginning_of_aeon;
-  try
-  {
-    beginning_of_aeon = GetBeginningOfAeon(current, chain_);
-  }
-  catch (std::exception const &ex)
-  {
-    FETCH_LOG_ERROR(LOGGING_NAME, __func__, ": ", ex.what());
-    return {};
-  }
-  catch (...)
-  {
-    FETCH_LOG_ERROR(LOGGING_NAME, __func__, ": ", unknown_exception);
-    return {};
-  }
+  Block            beginning_of_aeon = GetBeginningOfAeon(current, chain_);
 
   auto qualified_cabinet_weighted = QualWeightedByEntropy(beginning_of_aeon.block_entropy.qualified,
                                                           current.block_entropy.EntropyAsU64());
@@ -358,7 +344,7 @@ bool Consensus::ValidBlockTiming(Block const &previous, Block const &proposed) c
   }
   catch (...)
   {
-    FETCH_LOG_ERROR(LOGGING_NAME, __func__, ": ", unknown_exception);
+    FETCH_LOG_ERROR(LOGGING_NAME, __func__, ": ", FATAL_ERROR);
     return {};
   }
 
@@ -633,7 +619,7 @@ NextBlockPtr Consensus::GenerateNextBlock()
   }
   catch (...)
   {
-    FETCH_LOG_ERROR(LOGGING_NAME, __func__, ": ", unknown_exception);
+    FETCH_LOG_ERROR(LOGGING_NAME, __func__, ": ", FATAL_ERROR);
     return {};
   }
 
@@ -904,7 +890,7 @@ Status Consensus::ValidBlock(Block const &current) const
     }
     catch (...)
     {
-      FETCH_LOG_ERROR(LOGGING_NAME, __func__, ": ", unknown_exception);
+      FETCH_LOG_ERROR(LOGGING_NAME, __func__, ": ", FATAL_ERROR);
       return {};
     }
   }
@@ -926,7 +912,7 @@ Status Consensus::ValidBlock(Block const &current) const
   }
   catch (...)
   {
-    FETCH_LOG_ERROR(LOGGING_NAME, __func__, ": ", unknown_exception);
+    FETCH_LOG_ERROR(LOGGING_NAME, __func__, ": ", FATAL_ERROR);
     return {};
   }
 

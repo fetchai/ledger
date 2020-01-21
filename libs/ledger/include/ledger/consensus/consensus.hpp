@@ -83,7 +83,7 @@ public:
   Consensus &operator=(Consensus const &) = delete;
   Consensus &operator=(Consensus &&) = delete;
 
-  // TODO (nobody): the only reason this function is public is it's used in a single POS test.
+  // TODO (LGDR-698): the only reason this function is public is it's used in a single POS test.
   uint64_t GetBlockGenerationWeight(Block const &current, Identity const &identity) const;
 
 private:
