@@ -151,32 +151,35 @@ public:
   }
 
   /**
-   * @brief ForwardCost
-   * @param input_shapes
+   * @brief ChargeForward
    * @return estimated charge amount, necessary for performing a forward pass on data of given
    * shapes.
    */
   virtual MLChargeAmount ChargeForward()
   {
     // TODO(VH): make a pure virtual call;
-    std::cout << "Error: call to unexisting ForwardCost() implementation! returned 0." << std::endl;
+    std::cout << "Error: call to unexisting ChargeForward() implementation! returned 0."
+              << std::endl;
     return 0;
   }
 
   /**
-   * @brief BackwardCost
-   * @param input_shapes
+   * @brief ChargeBackward
    * @return estimated charge amount, necessary for performing a backward pass on data of given
    * shapes.
    */
   virtual MLChargeAmount ChargeBackward()
   {
     // TODO(VH): make a pure virtual call;
-    std::cout << "Error: call to unexisting BackwardCost() implementation! returned 0."
+    std::cout << "Error: call to unexisting ChargeBackward() implementation! returned 0."
               << std::endl;
     return 0;
   }
 
+  /**
+   * @brief TotalElementsIn calculated a sum of total elements in all given tensors
+   * @param shapes - vector of tensor shapes
+   */
   static fetch::math::SizeType TotalElementsIn(std::vector<fetch::math::SizeVector> const &shapes)
   {
     if (shapes.empty())
