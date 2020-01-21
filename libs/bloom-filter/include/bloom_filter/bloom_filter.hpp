@@ -169,7 +169,7 @@ public:
    */
   BasicBloomFilter();
 
-  BasicBloomFilter(BitVector const &vector);
+  explicit BasicBloomFilter(BitVector const &vector);
 
   /*
    * Construct a Bloom filter with the given set of hash functions

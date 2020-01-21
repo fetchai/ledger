@@ -52,14 +52,18 @@ constexpr uint64_t DIRTY_TIMEOUT = 600;
 
 bloom::HistoricalBloomFilter::Mode SelectMode(MainChain::Mode mode)
 {
+  bloom::HistoricalBloomFilter::Mode bloom_mode{bloom::HistoricalBloomFilter::Mode ::LOAD_DATABASE};
+
   switch (mode)
   {
   case MainChain::Mode::IN_MEMORY_DB:
   case MainChain::Mode::CREATE_PERSISTENT_DB:
-    return bloom::HistoricalBloomFilter::Mode::NEW_DATABASE;
+    bloom_mode = bloom::HistoricalBloomFilter::Mode::NEW_DATABASE;
   case MainChain::Mode::LOAD_PERSISTENT_DB:
-    return bloom::HistoricalBloomFilter::Mode ::LOAD_DATABASE;
+    break;
   }
+
+  return bloom_mode;
 }
 
 }  // namespace
