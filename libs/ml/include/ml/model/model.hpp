@@ -35,13 +35,6 @@ class ModelEstimator;
 }  // namespace ml
 }  // namespace vm_modules
 
-namespace dmlf {
-namespace collective_learning {
-template <class TensorType>
-class ClientAlgorithm;
-}  // namespace collective_learning
-}  // namespace dmlf
-
 namespace ml {
 
 namespace dataloaders {
@@ -138,8 +131,6 @@ protected:
                           DataType test_loss = fetch::math::numeric_max<DataType>());
 
 private:
-  friend class dmlf::collective_learning::ClientAlgorithm<TensorType>;
-
   void TrainImplementation(DataType &loss, SizeType n_rounds = 1);
 };
 
