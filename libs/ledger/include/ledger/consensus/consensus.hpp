@@ -35,12 +35,27 @@
 #include <cmath>
 #include <unordered_map>
 
+class ConsensusTests;
+
 namespace fetch {
 namespace ledger {
 
 class StorageInterface;
 
-class Consensus final : public ConsensusInterface
+struct BorrowBlockGenerationWeight
+{
+  using Identity = crypto::Identity;
+  using This     = BorrowBlockGenerationWeight;
+
+protected:
+  virtual uint64_t GetBlockGenerationWeight(Block const &   current,
+                                            Identity const &identity) const = 0;
+
+private:
+  friend class ::ConsensusTests;
+};
+
+class Consensus final : public ConsensusInterface, public BorrowBlockGenerationWeight
 {
 public:
   using StakeManagerPtr       = std::shared_ptr<ledger::StakeManager>;
@@ -83,9 +98,9 @@ public:
   Consensus &operator=(Consensus const &) = delete;
   Consensus &operator=(Consensus &&) = delete;
 
-  uint64_t GetBlockGenerationWeight(Block const &current, Identity const &identity) const;
-
 private:
+  friend class BorrowBlockGenerationWeight;
+
   static constexpr std::size_t HISTORY_LENGTH = 1000;
 
   using Cabinet            = StakeManager::Cabinet;
@@ -116,6 +131,8 @@ private:
   uint64_t       default_start_time_ = 0;
   CabinetHistory cabinet_history_{};  ///< Cache of historical cabinets
   uint64_t       block_interval_ms_{std::numeric_limits<uint64_t>::max()};
+
+  uint64_t GetBlockGenerationWeight(Block const &current, Identity const &identity) const override;
 
   Block                      GetBeginningOfAeon(Block const &current, MainChain const &chain) const;
   mutable AeonBeginningCache aeon_beginning_cache_;

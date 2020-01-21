@@ -146,7 +146,9 @@ protected:
       ret->block_entropy.qualified.insert(i.identifier());
     }
 
-    ret->weight = consensus_->GetBlockGenerationWeight(*ret, cabinet_[miner_index]);
+    using Backdoor = fetch::ledger::BorrowBlockGenerationWeight;
+    ret->weight    = static_cast<Backdoor const &>(*consensus_)
+                      .GetBlockGenerationWeight(*ret, cabinet_[miner_index]);
 
     ret->UpdateDigest();
     ret->miner_signature = cabinet_priv_keys_[miner_index]->Sign(ret->hash);
