@@ -17,7 +17,6 @@ fetch_add_test(ml_ops_gtest fetch-ml unit/ops)
 fetch_add_test(ml_optimisation_gtest fetch-ml unit/optimisation)
 fetch_add_test(ml_regularisers_gtest fetch-ml unit/regularisers)
 fetch_add_test(ml_serializers_gtest fetch-ml unit/serializers)
-fetch_add_test(ml_state_gtest fetch-ml unit/state)
 fetch_add_test(ml_utilities_gtest fetch-ml unit/utilities)
 
 fetch_add_slow_test(ml_clustering_gtest fetch-ml unit/clustering)

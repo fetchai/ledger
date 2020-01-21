@@ -23,6 +23,11 @@
 
 namespace fetch {
 namespace ml {
+
+///////////////////////////
+/// FORWARD DECLARATION ///
+///////////////////////////
+
 namespace utilities {
 
 template <typename T>

@@ -24,9 +24,6 @@
 namespace fetch {
 namespace ml {
 
-template <typename TensorType>
-struct StateDict;
-
 struct OpsSaveableParams;
 
 namespace ops {
@@ -75,10 +72,6 @@ public:
   std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override;
 
   std::shared_ptr<Ops<TensorType>> MakeSharedCopy(std::shared_ptr<Ops<TensorType>> me) override;
-
-  fetch::ml::StateDict<T> StateDict() const override;
-
-  void LoadStateDict(fetch::ml::StateDict<T> const &dict) override;
 
   static void Initialise(TensorType &array, uint64_t in_size, uint64_t out_size,
                          WeightsInitialisation mode = WeightsInitialisation::XAVIER_GLOROT,

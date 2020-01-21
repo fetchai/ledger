@@ -99,17 +99,6 @@ TYPED_TEST(GraphTest, node_relu)
   ASSERT_TRUE(prediction.AllClose(gt));
 }
 
-TYPED_TEST(GraphTest, get_state_dict)
-{
-  using TensorType = TypeParam;
-
-  fetch::ml::Graph<TensorType>     g;
-  fetch::ml::StateDict<TensorType> sd = g.StateDict();
-
-  EXPECT_EQ(sd.weights_, nullptr);
-  EXPECT_TRUE(sd.dict_.empty());
-}
-
 TYPED_TEST(GraphTest, no_such_node_test)  // Use the class as a Node
 {
   using TensorType = TypeParam;
@@ -656,49 +645,6 @@ TYPED_TEST(GraphTest, diamond_graph_backward)  // output=(input1*input2)-(input1
                                      fetch::math::function_tolerance<DataType>()));
 }
 
-TYPED_TEST(GraphTest, diamond_graph_getStateDict)
-{
-  using TensorType = TypeParam;
-
-  // Generate input
-  TensorType data1 = TensorType::FromString(R"(-1,0,1,2,3,4)");
-  TensorType data2 = TensorType::FromString(R"(-20,-10, 0, 10, 20, 30)");
-
-  // Create graph
-  std::string                 name = "Diamond";
-  fetch::ml::Graph<TypeParam> g;
-
-  std::string input_name1 =
-      g.template AddNode<fetch::ml::ops::Weights<TensorType>>(name + "_Weight1", {});
-
-  std::string input_name2 =
-      g.template AddNode<fetch::ml::ops::Weights<TensorType>>(name + "_Weight2", {});
-
-  std::string op1_name = g.template AddNode<fetch::ml::ops::Multiply<TensorType>>(
-      name + "_Op1", {input_name1, input_name1});
-  std::string op2_name = g.template AddNode<fetch::ml::ops::Multiply<TensorType>>(
-      name + "_Op2", {input_name1, input_name2});
-
-  std::string output_name =
-      g.template AddNode<fetch::ml::ops::Subtract<TensorType>>(name + "_Op3", {op2_name, op1_name});
-
-  g.SetInput(input_name1, data1);
-  g.SetInput(input_name2, data2);
-
-  // Get statedict
-  fetch::ml::StateDict<TypeParam> sd = g.StateDict();
-
-  // Test weights
-  EXPECT_EQ(sd.weights_, nullptr);
-  EXPECT_EQ(sd.dict_.size(), 2);
-
-  ASSERT_NE(sd.dict_["Diamond_Weight1"].weights_, nullptr);
-  EXPECT_EQ(sd.dict_["Diamond_Weight1"].weights_->shape(), data1.shape());
-
-  ASSERT_NE(sd.dict_["Diamond_Weight2"].weights_, nullptr);
-  EXPECT_EQ(sd.dict_["Diamond_Weight2"].weights_->shape(), data2.shape());
-}
-
 TYPED_TEST(GraphTest, compute_shapes_single_placeholder)
 {
   using TensorType = TypeParam;
@@ -1103,6 +1049,37 @@ TYPED_TEST(GraphTest, graph_getNodeNames)
   EXPECT_EQ(names.at(23), "FC3/FullyConnected_Input");
   EXPECT_EQ(names.at(24), "FC3/FullyConnected_MatrixMultiply");
   EXPECT_EQ(names.at(25), "FC3/FullyConnected_Weights");
+}
+
+TYPED_TEST(GraphTest, graph_setWeight)
+{
+  using TensorType = TypeParam;
+  using DataType   = typename TensorType::Type;
+
+  TensorType gt({10, 1});
+  gt.Fill(fetch::math::Type<DataType>("1.23"));
+
+  // Create graph
+  auto g = MakeGraph<TensorType>();
+
+  // Assign weight
+  g->SetWeight("FC3/FullyConnected_Bias", gt);
+
+  // Get weight from graph
+  auto node_ptr = g->GetNode("FC3/FullyConnected_Bias");
+  ASSERT_TRUE(node_ptr);
+  EXPECT_EQ(node_ptr->GetNodeName(), "FullyConnected_Bias");
+  auto op_ptr = std::dynamic_pointer_cast<fetch::ml::ops::Weights<TensorType>>(node_ptr->GetOp());
+  ASSERT_TRUE(op_ptr);
+  auto weight = op_ptr->GetWeights();
+
+  // Test size
+  EXPECT_EQ(weight.shape().at(0), 10);
+  EXPECT_EQ(weight.shape().at(1), 1);
+
+  // Test values
+  ASSERT_TRUE(weight.AllClose(gt, fetch::math::function_tolerance<DataType>(),
+                              fetch::math::function_tolerance<DataType>()));
 }
 
 }  // namespace test

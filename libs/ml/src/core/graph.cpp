@@ -618,62 +618,6 @@ void Graph<TensorType>::ResetGraphCache(bool input_size_changed, NodePtrType n)
 }
 
 /**
- * Assigns all trainable parameters to a stateDict for exporting and serialising
- * @return  d is the StateDict of all trainable params
- */
-
-template <typename TensorType>
-fetch::ml::StateDict<TensorType> Graph<TensorType>::StateDict()
-{
-  Compile();
-  fetch::ml::StateDict<TensorType> state_dict;
-  StateDict(state_dict);
-  return state_dict;
-}
-
-template <typename TensorType>
-void Graph<TensorType>::StateDict(fetch::ml::StateDict<TensorType> &state_dict)
-{
-
-  // add trainables in this graph to state dict
-  for (auto const &t : trainable_lookup_)
-  {
-    auto node_ptr    = t.second;
-    auto op_ptr      = node_ptr->GetOp();
-    auto weights_ptr = std::dynamic_pointer_cast<ops::Weights<TensorType>>(op_ptr);
-    state_dict.dict_.emplace(t.first, weights_ptr->StateDict());
-  }
-
-  // add trainables in any subgraphs to state dict
-  for (auto &node_pair : nodes_)
-  {
-    auto op_ptr    = node_pair.second->GetOp();
-    auto graph_ptr = std::dynamic_pointer_cast<Graph<TensorType>>(op_ptr);
-
-    // if its a graph
-    if (graph_ptr)
-    {
-      graph_ptr->StateDict(state_dict);
-    }
-  }
-}
-
-/**
- * Import trainable parameters from an exported model
- * @param dict  state dictionary to import to weights
- */
-template <typename TensorType>
-void Graph<TensorType>::LoadStateDict(fetch::ml::StateDict<TensorType> const &dict)
-{
-  assert(!dict.weights_);
-  for (auto const &t : trainable_lookup_)
-  {
-    auto trainable_ptr = std::dynamic_pointer_cast<ops::Trainable<TensorType>>(t.second->GetOp());
-    trainable_ptr->LoadStateDict(dict.dict_.at(t.first));
-  }
-}
-
-/**
  * Assigns references of all trainable weights parameters to vector
  * @return ret is vector containing values for all weights
  */
@@ -1199,6 +1143,24 @@ template <typename TensorType>
 std::map<std::string, typename Graph<TensorType>::NodePtrType> &Graph<TensorType>::GetNodesLookup()
 {
   return nodes_;
+}
+
+/**
+ * Assign tensor to weight addressed by node_name
+ * @tparam TensorType
+ * @param node_name std::string name of weight in format GRAPH1/...SUBGRAPHS../LEAF
+ * @param data tensor which will be assigned to target weight
+ */
+template <class TensorType>
+void Graph<TensorType>::SetWeight(std::string const &node_name, TensorType const &data)
+{
+  auto node_ptr = GetNode(node_name);
+  auto op_ptr   = std::dynamic_pointer_cast<fetch::ml::ops::Weights<TensorType>>(node_ptr->GetOp());
+  if (!op_ptr)
+  {
+    throw ml::exceptions::InvalidMode("[" + node_name + "] is not Weight type!");
+  }
+  op_ptr->SetWeights(data);
 }
 
 ///////////////////////////////

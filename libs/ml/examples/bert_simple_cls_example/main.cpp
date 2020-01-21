@@ -37,7 +37,6 @@ using TensorType = fetch::math::Tensor<DataType>;
 using SizeVector = typename TensorType::SizeVector;
 
 using GraphType     = typename fetch::ml::Graph<TensorType>;
-using StateDictType = typename fetch::ml::StateDict<TensorType>;
 using OptimiserType = typename fetch::ml::optimisers::AdamOptimiser<TensorType>;
 
 using RegType         = fetch::ml::RegularisationType;
