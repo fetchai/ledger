@@ -246,10 +246,18 @@ function (add_fetch_gbench
 
     # detect if the "DISABLED" flag has been passed to this test
     set(is_disabled FALSE)
+    set(include_gtest FALSE)
+    set(include_main TRUE)
     foreach (arg ${ARGV})
       if (arg STREQUAL "DISABLED")
         set(is_disabled TRUE)
       endif ()
+      if (arg STREQUAL "GTEST")
+        set(include_gtest TRUE)
+      endif()
+      if (arg STREQUAL "NO_MAIN")
+        set(include_main FALSE)
+      endif()
     endforeach ()
 
     if (is_disabled)
@@ -265,20 +273,25 @@ function (add_fetch_gbench
 
       target_link_libraries(${name}
                             PRIVATE ${library}
-                                    gmock
-                                    gmock_main
                                     benchmark)
+
+      if (include_main)
+        target_link_libraries(${name} PRIVATE benchmark_main)
+      endif ()
+
+      if (include_gtest)
+        target_link_libraries(${name} PRIVATE gmock)
+
+        target_include_directories(${name}
+          PRIVATE ${FETCH_ROOT_VENDOR_DIR}/googletest/googletest/include)
+        target_include_directories(${name}
+          PRIVATE ${FETCH_ROOT_VENDOR_DIR}/googletest/googlemock/include)
+      endif()
 
       # CoreFoundation Support on MacOS
       if (APPLE)
         target_link_libraries(${name} PRIVATE "-framework CoreFoundation")
       endif ()
-
-      # Google bench requires google test
-      target_include_directories(${name}
-                                 PRIVATE ${FETCH_ROOT_VENDOR_DIR}/googletest/googletest/include)
-      target_include_directories(${name}
-                                 PRIVATE ${FETCH_ROOT_VENDOR_DIR}/googletest/googlemock/include)
 
       target_include_directories(${name} PRIVATE ${FETCH_ROOT_VENDOR_DIR}/benchmark/include)
 
