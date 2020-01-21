@@ -98,6 +98,7 @@ vm::ChargeAmount Node<TensorType>::ForwardCost(const std::vector<math::SizeVecto
 {
   FETCH_UNUSED(input_shapes);
   // TODO(VH): impl. a recursive cost call until leaf node(s);
+  return 0;
 }
 
 template <typename TensorType>
@@ -105,6 +106,7 @@ vm::ChargeAmount Node<TensorType>::BackwardCost(const std::vector<math::SizeVect
 {
   FETCH_UNUSED(input_shapes);
   // TODO(VH): impl. a backward recursive cost call until output node(s);
+  return 0;
 }
 
 template <typename TensorType>
