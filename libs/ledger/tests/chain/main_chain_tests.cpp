@@ -66,12 +66,12 @@ bool Contains(Container const &collection, Value const &value)
   return std::find(collection.begin(), collection.end(), value) != collection.end();
 }
 
-auto Generate(BlockGeneratorPtr &gen, BlockPtr genesis, std::size_t amount)
+auto Generate(BlockGenerator &gen, BlockPtr genesis, std::size_t amount, std::size_t num_tx = 0)
 {
   std::vector<BlockPtr> retVal(amount);
   for (auto &block : retVal)
   {
-    genesis = block = gen->Generate(genesis);
+    genesis = block = gen.Generate(genesis, 1u, num_tx);
   }
   return retVal;
 }
@@ -169,10 +169,10 @@ TEST_P(MainChainTests, CheckSideChainSwitching)
   auto const genesis = generator_->Generate();
 
   // build a small side chain
-  auto const side{Generate(generator_, genesis, 2)};
+  auto const side{Generate(*generator_, genesis, 2)};
 
   // build a larger main chain
-  auto const main{Generate(generator_, genesis, 3)};
+  auto const main{Generate(*generator_, genesis, 3)};
 
   // add the side chain blocks
   for (auto const &block : side)
@@ -204,18 +204,18 @@ TEST_P(MainChainTests, CheckChainBlockInvalidation)
   auto const genesis = generator_->Generate();
 
   // build a few branches
-  auto const branch3{Generate(generator_, genesis, 3)};
-  auto const branch5{Generate(generator_, genesis, 5)};
-  auto const branch9{Generate(generator_, genesis, 9)};
+  auto const branch3{Generate(*generator_, genesis, 3)};
+  auto const branch5{Generate(*generator_, genesis, 5)};
+  auto const branch9{Generate(*generator_, genesis, 9)};
 
   // an offspring of branch9
   std::vector<BlockGenerator::BlockPtr> branch7(branch9.cbegin(), branch9.cbegin() + 3);
-  for (auto &&other_direction : Generate(generator_, branch7.back(), 4))
+  for (auto &&other_direction : Generate(*generator_, branch7.back(), 4))
   {
     branch7.emplace_back(std::move(other_direction));
   }
 
-  auto const branch6{Generate(generator_, genesis, 6)};
+  auto const branch6{Generate(*generator_, genesis, 6)};
 
 #ifdef FETCH_LOG_DEBUG_ENABLED
   static constexpr char const *LOGGING_NAME = "MainChainTests";
@@ -884,7 +884,7 @@ TEST_P(MainChainTests, CheckResolvedLooseWeight)
 TEST_P(MainChainTests, CheckHeaviestChain)
 {
   auto genesis     = generator_->Generate();
-  auto main_branch = Generate(generator_, genesis, 10);
+  auto main_branch = Generate(*generator_, genesis, 10);
 
   for (auto const &block : main_branch)
   {
@@ -902,7 +902,7 @@ TEST_P(MainChainTests, CheckHeaviestChain)
     ASSERT_EQ(blogs[i + 1]->chain_label, 1);
   }
 
-  auto side_branch = Generate(generator_, main_branch[5], 10);
+  auto side_branch = Generate(*generator_, main_branch[5], 10);
   for (std::size_t i{}; i < 3; ++i)
   {
     ASSERT_EQ(ToString(chain_->AddBlock(*side_branch[i])), ToString(BlockStatus::ADDED));
@@ -993,6 +993,53 @@ TEST_P(MainChainTests, AddingBlockWithDuplicateTxInSameBlockFails)
 
   ASSERT_EQ(BlockStatus::INVALID, chain_->AddBlock(*main1));
   ASSERT_EQ(chain_->GetHeaviestBlockHash(), genesis->hash);
+}
+
+TEST(AltMainChainTests, CheckRecoveryAfterCrash)
+{
+  fetch::crypto::mcl::details::MCLInitialiser();
+  chain::InitialiseTestConstants();
+
+  MainChain::Config cfg{false, 4, 1};
+
+  // build a chain of blocks
+  BlockGenerator gen{1, 2};
+  auto const     genesis = gen.Generate();
+  auto const     branch{Generate(gen, genesis, 200, 1)};
+
+  Digest orig_heaviest_block_digest{};
+  {
+    MainChain chain1{MainChain::Mode::CREATE_PERSISTENT_DB, cfg};
+
+    // add the branch of blocks to the chain
+    for (auto const &blk : branch)
+    {
+      ASSERT_EQ(BlockStatus::ADDED, chain1.AddBlock(*blk));
+    }
+
+    // cache the heaviest
+    auto const heaviest        = chain1.GetHeaviestBlock();
+    orig_heaviest_block_digest = heaviest->hash;
+  }
+
+  MainChain chain2{MainChain::Mode::LOAD_PERSISTENT_DB, cfg};
+
+  auto const recovered_heaviest = chain2.GetHeaviestBlock();
+
+  // we expect that the heaviest block hashes do no match because the main chain has only
+  // recovered all of its contents.
+  EXPECT_NE(orig_heaviest_block_digest, recovered_heaviest->hash);
+  EXPECT_EQ(190, recovered_heaviest->block_number);
+
+  // should be able to add the remaining blocks again to the chain and have them being accepted.
+  // This is important because the bloom filter needs to be kept in sync with the main chain
+  for (std::size_t i = 190; i < branch.size(); ++i)
+  {
+    ASSERT_EQ(BlockStatus::ADDED, chain2.AddBlock(*branch.at(i)));
+  }
+
+  // finally we expect the two chains to be at the same end point
+  EXPECT_EQ(orig_heaviest_block_digest, chain2.GetHeaviestBlockHash());
 }
 
 INSTANTIATE_TEST_CASE_P(ParamBased, MainChainTests,

@@ -17,8 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "bloom_filter/progressive_bloom_filter.hpp"
+#include "bloom_filter/historical_bloom_filter.hpp"
 #include "chain/constants.hpp"
+#include "chain/transaction.hpp"
 #include "chain/transaction_layout.hpp"
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/decoders.hpp"
@@ -157,8 +158,16 @@ public:
     RETURN_LEAST_RECENT
   };
 
+  struct Config
+  {
+    bool        enable_dirty_blocks{false};
+    uint64_t    bloom_filter_window{chain::Transaction::MAXIMUM_TX_VALIDITY_PERIOD};
+    std::size_t bloom_filter_cached_buckets{3u};
+  };
+
   // Construction / Destruction
   explicit MainChain(Mode mode = Mode::IN_MEMORY_DB, bool dirty_block_functionality = false);
+  MainChain(Mode mode, Config const &cfg);
   MainChain(MainChain const &rhs) = delete;
   MainChain(MainChain &&rhs)      = delete;
   ~MainChain();
@@ -305,6 +314,8 @@ public:
   static IntBlockPtr CreateGenesisBlock();
 
 private:
+  using BloomFilter = bloom::HistoricalBloomFilter;
+
   BlockHash GetHeadHash();
   void      SetHeadHash(BlockHash const &hash);
 
@@ -329,7 +340,7 @@ private:
   ///< The earliest block known of current heaveiest chain.
   mutable IntBlockPtr labeled_subchain_start_;
 
-  mutable ProgressiveBloomFilter   bloom_filter_;
+  mutable BloomFilter              bloom_filter_;
   telemetry::GaugePtr<std::size_t> bloom_filter_queried_bit_count_;
   telemetry::CounterPtr            bloom_filter_query_count_;
   telemetry::CounterPtr            bloom_filter_positive_count_;

@@ -47,11 +47,22 @@ namespace fetch {
 namespace ledger {
 
 namespace {
-constexpr char const *BLOOM_FILTER_STORE = "chain.bloom.db";
-constexpr uint64_t    OVERLAP            = 400000;
-}  // namespace
 
-const uint64_t DIRTY_TIMEOUT{600};
+constexpr uint64_t DIRTY_TIMEOUT = 600;
+
+bloom::HistoricalBloomFilter::Mode SelectMode(MainChain::Mode mode)
+{
+  switch (mode)
+  {
+  case MainChain::Mode::IN_MEMORY_DB:
+  case MainChain::Mode::CREATE_PERSISTENT_DB:
+    return bloom::HistoricalBloomFilter::Mode::NEW_DATABASE;
+  case MainChain::Mode::LOAD_PERSISTENT_DB:
+    return bloom::HistoricalBloomFilter::Mode ::LOAD_DATABASE;
+  }
+}
+
+}  // namespace
 
 /**
  * Constructs the main chain
@@ -59,9 +70,14 @@ const uint64_t DIRTY_TIMEOUT{600};
  * @param mode Flag to signal which storage mode has been requested
  */
 MainChain::MainChain(Mode mode, bool dirty_block_functionality)
+  : MainChain(mode, Config{dirty_block_functionality})
+{}
+
+MainChain::MainChain(Mode mode, Config const &cfg)
   : mode_{mode}
-  , dirty_block_functionality_{dirty_block_functionality}
-  , bloom_filter_{OVERLAP}
+  , dirty_block_functionality_{cfg.enable_dirty_blocks}
+  , bloom_filter_{SelectMode(mode),       "chain.hbloom.db",       "chain.hbloom.index.db",
+                  "chain.hbloom.meta.db", cfg.bloom_filter_window, cfg.bloom_filter_cached_buckets}
   , bloom_filter_queried_bit_count_(telemetry::Registry::Instance().CreateGauge<std::size_t>(
         "ledger_main_chain_bloom_filter_queried_bit_number",
         "Total number of bits checked during each query to the Ledger Main Chain Bloom filter"))
@@ -77,12 +93,12 @@ MainChain::MainChain(Mode mode, bool dirty_block_functionality)
   , dirty_blocks_attempt_add_(telemetry::Registry::Instance().CreateCounter(
         "ledger_main_chain_dirty_blocks_attempt_add_total", "Total attempts to add a dirty block"))
 {
-  if (Mode::IN_MEMORY_DB != mode)
+  if (Mode::IN_MEMORY_DB != mode_)
   {
     // create the block store
     block_store_ = std::make_unique<BlockStore>();
 
-    RecoverFromFile(mode);
+    RecoverFromFile(mode_);
   }
 
   // create the genesis block and add it to the cache
@@ -121,7 +137,6 @@ void MainChain::Reset()
                      std::ios::binary | std::ios::in | std::ios::out | std::ios::trunc);
   }
 
-  std::ofstream out(BLOOM_FILTER_STORE, std::ios::binary | std::ios::out | std::ios::trunc);
   bloom_filter_.Reset();
 
   auto genesis = CreateGenesisBlock();
@@ -407,7 +422,7 @@ void MainChain::AddBlockToBloomFilter(Block const &block) const
   {
     for (auto const &tx_layout : slice)
     {
-      bloom_filter_.Add(tx_layout.digest(), tx_layout.valid_until(), heaviest_.BlockNumber());
+      bloom_filter_.Add(tx_layout.digest(), block.block_number);
     }
   }
 }
@@ -992,7 +1007,6 @@ void MainChain::RecoverFromFile(Mode mode)
     head_store_.open("chain.head.db",
                      std::ios::binary | std::ios::in | std::ios::out | std::ios::trunc);
 
-    std::ofstream out(BLOOM_FILTER_STORE, std::ios::binary | std::ios::out | std::ios::trunc);
     bloom_filter_.Reset();
 
     return;
@@ -1004,26 +1018,6 @@ void MainChain::RecoverFromFile(Mode mode)
 
     block_store_->Load("chain.db", "chain.index.db");
     head_store_.open("chain.head.db", std::ios::binary | std::ios::in | std::ios::out);
-
-    std::ifstream in(BLOOM_FILTER_STORE, std::ios::binary | std::ios::in);
-
-    if (in.is_open())
-    {
-      try
-      {
-        byte_array::ByteArray bloom_filter_data{in};
-
-        LargeObjectSerializeHelper buffer{bloom_filter_data};
-
-        buffer >> bloom_filter_;
-      }
-      catch (std::exception const &e)
-      {
-        FETCH_LOG_ERROR(LOGGING_NAME,
-                        "Failed to load Bloom filter from storage! Reason: ", e.what());
-        Reset();
-      }
-    }
   }
 
   // load the head block, and attempt verify that this block forms a complete chain to genesis
@@ -1031,6 +1025,9 @@ void MainChain::RecoverFromFile(Mode mode)
 
   // retrieve the starting hash
   BlockHash head_block_hash = GetHeadHash();
+
+  // clear the transaction bloom filter
+  bloom_filter_.Reset();
 
   bool recovery_complete{false};
   if (!head_block_hash.empty() && LoadBlock(head_block_hash, *head))
@@ -1048,6 +1045,13 @@ void MainChain::RecoverFromFile(Mode mode)
                        "Discontinuity found when walking main chain during recovery. Current: ",
                        block_index, " prev: ", next->block_number, " Resetting");
         break;
+      }
+
+      // repopulate the bloom filter
+      AddBlockToBloomFilter(*next);
+      if ((block_index % bloom_filter_.window_size()) == 0)
+      {
+        bloom_filter_.TrimCache();
       }
 
       block_index = next->block_number;
@@ -1085,6 +1089,9 @@ void MainChain::RecoverFromFile(Mode mode)
       FETCH_LOG_INFO(LOGGING_NAME, "Heaviest block now: ", heaviest_block_num);
       FETCH_LOG_INFO(LOGGING_NAME, "Heaviest block weight: ", GetHeaviestBlock()->total_weight);
 
+      // flush all the dirty pages
+      bloom_filter_.TrimCache();
+
       // signal that the recovery was successful
       recovery_complete = true;
     }
@@ -1105,7 +1112,6 @@ void MainChain::RecoverFromFile(Mode mode)
     head_store_.open("chain.head.db",
                      std::ios::binary | std::ios::in | std::ios::out | std::ios::trunc);
 
-    std::ofstream out(BLOOM_FILTER_STORE, std::ios::binary | std::ios::out | std::ios::trunc);
     bloom_filter_.Reset();
   }
 }
@@ -1987,58 +1993,14 @@ DigestSet MainChain::DetectDuplicateTransactions(BlockHash const &           sta
     return {};
   }
 
-  DigestSet potential_duplicates{};
+  DigestSet duplicates{};
   for (auto const &tx_layout : transactions)
   {
-    std::pair<bool, std::size_t> const result =
-        bloom_filter_.Match(tx_layout.digest(), tx_layout.valid_until());
-    bloom_filter_queried_bit_count_->set(result.second);
-    if (result.first)
+    if (bloom_filter_.Match(tx_layout.digest(), tx_layout.valid_from(), tx_layout.valid_until()))
     {
-      bloom_filter_positive_count_->increment();
-      potential_duplicates.insert(tx_layout.digest());
+      duplicates.insert(tx_layout.digest());
     }
-    bloom_filter_query_count_->increment();
   }
-
-  auto search_chain_for_duplicates =
-      [this, block](DigestSet const &transaction_digests) mutable -> DigestSet {
-    DigestSet duplicates{};
-    for (;;)
-    {
-      // Traversing the chain fully is costly: break out early if we know the transactions are all
-      // duplicated (or both sets are empty)
-      if (transaction_digests.size() == duplicates.size())
-      {
-        break;
-      }
-
-      for (auto const &slice : block->slices)
-      {
-        for (auto const &tx : slice)
-        {
-          if (transaction_digests.find(tx.digest()) != transaction_digests.end())
-          {
-            duplicates.insert(tx.digest());
-          }
-        }
-      }
-
-      // exit the loop once we can no longer find the block
-      if (!LookupBlock(block->previous_hash, block))
-      {
-        break;
-      }
-    }
-
-    return duplicates;
-  };
-
-  DigestSet const duplicates = search_chain_for_duplicates(potential_duplicates);
-
-  auto const false_positives = potential_duplicates.size() - duplicates.size();
-
-  bloom_filter_false_positive_count_->add(false_positives);
 
   return duplicates;
 }
@@ -2052,20 +2014,13 @@ void MainChain::FlushToDisk(bool flush_bloom)
     block_store_->Flush(false);
   }
 
+  // cause the bloom filter to trim its cache. In general this will not do anything, only after we
+  // have moved over a boundary point will the values be flushed.
+  bloom_filter_.TrimCache();
+
   if (flush_bloom && (mode_ != Mode::IN_MEMORY_DB))
   {
-    try
-    {
-      std::ofstream out(BLOOM_FILTER_STORE, std::ios::binary | std::ios::out | std::ios::trunc);
-      LargeObjectSerializeHelper buffer{};
-      buffer << bloom_filter_;
-
-      out << buffer.data();
-    }
-    catch (std::exception const &e)
-    {
-      FETCH_LOG_ERROR(LOGGING_NAME, "Failed to save Bloom filter to file, reason: ", e.what());
-    }
+    bloom_filter_.Flush();
   }
 }
 

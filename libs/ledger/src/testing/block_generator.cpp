@@ -45,7 +45,8 @@ void BlockGenerator::Reset()
   block_count_ = 0;
 }
 
-BlockGenerator::BlockPtr BlockGenerator::Generate(BlockPtrConst const &from, uint64_t weight)
+BlockGenerator::BlockPtr BlockGenerator::Generate(BlockPtrConst const &from, uint64_t weight,
+                                                  std::size_t num_tx)
 {
   using fetch::byte_array::ByteArray;
 
@@ -56,6 +57,9 @@ BlockGenerator::BlockPtr BlockGenerator::Generate(BlockPtrConst const &from, uin
 
   if (from)
   {
+    // clip the number of tx to the limit on the number of slices
+    num_tx = std::min(num_tx, num_slices_);
+
     ByteArray merkle_root{};
     merkle_root.Resize(32);
 
@@ -84,6 +88,21 @@ BlockGenerator::BlockPtr BlockGenerator::Generate(BlockPtrConst const &from, uin
     block->log2_num_lanes = log2_num_lanes_;
     block->slices.resize(num_slices_);
 
+    // add fake transactions if that is what is needed
+    for (std::size_t i = 0; i < num_tx; ++i)
+    {
+      // lookup the slice
+      auto &slice = block->slices.at(i);
+
+      // build the transaction hash from the previous hash mixed with the an index
+      byte_array::ByteArray tx_digest = from->hash.Copy();
+      tx_digest[0]                    = i & 0xffu;
+
+      // add the transaction into the block
+      slice.emplace_back(tx_digest, BitVector{}, 1u, block->block_number - 1u,
+                         block->block_number + 1u);
+    }
+
     block->UpdateTimestamp();
 
     // compute the digest for the block
@@ -100,9 +119,10 @@ BlockGenerator::BlockPtr BlockGenerator::Generate(BlockPtrConst const &from, uin
   return block;
 }
 
-BlockGenerator::BlockPtr BlockGenerator::operator()(BlockPtrConst const &from, uint64_t weight)
+BlockGenerator::BlockPtr BlockGenerator::operator()(BlockPtrConst const &from, uint64_t weight,
+                                                    std::size_t num_tx)
 {
-  return Generate(from, weight);
+  return Generate(from, weight, num_tx);
 }
 
 }  // namespace testing
