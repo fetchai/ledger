@@ -290,13 +290,17 @@ void PutWeightInMultiheadAttention(
            typename TensorType::SizeVector({attn_head_size, model_dims}));
     assert(sliced_key_bias.shape() == typename TensorType::SizeVector({attn_head_size, 1, 1}));
 
+    std::string prefix = layer;
+    prefix += "/";
+    prefix += this_attn_prefix;
+
     // put the weights into each head
-    g.SetWeight(layer + "/" + this_attn_prefix + query_weights_name, sliced_query_weights);
-    g.SetWeight(layer + "/" + this_attn_prefix + query_bias_name, sliced_query_bias);
-    g.SetWeight(layer + "/" + this_attn_prefix + key_weights_name, sliced_key_weights);
-    g.SetWeight(layer + "/" + this_attn_prefix + key_bias_name, sliced_key_bias);
-    g.SetWeight(layer + "/" + this_attn_prefix + value_weights_name, sliced_value_weights);
-    g.SetWeight(layer + "/" + this_attn_prefix + value_bias_name, sliced_value_bias);
+    g.SetWeight(prefix + query_weights_name, sliced_query_weights);
+    g.SetWeight(prefix + query_bias_name, sliced_query_bias);
+    g.SetWeight(prefix + key_weights_name, sliced_key_weights);
+    g.SetWeight(prefix + key_bias_name, sliced_key_bias);
+    g.SetWeight(prefix + value_weights_name, sliced_value_weights);
+    g.SetWeight(prefix + value_bias_name, sliced_value_bias);
   }
 }
 

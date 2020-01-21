@@ -18,7 +18,6 @@
 
 #include "math/base_types.hpp"
 #include "ml/ops/weights.hpp"
-#include "ml/serializers/ml_types.hpp"
 #include "test_types.hpp"
 
 #include "gtest/gtest.h"
@@ -80,5 +79,3 @@ TYPED_TEST(WeightsTest, gradient_step_test)
 }
 
 }  // namespace
-}  // namespace ml
-}  // namespace fetch
