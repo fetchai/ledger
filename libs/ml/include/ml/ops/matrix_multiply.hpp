@@ -71,7 +71,7 @@ public:
     return DESCRIPTOR;
   }
 
-  OperationsCount ForwardCost() override;
+  MLChargeAmount ForwardCost() override;
 
 private:
   // caching tensors and shapes

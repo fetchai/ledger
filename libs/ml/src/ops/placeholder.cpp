@@ -85,11 +85,11 @@ const char *PlaceHolder<TensorType>::Descriptor() const
 }
 
 template <typename TensorType>
-OperationsCount PlaceHolder<TensorType>::ForwardCost()
+MLChargeAmount PlaceHolder<TensorType>::ForwardCost()
 {
   assert(!this->batch_input_shapes_.empty());
-  OperationsCount cost = fetch::ml::ops::charge_cost::PLACEHOLDER_READING_PER_ELEMENT *
-                         this->TotalElementsIn(this->batch_input_shapes_);
+  MLChargeAmount cost = fetch::ml::ops::charge_cost::PLACEHOLDER_READING_PER_ELEMENT *
+                        this->TotalElementsIn(this->batch_input_shapes_);
   return cost;
 }
 

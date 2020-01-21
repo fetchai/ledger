@@ -1217,7 +1217,7 @@ TYPED_TEST(GraphTest, graph_getWeightsOrder_2)
 TYPED_TEST(GraphTest, graph_charge_input_only)
 {
   using TensorType = TypeParam;
-  using fetch::ml::ops::OperationsCount;
+  using fetch::ml::ops::MLChargeAmount;
 
   TensorType data = TensorType::FromString(R"(01,02,03,04; 11,12,13,14; 21,22,23,24; 31,32,33,34)");
 
@@ -1237,7 +1237,7 @@ TYPED_TEST(GraphTest, graph_charge_input_only)
 TYPED_TEST(GraphTest, graph_charge_subtraction)
 {
   using TensorType = TypeParam;
-  using fetch::ml::ops::OperationsCount;
+  using fetch::ml::ops::MLChargeAmount;
 
   TensorType data = TensorType::FromString(R"(01,02,03,04; 11,12,13,14; 21,22,23,24; 31,32,33,34)");
 
@@ -1299,11 +1299,11 @@ TYPED_TEST(GraphTest, graph_charge_matmul)
   ASSERT_EQ(out_shape.size(), 2);
   ASSERT_EQ(out_shape.front(), 2);
 
-  OperationsCount const charge       = g.ChargeForwardTo(matmul);
-  OperationsCount const batch_charge = charge * batch_size;
+  MLChargeAmount const charge       = g.ChargeForwardTo(matmul);
+  MLChargeAmount const batch_charge = charge * batch_size;
 
-  SizeType const        matmul_ops      = weight_width * input_height * batch_size;
-  OperationsCount const expected_charge = matmul_ops * charge_cost::MULTIPLICATION_PER_ELEMENT;
+  SizeType const       matmul_ops      = weight_width * input_height * batch_size;
+  MLChargeAmount const expected_charge = matmul_ops * charge_cost::MULTIPLICATION_PER_ELEMENT;
 
   ASSERT_EQ(batch_charge, expected_charge);
 }
