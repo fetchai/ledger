@@ -1217,13 +1217,13 @@ TYPED_TEST(GraphTest, graph_getWeightsOrder_2)
 TYPED_TEST(GraphTest, graph_charge_input_only)
 {
   using TensorType = TypeParam;
-  using fetch::ml::ops::MLChargeAmount;
+  using namespace fetch::ml::ops;
 
   TensorType data = TensorType::FromString(R"(01,02,03,04; 11,12,13,14; 21,22,23,24; 31,32,33,34)");
 
   fetch::ml::Graph<TensorType> g;
 
-  std::string input = g.template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Input", {});
+  std::string input = g.template AddNode<PlaceHolder<TensorType>>("Input", {});
 
   g.SetInput(input, data);
   g.Compile();
@@ -1237,18 +1237,16 @@ TYPED_TEST(GraphTest, graph_charge_input_only)
 TYPED_TEST(GraphTest, graph_charge_subtraction)
 {
   using TensorType = TypeParam;
-  using fetch::ml::ops::MLChargeAmount;
+  using namespace fetch::ml::ops;
 
   TensorType data = TensorType::FromString(R"(01,02,03,04; 11,12,13,14; 21,22,23,24; 31,32,33,34)");
 
   fetch::ml::Graph<TensorType> g;
 
-  std::string left_input =
-      g.template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("LeftInput", {});
-  std::string right_input =
-      g.template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("RightInput", {});
-  std::string subtract = g.template AddNode<fetch::ml::ops::Subtract<TensorType>>(
-      "Subtract", {"LeftInput", "RightInput"});
+  std::string left_input  = g.template AddNode<PlaceHolder<TensorType>>("LeftInput", {});
+  std::string right_input = g.template AddNode<PlaceHolder<TensorType>>("RightInput", {});
+  std::string subtract =
+      g.template AddNode<Subtract<TensorType>>("Subtract", {"LeftInput", "RightInput"});
 
   g.SetInput(left_input, data);
   g.SetInput(right_input, data);
@@ -1259,7 +1257,7 @@ TYPED_TEST(GraphTest, graph_charge_subtraction)
 
   std::size_t const    total_elements_in_output = 4 * 4;
   MLChargeAmount const expected_charge =
-      total_elements_in_output * fetch::ml::ops::charge_cost::ADDITION_PER_ELEMENT;
+      total_elements_in_output * charge_cost::SUBTRACTION_PER_ELEMENT;
 
   ASSERT_EQ(batch_charge, expected_charge);
 }
