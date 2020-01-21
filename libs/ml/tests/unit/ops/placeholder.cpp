@@ -16,19 +16,17 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/serializers/main_serializer_definition.hpp"
-#include "math/base_types.hpp"
 #include "ml/core/graph.hpp"
 #include "ml/layers/fully_connected.hpp"
 #include "ml/ops/placeholder.hpp"
-#include "ml/serializers/ml_types.hpp"
 #include "test_types.hpp"
 
 #include "gtest/gtest.h"
 
-namespace fetch {
-namespace ml {
-namespace test {
+namespace {
+
+using namespace fetch::ml;
+
 template <typename T>
 class PlaceholderAllTest : public ::testing::Test
 {
@@ -39,8 +37,8 @@ class PlaceholderNonIntTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(PlaceholderAllTest, math::test::TensorIntAndFloatingTypes);
-TYPED_TEST_CASE(PlaceholderNonIntTest, math::test::TensorFloatingTypes);
+TYPED_TEST_CASE(PlaceholderAllTest, fetch::math::test::TensorIntAndFloatingTypes);
+TYPED_TEST_CASE(PlaceholderNonIntTest, fetch::math::test::TensorFloatingTypes);
 
 TYPED_TEST(PlaceholderAllTest, set_data)
 {
@@ -134,51 +132,4 @@ TYPED_TEST(PlaceholderNonIntTest, shareable_layer_with_placeholder)
   EXPECT_TRUE(prediction1.AllClose(prediction2));
 }
 
-TYPED_TEST(PlaceholderAllTest, saveable_test)
-{
-  using TensorType = TypeParam;
-  using DataType   = typename TypeParam::Type;
-  using SPType     = typename fetch::ml::ops::PlaceHolder<TensorType>::SPType;
-  using OpType     = typename fetch::ml::ops::PlaceHolder<TensorType>;
-
-  TensorType data = TensorType::FromString("1, -2, 3, -4, 5, -6, 7, -8");
-
-  OpType op;
-  op.SetData(data);
-
-  TensorType prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
-
-  op.Forward({}, prediction);
-
-  // extract saveparams
-  std::shared_ptr<fetch::ml::OpsSaveableParams> sp = op.GetOpSaveableParams();
-
-  // downcast to correct type
-  auto dsp = std::static_pointer_cast<SPType>(sp);
-
-  // serialize
-  fetch::serializers::MsgPackSerializer b;
-  b << *dsp;
-
-  // deserialize
-  b.seek(0);
-  auto dsp2 = std::make_shared<SPType>();
-  b >> *dsp2;
-
-  // rebuild node
-  OpType new_op(*dsp2);
-
-  // placeholders do not store their data in serialisation, so we re set the data here
-  new_op.SetData(data);
-
-  // check that new predictions match the old
-  TensorType new_prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
-  new_op.Forward({}, new_prediction);
-
-  // test correct values
-  EXPECT_TRUE(new_prediction.AllClose(prediction, DataType{0}, DataType{0}));
-}
-
-}  // namespace test
-}  // namespace ml
-}  // namespace fetch
+}  // namespace

@@ -16,26 +16,24 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/serializers/main_serializer_definition.hpp"
 #include "math/base_types.hpp"
 #include "ml/ops/switch.hpp"
-#include "ml/serializers/ml_types.hpp"
 #include "test_types.hpp"
-#include "vectorise/fixed_point/fixed_point.hpp"
 
 #include "gtest/gtest.h"
 
 #include <vector>
 
-namespace fetch {
-namespace ml {
-namespace test {
+namespace {
+
+using namespace fetch::ml;
+
 template <typename T>
 class SwitchTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(SwitchTest, math::test::TensorFloatingTypes);
+TYPED_TEST_CASE(SwitchTest, fetch::math::test::TensorFloatingTypes);
 
 TYPED_TEST(SwitchTest, forward_test)
 {
@@ -180,76 +178,4 @@ TYPED_TEST(SwitchTest, back_test_broadcast_mask)
   ASSERT_TRUE(prediction.at(2).AllClose(gt_else, DataType{0}, DataType{0}));
 }
 
-TYPED_TEST(SwitchTest, saveparams_back_test_broadcast_mask)
-{
-  using TensorType = TypeParam;
-  using DataType   = typename TypeParam::Type;
-  using OpType     = typename fetch::ml::ops::Switch<TensorType>;
-  using SPType     = typename OpType::SPType;
-
-  TensorType mask = TensorType::FromString("1, 1, 0");
-  mask.Reshape({1, 3, 1});
-
-  TensorType target_input = TensorType::FromString("3, 6, 2, 1, 3, -2, 2, 1, -9");
-  target_input.Reshape({3, 3, 1});
-
-  TensorType mask_value({3, 3, 1});
-  mask_value.Fill(static_cast<DataType>(-100));
-
-  TensorType error_signal = TensorType::FromString("1, 2, 3, 4, 5, 6, 7, 8, 9");
-  error_signal.Reshape({3, 3, 1});
-
-  fetch::ml::ops::Switch<TensorType> op;
-
-  std::vector<TypeParam> prediction = op.Backward(
-      {std::make_shared<const TensorType>(mask), std::make_shared<const TensorType>(target_input),
-       std::make_shared<const TensorType>(mask_value)},
-      error_signal);
-
-  // extract saveparams
-  std::shared_ptr<fetch::ml::OpsSaveableParams> sp = op.GetOpSaveableParams();
-
-  // downcast to correct type
-  auto dsp = std::dynamic_pointer_cast<SPType>(sp);
-
-  // serialize
-  fetch::serializers::MsgPackSerializer b;
-  b << *dsp;
-
-  // make another prediction with the original op
-  prediction = op.Backward(
-      {std::make_shared<const TensorType>(mask), std::make_shared<const TensorType>(target_input),
-       std::make_shared<const TensorType>(mask_value)},
-      error_signal);
-
-  // deserialize
-  b.seek(0);
-  auto dsp2 = std::make_shared<SPType>();
-  b >> *dsp2;
-
-  // rebuild node
-  OpType new_op(*dsp2);
-
-  // check that new predictions match the old
-  std::vector<TypeParam> new_prediction = new_op.Backward(
-      {std::make_shared<const TensorType>(mask), std::make_shared<const TensorType>(target_input),
-       std::make_shared<const TensorType>(mask_value)},
-      error_signal);
-
-  // test correct values
-  EXPECT_TRUE(prediction.at(0).AllClose(
-      new_prediction.at(0), fetch::math::function_tolerance<typename TypeParam::Type>(),
-      fetch::math::function_tolerance<typename TypeParam::Type>()));
-
-  EXPECT_TRUE(prediction.at(1).AllClose(
-      new_prediction.at(1), fetch::math::function_tolerance<typename TypeParam::Type>(),
-      fetch::math::function_tolerance<typename TypeParam::Type>()));
-
-  EXPECT_TRUE(prediction.at(2).AllClose(
-      new_prediction.at(2), fetch::math::function_tolerance<typename TypeParam::Type>(),
-      fetch::math::function_tolerance<typename TypeParam::Type>()));
-}
-
-}  // namespace test
-}  // namespace ml
-}  // namespace fetch
+}  // namespace

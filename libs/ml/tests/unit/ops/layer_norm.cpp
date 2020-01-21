@@ -16,25 +16,21 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/serializers/main_serializer.hpp"
 #include "ml/ops/layer_norm.hpp"
-#include "ml/serializers/ml_types.hpp"
 #include "test_types.hpp"
-#include "vectorise/fixed_point/fixed_point.hpp"
 
 #include "gtest/gtest.h"
 
 #include <vector>
 
-namespace fetch {
-namespace ml {
-namespace test {
+namespace {
+
 template <typename T>
 class LayerNormTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(LayerNormTest, math::test::TensorFloatingTypes);
+TYPED_TEST_CASE(LayerNormTest, fetch::math::test::TensorFloatingTypes);
 
 TYPED_TEST(LayerNormTest, forward_test_2d)
 {
@@ -153,105 +149,4 @@ TYPED_TEST(LayerNormTest, backward_test_3d)
                                        DataType{15} * fetch::math::function_tolerance<DataType>()));
 }
 
-TYPED_TEST(LayerNormTest, saveparams_test)
-{
-  using TensorType = TypeParam;
-  using DataType   = typename TypeParam::Type;
-  using SPType     = typename fetch::ml::ops::LayerNorm<TensorType>::SPType;
-  using OpType     = fetch::ml::ops::LayerNorm<TensorType>;
-
-  TensorType data = TensorType::FromString(
-      "1, 2, 3, 0;"
-      "2, 3, 2, 1;"
-      "3, 6, 4, 13");
-
-  data.Reshape({3, 2, 2});
-  auto s1 = data.View(0).ToString();
-  auto s2 = data.View(1).ToString();
-
-  fetch::ml::ops::LayerNorm<TensorType> op(static_cast<typename TypeParam::SizeType>(0));
-
-  TensorType prediction(op.ComputeOutputShape({std::make_shared<TensorType>(data)}));
-  op.Forward({std::make_shared<TensorType>(data)}, prediction);
-
-  // extract saveparams
-  std::shared_ptr<fetch::ml::OpsSaveableParams> sp = op.GetOpSaveableParams();
-
-  // downcast to correct type
-  auto dsp = std::static_pointer_cast<SPType>(sp);
-
-  // serialize
-  fetch::serializers::MsgPackSerializer b;
-  b << *dsp;
-
-  // deserialize
-  b.seek(0);
-  auto dsp2 = std::make_shared<SPType>();
-  b >> *dsp2;
-
-  // rebuild node
-  OpType new_op(*dsp2);
-
-  // check that new predictions match the old
-  TensorType new_prediction(op.ComputeOutputShape({std::make_shared<TensorType>(data)}));
-  op.Forward({std::make_shared<TensorType>(data)}, new_prediction);
-
-  // test correct values
-  EXPECT_TRUE(new_prediction.AllClose(prediction, DataType{0}, DataType{0}));
-}
-
-TYPED_TEST(LayerNormTest, saveparams_backward_test_3d)
-{
-  using TensorType = TypeParam;
-  using OpType     = fetch::ml::ops::LayerNorm<TensorType>;
-  using SPType     = typename OpType::SPType;
-
-  TensorType data = TensorType::FromString(
-      "1, 1, 0.5, 2;"
-      "2, 0, 3, 1;"
-      "1, 1, 7, 9");
-  data.Reshape({3, 2, 2});
-
-  TensorType error_signal = TensorType::FromString(
-      "-1, 2, 1, 1;"
-      "2, 0, 1, 3;"
-      "1, 1, 1, 6");
-  error_signal.Reshape({3, 2, 2});
-
-  fetch::ml::ops::LayerNorm<TensorType> op(static_cast<typename TypeParam::SizeType>(0));
-
-  auto prediction = op.Backward({std::make_shared<TensorType>(data)}, error_signal);
-
-  // extract saveparams
-  std::shared_ptr<fetch::ml::OpsSaveableParams> sp = op.GetOpSaveableParams();
-
-  // downcast to correct type
-  auto dsp = std::dynamic_pointer_cast<SPType>(sp);
-
-  // serialize
-  fetch::serializers::MsgPackSerializer b;
-  b << *dsp;
-
-  // make another prediction with the original op
-  prediction = op.Backward({std::make_shared<TensorType>(data)}, error_signal);
-
-  // deserialize
-  b.seek(0);
-  auto dsp2 = std::make_shared<SPType>();
-  b >> *dsp2;
-
-  // rebuild node
-  OpType new_op(*dsp2);
-
-  // check that new predictions match the old
-  auto new_prediction = new_op.Backward({std::make_shared<TensorType>(data)}, error_signal);
-
-  // test correct values
-  EXPECT_TRUE(prediction.at(0).AllClose(
-      new_prediction.at(0), fetch::math::function_tolerance<typename TypeParam::Type>(),
-      fetch::math::function_tolerance<typename TypeParam::Type>()));
-}
-
-}  // namespace test
-}  // namespace ml
-}  // namespace fetch
+}  // namespace
