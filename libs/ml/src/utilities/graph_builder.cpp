@@ -18,10 +18,9 @@
 
 #include "ml/utilities/graph_builder.hpp"
 
-#include "ml/ops/metrics/categorical_accuracy.hpp"
-
 #include "ml/meta/ml_type_traits.hpp"
 
+// layers
 #include "ml/layers/PRelu.hpp"
 #include "ml/layers/convolution_1d.hpp"
 #include "ml/layers/convolution_2d.hpp"
@@ -31,17 +30,9 @@
 #include "ml/layers/scaled_dot_product_attention.hpp"
 #include "ml/layers/self_attention_encoder.hpp"
 #include "ml/layers/skip_gram.hpp"
+
+// ops
 #include "ml/ops/abs.hpp"
-#include "ml/ops/activations/dropout.hpp"
-#include "ml/ops/activations/elu.hpp"
-#include "ml/ops/activations/gelu.hpp"
-#include "ml/ops/activations/leaky_relu.hpp"
-#include "ml/ops/activations/logsigmoid.hpp"
-#include "ml/ops/activations/logsoftmax.hpp"
-#include "ml/ops/activations/randomised_relu.hpp"
-#include "ml/ops/activations/relu.hpp"
-#include "ml/ops/activations/sigmoid.hpp"
-#include "ml/ops/activations/softmax.hpp"
 #include "ml/ops/add.hpp"
 #include "ml/ops/avg_pool_1d.hpp"
 #include "ml/ops/avg_pool_2d.hpp"
@@ -54,9 +45,6 @@
 #include "ml/ops/flatten.hpp"
 #include "ml/ops/layer_norm.hpp"
 #include "ml/ops/log.hpp"
-#include "ml/ops/loss_functions/cross_entropy_loss.hpp"
-#include "ml/ops/loss_functions/mean_square_error_loss.hpp"
-#include "ml/ops/loss_functions/softmax_cross_entropy_loss.hpp"
 #include "ml/ops/mask_fill.hpp"
 #include "ml/ops/matrix_multiply.hpp"
 #include "ml/ops/max_pool.hpp"
@@ -79,6 +67,27 @@
 #include "ml/ops/top_k.hpp"
 #include "ml/ops/transpose.hpp"
 #include "ml/ops/weights.hpp"
+
+// metrics
+#include "ml/ops/metrics/categorical_accuracy.hpp"
+
+// activations
+#include "ml/ops/activations/dropout.hpp"
+#include "ml/ops/activations/elu.hpp"
+#include "ml/ops/activations/gelu.hpp"
+#include "ml/ops/activations/leaky_relu.hpp"
+#include "ml/ops/activations/logsigmoid.hpp"
+#include "ml/ops/activations/logsoftmax.hpp"
+#include "ml/ops/activations/randomised_relu.hpp"
+#include "ml/ops/activations/relu.hpp"
+#include "ml/ops/activations/sigmoid.hpp"
+#include "ml/ops/activations/softmax.hpp"
+
+// loss functions
+#include "ml/ops/loss_functions/cross_entropy_loss.hpp"
+#include "ml/ops/loss_functions/mean_square_error_loss.hpp"
+#include "ml/ops/loss_functions/softmax_cross_entropy_loss.hpp"
+
 #include "ml/saveparams/saveable_params.hpp"
 
 namespace fetch {

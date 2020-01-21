@@ -16,26 +16,25 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/serializers/main_serializer_definition.hpp"
 #include "math/base_types.hpp"
 #include "ml/ops/weights.hpp"
 #include "ml/serializers/ml_types.hpp"
 #include "test_types.hpp"
-#include "vectorise/fixed_point/fixed_point.hpp"
 
 #include "gtest/gtest.h"
 
 #include <memory>
 
-namespace fetch {
-namespace ml {
-namespace test {
+namespace {
+
+using namespace fetch::ml;
+
 template <typename T>
 class WeightsTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(WeightsTest, math::test::TensorIntAndFloatingTypes);
+TYPED_TEST_CASE(WeightsTest, fetch::math::test::TensorIntAndFloatingTypes);
 
 TYPED_TEST(WeightsTest, allocation_test)
 {
@@ -192,6 +191,6 @@ TYPED_TEST(WeightsTest, saveparams_gradient_step_test)
                                   fetch::math::function_tolerance<typename TypeParam::Type>()));
 }
 
-}  // namespace test
+}  // namespace
 }  // namespace ml
 }  // namespace fetch

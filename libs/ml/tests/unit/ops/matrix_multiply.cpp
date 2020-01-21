@@ -16,26 +16,23 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/serializers/main_serializer_definition.hpp"
-#include "math/base_types.hpp"
 #include "ml/ops/matrix_multiply.hpp"
-#include "ml/serializers/ml_types.hpp"
 #include "test_types.hpp"
-#include "vectorise/fixed_point/fixed_point.hpp"
 
 #include "gtest/gtest.h"
 
 #include <memory>
 
-namespace fetch {
-namespace ml {
-namespace test {
+namespace {
+
+using namespace fetch::ml;
+
 template <typename T>
 class MatrixMultiplyTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(MatrixMultiplyTest, math::test::TensorIntAndFloatingTypes);
+TYPED_TEST_CASE(MatrixMultiplyTest, fetch::math::test::TensorIntAndFloatingTypes);
 
 TYPED_TEST(MatrixMultiplyTest, forward_test)
 {
@@ -121,105 +118,4 @@ TYPED_TEST(MatrixMultiplyTest, backward_batch_test)
   EXPECT_TRUE(backpropagated_signals[1].AllClose(gradient_b));
 }
 
-TYPED_TEST(MatrixMultiplyTest, saveparams_test)
-{
-  using TensorType    = TypeParam;
-  using DataType      = typename TypeParam::Type;
-  using VecTensorType = typename fetch::ml::ops::Ops<TensorType>::VecTensorType;
-  using SPType        = typename fetch::ml::ops::MatrixMultiply<TensorType>::SPType;
-  using OpType        = typename fetch::ml::ops::MatrixMultiply<TensorType>;
-
-  TypeParam data_1 = TypeParam::FromString("1, 2, -3, 4, 5");
-  TypeParam data_2 = TypeParam::FromString(
-      "-11, 12, 13, 14; 21, 22, 23, 24; 31, 32, 33, 34; 41, 42, 43, 44; 51, 52, 53, 54");
-
-  OpType op;
-
-  TensorType    prediction(op.ComputeOutputShape(
-      {std::make_shared<const TensorType>(data_1), std::make_shared<const TensorType>(data_2)}));
-  VecTensorType vec_data(
-      {std::make_shared<const TensorType>(data_1), std::make_shared<const TensorType>(data_2)});
-
-  op.Forward(vec_data, prediction);
-
-  // extract saveparams
-  std::shared_ptr<fetch::ml::OpsSaveableParams> sp = op.GetOpSaveableParams();
-
-  // downcast to correct type
-  auto dsp = std::static_pointer_cast<SPType>(sp);
-
-  // serialize
-  fetch::serializers::MsgPackSerializer b;
-  b << *dsp;
-
-  // deserialize
-  b.seek(0);
-  auto dsp2 = std::make_shared<SPType>();
-  b >> *dsp2;
-
-  // rebuild node
-  OpType new_op(*dsp2);
-
-  // check that new predictions match the old
-  TensorType new_prediction(op.ComputeOutputShape(
-      {std::make_shared<const TensorType>(data_1), std::make_shared<const TensorType>(data_2)}));
-  new_op.Forward(vec_data, new_prediction);
-
-  // test correct values
-  EXPECT_TRUE(new_prediction.AllClose(prediction, DataType{0}, DataType{0}));
-}
-
-TYPED_TEST(MatrixMultiplyTest, saveparams_backward_batch_test)
-{
-  using TensorType = TypeParam;
-  using OpType     = typename fetch::ml::ops::MatrixMultiply<TensorType>;
-  using SPType     = typename OpType::SPType;
-  TypeParam a1({3, 4, 2});
-  TypeParam b1({4, 3, 2});
-  TypeParam error({3, 3, 2});
-  TypeParam gradient_a({3, 4, 2});
-  TypeParam gradient_b({4, 3, 2});
-
-  fetch::ml::ops::MatrixMultiply<TypeParam> op;
-  std::vector<TypeParam>                    backpropagated_signals =
-      op.Backward({std::make_shared<TypeParam>(a1), std::make_shared<TypeParam>(b1)}, error);
-
-  // extract saveparams
-  std::shared_ptr<fetch::ml::OpsSaveableParams> sp = op.GetOpSaveableParams();
-
-  // downcast to correct type
-  auto dsp = std::dynamic_pointer_cast<SPType>(sp);
-
-  // serialize
-  fetch::serializers::MsgPackSerializer b;
-  b << *dsp;
-
-  // make another prediction with the original op
-  backpropagated_signals =
-      op.Backward({std::make_shared<TypeParam>(a1), std::make_shared<TypeParam>(b1)}, error);
-
-  // deserialize
-  b.seek(0);
-  auto dsp2 = std::make_shared<SPType>();
-  b >> *dsp2;
-
-  // rebuild node
-  OpType new_op(*dsp2);
-
-  // check that new predictions match the old
-  std::vector<TypeParam> new_backpropagated_signals =
-      new_op.Backward({std::make_shared<TypeParam>(a1), std::make_shared<TypeParam>(b1)}, error);
-
-  // test correct values
-  EXPECT_TRUE(backpropagated_signals.at(0).AllClose(
-      new_backpropagated_signals.at(0), fetch::math::function_tolerance<typename TypeParam::Type>(),
-      fetch::math::function_tolerance<typename TypeParam::Type>()));
-
-  EXPECT_TRUE(backpropagated_signals.at(1).AllClose(
-      new_backpropagated_signals.at(1), fetch::math::function_tolerance<typename TypeParam::Type>(),
-      fetch::math::function_tolerance<typename TypeParam::Type>()));
-}
-
-}  // namespace test
-}  // namespace ml
-}  // namespace fetch
+}  // namespace

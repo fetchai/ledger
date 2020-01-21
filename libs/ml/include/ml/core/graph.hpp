@@ -27,14 +27,6 @@
 // appear in middle of graph
 
 namespace fetch {
-
-namespace dmlf {
-namespace collective_learning {
-template <typename TensorType>
-class ClientAlgorithm;
-}  // namespace collective_learning
-}  // namespace dmlf
-
 namespace ml {
 
 ///////////////
@@ -173,7 +165,6 @@ private:
 
   friend class optimisers::Optimiser<TensorType>;
   friend class model::ModelInterface<TensorType>;
-  friend class dmlf::collective_learning::ClientAlgorithm<TensorType>;
 
   TensorType ForwardImplementation(std::string const &node_name, bool is_training,
                                    bool evaluate_mode);
