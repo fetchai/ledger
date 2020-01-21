@@ -21,21 +21,12 @@
 #include "ml/exceptions/exceptions.hpp"
 #include "ml/ops/constant.hpp"
 #include "ml/ops/trainable.hpp"
-#include "ml/state_dict.hpp"
 
 // TODO(#1554) - we should only reset the cache for trained nodes, not all nodes
 // TODO(1467) - implement validity checks on graph compilation - e.g. loss function should not
 // appear in middle of graph
 
 namespace fetch {
-
-namespace dmlf {
-namespace collective_learning {
-template <typename TensorType>
-class ClientAlgorithm;
-}  // namespace collective_learning
-}  // namespace dmlf
-
 namespace ml {
 
 ///////////////
@@ -105,6 +96,7 @@ public:
 
   void ResetCompile();
   void Compile();
+  void ComputeAllNodeShapes();
 
   void AddTrainable(NodePtrType node_ptr, std::string const &node_name);
   void AddTrainable(NodePtrType node_ptr, std::string const &node_name,
@@ -126,6 +118,7 @@ public:
   void       BackPropagate(std::string const &node_name, TensorType const &error_signal = {});
   void       ApplyGradients(std::vector<TensorType> &grad);
   void       ApplySparseGradients(std::vector<TensorType> &grad, std::vector<SizeSet> &update_rows);
+  void       SetWeight(std::string const &node_name, TensorType const &data);
 
   //////////////////////////////////////////////////////
   /// public serialisation & weight export functions ///
@@ -134,8 +127,6 @@ public:
   bool                            InsertNode(std::string const &node_name, NodePtrType node_ptr);
   GraphSaveableParams<TensorType> GetGraphSaveableParams();
   void                            SetGraphSaveableParams(GraphSaveableParams<TensorType> const &sp);
-  virtual fetch::ml::StateDict<TensorType> StateDict();
-  virtual void                             LoadStateDict(fetch::ml::StateDict<T> const &dict);
 
   ////////////////////////////////////
   /// public setters and accessors ///
@@ -158,6 +149,8 @@ public:
 
   std::vector<std::string> GetTrainableNames();
 
+  std::vector<std::pair<std::string, std::vector<std::string>>> Connections();
+
 protected:
   std::map<std::string, NodePtrType>                            nodes_;
   std::map<std::string, NodePtrType>                            trainable_lookup_;
@@ -172,7 +165,6 @@ private:
 
   friend class optimisers::Optimiser<TensorType>;
   friend class model::ModelInterface<TensorType>;
-  friend class dmlf::collective_learning::ClientAlgorithm<TensorType>;
 
   TensorType ForwardImplementation(std::string const &node_name, bool is_training,
                                    bool evaluate_mode);
@@ -196,7 +188,6 @@ private:
   /// recursive implementation functions ///
   //////////////////////////////////////////
 
-  void StateDict(fetch::ml::StateDict<TensorType> &state_dict);
   void GetTrainables(std::vector<TrainablePtrType> &ret);
   void GetWeightsReferences(std::vector<TensorType> &ret) const;
   void GetGradientsReferences(std::vector<TensorType> &ret) const;

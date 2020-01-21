@@ -16,23 +16,19 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/serializers/main_serializer_definition.hpp"
 #include "ml/core/graph.hpp"
 #include "ml/ops/constant.hpp"
-#include "ml/serializers/ml_types.hpp"
 #include "test_types.hpp"
 
 #include "gtest/gtest.h"
 
-namespace fetch {
-namespace ml {
-namespace test {
+namespace {
 template <typename T>
 class ConstantTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(ConstantTest, math::test::TensorIntAndFloatingTypes);
+TYPED_TEST_CASE(ConstantTest, fetch::math::test::TensorIntAndFloatingTypes);
 
 TYPED_TEST(ConstantTest, set_data)
 {
@@ -101,48 +97,4 @@ TYPED_TEST(ConstantTest, shareable_test)
   EXPECT_TRUE(prediction1_node1.AllClose(prediction1_node2));
 }
 
-TYPED_TEST(ConstantTest, saveable_test)
-{
-  using TensorType = TypeParam;
-  using DataType   = typename TypeParam::Type;
-  using SPType     = typename fetch::ml::ops::Constant<TensorType>::SPType;
-  using OpType     = typename fetch::ml::ops::Constant<TensorType>;
-
-  TensorType data = TensorType::FromString("1, -2, 3, -4, 5, -6, 7, -8");
-
-  OpType op;
-  op.SetData(data);
-
-  TensorType prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
-
-  op.Forward({}, prediction);
-
-  // extract saveparams
-  std::shared_ptr<fetch::ml::OpsSaveableParams> sp = op.GetOpSaveableParams();
-
-  // downcast to correct type
-  auto dsp = std::static_pointer_cast<SPType>(sp);
-
-  // serialize
-  fetch::serializers::MsgPackSerializer b;
-  b << *dsp;
-
-  // deserialize
-  b.seek(0);
-  auto dsp2 = std::make_shared<SPType>();
-  b >> *dsp2;
-
-  // rebuild node
-  OpType new_op(*dsp2);
-
-  // check that new predictions match the old
-  TensorType new_prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
-  new_op.Forward({}, new_prediction);
-
-  // test correct values
-  EXPECT_TRUE(new_prediction.AllClose(prediction, DataType{0}, DataType{0}));
-}
-
-}  // namespace test
-}  // namespace ml
-}  // namespace fetch
+}  // namespace

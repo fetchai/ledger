@@ -34,17 +34,13 @@ var bias1    = readCSV(file_bias1);
 var weights2 = readCSV(file_weights2);
 var bias2    = readCSV(file_bias2);
 
-
 // load weights into graph
-var sd = graph.stateDict();
-
-// todo: currently broken
-//sd.setWeights("hidden_dense_1" + "_FullyConnected_Weights", weights0);
-//sd.setWeights("hidden_dense_1" + "_FullyConnected_Bias", bias0);
-//sd.setWeights("hidden_dense_2" + "_FullyConnected_Weights", weights1);
-//sd.setWeights("hidden_dense_2" + "_FullyConnected_Bias", bias1);
-//sd.setWeights("output_dense" + "_FullyConnected_Weights", weights2);
-//sd.setWeights("output_dense" + "_FullyConnected_Bias", bias2);
+graph.setWeight("hidden_dense_1" + "/FullyConnected_Weights", weights0);
+graph.setWeight("hidden_dense_1" + "/FullyConnected_Bias", bias0);
+graph.setWeight("hidden_dense_2" + "/FullyConnected_Weights", weights1));
+graph.setWeight("hidden_dense_2" + "/FullyConnected_Bias", bias1);
+graph.setWeight("output_dense" + "/FullyConnected_Weights", weights2);
+graph.setWeight("output_dense" + "/FullyConnected_Bias", bias2);
 
 endfunction
 
