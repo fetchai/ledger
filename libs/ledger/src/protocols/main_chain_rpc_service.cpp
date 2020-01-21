@@ -54,7 +54,7 @@ using PromiseState           = fetch::service::PromiseState;
 using State                  = MainChainRpcService::State;
 using Mode                   = MainChainRpcService::Mode;
 
-constexpr uint64_t max_sensible_step_back = 10000;
+constexpr uint64_t MAX_SENSIBLE_STEP_BACK = 10000;
 
 }  // namespace
 
@@ -544,7 +544,7 @@ State MainChainRpcService::WalkBack()
     // let's descend down to genesis logarithmically!
     blocks_back = current_height / 2;
   }
-  else if (back_stride_ < max_sensible_step_back)
+  else if (back_stride_ < MAX_SENSIBLE_STEP_BACK)
   {
     // speed up, unless we're already fast enough
     back_stride_ *= 2;

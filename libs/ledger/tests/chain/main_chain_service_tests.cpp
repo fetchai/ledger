@@ -17,7 +17,6 @@
 //------------------------------------------------------------------------------
 
 #include "chain/address.hpp"
-#include "core/containers/vector_util.hpp"
 #include "core/serializers/main_serializer.hpp"
 #include "crypto/ecdsa.hpp"
 #include "gtest/gtest.h"
@@ -25,10 +24,11 @@
 #include "ledger/chain/main_chain.hpp"
 #include "ledger/protocols/main_chain_rpc_service.hpp"
 #include "ledger/testing/block_generator.hpp"
-#include "mock_consensus.hpp"
-#include "mock_main_chain_rpc_client.hpp"
-#include "mock_muddle_endpoint.hpp"
-#include "mock_trust_system.hpp"
+#include "ledger/testing/digest_matcher.hpp"
+#include "ledger/testing/mock_consensus.hpp"
+#include "ledger/testing/mock_main_chain_rpc_client.hpp"
+#include "ledger/testing/mock_muddle_endpoint.hpp"
+#include "ledger/testing/mock_trust_system.hpp"
 #include "moment/clocks.hpp"
 #include "muddle/network_id.hpp"
 
@@ -36,8 +36,6 @@
 #include <unordered_map>
 
 using ::testing::InSequence;
-using ::testing::MatchResultListener;
-using ::testing::MatcherInterface;
 using ::testing::NiceMock;
 using ::testing::Return;
 
@@ -52,6 +50,7 @@ using fetch::chain::GetGenesisDigest;
 using fetch::serializers::LargeObjectSerializeHelper;
 using fetch::ledger::ConsensusInterface;
 using fetch::ledger::TravelogueStatus;
+using fetch::ledger::testing::DigestMatcher;
 
 using AddressList        = fetch::muddle::MuddleEndpoint::AddressList;
 using State              = MainChainRpcService::State;
@@ -76,107 +75,6 @@ inline void PrintTo(ConstByteArray const &digest, std::ostream *s)
 }  // namespace fetch
 
 namespace {
-
-class DigestMatcher : public MatcherInterface<fetch::byte_array::ConstByteArray>
-{
-public:
-  using type     = fetch::byte_array::ConstByteArray;
-  using Patterns = std::unordered_map<type, std::string>;
-
-  explicit DigestMatcher(type expected)
-    : expected_(std::move(expected))
-  {}
-
-  DigestMatcher(type expected, Patterns const &patterns)
-    : expected_(std::move(expected))
-    , patterns_(&patterns)
-  {}
-
-  bool MatchAndExplain(type actual, MatchResultListener *listener) const override
-  {
-    if (actual == expected_)
-    {
-      return true;
-    }
-    *listener << Show(actual);
-    if (static_cast<bool>(patterns_))
-    {
-      Identify(actual, listener);
-    }
-    return false;
-  }
-
-  void DescribeTo(std::ostream *os) const override
-  {
-    *os << Show(expected_);
-    if (static_cast<bool>(patterns_))
-    {
-      *os << ", ";
-      Identify(expected_, os);
-    }
-  }
-
-  template <class... NamesAndContainers>
-  static Patterns MakePatterns(NamesAndContainers &&... names_and_containers)
-  {
-    return KeepPatterns(Patterns{}, std::forward<NamesAndContainers>(names_and_containers)...);
-  }
-
-private:
-  template <template <class...> class Container, class... ContainerArgs,
-            class... NamesAndContainers>
-  static Patterns KeepPatterns(
-      Patterns patterns, std::string const &name,
-      Container<fetch::ledger::BlockPtr, ContainerArgs...> const &container,
-      NamesAndContainers &&... names_and_containers);
-
-  static Patterns KeepPatterns(Patterns patterns)
-  {
-    return patterns;
-  }
-
-  static std::string Show(type const &hash)
-  {
-    return std::string(hash.ToHex().SubArray(0, 8));
-  }
-
-  template <class Stream>
-  void Identify(type const &hash, Stream *stream) const
-  {
-    auto position = patterns_->find(hash);
-    if (position != patterns_->end())
-    {
-      *stream << "which is at " << position->second;
-    }
-    else
-    {
-      *stream << "unknown so far";
-    }
-  }
-
-  type            expected_;
-  Patterns const *patterns_ = nullptr;
-};
-
-auto ExpectedHash(fetch::byte_array::ConstByteArray expected)
-{
-  return MakeMatcher(new DigestMatcher(std::move(expected)));
-}
-
-template <template <class...> class Container, class... ContainerArgs, class... NamesAndContainers>
-DigestMatcher::Patterns DigestMatcher::KeepPatterns(
-    Patterns patterns, std::string const &name,
-    Container<fetch::ledger::BlockPtr, ContainerArgs...> const &container,
-    NamesAndContainers &&... names_and_containers)
-{
-  std::size_t index{};
-  for (auto const &block : container)
-  {
-    patterns.emplace(block->hash, name + '[' + std::to_string(index++) + ']');
-  }
-  return KeepPatterns(std::move(patterns),
-                      std::forward<NamesAndContainers>(names_and_containers)...);
-}
 
 template <typename T>
 std::shared_ptr<T> CreateNonOwning(T &value)
@@ -739,10 +637,8 @@ TEST_F(MainChainServiceTests, CheckExponentialBackStep)
       .WillOnce(Return(CreatePromise(TimeTravel(genuine_heaviest, genuine_branch))));
 
   // build a fake chain
-  FollowPath(State::SYNCHRONISING, State::START_SYNC_WITH_PEER, State::REQUEST_NEXT_BLOCKS);
-  // build a fake chain
-  FollowPath(State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS,
-             State::REQUEST_NEXT_BLOCKS);  // common_part
+  FollowPath(State::SYNCHRONISING, State::START_SYNC_WITH_PEER, State::REQUEST_NEXT_BLOCKS,
+	     State::WAIT_FOR_NEXT_BLOCKS, State::REQUEST_NEXT_BLOCKS);  // common_part
 
   // denounce fake chain
   FollowPath(State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS,  // fake_branch

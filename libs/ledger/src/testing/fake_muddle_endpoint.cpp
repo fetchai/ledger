@@ -18,7 +18,7 @@
 
 #include "muddle/packet.hpp"
 
-#include "fake_muddle_endpoint.hpp"
+#include "ledger/testing/fake_muddle_endpoint.hpp"
 
 using fetch::muddle::Subscription;
 

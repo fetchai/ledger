@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "fake_muddle_endpoint.hpp"
+#include "ledger/testing/fake_muddle_endpoint.hpp"
 #include "muddle/muddle_endpoint.hpp"
 
 #include "gmock/gmock.h"
