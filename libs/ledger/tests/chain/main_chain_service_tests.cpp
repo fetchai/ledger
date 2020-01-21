@@ -30,6 +30,7 @@
 #include "moment/clocks.hpp"
 #include "muddle/network_id.hpp"
 
+using ::testing::_;
 using ::testing::NiceMock;
 using ::testing::Return;
 using fetch::ledger::MainChainRpcService;
@@ -144,6 +145,7 @@ TEST_F(MainChainServiceTests, CheckSimpleCatchUpFromSinglePeer)
   EXPECT_CALL(endpoint_, GetDirectlyConnectedPeers()).WillRepeatedly(Return(AddressList{other1_}));
   EXPECT_CALL(rpc_client_, TimeTravel(other1_, GetGenesisDigest()))
       .WillOnce(Return(CreatePromise(travelogue)));
+  EXPECT_CALL(consensus_, ValidBlock(_)).WillRepeatedly(Return(ConsensusInterface::Status::YES));
 
   Tick(State::SYNCHRONISING, State::START_SYNC_WITH_PEER);
   Tick(State::START_SYNC_WITH_PEER, State::REQUEST_NEXT_BLOCKS);
@@ -172,6 +174,8 @@ TEST_F(MainChainServiceTests, ChecIncrementalCatchUp)
 
   auto travelogue1 = other1_proto.TimeTravel(GetGenesisDigest());
   travelogue1.blocks.resize(2);  // simulate large sync forward in time
+
+  EXPECT_CALL(consensus_, ValidBlock(_)).WillRepeatedly(Return(ConsensusInterface::Status::YES));
 
   EXPECT_CALL(endpoint_, GetDirectlyConnectedPeers()).WillRepeatedly(Return(AddressList{other1_}));
   EXPECT_CALL(rpc_client_, TimeTravel(other1_, GetGenesisDigest()))
@@ -233,6 +237,8 @@ TEST_F(MainChainServiceTests, ForkWhenPeerHasLongerChain)
 
   EXPECT_CALL(endpoint_, GetDirectlyConnectedPeers()).WillRepeatedly(Return(AddressList{other1_}));
 
+  EXPECT_CALL(consensus_, ValidBlock(_)).WillRepeatedly(Return(ConsensusInterface::Status::YES));
+
   auto const log1 = other1_proto.TimeTravel(b5_1->hash);
   EXPECT_CALL(rpc_client_, TimeTravel(other1_, b5_1->hash)).WillOnce(Return(CreatePromise(log1)));
 
@@ -290,6 +296,8 @@ TEST_F(MainChainServiceTests, ForkWhenPeerHasShorterChain)
 
   EXPECT_CALL(endpoint_, GetDirectlyConnectedPeers()).WillRepeatedly(Return(AddressList{other1_}));
 
+  EXPECT_CALL(consensus_, ValidBlock(_)).WillRepeatedly(Return(ConsensusInterface::Status::YES));
+
   auto const log1 = other1_proto.TimeTravel(b6_2->hash);
   EXPECT_CALL(rpc_client_, TimeTravel(other1_, b6_2->hash)).WillOnce(Return(CreatePromise(log1)));
 
@@ -326,6 +334,8 @@ TEST_F(MainChainServiceTests, CheckWaitingToFullfilResponse)
 
   auto promise = fetch::service::MakePromise();
 
+  EXPECT_CALL(consensus_, ValidBlock(_)).WillRepeatedly(Return(ConsensusInterface::Status::YES));
+
   EXPECT_CALL(rpc_client_, TimeTravel(other1_, GetGenesisDigest()))
       .WillOnce(Return(TraveloguePromise{promise}));
 
@@ -355,6 +365,8 @@ TEST_F(MainChainServiceTests, CheckHandlingOfEmptyLog)
 
   EXPECT_CALL(endpoint_, GetDirectlyConnectedPeers()).WillRepeatedly(Return(AddressList{other1_}));
 
+  EXPECT_CALL(consensus_, ValidBlock(_)).WillRepeatedly(Return(ConsensusInterface::Status::YES));
+
   EXPECT_CALL(rpc_client_, TimeTravel(other1_, GetGenesisDigest()))
       .WillOnce(Return(CreatePromise(log)));
 
@@ -373,6 +385,8 @@ TEST_F(MainChainServiceTests, CheckHandlingOfUnserialisablePayload)
 
   EXPECT_CALL(endpoint_, GetDirectlyConnectedPeers()).WillRepeatedly(Return(AddressList{other1_}));
 
+  EXPECT_CALL(consensus_, ValidBlock(_)).WillRepeatedly(Return(ConsensusInterface::Status::YES));
+
   EXPECT_CALL(rpc_client_, TimeTravel(other1_, GetGenesisDigest()))
       .WillOnce(Return(TraveloguePromise{promise}));
 
@@ -390,6 +404,8 @@ TEST_F(MainChainServiceTests, CheckRetryMechanism)
   failed->Fail();
 
   EXPECT_CALL(endpoint_, GetDirectlyConnectedPeers()).WillRepeatedly(Return(AddressList{other1_}));
+
+  EXPECT_CALL(consensus_, ValidBlock(_)).WillRepeatedly(Return(ConsensusInterface::Status::YES));
 
   EXPECT_CALL(rpc_client_, TimeTravel(other1_, GetGenesisDigest()))
       .WillRepeatedly(Return(TraveloguePromise{failed}));
