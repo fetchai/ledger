@@ -253,11 +253,11 @@ void BeaconService::ReloadState(State &next_state)
     // Load all signatures from the file
     for (auto const &siginfo : saved_state_all_sigs_)
     {
-      FETCH_LOG_DEBUG(LOGGING_NAME, "Adding sigs for: ", siginfo.round);
+      FETCH_LOG_INFO(LOGGING_NAME, "Adding sigs for: ", siginfo.round);
       signatures_being_built_[siginfo.round] = siginfo;
     }
 
-    FETCH_LOG_INFO(LOGGING_NAME, "Loaded signatures. Attemping loading of the rest of the class.");
+    FETCH_LOG_INFO(LOGGING_NAME, "Loaded signatures. Attempting loading of the rest of the class.");
 
     BeaconServiceSerializeWrapper wrapper{*this, 0};
 
