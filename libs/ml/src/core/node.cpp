@@ -97,7 +97,7 @@ OpType Node<TensorType>::OperationType() const
 template <typename TensorType>
 OperationsCount Node<TensorType>::ChargeForward()
 {
-  OperationsCount cost = op_ptr_->ForwardCost();
+  OperationsCount cost = op_ptr_->ChargeForward();
 
   for (auto const &i : input_nodes_)
   {
@@ -114,10 +114,9 @@ OperationsCount Node<TensorType>::ChargeForward()
 }
 
 template <typename TensorType>
-OperationsCount Node<TensorType>::BackwardCost()
+OperationsCount Node<TensorType>::ChargeBackward()
 {
-  // TODO(VH): impl. a backward recursive cost call until output node(s);
-  return 0;
+  throw std::runtime_error("ChargeBackward() estimator is not implemented.");
 }
 
 template <typename TensorType>
