@@ -50,7 +50,7 @@ class ObjectStore
 public:
   using type           = T;
   using SelfType       = ObjectStore<T, S>;
-  using SerializerType = serializers::MsgPackSerializer;
+  using SerializerType = serializers::LargeObjectSerializeHelper;
 
   class Iterator;
 

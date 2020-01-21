@@ -169,6 +169,8 @@ public:
    */
   BasicBloomFilter();
 
+  explicit BasicBloomFilter(BitVector const &vector);
+
   /*
    * Construct a Bloom filter with the given set of hash functions
    */
@@ -199,6 +201,8 @@ public:
    * Empty the Bloom filter (set all bits to zero). Preserves filter size and hash set.
    */
   void Reset();
+
+  BitVector const &underlying_bit_vector() const;
 
 private:
   BitVector                   bits_;

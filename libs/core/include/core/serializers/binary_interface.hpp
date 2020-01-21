@@ -111,7 +111,7 @@ public:
       auto size = static_cast<uint32_t>(count);
       size      = platform::ToBigEndian(size);
       serializer_.Allocate(sizeof(count));
-      serializer_.WriteBytes(reinterpret_cast<uint8_t *>(&count), sizeof(count));
+      serializer_.WriteBytes(reinterpret_cast<uint8_t *>(&size), sizeof(size));
     }
     else
     {
