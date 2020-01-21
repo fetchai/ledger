@@ -156,7 +156,7 @@ public:
    * @return estimated charge amount, necessary for performing a forward pass on data of given
    * shapes.
    */
-  virtual OperationsCount ForwardCost()
+  virtual MLChargeAmount ForwardCost()
   {
     // TODO(VH): make a pure virtual call;
     std::cout << "Error: call to unexisting ForwardCost() implementation! returned 0." << std::endl;
@@ -169,7 +169,7 @@ public:
    * @return estimated charge amount, necessary for performing a backward pass on data of given
    * shapes.
    */
-  virtual OperationsCount BackwardCost()
+  virtual MLChargeAmount BackwardCost()
   {
     // TODO(VH): make a pure virtual call;
     std::cout << "Error: call to unexisting BackwardCost() implementation! returned 0."
