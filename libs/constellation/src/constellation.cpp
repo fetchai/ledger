@@ -754,6 +754,7 @@ bool Constellation::OnRunning(core::WeakRunnable const &bootstrap_monitor)
       {
         FETCH_LOG_INFO(LOGGING_NAME, "Starting the block coordinator.");
         reactor_.Attach(block_coordinator_->GetWeakRunnable());
+        attached_block_coord = true;
       }
     }
 
