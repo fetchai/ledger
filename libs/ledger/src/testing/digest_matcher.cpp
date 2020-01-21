@@ -29,47 +29,47 @@ namespace ledger {
 namespace testing {
 
 DigestMatcher::DigestMatcher(type expected)
-	: expected_(std::move(expected))
+  : expected_(std::move(expected))
 {}
 
 DigestMatcher::DigestMatcher(type expected, Patterns const &patterns)
-	: expected_(std::move(expected))
-	, patterns_(&patterns)
+  : expected_(std::move(expected))
+  , patterns_(&patterns)
 {}
 
 bool DigestMatcher::MatchAndExplain(type actual, MatchResultListener *listener) const
 {
-	if (actual == expected_)
-	{
-		return true;
-	}
-	*listener << Show(actual);
-	if (static_cast<bool>(patterns_))
-	{
-		Identify(actual, listener);
-	}
-	return false;
+  if (actual == expected_)
+  {
+    return true;
+  }
+  *listener << Show(actual);
+  if (static_cast<bool>(patterns_))
+  {
+    Identify(actual, listener);
+  }
+  return false;
 }
 
 void DigestMatcher::DescribeTo(std::ostream *os) const
 {
-	*os << Show(expected_);
-	if (static_cast<bool>(patterns_))
-	{
-		*os << ", ";
-		Identify(expected_, os);
-	}
+  *os << Show(expected_);
+  if (static_cast<bool>(patterns_))
+  {
+    *os << ", ";
+    Identify(expected_, os);
+  }
 }
 
 DigestMatcher::Patterns DigestMatcher::KeepPatterns(Patterns patterns)
 {
-	return patterns;
+  return patterns;
 }
 
-  std::string DigestMatcher::Show(type const &hash)
-  {
-    return std::string(hash.ToHex().SubArray(0, 8));
-  }
+std::string DigestMatcher::Show(type const &hash)
+{
+  return std::string(hash.ToHex().SubArray(0, 8));
+}
 
 Matcher<byte_array::ConstByteArray> ExpectedHash(byte_array::ConstByteArray expected)
 {

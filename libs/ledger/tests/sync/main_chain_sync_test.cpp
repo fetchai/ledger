@@ -242,7 +242,7 @@ TEST_F(MainChainSyncTest, CheckExponentialBackStep)
 
   // build a fake chain
   FollowPath(State::SYNCHRONISING, State::START_SYNC_WITH_PEER, State::REQUEST_NEXT_BLOCKS,
-	     State::WAIT_FOR_NEXT_BLOCKS, State::REQUEST_NEXT_BLOCKS);  // common_part
+             State::WAIT_FOR_NEXT_BLOCKS, State::REQUEST_NEXT_BLOCKS);  // common_part
 
   // denounce fake chain
   FollowPath(State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS,  // fake_branch

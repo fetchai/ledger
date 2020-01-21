@@ -24,8 +24,8 @@
 #include <cstdint>
 #include <unordered_map>
 
-#include "gtest/gtest.h"
 #include "gmock/gmock.h"
+#include "gtest/gtest.h"
 
 using ::testing::MatchResultListener;
 using ::testing::Matcher;
@@ -57,10 +57,9 @@ public:
 private:
   template <template <class...> class Container, class... ContainerArgs,
             class... NamesAndContainers>
-  static Patterns KeepPatterns(
-      Patterns patterns, std::string const &name,
-      Container<BlockPtr, ContainerArgs...> const &container,
-      NamesAndContainers &&... names_and_containers);
+  static Patterns KeepPatterns(Patterns patterns, std::string const &name,
+                               Container<BlockPtr, ContainerArgs...> const &container,
+                               NamesAndContainers &&... names_and_containers);
 
   static Patterns KeepPatterns(Patterns patterns);
 
