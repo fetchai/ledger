@@ -116,7 +116,8 @@ class ConstellationTestCase(TestCase):
         self._constellation_exe = os.path.abspath(constellation_exe)
         self._yaml_file = os.path.abspath(yaml_file)
         self._test_files_dir = os.path.dirname(self._yaml_file)
-        self._scripts_dir = os.path.abspath(os.path.join(build_directory, "../scripts"))
+        self._scripts_dir = os.path.abspath(
+            os.path.join(build_directory, "../scripts"))
 
         verify_file(constellation_exe)
         verify_file(self._yaml_file)
