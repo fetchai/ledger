@@ -213,6 +213,8 @@ void BeaconService::SaveState()
                                   signatures_being_built_.at(highest_relevant_sig_index));
         highest_relevant_sig_index--;
       }
+
+      saved_state_all_sigs_.Flush(false);
     }
   }
   catch (std::exception const &ex)
