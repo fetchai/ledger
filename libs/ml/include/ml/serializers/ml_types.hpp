@@ -30,9 +30,6 @@
 namespace fetch {
 namespace ml {
 
-template <typename T>
-struct StateDict;
-
 namespace model {
 template <typename TensorType>
 class Model;
@@ -823,15 +820,19 @@ struct MapSerializer<ml::OpsSaveableParams, D>
   using Type       = ml::OpsSaveableParams;
   using DriverType = D;
 
-  static uint8_t const OP_CODE     = 1;
-  static uint8_t const IS_TRAINING = 2;
+  static uint8_t constexpr OP_CODE            = 1;
+  static uint8_t constexpr IS_TRAINING        = 2;
+  static uint8_t constexpr BATCH_INPUT_SHAPES = 3;
+  static uint8_t constexpr BATCH_OUTPUT_SHAPE = 4;
 
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &osp)
   {
-    auto map = map_constructor(2);
+    auto map = map_constructor(BATCH_OUTPUT_SHAPE);
     map.Append(OP_CODE, osp.op_type);
     map.Append(IS_TRAINING, osp.is_training);
+    map.Append(BATCH_INPUT_SHAPES, osp.batch_input_shapes);
+    map.Append(BATCH_OUTPUT_SHAPE, osp.batch_output_shape);
   }
 
   template <typename MapDeserializer>
@@ -839,68 +840,8 @@ struct MapSerializer<ml::OpsSaveableParams, D>
   {
     map.ExpectKeyGetValue(OP_CODE, osp.op_type);
     map.ExpectKeyGetValue(IS_TRAINING, osp.is_training);
-  }
-};
-
-template <typename V, typename D>
-struct MapSerializer<ml::StateDict<V>, D>
-{
-public:
-  using Type       = ml::StateDict<V>;
-  using DriverType = D;
-
-  constexpr static uint8_t WEIGHTS = 1;
-  constexpr static uint8_t DICT    = 2;
-
-  template <typename Constructor>
-  static void Serialize(Constructor &map_constructor, Type const &sd)
-  {
-    uint64_t n = 0;
-    if (sd.weights_)
-    {
-      ++n;
-    }
-    if (!sd.dict_.empty())
-    {
-      ++n;
-    }
-    auto map = map_constructor(n);
-    if (sd.weights_)
-    {
-      map.Append(WEIGHTS, *sd.weights_);
-    }
-    if (!sd.dict_.empty())
-    {
-      map.Append(DICT, sd.dict_);
-    }
-  }
-
-  template <typename MapDeserializer>
-  static void Deserialize(MapDeserializer &map, Type &output)
-  {
-    for (uint64_t i = 0; i < map.size(); ++i)
-    {
-      uint8_t key;
-      map.GetKey(key);
-      switch (key)
-      {
-      case WEIGHTS:
-      {
-        output.weights_ = std::make_shared<V>();
-        map.GetValue(*output.weights_);
-        break;
-      }
-      case DICT:
-      {
-        map.GetValue(output.dict_);
-        break;
-      }
-      default:
-      {
-        throw ml::exceptions::InvalidMode("unsupported key in statemap deserialization");
-      }
-      }
-    }
+    map.ExpectKeyGetValue(BATCH_INPUT_SHAPES, osp.batch_input_shapes);
+    map.ExpectKeyGetValue(BATCH_OUTPUT_SHAPE, osp.batch_output_shape);
   }
 };
 
@@ -3212,25 +3153,33 @@ struct MapSerializer<ml::LayerFullyConnectedSaveableParams<TensorType>, D>
   using Type       = ml::LayerFullyConnectedSaveableParams<TensorType>;
   using DriverType = D;
 
-  static uint8_t const SUB_GRAPH        = 1;
-  static uint8_t const OP_CODE          = 2;
-  static uint8_t const IN_SIZE          = 3;
-  static uint8_t const OUT_SIZE         = 4;
-  static uint8_t const TIME_DISTRIBUTED = 5;
+  static uint8_t constexpr SUB_GRAPH        = 1;
+  static uint8_t constexpr OP_CODE          = 2;
+  static uint8_t constexpr IN_SIZE          = 3;
+  static uint8_t constexpr OUT_SIZE         = 4;
+  static uint8_t constexpr TIME_DISTRIBUTED = 5;
+  static uint8_t constexpr IS_INITIALISED   = 6;
+  static uint8_t constexpr WEIGHTS_NAME     = 7;
+  static uint8_t constexpr BIAS_NAME        = 8;
+  static uint8_t constexpr INIT_MODE        = 9;
 
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &sp)
   {
-    auto map = map_constructor(5);
+    auto map = map_constructor(INIT_MODE);
 
     // serialize parent class first
     auto base_pointer = static_cast<ml::SubGraphSaveableParams<TensorType> const *>(&sp);
     map.Append(SUB_GRAPH, *base_pointer);
 
     map.Append(OP_CODE, sp.op_type);
-    map.Append(IN_SIZE, sp.in_size);
-    map.Append(OUT_SIZE, sp.out_size);
+    map.Append(IN_SIZE, sp.total_inputs_);
+    map.Append(OUT_SIZE, sp.total_outputs_);
     map.Append(TIME_DISTRIBUTED, sp.time_distributed);
+    map.Append(IS_INITIALISED, sp.is_initialised);
+    map.Append(WEIGHTS_NAME, sp.weights_name);
+    map.Append(BIAS_NAME, sp.bias_name);
+    map.Append(INIT_MODE, sp.init_mode);
   }
 
   template <typename MapDeserializer>
@@ -3240,9 +3189,13 @@ struct MapSerializer<ml::LayerFullyConnectedSaveableParams<TensorType>, D>
     map.ExpectKeyGetValue(SUB_GRAPH, *base_pointer);
 
     map.ExpectKeyGetValue(OP_CODE, sp.op_type);
-    map.ExpectKeyGetValue(IN_SIZE, sp.in_size);
-    map.ExpectKeyGetValue(OUT_SIZE, sp.out_size);
+    map.ExpectKeyGetValue(IN_SIZE, sp.total_inputs_);
+    map.ExpectKeyGetValue(OUT_SIZE, sp.total_outputs_);
     map.ExpectKeyGetValue(TIME_DISTRIBUTED, sp.time_distributed);
+    map.ExpectKeyGetValue(IS_INITIALISED, sp.is_initialised);
+    map.ExpectKeyGetValue(WEIGHTS_NAME, sp.weights_name);
+    map.ExpectKeyGetValue(BIAS_NAME, sp.bias_name);
+    map.ExpectKeyGetValue(INIT_MODE, sp.init_mode);
   }
 };
 

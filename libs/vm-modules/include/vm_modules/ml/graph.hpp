@@ -46,6 +46,9 @@ public:
   void SetInput(fetch::vm::Ptr<fetch::vm::String> const &                name,
                 fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> const &input);
 
+  void SetWeight(fetch::vm::Ptr<fetch::vm::String> const &                name,
+                 fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> const &input);
+
   fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> Evaluate(
       fetch::vm::Ptr<fetch::vm::String> const &name);
 

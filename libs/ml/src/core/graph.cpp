@@ -83,6 +83,7 @@ void Graph<TensorType>::Compile()
     // appear in middle of graph
     if (valid)
     {
+      ComputeAllNodeShapes();
       graph_state_ = GraphState::COMPILED;
     }
     else
@@ -204,6 +205,38 @@ TensorType Graph<TensorType>::ForwardImplementation(std::string const &node_name
 }
 
 /**
+ * Computes and/or deduces layer output shapes, recursively traversing the Graph
+ * up to leaf (input) nodes. Layer output shape computation/deduction results
+ * are cached in each Node.
+ * @param node_name
+ */
+template <typename TensorType>
+void Graph<TensorType>::ComputeAllNodeShapes()
+{
+  if (nodes_.empty() || connections_.empty())
+  {
+    FETCH_LOG_ERROR(
+        DESCRIPTOR,
+        " Batch output shape computing is impossible : connection list empty or no nodes");
+    return;
+  }
+  for (auto const &node_name_and_ptr : nodes_)
+  {
+    NodePtrType node = node_name_and_ptr.second;
+
+    // A recursive call will trigger shape computing in all previous nodes or return
+    // a shape if it has been already computed.
+    math::SizeVector const output_shape = node->BatchOutputShape();
+
+    if (output_shape.empty())
+    {
+      FETCH_LOG_ERROR(DESCRIPTOR, " Batch output shape computing failed for node " +
+                                      node_name_and_ptr.first + ".");
+    }
+  }
+}
+
+/**
  * Backpropagate given error signal through the graph
  * If no error signal is given, an empty error signal is used
  * (which is valid when backpropagating from a loss function op
@@ -268,7 +301,6 @@ void Graph<TensorType>::BackPropagate(std::string const &node_name, TensorType c
 template <typename TensorType>
 void Graph<TensorType>::SetRegularisation(RegPtrType regulariser, DataType regularisation_rate)
 {
-  Compile();
   for (auto &t : trainable_lookup_)
   {
     auto tmp = std::dynamic_pointer_cast<ops::Trainable<TensorType>>(t.second->GetOp());
@@ -544,7 +576,7 @@ void Graph<TensorType>::SetInputReference(std::string const &node_name, TensorTy
 template <typename TensorType>
 void Graph<TensorType>::SetInput(std::string const &node_name, TensorType const &data)
 {
-  SetInputReference(node_name, data.Copy());
+  SetInputReference(node_name, data);
 }
 
 /**
@@ -582,62 +614,6 @@ void Graph<TensorType>::ResetGraphCache(bool input_size_changed, NodePtrType n)
         throw std::runtime_error("Unable to lock weak pointer.");
       }
     }
-  }
-}
-
-/**
- * Assigns all trainable parameters to a stateDict for exporting and serialising
- * @return  d is the StateDict of all trainable params
- */
-
-template <typename TensorType>
-fetch::ml::StateDict<TensorType> Graph<TensorType>::StateDict()
-{
-  Compile();
-  fetch::ml::StateDict<TensorType> state_dict;
-  StateDict(state_dict);
-  return state_dict;
-}
-
-template <typename TensorType>
-void Graph<TensorType>::StateDict(fetch::ml::StateDict<TensorType> &state_dict)
-{
-
-  // add trainables in this graph to state dict
-  for (auto const &t : trainable_lookup_)
-  {
-    auto node_ptr    = t.second;
-    auto op_ptr      = node_ptr->GetOp();
-    auto weights_ptr = std::dynamic_pointer_cast<ops::Weights<TensorType>>(op_ptr);
-    state_dict.dict_.emplace(t.first, weights_ptr->StateDict());
-  }
-
-  // add trainables in any subgraphs to state dict
-  for (auto &node_pair : nodes_)
-  {
-    auto op_ptr    = node_pair.second->GetOp();
-    auto graph_ptr = std::dynamic_pointer_cast<Graph<TensorType>>(op_ptr);
-
-    // if its a graph
-    if (graph_ptr)
-    {
-      graph_ptr->StateDict(state_dict);
-    }
-  }
-}
-
-/**
- * Import trainable parameters from an exported model
- * @param dict  state dictionary to import to weights
- */
-template <typename TensorType>
-void Graph<TensorType>::LoadStateDict(fetch::ml::StateDict<TensorType> const &dict)
-{
-  assert(!dict.weights_);
-  for (auto const &t : trainable_lookup_)
-  {
-    auto trainable_ptr = std::dynamic_pointer_cast<ops::Trainable<TensorType>>(t.second->GetOp());
-    trainable_ptr->LoadStateDict(dict.dict_.at(t.first));
   }
 }
 
@@ -1129,6 +1105,12 @@ std::vector<std::string> Graph<TensorType>::GetTrainableNames()
   return ret;
 }
 
+template <typename TensorType>
+std::vector<std::pair<std::string, std::vector<std::string>>> Graph<TensorType>::Connections()
+{
+  return connections_;
+}
+
 /**
  * Return list of all node names in format GRAPH1/...SUBGRAPHS../LEAF
  * @return std::vector<std::string> list of names of all nodes in all subgraphs
@@ -1161,6 +1143,24 @@ template <typename TensorType>
 std::map<std::string, typename Graph<TensorType>::NodePtrType> &Graph<TensorType>::GetNodesLookup()
 {
   return nodes_;
+}
+
+/**
+ * Assign tensor to weight addressed by node_name
+ * @tparam TensorType
+ * @param node_name std::string name of weight in format GRAPH1/...SUBGRAPHS../LEAF
+ * @param data tensor which will be assigned to target weight
+ */
+template <class TensorType>
+void Graph<TensorType>::SetWeight(std::string const &node_name, TensorType const &data)
+{
+  auto node_ptr = GetNode(node_name);
+  auto op_ptr   = std::dynamic_pointer_cast<fetch::ml::ops::Weights<TensorType>>(node_ptr->GetOp());
+  if (!op_ptr)
+  {
+    throw ml::exceptions::InvalidMode("[" + node_name + "] is not Weight type!");
+  }
+  op_ptr->SetWeights(data);
 }
 
 ///////////////////////////////
