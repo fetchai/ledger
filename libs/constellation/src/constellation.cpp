@@ -796,9 +796,6 @@ void Constellation::OnTearDownExternalNetwork()
 {
   FETCH_LOG_INFO(LOGGING_NAME, "OnTearDownExternalNetwork()");
 
-  // not strictly necessary but make sure that chain has completely flushed to disk
-  chain_->Flush();
-
   if (http_)
   {
     http_->Stop();

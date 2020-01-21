@@ -253,7 +253,6 @@ MainChainRpcService::Address MainChainRpcService::GetRandomTrustedPeer() const
 
 void MainChainRpcService::HandleChainResponse(Address const &address, BlockList blocks)
 {
-  FETCH_MILLI_TIMER("MainChainRpc:HandleChainResponse");
   // default expectations is that blocks are returned in reverse order, later-to-earlier
   HandleChainResponse(address, blocks.rbegin(), blocks.rend());
 }
@@ -261,6 +260,8 @@ void MainChainRpcService::HandleChainResponse(Address const &address, BlockList 
 template <class Begin, class End>
 void MainChainRpcService::HandleChainResponse(Address const &address, Begin begin, End end)
 {
+  FETCH_MILLI_TIMER("MainChainRpc:HandleChainResponse");
+
   std::size_t added{0};
   std::size_t loose{0};
   std::size_t duplicate{0};
