@@ -146,7 +146,14 @@ protected:
       ret->block_entropy.qualified.insert(i.identifier());
     }
 
-    ret->weight = consensus_->GetBlockGenerationWeight(*ret, cabinet_[miner_index]);
+    try
+    {
+      ret->weight = consensus_->GetBlockGenerationWeight(*ret, cabinet_[miner_index]);
+    }
+    catch (...)
+    {
+      ret->weight = 0;
+    }
 
     ret->UpdateDigest();
     ret->miner_signature = cabinet_priv_keys_[miner_index]->Sign(ret->hash);
