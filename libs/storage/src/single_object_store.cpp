@@ -69,16 +69,13 @@ bool SingleObjectStore::Load(std::string const &file_name)
     return false;
   }
 
-  file_handle_.seekg(0, std::fstream::end);
-  uint64_t file_size = static_cast<uint64_t>(file_handle_.tellg());
-
   // To remain POD, this must be initialized rather than constructed
   FileMetadata meta{};
   meta.Initialise(version_);
   static_assert(std::is_pod<FileMetadata>::value, "FileMetadata must be POD");
 
   // Check it is either empty or non-corrupted
-  if (file_size == 0)
+  if (FileSize() == 0)
   {
     // Write metadata to new file
     file_handle_.write(reinterpret_cast<char const *>(&meta), sizeof(meta));
@@ -86,7 +83,7 @@ bool SingleObjectStore::Load(std::string const &file_name)
     return true;
   }
 
-  if (file_size < sizeof(meta))
+  if (FileSize() < sizeof(meta))
   {
     FETCH_LOG_WARN(
         LOGGING_NAME,
@@ -110,12 +107,12 @@ bool SingleObjectStore::Load(std::string const &file_name)
     return false;
   }
 
-  if ((meta.object_size + sizeof(meta)) != file_size)
+  if ((meta.object_size + sizeof(meta)) != FileSize())
   {
     FETCH_LOG_ERROR(LOGGING_NAME,
                     "mismatch in file sizes. Expected: ", (meta.object_size + sizeof(meta)),
-                    " got: ", file_size, " note: metadata is ", sizeof(meta), " while filesize is ",
-                    meta.object_size);
+                    " got: ", FileSize(), " note: metadata is ", sizeof(meta),
+                    " while filesize is ", meta.object_size);
     return false;
   }
 
@@ -131,6 +128,13 @@ void SingleObjectStore::GetRaw(ByteArray &data) const
     throw StorageException("Attempted to Get before loading");
   }
 
+  if (FileSize() < sizeof(meta))
+  {
+    FETCH_LOG_ERROR(LOGGING_NAME,
+                    "Attempt to get on an empty or too small file is invalid. Size: ", FileSize());
+    throw StorageException("Attempt to read empty or almost empty file");
+  }
+
   file_handle_.seekg(0, std::fstream::beg);
   file_handle_.read(reinterpret_cast<char *>(&meta), sizeof(meta));
 
@@ -138,7 +142,6 @@ void SingleObjectStore::GetRaw(ByteArray &data) const
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Attempted to get an object of size 0");
     throw StorageException("Attempt to get zero length object is invalid");
-    return;
   }
 
   data.Resize(meta.object_size);
@@ -196,6 +199,12 @@ void SingleObjectStore::Clear()
   file_handle_.close();
   file_handle_.open(file_name_, std::fstream::in | std::fstream::out | std::fstream::binary |
                                     std::fstream::trunc);
+}
+
+uint64_t SingleObjectStore::FileSize() const
+{
+  file_handle_.seekg(0, std::fstream::end);
+  return static_cast<uint64_t>(file_handle_.tellg());
 }
 
 }  // namespace storage

@@ -24,6 +24,7 @@
 
 using namespace fetch::storage;
 
+namespace {
 class TestClass
 {
 public:
@@ -36,6 +37,7 @@ public:
     return value1 == rhs.value1 && value2 == rhs.value2 && name == rhs.name;
   }
 };
+}  // namespace
 
 // Need to define a serializer for the single object store to use
 namespace fetch {
