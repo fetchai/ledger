@@ -365,6 +365,11 @@ int main(int argc, char **argv)
 
   vm->AttachOutputDevice(VM::STDOUT, std::cout);
 
+  if (params.program().GetParam("nochargelimit", false))
+  {
+    vm->SetChargeLimit(0);
+  }
+
   // Execute the requested function
   std::string error;
   std::string console;

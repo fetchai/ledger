@@ -72,6 +72,15 @@ public:
 
   static constexpr char const *DESCRIPTOR = "SkipGram";
 
+  inline OpType OperationType() const override
+  {
+    return this->OpCode();
+  }
+  inline char const *Descriptor() const override
+  {
+    return DESCRIPTOR;
+  }
+
 private:
   std::string embed_in_ = "";
   SizeType    out_size_{};

@@ -28,14 +28,6 @@
 // appear in middle of graph
 
 namespace fetch {
-
-namespace dmlf {
-namespace collective_learning {
-template <typename TensorType>
-class ClientAlgorithm;
-}  // namespace collective_learning
-}  // namespace dmlf
-
 namespace ml {
 
 ///////////////
@@ -105,6 +97,7 @@ public:
 
   void ResetCompile();
   void Compile();
+  void ComputeAllNodeShapes();
 
   void AddTrainable(NodePtrType node_ptr, std::string const &node_name);
   void AddTrainable(NodePtrType node_ptr, std::string const &node_name,
@@ -142,6 +135,7 @@ public:
   ////////////////////////////////////
 
   NodePtrType                   GetNode(std::string const &node_name) const;
+  std::vector<std::string>      GetNodeNames();
   std::vector<TensorType>       GetWeightsReferences() const;
   std::vector<TensorType>       GetWeights() const;
   std::vector<TensorType>       GetGradientsReferences() const;
@@ -154,6 +148,10 @@ public:
   ////////////////////////////////////
 
   void ResetGradients();
+
+  std::vector<std::string> GetTrainableNames();
+
+  std::vector<std::pair<std::string, std::vector<std::string>>> Connections();
 
 protected:
   std::map<std::string, NodePtrType>                            nodes_;
@@ -169,7 +167,6 @@ private:
 
   friend class optimisers::Optimiser<TensorType>;
   friend class model::ModelInterface<TensorType>;
-  friend class dmlf::collective_learning::ClientAlgorithm<TensorType>;
 
   TensorType ForwardImplementation(std::string const &node_name, bool is_training,
                                    bool evaluate_mode);
@@ -217,6 +214,15 @@ private:
 
   template <typename Val1Type, typename Val2Type, typename GraphFunc>
   void RecursiveApplyTwo(Val1Type &val_1, Val2Type &val_2, GraphFunc graph_func) const;
+
+  bool IsValidNodeName(std::string const &node_name) const;
+
+  std::map<std::string, NodePtrType> &GetTrainableLookup();
+  std::map<std::string, NodePtrType> &GetNodesLookup();
+
+  template <typename LookupFunction>
+  void GetNamesRecursively(std::vector<std::string> &ret, LookupFunction lookup_function,
+                           std::string const &level = "");
 };
 
 //////////////////////
@@ -240,6 +246,11 @@ template <class OperationType, typename... Params>
 std::string Graph<TensorType>::AddNode(std::string const &             node_name,
                                        std::vector<std::string> const &inputs, Params... params)
 {
+  if (!IsValidNodeName(node_name))
+  {
+    throw std::runtime_error{"Node name " + node_name + " contains invalid characters."};
+  }
+
   graph_state_ = GraphState::NOT_COMPILED;
 
   // guarantee unique op name
