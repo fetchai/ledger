@@ -45,7 +45,6 @@ class StorageInterface;
 struct BorrowBlockGenerationWeight
 {
   using Identity = crypto::Identity;
-  using This     = BorrowBlockGenerationWeight;
 
 protected:
   virtual uint64_t GetBlockGenerationWeight(Block const &   current,
@@ -62,13 +61,13 @@ public:
   using BeaconSetupServicePtr = std::shared_ptr<beacon::BeaconSetupService>;
   using BeaconServicePtr      = std::shared_ptr<fetch::beacon::BeaconService>;
   using CabinetMemberList     = beacon::BeaconSetupService::CabinetMemberList;
-  using Identity              = crypto::Identity;
   using WeightedQual          = std::vector<Identity>;
   using MainChain             = ledger::MainChain;
   using BlockEntropy          = ledger::Block::BlockEntropy;
   using NotarisationPtr       = std::shared_ptr<ledger::NotarisationService>;
   using NotarisationResult    = NotarisationService::NotarisationResult;
   using ConsensusInterface::NextBlockPtr;
+  using BorrowBlockGenerationWeight::Identity;
 
   // Construction / Destruction
   Consensus(StakeManagerPtr stake, BeaconSetupServicePtr beacon_setup, BeaconServicePtr beacon,
