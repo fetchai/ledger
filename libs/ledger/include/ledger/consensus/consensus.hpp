@@ -64,7 +64,7 @@ public:
   Consensus(Consensus &&)      = delete;
   ~Consensus() override        = default;
 
-  void         UpdateCurrentBlock(Block const &current) override;
+  bool         UpdateCurrentBlock(Block const &current) override;
   NextBlockPtr GenerateNextBlock() override;
   Status       ValidBlock(Block const &current) const override;
   bool         VerifyNotarisation(Block const &block) const;
@@ -83,6 +83,7 @@ public:
   Consensus &operator=(Consensus const &) = delete;
   Consensus &operator=(Consensus &&) = delete;
 
+  // TODO (LGDR-698): the only reason this function is public is it's used in a single POS test.
   uint64_t GetBlockGenerationWeight(Block const &current, Identity const &identity) const;
 
 private:
@@ -110,7 +111,6 @@ private:
   // Consensus' view on the heaviest block etc.
   Block  current_block_;
   Block  previous_block_;
-  Block  beginning_of_aeon_;
   Digest last_triggered_cabinet_;
 
   uint64_t       default_start_time_ = 0;
