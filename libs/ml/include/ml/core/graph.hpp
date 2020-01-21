@@ -21,7 +21,6 @@
 #include "ml/exceptions/exceptions.hpp"
 #include "ml/ops/constant.hpp"
 #include "ml/ops/trainable.hpp"
-#include "ml/state_dict.hpp"
 
 // TODO(#1554) - we should only reset the cache for trained nodes, not all nodes
 // TODO(1467) - implement validity checks on graph compilation - e.g. loss function should not
@@ -119,6 +118,7 @@ public:
   void       BackPropagate(std::string const &node_name, TensorType const &error_signal = {});
   void       ApplyGradients(std::vector<TensorType> &grad);
   void       ApplySparseGradients(std::vector<TensorType> &grad, std::vector<SizeSet> &update_rows);
+  void       SetWeight(std::string const &node_name, TensorType const &data);
 
   //////////////////////////////////////////////////////
   /// public serialisation & weight export functions ///
@@ -127,8 +127,6 @@ public:
   bool                            InsertNode(std::string const &node_name, NodePtrType node_ptr);
   GraphSaveableParams<TensorType> GetGraphSaveableParams();
   void                            SetGraphSaveableParams(GraphSaveableParams<TensorType> const &sp);
-  virtual fetch::ml::StateDict<TensorType> StateDict();
-  virtual void                             LoadStateDict(fetch::ml::StateDict<T> const &dict);
 
   ////////////////////////////////////
   /// public setters and accessors ///
@@ -190,7 +188,6 @@ private:
   /// recursive implementation functions ///
   //////////////////////////////////////////
 
-  void StateDict(fetch::ml::StateDict<TensorType> &state_dict);
   void GetTrainables(std::vector<TrainablePtrType> &ret);
   void GetWeightsReferences(std::vector<TensorType> &ret) const;
   void GetGradientsReferences(std::vector<TensorType> &ret) const;

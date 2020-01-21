@@ -491,50 +491,6 @@ TYPED_TEST(FullyConnectedTest, graph_forward_test)  // Use the class as a Node
   ASSERT_EQ(prediction.shape()[1], 2);
 }
 
-TYPED_TEST(FullyConnectedTest, getStateDict)
-{
-  using DataType = typename TypeParam::Type;
-  using RegType  = fetch::ml::RegularisationType;
-
-  fetch::ml::layers::FullyConnected<TypeParam> fc(
-      50, 10, fetch::ml::details::ActivationType::NOTHING, RegType::NONE, DataType{0});
-  fetch::ml::StateDict<TypeParam> sd = fc.StateDict();
-
-  EXPECT_EQ(sd.weights_, nullptr);
-  EXPECT_EQ(sd.dict_.size(), 2);
-
-  ASSERT_NE(sd.dict_["FullyConnected_Weights"].weights_, nullptr);
-  EXPECT_EQ(sd.dict_["FullyConnected_Weights"].weights_->shape(),
-            std::vector<typename TypeParam::SizeType>({10, 50}));
-
-  ASSERT_NE(sd.dict_["FullyConnected_Bias"].weights_, nullptr);
-  EXPECT_EQ(sd.dict_["FullyConnected_Bias"].weights_->shape(),
-            std::vector<typename TypeParam::SizeType>({10, 1}));
-}
-
-TYPED_TEST(FullyConnectedTest, getStateDict_time_distributed)
-{
-  using DataType        = typename TypeParam::Type;
-  using RegType         = fetch::ml::RegularisationType;
-  using WeightsInitType = fetch::ml::ops::WeightsInitialisation;
-
-  fetch::ml::layers::FullyConnected<TypeParam> fc(
-      50, 10, fetch::ml::details::ActivationType::NOTHING, RegType::NONE, DataType{0},
-      WeightsInitType::XAVIER_GLOROT, true);
-  fetch::ml::StateDict<TypeParam> sd = fc.StateDict();
-
-  EXPECT_EQ(sd.weights_, nullptr);
-  EXPECT_EQ(sd.dict_.size(), 2);
-
-  ASSERT_NE(sd.dict_["TimeDistributed_FullyConnected_Weights"].weights_, nullptr);
-  EXPECT_EQ(sd.dict_["TimeDistributed_FullyConnected_Weights"].weights_->shape(),
-            std::vector<typename TypeParam::SizeType>({10, 50}));
-
-  ASSERT_NE(sd.dict_["TimeDistributed_FullyConnected_Bias"].weights_, nullptr);
-  EXPECT_EQ(sd.dict_["TimeDistributed_FullyConnected_Bias"].weights_->shape(),
-            std::vector<typename TypeParam::SizeType>({10, 1, 1}));
-}
-
 TYPED_TEST(FullyConnectedTest, training_should_change_output)
 {
   using DataType  = typename TypeParam::Type;
