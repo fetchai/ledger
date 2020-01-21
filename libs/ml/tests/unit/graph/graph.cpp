@@ -1228,8 +1228,8 @@ TYPED_TEST(GraphTest, graph_charge_input_only)
   g.SetInput(input, data);
   g.Compile();
 
-  OperationsCount const charge          = g.ChargeForwardTo(input);
-  OperationsCount const expected_charge = 0;  // Placeholder reading is "free" in charge amount.
+  MLChargeAmount const charge          = g.ChargeForwardTo(input);
+  MLChargeAmount const expected_charge = 0;  // Placeholder reading is "free" in charge amount.
 
   ASSERT_EQ(charge, expected_charge);
 }
@@ -1254,11 +1254,11 @@ TYPED_TEST(GraphTest, graph_charge_subtraction)
   g.SetInput(right_input, data);
   g.Compile();
 
-  OperationsCount const charge       = g.ChargeForwardTo(subtract);
-  OperationsCount const batch_charge = charge * data.shape().back();
+  MLChargeAmount const charge       = g.ChargeForwardTo(subtract);
+  MLChargeAmount const batch_charge = charge * data.shape().back();
 
-  std::size_t const     total_elements_in_output = 4 * 4;
-  OperationsCount const expected_charge =
+  std::size_t const    total_elements_in_output = 4 * 4;
+  MLChargeAmount const expected_charge =
       total_elements_in_output * fetch::ml::ops::charge_cost::ADDITION_PER_ELEMENT;
 
   ASSERT_EQ(batch_charge, expected_charge);
