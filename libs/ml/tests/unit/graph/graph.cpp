@@ -1220,8 +1220,6 @@ TYPED_TEST(GraphTest, graph_charge_input_only)
   using fetch::ml::ops::OperationsCount;
 
   TensorType data = TensorType::FromString(R"(01,02,03,04; 11,12,13,14; 21,22,23,24; 31,32,33,34)");
-  math::SizeVector batch_shape = data.shape();
-  batch_shape.back()           = 1;  // Because default batch size is always 1.
 
   fetch::ml::Graph<TensorType> g;
 
@@ -1230,7 +1228,7 @@ TYPED_TEST(GraphTest, graph_charge_input_only)
   g.SetInput(input, data);
   g.Compile();
 
-  OperationsCount       charge          = g.ChargeForwardTo(input);
+  OperationsCount const charge          = g.ChargeForwardTo(input);
   OperationsCount const expected_charge = 0;  // Placeholder reading is "free" in charge amount.
 
   ASSERT_EQ(charge, expected_charge);
@@ -1264,7 +1262,6 @@ TYPED_TEST(GraphTest, graph_charge_subtraction)
       total_elements_in_output * fetch::ml::ops::charge_cost::ADDITION_PER_ELEMENT;
 
   ASSERT_EQ(batch_charge, expected_charge);
->>>>>>> PR comment fixes
 }
 
 TYPED_TEST(GraphTest, graph_charge_matmul)
