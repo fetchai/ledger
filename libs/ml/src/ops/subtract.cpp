@@ -77,7 +77,7 @@ std::vector<math::SizeType> Subtract<TensorType>::ComputeOutputShape(
 }
 
 template <typename TensorType>
-MLChargeAmount Subtract<TensorType>::ForwardCost()
+MLChargeAmount Subtract<TensorType>::ChargeForward()
 {
   assert(!this->batch_output_shape_.empty());
   MLChargeAmount cost = fetch::ml::ops::charge_cost::ADDITION_PER_ELEMENT *

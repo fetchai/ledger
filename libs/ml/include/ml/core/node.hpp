@@ -150,7 +150,7 @@ public:
   }
 
   fetch::ml::ops::MLChargeAmount ChargeForward();
-  fetch::ml::ops::MLChargeAmount BackwardCost();
+  fetch::ml::ops::MLChargeAmount ChargeBackward();
 
 private:
   std::vector<NodeWeakPtrType> input_nodes_;

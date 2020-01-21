@@ -59,7 +59,7 @@ public:
   }
   static constexpr char const *DESCRIPTOR = "Subtract";
 
-  MLChargeAmount ForwardCost() override;
+  MLChargeAmount ChargeForward() override;
 };
 
 }  // namespace ops

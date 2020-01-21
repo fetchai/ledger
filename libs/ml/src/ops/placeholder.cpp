@@ -85,7 +85,7 @@ const char *PlaceHolder<TensorType>::Descriptor() const
 }
 
 template <typename TensorType>
-MLChargeAmount PlaceHolder<TensorType>::ForwardCost()
+MLChargeAmount PlaceHolder<TensorType>::ChargeForward()
 {
   assert(!this->batch_input_shapes_.empty());
   MLChargeAmount cost = fetch::ml::ops::charge_cost::PLACEHOLDER_READING_PER_ELEMENT *

@@ -69,7 +69,7 @@ public:
   OpType      OperationType() const override;
   char const *Descriptor() const override;
 
-  MLChargeAmount ForwardCost() override;
+  MLChargeAmount ChargeForward() override;
 };
 
 }  // namespace ops
