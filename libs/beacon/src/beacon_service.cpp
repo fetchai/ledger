@@ -347,8 +347,8 @@ BeaconService::State BeaconService::OnReloadOnStartup()
 
   ReloadState(state_after_reload);
 
-  FETCH_LOG_INFO(LOGGING_NAME, "After reloading state, we have ", completed_block_entropy_.size(),
-                 " completed block entropy");
+  FETCH_LOG_INFO(LOGGING_NAME, "After reloading state, we have ", signatures_being_built_.size(),
+                 " completed signatures");
 
   return state_after_reload;
 }
