@@ -474,6 +474,8 @@ State MainChainRpcService::OnWaitForBlocks()
   {
     // as soon as we get an invalid response from the peer we can simply conclude interacting with
     // them
+    FETCH_LOG_WARN(LOGGING_NAME, "Invalid response from peer");
+    healthy_ = true;
     return State::COMPLETE_SYNC_WITH_PEER;
   }
 

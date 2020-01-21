@@ -128,8 +128,6 @@ BeaconService::BeaconService(MuddleInterface &muddle, const CertificatePtr &cert
         {0.000001, 0.00001, 0.0001, 0.001, 0.01, 0.1}, "beacon_verify_time",
         "Time taken to verify signatures")}
 {
-  FETCH_LOG_INFO(LOGGING_NAME, "Constructing.");
-
   // Attaching beacon ready callback handler
   beacon_setup.SetBeaconReadyCallback([this](SharedAeonExecutionUnit beacon) {
     FETCH_LOCK(mutex_);
