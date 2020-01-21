@@ -224,7 +224,7 @@ private:
   DeadlineTimer resync_interval_{"MC_RPC:main"};
   std::size_t   consecutive_failures_{0};
 
-  bool healthy_{false};
+  bool                  healthy_{false};
   BlockHash             current_missing_block_;
   std::atomic<uint16_t> loose_blocks_seen_{0};
   /// @}

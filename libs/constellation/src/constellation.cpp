@@ -748,9 +748,9 @@ bool Constellation::OnRunning(core::WeakRunnable const &bootstrap_monitor)
     // The block coordinator needs to access correctly started lanes to recover state in the case of
     // a crash. Additionally, delay starting it until the main chain sync has started to avoid
     // immediately generating blocks on an old chain
-    if(!attached_block_coord)
+    if (!attached_block_coord)
     {
-      if(standalone_mode_ || main_chain_service_->IsHealthy())
+      if (standalone_mode_ || main_chain_service_->IsHealthy())
       {
         FETCH_LOG_INFO(LOGGING_NAME, "Starting the block coordinator.");
         reactor_.Attach(block_coordinator_->GetWeakRunnable());
