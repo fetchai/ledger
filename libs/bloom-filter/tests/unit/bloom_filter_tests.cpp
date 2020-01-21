@@ -177,4 +177,13 @@ TEST_F(BloomFilterTests, false_positives_are_reported_if_all_hash_values_coincid
   EXPECT_TRUE(filter_weak_hashing.Match(entry2).first);
 }
 
+TEST_F(BloomFilterTests, check_recovery_from_bitvector)
+{
+  fetch::BasicBloomFilter bloom1;
+  bloom1.Add("A");
+
+  fetch::BasicBloomFilter bloom2(bloom1.underlying_bit_vector());
+  ASSERT_TRUE(bloom2.Match("A").first);
+}
+
 }  // namespace
