@@ -141,7 +141,7 @@ TEST_F(HistoricalBloomFilterTests, DetectLoadFailure)
   ASSERT_THROW(
       HistoricalBloomFilter a(HistoricalBloomFilter::Mode::LOAD_DATABASE, "h-bloom-tests.db",
                               "h-bloom-tests.index.db", "h-bloom-tests.meta.db",
-                              WINDOW_SIZE + 1,  // <- the window size if different
+                              WINDOW_SIZE + 1,  // <- the window size is different
                               MAX_CACHED),
       std::runtime_error);
 }

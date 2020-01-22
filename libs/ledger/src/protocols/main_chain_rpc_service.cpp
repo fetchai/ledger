@@ -260,7 +260,7 @@ void MainChainRpcService::HandleChainResponse(Address const &address, BlockList 
 template <class Begin, class End>
 void MainChainRpcService::HandleChainResponse(Address const &address, Begin begin, End end)
 {
-  FETCH_MILLI_TIMER("MainChainRpc:HandleChainResposne");
+  FETCH_MILLI_TIMER("MainChainRpc:HandleChainResponse");
 
   std::size_t added{0};
   std::size_t loose{0};
@@ -474,6 +474,7 @@ State MainChainRpcService::OnWaitForBlocks()
   {
     // as soon as we get an invalid response from the peer we can simply conclude interacting with
     // them
+    FETCH_LOG_WARN(LOGGING_NAME, "Invalid response from peer");
     return State::COMPLETE_SYNC_WITH_PEER;
   }
 
@@ -485,6 +486,7 @@ State MainChainRpcService::OnWaitForBlocks()
     // if the responding block was not found then walk back by one block
     block_resolving_ = chain_.GetBlock(block_resolving_->previous_hash);
 
+    healthy_ = true;
     return State::REQUEST_NEXT_BLOCKS;
   }
 
@@ -492,11 +494,15 @@ State MainChainRpcService::OnWaitForBlocks()
   // normal and implies we should try and sync with another peer
   if (log.blocks.empty())
   {
+    healthy_ = true;
     return State::COMPLETE_SYNC_WITH_PEER;
   }
 
   // process all of the blocks that have been returned from the syncing process
   HandleChainResponse(current_peer_address_, log.blocks.begin(), log.blocks.end());
+
+  // count the RPC service as healthy
+  healthy_ = true;
 
   // we have now reached the heaviest tip
   auto const &latest_block = log.blocks.back();
@@ -548,6 +554,15 @@ bool MainChainRpcService::ValidBlock(Block const &block, char const *action) con
     FETCH_LOG_WARN(LOGGING_NAME, "Exception in consensus on validating ", action, ": ", ex.what());
     return false;
   }
+}
+
+/**
+ * Return whether the service is healthy or not. Currently it is considered
+ * healthy when it has made at least one successful RPC call to a peer
+ */
+bool MainChainRpcService::IsHealthy() const
+{
+  return healthy_;
 }
 
 }  // namespace ledger

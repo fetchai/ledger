@@ -17,7 +17,6 @@
 //------------------------------------------------------------------------------
 
 #include "bloom_filter/historical_bloom_filter.hpp"
-#include "bloom_filter/metadata_store.hpp"
 #include "core/byte_array/byte_array.hpp"
 #include "core/containers/is_in.hpp"
 #include "core/serializers/main_serializer.hpp"
@@ -98,8 +97,7 @@ struct BloomFilterMetadata
 };
 static_assert(meta::IsPOD<BloomFilterMetadata>, "Metadata must be POD");
 
-constexpr uint64_t    METADATA_VERSION = 1;
-constexpr char const *LOGGING_NAME     = "HBloomFilter";
+constexpr char const *LOGGING_NAME = "HBloomFilter";
 
 /**
  * Convert a bucket into a resource ID for the storage engine
@@ -163,10 +161,11 @@ HistoricalBloomFilter::HistoricalBloomFilter(Mode mode, char const *store_path,
                                              std::size_t max_num_cached_buckets)
   : store_filename_{store_path}
   , index_filename_{index_path}
-  , metadata_filename_{metadata_path}
   , window_size_{window_size}
   , max_num_cached_buckets_{max_num_cached_buckets}
 {
+  metadata_.Load(metadata_path);
+
   // create the default metadata for the bloom filter
   BloomFilterMetadata metadata{};
   metadata.window_size = window_size;
@@ -176,36 +175,39 @@ HistoricalBloomFilter::HistoricalBloomFilter(Mode mode, char const *store_path,
   {
   case Mode::NEW_DATABASE:
     store_.New(store_filename_, index_filename_, true);
-    SaveMetadataToFile(metadata_path, metadata, METADATA_VERSION);
-    break;
-  case Mode::LOAD_DATABASE:
-  {
 
-    // before loading the database check that the meta data for the database is correct
-    auto const status = LoadMetadataFromFile(metadata_path, metadata, METADATA_VERSION);
-    switch (status)
+    // Overwrite metadata in the file
+    try
     {
-    case MetaReadStatus::SUCCESS:
-      if (metadata.window_size != window_size)
-      {
-        throw std::runtime_error("The window size is not configured to match previous version");
-      }
-
-      // update the last flushed bucket
-      heaviest_persisted_bucket_ = metadata.last_bucket;
-
-      break;
-    case MetaReadStatus::NO_FILE_PRESENT:
-      SaveMetadataToFile(metadata_path, metadata, METADATA_VERSION);
-      break;
-    case MetaReadStatus::FAILED:
-    case MetaReadStatus::VERSION_MISMATCH:
-      throw std::runtime_error("Trying to recover metadata");
+      metadata_.Set(metadata);
+    }
+    catch (std::exception const &ex)
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Failed to write metadata to file: ", ex.what());
     }
 
-    store_.Load(store_filename_, index_filename_, true);
     break;
-  }
+  case Mode::LOAD_DATABASE:
+    store_.Load(store_filename_, index_filename_, true);
+
+    // Check metadata can be retrieved and is correct
+    try
+    {
+      metadata_.Get(metadata);
+    }
+    catch (std::exception const &ex)
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Failed to read metadata from file: ", ex.what());
+    }
+
+    if (metadata.window_size != window_size)
+    {
+      throw std::runtime_error("The window size is not configured to match previous version");
+    }
+
+    // update the last flushed bucket
+    heaviest_persisted_bucket_ = metadata.last_bucket;
+    break;
   }
 }
 
@@ -478,15 +480,17 @@ bool HistoricalBloomFilter::SaveBucketToStore(uint64_t bucket, CacheEntry const 
 void HistoricalBloomFilter::UpdateMetadata()
 {
   BloomFilterMetadata metadata;
+  bool                bad_version = false;
 
-  // before loading the database check that the meta data for the database is correct
-  auto const status = LoadMetadataFromFile(metadata_filename_.c_str(), metadata, METADATA_VERSION);
-  switch (status)
+  try
   {
-  case MetaReadStatus::SUCCESS:
+    // before loading the database check that the meta data for the database is correct
+    metadata_.Get(metadata);
+
     if (metadata.window_size != window_size_)
     {
-      throw std::runtime_error("The window size is not configured to match previous version");
+      FETCH_LOG_ERROR(LOGGING_NAME, "The window size is not configured to match previous version!");
+      bad_version = true;
     }
 
     if (metadata.last_bucket != heaviest_persisted_bucket_)
@@ -495,14 +499,17 @@ void HistoricalBloomFilter::UpdateMetadata()
       metadata.last_bucket = heaviest_persisted_bucket_;
 
       // flush to disk
-      SaveMetadataToFile(metadata_filename_.c_str(), metadata, METADATA_VERSION);
+      metadata_.Set(metadata);
     }
+  }
+  catch (std::exception const &ex)
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Failed to update metadata: ", ex.what());
+  }
 
-    break;
-  case MetaReadStatus::NO_FILE_PRESENT:
-  case MetaReadStatus::FAILED:
-  case MetaReadStatus::VERSION_MISMATCH:
-    throw std::runtime_error("Trying to recover metadata");
+  if (bad_version)
+  {
+    throw std::runtime_error("The window size is not configured to match previous version!");
   }
 }
 
@@ -523,4 +530,35 @@ bool HistoricalBloomFilter::CacheEntry::Match(ConstByteArray const &element) con
 }
 
 }  // namespace bloom
+
+namespace serializers {
+
+template <typename D>
+struct MapSerializer<bloom::BloomFilterMetadata, D>
+{
+public:
+  using Type       = bloom::BloomFilterMetadata;
+  using DriverType = D;
+
+  static uint8_t const WINDOW_SIZE = 1;
+  static uint8_t const LAST_BUCKET = 2;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &item)
+  {
+    auto map = map_constructor(2);
+    map.Append(WINDOW_SIZE, item.window_size);
+    map.Append(LAST_BUCKET, item.last_bucket);
+  }
+
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &item)
+  {
+    map.ExpectKeyGetValue(WINDOW_SIZE, item.window_size);
+    map.ExpectKeyGetValue(LAST_BUCKET, item.last_bucket);
+  }
+};
+
+}  // namespace serializers
+
 }  // namespace fetch

@@ -21,6 +21,7 @@
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/serializers/main_serializer_definition.hpp"
 #include "storage/object_store.hpp"
+#include "storage/single_object_store.hpp"
 
 #include <cstdint>
 #include <unordered_map>
@@ -33,6 +34,7 @@ class HistoricalBloomFilter
 public:
   using ConstByteArray      = byte_array::ConstByteArray;
   using BasicBloomFilterPtr = std::unique_ptr<BasicBloomFilter>;
+  using MetadataStore       = fetch::storage::SingleObjectStore;
 
   struct CacheEntry
   {
@@ -84,7 +86,7 @@ private:
 
   std::string   store_filename_{};
   std::string   index_filename_{};
-  std::string   metadata_filename_{};
+  MetadataStore metadata_{};
   uint64_t      window_size_{0};
   uint64_t      heaviest_persisted_bucket_{0};
   std::size_t   max_num_cached_buckets_{1};
