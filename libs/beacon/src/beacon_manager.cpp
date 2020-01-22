@@ -32,7 +32,6 @@ namespace {
 class CurveParameters
 {
 public:
-  // Construction / Destruction
   CurveParameters()                        = default;
   CurveParameters(CurveParameters const &) = delete;
   CurveParameters(CurveParameters &&)      = delete;
