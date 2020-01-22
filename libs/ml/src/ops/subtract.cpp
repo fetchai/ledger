@@ -16,7 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/ops/estimation/charge_constants.hpp"
+#include "ml/charge_estimation/ops/constants.hpp"
 #include "ml/ops/subtract.hpp"
 
 namespace fetch {

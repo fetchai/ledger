@@ -21,24 +21,8 @@
 
 namespace fetch {
 namespace ml {
-namespace ops {
 
 using MLChargeAmount = std::uint64_t;
 
-namespace charge_cost {
-
-static constexpr MLChargeAmount DROPOUT_PER_ELEMENT             = 3;
-static constexpr MLChargeAmount RELU_PER_ELEMENT                = 1;
-static constexpr MLChargeAmount SIGMOID_PER_ELEMENT             = 2;
-static constexpr MLChargeAmount ADDITION_PER_ELEMENT            = 1;
-static constexpr MLChargeAmount SUBTRACTION_PER_ELEMENT         = ADDITION_PER_ELEMENT;
-static constexpr MLChargeAmount FLATTEN_PER_ELEMENT             = 1;
-static constexpr MLChargeAmount MULTIPLICATION_PER_ELEMENT      = 3;
-static constexpr MLChargeAmount PLACEHOLDER_READING_PER_ELEMENT = 0;
-static constexpr MLChargeAmount WEIGHTS_READING_PER_ELEMENT     = 0;
-
-}  // namespace charge_cost
-
-}  // namespace ops
 }  // namespace ml
 }  // namespace fetch

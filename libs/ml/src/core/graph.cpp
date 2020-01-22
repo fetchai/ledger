@@ -1112,7 +1112,7 @@ std::vector<std::pair<std::string, std::vector<std::string>>> Graph<TensorType>:
 }
 
 template <typename TensorType>
-fetch::ml::ops::MLChargeAmount Graph<TensorType>::ChargeForward(const std::string &node_name)
+fetch::ml::MLChargeAmount Graph<TensorType>::ChargeForward(const std::string &node_name)
 {
   if (nodes_.find(node_name) == nodes_.end())
   {

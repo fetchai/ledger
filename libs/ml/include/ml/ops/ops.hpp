@@ -19,8 +19,8 @@
 
 #include "core/assert.hpp"
 #include "math/tensor/tensor.hpp"
+#include "ml/charge_estimation/ops/constants.hpp"
 #include "ml/exceptions/exceptions.hpp"
-#include "ml/ops/estimation/charge_constants.hpp"
 #include "ml/saveparams/saveable_params.hpp"
 
 #include <functional>

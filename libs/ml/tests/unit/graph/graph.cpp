@@ -17,12 +17,12 @@
 //------------------------------------------------------------------------------
 
 #include "math/tensor/tensor.hpp"
+#include "ml/charge_estimation/ops/constants.hpp"
 #include "ml/core/graph.hpp"
 #include "ml/layers/convolution_1d.hpp"
 #include "ml/layers/fully_connected.hpp"
 #include "ml/ops/activations/relu.hpp"
 #include "ml/ops/add.hpp"
-#include "ml/ops/estimation/charge_constants.hpp"
 #include "ml/ops/loss_functions/mean_square_error_loss.hpp"
 #include "ml/ops/matrix_multiply.hpp"
 #include "ml/ops/multiply.hpp"
