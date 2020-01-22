@@ -48,6 +48,12 @@ template <typename TensorType>
 class AdamOptimiser;
 }  // namespace optimisers
 
+namespace utilities {
+
+template <typename TensorType>
+class MinMaxScaler;
+}
+
 }  // namespace ml
 
 namespace serializers {
@@ -3728,6 +3734,39 @@ struct MapSerializer<ml::optimisers::LearningRateParam<T>, D>
     map.ExpectKeyGetValue(ENDING_LEARNING_RATE, sp.ending_learning_rate);
     map.ExpectKeyGetValue(LINEAR_DECAY_RATE, sp.linear_decay_rate);
     map.ExpectKeyGetValue(EXPONENTIAL_DECAY_RATE, sp.exponential_decay_rate);
+  }
+};
+
+/**
+ * serializer for MinMaxScaler
+ * @tparam TensorType
+ */
+template <typename TensorType, typename D>
+struct MapSerializer<ml::utilities::MinMaxScaler<TensorType>, D>
+{
+  using Type       = ml::utilities::MinMaxScaler<TensorType>;
+  using DriverType = D;
+
+  static uint8_t const MIN_VAL = 1;
+  static uint8_t const MAX_VAL = 2;
+  static uint8_t const RANGE   = 3;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &sp)
+  {
+    auto map = map_constructor(3);
+
+    map.Append(MIN_VAL, sp.x_min_);
+    map.Append(MAX_VAL, sp.x_max_);
+    map.Append(RANGE, sp.x_range_);
+  }
+
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &sp)
+  {
+    map.ExpectKeyGetValue(MIN_VAL, sp.x_min_);
+    map.ExpectKeyGetValue(MAX_VAL, sp.x_max_);
+    map.ExpectKeyGetValue(RANGE, sp.x_range_);
   }
 };
 
