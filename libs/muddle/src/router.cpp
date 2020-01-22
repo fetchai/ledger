@@ -237,7 +237,8 @@ Packet::Address Router::ConvertAddress(Packet::RawAddress const &address)
  * @param address The address of the current node
  * @param reg The connection register
  */
-Router::Router(NetworkId network_id, Address address, MuddleRegister &reg, Prover const &prover, bool enable_message_signing)
+Router::Router(NetworkId network_id, Address address, MuddleRegister &reg, Prover const &prover,
+               bool enable_message_signing)
   : name_{GenerateLoggingName(BASE_NAME, network_id)}
   , signing_enabled_{enable_message_signing}
   , address_(std::move(address))
