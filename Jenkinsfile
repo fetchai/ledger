@@ -51,6 +51,14 @@ def run_full_build()
   return true
 }
 
+def env_use_utf8()
+{
+  return [
+    "LC_ALL=C.UTF-8",
+    "LANG=C.UTF-8"
+  ]
+}
+
 def static_analysis(Configuration config)
 {
   return {
@@ -61,13 +69,15 @@ def static_analysis(Configuration config)
         }
 
         docker.image(STATIC_ANALYSIS_IMAGE).inside {
-          stage('Set Up Static Analysis') {
-            sh "python3 -m pip install pipenv"
-            sh "pipenv install --dev"
-          }
+          withEnv(env_use_utf8()) {
+            stage('Set Up Static Analysis') {
+              sh "python3 -m pip install pipenv"
+              sh "pipenv install --dev"
+            }
 
-          stage('Run Static Analysis') {
-            sh "pipenv run ./scripts/ci-tool.py --lint ${config.label}"
+            stage('Run Static Analysis') {
+              sh "pipenv run ./scripts/ci-tool.py --lint ${config.label}"
+            }
           }
         }
       }
@@ -170,12 +180,14 @@ def create_docker_build(Platform platform, Configuration config, stages)
 {
   def build = { build_stages ->
     docker.image(platform.docker_image).inside {
-      stage("Set Up ${stage_name_suffix(platform, config)}") {
-        sh "python3 -m pip install pipenv"
-        sh "pipenv install --dev"
-      }
+      withEnv(env_use_utf8()) {
+        stage("Set Up ${stage_name_suffix(platform, config)}") {
+          sh "python3 -m pip install pipenv"
+          sh "pipenv install --dev"
+        }
 
-      build_stages()
+        build_stages()
+      }
     }
   }
 
@@ -266,18 +278,20 @@ def run_basic_checks()
       }
 
       docker.image(DOCKER_IMAGE_NAME).inside {
-        stage('Set Up Basic Checks') {
-          sh "python3 -m pip install pipenv"
-          sh "pipenv install --dev"
-        }
+        withEnv(env_use_utf8()) {
+          stage('Set Up Basic Checks') {
+            sh "python3 -m pip install pipenv"
+            sh "pipenv install --dev"
+          }
 
-        stage('Style Check') {
-          sh 'pipenv run ./scripts/apply_style.py -d'
-        }
+          stage('Style Check') {
+            sh 'pipenv run ./scripts/apply_style.py -d'
+          }
 
-        stage('Circular Dependencies') {
-          sh 'mkdir -p build-deps && cd build-deps && cmake ../'
-          sh 'pipenv run ./scripts/detect-circular-dependencies.py build-deps/'
+          stage('Circular Dependencies') {
+            sh 'mkdir -p build-deps && cd build-deps && cmake ../'
+            sh 'pipenv run ./scripts/detect-circular-dependencies.py build-deps/'
+          }
         }
       }
     }
