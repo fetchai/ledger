@@ -520,13 +520,24 @@ State MainChainRpcService::WalkBack()
   assert(block_resolving_);
 
   std::size_t current_height = block_resolving_->block_number;
-  if (current_height == 0)
+  switch (current_height)
   {
+  case 0:
     assert(block_resolving_->IsGenesis());
-
     // genesis digest mismatch, stop sync with this peer
     block_resolving_.reset();
+    back_stride_ = 1;
     return State::COMPLETE_SYNC_WITH_PEER;
+
+  case 1:
+    assert(block_resolving_->previous_hash == GetGenesisDigest());
+    block_resolving_ = chain_.GetBlock(GetGenesisDigest());
+    if (!block_resolving_)
+    {
+      FETCH_LOG_ERROR(LOGGING_NAME, __func__, ": genesis block is not on the chain");
+      return State::RESET;
+    }
+    return State::REQUEST_NEXT_BLOCKS;
   }
 
   std::size_t blocks_back = back_stride_;
@@ -546,7 +557,14 @@ State MainChainRpcService::WalkBack()
   for (std::size_t i = 0; i < blocks_back; ++i)
   {
     assert(!block_resolving_->IsGenesis());
-    block_resolving_ = chain_.GetBlock(block_resolving_->previous_hash);
+    auto next_block_resolving = chain_.GetBlock(block_resolving_->previous_hash);
+    if (!next_block_resolving)
+    {
+      FETCH_LOG_ERROR(LOGGING_NAME, __func__, ": block 0x", block_resolving_->previous_hash.ToHex(),
+                      ", previous to current resolving 0x", block_resolving->hash.ToHex(),
+                      ", is not on the chain");
+      return State::RESET;
+    }
   }
 
   // now re-try requesting blocks from this point
