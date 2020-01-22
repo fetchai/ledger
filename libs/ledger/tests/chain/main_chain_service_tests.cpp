@@ -33,7 +33,6 @@
 #include "muddle/network_id.hpp"
 
 #include <string>
-#include <unordered_map>
 
 using ::testing::_;
 using ::testing::NiceMock;
