@@ -224,7 +224,7 @@ bool SigsAlreadyExist(BeaconService::SharedAeonExecutionUnit const &exe_unit,
 {
   if (sigs.empty())
   {
-    return true;
+    return false;
   }
 
   // If the aeon is correct, its beginning should be higher than all previously generated
@@ -233,17 +233,15 @@ bool SigsAlreadyExist(BeaconService::SharedAeonExecutionUnit const &exe_unit,
 
   if (exe_unit->aeon.round_start > last_signature.round)
   {
-    return true;
-  }
-  else
-  {
-    FETCH_LOG_WARN(
-        LOGGING_NAME,
-        "Found an aeon in the aeon queue that appears to be old or a duplicate! It starts: ",
-        exe_unit->aeon.round_start, " but we have a signature for round: ", last_signature.round);
+    return false;
   }
 
-  return false;
+  FETCH_LOG_WARN(
+      LOGGING_NAME,
+      "Found an aeon in the aeon queue that appears to be old or a duplicate! It starts: ",
+      exe_unit->aeon.round_start, " but we have a signature for round: ", last_signature.round);
+
+  return true;
 }
 
 BeaconService::State BeaconService::OnWaitForSetupCompletionState()
