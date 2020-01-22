@@ -392,19 +392,19 @@ inline VectorRegister<int8_t, 256> rotate_elements_left<0>(VectorRegister<int8_t
   return x;
 }
 
-#define FETCH_ROTATE_ELEMENTS_LEFT(type, L)                                                          \
-  template <>                                                                                        \
-  inline VectorRegister<type, 256> rotate_elements_left<L>(VectorRegister<type, 256> const &x)       \
-  {                                                                                                  \
-    constexpr bool is_in_high128bits = L > VectorRegister<type, 256>::E_BLOCK_COUNT / 2;             \
-    constexpr int  hi_id             = is_in_high128bits ? 0 : 1;                                    \
-    constexpr int  lo_id             = is_in_high128bits ? 1 : 0;                                    \
-    constexpr int  L1  = is_in_high128bits ? (L - VectorRegister<type, 256>::E_BLOCK_COUNT / 2) : L; \
-    __m128i        hi  = _mm256_extractf128_si256(x.data(), hi_id);                                  \
-    __m128i        lo  = _mm256_extractf128_si256(x.data(), lo_id);                                  \
-    __m128i        hi1 = _mm_alignr_epi8(lo, hi, L1 * sizeof(type));                                 \
-    __m128i        lo1 = _mm_alignr_epi8(hi, lo, L1 * sizeof(type));                                 \
-    return {_mm256_set_m128i(hi1, lo1)};                                                             \
+#define FETCH_ROTATE_ELEMENTS_LEFT(type, L)                                                              \
+  template <>                                                                                            \
+  inline VectorRegister<type, 256> rotate_elements_left<L>(VectorRegister<type, 256> const &x)           \
+  {                                                                                                      \
+    constexpr bool is_in_high128bits = (L) > VectorRegister<type, 256>::E_BLOCK_COUNT / 2;               \
+    constexpr int  hi_id             = is_in_high128bits ? 0 : 1;                                        \
+    constexpr int  lo_id             = is_in_high128bits ? 1 : 0;                                        \
+    constexpr int  L1  = is_in_high128bits ? ((L) - VectorRegister<type, 256>::E_BLOCK_COUNT / 2) : (L); \
+    __m128i        hi  = _mm256_extractf128_si256(x.data(), hi_id);                                      \
+    __m128i        lo  = _mm256_extractf128_si256(x.data(), lo_id);                                      \
+    __m128i        hi1 = _mm_alignr_epi8(lo, hi, L1 * sizeof(type));                                     \
+    __m128i        lo1 = _mm_alignr_epi8(hi, lo, L1 * sizeof(type));                                     \
+    return {_mm256_set_m128i(hi1, lo1)};                                                                 \
   }
 
 FETCH_ROTATE_ELEMENTS_LEFT(int8_t, 1)
