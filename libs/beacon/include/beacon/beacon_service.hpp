@@ -93,6 +93,7 @@ public:
   using BlockEntropyPtr         = std::shared_ptr<beacon::BlockEntropy>;
   using DeadlineTimer           = fetch::moment::DeadlineTimer;
   using OldStateStore           = fetch::storage::ObjectStore<AeonExecutionUnit>;
+  using SignaturesBeingBuilt    = std::map<uint64_t, SignatureInformation>;
 
   BeaconService()                      = delete;
   BeaconService(BeaconService const &) = delete;
