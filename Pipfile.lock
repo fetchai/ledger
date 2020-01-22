@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "10368543cc20df688486602ac86ebce6b56303da51980422654a2cf7d6cdd7ea"
+            "sha256": "395faf8ec3752ad46b8245a38141f08e4a8f17827eb70a2de0a724a82c1b2606"
         },
         "pipfile-spec": 6,
         "requires": {},
@@ -43,12 +43,9 @@
             "version": "==0.15"
         },
         "fetchai-ledger-api": {
-            "hashes": [
-                "sha256:79cefa515afc2ec90950374948b4a7f6ad470bcfa7dd20a3928130b345918618",
-                "sha256:da82fe364f6eeec686e8fdbf8c40a55cd0a227dd73c5d87ec0ce041151a68160"
-            ],
-            "index": "pypi",
-            "version": "==0.11.0a4"
+            "editable": true,
+            "git": "https://github.com/wkaluza/ledger-api-py.git",
+            "ref": "6a0c94bf0bdcaab39a1338b93ab7edd7bed741d0"
         },
         "idna": {
             "hashes": [
@@ -59,9 +56,9 @@
         },
         "lark-parser": {
             "hashes": [
-                "sha256:d646f0e08e159cfe567e950fb2896ac5e1fd1f5411b41932ce4e71328009fe4d"
+                "sha256:26215ebb157e6fb2ee74319aa4445b9f3b7e456e26be215ce19fdaaa901c20a4"
             ],
-            "version": "==0.8.0"
+            "version": "==0.7.8"
         },
         "msgpack": {
             "hashes": [
