@@ -65,6 +65,7 @@ std::string AddActivationNode(ActivationType type, Graph<T> *g, std::string name
 ///////////////////////////////
 /// EXPLICIT INSTANTIATIONS ///
 ///////////////////////////////
+
 template std::string AddActivationNode<math::Tensor<int8_t>>(ActivationType               type,
                                                              Graph<math::Tensor<int8_t>> *g,
                                                              std::string name, std::string input);
