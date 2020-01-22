@@ -236,6 +236,42 @@ TYPED_TEST(SequentialModelTest, sequential_predict_without_dataloader)
   // Predicting without setting a dataloader is fine
   EXPECT_NO_FATAL_FAILURE(model.Predict(train_data, train_labels));
 }
+
+TYPED_TEST(SequentialModelTest, charge_one_dense)
+{
+
+  using ModelType  = fetch::ml::model::Sequential<TypeParam>;
+  using DataType   = typename TypeParam::Type;
+  using TensorType = fetch::math::Tensor<DataType>;
+  using Dense      = fetch::ml::layers::FullyConnected<TypeParam>;
+
+  fetch::ml::OptimiserType optimiser_type = fetch::ml::OptimiserType::SGD;
+
+  // setup dataloader
+  using DataLoaderType = fetch::ml::dataloaders::TensorDataLoader<TypeParam>;
+  auto data_loader_ptr = std::make_unique<DataLoaderType>();
+
+  TensorType data = TensorType::FromString(R"(1, 2, 3, 4, 5, 6, 7, 8)");
+  TensorType gt   = TensorType::FromString(R"(1, 2, 3, 4, 5, 6, 7, 8)");
+  data_loader_ptr->AddData({data}, gt);
+
+  // run model in training modeConfig
+  fetch::ml::model::ModelConfig<DataType> model_config;
+  ModelType                               model = ModelType(model_config);
+
+  model.SetBatchInputShape({data.shape()});
+  model.template Add<fetch::ml::layers::FullyConnected<TypeParam>>(
+      Dense::AUTODETECT_INPUTS_COUNT, 7, fetch::ml::details::ActivationType::RELU);
+  model.template Add<Dense>(Dense::AUTODETECT_INPUTS_COUNT, 5,
+                            fetch::ml::details::ActivationType::RELU);
+  model.template Add<Dense>(Dense::AUTODETECT_INPUTS_COUNT, 1);
+  model.SetDataloader(std::move(data_loader_ptr));
+  model.Compile(optimiser_type, fetch::ml::ops::LossType::MEAN_SQUARE_ERROR);
+
+  MLChargeAmount cost = model.ChargeForward();
+  std::cout << "Cost : " << cost << std::endl;
+}
+
 }  // namespace test
 }  // namespace ml
 }  // namespace fetch
