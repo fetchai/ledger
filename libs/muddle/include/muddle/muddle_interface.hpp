@@ -317,7 +317,8 @@ MuddlePtr CreateMuddle(NetworkId const &network, ProverPtr certificate,
 MuddlePtr CreateMuddle(char const network[4], ProverPtr certificate,
                        network::NetworkManager const &nm, std::string const &external_address);
 MuddlePtr CreateMuddle(char const network[4], ProverPtr certificate,
-                       network::NetworkManager const &nm, std::string const &external_address, bool enable_message_signing);
+                       network::NetworkManager const &nm, std::string const &external_address,
+                       bool enable_message_signing);
 MuddlePtr CreateMuddle(NetworkId const &network, network::NetworkManager const &nm,
                        std::string const &external_address);
 MuddlePtr CreateMuddle(char const network[4], network::NetworkManager const &nm,

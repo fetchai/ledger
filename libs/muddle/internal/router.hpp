@@ -81,7 +81,8 @@ public:
   static Packet::Address    ConvertAddress(Packet::RawAddress const &address);
 
   // Construction / Destruction
-  Router(NetworkId network_id, Address address, MuddleRegister &reg, Prover const &prover, bool enable_message_signing);
+  Router(NetworkId network_id, Address address, MuddleRegister &reg, Prover const &prover,
+         bool enable_message_signing);
   Router(Router const &) = delete;
   Router(Router &&)      = delete;
   ~Router() override     = default;
