@@ -35,6 +35,7 @@
 #include <string>
 #include <unordered_map>
 
+using ::testing::_;
 using ::testing::InSequence;
 using ::testing::NiceMock;
 using ::testing::Return;
@@ -153,17 +154,18 @@ void MainChainSyncTest::Tick(State current_state, State next_state, int line)
 
 TEST_F(MainChainSyncTest, CheckExponentialBackStep)
 {
-  InSequence s;
-  auto       gen = block_generator_();
+  auto gen = block_generator_();
 
   static constexpr std::size_t pack_size = 10000;
 
-  auto common_part    = block_generator_(2 * pack_size, gen);
-  auto fake_branch    = block_generator_(5 * pack_size, common_part.back());
-  auto genuine_branch = block_generator_(3 * pack_size, common_part.back(), 10);  // heavier
+  auto common_part = block_generator_(2 * pack_size, gen);
 
-  auto        fake_heaviest    = block_generator_(fake_branch.back());
+  auto fake_branch   = block_generator_(5 * pack_size, common_part.back());
+  auto fake_heaviest = block_generator_(fake_branch.back());
+
+  auto        genuine_branch = block_generator_(3 * pack_size, common_part.back(), 10);  // heavier
   auto const &genuine_heaviest = genuine_branch.back();
+  FETCH_UNUSED(genuine_heaviest);
 
   auto known_hashes = DigestMatcher::MakePatterns("common_part", common_part, "fake_branch",
                                                   fake_branch, "genuine_branch", genuine_branch);
@@ -176,100 +178,110 @@ TEST_F(MainChainSyncTest, CheckExponentialBackStep)
   log.status = TravelogueStatus::HEAVIEST_BRANCH;
 
   EXPECT_CALL(endpoint_, GetDirectlyConnectedPeers()).WillRepeatedly(Return(AddressList{other1_}));
+  EXPECT_CALL(consensus_, ValidBlock(_)).WillRepeatedly(Return(ConsensusInterface::Status::YES));
 
-  // build a fake chain
-  EXPECT_CALL(rpc_client_, TimeTravel(other1_, ExpectedHash(GetGenesisDigest())))
-      .WillOnce(Return(CreatePromise(TimeTravel(fake_heaviest, common_part))));
-  EXPECT_CALL(rpc_client_, TimeTravel(other1_, expected_hash(common_part.back()->hash)))
-      .WillOnce(Return(CreatePromise(TimeTravel(fake_heaviest, fake_branch))));
-  // denounce this chain
-  EXPECT_CALL(rpc_client_, TimeTravel(other1_, expected_hash(fake_branch[5 * pack_size - 1]->hash)))
-      .WillOnce(Return(CreatePromise(MainChainProtocol::Travelogue{})));
-  EXPECT_CALL(rpc_client_, TimeTravel(other1_, expected_hash(fake_branch[5 * pack_size - 2]->hash)))
-      .WillOnce(Return(CreatePromise(MainChainProtocol::Travelogue{})));
-  EXPECT_CALL(rpc_client_, TimeTravel(other1_, expected_hash(fake_branch[5 * pack_size - 4]->hash)))
-      .WillOnce(Return(CreatePromise(MainChainProtocol::Travelogue{})));
-  EXPECT_CALL(rpc_client_, TimeTravel(other1_, expected_hash(fake_branch[5 * pack_size - 8]->hash)))
-      .WillOnce(Return(CreatePromise(MainChainProtocol::Travelogue{})));
-  EXPECT_CALL(rpc_client_,
-              TimeTravel(other1_, expected_hash(fake_branch[5 * pack_size - 16]->hash)))
-      .WillOnce(Return(CreatePromise(MainChainProtocol::Travelogue{})));
-  EXPECT_CALL(rpc_client_,
-              TimeTravel(other1_, expected_hash(fake_branch[5 * pack_size - 32]->hash)))
-      .WillOnce(Return(CreatePromise(MainChainProtocol::Travelogue{})));
-  EXPECT_CALL(rpc_client_,
-              TimeTravel(other1_, expected_hash(fake_branch[5 * pack_size - 64]->hash)))
-      .WillOnce(Return(CreatePromise(MainChainProtocol::Travelogue{})));
-  EXPECT_CALL(rpc_client_,
-              TimeTravel(other1_, expected_hash(fake_branch[5 * pack_size - 128]->hash)))
-      .WillOnce(Return(CreatePromise(MainChainProtocol::Travelogue{})));
-  EXPECT_CALL(rpc_client_,
-              TimeTravel(other1_, expected_hash(fake_branch[5 * pack_size - 256]->hash)))
-      .WillOnce(Return(CreatePromise(MainChainProtocol::Travelogue{})));
-  EXPECT_CALL(rpc_client_,
-              TimeTravel(other1_, expected_hash(fake_branch[5 * pack_size - 512]->hash)))
-      .WillOnce(Return(CreatePromise(MainChainProtocol::Travelogue{})));
-  EXPECT_CALL(rpc_client_,
-              TimeTravel(other1_, expected_hash(fake_branch[5 * pack_size - 1024]->hash)))
-      .WillOnce(Return(CreatePromise(MainChainProtocol::Travelogue{})));
-  EXPECT_CALL(rpc_client_,
-              TimeTravel(other1_, expected_hash(fake_branch[5 * pack_size - 2048]->hash)))
-      .WillOnce(Return(CreatePromise(MainChainProtocol::Travelogue{})));
-  EXPECT_CALL(rpc_client_,
-              TimeTravel(other1_, expected_hash(fake_branch[5 * pack_size - 4096]->hash)))
-      .WillOnce(Return(CreatePromise(MainChainProtocol::Travelogue{})));
-  EXPECT_CALL(rpc_client_,
-              TimeTravel(other1_, expected_hash(fake_branch[5 * pack_size - 8192]->hash)))
-      .WillOnce(Return(CreatePromise(MainChainProtocol::Travelogue{})));
-  EXPECT_CALL(rpc_client_,
-              TimeTravel(other1_, expected_hash(fake_branch[5 * pack_size - 16384]->hash)))
-      .WillOnce(Return(CreatePromise(MainChainProtocol::Travelogue{})));
-  // After this point, the backstride is fixed 16384 blocks.
-  EXPECT_CALL(rpc_client_,
-              TimeTravel(other1_, expected_hash(fake_branch[5 * pack_size - 32768]->hash)))
-      .WillOnce(Return(CreatePromise(MainChainProtocol::Travelogue{})));
-  EXPECT_CALL(rpc_client_,
-              TimeTravel(other1_, expected_hash(fake_branch[5 * pack_size - 49152]->hash)))
-      .WillOnce(Return(CreatePromise(MainChainProtocol::Travelogue{})));
-  using BlockPtrs = BlockGenerator::BlockPtrs;
-  // Finally reached the common part that is also inside the genuine chain.
-  EXPECT_CALL(rpc_client_,
-              TimeTravel(other1_, expected_hash(common_part[2 * pack_size - 15536]->hash)))
-      .WillOnce(Return(CreatePromise(TimeTravel(
-          genuine_heaviest, BlockPtrs(common_part.cend() - 15536, common_part.cend())))));
-  // Ok, now return the genuine branch.
-  EXPECT_CALL(rpc_client_, TimeTravel(other1_, expected_hash(common_part.back()->hash)))
-      .WillOnce(Return(CreatePromise(TimeTravel(genuine_heaviest, genuine_branch))));
+  {
+    InSequence s;
 
-  // build a fake chain
-  FollowPath(State::SYNCHRONISING, State::START_SYNC_WITH_PEER, State::REQUEST_NEXT_BLOCKS,
-             State::WAIT_FOR_NEXT_BLOCKS, State::REQUEST_NEXT_BLOCKS);  // common_part
+    // build a fake chain
+    EXPECT_CALL(rpc_client_, TimeTravel(other1_, ExpectedHash(GetGenesisDigest())))
+        .WillOnce(Return(CreatePromise(TimeTravel(fake_heaviest, common_part))));
+    EXPECT_CALL(rpc_client_, TimeTravel(other1_, expected_hash(common_part.back()->hash)))
+        .WillOnce(Return(CreatePromise(TimeTravel(fake_heaviest, fake_branch))));
 
-  // denounce fake chain
-  FollowPath(State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS,  // fake_branch
-             State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS,  // fake_branch[-1]
-             State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS,  // fake_branch[-2]
-             State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS,  // fake_branch[-4]
-             State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS,  // fake_branch[-8]
-             State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS,  // fake_branch[-16]
-             State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS,  // fake_branch[-32]
-             State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS,  // fake_branch[-64]
-             State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS,  // fake_branch[-128]
-             State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS,  // fake_branch[-256]
-             State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS,  // fake_branch[-512]
-             State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS,  // fake_branch[-1024]
-             State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS,  // fake_branch[-2048]
-             State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS,  // fake_branch[-4096]
-             State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS,  // fake_branch[-8192]
-             State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS,  // fake_branch[-16384]
-             State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS,  // fake_branch[-32768]
-             State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS,  // fake_branch[-49152]
-             // now build the genuine chain
-             State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS,      // common_part[-15536]
-             State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS,      // common_part.back()
-             State::REQUEST_NEXT_BLOCKS, State::COMPLETE_SYNC_WITH_PEER);  // and here it ends
+    // denounce this chain
+    EXPECT_CALL(rpc_client_,
+                TimeTravel(other1_, expected_hash(fake_branch[5 * pack_size - 1]->hash)))
+        .WillOnce(Return(CreatePromise(MainChainProtocol::Travelogue{})));
+    EXPECT_CALL(rpc_client_,
+                TimeTravel(other1_, expected_hash(fake_branch[5 * pack_size - 2]->hash)))
+        .WillOnce(Return(CreatePromise(MainChainProtocol::Travelogue{})));
+    EXPECT_CALL(rpc_client_,
+                TimeTravel(other1_, expected_hash(fake_branch[5 * pack_size - 4]->hash)))
+        .WillOnce(Return(CreatePromise(MainChainProtocol::Travelogue{})));
+    EXPECT_CALL(rpc_client_,
+                TimeTravel(other1_, expected_hash(fake_branch[5 * pack_size - 8]->hash)))
+        .WillOnce(Return(CreatePromise(MainChainProtocol::Travelogue{})));
+    EXPECT_CALL(rpc_client_,
+                TimeTravel(other1_, expected_hash(fake_branch[5 * pack_size - 16]->hash)))
+        .WillOnce(Return(CreatePromise(MainChainProtocol::Travelogue{})));
+    EXPECT_CALL(rpc_client_,
+                TimeTravel(other1_, expected_hash(fake_branch[5 * pack_size - 32]->hash)))
+        .WillOnce(Return(CreatePromise(MainChainProtocol::Travelogue{})));
+    EXPECT_CALL(rpc_client_,
+                TimeTravel(other1_, expected_hash(fake_branch[5 * pack_size - 64]->hash)))
+        .WillOnce(Return(CreatePromise(MainChainProtocol::Travelogue{})));
+    EXPECT_CALL(rpc_client_,
+                TimeTravel(other1_, expected_hash(fake_branch[5 * pack_size - 128]->hash)))
+        .WillOnce(Return(CreatePromise(MainChainProtocol::Travelogue{})));
+    EXPECT_CALL(rpc_client_,
+                TimeTravel(other1_, expected_hash(fake_branch[5 * pack_size - 256]->hash)))
+        .WillOnce(Return(CreatePromise(MainChainProtocol::Travelogue{})));
+    EXPECT_CALL(rpc_client_,
+                TimeTravel(other1_, expected_hash(fake_branch[5 * pack_size - 512]->hash)))
+        .WillOnce(Return(CreatePromise(MainChainProtocol::Travelogue{})));
+    EXPECT_CALL(rpc_client_,
+                TimeTravel(other1_, expected_hash(fake_branch[5 * pack_size - 1024]->hash)))
+        .WillOnce(Return(CreatePromise(MainChainProtocol::Travelogue{})));
+    EXPECT_CALL(rpc_client_,
+                TimeTravel(other1_, expected_hash(fake_branch[5 * pack_size - 2048]->hash)))
+        .WillOnce(Return(CreatePromise(MainChainProtocol::Travelogue{})));
+    EXPECT_CALL(rpc_client_,
+                TimeTravel(other1_, expected_hash(fake_branch[5 * pack_size - 4096]->hash)))
+        .WillOnce(Return(CreatePromise(MainChainProtocol::Travelogue{})));
+    EXPECT_CALL(rpc_client_,
+                TimeTravel(other1_, expected_hash(fake_branch[5 * pack_size - 8192]->hash)))
+        .WillOnce(Return(CreatePromise(MainChainProtocol::Travelogue{})));
+    EXPECT_CALL(rpc_client_,
+                TimeTravel(other1_, expected_hash(fake_branch[5 * pack_size - 16384]->hash)))
+        .WillOnce(Return(CreatePromise(MainChainProtocol::Travelogue{})));
+    // After this point, the backstride is fixed 16384 blocks.
+    EXPECT_CALL(rpc_client_,
+                TimeTravel(other1_, expected_hash(fake_branch[5 * pack_size - 32768]->hash)))
+        .WillOnce(Return(CreatePromise(MainChainProtocol::Travelogue{})));
+    EXPECT_CALL(rpc_client_,
+                TimeTravel(other1_, expected_hash(fake_branch[5 * pack_size - 49152]->hash)))
+        .WillOnce(Return(CreatePromise(MainChainProtocol::Travelogue{})));
+    using BlockPtrs = BlockGenerator::BlockPtrs;
+    // Finally reached the common part that is also inside the genuine chain.
+    EXPECT_CALL(rpc_client_,
+                TimeTravel(other1_, expected_hash(common_part[2 * pack_size - 15536]->hash)))
+        .WillOnce(Return(CreatePromise(TimeTravel(
+            genuine_heaviest, BlockPtrs(common_part.cend() - 15536, common_part.cend())))));
+    // Ok, now return the genuine branch.
+    EXPECT_CALL(rpc_client_, TimeTravel(other1_, expected_hash(common_part.back()->hash)))
+        .WillOnce(Return(CreatePromise(TimeTravel(genuine_heaviest, genuine_branch))));
 
-  EXPECT_EQ(chain_.GetHeaviestBlockHash(), genuine_heaviest->hash);
+    // build a fake chain
+    FollowPath(State::SYNCHRONISING, State::START_SYNC_WITH_PEER, State::REQUEST_NEXT_BLOCKS,
+               State::WAIT_FOR_NEXT_BLOCKS, State::REQUEST_NEXT_BLOCKS);  // common_part
+
+    // denounce fake chain
+    FollowPath(State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS,  // fake_branch
+               State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS,  // fake_branch[-1]
+               State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS,  // fake_branch[-2]
+               State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS,  // fake_branch[-4]
+               State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS,  // fake_branch[-8]
+               State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS,  // fake_branch[-16]
+               State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS,  // fake_branch[-32]
+               State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS,  // fake_branch[-64]
+               State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS,  // fake_branch[-128]
+               State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS,  // fake_branch[-256]
+               State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS,  // fake_branch[-512]
+               State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS,  // fake_branch[-1024]
+               State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS,  // fake_branch[-2048]
+               State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS,  // fake_branch[-4096]
+               State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS,  // fake_branch[-8192]
+               State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS,  // fake_branch[-16384]
+               State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS,  // fake_branch[-32768]
+               State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS,  // fake_branch[-49152]
+               // now build the genuine chain
+               State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS,      // common_part[-15536]
+               State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS,      // common_part.back()
+               State::REQUEST_NEXT_BLOCKS, State::COMPLETE_SYNC_WITH_PEER);  // and here it ends
+
+    EXPECT_EQ(chain_.GetHeaviestBlockHash(), genuine_heaviest->hash);
+  }
 }
 
 }  // namespace
