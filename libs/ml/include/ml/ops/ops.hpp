@@ -19,6 +19,7 @@
 
 #include "core/assert.hpp"
 #include "math/tensor/tensor.hpp"
+#include "ml/exceptions/exceptions.hpp"
 #include "ml/ops/estimation/charge_constants.hpp"
 #include "ml/saveparams/saveable_params.hpp"
 
@@ -182,21 +183,24 @@ public:
    */
   static fetch::math::SizeType TotalElementsIn(std::vector<fetch::math::SizeVector> const &shapes)
   {
+    using fetch::math::SizeType;
     if (shapes.empty())
     {
       return 0;
     }
-    fetch::math::SizeType total_elements = 1;
-    for (auto const &shape : shapes)
+    SizeType total_elements = 0;
+    for (fetch::math::SizeVector const &shape : shapes)
     {
-      for (auto const &dimension : shape)
+      SizeType elements_in_shape = 1;
+      for (SizeType dimension : shape)
       {
         if (dimension == 0)
         {
-          std::runtime_error("A dimension of size 0 found in tensor shape!");
+          throw fetch::math::exceptions::WrongShape("A dimension of size 0 found in tensor shape!");
         }
-        total_elements *= dimension;
+        elements_in_shape *= dimension;
       }
+      total_elements += elements_in_shape;
     }
     return total_elements;
   }
