@@ -98,8 +98,6 @@ public:
   Consensus &operator=(Consensus &&) = delete;
 
 private:
-  friend class BorrowBlockGenerationWeight;
-
   static constexpr std::size_t HISTORY_LENGTH = 1000;
 
   using Cabinet            = StakeManager::Cabinet;
