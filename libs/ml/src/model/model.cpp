@@ -405,6 +405,12 @@ bool Model<TensorType>::DataLoaderIsSet()
   return dataloader_ptr_->Size() != 0;
 }
 
+template <typename TensorType>
+MLChargeAmount Model<TensorType>::ChargeForward()
+{
+  return this->graph_ptr_->ChargeForward(this->output_);
+}
+
 ///////////////////////////////
 /// EXPLICIT INSTANTIATIONS ///
 ///////////////////////////////
