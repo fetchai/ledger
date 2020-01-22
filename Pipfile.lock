@@ -59,9 +59,9 @@
         },
         "lark-parser": {
             "hashes": [
-                "sha256:26215ebb157e6fb2ee74319aa4445b9f3b7e456e26be215ce19fdaaa901c20a4"
+                "sha256:d646f0e08e159cfe567e950fb2896ac5e1fd1f5411b41932ce4e71328009fe4d"
             ],
-            "version": "==0.7.8"
+            "version": "==0.8.0"
         },
         "msgpack": {
             "hashes": [
