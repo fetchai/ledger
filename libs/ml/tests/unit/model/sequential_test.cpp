@@ -237,7 +237,6 @@ TYPED_TEST(SequentialModelTest, sequential_predict_without_dataloader)
   EXPECT_NO_FATAL_FAILURE(model.Predict(train_data, train_labels));
 }
 
-// Note(VH): the test expects zero cost because some estimators for Dense layer are not implemented.
 TYPED_TEST(SequentialModelTest, charge_one_dense)
 {
   using ModelType  = fetch::ml::model::Sequential<TypeParam>;

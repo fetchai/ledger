@@ -59,6 +59,9 @@ public:
   }
   static constexpr char const *DESCRIPTOR = "Subtract";
 
+  OpType      OperationType() const override;
+  char const *Descriptor() const override;
+
   MLChargeAmount ChargeForward() override;
 };
 

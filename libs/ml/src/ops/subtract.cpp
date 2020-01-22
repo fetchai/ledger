@@ -76,6 +76,24 @@ std::vector<math::SizeType> Subtract<TensorType>::ComputeOutputShape(
   return inputs.front()->shape();
 }
 
+/**
+ * An OOP wrapper around static constexpr OpType member method.
+ */
+template <typename TensorType>
+OpType Subtract<TensorType>::OperationType() const
+{
+  return this->OpCode();
+}
+
+/**
+ * An OOP wrapper around static constexpr OpType member field.
+ */
+template <typename TensorType>
+const char *Subtract<TensorType>::Descriptor() const
+{
+  return DESCRIPTOR;
+}
+
 template <typename TensorType>
 MLChargeAmount Subtract<TensorType>::ChargeForward()
 {
