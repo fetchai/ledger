@@ -20,7 +20,6 @@
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/byte_array/encoders.hpp"
 #include "core/serializers/group_definitions.hpp"
-#include "crypto/fnv.hpp"
 #include "network/peer.hpp"
 
 #include <cassert>
