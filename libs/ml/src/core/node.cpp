@@ -27,7 +27,7 @@ namespace ml {
 
 using Shape       = fetch::math::SizeVector;
 using ShapeVector = std::vector<fetch::math::SizeVector>;
-using fetch::ml::ops::MLChargeAmount;
+using fetch::ml::MLChargeAmount;
 
 /**
  * @brief A helper function for printing node's output shape
