@@ -58,7 +58,7 @@ TEST(ledger_simulated_pow_gtest, test_block_emission)
   {
     if (block)
     {
-      consensus->UpdateCurrentBlock(*block);
+      EXPECT_TRUE(consensus->UpdateCurrentBlock(*block));
       all_blocks.push_back(*block);
       block.reset();
     }

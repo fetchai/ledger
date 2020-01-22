@@ -188,7 +188,7 @@ private:
   State OnWaitForBlocks();
   State OnCompleteSyncWithPeer();
 
-  bool  ValidBlock(Block const &block, char const *action) const;
+  bool ValidBlock(Block const &block) const;
   State WalkBack();
   /// @}
 
