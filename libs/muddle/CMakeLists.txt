@@ -17,6 +17,7 @@ setup_compiler()
 setup_library(fetch-muddle)
 target_link_libraries(fetch-muddle
                       PUBLIC fetch-network
+                             fetch-crypto
                              fetch-logging
                              fetch-moment
                              fetch-telemetry)
