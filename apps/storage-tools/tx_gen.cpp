@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -16,19 +16,19 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/byte_array/const_byte_array.hpp"
 #include "chain/transaction_builder.hpp"
 #include "chain/transaction_serializer.hpp"
-#include "vectorise/threading/pool.hpp"
-#include "crypto/ecdsa.hpp"
-#include "core/serializers/main_serializer.hpp"
+#include "core/byte_array/const_byte_array.hpp"
 #include "core/digest.hpp"
+#include "core/serializers/main_serializer.hpp"
+#include "crypto/ecdsa.hpp"
+#include "vectorise/threading/pool.hpp"
 
-#include <iostream>
 #include <cstdlib>
-#include <string>
-#include <memory>
 #include <fstream>
+#include <iostream>
+#include <memory>
+#include <string>
 
 using fetch::byte_array::ConstByteArray;
 using fetch::crypto::ECDSASigner;
@@ -38,9 +38,8 @@ using fetch::chain::Address;
 using fetch::threading::Pool;
 using fetch::serializers::LargeObjectSerializeHelper;
 
-using SignerPtr = std::unique_ptr<ECDSASigner>;
+using SignerPtr  = std::unique_ptr<ECDSASigner>;
 using AddressPtr = std::unique_ptr<Address>;
-
 
 static std::vector<SignerPtr> GenerateSignersInParallel(std::size_t count)
 {
@@ -52,10 +51,9 @@ static std::vector<SignerPtr> GenerateSignersInParallel(std::size_t count)
   for (std::size_t batch = 0; batch < pool.concurrency(); ++batch)
   {
     std::size_t const start = batch * batch_size;
-    std::size_t const end = std::min(count, start + batch_size);
+    std::size_t const end   = std::min(count, start + batch_size);
 
     pool.Dispatch([&signers, start, end]() {
-
       // create this batch of keys
       for (std::size_t i = start; i < end; ++i)
       {
@@ -134,14 +132,13 @@ static std::vector<ConstByteArray> GenerateTransactionsInParallel(
   for (std::size_t batch = 0; batch < num_batches; ++batch)
   {
     std::size_t const start = batch * batch_size;
-    std::size_t const end = std::min(count, start + batch_size);
+    std::size_t const end   = std::min(count, start + batch_size);
 
     // make a fresh copy of the
     auto const &key    = signer_copies.at(batch);
     auto const &target = addresses.at(batch + 1);
 
     pool.Dispatch([&encoded_tx, &target, start, end, &key]() {
-
       Address from{key->identity()};
 
       for (std::size_t i = start; i < end; ++i)
@@ -184,7 +181,6 @@ static std::vector<ConstByteArray> GenerateTransactionsInParallel(
   return encoded_tx;
 }
 
-
 static std::vector<ConstByteArray> GenerateTransactions(std::size_t                    count,
                                                         std::vector<SignerPtr> const & signers,
                                                         std::vector<AddressPtr> const &addresses)
@@ -201,20 +197,21 @@ static std::vector<ConstByteArray> GenerateTransactions(std::size_t             
 
   for (std::size_t i = 0; i < count; ++i)
   {
-    std::size_t const target_index = (i % (signers.size() - 1u)) + 1u; // first index is always the source
+    std::size_t const target_index =
+        (i % (signers.size() - 1u)) + 1u;  // first index is always the source
 
     // build the transaction
     auto const tx = TransactionBuilder()
-        .From(*addresses.at(0))
-        .ValidUntil(500)
-        .ChargeRate(1)
-        .ChargeLimit(5)
-        .Counter(i)
-        .Transfer(*addresses.at(target_index), 10)
-        .Signer(signers.at(0)->identity())
-        .Seal()
-        .Sign(*signers.at(0))
-        .Build();
+                        .From(*addresses.at(0))
+                        .ValidUntil(500)
+                        .ChargeRate(1)
+                        .ChargeLimit(5)
+                        .Counter(i)
+                        .Transfer(*addresses.at(target_index), 10)
+                        .Signer(signers.at(0)->identity())
+                        .Seal()
+                        .Sign(*signers.at(0))
+                        .Build();
 
     // serialise the transaction
     TransactionSerializer serializer{};
@@ -230,7 +227,7 @@ static std::vector<ConstByteArray> GenerateTransactions(std::size_t             
 
 int main(int argc, char **argv)
 {
-    if (argc != 4)
+  if (argc != 4)
   {
     std::cerr << "Usage: " << argv[0] << "<count> <filename> <metapath>" << std::endl;
     return 1;
@@ -239,7 +236,8 @@ int main(int argc, char **argv)
   auto const        count       = static_cast<std::size_t>(atoi(argv[1]));
   std::string const output_path = argv[2];
   std::string const meta_path   = argv[3];
-  std::size_t const num_signers = (count / 10u) + 2u; // 10% of count with minimum of 2 signers (src and dest)
+  std::size_t const num_signers =
+      (count / 10u) + 2u;  // 10% of count with minimum of 2 signers (src and dest)
 
   auto const signers    = GenerateSigners(num_signers);
   auto const addresses  = GenerateAddresses(signers);
@@ -254,7 +252,7 @@ int main(int argc, char **argv)
 
   // verify
   std::vector<ConstByteArray> verified{};
-  LargeObjectSerializeHelper helper2{helper.data()};
+  LargeObjectSerializeHelper  helper2{helper.data()};
   helper2 >> verified;
 
   std::cout << "Count: " << verified.size() << std::endl;
