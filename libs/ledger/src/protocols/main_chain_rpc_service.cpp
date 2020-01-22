@@ -535,6 +535,7 @@ State MainChainRpcService::WalkBack()
     if (!block_resolving_)
     {
       FETCH_LOG_ERROR(LOGGING_NAME, __func__, ": genesis block is not on the chain");
+      back_stride_ = 1;
       return State::RESET;
     }
     return State::REQUEST_NEXT_BLOCKS;
