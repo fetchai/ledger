@@ -159,8 +159,8 @@ public:
   virtual MLChargeAmount ChargeForward()
   {
     // TODO(VH): make a pure virtual call;
-    std::cout << "Error: call to unexisting ChargeForward() implementation! returned 0."
-              << std::endl;
+    FETCH_LOG_ERROR(Descriptor(),
+                    " Error: call to unexisting ChargeForward() implementation! returned 0.");
     return 0;
   }
 
@@ -169,11 +169,11 @@ public:
    * @return estimated charge amount, necessary for performing a backward pass on data of given
    * shapes.
    */
-  virtual MLChargeAmount ChargeBackward()
+  virtual MLChargeAmount ChargeBackward() const
   {
     // TODO(VH): make a pure virtual call;
-    std::cout << "Error: call to unexisting ChargeBackward() implementation! returned 0."
-              << std::endl;
+    FETCH_LOG_ERROR(Descriptor(),
+                    " Error: call to unexisting ChargeBackward() implementation! returned 0.");
     return 0;
   }
 
