@@ -17,7 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "math/tensor/tensor.hpp"
-#include <ml/utilities/mnist_utilities.hpp>
+#include "ml/utilities/mnist_utilities.hpp"
 
 #include "math/one_hot.hpp"
 #include "ml/exceptions/exceptions.hpp"
