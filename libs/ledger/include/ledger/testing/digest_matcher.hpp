@@ -20,8 +20,7 @@
 #include "core/byte_array/const_byte_array.hpp"
 #include "ledger/chain/block.hpp"
 
-#include <cstddef>
-#include <cstdint>
+#include <string>
 #include <unordered_map>
 
 #include "gmock/gmock.h"

@@ -536,9 +536,9 @@ State MainChainRpcService::WalkBack()
     block_resolving_ = chain_.GetBlock(GetGenesisDigest());
     if (!block_resolving_)
     {
-      FETCH_LOG_ERROR(LOGGING_NAME, __func__, ": genesis block is not on the chain");
+      FETCH_LOG_CRITICAL(LOGGING_NAME, __func__, ": genesis block is not on the chain");
       back_stride_ = 1;
-      return State::RESET;
+      return State::SYNCHRONISING;
     }
     return State::REQUEST_NEXT_BLOCKS;
   }
@@ -563,11 +563,13 @@ State MainChainRpcService::WalkBack()
     auto next_block_resolving = chain_.GetBlock(block_resolving_->previous_hash);
     if (!next_block_resolving)
     {
-      FETCH_LOG_ERROR(LOGGING_NAME, __func__, ": block 0x", block_resolving_->previous_hash.ToHex(),
-                      ", previous to current resolving 0x", block_resolving->hash.ToHex(),
-                      ", is not on the chain");
-      return State::RESET;
+      FETCH_LOG_CRITICAL(LOGGING_NAME, __func__, ": block 0x",
+                         block_resolving_->previous_hash.ToHex(),
+                         ", previous to current resolving 0x", block_resolving_->hash.ToHex(),
+                         ", is not on the chain");
+      return State::SYNCHRONISING;
     }
+    block_resolving_ = std::move(next_block_resolving);
   }
 
   // now re-try requesting blocks from this point
