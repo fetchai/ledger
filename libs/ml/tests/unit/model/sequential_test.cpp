@@ -237,9 +237,9 @@ TYPED_TEST(SequentialModelTest, sequential_predict_without_dataloader)
   EXPECT_NO_FATAL_FAILURE(model.Predict(train_data, train_labels));
 }
 
+// Note(VH): the test expects zero cost because some estimators for Dense layer are not implemented.
 TYPED_TEST(SequentialModelTest, charge_one_dense)
 {
-
   using ModelType  = fetch::ml::model::Sequential<TypeParam>;
   using DataType   = typename TypeParam::Type;
   using TensorType = fetch::math::Tensor<DataType>;
@@ -260,16 +260,12 @@ TYPED_TEST(SequentialModelTest, charge_one_dense)
   ModelType                               model = ModelType(model_config);
 
   model.SetBatchInputShape({data.shape()});
-  model.template Add<fetch::ml::layers::FullyConnected<TypeParam>>(
-      Dense::AUTODETECT_INPUTS_COUNT, 7, fetch::ml::details::ActivationType::RELU);
-  model.template Add<Dense>(Dense::AUTODETECT_INPUTS_COUNT, 5,
-                            fetch::ml::details::ActivationType::RELU);
   model.template Add<Dense>(Dense::AUTODETECT_INPUTS_COUNT, 1);
   model.SetDataloader(std::move(data_loader_ptr));
   model.Compile(optimiser_type, fetch::ml::ops::LossType::MEAN_SQUARE_ERROR);
 
-  MLChargeAmount cost = model.ChargeForward();
-  std::cout << "Cost : " << cost << std::endl;
+  MLChargeAmount const cost = model.ChargeForward();
+  EXPECT_EQ(cost, 0);
 }
 
 }  // namespace test
