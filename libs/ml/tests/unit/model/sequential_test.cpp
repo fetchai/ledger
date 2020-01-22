@@ -255,17 +255,17 @@ TYPED_TEST(SequentialModelTest, charge_one_dense)
   TensorType gt   = TensorType::FromString(R"(1, 2, 3, 4, 5, 6, 7, 8)");
   data_loader_ptr->AddData({data}, gt);
 
-  // run model in training modeConfig
   fetch::ml::model::ModelConfig<DataType> model_config;
   ModelType                               model = ModelType(model_config);
 
   model.SetBatchInputShape({data.shape()});
-  model.template Add<Dense>(Dense::AUTODETECT_INPUTS_COUNT, 1);
+  model.template Add<Dense>(Dense::AUTODETECT_INPUTS_COUNT, 16);
   model.SetDataloader(std::move(data_loader_ptr));
   model.Compile(optimiser_type, fetch::ml::ops::LossType::MEAN_SQUARE_ERROR);
 
-  MLChargeAmount const cost = model.ChargeForward();
-  EXPECT_EQ(cost, 0);
+  MLChargeAmount const cost          = model.ChargeForward();
+  MLChargeAmount const expected_cost = 65;  // A pre-calculated cost for a Dense with 8 neurons.
+  EXPECT_EQ(cost, expected_cost);
 }
 
 }  // namespace test

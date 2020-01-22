@@ -80,7 +80,7 @@ template <typename TensorType>
 MLChargeAmount Subtract<TensorType>::ChargeForward()
 {
   assert(!this->batch_output_shape_.empty());
-  MLChargeAmount cost = fetch::ml::ops::charge_cost::ADDITION_PER_ELEMENT *
+  MLChargeAmount cost = fetch::ml::ops::charge_cost::SUBTRACTION_PER_ELEMENT *
                         this->TotalElementsIn({this->batch_output_shape_});
   return cost;
 }
