@@ -51,6 +51,7 @@ using fetch::serializers::LargeObjectSerializeHelper;
 using fetch::ledger::ConsensusInterface;
 using fetch::ledger::TravelogueStatus;
 using fetch::ledger::testing::DigestMatcher;
+using fetch::ledger::testing::ExpectedHash;
 
 using AddressList        = fetch::muddle::MuddleEndpoint::AddressList;
 using State              = MainChainRpcService::State;
@@ -177,7 +178,7 @@ TEST_F(MainChainSyncTest, CheckExponentialBackStep)
   EXPECT_CALL(endpoint_, GetDirectlyConnectedPeers()).WillRepeatedly(Return(AddressList{other1_}));
 
   // build a fake chain
-  EXPECT_CALL(rpc_client_, TimeTravel(other1_, expected_hash(GetGenesisDigest())))
+  EXPECT_CALL(rpc_client_, TimeTravel(other1_, ExpectedHash(GetGenesisDigest())))
       .WillOnce(Return(CreatePromise(TimeTravel(fake_heaviest, common_part))));
   EXPECT_CALL(rpc_client_, TimeTravel(other1_, expected_hash(common_part.back()->hash)))
       .WillOnce(Return(CreatePromise(TimeTravel(fake_heaviest, fake_branch))));

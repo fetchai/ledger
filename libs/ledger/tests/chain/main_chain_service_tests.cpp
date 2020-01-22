@@ -52,6 +52,7 @@ using fetch::serializers::LargeObjectSerializeHelper;
 using fetch::ledger::ConsensusInterface;
 using fetch::ledger::TravelogueStatus;
 using fetch::ledger::testing::DigestMatcher;
+using fetch::ledger::testing::ExpectedHash;
 
 using AddressList        = fetch::muddle::MuddleEndpoint::AddressList;
 using State              = MainChainRpcService::State;
