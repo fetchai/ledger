@@ -276,7 +276,8 @@ void BeaconService::ReloadState(State &next_state)
 
     next_state = static_cast<State>(wrapper.current_state);
 
-    FETCH_LOG_INFO(LOGGING_NAME, "After re-load state is: ", wrapper.current_state);
+    FETCH_LOG_INFO(LOGGING_NAME, "After re-load state is: ", wrapper.current_state,
+                   ". Aeon queue size: ", aeon_exe_queue_.size());
 
     // Note, since certificates are not serialized, we must set the beacon managers in the aeon
     // to have the correct one
