@@ -45,7 +45,6 @@ using fetch::ledger::MainChain;
 using fetch::crypto::ECDSASigner;
 using fetch::muddle::NetworkId;
 using fetch::ledger::testing::BlockGenerator;
-using fetch::ledger::BlockStatus;
 using fetch::ledger::MainChainProtocol;
 using fetch::chain::GetGenesisDigest;
 using fetch::serializers::LargeObjectSerializeHelper;

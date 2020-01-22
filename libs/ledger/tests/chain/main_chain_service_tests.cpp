@@ -35,7 +35,6 @@
 #include <string>
 #include <unordered_map>
 
-using ::testing::InSequence;
 using ::testing::_;
 using ::testing::NiceMock;
 using ::testing::Return;
@@ -51,7 +50,6 @@ using fetch::chain::GetGenesisDigest;
 using fetch::serializers::LargeObjectSerializeHelper;
 using fetch::ledger::ConsensusInterface;
 using fetch::ledger::TravelogueStatus;
-using fetch::ledger::testing::DigestMatcher;
 using fetch::ledger::testing::ExpectedHash;
 
 using AddressList        = fetch::muddle::MuddleEndpoint::AddressList;
