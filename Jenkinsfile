@@ -60,9 +60,13 @@ def static_analysis(Configuration config)
           checkout scm
         }
 
-        stage('Run Static Analysis') {
-          docker.image(STATIC_ANALYSIS_IMAGE).inside {
-            sh "./scripts/ci-tool.py --lint ${config.label}"
+        docker.image(STATIC_ANALYSIS_IMAGE).inside {
+          stage('Set Up Static Analysis') {
+            sh "pipenv install --dev"
+          }
+
+          stage('Run Static Analysis') {
+            sh "pipenv run ./scripts/ci-tool.py --lint ${config.label}"
           }
         }
       }
@@ -79,7 +83,7 @@ def build_stage(Platform platform, Configuration config)
 {
   return {
     stage("Build ${stage_name_suffix(platform, config)}") {
-      sh "./scripts/ci-tool.py -B ${config.label}"
+      sh "pipenv run ./scripts/ci-tool.py -B ${config.label}"
     }
   }
 }
@@ -88,11 +92,11 @@ def fast_tests_stage(Platform platform, Configuration config)
 {
   return {
     stage("Unit Tests ${stage_name_suffix(platform, config)}") {
-      sh "./scripts/ci-tool.py -T ${config.label}"
+      sh "pipenv run ./scripts/ci-tool.py -T ${config.label}"
     }
 
     stage("Etch Lang Tests ${stage_name_suffix(platform, config)}") {
-      sh "./scripts/ci-tool.py -L ${config.label}"
+      sh "pipenv run ./scripts/ci-tool.py -L ${config.label}"
     }
   }
 }
@@ -101,16 +105,15 @@ def slow_tests_stage(Platform platform, Configuration config)
 {
   return {
     stage("Slow Tests ${stage_name_suffix(platform, config)}") {
-      sh "./scripts/ci-tool.py -S ${config.label}"
+      sh "pipenv run ./scripts/ci-tool.py -S ${config.label}"
     }
 
     stage("Integration Tests ${stage_name_suffix(platform, config)}") {
-      sh "./scripts/ci-tool.py -I ${config.label}"
+      sh "pipenv run ./scripts/ci-tool.py -I ${config.label}"
     }
 
     stage("End-to-End Tests ${stage_name_suffix(platform, config)}") {
-      sh './scripts/install-test-dependencies.sh'
-      sh "./scripts/ci-tool.py -E ${config.label}"
+      sh "pipenv run ./scripts/ci-tool.py -E ${config.label}"
     }
   }
 }
@@ -166,6 +169,10 @@ def create_docker_build(Platform platform, Configuration config, stages)
 {
   def build = { build_stages ->
     docker.image(platform.docker_image).inside {
+      stage("Set Up ${stage_name_suffix(platform, config)}") {
+        sh "pipenv install --dev"
+      }
+
       build_stages()
     }
   }
@@ -180,7 +187,19 @@ def create_docker_build(Platform platform, Configuration config, stages)
 
 def create_macos_build(Platform platform, Configuration config)
 {
-  def build = { build_stages -> build_stages() }
+  def build = { build_stages ->
+    try {
+      stage("Set Up ${stage_name_suffix(platform, config)}") {
+        sh "pipenv install --dev"
+      }
+
+      build_stages()
+    } finally {
+      stage("Tear Down ${stage_name_suffix(platform, config)}") {
+        sh "pipenv --rm"
+      }
+    }
+  }
 
   return _create_build(
     platform,
@@ -244,12 +263,17 @@ def run_basic_checks()
       }
 
       docker.image(DOCKER_IMAGE_NAME).inside {
+        stage('Set Up Basic Checks') {
+          sh "pipenv install --dev"
+        }
+
         stage('Style Check') {
-          sh './scripts/apply_style.py -d'
+          sh 'pipenv run ./scripts/apply_style.py -d'
         }
 
         stage('Circular Dependencies') {
-          sh 'mkdir -p build-deps && cd build-deps && cmake ../ && cd - && ./scripts/detect-circular-dependencies.py build-deps/'
+          sh 'mkdir -p build-deps && cd build-deps && cmake ../'
+          sh 'pipenv run ./scripts/detect-circular-dependencies.py build-deps/'
         }
       }
     }
