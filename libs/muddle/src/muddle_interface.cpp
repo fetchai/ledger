@@ -27,16 +27,31 @@ namespace fetch {
 namespace muddle {
 
 MuddlePtr CreateMuddle(NetworkId const &network, ProverPtr certificate,
+                       network::NetworkManager const &nm, std::string const &external_address,
+                       bool enable_message_signing)
+{
+  return std::make_shared<Muddle>(network, certificate, nm, external_address,
+                                  enable_message_signing);
+}
+
+MuddlePtr CreateMuddle(NetworkId const &network, ProverPtr certificate,
                        network::NetworkManager const &nm, std::string const &external_address)
 {
-  // enable all message signing
-  return std::make_shared<Muddle>(network, certificate, nm, external_address);
+  return CreateMuddle(network, std::move(certificate), nm, external_address, true);
 }
 
 MuddlePtr CreateMuddle(char const network[4], ProverPtr certificate,
                        network::NetworkManager const &nm, std::string const &external_address)
 {
   return CreateMuddle(NetworkId{network}, std::move(certificate), nm, external_address);
+}
+
+MuddlePtr CreateMuddle(char const network[4], ProverPtr certificate,
+                       network::NetworkManager const &nm, std::string const &external_address,
+                       bool enable_message_signing)
+{
+  return CreateMuddle(NetworkId{network}, std::move(certificate), nm, external_address,
+                      enable_message_signing);
 }
 
 MuddlePtr CreateMuddle(NetworkId const &network, network::NetworkManager const &nm,
