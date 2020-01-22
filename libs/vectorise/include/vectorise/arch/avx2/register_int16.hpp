@@ -385,8 +385,8 @@ FETCH_ROTATE_ELEMENTS_LEFT(int16_t, 7)
 template <>
 inline VectorRegister<int16_t, 256> rotate_elements_left<8>(VectorRegister<int16_t, 256> const &x)
 {
-  __m128i hi  = _mm256_extractf128_si256(x.data(), 1);
-  __m128i lo  = _mm256_extractf128_si256(x.data(), 0);
+  __m128i hi = _mm256_extractf128_si256(x.data(), 1);
+  __m128i lo = _mm256_extractf128_si256(x.data(), 0);
   return {_mm256_set_m128i(lo, hi)};
 }
 
@@ -432,9 +432,9 @@ inline int16_t reduce(VectorRegister<int16_t, 128> const &x)
 
 inline int16_t reduce(VectorRegister<int16_t, 256> const &x)
 {
-  __m256i r = _mm256_hadd_epi16(x.data(), _mm256_setzero_si256());
-  r         = _mm256_hadd_epi16(r, _mm256_setzero_si256());
-  r         = _mm256_hadd_epi16(r, _mm256_setzero_si256());
+  __m256i r   = _mm256_hadd_epi16(x.data(), _mm256_setzero_si256());
+  r           = _mm256_hadd_epi16(r, _mm256_setzero_si256());
+  r           = _mm256_hadd_epi16(r, _mm256_setzero_si256());
   __m128i hi  = _mm256_extractf128_si256(r, 1);
   __m128i lo  = _mm256_extractf128_si256(r, 0);
   __m128i sum = _mm_add_epi16(hi, lo);

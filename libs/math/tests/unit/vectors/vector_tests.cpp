@@ -220,14 +220,14 @@ TYPED_TEST(VectorRegisterTest, minmax_tests)
   TypeParam va{a};
   TypeParam vb{b};
 
-  auto vsum  = va + vb;
-  auto vdiff = va - vb;
+  auto      vsum  = va + vb;
+  auto      vdiff = va - vb;
   TypeParam vprod;
   if (sizeof(type) > 1)
   {
     vprod = va * vb;
   }
-  auto vdiv  = va / vb;
+  auto vdiv = va / vb;
 
   TypeParam vtmp1{sum}, vtmp2{diff}, vtmp3{prod}, vtmp4{div};
   EXPECT_TRUE(all_equal_to(vtmp1, vsum));
