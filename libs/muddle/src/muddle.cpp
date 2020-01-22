@@ -542,30 +542,34 @@ void Muddle::UpdateExternalAddresses()
 {
   PeerTracker::NetworkUris external_uris{};
   DiscoveryService::Peers  external_addresses{};
-  for (uint16_t port : GetListeningPorts())
+
+  if (!external_address_.empty())
   {
-    // ignore pending ports
-    if (port == 0)
+    for (uint16_t port : GetListeningPorts())
     {
-      continue;
+      // ignore pending ports
+      if (port == 0)
+      {
+        continue;
+      }
+
+      // determine if the port needs to be mapped to an external range
+      auto const it = port_mapping_.find(port);
+      if (it != port_mapping_.end())
+      {
+        port = it->second;
+      }
+
+      network::Peer peer{external_address_, port};
+
+      Uri uri;
+      uri.Parse(peer.ToUri());
+
+      external_uris.emplace_back(uri);
+
+      external_addresses.emplace_back(std::move(peer));
+      FETCH_LOG_TRACE(logging_name_, "Discovery: ", external_addresses.back().ToString());
     }
-
-    // determine if the port needs to be mapped to an external range
-    auto const it = port_mapping_.find(port);
-    if (it != port_mapping_.end())
-    {
-      port = it->second;
-    }
-
-    network::Peer peer{external_address_, port};
-
-    Uri uri;
-    uri.Parse(peer.ToUri());
-
-    external_uris.emplace_back(uri);
-
-    external_addresses.emplace_back(std::move(peer));
-    FETCH_LOG_TRACE(logging_name_, "Discovery: ", external_addresses.back().ToString());
   }
 
   discovery_service_.UpdatePeers(external_addresses);

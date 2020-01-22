@@ -166,17 +166,15 @@ public:
   MainChainRpcService &operator=(MainChainRpcService &&) = delete;
 
 private:
-  using BlockList       = fetch::ledger::MainChainProtocol::Blocks;
   using StateMachine    = core::StateMachine<State>;
   using StateMachinePtr = std::shared_ptr<StateMachine>;
-  using BlockPtr        = MainChain::BlockPtr;
   using DeadlineTimer   = fetch::moment::DeadlineTimer;
 
   /// @name Utilities
   /// @{
   Address GetRandomTrustedPeer() const;
 
-  void HandleChainResponse(Address const &address, BlockList blocks);
+  void HandleChainResponse(Address const &address, Blocks blocks);
   template <class Begin, class End>
   void HandleChainResponse(Address const &address, Begin begin, End end);
   /// @}
@@ -190,7 +188,7 @@ private:
   State OnWaitForBlocks();
   State OnCompleteSyncWithPeer();
 
-  bool ValidBlock(Block const &block, char const *action) const;
+  bool ValidBlock(Block const &block) const;
   /// @}
 
   /// @name System Components

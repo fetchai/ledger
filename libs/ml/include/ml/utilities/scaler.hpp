@@ -17,6 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include "math/tensor/tensor.hpp"
+
 namespace fetch {
 namespace ml {
 namespace utilities {

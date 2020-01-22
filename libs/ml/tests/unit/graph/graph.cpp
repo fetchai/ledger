@@ -21,10 +21,12 @@
 #include "ml/layers/convolution_1d.hpp"
 #include "ml/layers/fully_connected.hpp"
 #include "ml/ops/activations/relu.hpp"
+#include "ml/ops/add.hpp"
 #include "ml/ops/loss_functions/mean_square_error_loss.hpp"
 #include "ml/ops/multiply.hpp"
 #include "ml/ops/placeholder.hpp"
 #include "ml/ops/subtract.hpp"
+#include "ml/regularisers/l1_regulariser.hpp"
 #include "test_types.hpp"
 
 #include "gtest/gtest.h"
@@ -39,6 +41,26 @@ class GraphTest : public ::testing::Test
 };
 
 TYPED_TEST_CASE(GraphTest, math::test::TensorFloatingTypes);
+
+template <class TensorType>
+std::shared_ptr<fetch::ml::Graph<TensorType>> MakeGraph()
+{
+  // Create graph
+  std::shared_ptr<fetch::ml::Graph<TensorType>> g =
+      std::make_shared<fetch::ml::Graph<TensorType>>();
+
+  std::string input = g->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Input", {});
+  std::string label = g->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Label", {});
+
+  std::string layer_1 = g->template AddNode<layers::FullyConnected<TensorType>>(
+      "FC1", {input}, 28u * 28u, 10u, fetch::ml::details::ActivationType::RELU);
+  std::string layer_2 = g->template AddNode<layers::FullyConnected<TensorType>>(
+      "FC2", {layer_1}, 10u, 10u, fetch::ml::details::ActivationType::RELU);
+  std::string output = g->template AddNode<layers::FullyConnected<TensorType>>(
+      "FC3", {layer_2}, 10u, 10u, fetch::ml::details::ActivationType::SOFTMAX);
+
+  return g;
+}
 
 TYPED_TEST(GraphTest, node_placeholder)
 {
@@ -75,17 +97,6 @@ TYPED_TEST(GraphTest, node_relu)
 
   // test correct values
   ASSERT_TRUE(prediction.AllClose(gt));
-}
-
-TYPED_TEST(GraphTest, get_state_dict)
-{
-  using TensorType = TypeParam;
-
-  fetch::ml::Graph<TensorType>     g;
-  fetch::ml::StateDict<TensorType> sd = g.StateDict();
-
-  EXPECT_EQ(sd.weights_, nullptr);
-  EXPECT_TRUE(sd.dict_.empty());
 }
 
 TYPED_TEST(GraphTest, no_such_node_test)  // Use the class as a Node
@@ -634,47 +645,571 @@ TYPED_TEST(GraphTest, diamond_graph_backward)  // output=(input1*input2)-(input1
                                      fetch::math::function_tolerance<DataType>()));
 }
 
-TYPED_TEST(GraphTest, diamond_graph_getStateDict)
+TYPED_TEST(GraphTest, compute_shapes_single_placeholder)
 {
   using TensorType = TypeParam;
 
-  // Generate input
-  TensorType data1 = TensorType::FromString(R"(-1,0,1,2,3,4)");
-  TensorType data2 = TensorType::FromString(R"(-20,-10, 0, 10, 20, 30)");
+  TensorType data = TensorType::FromString(R"(01,02,03,04; 11,12,13,14; 21,22,23,24; 31,32,33,34)");
+  math::SizeVector batch_shape = data.shape();
+  batch_shape.back()           = 1;  // Because default batch size is always 1.
+
+  fetch::ml::Graph<TensorType> g;
+
+  std::string input = g.template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Input", {});
+
+  g.SetInput(input, data);
+  g.Compile();
+
+  math::SizeVector const out_shape = g.GetNode(input)->BatchOutputShape();
+
+  ASSERT_EQ(batch_shape, out_shape);
+}
+
+TYPED_TEST(GraphTest, compute_shapes_dense_layers)
+{
+  using TensorType = TypeParam;
+  using Dense      = fetch::ml::layers::FullyConnected<TensorType>;
+
+  static constexpr math::SizeType FIRST_LAYER_OUTPUTS  = 3;
+  static constexpr math::SizeType SECOND_LAYER_OUTPUTS = 13;
+  static constexpr math::SizeType THIRD_LAYER_OUTPUTS  = 9;
+
+  TensorType data = TensorType::FromString(R"(01,02,03,04; 11,12,13,14; 21,22,23,24; 31,32,33,34)");
+  math::SizeVector batch_shape = data.shape();
+  batch_shape.back()           = 1;  // Because default batch size is always 1.
+
+  fetch::ml::Graph<TensorType> g;
+
+  std::string input   = g.template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Input", {});
+  std::string layer_1 = g.template AddNode<Dense>("FC1", {"Input"}, Dense::AUTODETECT_INPUTS_COUNT,
+                                                  FIRST_LAYER_OUTPUTS);
+  std::string layer_2 = g.template AddNode<Dense>("FC2", {"FC1"}, Dense::AUTODETECT_INPUTS_COUNT,
+                                                  SECOND_LAYER_OUTPUTS);
+  std::string output  = g.template AddNode<Dense>("FC3", {"FC2"}, Dense::AUTODETECT_INPUTS_COUNT,
+                                                 THIRD_LAYER_OUTPUTS);
+
+  g.SetInput(input, data);
+  g.Compile();
+
+  math::SizeVector const out_shape1 = g.GetNode(layer_1)->BatchOutputShape();
+  EXPECT_EQ(out_shape1.size(), batch_shape.size());
+  EXPECT_EQ(out_shape1.at(0), FIRST_LAYER_OUTPUTS);
+
+  math::SizeVector const out_shape2 = g.GetNode(layer_2)->BatchOutputShape();
+  EXPECT_EQ(out_shape2.size(), batch_shape.size());
+  EXPECT_EQ(out_shape2.at(0), SECOND_LAYER_OUTPUTS);
+
+  math::SizeVector const out_shape3 = g.GetNode(output)->BatchOutputShape();
+  EXPECT_EQ(out_shape3.size(), batch_shape.size());
+  EXPECT_EQ(out_shape3.at(0), THIRD_LAYER_OUTPUTS);
+
+  TensorType const       result = g.Evaluate(output);
+  math::SizeVector const expected_out_shape{THIRD_LAYER_OUTPUTS, data.shape().back()};
+  EXPECT_EQ(result.shape(), expected_out_shape);
+}
+
+TYPED_TEST(GraphTest, compute_shapes_two_outputs)
+{
+  using TensorType = TypeParam;
+  using Dense      = fetch::ml::layers::FullyConnected<TensorType>;
+
+  static constexpr math::SizeType CENTER_OUTPUTS = 21;
+  static constexpr math::SizeType LEFT_OUTPUTS   = 13;
+  static constexpr math::SizeType RIGHT_OUTPUTS  = 9;
+
+  TensorType data = TensorType::FromString(R"(01,02,03,04; 11,12,13,14; 21,22,23,24; 31,32,33,34)");
+
+  fetch::ml::Graph<TensorType> g;
+
+  //          ┌───────────────┐
+  //          │ input {4, 1}  │
+  //          └───────┐───────┘
+  //                  │
+  //                  ▼
+  //          ┌───────────────┐
+  //          │ dense {21, 1} │
+  //          └───────┐───────┘
+  //                  │
+  //         ┌────────┴─────────┐
+  //         ▼                  ▼
+  // ┌───────────────┐  ┌───────────────┐
+  // │ dense {13, 1} │  │ dense {9, 1}  │
+  // └───────────────┘  └───────────────┘
+
+  std::string left_input =
+      g.template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("LeftInput", {});
+
+  std::string center = g.template AddNode<Dense>("Center", {"LeftInput"},
+                                                 Dense::AUTODETECT_INPUTS_COUNT, CENTER_OUTPUTS);
+
+  std::string left_output  = g.template AddNode<Dense>("LeftOutput", {"Center"},
+                                                      Dense::AUTODETECT_INPUTS_COUNT, LEFT_OUTPUTS);
+  std::string right_output = g.template AddNode<Dense>(
+      "RightOutput", {"Center"}, Dense::AUTODETECT_INPUTS_COUNT, RIGHT_OUTPUTS);
+
+  g.SetInput(left_input, data);
+  g.Compile();
+
+  math::SizeVector const center_out_batch_shape = g.GetNode(center)->BatchOutputShape();
+  EXPECT_EQ(center_out_batch_shape.at(0), CENTER_OUTPUTS);
+
+  math::SizeVector const left_out_batch_shape = g.GetNode(left_output)->BatchOutputShape();
+  EXPECT_EQ(left_out_batch_shape.at(0), LEFT_OUTPUTS);
+
+  math::SizeVector const right_out_batch_shape = g.GetNode(right_output)->BatchOutputShape();
+  EXPECT_EQ(right_out_batch_shape.at(0), RIGHT_OUTPUTS);
+
+  TensorType const left_result  = g.Evaluate(left_output);
+  TensorType const right_result = g.Evaluate(right_output);
+
+  math::SizeVector const expected_left_out_shape{LEFT_OUTPUTS, data.shape().back()};
+  EXPECT_EQ(left_result.shape(), expected_left_out_shape);
+
+  math::SizeVector const expected_right_out_shape{RIGHT_OUTPUTS, data.shape().back()};
+  EXPECT_EQ(right_result.shape(), expected_right_out_shape);
+}
+
+TYPED_TEST(GraphTest, compute_shapes_two_inputs_two_outputs)
+{
+  using TensorType = TypeParam;
+  using Dense      = fetch::ml::layers::FullyConnected<TensorType>;
+
+  static constexpr math::SizeType CENTER_OUTPUTS = 21;
+  static constexpr math::SizeType LEFT_OUTPUTS   = 13;
+  static constexpr math::SizeType RIGHT_OUTPUTS  = 9;
+
+  TensorType left_data =
+      TensorType::FromString(R"(01,02,03,04; 11,12,13,14; 21,22,23,24; 31,32,33,34)");
+  TensorType right_data = TensorType::FromString(
+      R"(011,022,033,044; 111,122,133,144; 211,222,233,244; 311,322,333,344)");
+
+  fetch::ml::Graph<TensorType> g;
+
+  //{4,1} {4,1}  {4,1} {4,1}
+  //  li     ri   (li)  (ri)
+  //   |     |      |     |
+  //  A_D_D{4,1}   S_U_B{4,1}
+  //      |         |
+  //    M_U_L_T_I_P_L_Y {??}
+  //         |
+  //    Dense{21, 1}
+  //      |       |
+  //    Dense    Dense
+  //   {13, 1}  {9, 1}
+
+  std::string left_input =
+      g.template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("LeftInput", {});
+  std::string right_input =
+      g.template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("RightInput", {});
+
+  std::string add =
+      g.template AddNode<fetch::ml::ops::Add<TensorType>>("AddInputs", {"LeftInput", "RightInput"});
+
+  std::string subtract =
+      g.template AddNode<fetch::ml::ops::Add<TensorType>>("SubInputs", {"LeftInput", "RightInput"});
+
+  std::string multiply = g.template AddNode<fetch::ml::ops::Multiply<TensorType>>(
+      "Multiply", {"AddInputs", "SubInputs"});
+
+  std::string center = g.template AddNode<Dense>("Center", {"Multiply"},
+                                                 Dense::AUTODETECT_INPUTS_COUNT, CENTER_OUTPUTS);
+
+  std::string left_output  = g.template AddNode<Dense>("LeftOutput", {"Center"},
+                                                      Dense::AUTODETECT_INPUTS_COUNT, LEFT_OUTPUTS);
+  std::string right_output = g.template AddNode<Dense>(
+      "RightOutput", {"Center"}, Dense::AUTODETECT_INPUTS_COUNT, RIGHT_OUTPUTS);
+
+  g.SetInput(left_input, left_data);
+  g.SetInput(right_input, left_data);
+  g.Compile();
+
+  math::SizeVector const center_out_batch_shape = g.GetNode(center)->BatchOutputShape();
+  EXPECT_EQ(center_out_batch_shape.at(0), CENTER_OUTPUTS);
+
+  math::SizeVector const left_out_batch_shape = g.GetNode(left_output)->BatchOutputShape();
+  EXPECT_EQ(left_out_batch_shape.at(0), LEFT_OUTPUTS);
+
+  math::SizeVector const right_out_batch_shape = g.GetNode(right_output)->BatchOutputShape();
+  EXPECT_EQ(right_out_batch_shape.at(0), RIGHT_OUTPUTS);
+
+  TensorType const left_result  = g.Evaluate(left_output);
+  TensorType const right_result = g.Evaluate(right_output);
+
+  math::SizeVector const expected_left_out_shape{LEFT_OUTPUTS, left_data.shape().back()};
+  EXPECT_EQ(left_result.shape(), expected_left_out_shape);
+
+  math::SizeVector const expected_right_out_shape{RIGHT_OUTPUTS, right_data.shape().back()};
+  EXPECT_EQ(right_result.shape(), expected_right_out_shape);
+}
+
+// (VH): Disabled because shared Dense layers do not work if created with auto-detected inputs.
+TYPED_TEST(GraphTest, compute_shapes_sequential_denses_with_shared_ops)
+{
+  using TensorType = TypeParam;
+  using Dense      = fetch::ml::layers::FullyConnected<TensorType>;
+
+  static constexpr math::SizeType NEURONS = 4;
+
+  TensorType data = TensorType::FromString(R"(01,02,03,04; 11,12,13,14; 21,22,23,24; 31,32,33,34)");
+
+  fetch::ml::Graph<TensorType> g;
+
+  // Note: all 4 Dense nodes share the same single Op.
+  //     {4,1}
+  //    i_n_p_u_t
+  //       |
+  //     Dense
+  //    {4, 1}
+  //       |
+  //     Dense - copy
+  //    {4, 1}
+  //       |
+  //     Dense - copy
+  //    {4, 1}
+
+  std::string const input =
+      g.template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Input", {});
+
+  std::string const dense_1 =
+      g.template AddNode<Dense>("SharedDense", {"Input"}, Dense::AUTODETECT_INPUTS_COUNT, NEURONS);
+
+  std::string const dense_2 = g.template AddNode<Dense>("SharedDense", {dense_1});
+  std::string const output  = g.template AddNode<Dense>("SharedDense", {dense_2});
+
+  g.SetInput(input, data);
+  g.Compile();
+
+  TensorType const result = g.Evaluate(output);
+
+  math::SizeVector const expected_out_shape{NEURONS, data.shape().back()};
+  EXPECT_EQ(result.shape(), expected_out_shape);
+}
+
+// (VH): Disabled because shared Dense layers do not work if created with auto-detected inputs.
+TYPED_TEST(GraphTest, compute_shapes_two_diamonds_with_shared_ops)
+{
+  using TensorType = TypeParam;
+  using Dense      = fetch::ml::layers::FullyConnected<TensorType>;
+
+  static constexpr math::SizeType NEURONS = 42;
+
+  TensorType data = TensorType::FromString(R"(01,02,03,04; 11,12,13,14; 21,22,23,24; 31,32,33,34)");
+
+  fetch::ml::Graph<TensorType> g;
+
+  // Note: all 4 Dense nodes share the same single Op.
+  //     {4,1}
+  //    i_n_p_u_t
+  //    |       |
+  //  Dense1  Dense1_copy
+  //{42, 1}    {42, 1}
+  //    |         |
+  //  M_U_L_T_I_P_L_Y
+  //    |         |
+  // Dense2   Dense2_copy
+  //{42, 1}    {42, 1}
+  //    |         |
+  //  M_U_L_T_I_P_L_Y
+
+  std::string input = g.template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Input", {});
+
+  std::string dense_top_left =
+      g.template AddNode<Dense>("SharedDense", {"Input"}, Dense::AUTODETECT_INPUTS_COUNT, NEURONS);
+
+  std::string dense_top_right = g.template AddNode<Dense>("SharedDense", {"Input"});
+
+  std::string multiply1 = g.template AddNode<fetch::ml::ops::Multiply<TensorType>>(
+      "Multiply1", {dense_top_left, dense_top_right});
+
+  std::string dense_bottom_left = g.template AddNode<Dense>(
+      "SharedDense2", {multiply1}, Dense::AUTODETECT_INPUTS_COUNT, NEURONS);
+
+  std::string dense_bottom_right = g.template AddNode<Dense>("SharedDense2", {"Multiply1"});
+
+  std::string output = g.template AddNode<fetch::ml::ops::Multiply<TensorType>>(
+      "Multiply2", {dense_bottom_left, dense_bottom_right});
+
+  g.SetInput(input, data);
+  g.Compile();
+
+  TensorType const result = g.Evaluate(output);
+
+  math::SizeVector const expected_out_shape{NEURONS, data.shape().back()};
+  EXPECT_EQ(result.shape(), expected_out_shape);
+}
+
+TYPED_TEST(GraphTest, graph_getTrainableNames)
+{
+  using TensorType = TypeParam;
 
   // Create graph
-  std::string                 name = "Diamond";
-  fetch::ml::Graph<TypeParam> g;
+  auto g = MakeGraph<TensorType>();
 
-  std::string input_name1 =
-      g.template AddNode<fetch::ml::ops::Weights<TensorType>>(name + "_Weight1", {});
+  std::vector<std::string> names = g->GetTrainableNames();
 
-  std::string input_name2 =
-      g.template AddNode<fetch::ml::ops::Weights<TensorType>>(name + "_Weight2", {});
+  // Test names
+  ASSERT_EQ(names.size(), 6);
+  EXPECT_EQ(names.at(0), "FC1/FullyConnected_Bias");
+  EXPECT_EQ(names.at(1), "FC1/FullyConnected_Weights");
+  EXPECT_EQ(names.at(2), "FC2/FullyConnected_Bias");
+  EXPECT_EQ(names.at(3), "FC2/FullyConnected_Weights");
+  EXPECT_EQ(names.at(4), "FC3/FullyConnected_Bias");
+  EXPECT_EQ(names.at(5), "FC3/FullyConnected_Weights");
+}
 
-  std::string op1_name = g.template AddNode<fetch::ml::ops::Multiply<TensorType>>(
-      name + "_Op1", {input_name1, input_name1});
-  std::string op2_name = g.template AddNode<fetch::ml::ops::Multiply<TensorType>>(
-      name + "_Op2", {input_name1, input_name2});
+TYPED_TEST(GraphTest, graph_getNode_as_weight)
+{
+  using TensorType = TypeParam;
 
-  std::string output_name =
-      g.template AddNode<fetch::ml::ops::Subtract<TensorType>>(name + "_Op3", {op2_name, op1_name});
+  // Create graph
+  auto g = MakeGraph<TensorType>();
 
-  g.SetInput(input_name1, data1);
-  g.SetInput(input_name2, data2);
+  auto node_ptr = g->GetNode("FC3/FullyConnected_Bias");
 
-  // Get statedict
-  fetch::ml::StateDict<TypeParam> sd = g.StateDict();
+  ASSERT_TRUE(node_ptr);
+  EXPECT_EQ(node_ptr->GetNodeName(), "FullyConnected_Bias");
+
+  auto op_ptr = std::dynamic_pointer_cast<fetch::ml::ops::Weights<TensorType>>(node_ptr->GetOp());
+
+  ASSERT_TRUE(op_ptr);
+
+  auto weight = op_ptr->GetWeights();
 
   // Test weights
-  EXPECT_EQ(sd.weights_, nullptr);
-  EXPECT_EQ(sd.dict_.size(), 2);
+  EXPECT_EQ(weight.shape().at(0), 10);
+  EXPECT_EQ(weight.shape().at(1), 1);
+}
 
-  ASSERT_NE(sd.dict_["Diamond_Weight1"].weights_, nullptr);
-  EXPECT_EQ(sd.dict_["Diamond_Weight1"].weights_->shape(), data1.shape());
+TYPED_TEST(GraphTest, graph_getNode_as_graph)
+{
+  using TensorType = TypeParam;
 
-  ASSERT_NE(sd.dict_["Diamond_Weight2"].weights_, nullptr);
-  EXPECT_EQ(sd.dict_["Diamond_Weight2"].weights_->shape(), data2.shape());
+  // Create graph
+  auto g = MakeGraph<TensorType>();
+
+  auto node_ptr = g->GetNode("FC1");
+
+  ASSERT_TRUE(node_ptr);
+  EXPECT_EQ(node_ptr->GetNodeName(), "FC1");
+
+  auto graph_ptr = std::dynamic_pointer_cast<Graph<TensorType>>(node_ptr->GetOp());
+  ASSERT_TRUE(graph_ptr);
+
+  std::vector<std::string> names = graph_ptr->GetTrainableNames();
+
+  EXPECT_EQ(names.at(0), "FullyConnected_Bias");
+  EXPECT_EQ(names.at(1), "FullyConnected_Weights");
+}
+
+TYPED_TEST(GraphTest, graph_invalidName)
+{
+  using TensorType = TypeParam;
+
+  // Create graph
+  fetch::ml::Graph<TensorType> g;
+
+  EXPECT_THROW(g.template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Input/", {}),
+               std::runtime_error);
+}
+
+TYPED_TEST(GraphTest, graph_getNodeNames)
+{
+  using TensorType = TypeParam;
+
+  // Create graph
+  auto g = MakeGraph<TensorType>();
+
+  std::vector<std::string> names = g->GetNodeNames();
+
+  // Test names
+  ASSERT_EQ(names.size(), 26);
+  EXPECT_EQ(names.at(0), "FC1");
+  EXPECT_EQ(names.at(1), "FC2");
+  EXPECT_EQ(names.at(2), "FC3");
+  EXPECT_EQ(names.at(3), "Input");
+  EXPECT_EQ(names.at(4), "Label");
+  EXPECT_EQ(names.at(5), "FC1/FullyConnected_Activation");
+  EXPECT_EQ(names.at(6), "FC1/FullyConnected_Add");
+  EXPECT_EQ(names.at(7), "FC1/FullyConnected_Bias");
+  EXPECT_EQ(names.at(8), "FC1/FullyConnected_Flatten");
+  EXPECT_EQ(names.at(9), "FC1/FullyConnected_Input");
+  EXPECT_EQ(names.at(10), "FC1/FullyConnected_MatrixMultiply");
+  EXPECT_EQ(names.at(11), "FC1/FullyConnected_Weights");
+  EXPECT_EQ(names.at(12), "FC2/FullyConnected_Activation");
+  EXPECT_EQ(names.at(13), "FC2/FullyConnected_Add");
+  EXPECT_EQ(names.at(14), "FC2/FullyConnected_Bias");
+  EXPECT_EQ(names.at(15), "FC2/FullyConnected_Flatten");
+  EXPECT_EQ(names.at(16), "FC2/FullyConnected_Input");
+  EXPECT_EQ(names.at(17), "FC2/FullyConnected_MatrixMultiply");
+  EXPECT_EQ(names.at(18), "FC2/FullyConnected_Weights");
+  EXPECT_EQ(names.at(19), "FC3/FullyConnected_Activation");
+  EXPECT_EQ(names.at(20), "FC3/FullyConnected_Add");
+  EXPECT_EQ(names.at(21), "FC3/FullyConnected_Bias");
+  EXPECT_EQ(names.at(22), "FC3/FullyConnected_Flatten");
+  EXPECT_EQ(names.at(23), "FC3/FullyConnected_Input");
+  EXPECT_EQ(names.at(24), "FC3/FullyConnected_MatrixMultiply");
+  EXPECT_EQ(names.at(25), "FC3/FullyConnected_Weights");
+}
+
+TYPED_TEST(GraphTest, graph_setWeight)
+{
+  using TensorType = TypeParam;
+  using DataType   = typename TensorType::Type;
+
+  TensorType gt({10, 1});
+  gt.Fill(fetch::math::Type<DataType>("1.23"));
+
+  // Create graph
+  auto g = MakeGraph<TensorType>();
+
+  // Assign weight
+  g->SetWeight("FC3/FullyConnected_Bias", gt);
+
+  // Get weight from graph
+  auto node_ptr = g->GetNode("FC3/FullyConnected_Bias");
+  ASSERT_TRUE(node_ptr);
+  EXPECT_EQ(node_ptr->GetNodeName(), "FullyConnected_Bias");
+  auto op_ptr = std::dynamic_pointer_cast<fetch::ml::ops::Weights<TensorType>>(node_ptr->GetOp());
+  ASSERT_TRUE(op_ptr);
+  auto weight = op_ptr->GetWeights();
+
+  // Test size
+  EXPECT_EQ(weight.shape().at(0), 10);
+  EXPECT_EQ(weight.shape().at(1), 1);
+
+  // Test values
+  ASSERT_TRUE(weight.AllClose(gt, fetch::math::function_tolerance<DataType>(),
+                              fetch::math::function_tolerance<DataType>()));
+}
+
+TYPED_TEST(GraphTest, graph_getWeightsOrder_1)
+{
+  // Tests if weight values in GetWeightsReferences are always in alphabetical order
+
+  using TensorType = TypeParam;
+  using DataType   = typename TensorType::Type;
+
+  // Create graph
+  std::shared_ptr<fetch::ml::Graph<TensorType>> g =
+      std::make_shared<fetch::ml::Graph<TensorType>>();
+
+  std::string input = g->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Input", {});
+  std::string label = g->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Label", {});
+
+  std::string layer_1 = g->template AddNode<layers::FullyConnected<TensorType>>(
+      "B", {input}, 5u, 10u, fetch::ml::details::ActivationType::RELU);
+  std::string layer_2 = g->template AddNode<layers::FullyConnected<TensorType>>(
+      "C", {layer_1}, 10u, 10u, fetch::ml::details::ActivationType::RELU);
+  std::string output = g->template AddNode<layers::FullyConnected<TensorType>>(
+      "A", {layer_2}, 10u, 5u, fetch::ml::details::ActivationType::SOFTMAX);
+
+  TensorType gt_a_bias({5, 1});
+  gt_a_bias.Fill(DataType{1});
+  TensorType gt_a_weight({10, 5});
+  gt_a_weight.Fill(DataType{2});
+
+  TensorType gt_b_bias({10, 1});
+  gt_b_bias.Fill(DataType{3});
+  TensorType gt_b_weight({5, 10});
+  gt_b_weight.Fill(DataType{4});
+
+  TensorType gt_c_bias({10, 1});
+  gt_c_bias.Fill(DataType{5});
+  TensorType gt_c_weight({10, 10});
+  gt_c_weight.Fill(DataType{6});
+
+  g->SetWeight("A/FullyConnected_Bias", gt_a_bias);
+  g->SetWeight("A/FullyConnected_Weights", gt_a_weight);
+
+  g->SetWeight("B/FullyConnected_Bias", gt_b_bias);
+  g->SetWeight("B/FullyConnected_Weights", gt_b_weight);
+
+  g->SetWeight("C/FullyConnected_Bias", gt_c_bias);
+  g->SetWeight("C/FullyConnected_Weights", gt_c_weight);
+
+  auto weights = g->GetWeightsReferences();
+
+  // Test values
+  ASSERT_EQ(weights.size(), 6);
+  ASSERT_TRUE(weights.at(0).AllClose(gt_a_bias, fetch::math::function_tolerance<DataType>(),
+                                     fetch::math::function_tolerance<DataType>()));
+  ASSERT_TRUE(weights.at(1).AllClose(gt_a_weight, fetch::math::function_tolerance<DataType>(),
+                                     fetch::math::function_tolerance<DataType>()));
+
+  ASSERT_TRUE(weights.at(2).AllClose(gt_b_bias, fetch::math::function_tolerance<DataType>(),
+                                     fetch::math::function_tolerance<DataType>()));
+  ASSERT_TRUE(weights.at(3).AllClose(gt_b_weight, fetch::math::function_tolerance<DataType>(),
+                                     fetch::math::function_tolerance<DataType>()));
+
+  ASSERT_TRUE(weights.at(4).AllClose(gt_c_bias, fetch::math::function_tolerance<DataType>(),
+                                     fetch::math::function_tolerance<DataType>()));
+  ASSERT_TRUE(weights.at(5).AllClose(gt_c_weight, fetch::math::function_tolerance<DataType>(),
+                                     fetch::math::function_tolerance<DataType>()));
+}
+
+TYPED_TEST(GraphTest, graph_getWeightsOrder_2)
+{
+  // Tests if weight values in GetWeightsReferences are always in alphabetical order
+
+  using TensorType = TypeParam;
+  using DataType   = typename TensorType::Type;
+
+  // Create graph
+  std::shared_ptr<fetch::ml::Graph<TensorType>> g =
+      std::make_shared<fetch::ml::Graph<TensorType>>();
+
+  std::string input = g->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Input", {});
+  std::string label = g->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Label", {});
+
+  std::string layer_1 = g->template AddNode<layers::FullyConnected<TensorType>>(
+      "C", {input}, 5u, 10u, fetch::ml::details::ActivationType::RELU);
+  std::string layer_2 = g->template AddNode<layers::FullyConnected<TensorType>>(
+      "A", {layer_1}, 10u, 10u, fetch::ml::details::ActivationType::RELU);
+  std::string output = g->template AddNode<layers::FullyConnected<TensorType>>(
+      "B", {layer_2}, 10u, 5u, fetch::ml::details::ActivationType::SOFTMAX);
+
+  TensorType gt_a_bias({10, 1});
+  gt_a_bias.Fill(DataType{5});
+  TensorType gt_a_weight({10, 10});
+  gt_a_weight.Fill(DataType{6});
+
+  TensorType gt_b_bias({5, 1});
+  gt_b_bias.Fill(DataType{1});
+  TensorType gt_b_weight({10, 5});
+  gt_b_weight.Fill(DataType{2});
+
+  TensorType gt_c_bias({10, 1});
+  gt_c_bias.Fill(DataType{3});
+  TensorType gt_c_weight({5, 10});
+  gt_c_weight.Fill(DataType{4});
+
+  g->SetWeight("A/FullyConnected_Bias", gt_a_bias);
+  g->SetWeight("A/FullyConnected_Weights", gt_a_weight);
+
+  g->SetWeight("B/FullyConnected_Bias", gt_b_bias);
+  g->SetWeight("B/FullyConnected_Weights", gt_b_weight);
+
+  g->SetWeight("C/FullyConnected_Bias", gt_c_bias);
+  g->SetWeight("C/FullyConnected_Weights", gt_c_weight);
+
+  auto weights = g->GetWeightsReferences();
+
+  // Test values
+  ASSERT_EQ(weights.size(), 6);
+  ASSERT_TRUE(weights.at(0).AllClose(gt_a_bias, fetch::math::function_tolerance<DataType>(),
+                                     fetch::math::function_tolerance<DataType>()));
+  ASSERT_TRUE(weights.at(1).AllClose(gt_a_weight, fetch::math::function_tolerance<DataType>(),
+                                     fetch::math::function_tolerance<DataType>()));
+
+  ASSERT_TRUE(weights.at(2).AllClose(gt_b_bias, fetch::math::function_tolerance<DataType>(),
+                                     fetch::math::function_tolerance<DataType>()));
+  ASSERT_TRUE(weights.at(3).AllClose(gt_b_weight, fetch::math::function_tolerance<DataType>(),
+                                     fetch::math::function_tolerance<DataType>()));
+
+  ASSERT_TRUE(weights.at(4).AllClose(gt_c_bias, fetch::math::function_tolerance<DataType>(),
+                                     fetch::math::function_tolerance<DataType>()));
+  ASSERT_TRUE(weights.at(5).AllClose(gt_c_weight, fetch::math::function_tolerance<DataType>(),
+                                     fetch::math::function_tolerance<DataType>()));
 }
 
 }  // namespace test

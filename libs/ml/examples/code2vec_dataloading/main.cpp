@@ -29,7 +29,7 @@
 
 constexpr std::size_t MAX_CONTEXTS = 20;
 
-using DataType   = uint64_t;
+using DataType   = int64_t;
 using TensorType = fetch::math::Tensor<DataType>;
 using SizeType   = fetch::math::Tensor<DataType>::SizeType;
 

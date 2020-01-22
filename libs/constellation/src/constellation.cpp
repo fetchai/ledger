@@ -556,7 +556,10 @@ bool Constellation::OnBringUpExternalNetwork(
 
   if (params.snapshot)
   {
-    consensus_->UpdateCurrentBlock(*chain_->GetHeaviestBlock());
+    if (!consensus_->UpdateCurrentBlock(*chain_->GetHeaviestBlock()))
+    {
+      return false;
+    }
     consensus_->Reset(*params.snapshot);
   }
   else
@@ -565,7 +568,10 @@ bool Constellation::OnBringUpExternalNetwork(
   }
 
   // Update with genesis to trigger loading any saved state
-  consensus_->UpdateCurrentBlock(*chain_->CreateGenesisBlock());
+  if (!consensus_->UpdateCurrentBlock(*chain_->CreateGenesisBlock()))
+  {
+    return false;
+  }
 
   block_packer_ = std::make_unique<BlockPackingAlgorithm>(cfg_.log2_num_lanes);
 
@@ -856,6 +862,9 @@ void Constellation::OnTearDownExternalNetwork()
 
 void Constellation::OnTearDownLaneServices()
 {
+  // not strictly necessary but make sure that chain has completely flushed to disk
+  chain_->Flush();
+
   ResetItem(chain_);
   ResetItem(lane_control_);
   ResetItem(storage_);

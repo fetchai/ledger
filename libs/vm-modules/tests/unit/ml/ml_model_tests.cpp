@@ -407,28 +407,24 @@ TEST_F(VMModelTests, model_add_dense_relu)
   TestValidLayerAdding(R"(model.add("dense", 10u64, 10u64, "relu");)");
 }
 
-// Disabled until implementation of AddLayerConv estimator
 TEST_F(VMModelTests, model_add_conv1d_noact)
 {
   TestValidLayerAdding(R"(model.add("conv1d", 10u64, 10u64, 10u64, 10u64);)",
                        IGNORE_CHARGE_ESTIMATION);
 }
 
-// Disabled until implementation of AddLayerConv estimator
 TEST_F(VMModelTests, model_add_conv1d_relu)
 {
   TestValidLayerAdding(R"(model.add("conv1d", 10u64, 10u64, 10u64, 10u64, "relu");)",
                        IGNORE_CHARGE_ESTIMATION);
 }
 
-// Disabled until implementation of AddLayerConv estimator
 TEST_F(VMModelTests, model_add_conv2d_noact)
 {
   TestValidLayerAdding(R"(model.add("conv2d", 10u64, 10u64, 10u64, 10u64);)",
                        IGNORE_CHARGE_ESTIMATION);
 }
 
-// Disabled until implementation of AddLayerConv estimator
 TEST_F(VMModelTests, model_add_conv2d_relu)
 {
   TestValidLayerAdding(R"(model.add("conv2d", 10u64, 10u64, 10u64, 10u64, "relu");)",
@@ -454,6 +450,17 @@ TEST_F(VMModelTests, model_add_activation)
   TestValidLayerAdding(R"(model.add("activation", "log_sigmoid");)", IGNORE_CHARGE_ESTIMATION);
   TestValidLayerAdding(R"(model.add("activation", "softmax");)", IGNORE_CHARGE_ESTIMATION);
   TestValidLayerAdding(R"(model.add("activation", "log_softmax");)", IGNORE_CHARGE_ESTIMATION);
+}
+
+TEST_F(VMModelTests, model_add_input)
+{
+  TestValidLayerAdding(R"(
+                       var data_shape = Array<UInt64>(2);
+                       data_shape[0] = 10u64;
+                       data_shape[1] = 250u64;
+                       model.addExperimental("input", data_shape);
+                       model.add("activation", "softmax");)",
+                       IGNORE_CHARGE_ESTIMATION);
 }
 
 TEST_F(VMModelTests, model_add_invalid_layer_type)
@@ -545,6 +552,11 @@ TEST_F(VMModelTests, model_uncompilable_add_layer__reshape_invalid_params)
 TEST_F(VMModelTests, model_uncompilable_add_layer__activation_invalid_params)
 {
   TestAddingUncompilableLayer(R"(model.add("activation", 0u64);)");
+}
+
+TEST_F(VMModelTests, model_uncompilable_add_layer__input_invalid_params)
+{
+  TestAddingUncompilableLayer(R"(model.add("input", 0u64);)");
 }
 
 TEST_F(VMModelTests, model_empty_sequential_compilation)
@@ -1577,6 +1589,90 @@ TEST_F(VMModelTests, model_fit_and_refit)
   ASSERT_TRUE(toolkit.Compile(SRC_METRIC));
 
   ASSERT_TRUE(toolkit.Run());
+}
+
+TEST_F(VMModelTests, model_add_input_layer_as_second)
+{
+  static char const *SRC = R"(
+      function main()
+        var data_shape = Array<UInt64>(2);
+        data_shape[0] = 10u64;
+        data_shape[1] = 250u64;
+
+        var model = Model("sequential");
+
+        model.add("dense", 10u64, 10u64);
+        model.addExperimental("input", data_shape);
+      endfunction
+    )";
+
+  ASSERT_TRUE(toolkit.Compile(SRC));
+  ASSERT_FALSE(toolkit.Run(nullptr, ChargeAmount{0}));
+}
+
+TEST_F(VMModelTests, model_add_dense_auto_inputs)
+{
+  static char const *SRC = R"(
+      function main()
+        var data_shape = Array<UInt64>(4);
+        data_shape[0] = 3u64;
+        data_shape[1] = 3u64;
+        data_shape[2] = 3u64;
+        data_shape[3] = 25u64;
+
+        var model = Model("sequential");
+
+        model.addExperimental("input", data_shape);
+        model.addExperimental("dense", 10u64);
+        model.addExperimental("dense", 6u64);
+        model.addExperimental("dense", 1u64);
+        model.compile("scel", "adam");
+
+        var data = Tensor(data_shape);
+        data.fillRandom();
+        model.predict(data);
+      endfunction
+    )";
+
+  ASSERT_TRUE(toolkit.Compile(SRC));
+  ASSERT_TRUE(toolkit.Run(nullptr, ChargeAmount{0}));
+}
+
+TEST_F(VMModelTests, model_add_mixed_auto_inputs)
+{
+  static char const *SRC = R"(
+      function main()
+         var num_channels = 3u64;
+         var image_height = 20u64;
+         var image_width = 40u64;
+
+         var data_shape = Array<UInt64>(4);
+         data_shape[0] = num_channels;
+         data_shape[1] = image_height;
+         data_shape[2] = image_width;
+         data_shape[3] = 25u64;
+
+         var model = Model("sequential");
+
+         model.addExperimental("input", data_shape);
+         model.add("conv2d", num_channels, 13u64, 3u64, 1u64);
+         model.add("dropout", 0.5fp64);
+         model.add("conv2d", num_channels, 6u64, 3u64, 2u64);
+         model.add("activation", "sigmoid");
+         model.add("conv2d", num_channels, 3u64, 1u64, 2u64);
+         model.add("dropout", 0.1fp64);
+         model.addExperimental("dense", 6u64);
+         model.addExperimental("dense", 1u64);
+         model.compile("scel", "adam");
+
+         var data = Tensor(data_shape);
+         data.fillRandom();
+         model.predict(data);
+      endfunction
+    )";
+
+  ASSERT_TRUE(toolkit.Compile(SRC));
+  ASSERT_TRUE(toolkit.Run(nullptr, ChargeAmount{0}));
 }
 
 }  // namespace
