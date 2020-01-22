@@ -18,6 +18,7 @@
 
 #include "ledger/protocols/main_chain_rpc_service.hpp"
 
+#include "chain/constants.hpp"
 #include "chain/transaction_layout_rpc_serializers.hpp"
 #include "core/byte_array/encoders.hpp"
 #include "core/serializers/counter.hpp"
@@ -518,6 +519,7 @@ bool MainChainRpcService::ValidBlock(Block const &block) const
 State MainChainRpcService::WalkBack()
 {
   assert(block_resolving_);
+  using chain::GetGenesisDigest;
 
   std::size_t current_height = block_resolving_->block_number;
   switch (current_height)
@@ -530,7 +532,7 @@ State MainChainRpcService::WalkBack()
     return State::COMPLETE_SYNC_WITH_PEER;
 
   case 1:
-    assert(block_resolving_->previous_hash == GetGenesisDigest());
+    assert(block_resolving_->previous_hash == chain::GetGenesisDigest());
     block_resolving_ = chain_.GetBlock(GetGenesisDigest());
     if (!block_resolving_)
     {
