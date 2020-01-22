@@ -481,6 +481,7 @@ bool HistoricalBloomFilter::SaveBucketToStore(uint64_t bucket, CacheEntry const 
 void HistoricalBloomFilter::UpdateMetadata()
 {
   BloomFilterMetadata metadata;
+  bool                bad_version = false;
 
   try
   {
@@ -489,7 +490,8 @@ void HistoricalBloomFilter::UpdateMetadata()
 
     if (metadata.window_size != window_size_)
     {
-      FETCH_LOG_ERROR(LOGGING_NAME, "The window size is not configured to match previous version");
+      FETCH_LOG_ERROR(LOGGING_NAME, "The window size is not configured to match previous version!");
+      bad_version = true;
     }
 
     if (metadata.last_bucket != heaviest_persisted_bucket_)
@@ -504,6 +506,11 @@ void HistoricalBloomFilter::UpdateMetadata()
   catch (std::exception const &ex)
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Failed to update metadata: ", ex.what());
+  }
+
+  if (bad_version)
+  {
+    throw std::runtime_error("The window size is not configured to match previous version!");
   }
 }
 
