@@ -47,8 +47,4 @@ public:
 
 }  // namespace utilities
 }  // namespace ml
-
-// namespace serializers {
-
-//}
 }  // namespace fetch
