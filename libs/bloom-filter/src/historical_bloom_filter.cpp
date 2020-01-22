@@ -188,9 +188,7 @@ HistoricalBloomFilter::HistoricalBloomFilter(Mode mode, char const *store_path,
 
     break;
   case Mode::LOAD_DATABASE:
-
     store_.Load(store_filename_, index_filename_, true);
-    break;
 
     // Check metadata can be retrieved and is correct
     try
@@ -209,6 +207,7 @@ HistoricalBloomFilter::HistoricalBloomFilter(Mode mode, char const *store_path,
 
     // update the last flushed bucket
     heaviest_persisted_bucket_ = metadata.last_bucket;
+    break;
   }
 }
 
