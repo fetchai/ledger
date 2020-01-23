@@ -2005,12 +2005,14 @@ DigestSet MainChain::DetectDuplicateTransactions(BlockHash const &           sta
     {
       potential_duplicates.insert(tx_layout.digest());
     }
+
+    bloom_filter_query_count_->increment();
   }
 
   // calculate the maximum search depth
   uint64_t const last_block_num =
       block->block_number -
-      std::min(block->block_number, chain::Transaction::MAXIMUM_TX_VALIDITY_PERIOD);
+      std::min(block->block_number, uint64_t{chain::Transaction::MAXIMUM_TX_VALIDITY_PERIOD});
 
   // filter the potential duplicates by traversing back down the chain
   DigestSet duplicates{};
@@ -2046,8 +2048,10 @@ DigestSet MainChain::DetectDuplicateTransactions(BlockHash const &           sta
     {
       break;
     }
-
   }
+
+  bloom_filter_false_positive_count_->add(potential_duplicates.size() - duplicates.size());
+  bloom_filter_positive_count_->add(duplicates.size());
 
   return duplicates;
 }
