@@ -452,12 +452,14 @@ bool TransactionSerializer::Deserialize(Transaction &tx) const
 
   Decode(buffer, tx.valid_until_);
 
+#if 0
   // in the case that a valid from field is not present we need to infer the valid from field based
   // on the maximum validity period
   if ((valid_from_flag == 0u) && (tx.valid_until_ >= Transaction::MAXIMUM_TX_VALIDITY_PERIOD))
   {
     tx.valid_from_ = tx.valid_until_ - Transaction::MAXIMUM_TX_VALIDITY_PERIOD;
   }
+#endif
 
   Decode(buffer, tx.charge_rate_);
   if (charge_unit_flag != 0u)
