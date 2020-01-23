@@ -290,7 +290,7 @@ OperationsCount MatrixMultiply<T>::ChargeForward()
 {
   assert(!this->batch_input_shapes_.empty());
 
-  // TODO(VH): impl. for n-dimensional case, not only for 2D.
+  // TODO(ML-482): impl. for n-dimensional case, not only for 2D.
   assert(this->batch_input_shapes_.size() == 2);
 
   // Assuming this is a matrix multiplication of weights * input_vector
