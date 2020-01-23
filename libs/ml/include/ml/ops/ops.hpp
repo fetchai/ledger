@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/assert.hpp"
+#include "math/matrix_operations.hpp"
 #include "math/tensor/tensor.hpp"
 #include "ml/charge_estimation/ops/constants.hpp"
 #include "ml/exceptions/exceptions.hpp"
@@ -191,16 +192,7 @@ public:
     SizeType total_elements = 0;
     for (fetch::math::SizeVector const &shape : shapes)
     {
-      SizeType elements_in_shape = 1;
-      for (SizeType dimension : shape)
-      {
-        if (dimension == 0)
-        {
-          throw fetch::math::exceptions::WrongShape("A dimension of size 0 found in tensor shape!");
-        }
-        elements_in_shape *= dimension;
-      }
-      total_elements += elements_in_shape;
+      total_elements += math::Product(shape);
     }
     return total_elements;
   }

@@ -1238,6 +1238,7 @@ TYPED_TEST(GraphTest, graph_charge_subtraction)
 {
   using TensorType = TypeParam;
   using namespace fetch::ml::ops;
+  using namespace fetch::ml::charge_estimation::ops;
 
   TensorType data = TensorType::FromString(R"(01,02,03,04; 11,12,13,14; 21,22,23,24; 31,32,33,34)");
 
@@ -1255,8 +1256,7 @@ TYPED_TEST(GraphTest, graph_charge_subtraction)
   OperationsCount const batch_charge = charge * data.shape().back();
 
   std::size_t const     total_elements_in_output = 4 * 4;
-  OperationsCount const expected_charge =
-      total_elements_in_output * fetch::ml::charge_estimation::ops::SUBTRACTION_PER_ELEMENT;
+  OperationsCount const expected_charge = total_elements_in_output * SUBTRACTION_PER_ELEMENT;
 
   ASSERT_EQ(batch_charge, expected_charge);
 }
@@ -1264,6 +1264,7 @@ TYPED_TEST(GraphTest, graph_charge_subtraction)
 TYPED_TEST(GraphTest, graph_charge_matmul)
 {
   using namespace fetch::ml::ops;
+  using namespace fetch::ml::charge_estimation::ops;
   using TensorType = TypeParam;
   using math::SizeType;
 
@@ -1300,7 +1301,7 @@ TYPED_TEST(GraphTest, graph_charge_matmul)
   OperationsCount const batch_charge = charge * batch_size;
 
   SizeType const        matmul_ops      = weight_width * input_height * batch_size;
-  OperationsCount const expected_charge = matmul_ops * charge_cost::MULTIPLICATION_PER_ELEMENT;
+  OperationsCount const expected_charge = matmul_ops * MULTIPLICATION_PER_ELEMENT;
 
   ASSERT_EQ(batch_charge, expected_charge);
 }
