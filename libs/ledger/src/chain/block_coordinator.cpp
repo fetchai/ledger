@@ -69,7 +69,7 @@ const std::chrono::seconds      STATE_NOTIFY_INTERVAL{20};
 const std::chrono::seconds      NOTIFY_INTERVAL{5};
 const std::chrono::seconds      WAIT_BEFORE_ASKING_FOR_MISSING_TX_INTERVAL{5};
 const std::size_t               MIN_BLOCK_SYNC_SLIPPAGE_FOR_WAITLESS_SYNC_OF_MISSING_TXS{30};
-const std::chrono::seconds      WAIT_FOR_TX_TIMEOUT_INTERVAL{120};
+const std::chrono::seconds      WAIT_FOR_TX_TIMEOUT_INTERVAL{240};
 const uint32_t                  THRESHOLD_FOR_FAST_SYNCING{100u};
 
 }  // namespace
