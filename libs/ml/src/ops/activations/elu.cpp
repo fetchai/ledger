@@ -20,6 +20,8 @@
 #include "math/fundamental_operators.hpp"
 #include "ml/ops/activations/elu.hpp"
 
+#include <cassert>
+
 namespace fetch {
 namespace ml {
 namespace ops {
@@ -114,10 +116,6 @@ template class Elu<math::Tensor<int8_t>>;
 template class Elu<math::Tensor<int16_t>>;
 template class Elu<math::Tensor<int32_t>>;
 template class Elu<math::Tensor<int64_t>>;
-template class Elu<math::Tensor<uint8_t>>;
-template class Elu<math::Tensor<uint16_t>>;
-template class Elu<math::Tensor<uint32_t>>;
-template class Elu<math::Tensor<uint64_t>>;
 template class Elu<math::Tensor<float>>;
 template class Elu<math::Tensor<double>>;
 template class Elu<math::Tensor<fixed_point::fp32_t>>;

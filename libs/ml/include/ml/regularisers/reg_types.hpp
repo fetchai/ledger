@@ -17,6 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/serializers/base_types.hpp"
+
 namespace fetch {
 namespace ml {
 
@@ -60,5 +62,4 @@ struct MapSerializer<ml::RegularisationType, D>
 };
 
 }  // namespace serializers
-
 }  // namespace fetch

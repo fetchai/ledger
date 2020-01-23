@@ -55,6 +55,7 @@ Settings::Settings()
   , block_interval        {*this, "block-interval",          DEFAULT_BLOCK_INTERVAL,       "The block interval is milliseconds"}
   , standalone            {*this, "standalone",              false,                        "Signal the network should run in standalone mode"}
   , private_network       {*this, "private-network",         false,                        "Signal the network should run as part of a private network"}
+  , initial_address       {*this, "initial-address",         "",                           "The initial address where all funds can be found for a standalone node"}
   , db_prefix             {*this, "db-prefix",               "node_storage",               "The prefix for filenames related to constellation databases"}
   , port                  {*this, "port",                    DEFAULT_PORT,                 "The starting port for ledger services"}
   , peers                 {*this, "peers",                   {},                           "The comma separated list of addresses to initially connect to"}

@@ -19,6 +19,7 @@
 #include "math/activation_functions/sigmoid.hpp"
 #include "math/activation_functions/softmax.hpp"
 #include "math/fundamental_operators.hpp"
+#include "math/matrix_operations.hpp"
 #include "math/metrics/cross_entropy.hpp"
 #include "ml/ops/loss_functions/softmax_cross_entropy_loss.hpp"
 
@@ -59,8 +60,8 @@ void SoftmaxCrossEntropyLoss<TensorType>::Forward(VecTensorType const &inputs, T
   assert(inputs.at(0)->size() == inputs.at(1)->size());
 
   // sanity check the softmax adds up to 1
-  assert(static_cast<double>(Sum(fetch::math::Softmax((*inputs.at(0)))) -
-                             (DataType(inputs.at(0)->shape().at(1)))) < 0.0001);
+  assert(Sum(fetch::math::Softmax((*inputs.at(0))) - (DataType(inputs.at(0)->shape().at(1)))) <
+         fetch::math::function_tolerance<DataType>());
 
   // softmax forward & then CrossEntropy
   output(0, 0) =
@@ -99,10 +100,6 @@ template class SoftmaxCrossEntropyLoss<math::Tensor<int8_t>>;
 template class SoftmaxCrossEntropyLoss<math::Tensor<int16_t>>;
 template class SoftmaxCrossEntropyLoss<math::Tensor<int32_t>>;
 template class SoftmaxCrossEntropyLoss<math::Tensor<int64_t>>;
-template class SoftmaxCrossEntropyLoss<math::Tensor<uint8_t>>;
-template class SoftmaxCrossEntropyLoss<math::Tensor<uint16_t>>;
-template class SoftmaxCrossEntropyLoss<math::Tensor<uint32_t>>;
-template class SoftmaxCrossEntropyLoss<math::Tensor<uint64_t>>;
 template class SoftmaxCrossEntropyLoss<math::Tensor<float>>;
 template class SoftmaxCrossEntropyLoss<math::Tensor<double>>;
 template class SoftmaxCrossEntropyLoss<math::Tensor<fixed_point::fp32_t>>;

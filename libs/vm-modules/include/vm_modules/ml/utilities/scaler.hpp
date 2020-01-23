@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/utilities/min_max_scaler.hpp"
+#include "ml/serializers/ml_types.hpp"
 #include "vm/object.hpp"
 #include "vm_modules/math/type.hpp"
 
@@ -27,9 +27,10 @@ namespace fetch {
 
 namespace ml {
 namespace utilities {
-template <typename>
+template <typename TensorType>
 class Scaler;
 }
+
 }  // namespace ml
 namespace vm {
 class Module;

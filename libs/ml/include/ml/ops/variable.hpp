@@ -18,11 +18,10 @@
 //------------------------------------------------------------------------------
 
 #include "core/assert.hpp"
-#include "ml/regularisers/regularisation.hpp"
-
 #include "ml/ops/dataholder.hpp"
-#include "ml/ops/ops.hpp"
 #include "ml/ops/trainable.hpp"
+#include "ml/regularisers/reg_types.hpp"
+#include "ml/saveparams/saveable_params.hpp"
 
 #include <cassert>
 #include <memory>
@@ -30,19 +29,6 @@
 
 namespace fetch {
 namespace ml {
-
-template <typename TensorType>
-struct OpVariableSaveableParams : public OpDataHolderSaveableParams<TensorType>
-{
-  using DataType                      = typename TensorType::Type;
-  fetch::ml::OpType           op_type = OpType::OP_PLACEHOLDER;
-  std::shared_ptr<TensorType> data;
-  std::shared_ptr<TensorType> gradient_accumulation;
-  RegularisationType          regularisation_type = RegularisationType::NONE;
-  DataType                    regularisation_rate = fetch::math::numeric_max<DataType>();
-  bool                        value_frozen        = false;
-};
-
 namespace ops {
 
 /**

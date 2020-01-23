@@ -79,7 +79,7 @@ TYPED_TEST(DropoutTest, forward_test)
   math::SizeType tensorsize = 10000;
   TensorType     data       = TensorType(tensorsize);
   data.Fill(DataType{1});
-  auto prob = fetch::math::Type<DataType>("0.5");
+  auto prob = fetch::math::Type<DataType>("0.2");
 
   fetch::ml::ops::Dropout<TensorType> op(prob, 12345);
 
@@ -127,7 +127,7 @@ TYPED_TEST(DropoutTest, forward_3d_tensor_test)
   TensorType     data       = TensorType(tensorsize);
   data.Fill(DataType{1});
   data.Reshape({10, 10, 10});
-  DataType prob = fetch::math::Type<DataType>("0.5");
+  DataType prob = fetch::math::Type<DataType>("0.3");
 
   fetch::ml::ops::Dropout<TensorType> op(prob, 12345);
   TypeParam prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
@@ -153,7 +153,7 @@ TYPED_TEST(DropoutTest, backward_test)
   data.Fill(DataType{1});
   TensorType error = TensorType(tensorsize);
   error.Fill(DataType{1});
-  auto const prob = fetch::math::Type<DataType>("0.5");
+  auto const prob = fetch::math::Type<DataType>("0.2");
 
   fetch::ml::ops::Dropout<TensorType> op(prob, 12345);
 
@@ -191,7 +191,7 @@ TYPED_TEST(DropoutTest, backward_3d_tensor_test)
   using DataType      = typename TypeParam::Type;
   using TensorType    = TypeParam;
   using VecTensorType = typename fetch::ml::ops::Ops<TensorType>::VecTensorType;
-  DataType prob       = fetch::math::Type<DataType>("0.5");
+  DataType prob       = fetch::math::Type<DataType>("0.2");
 
   math::SizeType tensorsize = 1000;
   TensorType     data       = TensorType(tensorsize);
@@ -232,7 +232,7 @@ TYPED_TEST(DropoutTest, saveparams_test)
   math::SizeType tensorsize = 1000;
   TensorType     data       = TensorType(tensorsize);
   data.Fill(DataType{1});
-  auto const                    prob        = fetch::math::Type<DataType>("0.5");
+  auto const                    prob        = fetch::math::Type<DataType>("0.3");
   typename TensorType::SizeType random_seed = 12345;
 
   OpType op(prob, random_seed);

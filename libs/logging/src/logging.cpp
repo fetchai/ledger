@@ -91,8 +91,6 @@ private:
   std::atomic<LogLevel> global_level_{LogLevel::TRACE};
 };
 
-constexpr LogLevel DEFAULT_LEVEL = LogLevel::INFO;
-
 LogRegistry                                          registry;
 std::shared_ptr<spdlog::sinks::stdout_color_sink_mt> COLOUR_SINK;
 
@@ -221,7 +219,7 @@ LogRegistry::Logger &LogRegistry::GetLogger(char const *name)
 
     auto logger = std::make_shared<spdlog::logger>(name, dup_filter);
 
-    logger->set_level(ConvertFromLevel(DEFAULT_LEVEL));
+    logger->set_level(ConvertFromLevel(global_level()));
     logger->set_pattern("%^[%L]%$ %Y/%m/%d %T | %-30n : %v");
 
     // keep a reference of it

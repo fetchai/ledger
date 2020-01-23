@@ -190,6 +190,60 @@ BENCHMARK(BM_Construct)->Args({5, 1, 1, 1000000, 1, 1})->Unit(::benchmark::kMicr
 BENCHMARK(BM_Construct)->Args({5, 1, 1, 1, 1000000, 1})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Construct)->Args({5, 1, 1, 1, 1, 1000000})->Unit(::benchmark::kMicrosecond);
 
+Ptr<fetch::vm_modules::math::VMTensor> CreateTensorFromString(std::shared_ptr<VM> &vm,
+                                                              std::string const &  str)
+{
+  return vm->CreateNewObject<fetch::vm_modules::math::VMTensor>(str);
+}
+
+struct BM_Tensor_String_config
+{
+  using SizeType = fetch::math::SizeType;
+
+  explicit BM_Tensor_String_config(::benchmark::State const &state)
+  {
+    size = static_cast<SizeType>(state.range(0));
+  }
+
+  SizeType size;  // Number of elements
+};
+
+void BM_String_Construct(::benchmark::State &state)
+{
+  using VMPtr    = std::shared_ptr<VM>;
+  using SizeType = fetch::math::SizeType;
+
+  // Get args form state
+  BM_Tensor_String_config config{state};
+  state.counters["Size"] = static_cast<double>(config.size);
+
+  // Hidden as lambda tensor_constructor_charge_estimate
+  state.counters["charge"] = static_cast<double>(999.9);
+
+  std::string str;
+  for (SizeType i{0}; i < config.size; i++)
+  {
+    str += "1.0, ";
+  }
+
+  for (auto _ : state)
+  {
+    state.PauseTiming();
+    VMPtr vm;
+    SetUp(vm);
+
+    state.ResumeTiming();
+    auto data = CreateTensorFromString(vm, str);
+  }
+}
+
+BENCHMARK(BM_String_Construct)->Args({1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_String_Construct)->Args({10})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_String_Construct)->Args({100})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_String_Construct)->Args({1000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_String_Construct)->Args({10000})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_String_Construct)->Args({100000})->Unit(::benchmark::kMicrosecond);
+
 void BM_Fill(::benchmark::State &state)
 {
   using VMPtr    = std::shared_ptr<VM>;

@@ -16,17 +16,36 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vm_modules/ml/model/model.hpp"
-
+#include "core/byte_array/decoders.hpp"
 #include "core/serializers/counter.hpp"
+#include "ml/dataloaders/tensor_dataloader.hpp"
 #include "ml/layers/fully_connected.hpp"
-#include "ml/model/dnn_classifier.hpp"
-#include "ml/model/dnn_regressor.hpp"
+
 #include "ml/model/sequential.hpp"
+
+#include "ml/layers/convolution_1d.hpp"
+#include "ml/layers/convolution_2d.hpp"
+
 #include "ml/ops/loss_functions/mean_square_error_loss.hpp"
 #include "ml/ops/loss_functions/types.hpp"
+
+#include "ml/ops/metrics/types.hpp"
+#include "ml/serializers/ml_types.hpp"
+
+#include "ml/ops/activations/dropout.hpp"
+#include "ml/ops/activations/gelu.hpp"
+#include "ml/ops/activations/leaky_relu.hpp"
+#include "ml/ops/activations/logsigmoid.hpp"
+#include "ml/ops/activations/logsoftmax.hpp"
+#include "ml/ops/activations/relu.hpp"
+#include "ml/ops/activations/sigmoid.hpp"
+#include "ml/ops/activations/softmax.hpp"
+#include "ml/ops/flatten.hpp"
+
+#include "ml/ops/reshape.hpp"
+
 #include "vm/module.hpp"
-#include "vm_modules/ml/model/model_estimator.hpp"
+#include "vm_modules/ml/model/model.hpp"
 #include "vm_modules/use_estimator.hpp"
 
 using namespace fetch::vm;
@@ -47,7 +66,7 @@ std::map<std::string, SupportedLayerType> const VMModel::layer_types_{
     {"dense", SupportedLayerType::DENSE},     {"conv1d", SupportedLayerType::CONV1D},
     {"conv2d", SupportedLayerType::CONV2D},   {"flatten", SupportedLayerType::FLATTEN},
     {"dropout", SupportedLayerType::DROPOUT}, {"activation", SupportedLayerType::ACTIVATION},
-    {"reshape", SupportedLayerType::RESHAPE}};
+    {"input", SupportedLayerType::INPUT},     {"reshape", SupportedLayerType::RESHAPE}};
 
 std::map<std::string, ActivationType> const VMModel::activations_{
     {"nothing", ActivationType::NOTHING},
@@ -75,8 +94,6 @@ std::map<std::string, OptimiserType> const VMModel::optimisers_{
 std::map<std::string, uint8_t> const VMModel::model_categories_{
     {"none", static_cast<uint8_t>(ModelCategory::NONE)},
     {"sequential", static_cast<uint8_t>(ModelCategory::SEQUENTIAL)},
-    {"regressor", static_cast<uint8_t>(ModelCategory::REGRESSOR)},
-    {"classifier", static_cast<uint8_t>(ModelCategory::CLASSIFIER)},
 };
 
 std::map<std::string, MetricType> const VMModel::metrics_{
@@ -86,6 +103,7 @@ std::map<std::string, MetricType> const VMModel::metrics_{
     {"scel", MetricType ::SOFTMAX_CROSS_ENTROPY},
 };
 
+static constexpr SizeType    AUTODETECT_INPUTS      = 0;
 static constexpr char const *IMPOSSIBLE_ADD_MESSAGE = "Impossible to add layer : ";
 static constexpr char const *LAYER_TYPE_MESSAGE     = "layer type";
 
@@ -181,76 +199,11 @@ void VMModel::CompileSequentialImplementation(Ptr<String> const &loss, Ptr<Strin
     }
     PrepareDataloader();
     compiled_ = false;
-    model_->Compile(optimiser_type, loss_type, metrics);
+    me->Compile(optimiser_type, loss_type, metrics);
   }
   catch (std::exception const &e)
   {
     vm_->RuntimeError("Compilation of a sequential model failed : " + std::string(e.what()));
-    return;
-  }
-  compiled_ = true;
-}
-
-/**
- * @brief VMModel::CompileSimple
- * @param optimiser a valid optimiser name ["adam", "sgd" ...]
- * @param layer_shapes a list of layer shapes, min 2: Input and Output shape correspondingly.
- */
-void VMModel::CompileSimple(fetch::vm::Ptr<fetch::vm::String> const &        optimiser,
-                            fetch::vm::Ptr<vm::Array<math::SizeType>> const &layer_shapes)
-{
-  std::size_t const total_layer_shapes = layer_shapes->elements.size();
-  if (total_layer_shapes < min_total_layer_shapes)
-  {
-    vm_->RuntimeError("Regressor/classifier model compilation requires providing at least " +
-                      std::to_string(min_total_layer_shapes) + " layer shapes (input, output)!");
-    return;
-  }
-
-  std::vector<math::SizeType> shapes;
-  shapes.reserve(total_layer_shapes);
-  for (std::size_t i = 0; i < total_layer_shapes; ++i)
-  {
-    shapes.emplace_back(layer_shapes->elements.at(i));
-  }
-
-  switch (model_category_)
-  {
-  case (ModelCategory::REGRESSOR):
-    model_ = std::make_shared<fetch::ml::model::DNNRegressor<TensorType>>(*model_config_, shapes);
-    break;
-
-  case (ModelCategory::CLASSIFIER):
-    model_ = std::make_shared<fetch::ml::model::DNNClassifier<TensorType>>(*model_config_, shapes);
-    break;
-
-  default:
-    vm_->RuntimeError(
-        "Only regressor/classifier model types accept layer shapes list as a compilation "
-        "parameter!");
-    return;
-  }
-
-  // For regressor and classifier we can't prepare the dataloder until model_ is ready.
-  PrepareDataloader();
-
-  compiled_ = false;
-  try
-  {
-    OptimiserType const optimiser_type = ParseName(optimiser->string(), optimisers_, "optimiser");
-    if (optimiser_type != OptimiserType::ADAM)
-    {
-      vm_->RuntimeError(
-          R"(Wrong optimiser, a regressor/classifier model can use only "adam", while given : )" +
-          optimiser->string());
-      return;
-    }
-    model_->Compile(optimiser_type);
-  }
-  catch (std::exception const &e)
-  {
-    vm_->RuntimeError("Compilation of a regressor/classifier model failed : " +
-                      std::string(e.what()));
     return;
   }
   compiled_ = true;
@@ -338,10 +291,12 @@ void VMModel::Bind(Module &module, bool const experimental_enabled)
                               UseEstimator(&ModelEstimator::LayerAddActivation))
         .CreateMemberFunction("add", &VMModel::LayerAddReshape,
                               UseEstimator(&ModelEstimator::LayerAddReshape))
-        .CreateMemberFunction("compile", &VMModel::CompileSimple,
-                              UseEstimator(&ModelEstimator::CompileSimple))
         .CreateMemberFunction("addExperimental", &VMModel::LayerAddDenseActivationExperimental,
-                              UseEstimator(&ModelEstimator::LayerAddDenseActivationExperimental));
+                              UseEstimator(&ModelEstimator::LayerAddDenseActivationExperimental))
+        .CreateMemberFunction("addExperimental", &VMModel::LayerAddInput,
+                              UseEstimator(&ModelEstimator::LayerAddInput))
+        .CreateMemberFunction("addExperimental", &VMModel::LayerAddDenseAutoInputs,
+                              UseEstimator(&ModelEstimator::LayerAddDenseAutoInputs));
   }
 }
 
@@ -494,9 +449,10 @@ void VMModel::AssertLayerTypeMatches(SupportedLayerType                layer,
                                      std::vector<SupportedLayerType> &&valids) const
 {
   static const std::map<SupportedLayerType, std::string> LAYER_NAMES_{
-      {SupportedLayerType::DENSE, "dense"},
-      {SupportedLayerType::CONV1D, "conv1d"},
-      {SupportedLayerType::CONV2D, "conv2d"},
+      {SupportedLayerType::DENSE, "dense"},     {SupportedLayerType::CONV1D, "conv1d"},
+      {SupportedLayerType::CONV2D, "conv2d"},   {SupportedLayerType::FLATTEN, "flatten"},
+      {SupportedLayerType::DROPOUT, "dropout"}, {SupportedLayerType::ACTIVATION, "activation"},
+      {SupportedLayerType::INPUT, "input"},
   };
   if (std::find(valids.begin(), valids.end(), layer) == valids.end())
   {
@@ -518,6 +474,13 @@ void VMModel::LayerAddDense(fetch::vm::Ptr<fetch::vm::String> const &layer,
                             math::SizeType const &inputs, math::SizeType const &hidden_nodes)
 {
   LayerAddDenseActivationImplementation(layer, inputs, hidden_nodes, ActivationType::NOTHING);
+}
+
+void VMModel::LayerAddDenseAutoInputs(const fetch::vm::Ptr<String> &layer,
+                                      const math::SizeType &        hidden_nodes)
+{
+  LayerAddDenseActivationImplementation(layer, AUTODETECT_INPUTS, hidden_nodes,
+                                        ActivationType::NOTHING);
 }
 
 void VMModel::LayerAddDenseActivation(fetch::vm::Ptr<fetch::vm::String> const &layer,
@@ -572,6 +535,12 @@ void VMModel::LayerAddDenseActivationImplementation(fetch::vm::Ptr<fetch::vm::St
         ParseName(layer->string(), layer_types_, LAYER_TYPE_MESSAGE);
     AssertLayerTypeMatches(layer_type, {SupportedLayerType::DENSE});
     SequentialModelPtr me = GetMeAsSequentialIfPossible();
+    // if this is a first layer in a Model and inputs count is known,
+    // model's InputShape can be set as well.
+    if (me->LayerCount() == 0 && inputs != AUTODETECT_INPUTS)
+    {
+      me->SetBatchInputShape({inputs, 1});
+    }
     me->Add<fetch::ml::layers::FullyConnected<TensorType>>(inputs, hidden_nodes, activation);
     compiled_ = false;
   }
@@ -670,8 +639,7 @@ void VMModel::LayerAddDropout(const fetch::vm::Ptr<String> &layer,
     AssertLayerTypeMatches(layer_type, {SupportedLayerType::DROPOUT});
     SequentialModelPtr me = GetMeAsSequentialIfPossible();
 
-    // ops::Dropout takes a keep-probability, while Keras-style argument is a drop-probability,
-    // so it is reversed here.
+    // ops::Dropout takes a drop probability
     if (probability < DataType{0} || probability > DataType{1})
     {
       std::stringstream ss;
@@ -680,9 +648,8 @@ void VMModel::LayerAddDropout(const fetch::vm::Ptr<String> &layer,
       vm_->RuntimeError(ss.str());
       return;
     }
-    DataType const keep_probability = DataType{1} - probability;
 
-    me->Add<fetch::ml::ops::Dropout<TensorType>>(keep_probability);
+    me->Add<fetch::ml::ops::Dropout<TensorType>>(probability);
     compiled_ = false;
   }
   catch (std::exception const &e)
@@ -760,6 +727,53 @@ void VMModel::LayerAddReshape(const fetch::vm::Ptr<String> &                    
 }
 
 /**
+ * @brief Sets expected input shape of the Model; if the shape is not set, hidden layers' shapes
+ * can not be automatically deduced/inferred and charge estimation is not possible.
+ * @param layer - "input" expected
+ * @param shape - input shape, min 2 dimensions, the trailing is batch size.
+ */
+void VMModel::LayerAddInput(const fetch::vm::Ptr<String> &                   layer,
+                            const fetch::vm::Ptr<vm::Array<math::SizeType>> &shape)
+{
+  if (shape->elements.size() < 2)
+  {
+    vm_->RuntimeError(
+        "Invalid Input layer shape provided: at least 2 dimension needed; the trailing is batch "
+        "size.");
+    return;
+  }
+  for (auto const &element : shape->elements)
+  {
+    if (element == 0)
+    {
+      vm_->RuntimeError("Invalid Input layer shape provided: dimension with zero size found.");
+      return;
+    }
+  }
+
+  try
+  {
+    SupportedLayerType const layer_type =
+        ParseName(layer->string(), layer_types_, LAYER_TYPE_MESSAGE);
+    AssertLayerTypeMatches(layer_type, {SupportedLayerType::INPUT});
+    SequentialModelPtr me = GetMeAsSequentialIfPossible();
+    if (me->LayerCount() != 0)
+    {
+      vm_->RuntimeError(
+          "Can not add an Input layer to non-empty Model! Input layer must be first.");
+      return;
+    }
+    me->SetBatchInputShape(shape->elements);
+    compiled_ = false;
+  }
+  catch (std::exception const &e)
+  {
+    vm_->RuntimeError(IMPOSSIBLE_ADD_MESSAGE + std::string(e.what()));
+    return;
+  }
+}
+
+/**
  * for regressor and classifier we can't prepare the dataloder until after compile has begun
  * because model_ isn't ready until then.
  */
@@ -770,6 +784,7 @@ void VMModel::PrepareDataloader()
   data_loader->SetRandomMode(true);
   model_->SetDataloader(std::move(data_loader));
 }
+
 }  // namespace model
 }  // namespace ml
 }  // namespace vm_modules
