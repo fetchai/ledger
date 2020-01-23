@@ -79,6 +79,8 @@ public:
     return DESCRIPTOR;
   }
 
+  MLChargeAmount ChargeForward() override;
+
 private:
   void FillVerticalStride(TensorType &input, TensorType &vertical_stride, SizeType output_channels,
                           SizeType input_channels, SizeType kernel_height, SizeType kernel_width);

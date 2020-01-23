@@ -107,6 +107,13 @@ std::vector<fetch::math::SizeType> Convolution1D<TensorType>::ComputeOutputShape
       .ComputeOutputShape({inputs.at(0), std::make_shared<TensorType>(weights_data)});
 }
 
+template <typename TensorType>
+ MLChargeAmount Convolution1D<TensorType>::ChargeForward()
+ {
+   Graph<TensorType> *ptr = dynamic_cast<Graph<TensorType> *>(this);
+   return ptr->ChargeForward(this->output_node_name_);
+ }
+
 ///////////////////////////////
 /// EXPLICIT INSTANTIATIONS ///
 ///////////////////////////////

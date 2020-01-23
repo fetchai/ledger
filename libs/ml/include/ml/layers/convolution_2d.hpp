@@ -77,6 +77,8 @@ public:
     return DESCRIPTOR;
   }
 
+  MLChargeAmount ChargeForward() override;
+
 private:
   void Initialise(TensorType &weights, WeightsInit init_mode)
   {

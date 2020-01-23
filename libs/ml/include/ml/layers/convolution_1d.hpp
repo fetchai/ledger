@@ -77,6 +77,8 @@ public:
     return DESCRIPTOR;
   }
 
+  MLChargeAmount ChargeForward() override;
+
 private:
   SizeType kernel_size_{};
   SizeType input_channels_{};
