@@ -27,7 +27,7 @@ namespace ml {
 
 using Shape       = fetch::math::SizeVector;
 using ShapeVector = std::vector<fetch::math::SizeVector>;
-using fetch::ml::MLChargeAmount;
+using fetch::ml::OperationsCount;
 
 /**
  * @brief A helper function for printing node's output shape
@@ -95,9 +95,9 @@ OpType Node<TensorType>::OperationType() const
 }
 
 template <typename TensorType>
-MLChargeAmount Node<TensorType>::ChargeForward()
+OperationsCount Node<TensorType>::ChargeForward()
 {
-  MLChargeAmount cost = op_ptr_->ChargeForward();
+  OperationsCount cost = op_ptr_->ChargeForward();
 
   for (auto const &i : input_nodes_)
   {
@@ -114,7 +114,7 @@ MLChargeAmount Node<TensorType>::ChargeForward()
 }
 
 template <typename TensorType>
-MLChargeAmount Node<TensorType>::ChargeBackward()
+OperationsCount Node<TensorType>::ChargeBackward()
 {
   throw std::runtime_error("ChargeBackward() estimator is not implemented.");
 }

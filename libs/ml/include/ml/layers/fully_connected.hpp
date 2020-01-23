@@ -77,7 +77,7 @@ public:
 
   void CompleteConstruction() override;
 
-  MLChargeAmount ChargeForward() override;
+  OperationsCount ChargeForward() override;
 
   std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override;
 

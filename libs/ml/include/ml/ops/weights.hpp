@@ -103,7 +103,7 @@ public:
   OpType      OperationType() const override;
   char const *Descriptor() const override;
 
-  MLChargeAmount ChargeForward() override;
+  OperationsCount ChargeForward() override;
 
 private:
   static void XavierInitialisation(TensorType &array, DataType normalising_factor,

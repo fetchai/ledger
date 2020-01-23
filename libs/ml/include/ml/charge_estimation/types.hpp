@@ -22,7 +22,7 @@
 namespace fetch {
 namespace ml {
 
-using MLChargeAmount = std::uint64_t;
+using OperationsCount = std::uint64_t;
 
 }  // namespace ml
 }  // namespace fetch

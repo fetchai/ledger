@@ -1228,8 +1228,8 @@ TYPED_TEST(GraphTest, graph_charge_input_only)
   g.SetInput(input, data);
   g.Compile();
 
-  MLChargeAmount const charge          = g.ChargeForward(input);
-  MLChargeAmount const expected_charge = 0;  // Placeholder reading is "free" in charge amount.
+  OperationsCount const charge          = g.ChargeForward(input);
+  OperationsCount const expected_charge = 0;  // Placeholder reading is "free" in charge amount.
 
   ASSERT_EQ(charge, expected_charge);
 }
@@ -1251,12 +1251,12 @@ TYPED_TEST(GraphTest, graph_charge_subtraction)
   g.SetInput(right_input, data);
   g.Compile();
 
-  MLChargeAmount const charge       = g.ChargeForward(subtract);
-  MLChargeAmount const batch_charge = charge * data.shape().back();
+  OperationsCount const charge       = g.ChargeForward(subtract);
+  OperationsCount const batch_charge = charge * data.shape().back();
 
-  std::size_t const    total_elements_in_output = 4 * 4;
-  MLChargeAmount const expected_charge =
-      total_elements_in_output * charge_cost::SUBTRACTION_PER_ELEMENT;
+  std::size_t const     total_elements_in_output = 4 * 4;
+  OperationsCount const expected_charge =
+      total_elements_in_output * fetch::ml::charge_estimation::ops::SUBTRACTION_PER_ELEMENT;
 
   ASSERT_EQ(batch_charge, expected_charge);
 }
@@ -1296,11 +1296,11 @@ TYPED_TEST(GraphTest, graph_charge_matmul)
   ASSERT_EQ(out_shape.size(), 2);
   ASSERT_EQ(out_shape.front(), 2);
 
-  MLChargeAmount const charge       = g.ChargeForward(matmul);
-  MLChargeAmount const batch_charge = charge * batch_size;
+  OperationsCount const charge       = g.ChargeForward(matmul);
+  OperationsCount const batch_charge = charge * batch_size;
 
-  SizeType const       matmul_ops      = weight_width * input_height * batch_size;
-  MLChargeAmount const expected_charge = matmul_ops * charge_cost::MULTIPLICATION_PER_ELEMENT;
+  SizeType const        matmul_ops      = weight_width * input_height * batch_size;
+  OperationsCount const expected_charge = matmul_ops * charge_cost::MULTIPLICATION_PER_ELEMENT;
 
   ASSERT_EQ(batch_charge, expected_charge);
 }

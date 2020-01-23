@@ -151,7 +151,7 @@ void FullyConnected<TensorType>::CompleteConstruction()
 }
 
 template <typename TensorType>
-MLChargeAmount FullyConnected<TensorType>::ChargeForward()
+OperationsCount FullyConnected<TensorType>::ChargeForward()
 {
   auto ptr = dynamic_cast<Graph<TensorType> *>(this);
   return ptr->ChargeForward(this->output_node_name_);

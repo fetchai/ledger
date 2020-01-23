@@ -156,7 +156,7 @@ public:
    * @return estimated charge amount, necessary for performing a forward pass on data of given
    * shapes.
    */
-  virtual MLChargeAmount ChargeForward()
+  virtual OperationsCount ChargeForward()
   {
     // TODO(VH): make a pure virtual call;
     FETCH_LOG_ERROR(Descriptor(),
@@ -169,7 +169,7 @@ public:
    * @return estimated charge amount, necessary for performing a backward pass on data of given
    * shapes.
    */
-  virtual MLChargeAmount ChargeBackward() const
+  virtual OperationsCount ChargeBackward() const
   {
     // TODO(VH): make a pure virtual call;
     FETCH_LOG_ERROR(Descriptor(),

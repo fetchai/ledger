@@ -149,8 +149,8 @@ public:
     return static_cast<bool>(cached_output_status_ == CachedOutputState::VALID_CACHE);
   }
 
-  fetch::ml::MLChargeAmount ChargeForward();
-  fetch::ml::MLChargeAmount ChargeBackward();
+  fetch::ml::OperationsCount ChargeForward();
+  fetch::ml::OperationsCount ChargeBackward();
 
 private:
   std::vector<NodeWeakPtrType> input_nodes_;

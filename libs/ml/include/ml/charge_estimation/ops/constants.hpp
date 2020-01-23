@@ -21,20 +21,20 @@
 
 namespace fetch {
 namespace ml {
+namespace charge_estimation {
 namespace ops {
-namespace charge_cost {
 
-static constexpr MLChargeAmount DROPOUT_PER_ELEMENT             = 3;
-static constexpr MLChargeAmount RELU_PER_ELEMENT                = 1;
-static constexpr MLChargeAmount SIGMOID_PER_ELEMENT             = 2;
-static constexpr MLChargeAmount ADDITION_PER_ELEMENT            = 1;
-static constexpr MLChargeAmount SUBTRACTION_PER_ELEMENT         = ADDITION_PER_ELEMENT;
-static constexpr MLChargeAmount FLATTEN_PER_ELEMENT             = 1;
-static constexpr MLChargeAmount MULTIPLICATION_PER_ELEMENT      = 3;
-static constexpr MLChargeAmount PLACEHOLDER_READING_PER_ELEMENT = 0;
-static constexpr MLChargeAmount WEIGHTS_READING_PER_ELEMENT     = 0;
+static constexpr OperationsCount DROPOUT_PER_ELEMENT             = 3;
+static constexpr OperationsCount RELU_PER_ELEMENT                = 1;
+static constexpr OperationsCount SIGMOID_PER_ELEMENT             = 2;
+static constexpr OperationsCount ADDITION_PER_ELEMENT            = 1;
+static constexpr OperationsCount SUBTRACTION_PER_ELEMENT         = ADDITION_PER_ELEMENT;
+static constexpr OperationsCount FLATTEN_PER_ELEMENT             = 1;
+static constexpr OperationsCount MULTIPLICATION_PER_ELEMENT      = 3;
+static constexpr OperationsCount PLACEHOLDER_READING_PER_ELEMENT = 0;
+static constexpr OperationsCount WEIGHTS_READING_PER_ELEMENT     = 0;
 
-}  // namespace charge_cost
 }  // namespace ops
+}  // namespace charge_estimation
 }  // namespace ml
 }  // namespace fetch

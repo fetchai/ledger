@@ -98,11 +98,11 @@ const char *Add<TensorType>::Descriptor() const
 }
 
 template <typename TensorType>
-MLChargeAmount Add<TensorType>::ChargeForward()
+OperationsCount Add<TensorType>::ChargeForward()
 {
   assert(!this->batch_output_shape_.empty());
-  MLChargeAmount cost = fetch::ml::ops::charge_cost::ADDITION_PER_ELEMENT *
-                        this->TotalElementsIn({this->batch_output_shape_});
+  OperationsCount cost = fetch::ml::charge_estimation::ops::ADDITION_PER_ELEMENT *
+                         this->TotalElementsIn({this->batch_output_shape_});
   return cost;
 }
 
