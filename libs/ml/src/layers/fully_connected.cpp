@@ -153,7 +153,7 @@ void FullyConnected<TensorType>::CompleteConstruction()
 template <typename TensorType>
 MLChargeAmount FullyConnected<TensorType>::ChargeForward()
 {
-  Graph<TensorType> *ptr = dynamic_cast<Graph<TensorType> *>(this);
+  auto ptr = dynamic_cast<Graph<TensorType> *>(this);
   return ptr->ChargeForward(this->output_node_name_);
 }
 

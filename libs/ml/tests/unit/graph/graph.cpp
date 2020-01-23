@@ -1246,8 +1246,7 @@ TYPED_TEST(GraphTest, graph_charge_subtraction)
   std::string left_input  = g.template AddNode<PlaceHolder<TensorType>>("LeftInput", {});
   std::string right_input = g.template AddNode<PlaceHolder<TensorType>>("RightInput", {});
   std::string subtract =
-      g.template AddNode<Subtract<TensorType>>("Subtract", {"LeftInput", "RightInput"});
-
+      g.template AddNode<Subtract<TensorType>>("Subtract", {left_input, right_input});
   g.SetInput(left_input, data);
   g.SetInput(right_input, data);
   g.Compile();
