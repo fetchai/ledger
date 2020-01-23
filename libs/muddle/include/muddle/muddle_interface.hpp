@@ -310,9 +310,15 @@ using ProverPtr = std::shared_ptr<crypto::Prover>;
 
 // creation
 MuddlePtr CreateMuddle(NetworkId const &network, ProverPtr certificate,
+                       network::NetworkManager const &nm, std::string const &external_address,
+                       bool enable_message_signing);
+MuddlePtr CreateMuddle(NetworkId const &network, ProverPtr certificate,
                        network::NetworkManager const &nm, std::string const &external_address);
 MuddlePtr CreateMuddle(char const network[4], ProverPtr certificate,
                        network::NetworkManager const &nm, std::string const &external_address);
+MuddlePtr CreateMuddle(char const network[4], ProverPtr certificate,
+                       network::NetworkManager const &nm, std::string const &external_address,
+                       bool enable_message_signing);
 MuddlePtr CreateMuddle(NetworkId const &network, network::NetworkManager const &nm,
                        std::string const &external_address);
 MuddlePtr CreateMuddle(char const network[4], network::NetworkManager const &nm,
