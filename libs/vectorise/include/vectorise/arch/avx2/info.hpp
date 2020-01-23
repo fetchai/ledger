@@ -29,9 +29,23 @@ namespace fetch {
 namespace vectorise {
 
 template <>
+struct VectorInfo<int8_t, 128>
+{
+  using NativeType   = int8_t;
+  using RegisterType = __m128i;
+};
+
+template <>
 struct VectorInfo<uint8_t, 128>
 {
   using NativeType   = uint8_t;
+  using RegisterType = __m128i;
+};
+
+template <>
+struct VectorInfo<int16_t, 128>
+{
+  using NativeType   = int16_t;
   using RegisterType = __m128i;
 };
 
@@ -92,9 +106,23 @@ struct VectorInfo<fixed_point::fp64_t, 128>
 };
 
 template <>
+struct VectorInfo<int8_t, 256>
+{
+  using NativeType   = int8_t;
+  using RegisterType = __m256i;
+};
+
+template <>
 struct VectorInfo<uint8_t, 256>
 {
   using NativeType   = uint8_t;
+  using RegisterType = __m256i;
+};
+
+template <>
+struct VectorInfo<int16_t, 256>
+{
+  using NativeType   = int16_t;
   using RegisterType = __m256i;
 };
 

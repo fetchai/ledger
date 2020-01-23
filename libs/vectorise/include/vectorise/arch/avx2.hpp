@@ -29,8 +29,10 @@
 #include "vectorise/arch/avx2/register_fixed32.hpp"
 #include "vectorise/arch/avx2/register_fixed64.hpp"
 #include "vectorise/arch/avx2/register_float.hpp"
+#include "vectorise/arch/avx2/register_int16.hpp"
 #include "vectorise/arch/avx2/register_int32.hpp"
 #include "vectorise/arch/avx2/register_int64.hpp"
+#include "vectorise/arch/avx2/register_int8.hpp"
 
 #undef ADD_REGISTER_SIZE
 
