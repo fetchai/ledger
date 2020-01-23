@@ -108,11 +108,11 @@ std::vector<fetch::math::SizeType> Convolution1D<TensorType>::ComputeOutputShape
 }
 
 template <typename TensorType>
- MLChargeAmount Convolution1D<TensorType>::ChargeForward()
- {
-   Graph<TensorType> *ptr = dynamic_cast<Graph<TensorType> *>(this);
-   return ptr->ChargeForward(this->output_node_name_);
- }
+MLChargeAmount Convolution1D<TensorType>::ChargeForward()
+{
+  Graph<TensorType> *ptr = dynamic_cast<Graph<TensorType> *>(this);
+  return ptr->ChargeForward(this->output_node_name_);
+}
 
 ///////////////////////////////
 /// EXPLICIT INSTANTIATIONS ///

@@ -402,13 +402,16 @@ MLChargeAmount Convolution1D<TensorType>::ChargeForward()
   SizeType kernel_height   = this->batch_input_shapes_.back().at(2);
 
   // output_height=number of stride_size steps over input size
-  SizeType output_height = (this->batch_input_shapes_.front().at(1) - this->batch_input_shapes_.back().at(2) + this->stride_size_) / this->stride_size_;
+  SizeType output_height = (this->batch_input_shapes_.front().at(1) -
+                            this->batch_input_shapes_.back().at(2) + this->stride_size_) /
+                           this->stride_size_;
 
   SizeType horizontal_stride_width  = kernel_height * input_channels;
   SizeType horizontal_stride_height = output_height * batch_size;
   SizeType vertical_stride_width    = output_channels;
 
-  MLChargeAmount cost = horizontal_stride_width * horizontal_stride_height * vertical_stride_width * fetch::ml::ops::charge_cost::MULTIPLICATION_PER_ELEMENT ;
+  MLChargeAmount cost = horizontal_stride_width * horizontal_stride_height * vertical_stride_width *
+                        fetch::ml::ops::charge_cost::MULTIPLICATION_PER_ELEMENT;
 
   return cost;
 }
