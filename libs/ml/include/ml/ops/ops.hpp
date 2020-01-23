@@ -159,7 +159,7 @@ public:
    */
   virtual OperationsCount ChargeForward()
   {
-    // TODO(VH): make a pure virtual call;
+    // TODO(ML-483): make a pure virtual method after all Ops have their overrides;
     FETCH_LOG_ERROR(Descriptor(),
                     " Error: call to unexisting ChargeForward() implementation! returned 0.");
     return 0;
@@ -172,7 +172,7 @@ public:
    */
   virtual OperationsCount ChargeBackward() const
   {
-    // TODO(VH): make a pure virtual call;
+    // TODO(ML-483): make a pure virtual method after all Ops have their overrides;
     FETCH_LOG_ERROR(Descriptor(),
                     " Error: call to unexisting ChargeBackward() implementation! returned 0.");
     return 0;
