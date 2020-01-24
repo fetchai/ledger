@@ -150,8 +150,8 @@ inline void FakeMuddleEndpoint::Broadcast(uint16_t service, uint16_t channel,
   FETCH_UNUSED(service, channel, payload);
 }
 
-FakeMuddleEndpoint::SubscriptionPtr FakeMuddleEndpoint::Subscribe(uint16_t service,
-                                                                  uint16_t channel)
+inline FakeMuddleEndpoint::SubscriptionPtr FakeMuddleEndpoint::Subscribe(uint16_t service,
+                                                                         uint16_t channel)
 {
   auto subscription = std::make_shared<Subscription>();
 
@@ -166,26 +166,26 @@ FakeMuddleEndpoint::SubscriptionPtr FakeMuddleEndpoint::Subscribe(uint16_t servi
   return subscription;
 }
 
-FakeMuddleEndpoint::SubscriptionPtr FakeMuddleEndpoint::Subscribe(Address const &address,
-                                                                  uint16_t       service,
-                                                                  uint16_t       channel)
+inline FakeMuddleEndpoint::SubscriptionPtr FakeMuddleEndpoint::Subscribe(Address const &address,
+                                                                         uint16_t       service,
+                                                                         uint16_t       channel)
 {
   FETCH_UNUSED(address, service, channel);
 
   throw std::runtime_error{"Exchange not supported in fake muddle currently"};
 }
 
-FakeMuddleEndpoint::NetworkId const &FakeMuddleEndpoint::network_id() const
+inline FakeMuddleEndpoint::NetworkId const &FakeMuddleEndpoint::network_id() const
 {
   return network_id_;
 }
 
-FakeMuddleEndpoint::AddressList FakeMuddleEndpoint::GetDirectlyConnectedPeers() const
+inline FakeMuddleEndpoint::AddressList FakeMuddleEndpoint::GetDirectlyConnectedPeers() const
 {
   return {};
 }
 
-FakeMuddleEndpoint::AddressSet FakeMuddleEndpoint::GetDirectlyConnectedPeerSet() const
+inline FakeMuddleEndpoint::AddressSet FakeMuddleEndpoint::GetDirectlyConnectedPeerSet() const
 {
   return {};
 }
