@@ -101,7 +101,7 @@ public:
     START_SYNC_WITH_PEER,
     REQUEST_NEXT_BLOCKS,
     WAIT_FOR_NEXT_BLOCKS,
-    COMPLETE_SYNC_WITH_PEER,
+    COMPLETE_SYNC_WITH_PEER
   };
 
   using MuddleEndpoint  = muddle::MuddleEndpoint;
@@ -188,7 +188,8 @@ private:
   State OnWaitForBlocks();
   State OnCompleteSyncWithPeer();
 
-  bool ValidBlock(Block const &block) const;
+  bool  ValidBlock(Block const &block) const;
+  State WalkBack();
   /// @}
 
   /// @name System Components
@@ -222,6 +223,8 @@ private:
 
   BlockHash             current_missing_block_;
   std::atomic<uint16_t> loose_blocks_seen_{0};
+
+  std::size_t back_stride_{1};
   /// @}
 
   /// @name Telemetry

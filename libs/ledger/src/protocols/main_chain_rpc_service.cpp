@@ -18,6 +18,7 @@
 
 #include "ledger/protocols/main_chain_rpc_service.hpp"
 
+#include "chain/constants.hpp"
 #include "chain/transaction_layout_rpc_serializers.hpp"
 #include "core/byte_array/encoders.hpp"
 #include "core/serializers/counter.hpp"
@@ -53,6 +54,8 @@ using BlockSerializerCounter = fetch::serializers::SizeCounter;
 using PromiseState           = fetch::service::PromiseState;
 using State                  = MainChainRpcService::State;
 using Mode                   = MainChainRpcService::Mode;
+
+constexpr uint64_t MAX_SENSIBLE_STEP_BACK = 10000;
 
 }  // namespace
 
@@ -121,10 +124,10 @@ MainChainRpcService::MainChainRpcService(MuddleEndpoint &             endpoint,
   // clang-format off
   state_machine_->RegisterHandler(State::SYNCHRONISING,           this, &MainChainRpcService::OnSynchronising);
   state_machine_->RegisterHandler(State::SYNCHRONISED,            this, &MainChainRpcService::OnSynchronised);
-  state_machine_->RegisterHandler(State::START_SYNC_WITH_PEER,  this, &MainChainRpcService::OnStartSyncWithPeer);
-  state_machine_->RegisterHandler(State::REQUEST_NEXT_BLOCKS, this, &MainChainRpcService::OnRequestNextSetOfBlocks);
+  state_machine_->RegisterHandler(State::START_SYNC_WITH_PEER,    this, &MainChainRpcService::OnStartSyncWithPeer);
+  state_machine_->RegisterHandler(State::REQUEST_NEXT_BLOCKS,     this, &MainChainRpcService::OnRequestNextSetOfBlocks);
   state_machine_->RegisterHandler(State::WAIT_FOR_NEXT_BLOCKS,    this, &MainChainRpcService::OnWaitForBlocks);
-  state_machine_->RegisterHandler(State::COMPLETE_SYNC_WITH_PEER,    this, &MainChainRpcService::OnCompleteSyncWithPeer);
+  state_machine_->RegisterHandler(State::COMPLETE_SYNC_WITH_PEER, this, &MainChainRpcService::OnCompleteSyncWithPeer);
   // clang-format on
 
   state_machine_->OnStateChange([](State current, State previous) {
@@ -417,15 +420,15 @@ State MainChainRpcService::OnWaitForBlocks()
 
   // if we are still waiting for the promise to resolve
   auto const status = current_request_->state();
-  if (status == PromiseState::WAITING)
+  switch (status)
   {
+  case PromiseState::WAITING:
     state_machine_->Delay(std::chrono::milliseconds{100});
     return State::WAIT_FOR_NEXT_BLOCKS;
-  }
 
-  // at this point the promise has either resolved successfully or not.
-  if ((status == PromiseState::FAILED) || (status == PromiseState::TIMEDOUT))
-  {
+    // at this point the promise has either resolved successfully or not.
+  case PromiseState::FAILED:
+  case PromiseState::TIMEDOUT:
     if (++consecutive_failures_ >= 3)
     {
       // too many failures give up on this peer
@@ -434,6 +437,7 @@ State MainChainRpcService::OnWaitForBlocks()
 
     state_machine_->Delay(std::chrono::milliseconds{100 * consecutive_failures_});
     return State::REQUEST_NEXT_BLOCKS;
+  case PromiseState::SUCCESS:;
   }
 
   // If we have passed all these checks then we have successfully retrieved a travelogue from our
@@ -451,11 +455,11 @@ State MainChainRpcService::OnWaitForBlocks()
   // this point
   if (log.status == TravelogueStatus::NOT_FOUND)
   {
-    // if the responding block was not found then walk back by one block
-    block_resolving_ = chain_.GetBlock(block_resolving_->previous_hash);
-
-    return State::REQUEST_NEXT_BLOCKS;
+    // if the responding block was not found then start walking back slowly
+    return WalkBack();
   }
+  // The remote peer did not respond with NOT_FOUND, we can reset the stride.
+  back_stride_ = 1;
 
   // We always expect at least 1 block to be synced during this process, failure to do this is not
   // normal and implies we should try and sync with another peer
@@ -510,6 +514,66 @@ State MainChainRpcService::OnCompleteSyncWithPeer()
 bool MainChainRpcService::ValidBlock(Block const &block) const
 {
   return !consensus_ || consensus_->ValidBlock(block) == ConsensusInterface::Status::YES;
+}
+
+State MainChainRpcService::WalkBack()
+{
+  assert(block_resolving_);
+  using chain::GetGenesisDigest;
+
+  std::size_t current_height = block_resolving_->block_number;
+  switch (current_height)
+  {
+  case 0:
+    assert(block_resolving_->IsGenesis());
+    // genesis digest mismatch, stop sync with this peer
+    block_resolving_.reset();
+    back_stride_ = 1;
+    return State::COMPLETE_SYNC_WITH_PEER;
+
+  case 1:
+    assert(block_resolving_->previous_hash == chain::GetGenesisDigest());
+    block_resolving_ = chain_.GetBlock(GetGenesisDigest());
+    if (!block_resolving_)
+    {
+      FETCH_LOG_CRITICAL(LOGGING_NAME, __func__, ": genesis block is not on the chain");
+      back_stride_ = 1;
+      return State::SYNCHRONISING;
+    }
+    return State::REQUEST_NEXT_BLOCKS;
+  }
+
+  std::size_t blocks_back = back_stride_;
+  if (blocks_back >= current_height)
+  {
+    // we don't need to (and actually can't) leap back as far
+    // let's descend down to genesis logarithmically!
+    blocks_back = current_height / 2;
+  }
+  else if (back_stride_ < MAX_SENSIBLE_STEP_BACK)
+  {
+    // speed up, unless we're already fast enough
+    back_stride_ *= 2;
+  }
+
+  // TODO (nobody): we should consider once if this linear crawlback is worth improving
+  for (std::size_t i = 0; i < blocks_back; ++i)
+  {
+    assert(!block_resolving_->IsGenesis());
+    auto next_block_resolving = chain_.GetBlock(block_resolving_->previous_hash);
+    if (!next_block_resolving)
+    {
+      FETCH_LOG_CRITICAL(LOGGING_NAME, __func__, ": block 0x",
+                         block_resolving_->previous_hash.ToHex(),
+                         ", previous to current resolving 0x", block_resolving_->hash.ToHex(),
+                         ", is not on the chain");
+      return State::SYNCHRONISING;
+    }
+    block_resolving_ = std::move(next_block_resolving);
+  }
+
+  // now re-try requesting blocks from this point
+  return State::REQUEST_NEXT_BLOCKS;
 }
 
 }  // namespace ledger
