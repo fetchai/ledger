@@ -6,11 +6,11 @@ MACOS_NODE_LABEL = 'mac-mini'
 
 enum Platform
 {
-  DEFAULT_CLANG('Clang',      'clang',     'clang++',     ''),
-  CLANG6       ('Clang 6',    'clang-6.0', 'clang++-6.0', 'gcr.io/organic-storm-201412/ledger-ci-clang6:v0.1.2-3-g1388d9c'),
-  CLANG7       ('Clang 7',    'clang-7',   'clang++-7',   'gcr.io/organic-storm-201412/ledger-ci-clang7:v0.1.2-3-g1388d9c'),
-  GCC7         ('GCC 7',      'gcc-7',     'g++-7',       'gcr.io/organic-storm-201412/ledger-ci-gcc7:v0.1.2-3-g1388d9c'),
-  GCC8         ('GCC 8',      'gcc-8',     'g++-8',       'gcr.io/organic-storm-201412/ledger-ci-gcc8:v0.1.2-3-g1388d9c')
+  DEFAULT_CLANG('Clang',   'clang',     'clang++',     ''),
+  CLANG6       ('Clang 6', 'clang-6.0', 'clang++-6.0', 'gcr.io/organic-storm-201412/ledger-ci-clang6:v0.1.2-3-g1388d9c'),
+  CLANG7       ('Clang 7', 'clang-7',   'clang++-7',   'gcr.io/organic-storm-201412/ledger-ci-clang7:v0.1.2-3-g1388d9c'),
+  GCC7         ('GCC 7',   'gcc-7',     'g++-7',       'gcr.io/organic-storm-201412/ledger-ci-gcc7:v0.1.2-3-g1388d9c'),
+  GCC8         ('GCC 8',   'gcc-8',     'g++-8',       'gcr.io/organic-storm-201412/ledger-ci-gcc8:v0.1.2-3-g1388d9c')
 
   public Platform(label, cc, cxx, image)
   {
@@ -66,7 +66,6 @@ def set_up_pipenv()
 {
   sh "pipenv install --dev --pre"
 }
-
 
 def static_analysis(Configuration config)
 {
