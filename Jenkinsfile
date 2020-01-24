@@ -51,13 +51,21 @@ def run_full_build()
   return true
 }
 
-def env_use_utf8()
+def set_up_env_for_linux_pipenv(steps)
 {
-  return [
+  withEnv([
     "LC_ALL=C.UTF-8",
-    "LANG=C.UTF-8"
-  ]
+    "LANG=C.UTF-8"])
+  {
+    steps()
+  }
 }
+
+def set_up_pipenv()
+{
+  sh "pipenv install --dev"
+}
+
 
 def static_analysis(Configuration config)
 {
@@ -68,11 +76,10 @@ def static_analysis(Configuration config)
           checkout scm
         }
 
-        withEnv(env_use_utf8()) {
+        set_up_env_for_linux_pipenv {
           docker.image(STATIC_ANALYSIS_IMAGE).inside {
             stage('Set Up Static Analysis') {
-              sh "python3 -m pip install pipenv"
-              sh "pipenv install --dev"
+              set_up_pipenv()
             }
 
             stage('Run Static Analysis') {
@@ -179,11 +186,10 @@ full_run = { platform_, config_ ->
 def create_docker_build(Platform platform, Configuration config, stages)
 {
   def build = { build_stages ->
-    withEnv(env_use_utf8()) {
+    set_up_env_for_linux_pipenv {
       docker.image(platform.docker_image).inside {
         stage("Set Up ${stage_name_suffix(platform, config)}") {
-          sh "python3 -m pip install pipenv"
-          sh "pipenv install --dev"
+          set_up_pipenv()
         }
 
         build_stages()
@@ -204,8 +210,7 @@ def create_macos_build(Platform platform, Configuration config)
   def build = { build_stages ->
     try {
       stage("Set Up ${stage_name_suffix(platform, config)}") {
-        sh "python3 -m pip install pipenv"
-        sh "pipenv install --dev"
+        set_up_pipenv()
       }
 
       build_stages()
@@ -277,11 +282,10 @@ def run_basic_checks()
         checkout scm
       }
 
-      withEnv(env_use_utf8()) {
+      set_up_env_for_linux_pipenv {
         docker.image(DOCKER_IMAGE_NAME).inside {
           stage('Set Up Basic Checks') {
-            sh "python3 -m pip install pipenv"
-            sh "pipenv install --dev"
+            set_up_pipenv()
           }
 
           stage('Style Check') {
