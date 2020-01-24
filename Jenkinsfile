@@ -79,6 +79,7 @@ def static_analysis(Configuration config)
         set_up_env_for_linux_pipenv {
           docker.image(STATIC_ANALYSIS_IMAGE).inside {
             stage('Set Up Static Analysis') {
+              sh "python3 -m pip install pipenv"
               set_up_pipenv()
             }
 
@@ -189,6 +190,7 @@ def create_docker_build(Platform platform, Configuration config, stages)
     set_up_env_for_linux_pipenv {
       docker.image(platform.docker_image).inside {
         stage("Set Up ${stage_name_suffix(platform, config)}") {
+          sh "python3 -m pip install pipenv"
           set_up_pipenv()
         }
 
@@ -285,6 +287,7 @@ def run_basic_checks()
       set_up_env_for_linux_pipenv {
         docker.image(DOCKER_IMAGE_NAME).inside {
           stage('Set Up Basic Checks') {
+            sh "python3 -m pip install pipenv"
             set_up_pipenv()
           }
 
