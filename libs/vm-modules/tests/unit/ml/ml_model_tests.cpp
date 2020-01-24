@@ -413,12 +413,6 @@ TEST_F(VMModelTests, model_add_conv1d_noact)
                        IGNORE_CHARGE_ESTIMATION);
 }
 
-//TEST_F(VMModelTests, model_add_maxpool1d_noact)
-//{
-//  TestValidLayerAdding(R"(model.add("maxpool1d", 10u64, 10u64, 10u64, 10u64);)",
-//                       IGNORE_CHARGE_ESTIMATION);
-//}
-
 TEST_F(VMModelTests, model_add_conv1d_relu)
 {
   TestValidLayerAdding(R"(model.add("conv1d", 10u64, 10u64, 10u64, 10u64, "relu");)",
@@ -492,6 +486,16 @@ TEST_F(VMModelTests, model_add_conv_invalid_params_noact)
 TEST_F(VMModelTests, model_add_conv_invalid_params_relu)
 {
   TestInvalidLayerAdding(R"(model.add("conv1d", 10u64, 10u64, "relu");)");
+}
+
+TEST_F(VMModelTests, model_add_maxpool1d_invalid_params_relu)
+{
+  TestInvalidLayerAdding(R"(model.add("maxpool1d", 10u64, 10u64, "relu");)");
+}
+
+TEST_F(VMModelTests, model_add_maxpool2d_invalid_params_relu)
+{
+  TestInvalidLayerAdding(R"(model.add("maxpool2d", 10u64, 10u64, "relu");)");
 }
 
 TEST_F(VMModelTests, model_add_activation_invalid_params)
@@ -917,15 +921,27 @@ TEST_F(VMModelTests, model_sequential_flatten)
   ASSERT_TRUE(toolkit.Run(nullptr, ChargeAmount{0}));
 }
 
-TEST_F(VMModelTests, model_sequential_maxpool)
+TEST_F(VMModelTests, model_sequential_maxpool1d)
 {
   static char const *SRC_METRIC = R"(
         function main()
           var model = Model("sequential");
-          model.add("maxpool1d", 4, 1);
-          model.add("maxpool1d", 4fp64, 1fp64);
-          model.add("maxpool1d", 4u64, 1u64);
-          model.compile("scel", "adam", {"categorical accuracy"});
+          model.addExperimental("maxpool1d", 4u64, 1u64);
+          model.compile("scel", "adam");
+        endfunction
+      )";
+
+  ASSERT_TRUE(toolkit.Compile(SRC_METRIC));
+  ASSERT_TRUE(toolkit.Run(nullptr, ChargeAmount{0}));
+}
+
+TEST_F(VMModelTests, model_sequential_maxpool2d)
+{
+  static char const *SRC_METRIC = R"(
+        function main()
+          var model = Model("sequential");
+          model.addExperimental("maxpool2d", 4u64, 1u64);
+          model.compile("scel", "adam");
         endfunction
       )";
 

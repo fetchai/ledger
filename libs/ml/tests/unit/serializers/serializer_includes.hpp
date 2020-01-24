@@ -37,7 +37,6 @@
 #include "ml/ops/log.hpp"
 #include "ml/ops/mask_fill.hpp"
 #include "ml/ops/matrix_multiply.hpp"
-#include "ml/ops/max_pool.hpp"
 #include "ml/ops/max_pool_1d.hpp"
 #include "ml/ops/max_pool_2d.hpp"
 #include "ml/ops/maximum.hpp"

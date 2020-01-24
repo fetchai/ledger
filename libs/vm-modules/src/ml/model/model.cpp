@@ -41,7 +41,8 @@
 #include "ml/ops/activations/sigmoid.hpp"
 #include "ml/ops/activations/softmax.hpp"
 #include "ml/ops/flatten.hpp"
-#include "ml/ops/max_pool.hpp"
+#include "ml/ops/max_pool_1d.hpp"
+#include "ml/ops/max_pool_2d.hpp"
 #include "ml/ops/reshape.hpp"
 
 #include "vm/module.hpp"
@@ -292,7 +293,7 @@ void VMModel::Bind(Module &module, bool const experimental_enabled)
                               UseEstimator(&ModelEstimator::LayerAddActivation))
         .CreateMemberFunction("add", &VMModel::LayerAddReshape,
                               UseEstimator(&ModelEstimator::LayerAddReshape))
-        .CreateMemberFunction("add", &VMModel::LayerAddMaxPool,
+        .CreateMemberFunction("addExperimental", &VMModel::LayerAddMaxPool,
                               UseEstimator(&ModelEstimator::LayerAddMaxPool))
         .CreateMemberFunction("addExperimental", &VMModel::LayerAddDenseActivationExperimental,
                               UseEstimator(&ModelEstimator::LayerAddDenseActivationExperimental))
@@ -776,8 +777,9 @@ void VMModel::LayerAddInput(const fetch::vm::Ptr<String> &                   lay
   }
 }
 
-void VMModel::LayerAddMaxPool(fetch::vm::Ptr<fetch::vm::String> const &layer,
-                              math::SizeType const &kernel_size, math::SizeType const &stride_size)
+void VMModel::LayerAddMaxPool(const fetch::vm::Ptr<fetch::vm::String> &layer,
+                              const math::SizeType &kernel_size,
+                              const math::SizeType &stride_size)
 {
   try
   {
@@ -786,7 +788,14 @@ void VMModel::LayerAddMaxPool(fetch::vm::Ptr<fetch::vm::String> const &layer,
     AssertLayerTypeMatches(layer_type,
                            {SupportedLayerType::MAXPOOL1D, SupportedLayerType::MAXPOOL2D});
     SequentialModelPtr me = GetMeAsSequentialIfPossible();
-    me->Add<fetch::ml::ops::MaxPool<TensorType>>(kernel_size, stride_size);
+    if (layer_type == SupportedLayerType::MAXPOOL1D)
+    {
+      me->Add<fetch::ml::ops::MaxPool1D<TensorType>>(kernel_size, stride_size);
+    }
+    else if (layer_type == SupportedLayerType::MAXPOOL2D)
+    {
+      me->Add<fetch::ml::ops::MaxPool2D<TensorType>>(kernel_size, stride_size);
+    }
     compiled_ = false;
   }
   catch (std::exception const &e)
