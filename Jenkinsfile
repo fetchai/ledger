@@ -1,4 +1,4 @@
-def image_version_tag() { return 'v0.1.2-4-gace46f6' }
+static def image_version_tag() { return 'v0.1.2-4-gace46f6' }
 
 HIGH_LOAD_NODE_LABEL = 'ledger'
 MACOS_NODE_LABEL = 'mac-mini'
