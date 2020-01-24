@@ -1440,7 +1440,7 @@ TYPED_TEST(OpsSaveParamsTest, maxpool_saveparams_backward_test_1d_2_channels)
   }
 
   fetch::ml::ops::MaxPool1D<TensorType> op(4, 1);
-  std::vector<TensorType>             prediction =
+  std::vector<TensorType>               prediction =
       op.Backward({std::make_shared<const TensorType>(data)}, error);
 
   auto   dsp = serializer_test_utils::SerialiseDeserialiseBuild<SPType, TypeParam>(op);

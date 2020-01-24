@@ -778,8 +778,7 @@ void VMModel::LayerAddInput(const fetch::vm::Ptr<String> &                   lay
 }
 
 void VMModel::LayerAddMaxPool(const fetch::vm::Ptr<fetch::vm::String> &layer,
-                              const math::SizeType &kernel_size,
-                              const math::SizeType &stride_size)
+                              const math::SizeType &kernel_size, const math::SizeType &stride_size)
 {
   try
   {
