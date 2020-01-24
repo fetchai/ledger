@@ -1,10 +1,10 @@
-IMAGE_VERSION_TAG = 'v0.1.2-4-gace46f6'
+static IMAGE_VERSION_TAG = 'v0.1.2-4-gace46f6'
 
-HIGH_LOAD_NODE_LABEL = 'ledger'
-MACOS_NODE_LABEL = 'mac-mini'
+static HIGH_LOAD_NODE_LABEL = 'ledger'
+static MACOS_NODE_LABEL = 'mac-mini'
 
-DOCKER_IMAGE_NAME = 'gcr.io/organic-storm-201412/fetch-ledger-develop:v0.4.3'
-STATIC_ANALYSIS_IMAGE = "gcr.io/organic-storm-201412/ledger-ci-clang-tidy:${IMAGE_VERSION_TAG}"
+static DOCKER_IMAGE_NAME = 'gcr.io/organic-storm-201412/fetch-ledger-develop:v0.4.3'
+static STATIC_ANALYSIS_IMAGE = "gcr.io/organic-storm-201412/ledger-ci-clang-tidy:${IMAGE_VERSION_TAG}"
 
 enum Platform
 {
