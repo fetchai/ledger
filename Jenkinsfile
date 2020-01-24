@@ -1,15 +1,16 @@
-DOCKER_IMAGE_NAME = 'gcr.io/organic-storm-201412/fetch-ledger-develop:v0.4.2'
-STATIC_ANALYSIS_IMAGE = 'gcr.io/organic-storm-201412/ledger-ci-clang-tidy:v0.1.3'
+DOCKER_IMAGE_NAME = 'gcr.io/organic-storm-201412/fetch-ledger-develop:v0.4.3'
+STATIC_ANALYSIS_IMAGE = 'gcr.io/organic-storm-201412/ledger-ci-clang-tidy:v0.1.2-3-g1388d9c'
+
 HIGH_LOAD_NODE_LABEL = 'ledger'
 MACOS_NODE_LABEL = 'mac-mini'
 
 enum Platform
 {
   DEFAULT_CLANG('Clang',      'clang',     'clang++',     ''),
-  CLANG6       ('Clang 6',    'clang-6.0', 'clang++-6.0', 'gcr.io/organic-storm-201412/ledger-ci-clang6:v0.1.1'),
-  CLANG7       ('Clang 7',    'clang-7',   'clang++-7',   'gcr.io/organic-storm-201412/ledger-ci-clang7:v0.1.1'),
-  GCC7         ('GCC 7',      'gcc-7',     'g++-7',       'gcr.io/organic-storm-201412/ledger-ci-gcc7:v0.1.1'),
-  GCC8         ('GCC 8',      'gcc-8',     'g++-8',       'gcr.io/organic-storm-201412/ledger-ci-gcc8:v0.1.1')
+  CLANG6       ('Clang 6',    'clang-6.0', 'clang++-6.0', 'gcr.io/organic-storm-201412/ledger-ci-clang6:v0.1.2-3-g1388d9c'),
+  CLANG7       ('Clang 7',    'clang-7',   'clang++-7',   'gcr.io/organic-storm-201412/ledger-ci-clang7:v0.1.2-3-g1388d9c'),
+  GCC7         ('GCC 7',      'gcc-7',     'g++-7',       'gcr.io/organic-storm-201412/ledger-ci-gcc7:v0.1.2-3-g1388d9c'),
+  GCC8         ('GCC 8',      'gcc-8',     'g++-8',       'gcr.io/organic-storm-201412/ledger-ci-gcc8:v0.1.2-3-g1388d9c')
 
   public Platform(label, cc, cxx, image)
   {
@@ -79,7 +80,6 @@ def static_analysis(Configuration config)
         set_up_env_for_linux_pipenv {
           docker.image(STATIC_ANALYSIS_IMAGE).inside {
             stage('Set Up Static Analysis') {
-              sh "python3 -m pip install pipenv"
               set_up_pipenv()
             }
 
@@ -190,7 +190,6 @@ def create_docker_build(Platform platform, Configuration config, stages)
     set_up_env_for_linux_pipenv {
       docker.image(platform.docker_image).inside {
         stage("Set Up ${stage_name_suffix(platform, config)}") {
-          sh "python3 -m pip install pipenv"
           set_up_pipenv()
         }
 
@@ -287,7 +286,6 @@ def run_basic_checks()
       set_up_env_for_linux_pipenv {
         docker.image(DOCKER_IMAGE_NAME).inside {
           stage('Set Up Basic Checks') {
-            sh "python3 -m pip install pipenv"
             set_up_pipenv()
           }
 
