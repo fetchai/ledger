@@ -19,7 +19,9 @@
 #include "chain/address.hpp"
 #include "core/serializers/main_serializer.hpp"
 #include "crypto/ecdsa.hpp"
+#include "digest_matcher.hpp"
 #include "gtest/gtest.h"
+#include "ledger/chain/block.hpp"
 #include "ledger/chain/main_chain.hpp"
 #include "ledger/protocols/main_chain_rpc_service.hpp"
 #include "ledger/testing/block_generator.hpp"
@@ -30,9 +32,12 @@
 #include "moment/clocks.hpp"
 #include "muddle/network_id.hpp"
 
+#include <string>
+
 using ::testing::_;
 using ::testing::NiceMock;
 using ::testing::Return;
+
 using fetch::ledger::MainChainRpcService;
 using fetch::ledger::MainChain;
 using fetch::crypto::ECDSASigner;
@@ -43,6 +48,8 @@ using fetch::ledger::MainChainProtocol;
 using fetch::chain::GetGenesisDigest;
 using fetch::serializers::LargeObjectSerializeHelper;
 using fetch::ledger::ConsensusInterface;
+using fetch::ledger::TravelogueStatus;
+using fetch::ledger::testing::ExpectedHash;
 
 using AddressList        = fetch::muddle::MuddleEndpoint::AddressList;
 using State              = MainChainRpcService::State;
@@ -52,9 +59,19 @@ using AdjustableClockPtr = fetch::moment::AdjustableClockPtr;
 
 std::ostream &operator<<(std::ostream &s, MainChainRpcService::State state)
 {
-  s << fetch::ledger::ToString(state);
-  return s;
+  return s << fetch::ledger::ToString(state);
 }
+
+namespace fetch {
+namespace byte_array {
+
+inline void PrintTo(ConstByteArray const &digest, std::ostream *s)
+{
+  *s << "" << std::string(digest.ToHex()).substr(0, 8);
+}
+
+}  // namespace byte_array
+}  // namespace fetch
 
 namespace {
 
@@ -89,13 +106,27 @@ protected:
     fetch::chain::InitialiseTestConstants();
   }
 
-  void Tick(State current_state, State next_state);
+  void Tick(State current_state, State next_state, int line);
+
+  template <class... States>
+  void FollowPath(int line, State current, States... subsequent)
+  {
+    State trajectory[] = {subsequent...};
+
+    for (auto next_state : trajectory)
+    {
+      Tick(current, next_state, line);
+      current = next_state;
+    }
+  }
 
   AdjustableClockPtr               clock_{fetch::moment::CreateAdjustableClock("MC_RPC:main")};
   BlockGenerator                   block_generator_{NUM_LANES, NUM_SLICES};
   ECDSASigner                      self_;
   ECDSASigner                      other1_signer_;
   MuddleAddress                    other1_{other1_signer_.identity().identifier()};
+  ECDSASigner                      other2_signer_;
+  MuddleAddress                    other2_{other1_signer_.identity().identifier()};
   NiceMock<MockMainChainRpcClient> rpc_client_;
   NiceMock<MockMuddleEndpoint>     endpoint_{self_.identity().identifier(), NetworkId{"TEST"}};
   NiceMock<MockConsensus>          consensus_;
@@ -105,13 +136,27 @@ protected:
                                    CreateNonOwning(consensus_)};
 };
 
-void MainChainServiceTests::Tick(State current_state, State next_state)
+namespace {
+
+void AssertEq(char const *tick_phase, State actual, State expected, int line)
 {
-  ASSERT_EQ(rpc_service_.state(), current_state);
+  ASSERT_EQ(actual, expected) << "when asserting " << tick_phase << "-tick state at line " << line
+                              << ": RPC service is " << ToString(actual)
+                              << " but was expected to be " << ToString(expected);
+}
+
+}  // namespace
+
+void MainChainServiceTests::Tick(State current_state, State next_state, int line)
+{
+  AssertEq("pre", rpc_service_.state(), current_state, line);
   auto sm = rpc_service_.GetWeakRunnable().lock();
   sm->Execute();
-  ASSERT_EQ(rpc_service_.state(), next_state);
+  AssertEq("post", rpc_service_.state(), next_state, line);
 }
+
+#define Tick(...) Tick(__VA_ARGS__, __LINE__)
+#define FollowPath(...) FollowPath(__LINE__, __VA_ARGS__)
 
 TEST_F(MainChainServiceTests, CheckNoPeersCase)
 {
@@ -143,7 +188,7 @@ TEST_F(MainChainServiceTests, CheckSimpleCatchUpFromSinglePeer)
   auto travelogue = other1_proto.TimeTravel(GetGenesisDigest());
 
   EXPECT_CALL(endpoint_, GetDirectlyConnectedPeers()).WillRepeatedly(Return(AddressList{other1_}));
-  EXPECT_CALL(rpc_client_, TimeTravel(other1_, GetGenesisDigest()))
+  EXPECT_CALL(rpc_client_, TimeTravel(other1_, ExpectedHash(GetGenesisDigest())))
       .WillOnce(Return(CreatePromise(travelogue)));
   EXPECT_CALL(consensus_, ValidBlock(_)).WillRepeatedly(Return(ConsensusInterface::Status::YES));
 
@@ -178,7 +223,7 @@ TEST_F(MainChainServiceTests, ChecIncrementalCatchUp)
   EXPECT_CALL(consensus_, ValidBlock(_)).WillRepeatedly(Return(ConsensusInterface::Status::YES));
 
   EXPECT_CALL(endpoint_, GetDirectlyConnectedPeers()).WillRepeatedly(Return(AddressList{other1_}));
-  EXPECT_CALL(rpc_client_, TimeTravel(other1_, GetGenesisDigest()))
+  EXPECT_CALL(rpc_client_, TimeTravel(other1_, ExpectedHash(GetGenesisDigest())))
       .WillOnce(Return(CreatePromise(travelogue1)));
 
   Tick(State::SYNCHRONISING, State::START_SYNC_WITH_PEER);
@@ -189,7 +234,7 @@ TEST_F(MainChainServiceTests, ChecIncrementalCatchUp)
   EXPECT_EQ(chain_.GetHeaviestBlockHash(), b2->hash);
 
   auto travelogue2 = other1_proto.TimeTravel(b2->hash);
-  EXPECT_CALL(rpc_client_, TimeTravel(other1_, b2->hash))
+  EXPECT_CALL(rpc_client_, TimeTravel(other1_, ExpectedHash(b2->hash)))
       .WillOnce(Return(CreatePromise(travelogue2)));
 
   Tick(State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS);
@@ -240,7 +285,8 @@ TEST_F(MainChainServiceTests, ForkWhenPeerHasLongerChain)
   EXPECT_CALL(consensus_, ValidBlock(_)).WillRepeatedly(Return(ConsensusInterface::Status::YES));
 
   auto const log1 = other1_proto.TimeTravel(b5_1->hash);
-  EXPECT_CALL(rpc_client_, TimeTravel(other1_, b5_1->hash)).WillOnce(Return(CreatePromise(log1)));
+  EXPECT_CALL(rpc_client_, TimeTravel(other1_, ExpectedHash(b5_1->hash)))
+      .WillOnce(Return(CreatePromise(log1)));
 
   Tick(State::SYNCHRONISING, State::START_SYNC_WITH_PEER);
   Tick(State::START_SYNC_WITH_PEER, State::REQUEST_NEXT_BLOCKS);
@@ -248,7 +294,8 @@ TEST_F(MainChainServiceTests, ForkWhenPeerHasLongerChain)
   Tick(State::WAIT_FOR_NEXT_BLOCKS, State::REQUEST_NEXT_BLOCKS);
 
   auto const log2 = other1_proto.TimeTravel(b4->hash);
-  EXPECT_CALL(rpc_client_, TimeTravel(other1_, b4->hash)).WillOnce(Return(CreatePromise(log2)));
+  EXPECT_CALL(rpc_client_, TimeTravel(other1_, ExpectedHash(b4->hash)))
+      .WillOnce(Return(CreatePromise(log2)));
 
   Tick(State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS);
   Tick(State::WAIT_FOR_NEXT_BLOCKS, State::REQUEST_NEXT_BLOCKS);
@@ -299,7 +346,8 @@ TEST_F(MainChainServiceTests, ForkWhenPeerHasShorterChain)
   EXPECT_CALL(consensus_, ValidBlock(_)).WillRepeatedly(Return(ConsensusInterface::Status::YES));
 
   auto const log1 = other1_proto.TimeTravel(b6_2->hash);
-  EXPECT_CALL(rpc_client_, TimeTravel(other1_, b6_2->hash)).WillOnce(Return(CreatePromise(log1)));
+  EXPECT_CALL(rpc_client_, TimeTravel(other1_, ExpectedHash(b6_2->hash)))
+      .WillOnce(Return(CreatePromise(log1)));
 
   Tick(State::SYNCHRONISING, State::START_SYNC_WITH_PEER);
   Tick(State::START_SYNC_WITH_PEER, State::REQUEST_NEXT_BLOCKS);
@@ -307,13 +355,15 @@ TEST_F(MainChainServiceTests, ForkWhenPeerHasShorterChain)
   Tick(State::WAIT_FOR_NEXT_BLOCKS, State::REQUEST_NEXT_BLOCKS);
 
   auto const log2 = other1_proto.TimeTravel(b5_2->hash);
-  EXPECT_CALL(rpc_client_, TimeTravel(other1_, b5_2->hash)).WillOnce(Return(CreatePromise(log2)));
+  EXPECT_CALL(rpc_client_, TimeTravel(other1_, ExpectedHash(b5_2->hash)))
+      .WillOnce(Return(CreatePromise(log2)));
 
   Tick(State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS);
   Tick(State::WAIT_FOR_NEXT_BLOCKS, State::REQUEST_NEXT_BLOCKS);
 
-  auto const log3 = other1_proto.TimeTravel(b4->hash);
-  EXPECT_CALL(rpc_client_, TimeTravel(other1_, b4->hash)).WillOnce(Return(CreatePromise(log3)));
+  auto const log3 = other1_proto.TimeTravel(b3->hash);
+  EXPECT_CALL(rpc_client_, TimeTravel(other1_, ExpectedHash(b3->hash)))
+      .WillOnce(Return(CreatePromise(log3)));
 
   Tick(State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS);
   Tick(State::WAIT_FOR_NEXT_BLOCKS, State::REQUEST_NEXT_BLOCKS);
@@ -336,7 +386,7 @@ TEST_F(MainChainServiceTests, CheckWaitingToFullfilResponse)
 
   EXPECT_CALL(consensus_, ValidBlock(_)).WillRepeatedly(Return(ConsensusInterface::Status::YES));
 
-  EXPECT_CALL(rpc_client_, TimeTravel(other1_, GetGenesisDigest()))
+  EXPECT_CALL(rpc_client_, TimeTravel(other1_, ExpectedHash(GetGenesisDigest())))
       .WillOnce(Return(TraveloguePromise{promise}));
 
   Tick(State::SYNCHRONISING, State::START_SYNC_WITH_PEER);
@@ -367,7 +417,7 @@ TEST_F(MainChainServiceTests, CheckHandlingOfEmptyLog)
 
   EXPECT_CALL(consensus_, ValidBlock(_)).WillRepeatedly(Return(ConsensusInterface::Status::YES));
 
-  EXPECT_CALL(rpc_client_, TimeTravel(other1_, GetGenesisDigest()))
+  EXPECT_CALL(rpc_client_, TimeTravel(other1_, ExpectedHash(GetGenesisDigest())))
       .WillOnce(Return(CreatePromise(log)));
 
   Tick(State::SYNCHRONISING, State::START_SYNC_WITH_PEER);
@@ -387,7 +437,7 @@ TEST_F(MainChainServiceTests, CheckHandlingOfUnserialisablePayload)
 
   EXPECT_CALL(consensus_, ValidBlock(_)).WillRepeatedly(Return(ConsensusInterface::Status::YES));
 
-  EXPECT_CALL(rpc_client_, TimeTravel(other1_, GetGenesisDigest()))
+  EXPECT_CALL(rpc_client_, TimeTravel(other1_, ExpectedHash(GetGenesisDigest())))
       .WillOnce(Return(TraveloguePromise{promise}));
 
   Tick(State::SYNCHRONISING, State::START_SYNC_WITH_PEER);
@@ -407,7 +457,7 @@ TEST_F(MainChainServiceTests, CheckRetryMechanism)
 
   EXPECT_CALL(consensus_, ValidBlock(_)).WillRepeatedly(Return(ConsensusInterface::Status::YES));
 
-  EXPECT_CALL(rpc_client_, TimeTravel(other1_, GetGenesisDigest()))
+  EXPECT_CALL(rpc_client_, TimeTravel(other1_, ExpectedHash(GetGenesisDigest())))
       .WillRepeatedly(Return(TraveloguePromise{failed}));
 
   Tick(State::SYNCHRONISING, State::START_SYNC_WITH_PEER);
@@ -490,14 +540,13 @@ TEST_F(MainChainServiceTests, CheckWhenGenesisAppearsToBeInvalid)
   log.status = fetch::ledger::TravelogueStatus::NOT_FOUND;
 
   EXPECT_CALL(endpoint_, GetDirectlyConnectedPeers()).WillRepeatedly(Return(AddressList{other1_}));
-  EXPECT_CALL(rpc_client_, TimeTravel(other1_, GetGenesisDigest()))
+  EXPECT_CALL(rpc_client_, TimeTravel(other1_, ExpectedHash(GetGenesisDigest())))
       .WillOnce(Return(CreatePromise(log)));
 
   Tick(State::SYNCHRONISING, State::START_SYNC_WITH_PEER);
   Tick(State::START_SYNC_WITH_PEER, State::REQUEST_NEXT_BLOCKS);
   Tick(State::REQUEST_NEXT_BLOCKS, State::WAIT_FOR_NEXT_BLOCKS);
-  Tick(State::WAIT_FOR_NEXT_BLOCKS, State::REQUEST_NEXT_BLOCKS);
-  Tick(State::REQUEST_NEXT_BLOCKS, State::COMPLETE_SYNC_WITH_PEER);
+  Tick(State::WAIT_FOR_NEXT_BLOCKS, State::COMPLETE_SYNC_WITH_PEER);
 }
 
 }  // namespace

@@ -34,6 +34,7 @@
 #include "ledger/transaction_status_cache.hpp"
 #include "ledger/upow/synergetic_execution_manager.hpp"
 #include "ledger/upow/synergetic_executor.hpp"
+#include "meta/value_util.hpp"
 #include "network/generics/milli_timer.hpp"
 #include "telemetry/counter.hpp"
 #include "telemetry/gauge.hpp"
@@ -1192,7 +1193,8 @@ BlockCoordinator::State BlockCoordinator::OnReset()
 
     if ((block->block_number % 100) == 0)
     {
-      block_hash_->set(*reinterpret_cast<uint64_t const *>(block->hash.pointer()));
+      block_hash_->set(
+          *reinterpret_cast<uint64_t const *>(value_util::AsConst(block->hash).pointer()));
     }
 
     if (!consensus_->UpdateCurrentBlock(*block))

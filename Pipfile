@@ -10,4 +10,4 @@ fetchai-netutils = {editable = true,path = "./scripts/fetchai_netutils"}
 pyyaml = "==5.3"
 
 [packages]
-fetchai-ledger-api = {editable = true,git = "https://github.com/wkaluza/ledger-api-py.git",ref = "pr_pin_dependency_versions"}
+fetchai-ledger-api = "1.0.0rc1"
