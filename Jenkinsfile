@@ -1,16 +1,18 @@
+static IMAGE_VERSION_TAG = 'v0.1.2-4-gace46f6'
+
 HIGH_LOAD_NODE_LABEL = 'ledger'
 MACOS_NODE_LABEL = 'mac-mini'
 
 DOCKER_IMAGE_NAME = 'gcr.io/organic-storm-201412/fetch-ledger-develop:v0.4.3'
-STATIC_ANALYSIS_IMAGE = 'gcr.io/organic-storm-201412/ledger-ci-clang-tidy:v0.1.2-4-gace46f6'
+STATIC_ANALYSIS_IMAGE = "gcr.io/organic-storm-201412/ledger-ci-clang-tidy:${IMAGE_VERSION_TAG}"
 
 enum Platform
 {
   DEFAULT_CLANG('Clang',   'clang',     'clang++',     ''),
-  CLANG6       ('Clang 6', 'clang-6.0', 'clang++-6.0', 'gcr.io/organic-storm-201412/ledger-ci-clang6:v0.1.2-4-gace46f6'),
-  CLANG7       ('Clang 7', 'clang-7',   'clang++-7',   'gcr.io/organic-storm-201412/ledger-ci-clang7:v0.1.2-4-gace46f6'),
-  GCC7         ('GCC 7',   'gcc-7',     'g++-7',       'gcr.io/organic-storm-201412/ledger-ci-gcc7:v0.1.2-4-gace46f6'),
-  GCC8         ('GCC 8',   'gcc-8',     'g++-8',       'gcr.io/organic-storm-201412/ledger-ci-gcc8:v0.1.2-4-gace46f6')
+  CLANG6       ('Clang 6', 'clang-6.0', 'clang++-6.0', "gcr.io/organic-storm-201412/ledger-ci-clang6:${tag()}"),
+  CLANG7       ('Clang 7', 'clang-7',   'clang++-7',   "gcr.io/organic-storm-201412/ledger-ci-clang7:${tag()}"),
+  GCC7         ('GCC 7',   'gcc-7',     'g++-7',       "gcr.io/organic-storm-201412/ledger-ci-gcc7:${tag()}"),
+  GCC8         ('GCC 8',   'gcc-8',     'g++-8',       "gcr.io/organic-storm-201412/ledger-ci-gcc8:${tag()}")
 
   public Platform(label, cc, cxx, image)
   {
@@ -18,6 +20,11 @@ enum Platform
     this.env_cc = cc
     this.env_cxx = cxx
     this.docker_image = image
+  }
+
+  public static def tag()
+  {
+    return Main.IMAGE_VERSION_TAG
   }
 
   public final String label
