@@ -1,8 +1,8 @@
-HIGH_LOAD_NODE_LABEL = 'ledger'
-MACOS_NODE_LABEL = 'mac-mini'
-
 DOCKER_IMAGE_NAME = 'gcr.io/organic-storm-201412/fetch-ledger-develop:v0.4.3'
 STATIC_ANALYSIS_IMAGE = 'gcr.io/organic-storm-201412/ledger-ci-clang-tidy:v0.1.2-4-gace46f6'
+
+HIGH_LOAD_NODE_LABEL = 'ledger'
+MACOS_NODE_LABEL = 'mac-mini'
 
 enum Platform
 {
