@@ -36,8 +36,14 @@ ADD_REGISTER_SIZE(fetch::fixed_point::fp128_t, 8 * sizeof(fetch::fixed_point::fp
 namespace fetch {
 namespace vectorise {
 
+ADD_REGISTER_SIZE(int8_t, 8 * sizeof(int8_t));
+ADD_REGISTER_SIZE(uint8_t, 8 * sizeof(uint8_t));
+ADD_REGISTER_SIZE(int16_t, 8 * sizeof(int16_t));
+ADD_REGISTER_SIZE(uint16_t, 8 * sizeof(uint16_t));
 ADD_REGISTER_SIZE(int32_t, 8 * sizeof(int32_t));
+ADD_REGISTER_SIZE(uint32_t, 8 * sizeof(uint32_t));
 ADD_REGISTER_SIZE(int64_t, 8 * sizeof(int64_t));
+ADD_REGISTER_SIZE(uint64_t, 8 * sizeof(uint64_t));
 ADD_REGISTER_SIZE(float, 8 * sizeof(float));
 ADD_REGISTER_SIZE(double, 8 * sizeof(double));
 ADD_REGISTER_SIZE(fixed_point::fp32_t, 8 * sizeof(fixed_point::fp32_t));
