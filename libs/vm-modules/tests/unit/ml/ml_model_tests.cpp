@@ -413,6 +413,12 @@ TEST_F(VMModelTests, model_add_conv1d_noact)
                        IGNORE_CHARGE_ESTIMATION);
 }
 
+//TEST_F(VMModelTests, model_add_maxpool1d_noact)
+//{
+//  TestValidLayerAdding(R"(model.add("maxpool1d", 10u64, 10u64, 10u64, 10u64);)",
+//                       IGNORE_CHARGE_ESTIMATION);
+//}
+
 TEST_F(VMModelTests, model_add_conv1d_relu)
 {
   TestValidLayerAdding(R"(model.add("conv1d", 10u64, 10u64, 10u64, 10u64, "relu");)",
@@ -903,6 +909,22 @@ TEST_F(VMModelTests, model_sequential_flatten)
         function main()
           var model = Model("sequential");
           model.add("flatten");
+          model.compile("scel", "adam", {"categorical accuracy"});
+        endfunction
+      )";
+
+  ASSERT_TRUE(toolkit.Compile(SRC_METRIC));
+  ASSERT_TRUE(toolkit.Run(nullptr, ChargeAmount{0}));
+}
+
+TEST_F(VMModelTests, model_sequential_maxpool)
+{
+  static char const *SRC_METRIC = R"(
+        function main()
+          var model = Model("sequential");
+          model.add("maxpool1d", 4, 1);
+          model.add("maxpool1d", 4fp64, 1fp64);
+          model.add("maxpool1d", 4u64, 1u64);
           model.compile("scel", "adam", {"categorical accuracy"});
         endfunction
       )";
