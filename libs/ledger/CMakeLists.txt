@@ -35,6 +35,3 @@ target_link_libraries(fetch-ledger
 add_test_target()
 add_subdirectory(examples)
 add_subdirectory(benchmark)
-target_include_directories(fetch-ledger
-                           PRIVATE ${FETCH_ROOT_VENDOR_DIR}/googletest/googletest/include
-                                   ${FETCH_ROOT_VENDOR_DIR}/googletest/googlemock/include)

@@ -40,12 +40,38 @@ public:
   using type     = byte_array::ConstByteArray;
   using Patterns = std::unordered_map<type, std::string>;
 
-  explicit DigestMatcher(type expected);
-  DigestMatcher(type expected, Patterns const &patterns);
+  explicit DigestMatcher(type expected)
+    : expected_(std::move(expected))
+  {}
 
-  bool MatchAndExplain(type actual, MatchResultListener *listener) const override;
+  DigestMatcher(type expected, Patterns const &patterns)
+    : expected_(std::move(expected))
+    , patterns_(&patterns)
+  {}
 
-  void DescribeTo(std::ostream *os) const override;
+  bool MatchAndExplain(type actual, MatchResultListener *listener) const override
+  {
+    if (actual == expected_)
+    {
+      return true;
+    }
+    *listener << Show(actual);
+    if (static_cast<bool>(patterns_))
+    {
+      Identify(actual, listener);
+    }
+    return false;
+  }
+
+  void DescribeTo(std::ostream *os) const override
+  {
+    *os << Show(expected_);
+    if (static_cast<bool>(patterns_))
+    {
+      *os << ", ";
+      Identify(expected_, os);
+    }
+  }
 
   template <class... NamesAndContainers>
   static Patterns MakePatterns(NamesAndContainers &&... names_and_containers)
@@ -60,9 +86,15 @@ private:
                                Container<BlockPtr, ContainerArgs...> const &container,
                                NamesAndContainers &&... names_and_containers);
 
-  static Patterns KeepPatterns(Patterns patterns);
+  static Patterns KeepPatterns(Patterns patterns)
+  {
+    return patterns;
+  }
 
-  static std::string Show(type const &hash);
+  static std::string Show(type const &hash)
+  {
+    return std::string(hash.ToHex().SubArray(0, 8));
+  }
 
   template <class Stream>
   void Identify(type const &hash, Stream *stream) const
@@ -82,7 +114,10 @@ private:
   Patterns const *patterns_ = nullptr;
 };
 
-Matcher<byte_array::ConstByteArray> ExpectedHash(byte_array::ConstByteArray expected);
+inline Matcher<byte_array::ConstByteArray> ExpectedHash(byte_array::ConstByteArray expected)
+{
+  return MakeMatcher(new DigestMatcher(std::move(expected)));
+}
 
 template <template <class...> class Container, class... ContainerArgs, class... NamesAndContainers>
 DigestMatcher::Patterns DigestMatcher::KeepPatterns(
