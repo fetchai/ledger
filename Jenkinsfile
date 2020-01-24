@@ -64,7 +64,7 @@ def set_up_env_for_linux_pipenv(steps)
 
 def set_up_pipenv()
 {
-  sh "pipenv install --dev"
+  sh "pipenv install --dev --pre"
 }
 
 
