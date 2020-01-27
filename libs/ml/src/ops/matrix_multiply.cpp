@@ -285,6 +285,26 @@ std::vector<typename fetch::math::SizeType> MatrixMultiply<T>::ComputeOutputShap
   return output_shape;
 }
 
+template <typename T>
+OperationsCount MatrixMultiply<T>::ChargeForward()
+{
+  assert(!this->batch_input_shapes_.empty());
+
+  // TODO(ML-482): impl. for n-dimensional case, not only for 2D.
+  assert(this->batch_input_shapes_.size() == 2);
+
+  // Assuming this is a matrix multiplication of weights * input_vector
+  // e.g. [n; m] * [m; batch_size], then total operations cost is n * m * batch_size,
+  // and default batch_size is 1.
+  OperationsCount const n = this->batch_input_shapes_.front().at(0);
+  OperationsCount const m = this->batch_input_shapes_.back().at(0);
+  OperationsCount const p = 1;
+
+  OperationsCount const cost =
+      n * m * p * fetch::ml::charge_estimation::ops::MULTIPLICATION_PER_ELEMENT;
+  return cost;
+}
+
 /**
  * Updates temporary container objects used in some cases of batched forward pass
  * @tparam T tensor type

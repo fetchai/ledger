@@ -27,6 +27,7 @@ namespace ml {
 
 using Shape       = fetch::math::SizeVector;
 using ShapeVector = std::vector<fetch::math::SizeVector>;
+using fetch::ml::OperationsCount;
 
 /**
  * @brief A helper function for printing node's output shape
@@ -91,6 +92,31 @@ OpType Node<TensorType>::OperationType() const
                                              std::string(op_ptr_->Descriptor()) + ") mismatch!");
   }
   return operation_type_;
+}
+
+template <typename TensorType>
+OperationsCount Node<TensorType>::ChargeForward()
+{
+  OperationsCount cost = op_ptr_->ChargeForward();
+
+  for (auto const &i : input_nodes_)
+  {
+    auto input_node_ptr = i.lock();
+    if (!input_node_ptr)
+    {
+      throw std::runtime_error("Unable to lock weak pointer.");
+    }
+
+    cost += input_node_ptr->ChargeForward();
+  }
+
+  return cost;
+}
+
+template <typename TensorType>
+OperationsCount Node<TensorType>::ChargeBackward()
+{
+  throw std::runtime_error("ChargeBackward() estimator is not implemented.");
 }
 
 template <typename TensorType>

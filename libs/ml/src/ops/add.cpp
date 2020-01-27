@@ -85,6 +85,27 @@ std::vector<math::SizeType> Add<TensorType>::ComputeOutputShape(VecTensorType co
   return inputs.at(0)->shape();
 }
 
+template <typename TensorType>
+OpType Add<TensorType>::OperationType() const
+{
+  return this->OpCode();
+}
+
+template <typename TensorType>
+const char *Add<TensorType>::Descriptor() const
+{
+  return DESCRIPTOR;
+}
+
+template <typename TensorType>
+OperationsCount Add<TensorType>::ChargeForward()
+{
+  assert(!this->batch_output_shape_.empty());
+  OperationsCount cost = fetch::ml::charge_estimation::ops::ADDITION_PER_ELEMENT *
+                         this->TotalElementsIn({this->batch_output_shape_});
+  return cost;
+}
+
 /**
  * method for updating axes in case of broadcast Add
  * @tparam TensorType
