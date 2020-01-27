@@ -490,12 +490,23 @@ TEST_F(VMModelTests, model_add_conv_invalid_params_relu)
 
 TEST_F(VMModelTests, model_add_maxpool1d_invalid_params_relu)
 {
-  TestInvalidLayerAdding(R"(model.add("maxpool1d", 10u64, 10u64, "relu");)");
+  TestInvalidLayerAdding(R"(model.addExperimental("maxpool1d", 10u64, 10u64, "relu");)");
 }
 
 TEST_F(VMModelTests, model_add_maxpool2d_invalid_params_relu)
 {
-  TestInvalidLayerAdding(R"(model.add("maxpool2d", 10u64, 10u64, "relu");)");
+  TestInvalidLayerAdding(R"(model.addExperimental("maxpool2d", 10u64, 10u64, "relu");)");
+}
+
+
+TEST_F(VMModelTests, model_add_maxpool1d_invalid_params_less_than_needed)
+{
+  TestInvalidLayerAdding(R"(model.addExperimental("maxpool1d", 1u64);)");
+}
+
+TEST_F(VMModelTests, model_add_maxpool2d_invalid_params_less_than_needed)
+{
+  TestInvalidLayerAdding(R"(model.addExperimental("maxpool2d", 10u64);)");
 }
 
 TEST_F(VMModelTests, model_add_activation_invalid_params)
@@ -947,6 +958,107 @@ TEST_F(VMModelTests, model_sequential_maxpool2d)
 
   ASSERT_TRUE(toolkit.Compile(SRC_METRIC));
   ASSERT_TRUE(toolkit.Run(nullptr, ChargeAmount{0}));
+}
+
+TEST_F(VMModelTests, model_sequential_avgpool1d)
+{
+  static char const *SRC_METRIC = R"(
+        function main()
+          var model = Model("sequential");
+          model.addExperimental("avgpool1d", 4u64, 1u64);
+          model.compile("scel", "adam");
+        endfunction
+      )";
+
+  ASSERT_TRUE(toolkit.Compile(SRC_METRIC));
+  ASSERT_TRUE(toolkit.Run(nullptr, ChargeAmount{0}));
+}
+
+TEST_F(VMModelTests, model_sequential_avgpool2d)
+{
+  static char const *SRC_METRIC = R"(
+        function main()
+          var model = Model("sequential");
+          model.addExperimental("avgpool2d", 4u64, 1u64);
+          model.compile("scel", "adam");
+        endfunction
+      )";
+
+  ASSERT_TRUE(toolkit.Compile(SRC_METRIC));
+  ASSERT_TRUE(toolkit.Run(nullptr, ChargeAmount{0}));
+}
+
+TEST_F(VMModelTests, model_sequential_conv_maxpool)
+{
+    static char const *sequential_model_src = R"(
+      function main() : Tensor
+
+        // conv1d parameters
+        var input_channels  = 3u64;
+        var output_channels = 5u64;
+        var input_height    = 3u64;
+        var kernel_size     = 3u64;
+        var output_height   = 1u64;
+        var stride_size     = 1u64;
+
+        // set up input data tensor
+        var data_shape = Array<UInt64>(3);
+        data_shape[0] = input_channels;
+        data_shape[1] = input_height;
+        data_shape[2] = 1u64;
+        var data = Tensor(data_shape);
+        for (in_channel in 0u64:input_channels)
+          for (in_height in 0u64:input_height)
+            data.setAt(in_channel, in_height, 0u64, toFixed64(in_height + 1u64));
+          endfor
+        endfor
+
+        // set up a gt label tensor
+        var label_shape = Array<UInt64>(3);
+        label_shape[0] = output_channels;
+        label_shape[1] = output_height;
+        label_shape[2] = 1u64;
+        var label = Tensor(label_shape);
+
+        // set up a model
+        var model = Model("sequential");
+        model.add("conv1d", output_channels, input_channels, kernel_size, stride_size);
+        model.addExperimental("maxpool1d", 2u64, stride_size);
+        model.compile("mse", "adam");
+
+        // make an initial prediction
+        var prediction = model.predict(data);
+        printLn(prediction.toString());
+
+        // train the model
+        model.fit(data, label, 1u64);
+
+        // evaluate performance
+        var loss = model.evaluate();
+
+        return prediction;
+      endfunction
+    )";
+
+    Variant res;
+    ASSERT_TRUE(toolkit.Compile(sequential_model_src));
+    ASSERT_TRUE(toolkit.Run(&res, ChargeAmount{0}));
+    auto const prediction = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
+
+    fetch::math::Tensor<fetch::vm_modules::math::DataType> gt({5, 1});
+    gt(0, 0) = fetch::math::Type<DataType>("+4.592834088");
+    gt(1, 0) = fetch::math::Type<DataType>("-1.145004561");
+    gt(2, 0) = fetch::math::Type<DataType>("+1.795713195");
+    gt(3, 0) = fetch::math::Type<DataType>("+2.958410677");
+    gt(4, 0) = fetch::math::Type<DataType>("+3.157947287");
+    // the actual model output is {5, 1, 1}
+    ASSERT_TRUE((prediction->GetTensor())
+                    .AllClose(gt, fetch::math::function_tolerance<DataType>(),
+                              fetch::math::function_tolerance<DataType>()));
+}
+
+TEST_F(VMModelTests, model_sequential_conv_maxpool_wrong_kernel_size)
+{
 }
 
 TEST_F(VMModelTests, model_sequential_reshape)

@@ -68,7 +68,7 @@ public:
                             math::SizeType const &                   output_channels,
                             math::SizeType const &input_channels, math::SizeType const &kernel_size,
                             math::SizeType const &stride_size);
-  ChargeAmount LayerAddMaxPool(fetch::vm::Ptr<fetch::vm::String> const &layer,
+  ChargeAmount LayerAddPool(fetch::vm::Ptr<fetch::vm::String> const &layer,
                                math::SizeType const &                   kernel_size,
                                math::SizeType const &                   stride_size);
   ChargeAmount LayerAddConvActivation(fetch::vm::Ptr<fetch::vm::String> const &layer,
