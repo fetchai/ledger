@@ -303,7 +303,8 @@ void VMModel::Bind(Module &module, bool const experimental_enabled)
                             UseEstimator(&ModelEstimator::CompileSequentialWithMetrics))
       .CreateMemberFunction("fit", &VMModel::Fit, UseEstimator(&ModelEstimator::Fit))
       .CreateMemberFunction("evaluate", &VMModel::Evaluate, UseEstimator(&ModelEstimator::Evaluate))
-      .CreateMemberFunction("predict", &VMModel::Predict, UseEstimator(&ModelEstimator::Predict))
+      .CreateMemberFunction("predict", &VMModel::Predict,
+                            UseEstimator(&ModelEstimator::EstimatePredict))
       .CreateMemberFunction("serializeToString", &VMModel::SerializeToString,
                             UseEstimator(&ModelEstimator::SerializeToString))
       .CreateMemberFunction("deserializeFromString", &VMModel::DeserializeFromString,
@@ -840,6 +841,22 @@ void VMModel::LayerAddMaxPool(const fetch::vm::Ptr<fetch::vm::String> &layer,
     vm_->RuntimeError(IMPOSSIBLE_ADD_MESSAGE + std::string(e.what()));
     return;
   }
+}
+
+/**
+ * @brief VMModel::EstimatePredict calculates a charge amount, required for a forward pass
+ * @param data
+ * @return charge estimation
+ */
+ChargeAmount VMModel::EstimatePredict(const vm::Ptr<math::VMTensor> &data)
+{
+  ChargeAmount const cost       = model_->ChargeForward();
+  auto const         batch_size = data->shape().back();
+  auto const         batch_cost = batch_size * cost;
+  FETCH_LOG_INFO(GetTypeName().c_str(),
+                 " forward pass estimated batch cost is " + std::to_string(batch_size) + " * " +
+                     std::to_string(cost) + " = " + std::to_string(batch_cost));
+  return batch_cost;
 }
 
 /**
