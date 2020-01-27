@@ -160,7 +160,15 @@ Ptr<VMModel> VMModel::Constructor(VM *vm, TypeId type_id,
 void VMModel::CompileSequential(Ptr<String> const &loss, Ptr<String> const &optimiser)
 {
   std::vector<MetricType> mets;
-  CompileSequentialImplementation(loss, optimiser, mets);
+  try
+  {
+    CompileSequentialImplementation(loss, optimiser, mets);
+  }
+  catch (std::exception const &e)
+  {
+    vm_->RuntimeError("Compile sequential failed: " + std::string(e.what()));
+    return;
+  }
 }
 
 /**
@@ -172,18 +180,26 @@ void VMModel::CompileSequential(Ptr<String> const &loss, Ptr<String> const &opti
 void VMModel::CompileSequentialWithMetrics(Ptr<String> const &loss, Ptr<String> const &optimiser,
                                            Ptr<vm::Array<Ptr<String>>> const &metrics)
 {
-  // Make vector<MetricType> from vm::Array
-  std::size_t const       n_metrics = metrics->elements.size();
-  std::vector<MetricType> mets;
-  mets.reserve(n_metrics);
-
-  for (std::size_t i = 0; i < n_metrics; ++i)
+  try
   {
-    Ptr<String> ptr_string = metrics->elements.at(i);
-    MetricType  mt         = ParseName(ptr_string->string(), metrics_, "metric");
-    mets.emplace_back(mt);
+    // Make vector<MetricType> from vm::Array
+    std::size_t const       n_metrics = metrics->elements.size();
+    std::vector<MetricType> mets;
+    mets.reserve(n_metrics);
+
+    for (std::size_t i = 0; i < n_metrics; ++i)
+    {
+      Ptr<String> ptr_string = metrics->elements.at(i);
+      MetricType  mt         = ParseName(ptr_string->string(), metrics_, "metric");
+      mets.emplace_back(mt);
+    }
+    CompileSequentialImplementation(loss, optimiser, mets);
   }
-  CompileSequentialImplementation(loss, optimiser, mets);
+  catch (std::exception const &e)
+  {
+    vm_->RuntimeError("Compile model failed: " + std::string(e.what()));
+    return;
+  }
 }
 
 void VMModel::CompileSequentialImplementation(Ptr<String> const &loss, Ptr<String> const &optimiser,
@@ -214,18 +230,25 @@ void VMModel::CompileSequentialImplementation(Ptr<String> const &loss, Ptr<Strin
 void VMModel::Fit(vm::Ptr<VMTensor> const &data, vm::Ptr<VMTensor> const &labels,
                   fetch::math::SizeType const &batch_size)
 {
-  // prepare dataloader
-  auto data_loader = std::make_unique<TensorDataloader>();
-  data_loader->SetRandomMode(true);
-  data_loader->AddData({data->GetTensor()}, labels->GetTensor());
-  model_->SetDataloader(std::move(data_loader));
+  try
+  {
+    // prepare dataloader
+    auto data_loader = std::make_unique<TensorDataloader>();
+    data_loader->SetRandomMode(true);
+    data_loader->AddData({data->GetTensor()}, labels->GetTensor());
+    model_->SetDataloader(std::move(data_loader));
 
-  // set batch size
-  model_config_->batch_size = batch_size;
-  model_->UpdateConfig(*model_config_);
+    // set batch size
+    model_config_->batch_size = batch_size;
+    model_->UpdateConfig(*model_config_);
 
-  // train for one epoch
-  model_->Train();
+    // train for one epoch
+    model_->Train();
+  }
+  catch (std::exception const &e)
+  {
+    vm_->RuntimeError("Model fit failed: " + std::string(e.what()));
+  }
 }
 
 vm::Ptr<Array<math::DataType>> VMModel::Evaluate()
@@ -471,7 +494,13 @@ VMModel::SequentialModelPtr VMModel::GetMeAsSequentialIfPossible()
   {
     throw std::runtime_error("Layer adding is allowed only for sequential models!");
   }
-  return std::dynamic_pointer_cast<fetch::ml::model::Sequential<TensorType>>(model_);
+  auto sequential_ptr = std::dynamic_pointer_cast<fetch::ml::model::Sequential<TensorType>>(model_);
+  if (!sequential_ptr)
+  {
+    throw std::runtime_error("Cannot cast model pointer to Sequential!");
+  }
+
+  return sequential_ptr;
 }
 
 void VMModel::LayerAddDense(fetch::vm::Ptr<fetch::vm::String> const &layer,
@@ -810,7 +839,8 @@ void VMModel::LayerAddMaxPool(const fetch::vm::Ptr<fetch::vm::String> &layer,
  */
 void VMModel::PrepareDataloader()
 {
-  try {
+  try
+  {
     // set up the dataloader
     auto data_loader = std::make_unique<TensorDataloader>();
     data_loader->SetRandomMode(true);
