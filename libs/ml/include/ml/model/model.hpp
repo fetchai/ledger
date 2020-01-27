@@ -109,6 +109,8 @@ public:
   friend struct serializers::MapSerializer;
   friend class fetch::vm_modules::ml::model::ModelEstimator;
 
+  virtual fetch::ml::OperationsCount ChargeForward();
+
 protected:
   ModelConfig<DataType> model_config_;
   GraphPtrType          graph_ptr_ = std::make_shared<GraphType>();

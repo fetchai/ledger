@@ -283,6 +283,15 @@ const char *ops::Weights<TensorType>::Descriptor() const
   return DESCRIPTOR;
 }
 
+template <typename TensorType>
+OperationsCount Weights<TensorType>::ChargeForward()
+{
+  assert(!this->batch_output_shape_.empty());
+  OperationsCount cost = fetch::ml::charge_estimation::ops::WEIGHTS_READING_PER_ELEMENT *
+                         this->TotalElementsIn({this->batch_output_shape_});
+  return cost;
+}
+
 template <class T>
 const typename T::Type ops::Weights<T>::HALF = fetch::math::Type<DataType>("0.5");
 
@@ -294,10 +303,6 @@ template class Weights<math::Tensor<int8_t>>;
 template class Weights<math::Tensor<int16_t>>;
 template class Weights<math::Tensor<int32_t>>;
 template class Weights<math::Tensor<int64_t>>;
-template class Weights<math::Tensor<uint8_t>>;
-template class Weights<math::Tensor<uint16_t>>;
-template class Weights<math::Tensor<uint32_t>>;
-template class Weights<math::Tensor<uint64_t>>;
 template class Weights<math::Tensor<float>>;
 template class Weights<math::Tensor<double>>;
 template class Weights<math::Tensor<fixed_point::fp32_t>>;
