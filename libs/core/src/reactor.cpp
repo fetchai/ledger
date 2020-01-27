@@ -21,7 +21,6 @@
 #include "core/runnable.hpp"
 #include "core/set_thread_name.hpp"
 #include "logging/logging.hpp"
-#include "moment/deadline_timer.hpp"
 #include "telemetry/counter.hpp"
 #include "telemetry/gauge.hpp"
 #include "telemetry/histogram.hpp"
@@ -44,6 +43,25 @@ using WorkQueue = std::deque<fetch::core::WeakRunnable>;
 
 namespace fetch {
 namespace core {
+
+class BasicTimer
+{
+public:
+  BasicTimer(uint64_t duration_ms)
+  {
+    deadline_ = std::chrono::system_clock::now() + std::chrono::milliseconds{duration_ms};
+  }
+
+  bool HasExpired()
+  {
+    return deadline_ <= std::chrono::system_clock::now();
+  }
+
+private:
+  using Timestamp = std::chrono::system_clock::time_point;
+
+  Timestamp deadline_{};
+};
 
 Reactor::Reactor(std::string name)
   : name_{std::move(name)}
@@ -204,8 +222,7 @@ void Reactor::Monitor()
   // set the thread name
   SetThreadName(name_);
 
-  std::string const     timer_name = "reactor:" + name_;
-  moment::DeadlineTimer execution_too_long_timer{timer_name.c_str()};
+  std::string const timer_name = "reactor:" + name_;
 
   WorkQueue work_queue;
 
@@ -274,7 +291,7 @@ void Reactor::Monitor()
       try
       {
         currently_executing_ = true;
-        execution_too_long_timer.Restart(std::chrono::milliseconds{execution_too_long_ms_});
+        BasicTimer execution_too_long_timer{execution_too_long_ms_};
 
         runnable->Execute();
 
