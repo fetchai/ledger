@@ -24,7 +24,39 @@
 using namespace fetch;
 using namespace testing;
 
-class StateMachineTests : public Test
+// Test class allows accessing protected state of the reactor
+class ReactorTest : public core::Reactor
+{
+public:
+  ReactorTest(std::string name) : Reactor(name)
+  {
+    // Redefine these so the test doesn't take too long
+    execution_too_long_ms_   = 50;
+    thread_watcher_check_ms_ = 200;
+  }
+
+  uint64_t ExecutionTooLongMs() const
+  {
+    return execution_too_long_ms_;
+  }
+
+  uint64_t ThreadWatcherCheckMs() const
+  {
+    return thread_watcher_check_ms_;
+  }
+
+  uint32_t ExecutionsTooLongCounter() const
+  {
+    return executions_too_long_;
+  }
+
+  uint32_t ExecutionsWayTooLongCounter() const
+  {
+    return executions_way_too_long_;
+  }
+};
+
+class ReactorTests : public Test
 {
 public:
   enum class State : uint8_t
@@ -34,7 +66,7 @@ public:
     C,
   };
 
-  StateMachineTests()
+  ReactorTests()
     : reactor_{"Reactor"}
   {
   }
@@ -54,22 +86,33 @@ public:
 
   State OnA()
   {
-    std::cerr << "A" << std::endl; // DELETEME_NH
     state_seen_ = static_cast<uint8_t>(State::A);
     return State::B;
   }
 
   State OnB()
   {
-    std::cerr << "B" << std::endl; // DELETEME_NH
     state_seen_ = static_cast<uint8_t>(State::B);
     return State::C;
   }
 
   State OnC()
   {
-    std::cerr << "C" << std::endl; // DELETEME_NH
     state_seen_ = static_cast<uint8_t>(State::C);
+    return State::A;
+  }
+
+  State OnSlowC()
+  {
+    state_seen_ = static_cast<uint8_t>(State::C);
+    std::this_thread::sleep_for(std::chrono::milliseconds(reactor_.ExecutionTooLongMs()));
+    return State::A;
+  }
+
+  State OnVerySlowC()
+  {
+    state_seen_ = static_cast<uint8_t>(State::C);
+    std::this_thread::sleep_for(std::chrono::milliseconds(reactor_.ThreadWatcherCheckMs() * 3));
     return State::A;
   }
 
@@ -94,19 +137,19 @@ public:
   }
 
 protected:
-  std::shared_ptr<StateMachine> state_machine_;
-  core::Reactor                 reactor_;
-  std::atomic<uint8_t>          state_seen_{std::numeric_limits<uint8_t>::max()};
+  StateMachinePtr         state_machine_;
+  ReactorTest                        reactor_;
+  std::atomic<uint8_t>               state_seen_{std::numeric_limits<uint8_t>::max()};
 };
 
-TEST_F(StateMachineTests, StateMachinePassesThroughStates)
+// Basic test - does the reactor drive the state machine through all states
+TEST_F(ReactorTests, ReactorPassesThroughStates)
 {
-
   // Note: because it is a fixture you need to upcast the this pointer
   // clang-format off
-  state_machine_->RegisterHandler(State::A, static_cast<StateMachineTests *>(this), &StateMachineTests::OnA);
-  state_machine_->RegisterHandler(State::B, static_cast<StateMachineTests *>(this), &StateMachineTests::OnB);
-  state_machine_->RegisterHandler(State::C, static_cast<StateMachineTests *>(this), &StateMachineTests::OnC);
+  state_machine_->RegisterHandler(State::A, static_cast<ReactorTests *>(this), &ReactorTests::OnA);
+  state_machine_->RegisterHandler(State::B, static_cast<ReactorTests *>(this), &ReactorTests::OnB);
+  state_machine_->RegisterHandler(State::C, static_cast<ReactorTests *>(this), &ReactorTests::OnC);
   // clang-format on
 
    reactor_.Attach(state_machine_);
@@ -115,4 +158,48 @@ TEST_F(StateMachineTests, StateMachinePassesThroughStates)
    std::this_thread::sleep_for(std::chrono::milliseconds(5));
 
    EXPECT_NE(state_seen_, std::numeric_limits<uint8_t>::max());
+   EXPECT_EQ(reactor_.ExecutionsTooLongCounter(), 0);
+   EXPECT_EQ(reactor_.ExecutionsWayTooLongCounter(), 0);
+}
+
+// Test the state machine registers states that are taking too long
+TEST_F(ReactorTests, ReactorNoticesTooLongStates)
+{
+
+  // Note: because it is a fixture you need to upcast the this pointer
+  // clang-format off
+  state_machine_->RegisterHandler(State::A, static_cast<ReactorTests *>(this), &ReactorTests::OnA);
+  state_machine_->RegisterHandler(State::B, static_cast<ReactorTests *>(this), &ReactorTests::OnB);
+  state_machine_->RegisterHandler(State::C, static_cast<ReactorTests *>(this), &ReactorTests::OnSlowC);
+  // clang-format on
+
+   reactor_.Attach(state_machine_);
+   reactor_.Start();
+
+   std::this_thread::sleep_for(std::chrono::milliseconds(reactor_.ExecutionTooLongMs() * 10));
+
+   EXPECT_NE(state_seen_, std::numeric_limits<uint8_t>::max());
+   EXPECT_NE(reactor_.ExecutionsTooLongCounter(), 0);
+   EXPECT_EQ(reactor_.ExecutionsWayTooLongCounter(), 0);
+}
+
+// Test the state machine registers states that are taking *way* too long
+TEST_F(ReactorTests, ReactorNoticesWayTooLongStates)
+{
+
+  // Note: because it is a fixture you need to upcast the this pointer
+  // clang-format off
+  state_machine_->RegisterHandler(State::A, static_cast<ReactorTests *>(this), &ReactorTests::OnA);
+  state_machine_->RegisterHandler(State::B, static_cast<ReactorTests *>(this), &ReactorTests::OnB);
+  state_machine_->RegisterHandler(State::C, static_cast<ReactorTests *>(this), &ReactorTests::OnVerySlowC);
+  // clang-format on
+
+   reactor_.Attach(state_machine_);
+   reactor_.Start();
+
+   std::this_thread::sleep_for(std::chrono::milliseconds(reactor_.ThreadWatcherCheckMs() * 4));
+
+   EXPECT_NE(state_seen_, std::numeric_limits<uint8_t>::max());
+   EXPECT_NE(reactor_.ExecutionsTooLongCounter(), 0);
+   EXPECT_NE(reactor_.ExecutionsWayTooLongCounter(), 0);
 }

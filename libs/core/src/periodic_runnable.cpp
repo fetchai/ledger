@@ -60,5 +60,10 @@ char const *PeriodicRunnable::GetId() const
   return "PeriodicRunnable";
 }
 
+char const *PeriodicRunnable::GetDebug() const
+{
+  return "PeriodicRunnableDebug";
+}
+
 }  // namespace core
 }  // namespace fetch

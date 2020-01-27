@@ -87,6 +87,7 @@ public:
   bool        IsReadyToExecute() const override;
   void        Execute() override;
   char const *GetId() const override;
+  char const *GetDebug() const override;
   /// @}
 
   State state() const
@@ -274,6 +275,18 @@ char const *StateMachine<S>::GetId() const
 }
 
 /**
+ * Get debug about what the runnable is doing
+ *
+ * @tparam S The state enum type
+ * @return The current state of the state machine
+ */
+template <typename S>
+char const *StateMachine<S>::GetDebug() const
+{
+  return this->GetStateName();
+}
+
+/**
  * Get the current string representation for the current state
  *
  * @tparam S The state enum type
@@ -293,7 +306,7 @@ char const *StateMachine<S>::GetStateName() const
 }
 
 /**
- * Determine if the runnable is ready to the run again
+ * Determine if the runnable is ready to be run again
  *
  * @tparam S The state enum type
  * @return true if the state machine should be executed again, otherwise false
