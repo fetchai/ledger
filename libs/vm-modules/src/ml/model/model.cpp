@@ -773,16 +773,19 @@ void VMModel::LayerAddInput(const fetch::vm::Ptr<String> &                   lay
   }
 }
 
-/**
- * for regressor and classifier we can't prepare the dataloder until after compile has begun
- * because model_ isn't ready until then.
- */
 void VMModel::PrepareDataloader()
 {
-  // set up the dataloader
-  auto data_loader = std::make_unique<TensorDataloader>();
-  data_loader->SetRandomMode(true);
-  model_->SetDataloader(std::move(data_loader));
+  try {
+    // set up the dataloader
+    auto data_loader = std::make_unique<TensorDataloader>();
+    data_loader->SetRandomMode(true);
+    model_->SetDataloader(std::move(data_loader));
+  }
+  catch (std::exception const &e)
+  {
+    vm_->RuntimeError("Can't prepare DataLoader: " + std::string(e.what()));
+    return;
+  }
 }
 
 }  // namespace model
