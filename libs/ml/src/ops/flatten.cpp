@@ -92,6 +92,27 @@ std::vector<math::SizeType> Flatten<TensorType>::ComputeOutputShape(
   return {data_size, batch_size};
 }
 
+template <class TensorType>
+OpType Flatten<TensorType>::OperationType() const
+{
+  return this->OpCode();
+}
+
+template <class TensorType>
+const char *Flatten<TensorType>::Descriptor() const
+{
+  return DESCRIPTOR;
+}
+
+template <class TensorType>
+OperationsCount Flatten<TensorType>::ChargeForward()
+{
+  assert(!this->batch_input_shapes_.empty());
+  OperationsCount cost = fetch::ml::charge_estimation::ops::FLATTEN_PER_ELEMENT *
+                         this->TotalElementsIn(this->batch_input_shapes_);
+  return cost;
+}
+
 ///////////////////////////////
 /// EXPLICIT INSTANTIATIONS ///
 ///////////////////////////////

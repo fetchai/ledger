@@ -103,6 +103,8 @@ public:
   OpType      OperationType() const override;
   char const *Descriptor() const override;
 
+  OperationsCount ChargeForward() override;
+
 private:
   static void XavierInitialisation(TensorType &array, DataType normalising_factor,
                                    SizeType seed = 123456789);

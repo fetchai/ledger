@@ -16,6 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ml/charge_estimation/ops/constants.hpp"
 #include "ml/ops/subtract.hpp"
 
 namespace fetch {
@@ -73,6 +74,33 @@ std::vector<math::SizeType> Subtract<TensorType>::ComputeOutputShape(
     VecTensorType const &inputs) const
 {
   return inputs.front()->shape();
+}
+
+/**
+ * An OOP wrapper around static constexpr OpType member method.
+ */
+template <typename TensorType>
+OpType Subtract<TensorType>::OperationType() const
+{
+  return this->OpCode();
+}
+
+/**
+ * An OOP wrapper around static constexpr OpType member field.
+ */
+template <typename TensorType>
+const char *Subtract<TensorType>::Descriptor() const
+{
+  return DESCRIPTOR;
+}
+
+template <typename TensorType>
+OperationsCount Subtract<TensorType>::ChargeForward()
+{
+  assert(!this->batch_output_shape_.empty());
+  OperationsCount cost = fetch::ml::charge_estimation::ops::SUBTRACTION_PER_ELEMENT *
+                         this->TotalElementsIn({this->batch_output_shape_});
+  return cost;
 }
 
 ///////////////////////////////
