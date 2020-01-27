@@ -17,17 +17,13 @@
 //
 //------------------------------------------------------------------------------
 
+#include "chain/transaction.hpp"
+#include "chain/transaction_layout.hpp"
+
 #include <cstddef>
 #include <cstdint>
 
 namespace fetch {
-
-namespace chain {
-
-class Transaction;
-class TransactionLayout;
-
-}  // namespace chain
 
 namespace ledger {
 

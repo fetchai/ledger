@@ -30,6 +30,7 @@ namespace {
 
 using fetch::chain::Address;
 using fetch::chain::TransactionBuilder;
+using fetch::chain::TransactionPtr;
 
 using AddressArray = std::vector<Address>;
 using PrivateKey   = crypto::ECDSASigner;
@@ -81,9 +82,9 @@ protected:
     return oss.str();
   }
 
-  static TransactionBuilder::TransactionPtr CreateTransferTx(
-      Address const &from, Address const &to, std::vector<PrivateKey *> const &signing_keys,
-      Amount amount)
+  static TransactionPtr CreateTransferTx(Address const &from, Address const &to,
+                                         std::vector<PrivateKey *> const &signing_keys,
+                                         Amount                           amount)
   {
     TransactionBuilder builder;
     builder.From(from);

@@ -33,11 +33,12 @@
 using fetch::storage::ResourceID;
 using fetch::chain::Transaction;
 using fetch::chain::TransactionBuilder;
+using fetch::chain::TransactionPtr;
 using fetch::crypto::ECDSASigner;
 
 using ObjectStore      = fetch::storage::ObjectStore<Transaction>;
 using TransactionStore = fetch::storage::TransientObjectStore<Transaction>;
-using TransactionList  = std::vector<TransactionBuilder::TransactionPtr>;
+using TransactionList  = std::vector<TransactionPtr>;
 
 void TxSubmitWrites(benchmark::State &state)
 {

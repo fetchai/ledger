@@ -32,7 +32,7 @@ public:
   using Transaction        = fetch::chain::Transaction;
   using TransactionBuilder = fetch::chain::TransactionBuilder;
   using TransactionPtr     = fetch::chain::TransactionPtr;
-  using Txs                = std::vector<TransactionGenerator::TransactionPtr>;
+  using Txs                = std::vector<TransactionPtr>;
 
   TransactionPtr operator()()
   {

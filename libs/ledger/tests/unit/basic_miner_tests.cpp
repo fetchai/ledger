@@ -35,12 +35,15 @@
 #include <memory>
 #include <random>
 
+#include "mock_storage_interface.hpp"
+
 using fetch::meta::IsLog2;
 using fetch::meta::Log2;
 using fetch::BitVector;
 using fetch::Digest;
 using fetch::DigestSet;
 using fetch::DigestMap;
+using testing::NiceMock;
 
 class BasicMinerTests : public ::testing::TestWithParam<std::size_t>
 {
@@ -68,6 +71,7 @@ protected:
   using MainChain         = fetch::ledger::MainChain;
   using Block             = fetch::ledger::Block;
   using LayoutMap         = DigestMap<TransactionLayout>;
+  using Storage           = NiceMock<MockStorage>;
 
   void SetUp() override
   {
@@ -75,7 +79,7 @@ protected:
 
     rng_.seed(RANDOM_SEED);
     generator_.Seed(RANDOM_SEED);
-    miner_ = std::make_unique<BasicMiner>(uint32_t{LOG2_NUM_LANES});
+    miner_ = std::make_unique<BasicMiner>(uint32_t{LOG2_NUM_LANES}, storage_);
   }
 
   LayoutMap PopulateWithTransactions(std::size_t num_transactions, std::size_t duplicates = 1)
@@ -106,6 +110,7 @@ protected:
   Rng                  rng_{};
   TransactionGenerator generator_{LOG2_NUM_LANES};
   BasicMinerPtr        miner_;
+  Storage              storage_;
 };
 
 TEST_P(BasicMinerTests, SimpleExample)

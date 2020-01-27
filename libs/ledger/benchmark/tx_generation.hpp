@@ -28,8 +28,9 @@
 using fetch::crypto::ECDSASigner;
 using fetch::chain::Transaction;
 using fetch::chain::TransactionBuilder;
+using fetch::chain::TransactionPtr;
 using fetch::byte_array::ByteArray;
-using TransactionList = std::vector<TransactionBuilder::TransactionPtr>;
+using TransactionList = std::vector<TransactionPtr>;
 
 template <typename Word = uint64_t>
 fetch::meta::IfIsUnsignedInteger<Word, ByteArray> GenerateRandomArray(
