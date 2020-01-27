@@ -16,6 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ml/charge_estimation/ops/constants.hpp"
 #include "ml/ops/dataholder.hpp"
 #include "ml/ops/placeholder.hpp"
 
@@ -81,6 +82,15 @@ template <typename TensorType>
 const char *PlaceHolder<TensorType>::Descriptor() const
 {
   return DESCRIPTOR;
+}
+
+template <typename TensorType>
+OperationsCount PlaceHolder<TensorType>::ChargeForward()
+{
+  assert(!this->batch_input_shapes_.empty());
+  OperationsCount cost = fetch::ml::charge_estimation::ops::PLACEHOLDER_READING_PER_ELEMENT *
+                         this->TotalElementsIn(this->batch_input_shapes_);
+  return cost;
 }
 
 ///////////////////////////////
