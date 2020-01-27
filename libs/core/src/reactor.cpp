@@ -46,6 +46,17 @@ namespace core {
 
 Reactor::Reactor(std::string name)
   : name_{std::move(name)}
+{
+  // The reactor watcher is always running and determines whether executions are taking
+  // too long or are stalled.
+  //watcher_ = std::make_unique<ProtectedThread>(&Reactor::ReactorWatch, this);
+}
+
+Reactor::~Reactor()
+{
+  //watcher_->ApplyVoid([](auto &watcher) { watcher.join(); });
+  //watcher_.reset();
+}
   , runnables_time_{CreateHistogram("ledger_reactor_runnable_time",
                                     "The histogram of runnables execution time")}
   , attach_total_{CreateCounter("ledger_reactor_attach_total",
@@ -70,6 +81,7 @@ Reactor::Reactor(std::string name)
   , work_queue_max_length_{
         CreateGauge("ledger_reactor_max_work_queue_length", "The max size of the work queue")}
 {}
+>>>>>>> master
 
 bool Reactor::Attach(WeakRunnable runnable)
 {
@@ -158,6 +170,11 @@ void Reactor::StopWorker()
     worker_->ApplyVoid([](auto &worker) { worker.join(); });
     worker_.reset();
   }
+}
+
+void Reactor::ReactorWatch()
+{
+  (void)execution_too_long_ms_;
 }
 
 void Reactor::Monitor()

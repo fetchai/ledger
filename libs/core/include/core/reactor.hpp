@@ -59,6 +59,7 @@ private:
   void StartWorker();
   void StopWorker();
   void Monitor();
+  void ReactorWatch();
 
   telemetry::HistogramPtr       CreateHistogram(char const *name, char const *description) const;
   telemetry::CounterPtr         CreateCounter(char const *name, char const *description) const;
@@ -69,6 +70,8 @@ private:
 
   RunnableMap work_map_{};
   ThreadPtr   worker_{};
+  ThreadPtr   watcher_{};
+  uint64_t    execution_too_long_ms_{200};
 
   // telemetry
   telemetry::HistogramPtr       runnables_time_;
