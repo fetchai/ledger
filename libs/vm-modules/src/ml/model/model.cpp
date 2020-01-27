@@ -253,15 +253,24 @@ void VMModel::Fit(vm::Ptr<VMTensor> const &data, vm::Ptr<VMTensor> const &labels
 
 vm::Ptr<Array<math::DataType>> VMModel::Evaluate()
 {
-  auto     ml_scores = model_->Evaluate(fetch::ml::dataloaders::DataLoaderMode::TRAIN);
-  SizeType n_scores  = ml_scores.size();
+  vm::Ptr<Array<math::DataType>> scores;
 
-  vm::Ptr<Array<math::DataType>> scores = this->vm_->CreateNewObject<Array<math::DataType>>(
-      this->vm_->GetTypeId<math::DataType>(), static_cast<int32_t>(n_scores));
-
-  for (SizeType i{0}; i < n_scores; i++)
+  try
   {
-    scores->elements.at(i) = ml_scores.at(i);
+    auto     ml_scores = model_->Evaluate(fetch::ml::dataloaders::DataLoaderMode::TRAIN);
+    SizeType n_scores  = ml_scores.size();
+
+    scores = this->vm_->CreateNewObject<Array<math::DataType>>(
+        this->vm_->GetTypeId<math::DataType>(), static_cast<int32_t>(n_scores));
+
+    for (SizeType i{0}; i < n_scores; i++)
+    {
+      scores->elements.at(i) = ml_scores.at(i);
+    }
+  }
+  catch (std::exception const &e)
+  {
+    vm_->RuntimeError("Model evaluate failed: " + std::string(e.what()));
   }
 
   return scores;
