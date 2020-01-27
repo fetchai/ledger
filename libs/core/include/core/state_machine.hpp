@@ -284,7 +284,7 @@ std::string StateMachine<S>::GetId() const
 template <typename S>
 std::string StateMachine<S>::GetDebug() const
 {
-  return std::string("State: ") + this->GetStateName() + " prev: " + this->GetPrevStateName();
+  return std::string("State now: ") + this->GetStateName() + " prev: " + this->GetPrevStateName();
 }
 
 /**

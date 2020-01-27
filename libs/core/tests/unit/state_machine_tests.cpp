@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -28,7 +28,8 @@ using namespace testing;
 class ReactorTest : public core::Reactor
 {
 public:
-  ReactorTest(std::string name) : Reactor(name)
+  ReactorTest(std::string name)
+    : Reactor(name)
   {
     // Redefine these so the test doesn't take too long
     execution_too_long_ms_   = 50;
@@ -68,8 +69,7 @@ public:
 
   ReactorTests()
     : reactor_{"Reactor"}
-  {
-  }
+  {}
 
   using StateMachine    = core::StateMachine<State>;
   using StateMachinePtr = std::shared_ptr<StateMachine>;
@@ -122,24 +122,24 @@ public:
 
     switch (state)
     {
-      case State::A:
-        text = "A";
-        break;
-      case State::B:
-        text = "B";
-        break;
-      case State::C:
-        text = "C";
-        break;
+    case State::A:
+      text = "A";
+      break;
+    case State::B:
+      text = "B";
+      break;
+    case State::C:
+      text = "C";
+      break;
     }
 
     return text;
   }
 
 protected:
-  StateMachinePtr         state_machine_;
-  ReactorTest                        reactor_;
-  std::atomic<uint8_t>               state_seen_{std::numeric_limits<uint8_t>::max()};
+  StateMachinePtr      state_machine_;
+  ReactorTest          reactor_;
+  std::atomic<uint8_t> state_seen_{std::numeric_limits<uint8_t>::max()};
 };
 
 // Basic test - does the reactor drive the state machine through all states
@@ -152,14 +152,14 @@ TEST_F(ReactorTests, ReactorPassesThroughStates)
   state_machine_->RegisterHandler(State::C, static_cast<ReactorTests *>(this), &ReactorTests::OnC);
   // clang-format on
 
-   reactor_.Attach(state_machine_);
-   reactor_.Start();
+  reactor_.Attach(state_machine_);
+  reactor_.Start();
 
-   std::this_thread::sleep_for(std::chrono::milliseconds(5));
+  std::this_thread::sleep_for(std::chrono::milliseconds(5));
 
-   EXPECT_NE(state_seen_, std::numeric_limits<uint8_t>::max());
-   EXPECT_EQ(reactor_.ExecutionsTooLongCounter(), 0);
-   EXPECT_EQ(reactor_.ExecutionsWayTooLongCounter(), 0);
+  EXPECT_NE(state_seen_, std::numeric_limits<uint8_t>::max());
+  EXPECT_EQ(reactor_.ExecutionsTooLongCounter(), 0);
+  EXPECT_EQ(reactor_.ExecutionsWayTooLongCounter(), 0);
 }
 
 // Test the state machine registers states that are taking too long
@@ -173,14 +173,14 @@ TEST_F(ReactorTests, ReactorNoticesTooLongStates)
   state_machine_->RegisterHandler(State::C, static_cast<ReactorTests *>(this), &ReactorTests::OnSlowC);
   // clang-format on
 
-   reactor_.Attach(state_machine_);
-   reactor_.Start();
+  reactor_.Attach(state_machine_);
+  reactor_.Start();
 
-   std::this_thread::sleep_for(std::chrono::milliseconds(reactor_.ExecutionTooLongMs() * 10));
+  std::this_thread::sleep_for(std::chrono::milliseconds(reactor_.ExecutionTooLongMs() * 10));
 
-   EXPECT_NE(state_seen_, std::numeric_limits<uint8_t>::max());
-   EXPECT_NE(reactor_.ExecutionsTooLongCounter(), 0);
-   EXPECT_EQ(reactor_.ExecutionsWayTooLongCounter(), 0);
+  EXPECT_NE(state_seen_, std::numeric_limits<uint8_t>::max());
+  EXPECT_NE(reactor_.ExecutionsTooLongCounter(), 0);
+  EXPECT_EQ(reactor_.ExecutionsWayTooLongCounter(), 0);
 }
 
 // Test the state machine registers states that are taking *way* too long
@@ -194,12 +194,12 @@ TEST_F(ReactorTests, ReactorNoticesWayTooLongStates)
   state_machine_->RegisterHandler(State::C, static_cast<ReactorTests *>(this), &ReactorTests::OnVerySlowC);
   // clang-format on
 
-   reactor_.Attach(state_machine_);
-   reactor_.Start();
+  reactor_.Attach(state_machine_);
+  reactor_.Start();
 
-   std::this_thread::sleep_for(std::chrono::milliseconds(reactor_.ThreadWatcherCheckMs() * 4));
+  std::this_thread::sleep_for(std::chrono::milliseconds(reactor_.ThreadWatcherCheckMs() * 4));
 
-   EXPECT_NE(state_seen_, std::numeric_limits<uint8_t>::max());
-   EXPECT_NE(reactor_.ExecutionsTooLongCounter(), 0);
-   EXPECT_NE(reactor_.ExecutionsWayTooLongCounter(), 0);
+  EXPECT_NE(state_seen_, std::numeric_limits<uint8_t>::max());
+  EXPECT_NE(reactor_.ExecutionsTooLongCounter(), 0);
+  EXPECT_NE(reactor_.ExecutionsWayTooLongCounter(), 0);
 }

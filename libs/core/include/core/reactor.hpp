@@ -76,14 +76,14 @@ private:
   Flag              running_{false};
   Flag              not_destructing_{true};
 
-  RunnableMap                  work_map_{};
-  ThreadPtr                    worker_{};
-  ThreadPtr                    watcher_{};
+  RunnableMap work_map_{};
+  ThreadPtr   worker_{};
+  ThreadPtr   watcher_{};
 
   // Keeping track of the last item executed
-  uint32_t                     execution_counter_{0};
-  WeakRunnable                 last_executed_runnable_;
-  Flag                         currently_executing_{false};
+  uint32_t     execution_counter_{0};
+  WeakRunnable last_executed_runnable_;
+  Flag         currently_executing_{false};
 
   // telemetry
   telemetry::HistogramPtr       runnables_time_;

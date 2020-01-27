@@ -21,12 +21,12 @@
 #include "core/runnable.hpp"
 #include "core/set_thread_name.hpp"
 #include "logging/logging.hpp"
+#include "moment/deadline_timer.hpp"
 #include "telemetry/counter.hpp"
 #include "telemetry/gauge.hpp"
 #include "telemetry/histogram.hpp"
 #include "telemetry/registry.hpp"
 #include "telemetry/utils/timer.hpp"
-#include "moment/deadline_timer.hpp"
 
 #include <chrono>
 #include <deque>
@@ -67,9 +67,9 @@ Reactor::Reactor(std::string name)
   , expired_total_{CreateCounter("ledger_reactor_expired_total",
                                  "The total number of expired runnables")}
   , too_long_total_{CreateCounter("ledger_reactor_too_long_total",
-                                 "The total number of runnables that took too long")}
+                                  "The total number of runnables that took too long")}
   , way_too_long_total_{CreateCounter("ledger_reactor_way_too_long_total",
-                                 "The total number of runnables that took way too long")}
+                                      "The total number of runnables that took way too long")}
   , work_queue_length_{CreateGauge("ledger_reactor_work_queue_length",
                                    "The current size of the work queue")}
   , work_queue_max_length_{
@@ -178,17 +178,19 @@ void Reactor::ReactorWatch()
 {
   uint32_t last_seen_executed = 0;
 
-  while(not_destructing_)
+  while (not_destructing_)
   {
     std::this_thread::sleep_for(std::chrono::milliseconds(thread_watcher_check_ms_));
 
-    auto runnable_concrete = last_executed_runnable_.lock();
-    std::string runnable_name  = runnable_concrete ? runnable_concrete->GetId() : "nullptr fail";
+    auto        runnable_concrete = last_executed_runnable_.lock();
+    std::string runnable_name     = runnable_concrete ? runnable_concrete->GetId() : "nullptr fail";
     std::string runnable_debug = runnable_concrete ? runnable_concrete->GetDebug() : "nullptr fail";
 
-    if((last_seen_executed == execution_counter_) && currently_executing_)
+    if ((last_seen_executed == execution_counter_) && currently_executing_)
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Very long execution noticed at execution counter: ", last_seen_executed, ". from runnable: ", runnable_name, " debug: ", runnable_debug);
+      FETCH_LOG_WARN(LOGGING_NAME,
+                     "Very long execution noticed at execution counter: ", last_seen_executed,
+                     ". from runnable: ", runnable_name, " debug: ", runnable_debug);
       executions_way_too_long_++;
       way_too_long_total_->increment();
     }
@@ -202,7 +204,7 @@ void Reactor::Monitor()
   // set the thread name
   SetThreadName(name_);
 
-  std::string const timer_name = "reactor:" + name_;
+  std::string const     timer_name = "reactor:" + name_;
   moment::DeadlineTimer execution_too_long_timer{timer_name.c_str()};
 
   WorkQueue work_queue;
@@ -278,23 +280,27 @@ void Reactor::Monitor()
 
         success_total_->increment();
 
-        if(execution_too_long_timer.HasExpired())
+        if (execution_too_long_timer.HasExpired())
         {
-          FETCH_LOG_WARN(LOGGING_NAME, "Execution took longer than was polite! From: ", runnable->GetId(), " Debug: ", runnable->GetDebug());
+          FETCH_LOG_WARN(LOGGING_NAME,
+                         "Execution took longer than was polite! From: ", runnable->GetId(),
+                         " Debug: ", runnable->GetDebug());
           executions_too_long_++;
           too_long_total_->increment();
         }
       }
       catch (std::exception const &ex)
       {
-        FETCH_LOG_WARN(LOGGING_NAME, "The reactor ", name_," caught an exception in ", runnable->GetId(), "! ",
-                       " error: ", ex.what(), " Debug: ", runnable->GetDebug());
+        FETCH_LOG_WARN(LOGGING_NAME, "The reactor ", name_, " caught an exception in ",
+                       runnable->GetId(), "! ", " error: ", ex.what(),
+                       " Debug: ", runnable->GetDebug());
 
         failure_total_->increment();
       }
       catch (...)
       {
-        FETCH_LOG_INFO(LOGGING_NAME, "Unknown error generated in reactor: ", name_, " From: ", runnable->GetId(), " Debug: ", runnable->GetDebug());
+        FETCH_LOG_INFO(LOGGING_NAME, "Unknown error generated in reactor: ", name_,
+                       " From: ", runnable->GetId(), " Debug: ", runnable->GetDebug());
 
         failure_total_->increment();
       }
