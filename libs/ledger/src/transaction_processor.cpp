@@ -85,7 +85,7 @@ void TransactionProcessor::OnTransaction(TransactionPtr const &tx)
   case Transaction::ContractMode::CHAIN_CODE:
 
     // dispatch the summary to the miner
-    packer_.EnqueueTransaction(*tx);
+    packer_.EnqueueTransaction(tx);
 
     // update the status cache with the state of this transaction
     if (status_cache_)

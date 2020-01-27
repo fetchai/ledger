@@ -52,7 +52,7 @@ public:
    *
    * @param tx The reference to the transaction
    */
-  virtual void EnqueueTransaction(chain::Transaction const &tx) = 0;
+  virtual void EnqueueTransaction(chain::TransactionPtr tx) = 0;
 
   /**
    * Add the specified transaction layout to the internal queue

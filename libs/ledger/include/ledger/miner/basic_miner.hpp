@@ -61,7 +61,7 @@ public:
 
   /// @name Miner Interface
   /// @{
-  void     EnqueueTransaction(chain::Transaction const &tx) override;
+  void     EnqueueTransaction(chain::TransactionPtr tx) override;
   void     EnqueueTransaction(chain::TransactionLayout const &layout) override;
   void     GenerateBlock(Block &block, std::size_t num_lanes, std::size_t num_slices,
                          MainChain const &chain) override;
@@ -75,6 +75,7 @@ public:
 private:
   using ThreadPool = threading::Pool;
   using Queue      = TransactionLayoutQueue;
+  using TxIdx      = chain::TransactionIndex;
 
   /// @name Packing Operations
   /// @{
@@ -102,6 +103,7 @@ private:
   /// @{
   mutable Mutex mining_pool_lock_;  ///< Mining pool lock (priority 0)
   Queue         mining_pool_;       ///< The main mining queue for the node
+  mutable TxIdx txs_to_mine_;       ///< Transactions to be executed
   /// @}
 
   /// @name Transaction Validation
@@ -109,6 +111,7 @@ private:
   StorageInterface &   storage_;
   TokenContract        token_contract_{};
   TransactionValidator tx_validator_{storage_, token_contract_};
+  bool                 IsInvalid(TransactionLayout const &tx_lo, uint64_t block_number) const;
   /// @}
 
   /// @name Telemetry

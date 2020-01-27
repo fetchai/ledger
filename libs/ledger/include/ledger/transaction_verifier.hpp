@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "chain/transaction.hpp"
 #include "core/containers/queue.hpp"
 #include "telemetry/telemetry.hpp"
 
@@ -25,11 +26,6 @@
 #include <thread>
 
 namespace fetch {
-namespace chain {
-
-class Transaction;
-
-}  // namespace chain
 namespace ledger {
 
 class TransactionSink;
@@ -37,7 +33,7 @@ class TransactionSink;
 class TransactionVerifier
 {
 public:
-  using TransactionPtr = std::shared_ptr<chain::Transaction>;
+  using TransactionPtr = chain::TransactionPtr;
 
   // Construction / Destruction
   TransactionVerifier(TransactionSink &sink, std::size_t verifying_threads,

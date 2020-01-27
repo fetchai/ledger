@@ -23,6 +23,8 @@
 #include "crypto/identity.hpp"
 
 #include <cstdint>
+#include <memory>
+#include <unordered_map>
 #include <vector>
 
 namespace fetch {
@@ -173,6 +175,10 @@ private:
   friend class TransactionBuilder;
   friend class TransactionSerializer;
 };
+
+using TransactionPtr = std::shared_ptr<Transaction>;
+
+using TransactionIndex = std::unordered_map<Digest, TransactionPtr, DigestHashAdapter>;
 
 }  // namespace chain
 }  // namespace fetch

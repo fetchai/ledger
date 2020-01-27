@@ -57,7 +57,7 @@ protected:
   using Query                 = Contract::Query;
   using IdentifierPtr         = std::shared_ptr<ConstByteArray>;
   using CachedStorageAdapter  = fetch::ledger::CachedStorageAdapter;
-  using TransactionPtr        = fetch::chain::TransactionBuilder::TransactionPtr;
+  using TransactionPtr        = fetch::chain::TransactionPtr;
 
   void SetUp() override
   {

@@ -72,7 +72,7 @@ public:
   InMemoryStorageUnit &operator=(InMemoryStorageUnit &&) = delete;
 
 private:
-  using TransactionPtr   = std::shared_ptr<Transaction>;
+  using TransactionPtr   = fetch::chain::TransactionPtr;
   using TransactionStore = std::unordered_map<Digest, TransactionPtr>;
   using StateSnapshot    = std::unordered_map<Digest, StateValue>;
   using StateSnapshotPtr = std::shared_ptr<StateSnapshot>;

@@ -31,7 +31,7 @@ class TransactionGenerator
 public:
   using Transaction        = fetch::chain::Transaction;
   using TransactionBuilder = fetch::chain::TransactionBuilder;
-  using TransactionPtr     = TransactionBuilder::TransactionPtr;
+  using TransactionPtr     = fetch::chain::TransactionPtr;
   using Txs                = std::vector<TransactionGenerator::TransactionPtr>;
 
   TransactionPtr operator()()

@@ -85,9 +85,10 @@ BasicMiner::BasicMiner(uint32_t log2_num_lanes, StorageInterface &storage)
  *
  * @param tx The reference to the transaction
  */
-void BasicMiner::EnqueueTransaction(chain::Transaction const &tx)
+void BasicMiner::EnqueueTransaction(chain::TransactionPtr tx)
 {
-  EnqueueTransaction(chain::TransactionLayout{tx, log2_num_lanes_});
+  EnqueueTransaction(chain::TransactionLayout{*tx, log2_num_lanes_});
+  txs_to_mine_.emplace(tx->digest(), std::move(tx));
 }
 
 /**
@@ -121,6 +122,30 @@ void BasicMiner::EnqueueTransaction(chain::TransactionLayout const &layout)
 }
 
 /**
+ * Check if transaction is inbvalid and should not be mined.
+ *
+ * @param tx_lo Transaction layout to check
+ * @param block_number
+ */
+bool BasicMiner::IsInvalid(TransactionLayout const &tx_lo, uint64_t block_number) const
+{
+  ContractExecutionStatus ces;
+
+  auto respective_transaction_itr = txs_to_mine_.find(tx_lo.digest());
+  if (respective_transaction_itr == txs_to_mine_.end())
+  {
+    ces = tx_validator_(tx_lo, block_number);
+  }
+  else
+  {
+    ces = tx_validator_(*respective_transaction_itr->second, block_number);
+    txs_to_mine_.erase(respective_transaction_itr);
+  }
+
+  return ces != ContractExecutionStatus::SUCCESS;
+}
+
+/**
  * Generate a new block based on the current queue of transactions. Not thread safe.
  *
  * @param block The reference to the output block to generate
@@ -143,7 +168,7 @@ void BasicMiner::GenerateBlock(Block &block, std::size_t num_lanes, std::size_t 
   DigestSet invalid{};
   for (auto const &layout : mining_pool_)
   {
-    if (chain::Transaction::Validity::VALID != chain::GetValidity(layout, block.block_number))
+    if (IsInvalid(layout, block.block_number))
     {
       invalid.emplace(layout.digest());
     }

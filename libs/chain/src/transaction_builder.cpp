@@ -106,7 +106,7 @@ TransactionBuilder::Sealer &TransactionBuilder::Sealer::Sign(crypto::Prover cons
  *
  * @return The finalised transaction
  */
-TransactionBuilder::TransactionPtr TransactionBuilder::Sealer::Build()
+TransactionPtr TransactionBuilder::Sealer::Build()
 {
   using Signatory = Transaction::Signatory;
 

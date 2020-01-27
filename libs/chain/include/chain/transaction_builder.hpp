@@ -43,7 +43,6 @@ public:
   using TokenAmount    = Transaction::TokenAmount;
   using BlockIndex     = Transaction::BlockIndex;
   using CounterValue   = Transaction::Counter;
-  using TransactionPtr = std::shared_ptr<Transaction>;
   using ConstByteArray = byte_array::ConstByteArray;
 
   /**
