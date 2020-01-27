@@ -1315,31 +1315,34 @@ TYPED_TEST(GraphTest, graph_charge_conv2d)
   using TensorType = TypeParam;
   using math::SizeType;
 
-  // TODO: impl. Tensor creation with proper dimensions.
-  TensorType input_data = TensorType::FromString(
-      R"(01,02,03,04,05,06; 11,12,13,14,15,16; 21,22,23,24,25,26; 31,32,33,34,35,36)");
+  SizeType const num_channels = 3;
+  SizeType const input_height = 64;
+  SizeType const input_width  = 128;
+  SizeType const batch_size   = 16;
 
-  SizeType const input_height = input_data.shape().front();
+  TensorType input_data({num_channels, input_height, input_width, batch_size});
 
-  SizeType const batch_size = input_data.shape().back();
+  SizeType const outputs     = 16;
+  SizeType const kernel_size = 3;
+  SizeType const stride_size = 1;
 
   fetch::ml::Graph<TensorType> g;
 
   std::string input  = g.template AddNode<PlaceHolder<TensorType>>("Input", {});
-  std::string conv2d = g.template AddNode<Convolution2D<TensorType>>("Conv2d", {"Input"});
+  std::string conv2d = g.template AddNode<Convolution2D<TensorType>>(
+      "Conv2d", {"Input"}, outputs, num_channels, kernel_size, stride_size);
 
   g.SetInput(input, input_data);
   g.Compile();
 
   math::SizeVector const out_shape = g.GetNode(conv2d)->BatchOutputShape();
-  ASSERT_EQ(out_shape.size(), 2);
-  ASSERT_EQ(out_shape.front(), 2);
+  ASSERT_EQ(out_shape.size(), 4);
+  ASSERT_EQ(out_shape.front(), outputs);
 
   OperationsCount const charge       = g.ChargeForward(conv2d);
   OperationsCount const batch_charge = charge * batch_size;
 
-  SizeType const        matmul_ops      = weight_width * input_height * batch_size;
-  OperationsCount const expected_charge = matmul_ops * MULTIPLICATION_PER_ELEMENT;
+  OperationsCount const expected_charge = 0;  // TODO(VH): calc proper expected charge
 
   ASSERT_EQ(batch_charge, expected_charge);
 }
