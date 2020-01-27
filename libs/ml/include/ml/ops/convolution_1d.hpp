@@ -79,6 +79,7 @@ public:
     return DESCRIPTOR;
   }
 
+  OperationsCount ChargeForward() override;
 private:
   void FillVerticalStride(TensorType const &input, TensorType &vertical_stride,
                           SizeType output_channels, SizeType input_channels,

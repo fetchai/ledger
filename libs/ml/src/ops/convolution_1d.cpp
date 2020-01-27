@@ -390,6 +390,29 @@ void Convolution1D<TensorType>::ReverseFillOutput(TensorType &gemm_output, Tenso
   }
 }
 
+template <typename TensorType>
+OperationsCount Convolution1D<TensorType>::ChargeForward()
+ {
+   assert(!this->batch_output_shape_.empty());
+   assert(this->batch_input_shapes_.size() == 2);
+
+   SizeType input_channels  = this->batch_input_shapes_.front().at(0);
+   SizeType batch_size      = this->batch_input_shapes_.front().at(2);
+   SizeType output_channels = this->batch_input_shapes_.back().at(0);
+   SizeType kernel_height   = this->batch_input_shapes_.back().at(2);
+
+   // output_height=number of stride_size steps over input size
+   SizeType output_height = (this->batch_input_shapes_.front().at(1) - this->batch_input_shapes_.back().at(2) + this->stride_size_) / this->stride_size_;
+
+   SizeType horizontal_stride_width  = kernel_height * input_channels;
+   SizeType horizontal_stride_height = output_height * batch_size;
+   SizeType vertical_stride_width    = output_channels;
+
+   OperationsCount cost = horizontal_stride_width * horizontal_stride_height * vertical_stride_width * fetch::ml::charge_estimation::ops::MULTIPLICATION_PER_ELEMENT;
+
+   return cost;
+ }
+
 ///////////////////////////////
 /// EXPLICIT INSTANTIATIONS ///
 ///////////////////////////////
