@@ -851,11 +851,10 @@ void VMModel::LayerAddMaxPool(const fetch::vm::Ptr<fetch::vm::String> &layer,
 ChargeAmount VMModel::EstimatePredict(const vm::Ptr<math::VMTensor> &data)
 {
   ChargeAmount const cost       = model_->ChargeForward();
-  auto const         batch_size = data->shape().back();
-  auto const         batch_cost = batch_size * cost;
-  FETCH_LOG_INFO(GetTypeName().c_str(),
-                 " forward pass estimated batch cost is " + std::to_string(batch_size) + " * " +
-                     std::to_string(cost) + " = " + std::to_string(batch_cost));
+  SizeType const     batch_size = data->shape().back();
+  ChargeAmount const batch_cost = batch_size * cost;
+  FETCH_LOG_INFO("Model", " forward pass estimated batch cost is " + std::to_string(batch_size) +
+                              " * " + std::to_string(cost) + " = " + std::to_string(batch_cost));
   return batch_cost;
 }
 

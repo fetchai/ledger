@@ -1198,4 +1198,43 @@ TEST_F(VMModelEstimatorTests,
   EXPECT_EQ(charge_original, charge_from_serializer);
 }
 
+TEST_F(VMModelEstimatorTests, charge_forward_one_dense)
+{
+  using namespace fetch::ml::charge_estimation::ops;
+  auto              loss        = VmString(vm, "mse");
+  auto              optimiser   = VmString(vm, "adam");
+  std::vector<bool> activations = {true, true};
+
+  SizeType const inputs  = 10;
+  SizeType const outputs = 10;
+
+  VmModelPtr  model = VmSequentialModel(vm);
+  VmStringPtr dense{new fetch::vm::String(vm.get(), "dense")};
+
+  model->LayerAddDense(dense, inputs, outputs);
+  model->CompileSequential(loss, optimiser);
+
+  auto data = VmTensor(vm, {10, 1});
+  data->FillRandom();
+
+  const ChargeAmount cost = model->EstimatePredict(data);
+
+  ChargeAmount expected_cost = 0;
+  // For a Dense layer with n inputs and m outputs and empty activation there is expected
+  // n placeholder readings
+  expected_cost += inputs * PLACEHOLDER_READING_PER_ELEMENT;
+  // n flattening operations (because Dense is not time-distributed in this test)
+  expected_cost += inputs * FLATTEN_PER_ELEMENT;
+  // n*m Weights reading (100 weights total)
+  expected_cost += (inputs * outputs) * WEIGHTS_READING_PER_ELEMENT;
+  // n*m matmul operations
+  expected_cost += (inputs * outputs) * MULTIPLICATION_PER_ELEMENT;
+  // m bias weights reading
+  expected_cost += outputs * WEIGHTS_READING_PER_ELEMENT;
+  // m adding (bias + matmul result)
+  expected_cost += outputs * ADDITION_PER_ELEMENT;
+
+  ASSERT_EQ(cost, expected_cost);
+}
+
 }  // namespace

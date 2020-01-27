@@ -1712,5 +1712,4 @@ TEST_F(VMModelTests, model_add_mixed_auto_inputs)
   ASSERT_TRUE(toolkit.Compile(SRC));
   ASSERT_TRUE(toolkit.Run(nullptr, ChargeAmount{0}));
 }
-
 }  // namespace
