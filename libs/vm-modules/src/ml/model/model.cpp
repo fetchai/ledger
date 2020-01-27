@@ -489,7 +489,7 @@ void VMModel::LayerAddDenseAutoInputs(const fetch::vm::Ptr<String> &layer,
 
 void VMModel::LayerAddDenseActivation(fetch::vm::Ptr<fetch::vm::String> const &layer,
                                       math::SizeType const &                   inputs,
-                                      math::SizeType const &                   hidden_nodes,<<<
+                                      math::SizeType const &                   hidden_nodes,
                                       fetch::vm::Ptr<fetch::vm::String> const &activation)
 {
   try
