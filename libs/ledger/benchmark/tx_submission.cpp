@@ -35,7 +35,6 @@
 namespace {
 
 using fetch::chain::Transaction;
-using fetch::chain::TransactionBuilder;
 using fetch::chain::TransactionPtr;
 using fetch::crypto::ECDSASigner;
 using fetch::ledger::TransactionStore;
