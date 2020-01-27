@@ -1205,8 +1205,9 @@ TEST_F(VMModelEstimatorTests, charge_forward_one_dense)
   auto              optimiser   = VmString(vm, "adam");
   std::vector<bool> activations = {true, true};
 
-  SizeType const inputs  = 10;
-  SizeType const outputs = 10;
+  SizeType const inputs     = 10;
+  SizeType const outputs    = 10;
+  SizeType const batch_size = 20;
 
   VmModelPtr  model = VmSequentialModel(vm);
   VmStringPtr dense{new fetch::vm::String(vm.get(), "dense")};
@@ -1214,7 +1215,7 @@ TEST_F(VMModelEstimatorTests, charge_forward_one_dense)
   model->LayerAddDense(dense, inputs, outputs);
   model->CompileSequential(loss, optimiser);
 
-  auto data = VmTensor(vm, {10, 1});
+  auto data = VmTensor(vm, {inputs, batch_size});
   data->FillRandom();
 
   const ChargeAmount cost = model->EstimatePredict(data);
@@ -1227,7 +1228,7 @@ TEST_F(VMModelEstimatorTests, charge_forward_one_dense)
   expected_cost += inputs * FLATTEN_PER_ELEMENT;
   // n*m Weights reading (100 weights total)
   expected_cost += (inputs * outputs) * WEIGHTS_READING_PER_ELEMENT;
-  // n*m matmul operations
+  // n*m*1 matmul operations
   expected_cost += (inputs * outputs) * MULTIPLICATION_PER_ELEMENT;
   // m bias weights reading
   expected_cost += outputs * WEIGHTS_READING_PER_ELEMENT;

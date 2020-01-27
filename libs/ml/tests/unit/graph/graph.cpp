@@ -20,6 +20,7 @@
 #include "ml/charge_estimation/ops/constants.hpp"
 #include "ml/core/graph.hpp"
 #include "ml/layers/convolution_1d.hpp"
+#include "ml/layers/convolution_2d.hpp"
 #include "ml/layers/fully_connected.hpp"
 #include "ml/ops/activations/relu.hpp"
 #include "ml/ops/add.hpp"
@@ -1298,6 +1299,43 @@ TYPED_TEST(GraphTest, graph_charge_matmul)
   ASSERT_EQ(out_shape.front(), 2);
 
   OperationsCount const charge       = g.ChargeForward(matmul);
+  OperationsCount const batch_charge = charge * batch_size;
+
+  SizeType const        matmul_ops      = weight_width * input_height * batch_size;
+  OperationsCount const expected_charge = matmul_ops * MULTIPLICATION_PER_ELEMENT;
+
+  ASSERT_EQ(batch_charge, expected_charge);
+}
+
+TYPED_TEST(GraphTest, graph_charge_conv2d)
+{
+  using namespace fetch::ml::ops;
+  using namespace fetch::ml::layers;
+  using namespace fetch::ml::charge_estimation::ops;
+  using TensorType = TypeParam;
+  using math::SizeType;
+
+  // TODO: impl. Tensor creation with proper dimensions.
+  TensorType input_data = TensorType::FromString(
+      R"(01,02,03,04,05,06; 11,12,13,14,15,16; 21,22,23,24,25,26; 31,32,33,34,35,36)");
+
+  SizeType const input_height = input_data.shape().front();
+
+  SizeType const batch_size = input_data.shape().back();
+
+  fetch::ml::Graph<TensorType> g;
+
+  std::string input  = g.template AddNode<PlaceHolder<TensorType>>("Input", {});
+  std::string conv2d = g.template AddNode<Convolution2D<TensorType>>("Conv2d", {"Input"});
+
+  g.SetInput(input, input_data);
+  g.Compile();
+
+  math::SizeVector const out_shape = g.GetNode(conv2d)->BatchOutputShape();
+  ASSERT_EQ(out_shape.size(), 2);
+  ASSERT_EQ(out_shape.front(), 2);
+
+  OperationsCount const charge       = g.ChargeForward(conv2d);
   OperationsCount const batch_charge = charge * batch_size;
 
   SizeType const        matmul_ops      = weight_width * input_height * batch_size;

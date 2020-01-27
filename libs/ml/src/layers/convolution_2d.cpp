@@ -69,9 +69,6 @@ Convolution2D<TensorType>::Convolution2D(SizeType const output_channels,
 
   this->AddInputNode(input);
   this->SetOutputNode(output);
-
-  this->Compile();
-  FETCH_LOG_INFO(Descriptor(), "-- Convolution2D initialisation completed. --");
 }
 
 template <typename TensorType>
@@ -104,6 +101,26 @@ void Convolution2D<TensorType>::SetOpSaveableParams(SPType const &sp)
   input_channels_  = sp.input_channels;
   output_channels_ = sp.output_channels;
   stride_size_     = sp.stride_size;
+}
+
+template <typename TensorType>
+void Convolution2D<TensorType>::CompleteConstruction()
+{
+  if (is_initialised_)
+  {
+    return;
+  }
+  using NodePtrType = std::shared_ptr<fetch::ml::Node<TensorType>>;
+
+  assert(!this->batch_input_shapes_.empty());
+  assert(!this->batch_output_shape_.empty());
+
+  NodePtrType input_node = this->nodes_.at(this->input_node_names_.front());
+  input_node->SetBatchInputShapes(this->batch_input_shapes_);
+  input_node->SetBatchOutputShape(this->batch_input_shapes_.front());
+
+  this->Compile();
+  FETCH_LOG_INFO(Descriptor(), "-- Convolution2D initialisation completed. --");
 }
 
 template <typename TensorType>
