@@ -80,14 +80,15 @@ public:
   /// @{
   char const *GetName() const override;
   char const *GetStateName() const override;
+  char const *GetPrevStateName() const override;
   /// @}
 
   /// @name Runnable Interface
   /// @{
   bool        IsReadyToExecute() const override;
   void        Execute() override;
-  char const *GetId() const override;
-  char const *GetDebug() const override;
+  std::string GetId() const override;
+  std::string GetDebug() const override;
   /// @}
 
   State state() const
@@ -269,9 +270,9 @@ char const *StateMachine<S>::GetName() const
  * @return The string name of the state machine
  */
 template <typename S>
-char const *StateMachine<S>::GetId() const
+std::string StateMachine<S>::GetId() const
 {
-  return name_.c_str();
+  return name_;
 }
 
 /**
@@ -281,9 +282,9 @@ char const *StateMachine<S>::GetId() const
  * @return The current state of the state machine
  */
 template <typename S>
-char const *StateMachine<S>::GetDebug() const
+std::string StateMachine<S>::GetDebug() const
 {
-  return this->GetStateName();
+  return std::string("State: ") + this->GetStateName() + " prev: " + this->GetPrevStateName();
 }
 
 /**
@@ -300,6 +301,25 @@ char const *StateMachine<S>::GetStateName() const
   if (mapper_)
   {
     text = mapper_(state());
+  }
+
+  return text;
+}
+
+/**
+ * Get the current string representation for the previous state
+ *
+ * @tparam S The state enum type
+ * @return The string representation of the current state if successful otherwise "Unknown"
+ */
+template <typename S>
+char const *StateMachine<S>::GetPrevStateName() const
+{
+  char const *text = "Unknown";
+
+  if (mapper_)
+  {
+    text = mapper_(previous_state());
   }
 
   return text;

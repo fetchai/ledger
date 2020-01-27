@@ -55,12 +55,12 @@ void PeriodicRunnable::Execute()
   last_executed_ = Clock::now();
 }
 
-char const *PeriodicRunnable::GetId() const
+std::string PeriodicRunnable::GetId() const
 {
   return "PeriodicRunnable";
 }
 
-char const *PeriodicRunnable::GetDebug() const
+std::string PeriodicRunnable::GetDebug() const
 {
   return "PeriodicRunnableDebug";
 }
