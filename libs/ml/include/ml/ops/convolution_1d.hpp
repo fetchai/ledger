@@ -104,6 +104,8 @@ private:
   void ReverseFillOutput(TensorType &gemm_output, TensorType const &output,
                          SizeType output_channels, SizeType output_height, SizeType batch_size);
 
+  SizeType ComputeOutputHeight(SizeType const input_height, SizeType const kernel_height) const;
+
   SizeType stride_size_;
 };
 
