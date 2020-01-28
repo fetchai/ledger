@@ -64,6 +64,8 @@ void MinMaxScaler<TensorType>::SetScale(TensorType const &reference_tensor)
 template <typename TensorType>
 void MinMaxScaler<TensorType>::Normalise(TensorType const &input_tensor, TensorType &output_tensor)
 {
+  using DataType = typename TensorType::Type;
+
   output_tensor.Reshape(input_tensor.shape());
   SizeType batch_dim = input_tensor.shape().size() - 1;
 
@@ -75,7 +77,7 @@ void MinMaxScaler<TensorType>::Normalise(TensorType const &input_tensor, TensorT
       auto ret_it = output_tensor.View(i).begin();
       while (ret_it.is_valid())
       {
-        *ret_it = typename TensorType::Type{0};
+        *ret_it = DataType{0};
         ++ret_it;
       }
     }
@@ -89,7 +91,7 @@ void MinMaxScaler<TensorType>::Normalise(TensorType const &input_tensor, TensorT
       auto ret_it = output_tensor.View(i).begin();
       while (ret_it.is_valid())
       {
-        *ret_it = (*in_it - x_min_) / (x_range_);
+        *ret_it = static_cast<DataType>((*in_it - x_min_) / (x_range_));
         ++in_it;
         ++ret_it;
       }
