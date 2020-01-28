@@ -1315,12 +1315,14 @@ TYPED_TEST(GraphTest, graph_charge_conv2d)
   using TensorType = TypeParam;
   using math::SizeType;
 
+  // An RGB 3-channel image of 64*128 pixels, 16 images in a batch
   SizeType const num_channels = 3;
   SizeType const input_height = 64;
   SizeType const input_width  = 128;
   SizeType const batch_size   = 16;
 
-  TensorType input_data({num_channels, input_height, input_width, batch_size});
+  math::SizeVector shape{num_channels, input_height, input_width, batch_size};
+  TensorType       input_data(shape);
 
   SizeType const outputs     = 16;
   SizeType const kernel_size = 3;
@@ -1336,7 +1338,7 @@ TYPED_TEST(GraphTest, graph_charge_conv2d)
   g.Compile();
 
   math::SizeVector const out_shape = g.GetNode(conv2d)->BatchOutputShape();
-  ASSERT_EQ(out_shape.size(), 4);
+  ASSERT_EQ(out_shape.size(), shape.size());
   ASSERT_EQ(out_shape.front(), outputs);
 
   OperationsCount const charge       = g.ChargeForward(conv2d);
