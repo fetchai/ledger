@@ -203,6 +203,17 @@ std::vector<fetch::math::SizeType> MaxPool2D<T>::ComputeOutputShape(
   return output_shape;
 }
 
+template <typename TensorType>
+OperationsCount MaxPool2D<TensorType>::ChargeForward()
+{
+  assert(!this->batch_output_shape_.empty());
+  OperationsCount cost = static_cast<OperationsCount>(
+      fetch::ml::charge_estimation::ops::MAX_PER_ELEMENT * this->batch_output_shape_.at(0) *
+      this->batch_output_shape_.at(1) * this->batch_output_shape_.at(2) *
+      this->batch_output_shape_.at(3) * pow(this->kernel_size_, 2));
+  return cost;
+}
+
 ///////////////////////////////
 /// EXPLICIT INSTANTIATIONS ///
 ///////////////////////////////

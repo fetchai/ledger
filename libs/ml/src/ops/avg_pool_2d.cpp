@@ -193,6 +193,21 @@ std::vector<math::SizeType> AvgPool2D<TensorType>::ComputeOutputShape(
   return output_shape;
 }
 
+template <typename TensorType>
+OperationsCount AvgPool2D<TensorType>::ChargeForward()
+{
+  assert(!this->batch_output_shape_.empty());
+  OperationsCount num_output_shape_ops =
+      this->batch_output_shape_.at(0) * this->batch_output_shape_.at(1) *
+      this->batch_output_shape_.at(2) * this->batch_output_shape_.at(3);
+  OperationsCount cost =
+      fetch::ml::charge_estimation::ops::DIVISION_PER_ELEMENT *
+      static_cast<OperationsCount>(num_output_shape_ops +
+                                   fetch::ml::charge_estimation::ops::ADDITION_PER_ELEMENT *
+                                       num_output_shape_ops * pow(this->kernel_size_, 2));
+  return cost;
+}
+
 ///////////////////////////////
 /// EXPLICIT INSTANTIATIONS ///
 ///////////////////////////////
