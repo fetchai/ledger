@@ -16,6 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include <utility>
+
 #include "core/reactor.hpp"
 #include "core/state_machine.hpp"
 
@@ -28,8 +30,8 @@ using namespace testing;
 class ReactorTest : public core::Reactor
 {
 public:
-  ReactorTest(std::string name)
-    : Reactor(name)
+  explicit ReactorTest(std::string name)
+    : Reactor(std::move(name))
   {
     // Redefine these so the test doesn't take too long
     execution_too_long_ms_   = 50;

@@ -47,7 +47,7 @@ namespace core {
 class BasicTimer
 {
 public:
-  BasicTimer(uint64_t duration_ms)
+  explicit BasicTimer(uint64_t duration_ms)
   {
     deadline_ = std::chrono::system_clock::now() + std::chrono::milliseconds{duration_ms};
   }
