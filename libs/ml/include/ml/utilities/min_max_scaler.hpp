@@ -89,16 +89,32 @@ void MinMaxScaler<TensorType>::Normalise(TensorType const &input_tensor, TensorT
   output_tensor.Reshape(input_tensor.shape());
   SizeType batch_dim = input_tensor.shape().size() - 1;
 
-  // apply normalisation to all data according to scale -1, 1
-  for (std::size_t i = 0; i < input_tensor.shape(batch_dim); ++i)
+  if (x_range_ == 0)
   {
-    auto in_it  = input_tensor.View(i).cbegin();
-    auto ret_it = output_tensor.View(i).begin();
-    while (ret_it.is_valid())
+    // edge case of an array filled with the same value is handled by returning all 0's
+    for (std::size_t i = 0; i < input_tensor.shape(batch_dim); ++i)
     {
-      *ret_it = (*in_it - x_min_) / (x_range_);
-      ++in_it;
-      ++ret_it;
+      auto ret_it = output_tensor.View(i).begin();
+      while (ret_it.is_valid())
+      {
+        *ret_it = typename TensorType::Type{0};
+        ++ret_it;
+      }
+    }
+  }
+  else
+  {
+    // apply normalisation to all data according to scale -1, 1
+    for (std::size_t i = 0; i < input_tensor.shape(batch_dim); ++i)
+    {
+      auto in_it  = input_tensor.View(i).cbegin();
+      auto ret_it = output_tensor.View(i).begin();
+      while (ret_it.is_valid())
+      {
+        *ret_it = (*in_it - x_min_) / (x_range_);
+        ++in_it;
+        ++ret_it;
+      }
     }
   }
 }
