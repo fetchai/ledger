@@ -25,8 +25,8 @@ class FakeBlockPacker : public fetch::ledger::BlockPackerInterface
 public:
   /// @name Block Packer Interface
   /// @{
-  void EnqueueTransaction(fetch::chain::TransactionPtr tx) override;
-  void EnqueueTransaction(fetch::chain::TransactionLayout const &layout) override;
+  bool EnqueueTransaction(fetch::chain::TransactionPtr tx) override;
+  bool EnqueueTransaction(fetch::chain::TransactionLayout const &layout) override;
 
   void GenerateBlock(fetch::ledger::Block &block, std::size_t num_lanes, std::size_t num_slices,
                      fetch::ledger::MainChain const &chain) override;

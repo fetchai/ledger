@@ -19,6 +19,7 @@
 #include "chain/address.hpp"
 #include "chain/transaction.hpp"
 #include "chain/transaction_validity_period.hpp"
+#include "core/digest.hpp"
 #include "ledger/chain/block.hpp"
 #include "ledger/chain/main_chain.hpp"
 #include "ledger/miner/basic_miner.hpp"
@@ -85,10 +86,15 @@ BasicMiner::BasicMiner(uint32_t log2_num_lanes, StorageInterface &storage)
  *
  * @param tx The reference to the transaction
  */
-void BasicMiner::EnqueueTransaction(chain::TransactionPtr tx)
+bool BasicMiner::EnqueueTransaction(chain::TransactionPtr tx)
 {
-  EnqueueTransaction(chain::TransactionLayout{*tx, log2_num_lanes_});
-  txs_to_mine_.emplace(tx->digest(), std::move(tx));
+  if (EnqueueTransaction(chain::TransactionLayout{*tx, log2_num_lanes_}))
+  {
+    txs_to_mine_.emplace(tx->digest(), std::move(tx));
+    return true;
+  }
+
+  return false;
 }
 
 /**
@@ -99,25 +105,27 @@ void BasicMiner::EnqueueTransaction(chain::TransactionPtr tx)
  *
  * @param layout The layout to be added to the queue
  */
-void BasicMiner::EnqueueTransaction(chain::TransactionLayout const &layout)
+bool BasicMiner::EnqueueTransaction(chain::TransactionLayout const &layout)
 {
   FETCH_LOCK(pending_lock_);
 
   if (layout.mask().size() != (1u << log2_num_lanes_))
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Discarding layout due to incompatible mask size");
-    return;
+    return false;
   }
 
   if (pending_.Add(layout))
   {
     max_pending_pool_size_->max(pending_.size());
     FETCH_LOG_DEBUG(LOGGING_NAME, "Enqueued Transaction (added) 0x", layout.digest().ToHex());
+    return true;
   }
   else
   {
     duplicate_count_->increment();
     FETCH_LOG_DEBUG(LOGGING_NAME, "Enqueued Transaction (duplicate) 0x", layout.digest().ToHex());
+    return false;
   }
 }
 

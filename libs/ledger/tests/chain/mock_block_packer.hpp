@@ -36,8 +36,8 @@ public:
 
   /// @name Block Packer Interface
   /// @{
-  MOCK_METHOD1(EnqueueTransaction, void(fetch::chain::TransactionLayout const &));
-  MOCK_METHOD1(EnqueueTransaction, void(fetch::chain::TransactionPtr));
+  MOCK_METHOD1(EnqueueTransaction, bool(fetch::chain::TransactionLayout const &));
+  MOCK_METHOD1(EnqueueTransaction, bool(fetch::chain::TransactionPtr));
   MOCK_METHOD4(GenerateBlock, void(fetch::ledger::Block &, std::size_t, std::size_t,
                                    fetch::ledger::MainChain const &));
   MOCK_CONST_METHOD0(GetBacklog, uint64_t());

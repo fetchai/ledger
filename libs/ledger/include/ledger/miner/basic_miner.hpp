@@ -61,8 +61,8 @@ public:
 
   /// @name Miner Interface
   /// @{
-  void     EnqueueTransaction(chain::TransactionPtr tx) override;
-  void     EnqueueTransaction(chain::TransactionLayout const &layout) override;
+  bool     EnqueueTransaction(chain::TransactionPtr tx) override;
+  bool     EnqueueTransaction(chain::TransactionLayout const &layout) override;
   void     GenerateBlock(Block &block, std::size_t num_lanes, std::size_t num_slices,
                          MainChain const &chain) override;
   uint64_t GetBacklog() const override;

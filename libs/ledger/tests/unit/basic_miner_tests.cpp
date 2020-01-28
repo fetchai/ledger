@@ -28,6 +28,7 @@
 
 #include "gtest/gtest.h"
 
+#include <algorithm>
 #include <cassert>
 #include <chrono>
 #include <cstddef>
@@ -88,6 +89,7 @@ protected:
 
     std::poisson_distribution<uint32_t> dist(5.0);
 
+    std::vector<TransactionLayout> screenplay;
     for (std::size_t i = 0; i < num_transactions; ++i)
     {
       uint32_t const num_resources = dist(rng_);
@@ -97,11 +99,25 @@ protected:
 
       for (std::size_t j = 0; j < duplicates; ++j)
       {
-        miner_->EnqueueTransaction(tx);
+        screenplay.push_back(tx);
       }
+    }
+    std::shuffle(screenplay.begin(), screenplay.end(), rng_);
 
+    for (auto const &tx_lo : screenplay)
+    {
       // ensure that the generator has not produced any duplicates
-      assert(layout.find(tx.digest()) == layout.end());
+      if (miner_->EnqueueTransaction(tx_lo))
+      {
+        EXPECT_EQ(layout.find(tx_lo.digest()), layout.end())
+            << " when adding tx " << tx_lo.digest().ToHex().SubArray(0, 8);
+        layout.emplace(tx_lo.digest(), tx_lo);
+      }
+      else
+      {
+        EXPECT_NE(layout.find(tx_lo.digest()), layout.end())
+            << " when adding tx " << tx_lo.digest().ToHex().SubArray(0, 8);
+      }
     }
 
     return layout;
@@ -156,11 +172,12 @@ TEST_P(BasicMinerTests, RejectReplayedTransactions)
   DigestSet transactions_already_seen{};
   DigestSet transactions_within_block{};
 
-  while (miner_->GetBacklog() > 0)
+  do
   {
     Block block;
 
     block.previous_hash = chain.GetHeaviestBlockHash();
+    block.block_number  = chain.GetHeaviestBlock()->block_number + 1;
 
     miner_->GenerateBlock(block, NUM_LANES, NUM_SLICES, chain);
 
@@ -191,7 +208,7 @@ TEST_P(BasicMinerTests, RejectReplayedTransactions)
 
     /* Note no mining needed here - main chain doesn't care */
     chain.AddBlock(block);
-  }
+  } while (miner_->GetBacklog() > 0);
 
   // Now, push on all of the TXs that are already in the blockchain
   for (auto const &digest : transactions_already_seen)

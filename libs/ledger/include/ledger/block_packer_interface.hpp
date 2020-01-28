@@ -48,7 +48,7 @@ public:
    *
    * @param tx The reference to the transaction
    */
-  virtual void EnqueueTransaction(chain::TransactionPtr tx) = 0;
+  virtual bool EnqueueTransaction(chain::TransactionPtr tx) = 0;
 
   /**
    * Add the specified transaction layout to the internal queue
@@ -58,7 +58,7 @@ public:
    *
    * @param layout The layout to be added to the queue
    */
-  virtual void EnqueueTransaction(chain::TransactionLayout const &layout) = 0;
+  virtual bool EnqueueTransaction(chain::TransactionLayout const &layout) = 0;
 
   /**
    * Generate a new block based on the current queue of transactions
