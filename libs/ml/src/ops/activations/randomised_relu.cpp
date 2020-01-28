@@ -136,6 +136,15 @@ std::vector<math::SizeType> RandomisedRelu<TensorType>::ComputeOutputShape(
   return inputs.front()->shape();
 }
 
+template <typename TensorType>
+OperationsCount RandomisedRelu<TensorType>::ChargeForward()
+{
+  assert(!this->batch_output_shape_.empty());
+  OperationsCount cost = fetch::ml::charge_estimation::ops::RANDOMISED_RELU_PER_ELEMENT *
+                         this->TotalElementsIn({this->batch_input_shapes_});
+  return cost;
+}
+
 ///////////////////////////////
 /// EXPLICIT INSTANTIATIONS ///
 ///////////////////////////////
