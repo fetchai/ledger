@@ -118,10 +118,10 @@ std::vector<math::SizeType> Convolution2D<TensorType>::ComputeOutputShape(
 
 template <class TensorType>
 OperationsCount Convolution2D<TensorType>::ChargeForward()
- {
-   Graph<TensorType> *ptr = dynamic_cast<Graph<TensorType> *>(this);
-   return ptr->ChargeForward(this->output_node_name_);
- }
+{
+  Graph<TensorType> *ptr = dynamic_cast<Graph<TensorType> *>(this);
+  return ptr->ChargeForward(this->output_node_name_);
+}
 
 ///////////////////////////////
 /// EXPLICIT INSTANTIATIONS ///
