@@ -47,7 +47,6 @@
 #include "ml/ops/log.hpp"
 #include "ml/ops/mask_fill.hpp"
 #include "ml/ops/matrix_multiply.hpp"
-#include "ml/ops/max_pool.hpp"
 #include "ml/ops/max_pool_1d.hpp"
 #include "ml/ops/max_pool_2d.hpp"
 #include "ml/ops/maximum.hpp"
@@ -228,11 +227,6 @@ void BuildNodeAndInsertTrainables(NodeSaveableParams<T> const &nsp, std::string 
   case ops::MaxPool2D<T>::OpCode():
   {
     op_ptr = GetOp<ops::MaxPool2D<T>>(nsp.op_save_params);
-    break;
-  }
-  case ops::MaxPool<T>::OpCode():
-  {
-    op_ptr = GetOp<ops::MaxPool<T>>(nsp.op_save_params);
     break;
   }
   case ops::AvgPool1D<T>::OpCode():

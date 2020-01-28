@@ -151,6 +151,13 @@ void FullyConnected<TensorType>::CompleteConstruction()
 }
 
 template <typename TensorType>
+OperationsCount FullyConnected<TensorType>::ChargeForward()
+{
+  auto ptr = dynamic_cast<Graph<TensorType> *>(this);
+  return ptr->ChargeForward(this->output_node_name_);
+}
+
+template <typename TensorType>
 std::shared_ptr<fetch::ml::ops::Ops<TensorType>> FullyConnected<TensorType>::MakeSharedCopy(
     OpPtrType me)
 {

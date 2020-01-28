@@ -241,7 +241,6 @@ TYPED_TEST(GraphRebuildTest, graph_rebuild_every_op)
       AddOp<fetch::ml::ops::MaskFill<TensorType>>(g, {input_1, input_1}, DataType{0});
   std::string matmul =
       AddOp<fetch::ml::ops::MatrixMultiply<TensorType>>(g, {input_1, input_1_transpose});
-  std::string maxpool     = AddOp<fetch::ml::ops::MaxPool<TensorType>>(g, {input_3d}, 1, 1);
   std::string maxpool1d   = AddOp<fetch::ml::ops::MaxPool1D<TensorType>>(g, {input_3d}, 1, 1);
   std::string maxpool2d   = AddOp<fetch::ml::ops::MaxPool2D<TensorType>>(g, {input_4d}, 1, 1);
   std::string maximum     = AddOp<fetch::ml::ops::Maximum<TensorType>>(g, {input_1, input_2});
@@ -390,7 +389,6 @@ TYPED_TEST(GraphRebuildTest, graph_rebuild_every_op)
   ComparePrediction<GraphPtrType, TensorType>(g, g2, log);
   ComparePrediction<GraphPtrType, TensorType>(g, g2, maskfill);
   ComparePrediction<GraphPtrType, TensorType>(g, g2, matmul);
-  ComparePrediction<GraphPtrType, TensorType>(g, g2, maxpool);
   ComparePrediction<GraphPtrType, TensorType>(g, g2, maxpool1d);
   ComparePrediction<GraphPtrType, TensorType>(g, g2, maxpool2d);
   ComparePrediction<GraphPtrType, TensorType>(g, g2, maximum);

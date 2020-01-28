@@ -17,6 +17,7 @@ setup_compiler()
 setup_library(fetch-oef-core)
 target_link_libraries(fetch-oef-core
                       PUBLIC fetch-core
+                             fetch-crypto
                              fetch-oef-messages
                              fetch-oef-base
                              fetch-network

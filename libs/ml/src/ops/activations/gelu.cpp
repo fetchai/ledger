@@ -131,6 +131,15 @@ std::vector<math::SizeType> Gelu<TensorType>::ComputeOutputShape(VecTensorType c
   return inputs.front()->shape();
 }
 
+template <typename TensorType>
+OperationsCount Gelu<TensorType>::ChargeForward()
+{
+  assert(!this->batch_output_shape_.empty());
+  OperationsCount cost = fetch::ml::charge_estimation::ops::GELU_PER_ELEMENT *
+                         this->TotalElementsIn({this->batch_input_shapes_});
+  return cost;
+}
+
 ///////////////////////////////
 /// EXPLICIT INSTANTIATIONS ///
 ///////////////////////////////
@@ -139,10 +148,6 @@ template class Gelu<math::Tensor<int8_t>>;
 template class Gelu<math::Tensor<int16_t>>;
 template class Gelu<math::Tensor<int32_t>>;
 template class Gelu<math::Tensor<int64_t>>;
-template class Gelu<math::Tensor<uint8_t>>;
-template class Gelu<math::Tensor<uint16_t>>;
-template class Gelu<math::Tensor<uint32_t>>;
-template class Gelu<math::Tensor<uint64_t>>;
 template class Gelu<math::Tensor<float>>;
 template class Gelu<math::Tensor<double>>;
 template class Gelu<math::Tensor<fixed_point::fp32_t>>;
