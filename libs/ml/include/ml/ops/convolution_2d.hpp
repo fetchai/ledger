@@ -105,7 +105,7 @@ private:
                          SizeType output_channels, SizeType output_height, SizeType output_width,
                          SizeType batch_size);
 
-  SizeType ComputeOutputDim(SizeType const input_dim, SizeType const kernel_dim) const;
+  SizeType ComputeOutputDim(SizeType input_dim, SizeType kernel_dim) const;
 
   SizeType stride_size_;
 };
