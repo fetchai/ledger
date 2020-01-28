@@ -62,16 +62,19 @@ bool TransactionLayoutQueue::Remove(Digest const &digest)
     auto const it = std::find_if(
         list_.begin(), list_.end(),
         [&digest](TransactionLayout const &layout) { return layout.digest() == digest; });
-    assert(it != list_.end() != it);
+    assert(it != list_.end());
     list_.erase(it);
     return true
   }
 
 #ifndef NDEBUG
-  // there's no such digest among those enqueued, assert that there's no such layout
-  auto const it = std::find_if(
-      list_.begin(), list_.end(),
-      [&digest](TransactionLayout const &layout) { return layout.digest() == digest; });
+  {
+    // there's no such digest among those enqueued, assert that there's no such layout
+    auto const it = std::find_if(
+        list_.begin(), list_.end(),
+        [&digest](TransactionLayout const &layout) { return layout.digest() == digest; });
+    assert(it == list_.end());
+  }
 #endif
 
   return false;
@@ -83,7 +86,7 @@ bool TransactionLayoutQueue::Remove(Digest const &digest)
  * @param digests The set of the transaction digests to be removed
  * @return The number of transaction layouts removed from the queue
  */
-std::size_t TransactionLayoutQueue::Remove(DigestSet 21const & digests_to_remove)
+std::size_t TransactionLayoutQueue::Remove(DigestSet const &digests_to_remove)
 {
   std::size_t current_population = digests_.size();
 
