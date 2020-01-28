@@ -22,10 +22,14 @@
 #include "vectorise/platform.hpp"
 
 bool FakeBlockPacker::EnqueueTransaction(fetch::chain::TransactionPtr /*tx*/)
-{}
+{
+  return true;
+}
 
 bool FakeBlockPacker::EnqueueTransaction(fetch::chain::TransactionLayout const & /*layout*/)
-{}
+{
+  return true;
+}
 
 void FakeBlockPacker::GenerateBlock(fetch::ledger::Block &block, std::size_t num_lanes,
                                     std::size_t num_slices, fetch::ledger::MainChain const &chain)
