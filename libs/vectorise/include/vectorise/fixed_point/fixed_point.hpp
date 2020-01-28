@@ -1375,14 +1375,7 @@ constexpr bool FixedPoint<I, F>::operator<(FixedPoint const &o) const
 
   // Negative infinity is always smaller than all other quantities except itself
   // Positive infinity is never smaller than any other quantity
-  bool true_mask =
-      (this_neg_inf && !o_neg_inf) || (!this_pos_inf && o_pos_inf) || (data_ < o.Data());
-
-  if (true_mask)
-  {
-    return true;
-  }
-  return false;
+  return (this_neg_inf && !o_neg_inf) || (!this_pos_inf && o_pos_inf) || (data_ < o.Data());
 }
 
 /**
