@@ -61,7 +61,7 @@ public:
   /// @{
   bool        Add(TransactionLayout const &item);
   bool        Remove(Digest const &digest);
-  std::size_t Remove(DigestSet const &digests);
+  std::size_t Remove(DigestSet const &digests_to_remove);
   void        Splice(TransactionLayoutQueue &other);
   void        Splice(TransactionLayoutQueue &other, Iterator start, Iterator end);
   Iterator    Erase(ConstIterator iterator);
