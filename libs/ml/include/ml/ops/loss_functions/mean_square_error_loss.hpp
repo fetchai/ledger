@@ -72,6 +72,8 @@ public:
     return DESCRIPTOR;
   }
 
+  OperationsCount ChargeForward() override;
+
 private:
   TensorType weightings_;
 };

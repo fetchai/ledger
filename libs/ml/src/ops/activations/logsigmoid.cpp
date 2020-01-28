@@ -91,6 +91,15 @@ std::vector<math::SizeType> LogSigmoid<TensorType>::ComputeOutputShape(
   return inputs.front()->shape();
 }
 
+template <typename TensorType>
+OperationsCount LogSigmoid<TensorType>::ChargeForward()
+{
+  assert(!this->batch_output_shape_.empty());
+  OperationsCount cost = fetch::ml::charge_estimation::ops::LOG_SIGMOID_PER_ELEMENT *
+                         this->TotalElementsIn({this->batch_input_shapes_});
+  return cost;
+}
+
 ///////////////////////////////
 /// EXPLICIT INSTANTIATIONS ///
 ///////////////////////////////
