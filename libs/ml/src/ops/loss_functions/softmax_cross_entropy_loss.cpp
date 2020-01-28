@@ -92,6 +92,15 @@ std::vector<math::SizeType> SoftmaxCrossEntropyLoss<TensorType>::ComputeOutputSh
   return {1, 1};
 }
 
+template <typename TensorType>
+OperationsCount SoftmaxCrossEntropyLoss<TensorType>::ChargeForward()
+{
+  assert(!this->batch_output_shape_.empty());
+  OperationsCount cost = fetch::ml::charge_estimation::ops::CROSS_ENTROPY_SOFTMAX_PER_ELEMENT *
+                         this->TotalElementsIn({this->batch_input_shapes_});
+  return cost;
+}
+
 ///////////////////////////////
 /// EXPLICIT INSTANTIATIONS ///
 ///////////////////////////////

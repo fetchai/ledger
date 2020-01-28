@@ -33,6 +33,19 @@ static constexpr OperationsCount FLATTEN_PER_ELEMENT             = 1;
 static constexpr OperationsCount MULTIPLICATION_PER_ELEMENT      = 3;
 static constexpr OperationsCount PLACEHOLDER_READING_PER_ELEMENT = 0;
 static constexpr OperationsCount WEIGHTS_READING_PER_ELEMENT     = 0;
+static constexpr OperationsCount LOG_PER_ELEMENT                 = 1;
+static constexpr OperationsCount MAX_PER_ELEMENT                 = 1;
+static constexpr OperationsCount EXP_PER_ELEMENT                 = 1;
+static constexpr OperationsCount DIVISION_PER_ELEMENT            = 1;
+static constexpr OperationsCount CROSS_ENTROPY_PER_ELEMENT =
+    2 * SUBTRACTION_PER_ELEMENT + LOG_PER_ELEMENT;
+static constexpr OperationsCount MEAN_SQ_ERROR_PER_ELEMENT =
+    2 * MULTIPLICATION_PER_ELEMENT + ADDITION_PER_ELEMENT + SUBTRACTION_PER_ELEMENT;
+static constexpr OperationsCount SOFTMAX_PER_ELEMENT = MAX_PER_ELEMENT + SUBTRACTION_PER_ELEMENT +
+                                                       EXP_PER_ELEMENT + ADDITION_PER_ELEMENT +
+                                                       DIVISION_PER_ELEMENT;
+static constexpr OperationsCount CROSS_ENTROPY_SOFTMAX_PER_ELEMENT =
+    CROSS_ENTROPY_PER_ELEMENT + SOFTMAX_PER_ELEMENT;
 
 }  // namespace ops
 }  // namespace charge_estimation
