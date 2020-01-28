@@ -60,6 +60,8 @@ public:
   }
   static constexpr char const *DESCRIPTOR = "Elu";
 
+  OperationsCount ChargeForward() override;
+
 private:
   DataType a_;
 };
