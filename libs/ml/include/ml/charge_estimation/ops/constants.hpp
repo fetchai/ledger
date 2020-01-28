@@ -44,7 +44,7 @@ static constexpr OperationsCount MEAN_SQ_ERROR_PER_ELEMENT =
 static constexpr OperationsCount SOFTMAX_PER_ELEMENT = MAX_PER_ELEMENT + SUBTRACTION_PER_ELEMENT +
                                                        EXP_PER_ELEMENT + ADDITION_PER_ELEMENT +
                                                        DIVISION_PER_ELEMENT;
-static constexpr OperationsCount CROSS_ENTROPY_SOFTMAX_PER_ELEMENT =
+static constexpr OperationsCount SOFTMAX_CROSS_ENTROPY_PER_ELEMENT =
     CROSS_ENTROPY_PER_ELEMENT + SOFTMAX_PER_ELEMENT;
 
 }  // namespace ops
