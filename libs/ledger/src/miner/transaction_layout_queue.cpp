@@ -64,7 +64,7 @@ bool TransactionLayoutQueue::Remove(Digest const &digest)
         [&digest](TransactionLayout const &layout) { return layout.digest() == digest; });
     assert(it != list_.end());
     list_.erase(it);
-    return true
+    return true;
   }
 
 #ifndef NDEBUG
@@ -92,7 +92,7 @@ std::size_t TransactionLayoutQueue::Remove(DigestSet const &digests_to_remove)
 
   if (!digests_to_remove.empty())
   {
-    list_.remove_if([this, &digests_to_remove, &count](TransactionLayout const &layout) {
+    list_.remove_if([this, &digests_to_remove](TransactionLayout const &layout) {
       auto const &digest = layout.digest();
 
       // determine if we should remove this element
