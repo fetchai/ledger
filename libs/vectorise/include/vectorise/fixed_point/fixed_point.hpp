@@ -1521,7 +1521,7 @@ constexpr meta::IfIsInteger<T, bool> FixedPoint<I, F>::Near(T const &o) const
 template <uint16_t I, uint16_t F>
 constexpr FixedPoint<I, F> FixedPoint<I, F>::operator-() const
 {
-  bool this_nan = IsNaN(*this);
+  bool this_nan     = IsNaN(*this);
   bool this_pos_inf = IsPosInfinity(*this);
   bool this_neg_inf = IsNegInfinity(*this);
 
