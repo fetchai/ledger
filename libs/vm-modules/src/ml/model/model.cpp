@@ -304,7 +304,7 @@ void VMModel::Bind(Module &module, bool const experimental_enabled)
       .CreateMemberFunction("fit", &VMModel::Fit, UseEstimator(&ModelEstimator::Fit))
       .CreateMemberFunction("evaluate", &VMModel::Evaluate, UseEstimator(&ModelEstimator::Evaluate))
       .CreateMemberFunction("predict", &VMModel::Predict,
-                            UseEstimator(&ModelEstimator::EstimatePredict))
+                            UseMemberEstimator(&VMModel::EstimatePredict))
       .CreateMemberFunction("serializeToString", &VMModel::SerializeToString,
                             UseEstimator(&ModelEstimator::SerializeToString))
       .CreateMemberFunction("deserializeFromString", &VMModel::DeserializeFromString,
