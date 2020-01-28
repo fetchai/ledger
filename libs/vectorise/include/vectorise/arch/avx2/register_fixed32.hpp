@@ -839,23 +839,21 @@ inline fixed_point::fp32_t reduce(VectorRegister<fixed_point::fp32_t, 128> const
   alignas(VectorRegister<fixed_point::fp32_t, 128>::E_REGISTER_SIZE) fixed_point::fp32_t x_[4];
   x.Store(x_);
   fixed_point::fp32_t sum{x_[0]};
+  fixed_point::fp32_t::Type tmp;
   for (size_t i = 1; i < 4; i++)
   {
-    if (fixed_point::fp32_t::CheckOverflow(
-            static_cast<fixed_point::fp32_t::NextType>(sum.Data()) +
-            static_cast<fixed_point::fp32_t::NextType>(x_[i].Data())))
+    tmp = sum.Data() + x_[i].Data();
+    if (fixed_point::fp32_t::CheckSumOverflow(sum.Data(), x_[i].Data(), tmp))
     {
       fixed_point::fp32_t::fp_state |= fixed_point::fp32_t::STATE_OVERFLOW;
       return fixed_point::fp32_t::FP_MAX;
     }
-    if (fixed_point::fp32_t::CheckUnderflow(
-            static_cast<fixed_point::fp32_t::NextType>(sum.Data()) +
-            static_cast<fixed_point::fp32_t::NextType>(x_[i].Data())))
+    if (fixed_point::fp32_t::CheckSumUnderflow(sum.Data(), x_[i].Data(), tmp))
     {
       fixed_point::fp32_t::fp_state |= fixed_point::fp32_t::STATE_OVERFLOW;
       return fixed_point::fp32_t::FP_MIN;
     }
-    sum.Data() += x_[i].Data();
+    sum.SetData(tmp);
   }
   return sum;
 }
