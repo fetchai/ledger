@@ -105,7 +105,7 @@ setup_conditions:
   test_name: "basic_node_recovery"
   number_of_nodes: 1
   mining_nodes: [0]
-  max_test_time: 90
+  max_test_time: 70
 
 steps:
   - send_txs: { "name": "batch1", "amount": 10, "nodes": [0] }
@@ -201,7 +201,7 @@ setup_conditions:
   number_of_nodes: 1
   lanes: 4
   mining_nodes: [0]
-  max_test_time: 90
+  max_test_time: 60
 
 steps:
   - sleep: 30 #  allow all the lanes to start
