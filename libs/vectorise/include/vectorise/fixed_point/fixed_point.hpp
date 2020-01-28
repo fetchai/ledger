@@ -1370,12 +1370,13 @@ constexpr bool FixedPoint<I, F>::operator<(FixedPoint const &o) const
   }
   bool this_pos_inf = IsPosInfinity(*this);
   bool this_neg_inf = IsNegInfinity(*this);
-  bool o_pos_inf = IsPosInfinity(o);
-  bool o_neg_inf = IsNegInfinity(o);
+  bool o_pos_inf    = IsPosInfinity(o);
+  bool o_neg_inf    = IsNegInfinity(o);
 
   // Negative infinity is always smaller than all other quantities except itself
   // Positive infinity is never smaller than any other quantity
-  bool true_mask = (this_neg_inf && !o_neg_inf) || (!this_pos_inf && o_pos_inf) || (data_ < o.Data());
+  bool true_mask =
+      (this_neg_inf && !o_neg_inf) || (!this_pos_inf && o_pos_inf) || (data_ < o.Data());
 
   if (true_mask)
   {
@@ -1607,7 +1608,7 @@ constexpr FixedPoint<I, F> &FixedPoint<I, F>::operator--()
     fp_state |= STATE_OVERFLOW;
     data_ = MAX;
   }
-  else if (CheckSumUnderflow(data_, - _1.Data(), sum))
+  else if (CheckSumUnderflow(data_, -_1.Data(), sum))
   {
     fp_state |= STATE_OVERFLOW;
     data_ = MIN;
@@ -1783,8 +1784,8 @@ constexpr FixedPoint<I, F> &FixedPoint<I, F>::operator+=(FixedPoint<I, F> const 
 
   bool this_pos_inf = IsPosInfinity(*this);
   bool this_neg_inf = IsNegInfinity(*this);
-  bool n_pos_inf = IsPosInfinity(n);
-  bool n_neg_inf = IsNegInfinity(n);
+  bool n_pos_inf    = IsPosInfinity(n);
+  bool n_neg_inf    = IsNegInfinity(n);
 
   // Adding +∞ to -∞ or -∞ to +∞ gives NaN
   bool nan = (this_pos_inf && n_neg_inf) || (this_neg_inf && n_pos_inf);
@@ -1846,8 +1847,8 @@ constexpr FixedPoint<I, F> &FixedPoint<I, F>::operator-=(FixedPoint<I, F> const 
 
   bool this_pos_inf = IsPosInfinity(*this);
   bool this_neg_inf = IsNegInfinity(*this);
-  bool n_pos_inf = IsPosInfinity(n);
-  bool n_neg_inf = IsNegInfinity(n);
+  bool n_pos_inf    = IsPosInfinity(n);
+  bool n_neg_inf    = IsNegInfinity(n);
 
   // Subtracting +∞ from -∞ or -∞ from +∞ gives NaN
   bool nan = (this_pos_inf && n_pos_inf) || (this_neg_inf && n_neg_inf);
@@ -1876,13 +1877,13 @@ constexpr FixedPoint<I, F> &FixedPoint<I, F>::operator-=(FixedPoint<I, F> const 
   }
 
   Type diff = data_ - n.Data();
-  if (CheckSumOverflow(data_, - n.Data(), diff))
+  if (CheckSumOverflow(data_, -n.Data(), diff))
   {
     fp_state |= STATE_OVERFLOW;
     data_ = MAX;
     return *this;
   }
-  if (CheckSumUnderflow(data_, - n.Data(), diff))
+  if (CheckSumUnderflow(data_, -n.Data(), diff))
   {
     fp_state |= STATE_OVERFLOW;
     data_ = MIN;
@@ -1909,17 +1910,21 @@ constexpr FixedPoint<I, F> &FixedPoint<I, F>::operator*=(FixedPoint<I, F> const 
 
   bool this_pos_inf = IsPosInfinity(*this);
   bool this_neg_inf = IsNegInfinity(*this);
-  bool n_pos_inf = IsPosInfinity(n);
-  bool n_neg_inf = IsNegInfinity(n);
-  bool this_zero = *this == _0;
-  bool n_zero = n == _0;
+  bool n_pos_inf    = IsPosInfinity(n);
+  bool n_neg_inf    = IsNegInfinity(n);
+  bool this_zero    = *this == _0;
+  bool n_zero       = n == _0;
 
   // Multiplying  +∞/-∞ with 0 gives NaN
   bool nan = (n_zero && (this_pos_inf || this_neg_inf)) || (this_zero && (n_pos_inf || n_neg_inf));
-  // Multiplying +∞ with any positive number (incl +∞) or -∞ with a negative number (incl -∞), gives +∞
-  bool pos_inf = (this_pos_inf && n > _0) || (n_pos_inf && (*this > 0)) || (this_neg_inf && n < _0) || (n_neg_inf && (*this < _0));
-  // Multiplying +∞ with any negative number (incl -∞) or -∞ with a positive number (incl. +∞) gives -∞
-  bool neg_inf = (this_pos_inf && n < _0) || (n_pos_inf && (*this < 0)) || (this_neg_inf && n > _0) || (n_neg_inf && (*this > _0));
+  // Multiplying +∞ with any positive number (incl +∞) or -∞ with a negative number (incl -∞), gives
+  // +∞
+  bool pos_inf = (this_pos_inf && n > _0) || (n_pos_inf && (*this > 0)) ||
+                 (this_neg_inf && n < _0) || (n_neg_inf && (*this < _0));
+  // Multiplying +∞ with any negative number (incl -∞) or -∞ with a positive number (incl. +∞) gives
+  // -∞
+  bool neg_inf = (this_pos_inf && n < _0) || (n_pos_inf && (*this < 0)) ||
+                 (this_neg_inf && n > _0) || (n_neg_inf && (*this > _0));
 
   if (nan)
   {
@@ -1987,8 +1992,8 @@ constexpr FixedPoint<I, F> &FixedPoint<I, F>::operator/=(FixedPoint<I, F> const 
 
   bool this_pos_inf = IsPosInfinity(*this);
   bool this_neg_inf = IsNegInfinity(*this);
-  bool n_pos_inf = IsPosInfinity(n);
-  bool n_neg_inf = IsNegInfinity(n);
+  bool n_pos_inf    = IsPosInfinity(n);
+  bool n_neg_inf    = IsNegInfinity(n);
 
   if (this_pos_inf || this_neg_inf)
   {
@@ -2520,14 +2525,14 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::Exp(FixedPoint<I, F> const &x)
     return NaN;
   }
 
-  bool x_pos_inf = IsPosInfinity(x);
-  bool x_neg_inf = IsNegInfinity(x);
-  bool x_zero = (x == _0);
+  bool x_pos_inf    = IsPosInfinity(x);
+  bool x_neg_inf    = IsNegInfinity(x);
+  bool x_zero       = (x == _0);
   bool x_lt_min_exp = (x < MIN_EXP);
 
   bool pos_inf_mask = x_pos_inf;
-  bool one_mask = x_zero;
-  bool zero_mask = x_neg_inf || x_lt_min_exp;
+  bool one_mask     = x_zero;
+  bool zero_mask    = x_neg_inf || x_lt_min_exp;
 
   if (pos_inf_mask)
   {
@@ -2835,28 +2840,30 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::Pow(FixedPoint<I, F> const &x,
     return NaN;
   }
 
-  bool x_pos_inf = IsPosInfinity(x);
-  bool x_neg_inf = IsNegInfinity(x);
-  bool y_pos_inf = IsPosInfinity(y);
-  bool y_neg_inf = IsNegInfinity(y);
-  bool x_zero = (x == _0);
-  bool y_zero = (y == _0);
-  bool y_one = (y == _1);
-  bool y_pos = (y > _0);
-  bool x_neg = (x < _0);
-  bool y_neg = (y < _0);
+  bool x_pos_inf  = IsPosInfinity(x);
+  bool x_neg_inf  = IsNegInfinity(x);
+  bool y_pos_inf  = IsPosInfinity(y);
+  bool y_neg_inf  = IsNegInfinity(y);
+  bool x_zero     = (x == _0);
+  bool y_zero     = (y == _0);
+  bool y_one      = (y == _1);
+  bool y_pos      = (y > _0);
+  bool x_neg      = (x < _0);
+  bool y_neg      = (y < _0);
   bool abs_x_gt_1 = (Abs(x) > _1);
   bool abs_x_eq_1 = (Abs(x) == _1);
   bool abs_x_lt_1 = (Abs(x) < _1);
-  bool y_int = (y.Fraction() == 0);
-  bool y_odd = (y_int && y.Integer() % 2 == 1);
+  bool y_int      = (y.Fraction() == 0);
+  bool y_odd      = (y_int && y.Integer() % 2 == 1);
 
-  bool nan_mask = (x_zero && y_neg) || (x_neg && !y_int && !y_pos_inf && !y_neg_inf);
-  bool pos_inf_mask = (x_pos_inf && y_one) || (x_pos_inf && y_pos) || (y_pos_inf && abs_x_gt_1) || (y_neg_inf && abs_x_lt_1) || (x_neg_inf && y_pos && !y_odd);
-  bool neg_inf_mask = (x_neg_inf && y_one) || (y_pos_inf && abs_x_gt_1) || (x_neg_inf && y_pos && y_odd);
-  bool one_mask = (y_zero) || (y_pos_inf && abs_x_eq_1) || (y_neg_inf && abs_x_eq_1);
-  bool zero_mask = (x_pos_inf && !y_pos) || (x_zero && !y_neg) || (y_pos_inf && abs_x_lt_1) || (y_neg_inf && abs_x_gt_1)
-                || (x_neg_inf && y_neg);
+  bool nan_mask     = (x_zero && y_neg) || (x_neg && !y_int && !y_pos_inf && !y_neg_inf);
+  bool pos_inf_mask = (x_pos_inf && y_one) || (x_pos_inf && y_pos) || (y_pos_inf && abs_x_gt_1) ||
+                      (y_neg_inf && abs_x_lt_1) || (x_neg_inf && y_pos && !y_odd);
+  bool neg_inf_mask =
+      (x_neg_inf && y_one) || (y_pos_inf && abs_x_gt_1) || (x_neg_inf && y_pos && y_odd);
+  bool one_mask  = (y_zero) || (y_pos_inf && abs_x_eq_1) || (y_neg_inf && abs_x_eq_1);
+  bool zero_mask = (x_pos_inf && !y_pos) || (x_zero && !y_neg) || (y_pos_inf && abs_x_lt_1) ||
+                   (y_neg_inf && abs_x_gt_1) || (x_neg_inf && y_neg);
 
   if (nan_mask)
   {

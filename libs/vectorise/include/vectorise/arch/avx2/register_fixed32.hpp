@@ -838,7 +838,7 @@ inline fixed_point::fp32_t reduce(VectorRegister<fixed_point::fp32_t, 128> const
 
   alignas(VectorRegister<fixed_point::fp32_t, 128>::E_REGISTER_SIZE) fixed_point::fp32_t x_[4];
   x.Store(x_);
-  fixed_point::fp32_t sum{x_[0]};
+  fixed_point::fp32_t       sum{x_[0]};
   fixed_point::fp32_t::Type tmp;
   for (size_t i = 1; i < 4; i++)
   {
