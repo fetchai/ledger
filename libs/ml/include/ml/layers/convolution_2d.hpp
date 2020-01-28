@@ -93,7 +93,7 @@ private:
   SizeType output_channels_{};
   SizeType stride_size_{};
 
-  bool is_initialised_ = false;  // TODO(VH): serialise me.
+  bool is_initialised_ = false;
 };
 
 }  // namespace layers
