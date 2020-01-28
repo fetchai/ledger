@@ -1521,24 +1521,28 @@ constexpr meta::IfIsInteger<T, bool> FixedPoint<I, F>::Near(T const &o) const
 template <uint16_t I, uint16_t F>
 constexpr FixedPoint<I, F> FixedPoint<I, F>::operator-() const
 {
-  if (IsNaN(*this))
+  bool this_nan = IsNaN(*this);
+  bool this_pos_inf = IsPosInfinity(*this);
+  bool this_neg_inf = IsNegInfinity(*this);
+
+  if (this_nan)
   {
     fp_state |= STATE_NAN;
     return NaN;
   }
-  if (IsPosInfinity(*this))
+  if (this_pos_inf)
   {
     fp_state |= STATE_INFINITY;
     return NEGATIVE_INFINITY;
   }
-  if (IsNegInfinity(*this))
+  if (this_neg_inf)
   {
     fp_state |= STATE_INFINITY;
     return POSITIVE_INFINITY;
   }
   FixedPoint t(*this);
   t.data_ = -t.data_;
-  return t;
+  return std::move(t);
 }
 
 /**
@@ -2448,7 +2452,7 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::Abs(FixedPoint<I, F> const &x)
     return POSITIVE_INFINITY;
   }
 
-  if (Sign(x) > _0)
+  if (x >= _0)
   {
     return x;
   }
