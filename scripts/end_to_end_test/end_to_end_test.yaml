@@ -201,7 +201,7 @@ setup_conditions:
   number_of_nodes: 1
   lanes: 4
   mining_nodes: [0]
-  max_test_time: 60
+  max_test_time: 90
 
 steps:
   - sleep: 30 #  allow all the lanes to start
