@@ -384,7 +384,6 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
   , http_network_manager_{"Http", HTTP_THREADS}
   , internal_identity_{std::make_shared<crypto::ECDSASigner>()}
   , external_identity_{std::move(certificate)}
-  , standalone_mode_{config.network_mode == NetworkMode::STANDALONE}
   , tx_status_cache_(TxStatusCache::factory())
   , uptime_{telemetry::Registry::Instance().CreateCounter(
         "ledger_uptime_ticks_total",
