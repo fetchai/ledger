@@ -165,7 +165,7 @@ TEST_F(ReactorTests, ReactorPassesThroughStates)
 }
 
 // Test the state machine registers states that are taking too long
-TEST_F(ReactorTests, DISABLED_ReactorNoticesTooLongStates)
+TEST_F(ReactorTests, ReactorNoticesTooLongStates)
 {
 
   // Note: because it is a fixture you need to upcast the this pointer
@@ -186,7 +186,7 @@ TEST_F(ReactorTests, DISABLED_ReactorNoticesTooLongStates)
 }
 
 // Test the state machine registers states that are taking *way* too long
-TEST_F(ReactorTests, DISABLED_ReactorNoticesWayTooLongStates)
+TEST_F(ReactorTests, ReactorNoticesWayTooLongStates)
 {
 
   // Note: because it is a fixture you need to upcast the this pointer
