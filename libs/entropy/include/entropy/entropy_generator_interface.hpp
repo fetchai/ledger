@@ -49,11 +49,11 @@ constexpr char const *ToString(EntropyGeneratorInterface::Status status) noexcep
 {
   switch (status)
   {
-  case EntropyGeneraorInterface::Status::OK:
+  case EntropyGeneratorInterface::Status::OK:
     return "OK";
-  case EntropyGeneraorInterface::Status::NOT_READY:
+  case EntropyGeneratorInterface::Status::NOT_READY:
     return "Not Ready";
-  case EntropyGeneraorInterface::Status::FAILED:
+  case EntropyGeneratorInterface::Status::FAILED:
     return "Failed";
   default:
     return "Unknown";
