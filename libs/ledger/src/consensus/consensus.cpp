@@ -600,7 +600,7 @@ NextBlockPtr Consensus::GenerateNextBlock()
     auto entgen_status = beacon_->GenerateEntropy(block_number, ret->block_entropy);
     if (entgen_status != EntropyGeneratorInterface::Status::OK)
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "Failed to generate entropy: ", ToString(status));
+      FETCH_LOG_INFO(LOGGING_NAME, "Failed to generate entropy: ", ToString(entgen_status));
       return {};
     }
   }
