@@ -21,6 +21,7 @@
 #include "core/runnable.hpp"
 #include "core/set_thread_name.hpp"
 #include "logging/logging.hpp"
+#include "moment/deadline_timer.hpp"
 #include "telemetry/counter.hpp"
 #include "telemetry/gauge.hpp"
 #include "telemetry/histogram.hpp"
@@ -43,25 +44,6 @@ using WorkQueue = std::deque<fetch::core::WeakRunnable>;
 
 namespace fetch {
 namespace core {
-
-class BasicTimer
-{
-public:
-  explicit BasicTimer(uint64_t duration_ms)
-  {
-    deadline_ = std::chrono::system_clock::now() + std::chrono::milliseconds{duration_ms};
-  }
-
-  bool HasExpired()
-  {
-    return deadline_ <= std::chrono::system_clock::now();
-  }
-
-private:
-  using Timestamp = std::chrono::system_clock::time_point;
-
-  Timestamp deadline_{};
-};
 
 Reactor::Reactor(std::string name)
   : name_{std::move(name)}
@@ -92,11 +74,7 @@ Reactor::Reactor(std::string name)
                                    "The current size of the work queue")}
   , work_queue_max_length_{
         CreateGauge("ledger_reactor_max_work_queue_length", "The max size of the work queue")}
-{
-  // The reactor watcher is always running and determines whether executions are taking
-  // too long or are stalled.
-  watcher_ = std::make_unique<ProtectedThread>(&Reactor::ReactorWatch, this);
-}
+{}
 
 bool Reactor::Attach(WeakRunnable runnable)
 {
@@ -159,34 +137,37 @@ void Reactor::Stop()
 void Reactor::StartWorker()
 {
   detailed_assert(!worker_);
+  detailed_assert(!watcher_);
 
   // signal the reactor is running
   running_ = true;
 
   // create the worker routine
   worker_ = std::make_unique<ProtectedThread>(&Reactor::Monitor, this);
+
+  // The reactor watcher determines whether executions are taking
+  // too long or are stalled.
+  watcher_ = std::make_unique<ProtectedThread>(&Reactor::ReactorWatch, this);
 }
 
 Reactor::~Reactor()
 {
-  if (worker_)
-  {
-    worker_->ApplyVoid([](auto &worker) { worker.join(); });
-    worker_.reset();
-  }
-
-  not_destructing_ = false;
-
-  watcher_->ApplyVoid([](auto &watcher) { watcher.join(); });
-  watcher_.reset();
+  StopWorker();
 }
 
 void Reactor::StopWorker()
 {
   running_ = false;
 
+  if (watcher_)
+  {
+    watcher_->ApplyVoid([](auto &watcher) { watcher.join(); });
+    watcher_.reset();
+  }
+
   if (worker_)
   {
+    cv_.notify_all();  // Force the watcher awake
     worker_->ApplyVoid([](auto &worker) { worker.join(); });
     worker_.reset();
   }
@@ -196,9 +177,10 @@ void Reactor::ReactorWatch()
 {
   uint32_t last_seen_executed = 0;
 
-  while (not_destructing_)
+  while (running_)
   {
-    std::this_thread::sleep_for(std::chrono::milliseconds(thread_watcher_check_ms_));
+    std::unique_lock<std::mutex> lock(cv_m_);
+    cv_.wait_for(lock, std::chrono::milliseconds(thread_watcher_check_ms_));
 
     auto        runnable_concrete = last_executed_runnable_.lock();
     std::string runnable_name     = runnable_concrete ? runnable_concrete->GetId() : "nullptr fail";
@@ -222,7 +204,8 @@ void Reactor::Monitor()
   // set the thread name
   SetThreadName(name_);
 
-  std::string const timer_name = "reactor:" + name_;
+  std::string const     timer_name = "reactor:" + name_;
+  moment::DeadlineTimer execution_too_long_timer{timer_name.c_str()};
 
   WorkQueue work_queue;
 
@@ -291,7 +274,7 @@ void Reactor::Monitor()
       try
       {
         currently_executing_ = true;
-        BasicTimer execution_too_long_timer{execution_too_long_ms_};
+        execution_too_long_timer.Restart(execution_too_long_ms_);
 
         runnable->Execute();
 
@@ -343,6 +326,26 @@ telemetry::GaugePtr<uint64_t> Reactor::CreateGauge(char const *name, char const 
 {
   return telemetry::Registry::Instance().CreateGauge<uint64_t>(name, description,
                                                                {{"reactor", name_}});
+}
+
+uint64_t &Reactor::ExecutionTooLongMs()
+{
+  return execution_too_long_ms_;
+}
+
+uint64_t &Reactor::ThreadWatcherCheckMs()
+{
+  return thread_watcher_check_ms_;
+}
+
+uint32_t Reactor::ExecutionsTooLongCounter() const
+{
+  return executions_too_long_;
+}
+
+uint32_t Reactor::ExecutionsWayTooLongCounter() const
+{
+  return executions_way_too_long_;
 }
 
 }  // namespace core

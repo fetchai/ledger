@@ -50,12 +50,10 @@ public:
   Reactor &operator=(Reactor const &) = delete;
   Reactor &operator=(Reactor &&) = delete;
 
-protected:
-  uint64_t execution_too_long_ms_{200};
-  uint64_t thread_watcher_check_ms_{1000};
-
-  uint32_t executions_too_long_{0};
-  uint32_t executions_way_too_long_{0};
+  uint64_t &ExecutionTooLongMs();
+  uint64_t &ThreadWatcherCheckMs();
+  uint32_t  ExecutionsTooLongCounter() const;
+  uint32_t  ExecutionsWayTooLongCounter() const;
 
 private:
   using RunnableMap     = Protected<std::map<Runnable const *, WeakRunnable>>;
@@ -84,6 +82,16 @@ private:
   uint32_t     execution_counter_{0};
   WeakRunnable last_executed_runnable_;
   Flag         currently_executing_{false};
+
+  uint64_t execution_too_long_ms_{200};
+  uint64_t thread_watcher_check_ms_{1000};
+
+  uint32_t executions_too_long_{0};
+  uint32_t executions_way_too_long_{0};
+
+  // The watcher will sleep unless awoken early via a condition variable
+  std::condition_variable cv_;
+  std::mutex              cv_m_;
 
   // telemetry
   telemetry::HistogramPtr       runnables_time_;
