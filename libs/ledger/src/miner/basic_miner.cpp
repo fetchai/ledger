@@ -121,12 +121,10 @@ bool BasicMiner::EnqueueTransaction(chain::TransactionLayout const &layout)
     FETCH_LOG_DEBUG(LOGGING_NAME, "Enqueued Transaction (added) 0x", layout.digest().ToHex());
     return true;
   }
-  else
-  {
-    duplicate_count_->increment();
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Enqueued Transaction (duplicate) 0x", layout.digest().ToHex());
-    return false;
-  }
+
+  duplicate_count_->increment();
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Enqueued Transaction (duplicate) 0x", layout.digest().ToHex());
+  return false;
 }
 
 /**
