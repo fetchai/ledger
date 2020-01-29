@@ -623,6 +623,7 @@ NextBlockPtr Consensus::GenerateNextBlock()
     FETCH_LOG_ERROR(LOGGING_NAME, __func__, ": ", FATAL_ERROR);
     return {};
   }
+
   // Note here the previous block's entropy determines miner selection
   if (!ValidBlockTiming(current_block_, *ret))
   {
