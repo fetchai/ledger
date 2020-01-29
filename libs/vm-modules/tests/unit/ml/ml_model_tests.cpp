@@ -979,6 +979,7 @@ TEST_F(VMModelTests, model_sequential_flatten_tensor_data)
           var data = x.unsqueeze();
 
           var model = Model("sequential");
+          model.addExperimental("input", x.shape());
           model.add("flatten");
           model.compile("scel", "adam", {"categorical accuracy"});
           var prediction = model.predict(data);
@@ -1390,21 +1391,22 @@ TEST_F(VMModelTests, model_sequential_activation_layer_gelu)
 TEST_F(VMModelTests, model_sequential_flatten_1d_in_2d_out)
 {
   static char const *SRC_METRIC = R"(
-              function main() : Tensor
-                var shape = Array<UInt64>(1);
-                shape[0] = 1u64;
-                var x = Tensor(shape);
+      function main() : Tensor
+        var shape = Array<UInt64>(2);
+        shape[0] = 1u64;
+        shape[1] = 1u64;
+        var x = Tensor(shape);
 
-                var model = Model("sequential");
-                model.addExperimental("input", x.shape());
-                model.add("flatten");
-                model.compile("scel", "adam");
-                var prediction = model.predict(x);
-                print(prediction.toString());
+        var model = Model("sequential");
+        model.addExperimental("input", x.shape());
+        model.add("flatten");
+        model.compile("scel", "adam");
+        var prediction = model.predict(x);
+        print(prediction.toString());
 
-                return prediction;
-              endfunction
-      )";
+        return prediction;
+      endfunction
+  )";
 
   Variant res;
   ASSERT_TRUE(toolkit.Compile(SRC_METRIC));
