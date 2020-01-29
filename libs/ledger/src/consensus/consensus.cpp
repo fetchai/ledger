@@ -1043,7 +1043,7 @@ void Consensus::SetWhitelist(Minerwhitelist const &whitelist)
   whitelist_ = whitelist;
 }
 
-fetch::telemetry::CounterPtr Consensus::TelemetryOnFail(std::string const &key)
+fetch::telemetry::CounterPtr Consensus::TelemetryOnFail(std::string const &key) const
 {
   auto &registry = telemetry::Registry::Instance();
 
