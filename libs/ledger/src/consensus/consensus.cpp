@@ -22,8 +22,6 @@
 #include "ledger/chain/block.hpp"
 #include "ledger/consensus/consensus.hpp"
 #include "network/generics/milli_timer.hpp"
-#include "telemetry/counter.hpp"
-#include "telemetry/registry.hpp"
 
 #include <ctime>
 #include <random>
@@ -103,18 +101,6 @@ T DeterministicShuffle(T &container, uint64_t entropy)
   }
 
   return container;
-}
-
-fetch::telemetry::CounterPtr TelemetryOnFail(std::string const &key)
-{
-  auto &registry = fetch::telemetry::Registry::Instance();
-
-  auto existing_telemetry = registry.LookupMeasurement<fetch::telemetry::CounterPtr>(key);
-  if (existing_telemetry)
-  {
-    return existing_telemetry;
-  }
-  return registry.CreateCounter(key, "A particular failure when generating a block.");
 }
 
 }  // namespace
@@ -1055,4 +1041,21 @@ void Consensus::SetWhitelist(Minerwhitelist const &whitelist)
     FETCH_LOG_DEBUG(LOGGING_NAME, "Adding to whitelist: ", miner.ToBase64());
   }
   whitelist_ = whitelist;
+}
+
+fetch::telemetry::CounterPtr Consensus::TelemetryOnFail(std::string const &key)
+{
+  auto &registry = telemetry::Registry::Instance();
+
+  FETCH_LOCK(block_generation_fails_mutex_);
+  auto existing_telemetry_it = block_generation_fails_.find(key);
+  if (existing_telemetry_it == block_generation_fails_.end())
+  {
+    existing_telemetry_it =
+        block_generation_fails_
+            .emplace(key,
+                     registry.CreateCounter(key, "A particular failure when generating a block."))
+            .first;
+  }
+  return existing_telemetry_it->second;
 }
