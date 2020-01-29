@@ -1235,7 +1235,7 @@ TEST_F(VMModelEstimatorTests, charge_forward_one_dense)
   // m adding (bias + matmul result)
   expected_cost += outputs * ADDITION_PER_ELEMENT;
 
-  ASSERT_EQ(cost, expected_cost);
+  ASSERT_EQ(cost, expected_cost * batch_size);
 }
 
 }  // namespace

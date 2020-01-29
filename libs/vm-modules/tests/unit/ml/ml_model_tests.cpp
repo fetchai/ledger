@@ -798,6 +798,7 @@ TEST_F(VMModelTests, conv2d_sequential_model_test)
 
       // set up a model
       var model = Model("sequential");
+      model.addExperimental("input", data.shape());
       model.add("conv2d", output_channels, input_channels, kernel_size, stride_size);
       model.compile("mse", "adam");
 
