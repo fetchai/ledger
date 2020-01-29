@@ -105,7 +105,7 @@ T DeterministicShuffle(T &container, uint64_t entropy)
   return container;
 }
 
-fetch::telemetry::CounterPtr TelemetryOnFail(std::string const &key) const
+fetch::telemetry::CounterPtr TelemetryOnFail(std::string const &key)
 {
   auto &registry = fetch::telemetry::Registry::Instance();
 
@@ -114,7 +114,7 @@ fetch::telemetry::CounterPtr TelemetryOnFail(std::string const &key) const
   {
     return existing_telemetry;
   }
-  return registry::CreateCounter(key, "A particular failure when generating a block.");
+  return registry.CreateCounter(key, "A particular failure when generating a block.");
 }
 
 }  // namespace
