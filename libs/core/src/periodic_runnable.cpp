@@ -60,10 +60,5 @@ std::string PeriodicRunnable::GetId() const
   return "PeriodicRunnable";
 }
 
-std::string PeriodicRunnable::GetDebug() const
-{
-  return "PeriodicRunnableDebug";
-}
-
 }  // namespace core
 }  // namespace fetch

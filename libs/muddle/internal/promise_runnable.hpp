@@ -49,7 +49,6 @@ public:
   bool        IsReadyToExecute() const final;
   void        Execute() final;
   std::string GetId() const final;
-  std::string GetDebug() const final;
   /// @}
 
   bool IsComplete() const;

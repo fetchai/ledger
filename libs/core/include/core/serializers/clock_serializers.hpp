@@ -18,15 +18,16 @@
 //------------------------------------------------------------------------------
 
 #include "core/serializers/main_serializer.hpp"
+#include "moment/clock_interfaces.hpp"
 
 namespace fetch {
 namespace serializers {
 
 template <typename D>
-struct ForwardSerializer<moment::ClockInterface::Duration, D>
+struct ForwardSerializer<fetch::moment::ClockInterface::Duration, D>
 {
 public:
-  using Type       = moment::ClockInterface::Duration;
+  using Type       = fetch::moment::ClockInterface::Duration;
   using DriverType = D;
 
   template <typename Serializer>

@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include <memory>
+#include <string>
 #include <vector>
 
 namespace fetch {
@@ -41,8 +42,12 @@ public:
   }
   virtual void Execute() = 0;
 
-  virtual std::string GetId() const    = 0;
-  virtual std::string GetDebug() const = 0;
+  virtual std::string GetId() const = 0;
+
+  virtual std::string GetDebug() const
+  {
+    return std::string("No debug info");
+  };
   /// @}
 
   // Helper operators
