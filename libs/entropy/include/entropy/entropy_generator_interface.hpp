@@ -45,7 +45,7 @@ public:
   /// @}
 };
 
-constexpr char const *ToString(EntropyGeneraorInterface::Status status) noexcept
+constexpr char const *ToString(EntropyGeneratorInterface::Status status) noexcept
 {
   switch (status)
   {
