@@ -109,7 +109,7 @@ fetch::telemetry::CounterPtr TelemetryOnFail(std::string const &key) const
 {
   auto &registry = fetch::telemetry::Registry::Instance();
 
-  auto existing_telemetry = registry.LookupMeasurement<telemetry::CounterPtr>(key);
+  auto existing_telemetry = registry.LookupMeasurement<fetch::telemetry::CounterPtr>(key);
   if (existing_telemetry)
   {
     return existing_telemetry;
