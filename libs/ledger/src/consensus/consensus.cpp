@@ -1053,8 +1053,8 @@ fetch::telemetry::CounterPtr Consensus::TelemetryOnFail(std::string const &key) 
   {
     existing_telemetry_it =
         block_generation_fails_
-            .emplace(key + "_total",
-                     registry.CreateCounter(key, "A particular failure when generating a block."))
+            .emplace(key, registry.CreateCounter(key + "_total",
+                                                 "A particular failure when generating a block."))
             .first;
   }
   return existing_telemetry_it->second;
