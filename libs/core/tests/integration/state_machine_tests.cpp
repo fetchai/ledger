@@ -110,7 +110,7 @@ public:
 
 protected:
   StateMachinePtr      state_machine_;
-  core::Reactor              reactor_;
+  core::Reactor        reactor_;
   std::atomic<uint8_t> state_seen_{std::numeric_limits<uint8_t>::max()};
 };
 
