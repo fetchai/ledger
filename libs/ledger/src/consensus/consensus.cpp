@@ -609,7 +609,7 @@ NextBlockPtr Consensus::GenerateNextBlock()
   ret->timestamp = GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM));
   try
   {
-    ret->weight    = GetBlockGenerationWeight(*ret, mining_identity_);
+    ret->weight = GetBlockGenerationWeight(*ret, mining_identity_);
   }
   catch (std::exception const &ex)
   {
