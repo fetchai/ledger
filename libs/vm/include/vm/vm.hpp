@@ -1996,7 +1996,7 @@ IfIsExternal<T, bool> ParameterPack::AddSingle(T val)
   {
     throw std::runtime_error("Cannot copy construct C++-to-Etch objects without a VM instance.");
   }
-  using DecayedType = typename std::decay<T>::type;
+  using DecayedType = std::decay_t<T>;
 
   if (!vm_->HasCPPCopyConstructor<DecayedType>())
   {
