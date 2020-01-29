@@ -3022,7 +3022,7 @@ struct MapSerializer<ml::LayerConvolution2DSaveableParams<TensorType>, D>
     map.ExpectKeyGetValue(INPUT_CHANNELS, sp.input_channels);
     map.ExpectKeyGetValue(OUTPUT_CHANNELS, sp.output_channels);
     map.ExpectKeyGetValue(STRIDE_SIZE, sp.stride_size);
-    map.ExpectKeyGetValue(IS_INITIALISED, sp.stride_size);
+    map.ExpectKeyGetValue(IS_INITIALISED, sp.is_initialised);
   }
 };
 
