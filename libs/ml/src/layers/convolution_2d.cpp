@@ -80,7 +80,7 @@ std::shared_ptr<OpsSaveableParams> Convolution2D<TensorType>::GetOpSaveableParam
   ret->input_channels  = input_channels_;
   ret->output_channels = output_channels_;
   ret->stride_size     = stride_size_;
-  ret->is_inited       = is_initialised_;
+  ret->is_initialised  = is_initialised_;
 
   return ret;
 }
@@ -93,7 +93,7 @@ void Convolution2D<TensorType>::SetOpSaveableParams(SPType const &sp)
   input_channels_  = sp.input_channels;
   output_channels_ = sp.output_channels;
   stride_size_     = sp.stride_size;
-  is_initialised_  = sp.is_inited;
+  is_initialised_  = sp.is_initialised;
 }
 
 template <typename TensorType>
@@ -114,6 +114,7 @@ void Convolution2D<TensorType>::CompleteConstruction()
 
   this->Compile();
   FETCH_LOG_INFO(Descriptor(), "-- Convolution2D initialisation completed. --");
+  is_initialised_ = true;
 }
 
 template <typename TensorType>

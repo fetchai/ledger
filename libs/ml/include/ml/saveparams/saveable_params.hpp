@@ -278,7 +278,7 @@ struct LayerConvolution2DSaveableParams : SubGraphSaveableParams<TensorType>
   SizeType input_channels{};
   SizeType output_channels{};
   SizeType stride_size{};
-  bool     is_inited = false;
+  bool     is_initialised = false;
 };
 
 /**
