@@ -285,6 +285,26 @@ std::vector<typename fetch::math::SizeType> MatrixMultiply<T>::ComputeOutputShap
   return output_shape;
 }
 
+template <typename T>
+OperationsCount MatrixMultiply<T>::ChargeForward()
+{
+  assert(!this->batch_input_shapes_.empty());
+
+  // TODO(ML-482): impl. for n-dimensional case, not only for 2D.
+  assert(this->batch_input_shapes_.size() == 2);
+
+  // Assuming this is a matrix multiplication of weights * input_vector
+  // e.g. [n; m] * [m; batch_size], then total operations cost is n * m * batch_size,
+  // and default batch_size is 1.
+  OperationsCount const n = this->batch_input_shapes_.front().at(0);
+  OperationsCount const m = this->batch_input_shapes_.back().at(0);
+  OperationsCount const p = 1;
+
+  OperationsCount const cost =
+      n * m * p * fetch::ml::charge_estimation::ops::MULTIPLICATION_PER_ELEMENT;
+  return cost;
+}
+
 /**
  * Updates temporary container objects used in some cases of batched forward pass
  * @tparam T tensor type
@@ -449,15 +469,10 @@ std::shared_ptr<fetch::ml::ops::Ops<TensorType>> MatrixMultiply<TensorType>::Mak
 /// EXPLICIT INSTANTIATIONS ///
 ///////////////////////////////
 
-// TODO(ML-438)
 template class MatrixMultiply<math::Tensor<int8_t>>;
 template class MatrixMultiply<math::Tensor<int16_t>>;
 template class MatrixMultiply<math::Tensor<int32_t>>;
 template class MatrixMultiply<math::Tensor<int64_t>>;
-// template class MatrixMultiply<math::Tensor<uint8_t>>;
-// template class MatrixMultiply<math::Tensor<uint16_t>>;
-template class MatrixMultiply<math::Tensor<uint32_t>>;
-template class MatrixMultiply<math::Tensor<uint64_t>>;
 template class MatrixMultiply<math::Tensor<float>>;
 template class MatrixMultiply<math::Tensor<double>>;
 template class MatrixMultiply<math::Tensor<fixed_point::fp32_t>>;

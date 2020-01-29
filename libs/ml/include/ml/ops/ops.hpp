@@ -18,7 +18,10 @@
 //------------------------------------------------------------------------------
 
 #include "core/assert.hpp"
+#include "math/matrix_operations.hpp"
 #include "math/tensor/tensor.hpp"
+#include "ml/charge_estimation/ops/constants.hpp"
+#include "ml/exceptions/exceptions.hpp"
 #include "ml/saveparams/saveable_params.hpp"
 
 #include <functional>
@@ -147,6 +150,51 @@ public:
   virtual void CompleteConstruction()
   {
     // Empty deafult implementation for non-trainable Ops.
+  }
+
+  /**
+   * @brief ChargeForward
+   * @return estimated charge amount, necessary for performing a forward pass on data of given
+   * shapes.
+   */
+  virtual OperationsCount ChargeForward()
+  {
+    // TODO(ML-483): make a pure virtual method after all Ops have their overrides;
+    FETCH_LOG_ERROR(Descriptor(),
+                    " Error: call to unexisting ChargeForward() implementation! returned 0.");
+    return 0;
+  }
+
+  /**
+   * @brief ChargeBackward
+   * @return estimated charge amount, necessary for performing a backward pass on data of given
+   * shapes.
+   */
+  virtual OperationsCount ChargeBackward() const
+  {
+    // TODO(ML-483): make a pure virtual method after all Ops have their overrides;
+    FETCH_LOG_ERROR(Descriptor(),
+                    " Error: call to unexisting ChargeBackward() implementation! returned 0.");
+    return 0;
+  }
+
+  /**
+   * @brief TotalElementsIn calculated a sum of total elements in all given tensors
+   * @param shapes - vector of tensor shapes
+   */
+  static fetch::math::SizeType TotalElementsIn(std::vector<fetch::math::SizeVector> const &shapes)
+  {
+    using fetch::math::SizeType;
+    if (shapes.empty())
+    {
+      return 0;
+    }
+    SizeType total_elements = 0;
+    for (fetch::math::SizeVector const &shape : shapes)
+    {
+      total_elements += math::Product(shape);
+    }
+    return total_elements;
   }
 
 protected:

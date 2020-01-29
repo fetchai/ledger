@@ -143,7 +143,7 @@ public:
 
   // Construction / Destruction
   Muddle(NetworkId network_id, CertificatePtr certificate, NetworkManager const &nm,
-         std::string external_address = "127.0.0.1");
+         std::string external_address = "127.0.0.1", bool enabled_message_signing = true);
   Muddle(Muddle const &) = delete;
   Muddle(Muddle &&)      = delete;
   ~Muddle() override;

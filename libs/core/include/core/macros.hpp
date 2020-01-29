@@ -19,10 +19,18 @@
 
 namespace fetch {
 
+template <class = void>
+struct Unused
+{
+  template <class... Args>
+  constexpr static void noop(Args &&... /*unused*/) noexcept
+  {}
+};
+
 #define FETCH_JOIN_IMPL(x, y) x##y
 #define FETCH_JOIN(x, y) FETCH_JOIN_IMPL(x, y)
 
-#define FETCH_UNUSED(name) (void)(name)
+#define FETCH_UNUSED(...) ::fetch::Unused<>::noop(__VA_ARGS__)
 
 #define FETCH_UNUSED_IN_NAMESPACE(name)                                                     \
   inline auto FETCH_JOIN(name, _FinallyUsed_AndHopefullyThisNameWillNotClashWithAnything)() \
@@ -30,12 +38,6 @@ namespace fetch {
     return name;                                                                            \
   }
 
-template <typename>
-struct Unused
-{
-  constexpr static void noop()
-  {}
-};
 #define FETCH_UNUSED_ALIAS(x) (void)Unused<x>::noop()
 
 #define FETCH_MAYBE_UNUSED __attribute__((used))
