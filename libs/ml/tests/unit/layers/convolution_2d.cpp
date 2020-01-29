@@ -74,7 +74,7 @@ TYPED_TEST(Convolution2DTest, set_input_and_evaluate_test)  // Use the class as 
                               math::function_tolerance<DataType>()));
 }
 
-TYPED_TEST(Convolution2DTest, ops_forward_test)  // Use the class as an Ops
+TYPED_TEST(Convolution2DTest, conv2d_ops_forward_test)  // Use the class as an Ops
 {
   using DataType   = typename TypeParam::Type;
   using TensorType = TypeParam;

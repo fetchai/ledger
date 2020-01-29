@@ -107,6 +107,8 @@ void Convolution2D<TensorType>::CompleteConstruction()
 
   assert(!this->batch_input_shapes_.empty());
   assert(!this->batch_output_shape_.empty());
+  assert(this->input_node_names_.size() == 1);  // Only 1 input node is allowed
+  assert(output_channels_ == this->batch_output_shape_.front());
 
   NodePtrType input_node = this->nodes_.at(this->input_node_names_.front());
   input_node->SetBatchInputShapes(this->batch_input_shapes_);
