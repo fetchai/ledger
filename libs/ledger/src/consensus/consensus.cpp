@@ -132,16 +132,14 @@ Consensus::Consensus(StakeManagerPtr stake, BeaconSetupServicePtr beacon_setup,
 // This can't be automated with a custom allocator. :/
 telemetry::CounterPtr &Consensus::TelemetryOnFail(std::string const &key) const
 {
-  auto existing_fail_telemetry_it = fails_.find(key);
-  if (existing_fail_telemetry_it == fails_.end())
+  auto &registry = telemetry::Registry::Instance();
+
+  auto existing_telemetry = registry.LookupMeasurement<telemetry::CounterPtr>(key);
+  if (existing_telemetry)
   {
-    existing_fail_telemetry_it =
-        fails_
-            .emplace(key, telemetry::Registry::Instance().CreateCounter(
-                              key, "A particular failure when generating a block"))
-            .first;
+    return existing_telemetry;
   }
-  return existing_fail_telemetry_it->second;
+  return registry::CreateCounter(key, "A particular failure when generating a block");
 }
 
 Consensus::WeightedQual QualWeightedByEntropy(Consensus::BlockEntropy::Cabinet const &cabinet,
