@@ -129,8 +129,7 @@ Consensus::Consensus(StakeManagerPtr stake, BeaconSetupServicePtr beacon_setup,
   assert(stake_);
 }
 
-// This can't be automated with a custom allocator. :/
-telemetry::CounterPtr &Consensus::TelemetryOnFail(std::string const &key) const
+telemetry::CounterPtr Consensus::TelemetryOnFail(std::string const &key) const
 {
   auto &registry = telemetry::Registry::Instance();
 
