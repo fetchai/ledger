@@ -17,7 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "math/base_types.hpp"
-#include "ml/ops/max_pool.hpp"
+#include "ml/ops/max_pool_1d.hpp"
 #include "ml/ops/max_pool_2d.hpp"
 #include "test_types.hpp"
 
@@ -61,7 +61,7 @@ TYPED_TEST(MaxPoolTest, forward_test_1d_3_2_2)
     }
   }
 
-  fetch::ml::ops::MaxPool<TensorType> op(3, 2);
+  fetch::ml::ops::MaxPool1D<TensorType> op(3, 2);
 
   TensorType prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
   op.Forward({std::make_shared<const TensorType>(data)}, prediction);
@@ -105,8 +105,8 @@ TYPED_TEST(MaxPoolTest, backward_test_1d)
     gt(0, i, 1) = fetch::math::AsType<DataType>(gt_input2[i]);
   }
 
-  fetch::ml::ops::MaxPool<TensorType> op(3, 2);
-  std::vector<TensorType>             prediction =
+  fetch::ml::ops::MaxPool1D<TensorType> op(3, 2);
+  std::vector<TensorType>               prediction =
       op.Backward({std::make_shared<const TensorType>(data)}, error);
 
   // test correct values
@@ -145,8 +145,8 @@ TYPED_TEST(MaxPoolTest, backward_test_1d_2_channels)
     }
   }
 
-  fetch::ml::ops::MaxPool<TensorType> op(4, 1);
-  std::vector<TensorType>             prediction =
+  fetch::ml::ops::MaxPool1D<TensorType> op(4, 1);
+  std::vector<TensorType>               prediction =
       op.Backward({std::make_shared<const TensorType>(data)}, error);
 
   // test correct values
@@ -175,7 +175,7 @@ TYPED_TEST(MaxPoolTest, forward_test_1d_4_2)
     gt(0, i, 0) = fetch::math::AsType<DataType>(gt_input[i]);
   }
 
-  fetch::ml::ops::MaxPool<TensorType> op(4, 2);
+  fetch::ml::ops::MaxPool1D<TensorType> op(4, 2);
 
   TensorType prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
   op.Forward({std::make_shared<const TensorType>(data)}, prediction);
@@ -217,7 +217,7 @@ TYPED_TEST(MaxPoolTest, forward_test_1d_2_channels_4_1_2)
     }
   }
 
-  fetch::ml::ops::MaxPool<TensorType> op(4, 1);
+  fetch::ml::ops::MaxPool1D<TensorType> op(4, 1);
 
   TensorType prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
   op.Forward({std::make_shared<const TensorType>(data)}, prediction);
@@ -247,7 +247,7 @@ TYPED_TEST(MaxPoolTest, forward_test_1d_2_4_2)
     gt(0, i, 0) = fetch::math::AsType<DataType>(gt_input[i]);
   }
 
-  fetch::ml::ops::MaxPool<TensorType> op(2, 4);
+  fetch::ml::ops::MaxPool1D<TensorType> op(2, 4);
 
   TensorType prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
   op.Forward({std::make_shared<const TensorType>(data)}, prediction);
