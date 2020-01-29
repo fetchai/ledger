@@ -290,14 +290,14 @@ void Reactor::Monitor()
 
       try
       {
-        //currently_executing_ = true;
-        //BasicTimer execution_too_long_timer{execution_too_long_ms_};
+        // currently_executing_ = true;
+        // BasicTimer execution_too_long_timer{execution_too_long_ms_};
 
         runnable->Execute();
 
         success_total_->increment();
 
-        //if (execution_too_long_timer.HasExpired())
+        // if (execution_too_long_timer.HasExpired())
         //{
         //  FETCH_LOG_WARN(LOGGING_NAME,
         //                 "Execution took longer than was polite! From: ", runnable->GetId(),
@@ -322,7 +322,7 @@ void Reactor::Monitor()
         failure_total_->increment();
       }
 
-      //currently_executing_ = false;
+      // currently_executing_ = false;
     }
   }
 }
