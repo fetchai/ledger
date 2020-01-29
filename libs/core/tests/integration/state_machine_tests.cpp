@@ -33,7 +33,7 @@ public:
   {
     A,
     B,
-    C,
+    C
   };
 
   ReactorTests()

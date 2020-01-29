@@ -62,8 +62,8 @@ private:
   using ProtectedThread = Protected<std::thread>;
   using ThreadPtr       = std::unique_ptr<ProtectedThread>;
 
-  void StartWorker();
-  void StopWorker();
+  void StartWorkerAndWatcher();
+  void StopWorkerAndWatcher();
   void Monitor();
   void ReactorWatch();
 
@@ -80,15 +80,15 @@ private:
   ThreadPtr   watcher_{};
 
   // Keeping track of the last item executed
-  uint32_t     execution_counter_{0};
-  WeakRunnable last_executed_runnable_;
-  Flag         currently_executing_{false};
+  std::atomic<uint32_t> execution_counter_{0};
+  WeakRunnable          last_executed_runnable_;
+  Flag                  currently_executing_{false};
 
   uint64_t execution_too_long_ms_{200};
   uint64_t thread_watcher_check_ms_{1000};
 
-  uint32_t executions_too_long_{0};
-  uint32_t executions_way_too_long_{0};
+  std::atomic<uint32_t> executions_too_long_{0};
+  std::atomic<uint32_t> executions_way_too_long_{0};
 
   // The watcher will sleep unless awoken early via a condition variable
   std::condition_variable cv_;

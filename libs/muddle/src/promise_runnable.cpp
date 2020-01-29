@@ -119,11 +119,6 @@ std::string PromiseTask::GetId() const
   return ("PromiseTask#" + std::to_string(promise_->id()));
 }
 
-std::string PromiseTask::GetDebug() const
-{
-  return "none";
-}
-
 bool PromiseTask::IsComplete() const
 {
   return complete_ || (!promise_);

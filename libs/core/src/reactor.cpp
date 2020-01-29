@@ -124,17 +124,17 @@ bool Reactor::Detach(Runnable const &runnable)
 void Reactor::Start()
 {
   // restart the work if called multiple times
-  StopWorker();
-  StartWorker();
+  StopWorkerAndWatcher();
+  StartWorkerAndWatcher();
 }
 
 void Reactor::Stop()
 {
   // stop the worker
-  StopWorker();
+  StopWorkerAndWatcher();
 }
 
-void Reactor::StartWorker()
+void Reactor::StartWorkerAndWatcher()
 {
   detailed_assert(!worker_);
   detailed_assert(!watcher_);
@@ -152,10 +152,10 @@ void Reactor::StartWorker()
 
 Reactor::~Reactor()
 {
-  StopWorker();
+  StopWorkerAndWatcher();
 }
 
-void Reactor::StopWorker()
+void Reactor::StopWorkerAndWatcher()
 {
   running_ = false;
 
