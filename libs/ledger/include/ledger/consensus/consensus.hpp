@@ -135,8 +135,8 @@ private:
   telemetry::CounterPtr         consensus_validate_block_failures_total_;
   telemetry::CounterPtr         consensus_non_heaviest_blocks_total_;
 
-  mutable std::unique_map<std::string, telemetry::CounterPtr> block_generation_fails_;
-  mutable Mutex                                               block_generation_fails_mutex_;
+  mutable std::unordered_map<std::string, telemetry::CounterPtr> block_generation_fails_;
+  mutable Mutex                                                  block_generation_fails_mutex_;
   telemetry::CounterPtr TelemetryOnFail(std::string const &key) const;
 };
 
