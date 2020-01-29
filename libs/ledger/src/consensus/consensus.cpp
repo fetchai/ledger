@@ -105,9 +105,9 @@ T DeterministicShuffle(T &container, uint64_t entropy)
   return container;
 }
 
-telemetry::CounterPtr TelemetryOnFail(std::string const &key) const
+fetch::telemetry::CounterPtr TelemetryOnFail(std::string const &key) const
 {
-  auto &registry = telemetry::Registry::Instance();
+  auto &registry = fetch::telemetry::Registry::Instance();
 
   auto existing_telemetry = registry.LookupMeasurement<telemetry::CounterPtr>(key);
   if (existing_telemetry)
