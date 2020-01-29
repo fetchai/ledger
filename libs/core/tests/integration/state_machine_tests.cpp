@@ -26,39 +26,6 @@
 using namespace fetch;
 using namespace testing;
 
-// Test class allows accessing protected state of the reactor
-class ReactorTest : public core::Reactor
-{
-public:
-  explicit ReactorTest(std::string name)
-    : Reactor(std::move(name))
-  {
-    // Redefine these so the test doesn't take too long
-    execution_too_long_ms_   = 50;
-    thread_watcher_check_ms_ = 200;
-  }
-
-  uint64_t ExecutionTooLongMs() const
-  {
-    return execution_too_long_ms_;
-  }
-
-  uint64_t ThreadWatcherCheckMs() const
-  {
-    return thread_watcher_check_ms_;
-  }
-
-  uint32_t ExecutionsTooLongCounter() const
-  {
-    return executions_too_long_;
-  }
-
-  uint32_t ExecutionsWayTooLongCounter() const
-  {
-    return executions_way_too_long_;
-  }
-};
-
 class ReactorTests : public Test
 {
 public:
@@ -71,7 +38,10 @@ public:
 
   ReactorTests()
     : reactor_{"Reactor"}
-  {}
+  {
+    reactor_.ExecutionTooLongMs()   = 50;
+    reactor_.ThreadWatcherCheckMs() = 200;
+  }
 
   using StateMachine    = core::StateMachine<State>;
   using StateMachinePtr = std::shared_ptr<StateMachine>;
@@ -140,7 +110,7 @@ public:
 
 protected:
   StateMachinePtr      state_machine_;
-  ReactorTest          reactor_;
+  core::Reactor              reactor_;
   std::atomic<uint8_t> state_seen_{std::numeric_limits<uint8_t>::max()};
 };
 
@@ -165,7 +135,7 @@ TEST_F(ReactorTests, ReactorPassesThroughStates)
 }
 
 // Test the state machine registers states that are taking too long
-TEST_F(ReactorTests, DISABLED_ReactorNoticesTooLongStates)
+TEST_F(ReactorTests, ReactorNoticesTooLongStates)
 {
 
   // Note: because it is a fixture you need to upcast the this pointer
@@ -186,7 +156,7 @@ TEST_F(ReactorTests, DISABLED_ReactorNoticesTooLongStates)
 }
 
 // Test the state machine registers states that are taking *way* too long
-TEST_F(ReactorTests, DISABLED_ReactorNoticesWayTooLongStates)
+TEST_F(ReactorTests, ReactorNoticesWayTooLongStates)
 {
 
   // Note: because it is a fixture you need to upcast the this pointer
