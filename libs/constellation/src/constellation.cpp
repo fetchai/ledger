@@ -746,8 +746,9 @@ bool Constellation::OnBringUpExternalNetwork(
 
 bool Constellation::OnRunning(core::WeakRunnable const &bootstrap_monitor)
 {
-  bool start_up_in_progress{true};
-  bool attached_block_coord{false};
+  bool       start_up_in_progress{true};
+  bool       attached_block_coord{false};
+  bool const standalone_mode = cfg_.network_mode == NetworkMode::STANDALONE;
 
   // monitor loop
   while (active_)
@@ -757,7 +758,7 @@ bool Constellation::OnRunning(core::WeakRunnable const &bootstrap_monitor)
     // immediately generating blocks on an old chain
     if (!attached_block_coord)
     {
-      if (standalone_mode_ || main_chain_service_->IsHealthy())
+      if (standalone_mode || main_chain_service_->IsHealthy())
       {
         FETCH_LOG_INFO(LOGGING_NAME, "Starting the block coordinator.");
         reactor_.Attach(block_coordinator_->GetWeakRunnable());
