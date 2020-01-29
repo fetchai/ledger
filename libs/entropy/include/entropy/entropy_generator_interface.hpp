@@ -45,5 +45,20 @@ public:
   /// @}
 };
 
+constexpr char const *ToString(EntropyGeneraorInterface::Status status) noexcept
+{
+  switch (status)
+  {
+  case EntropyGeneraorInterface::Status::OK:
+    return "OK";
+  case EntropyGeneraorInterface::Status::NOT_READY:
+    return "Not Ready";
+  case EntropyGeneraorInterface::Status::FAILED:
+    return "Failed";
+  default:
+    return "Unknown";
+  }
+}
+
 }  // namespace ledger
 }  // namespace fetch

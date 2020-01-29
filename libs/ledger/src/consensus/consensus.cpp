@@ -596,10 +596,13 @@ NextBlockPtr Consensus::GenerateNextBlock()
   // early. Need to do entropy generation first so that we can pass the block we are generating
   // into GetBlockGenerationWeight (important for first block of each aeon which specifies the
   // qual for this aeon)
-  if (EntropyGeneratorInterface::Status::OK !=
-      beacon_->GenerateEntropy(block_number, ret->block_entropy))
   {
-    return {};
+    auto entgen_status = beacon_->GenerateEntropy(block_number, ret->block_entropy);
+    if (entgen_status != EntropyGeneratorInterface::Status::OK)
+    {
+      FETCH_LOG_INFO(LOGGING_NAME, "Failed to generate entropy: ", ToString(status));
+      return {};
+    }
   }
 
   // Note, it is important to do this here so the block when passed to ValidBlockTiming
@@ -626,6 +629,7 @@ NextBlockPtr Consensus::GenerateNextBlock()
   // Note here the previous block's entropy determines miner selection
   if (!ValidBlockTiming(current_block_, *ret))
   {
+    FETCH_LOG_INFO(LOGGING_NAME, "Invalid block timing");
     return {};
   }
 
@@ -636,6 +640,7 @@ NextBlockPtr Consensus::GenerateNextBlock()
     if (current_block_.block_number != 0 && notarisation.first.isZero())
     {
       // Notarisation for head of chain is not ready yet so wait
+      FETCH_LOG_INFO(LOGGING_NAME, "Notarisation is not ready yet");
       return {};
     }
     ret->block_entropy.block_notarisation = notarisation;
