@@ -134,8 +134,6 @@ private:
   telemetry::GaugePtr<uint64_t> consensus_last_validate_block_failure_;
   telemetry::CounterPtr         consensus_validate_block_failures_total_;
   telemetry::CounterPtr         consensus_non_heaviest_blocks_total_;
-
-  telemetry::CounterPtr TelemetryOnFail(std::string const &key) const;
 };
 
 }  // namespace ledger

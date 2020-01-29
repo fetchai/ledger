@@ -103,6 +103,18 @@ T DeterministicShuffle(T &container, uint64_t entropy)
   return container;
 }
 
+telemetry::CounterPtr TelemetryOnFail(std::string const &key) const
+{
+  auto &registry = telemetry::Registry::Instance();
+
+  auto existing_telemetry = registry.LookupMeasurement<telemetry::CounterPtr>(key);
+  if (existing_telemetry)
+  {
+    return existing_telemetry;
+  }
+  return registry::CreateCounter(key, "A particular failure when generating a block");
+}
+
 }  // namespace
 
 Consensus::Consensus(StakeManagerPtr stake, BeaconSetupServicePtr beacon_setup,
@@ -127,18 +139,6 @@ Consensus::Consensus(StakeManagerPtr stake, BeaconSetupServicePtr beacon_setup,
         "consensus_non_heaviest_blocks_total", "The total number of DKG failures")}
 {
   assert(stake_);
-}
-
-telemetry::CounterPtr Consensus::TelemetryOnFail(std::string const &key) const
-{
-  auto &registry = telemetry::Registry::Instance();
-
-  auto existing_telemetry = registry.LookupMeasurement<telemetry::CounterPtr>(key);
-  if (existing_telemetry)
-  {
-    return existing_telemetry;
-  }
-  return registry::CreateCounter(key, "A particular failure when generating a block");
 }
 
 Consensus::WeightedQual QualWeightedByEntropy(Consensus::BlockEntropy::Cabinet const &cabinet,
