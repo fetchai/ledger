@@ -127,8 +127,7 @@ void Convolution2D<TensorType>::CompleteConstruction()
   input_node->SetBatchInputShapes(this->batch_input_shapes_);
   input_node->SetBatchOutputShape(this->batch_input_shapes_.front());
 
-  this->ResetCompile();
-  this->Compile();
+  this->ComputeAllNodeShapes();
   FETCH_LOG_INFO(Descriptor(), "-- Convolution2D initialisation completed. --");
   is_initialised_ = true;
 }
