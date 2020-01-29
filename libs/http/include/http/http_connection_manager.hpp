@@ -44,10 +44,12 @@ public:
   void        PushRequest(HandleType client, HTTPRequest const &req);
   std::string GetAddress(HandleType client);
 
+  bool has_connections() const;
+
 private:
   AbstractHTTPServer &                 server_;
   std::map<HandleType, ConnectionType> clients_;
-  Mutex                                clients_mutex_;
+  mutable Mutex                        clients_mutex_;
 };
 
 }  // namespace http

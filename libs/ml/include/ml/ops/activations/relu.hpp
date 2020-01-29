@@ -60,6 +60,17 @@ public:
     return OpType::OP_RELU;
   }
   static constexpr char const *DESCRIPTOR = "Relu";
+
+  inline OpType OperationType() const override
+  {
+    return this->OpCode();
+  }
+  inline char const *Descriptor() const override
+  {
+    return DESCRIPTOR;
+  }
+
+  OperationsCount ChargeForward() override;
 };
 
 }  // namespace ops

@@ -16,29 +16,24 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/serializers/main_serializer_definition.hpp"
 #include "math/base_types.hpp"
 #include "ml/ops/embeddings.hpp"
-#include "ml/serializers/ml_types.hpp"
 #include "test_types.hpp"
-#include "vectorise/fixed_point/fixed_point.hpp"
 
 #include "gtest/gtest.h"
 
 #include <cstdint>
-#include <cstdlib>
 #include <memory>
 #include <vector>
 
-namespace fetch {
-namespace ml {
-namespace test {
+namespace {
+
 template <typename T>
 class EmbeddingsTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(EmbeddingsTest, math::test::TensorIntAndFloatingTypes);
+TYPED_TEST_CASE(EmbeddingsTest, fetch::math::test::TensorIntAndFloatingTypes);
 
 TYPED_TEST(EmbeddingsTest, forward_shape)
 {
@@ -152,129 +147,4 @@ TYPED_TEST(EmbeddingsTest, backward)
   }
 }
 
-TYPED_TEST(EmbeddingsTest, saveparams_test)
-{
-  using TensorType = TypeParam;
-  using DataType   = typename TypeParam::Type;
-  using SPType     = typename fetch::ml::ops::Embeddings<TensorType>::SPType;
-  using OpType     = fetch::ml::ops::Embeddings<TensorType>;
-
-  TypeParam weights(std::vector<uint64_t>({6, 10}));
-
-  for (uint32_t i(0); i < 10; ++i)
-  {
-    for (uint32_t j(0); j < 6; ++j)
-    {
-      weights(j, i) = typename TypeParam::Type(i * 10 + j);
-    }
-  }
-  TypeParam input(std::vector<uint64_t>({2, 1}));
-  input.At(0, 0) = typename TypeParam::Type(3);
-  input.At(1, 0) = typename TypeParam::Type(5);
-
-  OpType op(6, 10);
-
-  op.SetData(weights);
-
-  TensorType prediction(op.ComputeOutputShape({std::make_shared<TensorType const>(input)}));
-
-  op.Forward({std::make_shared<TensorType const>(input)}, prediction);
-
-  // extract saveparams
-  std::shared_ptr<fetch::ml::OpsSaveableParams> sp = op.GetOpSaveableParams();
-
-  // downcast to correct type
-  auto dsp = std::static_pointer_cast<SPType>(sp);
-
-  // serialize
-  fetch::serializers::MsgPackSerializer b;
-  b << *dsp;
-
-  // deserialize
-  b.seek(0);
-  auto dsp2 = std::make_shared<SPType>();
-  b >> *dsp2;
-
-  // rebuild node
-  OpType new_op(*dsp2);
-
-  // check that new predictions match the old
-  TensorType new_prediction(op.ComputeOutputShape({std::make_shared<TensorType const>(input)}));
-  new_op.Forward({std::make_shared<TensorType const>(input)}, new_prediction);
-
-  // test correct values
-  EXPECT_TRUE(new_prediction.AllClose(prediction, DataType{0}, DataType{0}));
-}
-
-TYPED_TEST(EmbeddingsTest, saveparams_backward)
-{
-  using TensorType = TypeParam;
-  using DataType   = typename TypeParam::Type;
-  using OpType     = fetch::ml::ops::Embeddings<TensorType>;
-  using SPType     = typename OpType::SPType;
-
-  fetch::ml::ops::Embeddings<TypeParam> op(6, 10);
-  TypeParam                             weights(std::vector<uint64_t>({6, 10}));
-  for (uint32_t i{0}; i < 10; ++i)
-  {
-    for (uint32_t j{0}; j < 6; ++j)
-    {
-      weights(j, i) = static_cast<DataType>(i * 10 + j);
-    }
-  }
-
-  op.SetData(weights);
-
-  TensorType input(std::vector<uint64_t>({2, 1}));
-  input.At(0, 0) = DataType{3};
-  input.At(1, 0) = DataType{5};
-
-  TensorType output(op.ComputeOutputShape({std::make_shared<TypeParam>(input)}));
-  op.Forward({std::make_shared<TypeParam>(input)}, output);
-
-  TensorType error_signal(std::vector<uint64_t>({6, 2, 1}));
-  for (uint32_t j{0}; j < 2; ++j)
-  {
-    for (uint32_t k{0}; k < 6; ++k)
-    {
-      error_signal(k, j, 0) = static_cast<DataType>(j * 6 + k);
-    }
-  }
-
-  std::vector<TensorType> prediction =
-      op.Backward({std::make_shared<TypeParam>(input)}, error_signal);
-
-  // extract saveparams
-  std::shared_ptr<fetch::ml::OpsSaveableParams> sp = op.GetOpSaveableParams();
-
-  // downcast to correct type
-  auto dsp = std::dynamic_pointer_cast<SPType>(sp);
-
-  // serialize
-  fetch::serializers::MsgPackSerializer b;
-  b << *dsp;
-
-  // make another prediction with the original op
-  prediction = op.Backward({std::make_shared<TypeParam>(input)}, error_signal);
-
-  // deserialize
-  b.seek(0);
-  auto dsp2 = std::make_shared<SPType>();
-  b >> *dsp2;
-
-  // rebuild node
-  OpType new_op(*dsp2);
-
-  // check that new predictions match the old
-  std::vector<TensorType> new_prediction =
-      new_op.Backward({std::make_shared<TypeParam>(input)}, error_signal);
-
-  // test correct values
-  EXPECT_TRUE(prediction.at(0).AllClose(
-      new_prediction.at(0), fetch::math::function_tolerance<typename TypeParam::Type>(),
-      fetch::math::function_tolerance<typename TypeParam::Type>()));
-}
-
-}  // namespace test
-}  // namespace ml
-}  // namespace fetch
+}  // namespace

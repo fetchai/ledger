@@ -106,6 +106,15 @@ std::vector<math::SizeType> CrossEntropyLoss<TensorType>::ComputeOutputShape(
   return {1, 1};
 }
 
+template <typename TensorType>
+OperationsCount CrossEntropyLoss<TensorType>::ChargeForward()
+{
+  assert(!this->batch_output_shape_.empty());
+  OperationsCount cost = fetch::ml::charge_estimation::ops::CROSS_ENTROPY_PER_ELEMENT *
+                         this->TotalElementsIn({this->batch_input_shapes_});
+  return cost;
+}
+
 ///////////////////////////////
 /// EXPLICIT INSTANTIATIONS ///
 ///////////////////////////////
@@ -114,10 +123,6 @@ template class CrossEntropyLoss<math::Tensor<int8_t>>;
 template class CrossEntropyLoss<math::Tensor<int16_t>>;
 template class CrossEntropyLoss<math::Tensor<int32_t>>;
 template class CrossEntropyLoss<math::Tensor<int64_t>>;
-template class CrossEntropyLoss<math::Tensor<uint8_t>>;
-template class CrossEntropyLoss<math::Tensor<uint16_t>>;
-template class CrossEntropyLoss<math::Tensor<uint32_t>>;
-template class CrossEntropyLoss<math::Tensor<uint64_t>>;
 template class CrossEntropyLoss<math::Tensor<float>>;
 template class CrossEntropyLoss<math::Tensor<double>>;
 template class CrossEntropyLoss<math::Tensor<fixed_point::fp32_t>>;

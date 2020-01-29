@@ -57,6 +57,8 @@ public:
 
   ChargeAmount LayerAddDense(fetch::vm::Ptr<fetch::vm::String> const &layer,
                              math::SizeType const &inputs, math::SizeType const &hidden_nodes);
+  ChargeAmount LayerAddDenseAutoInputs(fetch::vm::Ptr<fetch::vm::String> const &layer,
+                                       math::SizeType const &                   hidden_nodes);
   ChargeAmount LayerAddDenseActivation(fetch::vm::Ptr<fetch::vm::String> const &layer,
                                        math::SizeType const &                   inputs,
                                        math::SizeType const &                   hidden_nodes,
@@ -66,6 +68,9 @@ public:
                             math::SizeType const &                   output_channels,
                             math::SizeType const &input_channels, math::SizeType const &kernel_size,
                             math::SizeType const &stride_size);
+  ChargeAmount LayerAddMaxPool(fetch::vm::Ptr<fetch::vm::String> const &layer,
+                               math::SizeType const &                   kernel_size,
+                               math::SizeType const &                   stride_size);
   ChargeAmount LayerAddConvActivation(fetch::vm::Ptr<fetch::vm::String> const &layer,
                                       math::SizeType const &                   output_channels,
                                       math::SizeType const &                   input_channels,
@@ -86,15 +91,15 @@ public:
   ChargeAmount LayerAddReshape(fetch::vm::Ptr<fetch::vm::String> const &               layer,
                                fetch::vm::Ptr<fetch::vm::Array<math::SizeType>> const &shape);
 
+  ChargeAmount LayerAddInput(fetch::vm::Ptr<fetch::vm::String> const &        layer,
+                             fetch::vm::Ptr<vm::Array<math::SizeType>> const &shape);
+
   ChargeAmount CompileSequential(fetch::vm::Ptr<fetch::vm::String> const &loss,
                                  fetch::vm::Ptr<fetch::vm::String> const &optimiser);
 
   ChargeAmount CompileSequentialWithMetrics(
       vm::Ptr<vm::String> const &loss, vm::Ptr<vm::String> const &optimiser,
       vm::Ptr<vm::Array<vm::Ptr<fetch::vm::String>>> const &metrics);
-
-  ChargeAmount CompileSimple(fetch::vm::Ptr<fetch::vm::String> const &        optimiser,
-                             fetch::vm::Ptr<vm::Array<math::SizeType>> const &in_layers);
 
   ChargeAmount Fit(vm::Ptr<vm_modules::math::VMTensor> const &data,
                    vm::Ptr<vm_modules::math::VMTensor> const &labels,

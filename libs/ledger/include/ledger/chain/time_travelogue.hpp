@@ -34,23 +34,18 @@ enum class TravelogueStatus : uint8_t
 /**
  * Packet format used to convey heaviest chain for node sync.
  */
-template <class B>
 struct TimeTravelogue
 {
-  using Block     = B;
-  using BlockHash = Digest;
-  using Blocks    = std::vector<Block>;
-
   /// @name Heaviest Block Information
   /// @{
-  BlockHash heaviest_hash{};
-  uint64_t  block_number{0};
+  BlockHash heaviest_hash;
+  uint64_t  block_number = 0;
   /// @}
 
   /// @name Request Metadata
   /// @{
-  TravelogueStatus status{TravelogueStatus::NOT_FOUND};
-  Blocks           blocks{};
+  TravelogueStatus status = TravelogueStatus::NOT_FOUND;
+  Blocks           blocks = {};
   /// @}
 };
 
@@ -58,10 +53,10 @@ struct TimeTravelogue
 
 namespace serializers {
 
-template <class B, class D>
-struct MapSerializer<ledger::TimeTravelogue<B>, D>
+template <class D>
+struct MapSerializer<ledger::TimeTravelogue, D>
 {
-  using Type       = ledger::TimeTravelogue<B>;
+  using Type       = ledger::TimeTravelogue;
   using DriverType = D;
 
   static constexpr uint8_t BLOCKS        = 1;

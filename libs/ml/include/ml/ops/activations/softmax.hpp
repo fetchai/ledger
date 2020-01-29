@@ -19,7 +19,6 @@
 
 #include "ml/ops/ops.hpp"
 
-#include <cassert>
 #include <memory>
 #include <stdexcept>
 #include <utility>
@@ -65,6 +64,17 @@ public:
     return OpType::OP_SOFTMAX;
   }
   static constexpr char const *DESCRIPTOR = "Softmax";
+
+  OpType OperationType() const override  // TODO(ML-466) : move implementation to .cpp
+  {
+    return this->OpCode();
+  }
+  char const *Descriptor() const override  // TODO(ML-466) : move implementation to .cpp
+  {
+    return DESCRIPTOR;
+  }
+
+  OperationsCount ChargeForward() override;
 
 private:
   SizeType              axis_;

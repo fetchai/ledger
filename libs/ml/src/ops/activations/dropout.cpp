@@ -21,6 +21,8 @@
 #include "math/fundamental_operators.hpp"
 #include "ml/ops/activations/dropout.hpp"
 
+#include <cassert>
+
 namespace fetch {
 namespace ml {
 namespace ops {
@@ -91,9 +93,9 @@ void Dropout<TensorType>::Forward(VecTensorType const &inputs, TensorType &outpu
     auto it     = drop_values_.begin();
     while (it.is_valid())
     {
-      if (rng_.AsType<DataType>() <= probability_)
+      if (rng_.AsType<DataType>() > probability_)
       {
-        *it     = static_cast<DataType>(DataType{1} / probability_);
+        *it     = static_cast<DataType>(DataType{1} / (DataType{1} - probability_));
         *out_it = static_cast<DataType>((*it) * (*in_it));
       }
       else
@@ -120,7 +122,7 @@ std::vector<TensorType> Dropout<TensorType>::Backward(VecTensorType const &input
 
   TensorType return_signal{error_signal.shape()};
 
-  // gradient of dropout is 1.0/keep_prob for enabled neurons and 0.0 for disabled
+  // gradient of dropout is 1.0/(1.0-prob) for enabled neurons and 0.0 for disabled
   // multiply by error_signal (chain rule)
 
   fetch::math::Multiply(error_signal, drop_values_, return_signal);
@@ -135,6 +137,15 @@ std::vector<math::SizeType> Dropout<TensorType>::ComputeOutputShape(
   return inputs.front()->shape();
 }
 
+template <typename TensorType>
+OperationsCount Dropout<TensorType>::ChargeForward()
+{
+  assert(!this->batch_output_shape_.empty());
+  OperationsCount cost = fetch::ml::charge_estimation::ops::DROPOUT_PER_ELEMENT *
+                         this->TotalElementsIn({this->batch_input_shapes_});
+  return cost;
+}
+
 ///////////////////////////////
 /// EXPLICIT INSTANTIATIONS ///
 ///////////////////////////////
@@ -143,10 +154,6 @@ template class Dropout<math::Tensor<int8_t>>;
 template class Dropout<math::Tensor<int16_t>>;
 template class Dropout<math::Tensor<int32_t>>;
 template class Dropout<math::Tensor<int64_t>>;
-template class Dropout<math::Tensor<uint8_t>>;
-template class Dropout<math::Tensor<uint16_t>>;
-template class Dropout<math::Tensor<uint32_t>>;
-template class Dropout<math::Tensor<uint64_t>>;
 template class Dropout<math::Tensor<float>>;
 template class Dropout<math::Tensor<double>>;
 template class Dropout<math::Tensor<fixed_point::fp32_t>>;

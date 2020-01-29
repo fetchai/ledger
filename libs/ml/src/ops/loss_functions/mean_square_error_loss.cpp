@@ -247,6 +247,15 @@ std::vector<math::SizeType> MeanSquareErrorLoss<TensorType>::ComputeOutputShape(
   return {1, 1};
 }
 
+template <typename TensorType>
+OperationsCount MeanSquareErrorLoss<TensorType>::ChargeForward()
+{
+  assert(!this->batch_output_shape_.empty());
+  OperationsCount cost = fetch::ml::charge_estimation::ops::MEAN_SQ_ERROR_PER_ELEMENT *
+                         this->TotalElementsIn({this->batch_input_shapes_});
+  return cost;
+}
+
 ///////////////////////////////
 /// EXPLICIT INSTANTIATIONS ///
 ///////////////////////////////
@@ -255,10 +264,6 @@ template class MeanSquareErrorLoss<math::Tensor<int8_t>>;
 template class MeanSquareErrorLoss<math::Tensor<int16_t>>;
 template class MeanSquareErrorLoss<math::Tensor<int32_t>>;
 template class MeanSquareErrorLoss<math::Tensor<int64_t>>;
-template class MeanSquareErrorLoss<math::Tensor<uint8_t>>;
-template class MeanSquareErrorLoss<math::Tensor<uint16_t>>;
-template class MeanSquareErrorLoss<math::Tensor<uint32_t>>;
-template class MeanSquareErrorLoss<math::Tensor<uint64_t>>;
 template class MeanSquareErrorLoss<math::Tensor<float>>;
 template class MeanSquareErrorLoss<math::Tensor<double>>;
 template class MeanSquareErrorLoss<math::Tensor<fixed_point::fp32_t>>;

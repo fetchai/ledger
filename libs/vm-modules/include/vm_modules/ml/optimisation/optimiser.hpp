@@ -127,7 +127,7 @@ public:
 
 private:
   std::shared_ptr<fetch::ml::optimisers::Optimiser<fetch::math::Tensor<DataType>>> optimiser_;
-  std::shared_ptr<fetch::ml::dataloaders::DataLoader<TensorType, TensorType>>      loader_;
+  std::shared_ptr<fetch::ml::dataloaders::DataLoader<TensorType>>                  loader_;
   OptimiserMode                                                                    mode_;
 };
 
@@ -152,11 +152,9 @@ struct MapSerializer<fetch::vm_modules::ml::VMOptimiser, D>
   using SgdOptimiserType      = fetch::vm_modules::ml::VMOptimiser::SgdOptimiserType;
 
   using DataLoaderType =
-      fetch::ml::dataloaders::DataLoader<vm_modules::ml::VMOptimiser::TensorType,
-                                         vm_modules::ml::VMOptimiser::TensorType>;
+      fetch::ml::dataloaders::DataLoader<vm_modules::ml::VMOptimiser::TensorType>;
   using TensorDataLoaderType =
-      fetch::ml::dataloaders::TensorDataLoader<vm_modules::ml::VMOptimiser::TensorType,
-                                               vm_modules::ml::VMOptimiser::TensorType>;
+      fetch::ml::dataloaders::TensorDataLoader<vm_modules::ml::VMOptimiser::TensorType>;
   using DriverType = D;
 
   static uint8_t const MODE       = 1;

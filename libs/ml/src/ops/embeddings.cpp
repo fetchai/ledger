@@ -17,7 +17,6 @@
 //------------------------------------------------------------------------------
 
 #include "ml/ops/embeddings.hpp"
-#include "ml/saveparams/saveable_params.hpp"
 
 namespace fetch {
 namespace ml {
@@ -141,10 +140,6 @@ template class Embeddings<math::Tensor<int8_t>>;
 template class Embeddings<math::Tensor<int16_t>>;
 template class Embeddings<math::Tensor<int32_t>>;
 template class Embeddings<math::Tensor<int64_t>>;
-template class Embeddings<math::Tensor<uint8_t>>;
-template class Embeddings<math::Tensor<uint16_t>>;
-template class Embeddings<math::Tensor<uint32_t>>;
-template class Embeddings<math::Tensor<uint64_t>>;
 template class Embeddings<math::Tensor<float>>;
 template class Embeddings<math::Tensor<double>>;
 template class Embeddings<math::Tensor<fixed_point::fp32_t>>;

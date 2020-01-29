@@ -17,10 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/assert.hpp"
 #include "ml/ops/ops.hpp"
 
-#include <cassert>
 #include <memory>
 #include <vector>
 
@@ -47,81 +45,17 @@ public:
 
   ~Maximum() override = default;
 
-  std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override
-  {
-    SPType sp{};
-    return std::make_shared<SPType>(sp);
-  }
+  std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override;
 
   std::shared_ptr<fetch::ml::ops::Ops<TensorType>> MakeSharedCopy(
-      std::shared_ptr<fetch::ml::ops::Ops<TensorType>> me) override
-  {
-    FETCH_UNUSED(me);
-    assert(me.get() == this);
+      std::shared_ptr<fetch::ml::ops::Ops<TensorType>> me) override;
 
-    auto copyshare = std::make_shared<MyType>(*this);  // calls default copy constructor of MyType
+  void Forward(VecTensorType const &inputs, TensorType &output) override;
 
-    return copyshare;
-  }
-  /**
-   * elementwise maximum
-   * @param inputs  left & right inputs to get maximum
-   * @return
-   */
-  void Forward(VecTensorType const &inputs, TensorType &output) override
-  {
-    assert(inputs.size() == 2);
-    assert(inputs.at(0)->size() == inputs.at(1)->size());
-    assert(output.shape() == this->ComputeOutputShape(inputs));
-
-    fetch::math::Maximum((*inputs.at(0)), (*inputs.at(1)), output);
-  }
-
-  /**
-   * elementwise maximum gradient is:
-   * f'(input0)=if(input0>input1)=error_signal
-   * f'(input1)=if(input0<=input1)=error_signal
-   */
   std::vector<TensorType> Backward(VecTensorType const &inputs,
-                                   TensorType const &   error_signal) override
-  {
-    assert(inputs.size() == 2);
-    assert(inputs.at(0)->size() == inputs.at(1)->size());
-    assert(error_signal.size() == inputs.at(1)->size());
+                                   TensorType const &   error_signal) override;
 
-    TensorType return_signal_1(inputs.at(0)->shape());
-    TensorType return_signal_2(inputs.at(1)->shape());
-
-    auto a_it   = inputs.at(0)->cbegin();
-    auto b_it   = inputs.at(1)->cbegin();
-    auto err_it = error_signal.cbegin();
-    auto r_1_it = return_signal_1.begin();
-    auto r_2_it = return_signal_2.begin();
-    while (a_it.is_valid())
-    {
-      if ((*a_it) > (*b_it))
-      {
-        *r_1_it = *err_it;
-      }
-      else
-      {
-        *r_2_it = *err_it;
-      }
-
-      ++a_it;
-      ++b_it;
-      ++err_it;
-      ++r_1_it;
-      ++r_2_it;
-    }
-
-    return {return_signal_1, return_signal_2};
-  }
-
-  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
-  {
-    return inputs.front()->shape();
-  }
+  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override;
 
   static constexpr OpType OpCode()
   {
