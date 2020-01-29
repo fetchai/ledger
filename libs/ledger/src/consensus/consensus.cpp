@@ -129,6 +129,21 @@ Consensus::Consensus(StakeManagerPtr stake, BeaconSetupServicePtr beacon_setup,
   assert(stake_);
 }
 
+// This can't be automated with a custom allocator. :/
+telemetry::CounterPtr &Consensus::TelemetryOnFail(std::string const &key) const
+{
+  auto existing_fail_telemetry_it = fails_.find(key);
+  if (existing_fail_telemetry_it == fails_.end())
+  {
+    existing_fail_telemetry_it =
+        fails_
+            .emplace(key, telemetry::Registry::Instance().CreateCounter(
+                              key, "A particular failure when generating a block"))
+            .first;
+  }
+  return existing_fail_telemetry_it->second;
+}
+
 Consensus::WeightedQual QualWeightedByEntropy(Consensus::BlockEntropy::Cabinet const &cabinet,
                                               uint64_t                                entropy)
 {
@@ -600,6 +615,7 @@ NextBlockPtr Consensus::GenerateNextBlock()
     auto entgen_status = beacon_->GenerateEntropy(block_number, ret->block_entropy);
     if (entgen_status != EntropyGeneratorInterface::Status::OK)
     {
+      TelemetryOnFail("failed_to_generate_entropy:_").increment();
       FETCH_LOG_INFO(LOGGING_NAME, "Failed to generate entropy: ", ToString(entgen_status));
       return {};
     }
@@ -617,11 +633,13 @@ NextBlockPtr Consensus::GenerateNextBlock()
   }
   catch (std::exception const &ex)
   {
+    TelemetryOnFail("block_generation_exception").increment();
     FETCH_LOG_ERROR(LOGGING_NAME, __func__, ": ", ex.what());
     return {};
   }
   catch (...)
   {
+    TelemetryOnFail("block_generation_unknown_failure").increment();
     FETCH_LOG_ERROR(LOGGING_NAME, __func__, ": ", FATAL_ERROR);
     return {};
   }
@@ -629,6 +647,7 @@ NextBlockPtr Consensus::GenerateNextBlock()
   // Note here the previous block's entropy determines miner selection
   if (!ValidBlockTiming(current_block_, *ret))
   {
+    TelemetryOnFail("invalid_block_timing").increment();
     FETCH_LOG_INFO(LOGGING_NAME, "Invalid block timing");
     return {};
   }
@@ -640,6 +659,7 @@ NextBlockPtr Consensus::GenerateNextBlock()
     if (current_block_.block_number != 0 && notarisation.first.isZero())
     {
       // Notarisation for head of chain is not ready yet so wait
+      TelemetryOnFail("notarisation_is_not_ready_yet").increment();
       FETCH_LOG_INFO(LOGGING_NAME, "Notarisation is not ready yet");
       return {};
     }
@@ -662,7 +682,7 @@ NextBlockPtr Consensus::GenerateNextBlock()
 
   if (ret->weight != GetBeginningOfAeon(*ret, chain_).block_entropy.qualified.size())
   {
-    consensus_non_heaviest_blocks_total_->add(1);
+    consensus_non_heaviest_blocks_total_->increment();
   }
 
   return ret;
@@ -795,7 +815,7 @@ Status Consensus::ValidBlock(Block const &current) const
   if (!block_preceeding)
   {
     consensus_last_validate_block_failure_->set(0);
-    consensus_validate_block_failures_total_->add(1);
+    consensus_validate_block_failures_total_->increment();
     return Status::NO;
   }
 
@@ -803,21 +823,21 @@ Status Consensus::ValidBlock(Block const &current) const
       current.previous_hash.size() != DIGEST_LENGTH_BYTES)
   {
     consensus_last_validate_block_failure_->set(1);
-    consensus_validate_block_failures_total_->add(1);
+    consensus_validate_block_failures_total_->increment();
     return Status::NO;
   }
 
   if (current.block_number != current.block_entropy.block_number)
   {
     consensus_last_validate_block_failure_->set(2);
-    consensus_validate_block_failures_total_->add(1);
+    consensus_validate_block_failures_total_->increment();
     return Status::NO;
   }
 
   if (current.block_number != block_preceeding->block_number + 1)
   {
     consensus_last_validate_block_failure_->set(3);
-    consensus_validate_block_failures_total_->add(1);
+    consensus_validate_block_failures_total_->increment();
     FETCH_LOG_WARN(LOGGING_NAME, "Found block with incorrect block number.");
     return Status::NO;
   }
@@ -833,7 +853,7 @@ Status Consensus::ValidBlock(Block const &current) const
     if (!block_entropy.IsAeonBeginning())
     {
       consensus_last_validate_block_failure_->set(4);
-      consensus_validate_block_failures_total_->add(1);
+      consensus_validate_block_failures_total_->increment();
       FETCH_LOG_WARN(LOGGING_NAME,
                      "Found block that didn't create a new aeon when it should have!");
       return Status::NO;
@@ -843,7 +863,7 @@ Status Consensus::ValidBlock(Block const &current) const
     if (!EnoughQualSigned(*block_preceeding, current))
     {
       consensus_last_validate_block_failure_->set(5);
-      consensus_validate_block_failures_total_->add(1);
+      consensus_validate_block_failures_total_->increment();
       FETCH_LOG_WARN(LOGGING_NAME, "Received a block with a bad aeon starting point!");
       return Status::NO;
     }
@@ -855,7 +875,7 @@ Status Consensus::ValidBlock(Block const &current) const
     if (qualified_cabinet.size() > max_cabinet_size_)
     {
       consensus_last_validate_block_failure_->set(6);
-      consensus_validate_block_failures_total_->add(1);
+      consensus_validate_block_failures_total_->increment();
       FETCH_LOG_WARN(LOGGING_NAME, "Found a block that had too many members in qual!");
       return Status::NO;
     }
@@ -864,7 +884,7 @@ Status Consensus::ValidBlock(Block const &current) const
         !ValidNotarisationKeys(qualified_cabinet, block_entropy.aeon_notarisation_keys))
     {
       consensus_last_validate_block_failure_->set(7);
-      consensus_validate_block_failures_total_->add(1);
+      consensus_validate_block_failures_total_->increment();
       FETCH_LOG_WARN(LOGGING_NAME, "Found block whose notarisation keys are not valid");
       return Status::NO;
     }
@@ -882,7 +902,7 @@ Status Consensus::ValidBlock(Block const &current) const
       if (beg_block_entropy.qualified != block_entropy.qualified)
       {
         consensus_last_validate_block_failure_->set(8);
-        consensus_validate_block_failures_total_->add(1);
+        consensus_validate_block_failures_total_->increment();
         FETCH_LOG_WARN(LOGGING_NAME, "Saw a block entropy with mismatched qualified field. Size: ",
                        block_entropy.qualified.size());
         return Status::NO;
@@ -905,7 +925,7 @@ Status Consensus::ValidBlock(Block const &current) const
     if (current.weight != GetBlockGenerationWeight(current, current.miner_id))
     {
       consensus_last_validate_block_failure_->set(9);
-      consensus_validate_block_failures_total_->add(1);
+      consensus_validate_block_failures_total_->increment();
       FETCH_LOG_WARN(LOGGING_NAME, "Block with incorrect weight found");
       return Status::NO;
     }
@@ -924,7 +944,7 @@ Status Consensus::ValidBlock(Block const &current) const
   if (!BlockSignedByQualMember(current))
   {
     consensus_last_validate_block_failure_->set(10);
-    consensus_validate_block_failures_total_->add(1);
+    consensus_validate_block_failures_total_->increment();
     FETCH_LOG_WARN(LOGGING_NAME,
                    "Saw block not signed by a member of qual! Block: ", current.block_number);
     return Status::NO;
@@ -935,7 +955,7 @@ Status Consensus::ValidBlock(Block const &current) const
                                   current.block_entropy.group_signature))
   {
     consensus_last_validate_block_failure_->set(11);
-    consensus_validate_block_failures_total_->add(1);
+    consensus_validate_block_failures_total_->increment();
     FETCH_LOG_WARN(LOGGING_NAME, "Found block whose entropy isn't a signature of the previous!");
     return Status::NO;
   }
@@ -943,7 +963,7 @@ Status Consensus::ValidBlock(Block const &current) const
   if (!VerifyNotarisation(current))
   {
     consensus_last_validate_block_failure_->set(12);
-    consensus_validate_block_failures_total_->add(1);
+    consensus_validate_block_failures_total_->increment();
     FETCH_LOG_WARN(LOGGING_NAME, "Found block whose notarisation is not valid");
     return Status::NO;
   }
@@ -953,7 +973,7 @@ Status Consensus::ValidBlock(Block const &current) const
   if (!ValidBlockTiming(*block_preceeding, current))
   {
     consensus_last_validate_block_failure_->set(13);
-    consensus_validate_block_failures_total_->add(1);
+    consensus_validate_block_failures_total_->increment();
     FETCH_LOG_WARN(LOGGING_NAME, "Found block with bad timings!");
     return Status::NO;
   }
