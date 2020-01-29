@@ -161,13 +161,13 @@ void Reactor::StopWorker()
 
   if (watcher_)
   {
+    cv_.notify_all();  // Force the watcher awake
     watcher_->ApplyVoid([](auto &watcher) { watcher.join(); });
     watcher_.reset();
   }
 
   if (worker_)
   {
-    cv_.notify_all();  // Force the watcher awake
     worker_->ApplyVoid([](auto &worker) { worker.join(); });
     worker_.reset();
   }
