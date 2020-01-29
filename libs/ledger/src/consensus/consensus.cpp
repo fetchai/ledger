@@ -620,7 +620,7 @@ NextBlockPtr Consensus::GenerateNextBlock()
   catch (...)
   {
     block_generation_unknown_failure_total_->increment();
-    FETCH_LOG_ERROR(LOGGING_NAME, __func__, ": ", FATAL_ERROR);
+    FETCH_LOG_ERROR(LOGGING_NAME, __func__, ": ", "fatal error");
     return {};
   }
 
