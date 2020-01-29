@@ -22,6 +22,7 @@
 #include "telemetry/telemetry.hpp"
 
 #include <atomic>
+#include <condition_variable>
 #include <map>
 #include <memory>
 #include <string>
