@@ -125,6 +125,17 @@ Consensus::Consensus(StakeManagerPtr stake, BeaconSetupServicePtr beacon_setup,
         "consensus_validate_block_failures_total", "The total number of DKG failures")}
   , consensus_non_heaviest_blocks_total_{telemetry::Registry::Instance().CreateCounter(
         "consensus_non_heaviest_blocks_total", "The total number of DKG failures")}
+  , failed_to_generate_entropy_total_{telemetry::Registry::Instance().CreateCounter(
+        "failed_to_generate_entropy_total", "The total number of failures to generate entropy")}
+  , block_generation_exception_total_{telemetry::Registry::Instance().CreateCounter(
+        "block_generation_exception_total", "The total number of exceptions at block generation")}
+  , block_generation_unknown_failure_total_{telemetry::Registry::Instance().CreateCounter(
+        "block_generation_unknown_failure_total",
+        "The total number of unknown failures at block generation")}
+  , invalid_block_timing_total_{telemetry::Registry::Instance().CreateCounter(
+        "invalid_block_timing_total", "The total number of invalid block timings")}
+  , notarisation_is_not_ready_yet_total_{telemetry::Registry::Instance().CreateCounter(
+        "notarisation_is_not_ready_yet_total", "The total number of unready notarisations")}
 {
   assert(stake_);
 }
@@ -600,7 +611,7 @@ NextBlockPtr Consensus::GenerateNextBlock()
     auto entgen_status = beacon_->GenerateEntropy(block_number, ret->block_entropy);
     if (entgen_status != EntropyGeneratorInterface::Status::OK)
     {
-      TelemetryOnFail("failed_to_generate_entropy")->increment();
+      failed_to_generate_entropy_total_->increment();
       FETCH_LOG_INFO(LOGGING_NAME, "Failed to generate entropy: ", ToString(entgen_status));
       return {};
     }
@@ -618,13 +629,13 @@ NextBlockPtr Consensus::GenerateNextBlock()
   }
   catch (std::exception const &ex)
   {
-    TelemetryOnFail("block_generation_exception")->increment();
+    block_generation_exception_total_->increment();
     FETCH_LOG_ERROR(LOGGING_NAME, __func__, ": ", ex.what());
     return {};
   }
   catch (...)
   {
-    TelemetryOnFail("block_generation_unknown_failure")->increment();
+    block_generation_unknown_failure_total_->increment();
     FETCH_LOG_ERROR(LOGGING_NAME, __func__, ": ", FATAL_ERROR);
     return {};
   }
@@ -632,7 +643,7 @@ NextBlockPtr Consensus::GenerateNextBlock()
   // Note here the previous block's entropy determines miner selection
   if (!ValidBlockTiming(current_block_, *ret))
   {
-    TelemetryOnFail("invalid_block_timing")->increment();
+    invalid_block_timing_total_->increment();
     FETCH_LOG_INFO(LOGGING_NAME, "Invalid block timing");
     return {};
   }
@@ -644,7 +655,7 @@ NextBlockPtr Consensus::GenerateNextBlock()
     if (current_block_.block_number != 0 && notarisation.first.isZero())
     {
       // Notarisation for head of chain is not ready yet so wait
-      TelemetryOnFail("notarisation_is_not_ready_yet")->increment();
+      notarisation_is_not_ready_yet_total_->increment();
       FETCH_LOG_INFO(LOGGING_NAME, "Notarisation is not ready yet");
       return {};
     }
@@ -1041,21 +1052,4 @@ void Consensus::SetWhitelist(Minerwhitelist const &whitelist)
     FETCH_LOG_DEBUG(LOGGING_NAME, "Adding to whitelist: ", miner.ToBase64());
   }
   whitelist_ = whitelist;
-}
-
-fetch::telemetry::CounterPtr Consensus::TelemetryOnFail(std::string const &key) const
-{
-  auto &registry = telemetry::Registry::Instance();
-
-  FETCH_LOCK(block_generation_fails_mutex_);
-  auto existing_telemetry_it = block_generation_fails_.find(key);
-  if (existing_telemetry_it == block_generation_fails_.end())
-  {
-    existing_telemetry_it =
-        block_generation_fails_
-            .emplace(key, registry.CreateCounter(key + "_total",
-                                                 "A particular failure when generating a block."))
-            .first;
-  }
-  return existing_telemetry_it->second;
 }
