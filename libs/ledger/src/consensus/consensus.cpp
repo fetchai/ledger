@@ -22,6 +22,8 @@
 #include "ledger/chain/block.hpp"
 #include "ledger/consensus/consensus.hpp"
 #include "network/generics/milli_timer.hpp"
+#include "telemetry/counter.hpp"
+#include "telemetry/registry.hpp"
 
 #include <ctime>
 #include <random>
