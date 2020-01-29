@@ -41,7 +41,8 @@ public:
   }
   virtual void Execute() = 0;
 
-  virtual char const *GetId() const = 0;
+  virtual std::string GetId() const    = 0;
+  virtual std::string GetDebug() const = 0;
   /// @}
 
   // Helper operators
