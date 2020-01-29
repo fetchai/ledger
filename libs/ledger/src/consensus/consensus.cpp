@@ -614,7 +614,7 @@ NextBlockPtr Consensus::GenerateNextBlock()
     auto entgen_status = beacon_->GenerateEntropy(block_number, ret->block_entropy);
     if (entgen_status != EntropyGeneratorInterface::Status::OK)
     {
-      TelemetryOnFail("failed_to_generate_entropy").increment();
+      TelemetryOnFail("failed_to_generate_entropy")->increment();
       FETCH_LOG_INFO(LOGGING_NAME, "Failed to generate entropy: ", ToString(entgen_status));
       return {};
     }
@@ -632,13 +632,13 @@ NextBlockPtr Consensus::GenerateNextBlock()
   }
   catch (std::exception const &ex)
   {
-    TelemetryOnFail("block_generation_exception").increment();
+    TelemetryOnFail("block_generation_exception")->increment();
     FETCH_LOG_ERROR(LOGGING_NAME, __func__, ": ", ex.what());
     return {};
   }
   catch (...)
   {
-    TelemetryOnFail("block_generation_unknown_failure").increment();
+    TelemetryOnFail("block_generation_unknown_failure")->increment();
     FETCH_LOG_ERROR(LOGGING_NAME, __func__, ": ", FATAL_ERROR);
     return {};
   }
@@ -646,7 +646,7 @@ NextBlockPtr Consensus::GenerateNextBlock()
   // Note here the previous block's entropy determines miner selection
   if (!ValidBlockTiming(current_block_, *ret))
   {
-    TelemetryOnFail("invalid_block_timing").increment();
+    TelemetryOnFail("invalid_block_timing")->increment();
     FETCH_LOG_INFO(LOGGING_NAME, "Invalid block timing");
     return {};
   }
@@ -658,7 +658,7 @@ NextBlockPtr Consensus::GenerateNextBlock()
     if (current_block_.block_number != 0 && notarisation.first.isZero())
     {
       // Notarisation for head of chain is not ready yet so wait
-      TelemetryOnFail("notarisation_is_not_ready_yet").increment();
+      TelemetryOnFail("notarisation_is_not_ready_yet")->increment();
       FETCH_LOG_INFO(LOGGING_NAME, "Notarisation is not ready yet");
       return {};
     }
