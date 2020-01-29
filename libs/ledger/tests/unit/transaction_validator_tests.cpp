@@ -137,7 +137,7 @@ void TransactionValidatorTests::SetDeed(Deed const &deed)
 }
 
 // TODO(HUT): fix these.
-TEST_F(TransactionValidatorTests, CheckWealthWhileValid)
+TEST_F(TransactionValidatorTests, CheckTxWhileValid)
 {
   uint64_t funds_for_test = 10000;
   AddFunds(funds_for_test);
@@ -159,12 +159,12 @@ TEST_F(TransactionValidatorTests, CheckWealthWhileValid)
   EXPECT_EQ(ContractExecutionStatus::TX_NOT_VALID_FOR_BLOCK, validator_(*tx, 101));
 }
 
-TEST_F(TransactionValidatorTests, CheckWealthOnValidityBoundary)
+TEST_F(TransactionValidatorTests, CheckTxOnValidityBoundary)
 {
   auto tx = TransactionBuilder{}
                 .From(signer_address_)
                 .TargetChainCode("fetch.token", BitVector{})
-                .Action("wealth")
+                .Action("foo-bar-baz")
                 .ValidUntil(100)
                 .Signer(signer_.identity())
                 .Seal()
@@ -174,12 +174,12 @@ TEST_F(TransactionValidatorTests, CheckWealthOnValidityBoundary)
   EXPECT_EQ(ContractExecutionStatus::TX_NOT_VALID_FOR_BLOCK, validator_(*tx, 100));
 }
 
-TEST_F(TransactionValidatorTests, CheckWealthOutsideOfValidityPeriod)
+TEST_F(TransactionValidatorTests, CheckTxOutsideOfValidityPeriod)
 {
   auto tx = TransactionBuilder{}
                 .From(signer_address_)
                 .TargetChainCode("fetch.token", BitVector{})
-                .Action("wealth")
+                .Action("foo-bar-baz")
                 .ValidUntil(100)
                 .Signer(signer_.identity())
                 .Seal()
