@@ -112,7 +112,7 @@ telemetry::CounterPtr TelemetryOnFail(std::string const &key) const
   {
     return existing_telemetry;
   }
-  return registry::CreateCounter(key, "A particular failure when generating a block");
+  return registry::CreateCounter(key, "A particular failure when generating a block.");
 }
 
 }  // namespace
