@@ -55,14 +55,9 @@ void PeriodicRunnable::Execute()
   last_executed_ = Clock::now();
 }
 
-std::string PeriodicRunnable::GetId() const
+char const *PeriodicRunnable::GetId() const
 {
   return "PeriodicRunnable";
-}
-
-std::string PeriodicRunnable::GetDebug() const
-{
-  return "PeriodicRunnableDebug";
 }
 
 }  // namespace core

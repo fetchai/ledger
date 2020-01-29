@@ -44,25 +44,6 @@ using WorkQueue = std::deque<fetch::core::WeakRunnable>;
 namespace fetch {
 namespace core {
 
-class BasicTimer
-{
-public:
-  explicit BasicTimer(uint64_t duration_ms)
-  {
-    deadline_ = std::chrono::system_clock::now() + std::chrono::milliseconds{duration_ms};
-  }
-
-  bool HasExpired()
-  {
-    return deadline_ <= std::chrono::system_clock::now();
-  }
-
-private:
-  using Timestamp = std::chrono::system_clock::time_point;
-
-  Timestamp deadline_{};
-};
-
 Reactor::Reactor(std::string name)
   : name_{std::move(name)}
   , runnables_time_{CreateHistogram("ledger_reactor_runnable_time",
@@ -84,19 +65,11 @@ Reactor::Reactor(std::string name)
         "The total number of times the reactor has failed to execute a runnable")}
   , expired_total_{CreateCounter("ledger_reactor_expired_total",
                                  "The total number of expired runnables")}
-  , too_long_total_{CreateCounter("ledger_reactor_too_long_total",
-                                  "The total number of runnables that took too long")}
-  , way_too_long_total_{CreateCounter("ledger_reactor_way_too_long_total",
-                                      "The total number of runnables that took way too long")}
   , work_queue_length_{CreateGauge("ledger_reactor_work_queue_length",
                                    "The current size of the work queue")}
   , work_queue_max_length_{
         CreateGauge("ledger_reactor_max_work_queue_length", "The max size of the work queue")}
-{
-  // The reactor watcher is always running and determines whether executions are taking
-  // too long or are stalled.
-  watcher_ = std::make_unique<ProtectedThread>(&Reactor::ReactorWatch, this);
-}
+{}
 
 bool Reactor::Attach(WeakRunnable runnable)
 {
@@ -174,11 +147,6 @@ Reactor::~Reactor()
     worker_->ApplyVoid([](auto &worker) { worker.join(); });
     worker_.reset();
   }
-
-  not_destructing_ = false;
-
-  watcher_->ApplyVoid([](auto &watcher) { watcher.join(); });
-  watcher_.reset();
 }
 
 void Reactor::StopWorker()
@@ -192,37 +160,10 @@ void Reactor::StopWorker()
   }
 }
 
-void Reactor::ReactorWatch()
-{
-  uint32_t last_seen_executed = 0;
-
-  while (not_destructing_)
-  {
-    std::this_thread::sleep_for(std::chrono::milliseconds(thread_watcher_check_ms_));
-
-    auto        runnable_concrete = last_executed_runnable_.lock();
-    std::string runnable_name     = runnable_concrete ? runnable_concrete->GetId() : "nullptr fail";
-    std::string runnable_debug = runnable_concrete ? runnable_concrete->GetDebug() : "nullptr fail";
-
-    if ((last_seen_executed == execution_counter_) && currently_executing_)
-    {
-      FETCH_LOG_WARN(LOGGING_NAME,
-                     "Very long execution noticed at execution counter: ", last_seen_executed,
-                     ". from runnable: ", runnable_name, " debug: ", runnable_debug);
-      executions_way_too_long_++;
-      way_too_long_total_->increment();
-    }
-
-    last_seen_executed = execution_counter_;
-  }
-}
-
 void Reactor::Monitor()
 {
   // set the thread name
   SetThreadName(name_);
-
-  std::string const timer_name = "reactor:" + name_;
 
   WorkQueue work_queue;
 
@@ -275,11 +216,8 @@ void Reactor::Monitor()
       continue;
     }
 
-    // extract the element from the front of the queue, keep note of it for block detection
-    execution_counter_++;
-    last_executed_runnable_ = work_queue.front();
-
-    auto runnable = last_executed_runnable_.lock();
+    // extract the element from the front of the queue
+    auto runnable = work_queue.front().lock();
     work_queue.pop_front();
 
     // execute the item if it can be executed
@@ -290,39 +228,23 @@ void Reactor::Monitor()
 
       try
       {
-        currently_executing_ = true;
-        BasicTimer execution_too_long_timer{execution_too_long_ms_};
-
         runnable->Execute();
 
         success_total_->increment();
-
-        if (execution_too_long_timer.HasExpired())
-        {
-          FETCH_LOG_WARN(LOGGING_NAME,
-                         "Execution took longer than was polite! From: ", runnable->GetId(),
-                         " Debug: ", runnable->GetDebug());
-          executions_too_long_++;
-          too_long_total_->increment();
-        }
       }
       catch (std::exception const &ex)
       {
-        FETCH_LOG_WARN(LOGGING_NAME, "The reactor ", name_, " caught an exception in ",
-                       runnable->GetId(), "! ", " error: ", ex.what(),
-                       " Debug: ", runnable->GetDebug());
+        FETCH_LOG_WARN(LOGGING_NAME, "The reactor caught an exception in ", runnable->GetId(), "! ",
+                       name_, " error: ", ex.what());
 
         failure_total_->increment();
       }
       catch (...)
       {
-        FETCH_LOG_INFO(LOGGING_NAME, "Unknown error generated in reactor: ", name_,
-                       " From: ", runnable->GetId(), " Debug: ", runnable->GetDebug());
+        FETCH_LOG_INFO(LOGGING_NAME, "Unknown error generated in reactor: ", name_);
 
         failure_total_->increment();
       }
-
-      currently_executing_ = false;
     }
   }
 }

@@ -114,14 +114,9 @@ void PromiseTask::Execute()
   complete_ = true;
 }
 
-std::string PromiseTask::GetId() const
+char const *PromiseTask::GetId() const
 {
-  return ("PromiseTask#" + std::to_string(promise_->id()));
-}
-
-std::string PromiseTask::GetDebug() const
-{
-  return "none";
+  return ("PromiseTask#" + std::to_string(promise_->id())).c_str();
 }
 
 bool PromiseTask::IsComplete() const

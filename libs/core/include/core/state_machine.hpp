@@ -80,15 +80,13 @@ public:
   /// @{
   char const *GetName() const override;
   char const *GetStateName() const override;
-  char const *GetPrevStateName() const override;
   /// @}
 
   /// @name Runnable Interface
   /// @{
   bool        IsReadyToExecute() const override;
   void        Execute() override;
-  std::string GetId() const override;
-  std::string GetDebug() const override;
+  char const *GetId() const override;
   /// @}
 
   State state() const
@@ -270,21 +268,9 @@ char const *StateMachine<S>::GetName() const
  * @return The string name of the state machine
  */
 template <typename S>
-std::string StateMachine<S>::GetId() const
+char const *StateMachine<S>::GetId() const
 {
-  return name_;
-}
-
-/**
- * Get debug about what the runnable is doing
- *
- * @tparam S The state enum type
- * @return The current state of the state machine
- */
-template <typename S>
-std::string StateMachine<S>::GetDebug() const
-{
-  return std::string("State now: ") + this->GetStateName() + " prev: " + this->GetPrevStateName();
+  return name_.c_str();
 }
 
 /**
@@ -307,26 +293,7 @@ char const *StateMachine<S>::GetStateName() const
 }
 
 /**
- * Get the current string representation for the previous state
- *
- * @tparam S The state enum type
- * @return The string representation of the current state if successful otherwise "Unknown"
- */
-template <typename S>
-char const *StateMachine<S>::GetPrevStateName() const
-{
-  char const *text = "Unknown";
-
-  if (mapper_)
-  {
-    text = mapper_(previous_state());
-  }
-
-  return text;
-}
-
-/**
- * Determine if the runnable is ready to be run again
+ * Determine if the runnable is ready to the run again
  *
  * @tparam S The state enum type
  * @return true if the state machine should be executed again, otherwise false
