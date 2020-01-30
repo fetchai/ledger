@@ -153,6 +153,15 @@ void TopK<TensorType>::UpdateIndices(VecTensorType const &inputs)
   }
 }
 
+template <typename TensorType>
+OperationsCount TopK<TensorType>::ChargeForward()
+{
+  assert(!this->batch_input_shapes_.empty());
+  OperationsCount cost = fetch::ml::charge_estimation::ops::TOPK_PER_ELEMENT *
+                         this->TotalElementsIn({this->batch_input_shapes_});
+  return cost;
+}
+
 ///////////////////////////////
 /// EXPLICIT INSTANTIATIONS ///
 ///////////////////////////////

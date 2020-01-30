@@ -96,6 +96,16 @@ std::vector<math::SizeType> Concatenate<TensorType>::ComputeOutputShape(
   return ret_shape;
 }
 
+template <typename TensorType>
+OperationsCount Concatenate<TensorType>::ChargeForward()
+{
+  assert(!this->batch_input_shapes_.empty());
+  OperationsCount cost =
+      fetch::ml::charge_estimation::ops::CONCAT_PER_ELEMENT * this->batch_input_shapes_.size();
+
+  return cost;
+}
+
 ///////////////////////////////
 /// EXPLICIT INSTANTIATIONS ///
 ///////////////////////////////

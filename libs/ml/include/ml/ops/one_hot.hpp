@@ -74,6 +74,8 @@ public:
   }
   static constexpr char const *DESCRIPTOR = "OneHot";
 
+  OperationsCount ChargeForward() override;
+
 private:
   SizeType depth_;
   SizeType axis_;
