@@ -52,16 +52,6 @@ def run_full_build()
   return true
 }
 
-def set_up_env_for_linux_pipenv(steps)
-{
-  withEnv([
-    "LC_ALL=C.UTF-8",
-    "LANG=C.UTF-8"])
-  {
-    steps()
-  }
-}
-
 def set_up_pipenv()
 {
   sh "pipenv install --dev"
