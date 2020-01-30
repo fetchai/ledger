@@ -997,34 +997,6 @@ TEST_F(VMModelTests, model_sequential_avgpool2d)
   ASSERT_TRUE(toolkit.Run(nullptr, ChargeAmount{0}));
 }
 
-TEST_F(VMModelTests, model_sequential_avgpool1d)
-{
-  static char const *SRC_METRIC = R"(
-        function main()
-          var model = Model("sequential");
-          model.addExperimental("avgpool1d", 4u64, 1u64);
-          model.compile("scel", "adam");
-        endfunction
-      )";
-
-  ASSERT_TRUE(toolkit.Compile(SRC_METRIC));
-  ASSERT_TRUE(toolkit.Run(nullptr, ChargeAmount{0}));
-}
-
-TEST_F(VMModelTests, model_sequential_avgpool2d)
-{
-  static char const *SRC_METRIC = R"(
-        function main()
-          var model = Model("sequential");
-          model.addExperimental("avgpool2d", 4u64, 1u64);
-          model.compile("scel", "adam");
-        endfunction
-      )";
-
-  ASSERT_TRUE(toolkit.Compile(SRC_METRIC));
-  ASSERT_TRUE(toolkit.Run(nullptr, ChargeAmount{0}));
-}
-
 TEST_F(VMModelTests, model_sequential_conv_maxpool)
 {
   static char const *sequential_model_src = R"(
