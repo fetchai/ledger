@@ -460,7 +460,7 @@ bool Constellation::OnBringUpLaneServices()
   // create the internal muddle instance
   internal_muddle_ =
       muddle::CreateMuddle("ISRD", internal_identity_, network_manager_,
-                           cfg_.manifest.FindExternalAddress(ServiceIdentifier::Type::CORE));
+                           cfg_.manifest.FindExternalAddress(ServiceIdentifier::Type::CORE), false);
 
   if (!StartInternalMuddle())
   {

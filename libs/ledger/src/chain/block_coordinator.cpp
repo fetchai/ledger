@@ -69,7 +69,7 @@ const std::chrono::seconds      STATE_NOTIFY_INTERVAL{20};
 const std::chrono::seconds      NOTIFY_INTERVAL{5};
 const std::chrono::seconds      WAIT_BEFORE_ASKING_FOR_MISSING_TX_INTERVAL{5};
 const std::size_t               MIN_BLOCK_SYNC_SLIPPAGE_FOR_WAITLESS_SYNC_OF_MISSING_TXS{30};
-const std::chrono::seconds      WAIT_FOR_TX_TIMEOUT_INTERVAL{120};
+const std::chrono::seconds      WAIT_FOR_TX_TIMEOUT_INTERVAL{240};
 const uint32_t                  THRESHOLD_FOR_FAST_SYNCING{100u};
 
 }  // namespace
@@ -167,6 +167,12 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr dag,
                                                                  "Blocks minted")}
   , consensus_update_failure_total_{telemetry::Registry::Instance().CreateCounter(
         "consensus_update_failure_total", "Failures to update consensus")}
+  , remove_block_total_{telemetry::Registry::Instance().CreateCounter(
+        "ledger_block_coordinator_remove_block_total",
+        "The total number of blocks removed from the chain by the block coordinator")}
+  , panic_block_total_{telemetry::Registry::Instance().CreateCounter(
+        "ledger_block_coordinator_panic_block_total",
+        "The total number of times that the block coordinator has paniced")}
   , tx_sync_times_{telemetry::Registry::Instance().CreateHistogram(
         {0.001, 0.01, 0.1, 1, 10, 100}, "ledger_block_coordinator_tx_sync_times",
         "The histogram of the time it takes to sync transactions")}
@@ -818,6 +824,7 @@ void BlockCoordinator::RemoveBlock(BlockPtrType &block)
   }
 
   blocks_to_common_ancestor_.clear();
+  remove_block_total_->increment();
 }
 
 bool BlockCoordinator::RevertToBlock(Block const &block)
@@ -880,6 +887,8 @@ void BlockCoordinator::Panic()
   // delay the state machine in these error cases, to allow the network to catch up if the issue
   // is network related and if nothing else restrict logs being spammed
   state_machine_->Delay(std::chrono::seconds{5});
+
+  panic_block_total_->increment();
 }
 
 BlockCoordinator::State BlockCoordinator::OnScheduleBlockExecution()

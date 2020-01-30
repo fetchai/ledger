@@ -135,6 +135,11 @@ private:
   telemetry::GaugePtr<uint64_t> consensus_last_validate_block_failure_;
   telemetry::CounterPtr         consensus_validate_block_failures_total_;
   telemetry::CounterPtr         consensus_non_heaviest_blocks_total_;
+  telemetry::CounterPtr         failed_to_generate_entropy_total_;
+  telemetry::CounterPtr         block_generation_exception_total_;
+  telemetry::CounterPtr         block_generation_unknown_failure_total_;
+  telemetry::CounterPtr         invalid_block_timing_total_;
+  telemetry::CounterPtr         notarisation_is_not_ready_yet_total_;
 };
 
 }  // namespace ledger

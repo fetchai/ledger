@@ -16,12 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/mutex.hpp"
 #include "moment/clocks.hpp"
 #include "moment/detail/adjustable_clock.hpp"
 #include "moment/detail/steady_clock.hpp"
 
 #include <memory>
+#include <mutex>
 #include <string>
 #include <unordered_map>
 #include <utility>
@@ -32,7 +32,7 @@ namespace {
 
 using ClockStore = std::unordered_map<std::string, ClockPtr>;
 
-Mutex      clock_store_lock{};
+std::mutex clock_store_lock{};
 ClockStore clock_store;
 
 /**
@@ -87,7 +87,7 @@ ClockPtr GetClock(char const *name, ClockType default_type)
 {
   std::string const clock_name{name};
 
-  FETCH_LOCK(clock_store_lock);
+  std::lock_guard<std::mutex> lock(clock_store_lock);
 
   // if the clock already exists then look it up
   auto it = clock_store.find(name);
@@ -119,7 +119,7 @@ AdjustableClockPtr CreateAdjustableClock(char const *name, ClockType type)
 {
   std::string const clock_name{name};
 
-  FETCH_LOCK(clock_store_lock);
+  std::lock_guard<std::mutex> lock(clock_store_lock);
 
   // create the new clock
   auto clock = CreateAdjustable(type);
