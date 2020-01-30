@@ -65,6 +65,7 @@ namespace {
 
 constexpr char const *LOGGING_NAME = "Consensus";
 const std::size_t     DIGEST_LENGTH_BYTES{32};
+constexpr char const *FATAL_ERROR = "fatal error generated";
 
 using Consensus       = fetch::ledger::Consensus;
 using NextBlockPtr    = Consensus::NextBlockPtr;

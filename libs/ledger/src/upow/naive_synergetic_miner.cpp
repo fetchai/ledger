@@ -16,6 +16,19 @@
 //
 //------------------------------------------------------------------------------
 
+//   you may not use this file except in compliance with the License.
+//   You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+//   Unless required by applicable law or agreed to in writing, software
+//   distributed under the License is distributed on an "AS IS" BASIS,
+//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//   See the License for the specific language governing permissions and
+//   limitations under the License.
+//
+//------------------------------------------------------------------------------
+
 #include "core/digest.hpp"
 #include "core/serializers/main_serializer.hpp"
 #include "ledger/chaincode/contract_context.hpp"
@@ -135,7 +148,7 @@ void NaiveSynergeticMiner::Mine()
     std::ostringstream oss;
     for (auto const &element : problem_spaces)
     {
-      oss << "\n -> 0x" << element.first.contract_address.display();
+      oss << "\n -> 0x" << element.first.display();
     }
 
     FETCH_LOG_DEBUG(LOGGING_NAME, "Available synergetic contracts to be mined", oss.str());
