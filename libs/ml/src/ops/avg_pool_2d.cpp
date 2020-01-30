@@ -200,12 +200,10 @@ OperationsCount AvgPool2D<TensorType>::ChargeForward()
   OperationsCount num_output_shape_ops =
       this->batch_output_shape_.at(0) * this->batch_output_shape_.at(1) *
       this->batch_output_shape_.at(2) * this->batch_output_shape_.at(3);
-  OperationsCount cost =
-      fetch::ml::charge_estimation::ops::DIVISION_PER_ELEMENT *
-      static_cast<OperationsCount>(
-          num_output_shape_ops +
-          fetch::ml::charge_estimation::ops::ADDITION_PER_ELEMENT * num_output_shape_ops *
-              static_cast<OperationsCount>(this->kernel_size_ * this->kernel_size_));
+  auto cost = static_cast<OperationsCount>(
+      fetch::ml::charge_estimation::ops::DIVISION_PER_ELEMENT * num_output_shape_ops +
+      fetch::ml::charge_estimation::ops::ADDITION_PER_ELEMENT * num_output_shape_ops *
+          static_cast<OperationsCount>(this->kernel_size_ * this->kernel_size_));
   return cost;
 }
 
