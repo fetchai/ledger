@@ -134,6 +134,18 @@ std::vector<math::SizeType> StridedSlice<TensorType>::ComputeOutputShape(
   return output_shape;
 }
 
+template <typename TensorType>
+OperationsCount StridedSlice<TensorType>::ChargeForward()
+{
+  assert(!this->batch_input_shapes_.empty());
+  OperationsCount cost = fetch::ml::charge_estimation::ops::SLICE_PER_ELEMENT *
+                             this->TotalElementsIn({this->batch_input_shapes_}) +
+                         fetch::ml::charge_estimation::ops::ASSIGN_PER_ELEMENT *
+                             this->TotalElementsIn({this->batch_input_shapes_});
+  ;
+  return cost;
+}
+
 ///////////////////////////////
 /// EXPLICIT INSTANTIATIONS ///
 ///////////////////////////////

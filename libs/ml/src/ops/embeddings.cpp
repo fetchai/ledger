@@ -132,6 +132,17 @@ std::vector<math::SizeType> Embeddings<TensorType>::ComputeOutputShape(
   return output_shape;
 }
 
+template <typename TensorType>
+OperationsCount Embeddings<TensorType>::ChargeForward()
+{
+  assert(!this->batch_input_shapes_.empty());
+  assert(!this->batch_output_shape_.empty());
+
+  OperationsCount cost = fetch::ml::charge_estimation::ops::EMBEDDING_PER_ELEMENT;
+
+  return cost;
+}
+
 ///////////////////////////////
 /// EXPLICIT INSTANTIATIONS ///
 ///////////////////////////////

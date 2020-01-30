@@ -75,6 +75,8 @@ public:
     return DESCRIPTOR;
   }
 
+  OperationsCount ChargeForward() override;
+
 private:
   SizeType              axis_;
   std::vector<SizeType> concat_points_;
