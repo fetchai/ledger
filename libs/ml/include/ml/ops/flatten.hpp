@@ -68,6 +68,11 @@ public:
   }
   static constexpr char const *DESCRIPTOR = "Flatten";
 
+  OpType      OperationType() const override;
+  char const *Descriptor() const override;
+
+  OperationsCount ChargeForward() override;
+
 private:
   std::vector<SizeType> input_shape_;
 };

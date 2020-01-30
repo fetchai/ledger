@@ -17,25 +17,22 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/random/lfg.hpp"
-#include "math/standard_functions/sqrt.hpp"
+#include "math/base_types.hpp"
+#include "ml/meta/ml_type_traits.hpp"
 #include "ml/ops/variable.hpp"
-
-#include <cassert>
-#include <cmath>
-#include <cstdint>
-#include <iostream>
-#include <memory>
-#include <utility>
-#include <vector>
 
 namespace fetch {
 namespace ml {
 
-template <typename TensorType>
-struct StateDict;
+struct OpsSaveableParams;
 
 namespace ops {
+
+template <class TensorType>
+class Variable;
+
+template <class TensorType>
+class Ops;
 
 /**
  * enum for selecting which type of initialisation to use with weights
@@ -52,7 +49,7 @@ enum class WeightsInitialisation
   XAVIER_FAN_OUT_UNIFORM
 };
 
-template <class T>
+template <typename T>
 class Weights : public fetch::ml::ops::Variable<T>
 {
 public:
@@ -75,10 +72,6 @@ public:
   std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override;
 
   std::shared_ptr<Ops<TensorType>> MakeSharedCopy(std::shared_ptr<Ops<TensorType>> me) override;
-
-  fetch::ml::StateDict<T> StateDict() const override;
-
-  void LoadStateDict(fetch::ml::StateDict<T> const &dict) override;
 
   static void Initialise(TensorType &array, uint64_t in_size, uint64_t out_size,
                          WeightsInitialisation mode = WeightsInitialisation::XAVIER_GLOROT,
@@ -107,6 +100,11 @@ public:
 
   static constexpr char const *DESCRIPTOR = "Weights";
 
+  OpType      OperationType() const override;
+  char const *Descriptor() const override;
+
+  OperationsCount ChargeForward() override;
+
 private:
   static void XavierInitialisation(TensorType &array, DataType normalising_factor,
                                    SizeType seed = 123456789);
@@ -118,12 +116,5 @@ private:
 };
 
 }  // namespace ops
-
-template <class TensorType>
-struct OpWeightsSaveableParams : public OpVariableSaveableParams<TensorType>
-{
-  fetch::ml::OpType op_type = OpType::OP_WEIGHTS;
-};
-
 }  // namespace ml
 }  // namespace fetch

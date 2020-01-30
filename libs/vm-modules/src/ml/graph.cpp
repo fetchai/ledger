@@ -20,9 +20,18 @@
 #include "ml/core/graph.hpp"
 #include "ml/layers/convolution_1d.hpp"
 #include "ml/layers/fully_connected.hpp"
+
 #include "ml/ops/activation.hpp"
+#include "ml/ops/activations/dropout.hpp"
+#include "ml/ops/activations/relu.hpp"
+#include "ml/ops/activations/softmax.hpp"
+#include "ml/ops/exp.hpp"
+#include "ml/ops/placeholder.hpp"
+#include "ml/ops/transpose.hpp"
+
 #include "ml/ops/loss_functions/cross_entropy_loss.hpp"
 #include "ml/ops/loss_functions/mean_square_error_loss.hpp"
+
 #include "ml/saveparams/saveable_params.hpp"
 #include "ml/utilities/graph_builder.hpp"
 #include "vm/module.hpp"
@@ -52,6 +61,11 @@ Ptr<VMGraph> VMGraph::Constructor(VM *vm, TypeId type_id)
 void VMGraph::SetInput(VMPtrString const &name, Ptr<VMTensorType> const &input)
 {
   graph_.SetInput(name->string(), (*input).GetTensor());
+}
+
+void VMGraph::SetWeight(VMPtrString const &name, Ptr<VMTensorType> const &input)
+{
+  graph_.SetWeight(name->string(), (*input).GetTensor());
 }
 
 Ptr<VMTensorType> VMGraph::Evaluate(VMPtrString const &name)
@@ -166,7 +180,8 @@ void VMGraph::Bind(Module &module, bool const enable_experimental)
         .CreateMemberFunction("addExp", &VMGraph::AddExp, vm::MAXIMUM_CHARGE)
         .CreateMemberFunction("serializeToString", &VMGraph::SerializeToString, vm::MAXIMUM_CHARGE)
         .CreateMemberFunction("deserializeFromString", &VMGraph::DeserializeFromString,
-                              vm::MAXIMUM_CHARGE);
+                              vm::MAXIMUM_CHARGE)
+        .CreateMemberFunction("setWeight", &VMGraph::SetWeight, vm::MAXIMUM_CHARGE);
   }
 }
 

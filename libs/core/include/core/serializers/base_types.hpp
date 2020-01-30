@@ -799,7 +799,7 @@ template <typename K, typename V, typename D>
 struct ArraySerializer<std::pair<K, V>, D>
 {
 public:
-  using Type       = std::pair<V, K>;
+  using Type       = std::pair<K, V>;
   using DriverType = D;
 
   template <typename Constructor>
@@ -856,6 +856,48 @@ public:
     {
       output = std::make_shared<V>();
       array.GetNextValue(*output);
+    }
+    else
+    {
+      output = Type{};
+    }
+  }
+};
+
+template <typename V, typename D>
+struct ArraySerializer<std::shared_ptr<const V>, D>
+{
+public:
+  using Type       = std::shared_ptr<const V>;
+  using DriverType = D;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &array_constructor, Type const &input)
+  {
+    if (input)
+    {
+      auto array = array_constructor(1);
+      array.Append(*input);
+    }
+    else
+    {
+      array_constructor(0);
+    }
+  }
+
+  template <typename ArrayDeserializer>
+  static void Deserialize(ArrayDeserializer &array, Type &output)
+  {
+    if (array.size() >= 2)
+    {
+      throw SerializableException(std::string("std::shared_ptr should have 0 or 1 elements"));
+    }
+
+    if (array.size() == 1)
+    {
+      V value;
+      array.GetNextValue(output);
+      output = std::make_shared<const V>(std::move(value));
     }
     else
     {

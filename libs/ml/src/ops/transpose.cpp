@@ -109,6 +109,15 @@ std::vector<math::SizeType> Transpose<TensorType>::ComputeOutputShape(
   return shape;
 }
 
+template <typename TensorType>
+OperationsCount Transpose<TensorType>::ChargeForward()
+{
+  assert(!this->batch_input_shapes_.empty());
+  OperationsCount cost = fetch::ml::charge_estimation::ops::TRANSPOSE_PER_ELEMENT *
+                         this->TotalElementsIn({this->batch_input_shapes_});
+  return cost;
+}
+
 ///////////////////////////////
 /// EXPLICIT INSTANTIATIONS ///
 ///////////////////////////////
@@ -117,10 +126,6 @@ template class Transpose<math::Tensor<int8_t>>;
 template class Transpose<math::Tensor<int16_t>>;
 template class Transpose<math::Tensor<int32_t>>;
 template class Transpose<math::Tensor<int64_t>>;
-template class Transpose<math::Tensor<uint8_t>>;
-template class Transpose<math::Tensor<uint16_t>>;
-template class Transpose<math::Tensor<uint32_t>>;
-template class Transpose<math::Tensor<uint64_t>>;
 template class Transpose<math::Tensor<float>>;
 template class Transpose<math::Tensor<double>>;
 template class Transpose<math::Tensor<fixed_point::fp32_t>>;

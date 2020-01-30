@@ -94,6 +94,14 @@ ChargeAmount ModelEstimator::LayerAddDense(Ptr<String> const &layer, SizeType co
          COMPUTE_CHARGE_COST;
 }
 
+ModelEstimator::ChargeAmount ModelEstimator::LayerAddDenseAutoInputs(
+    const fetch::vm::Ptr<String> &layer, const math::SizeType &hidden_nodes)
+{
+  FETCH_UNUSED(layer);
+  FETCH_UNUSED(hidden_nodes);
+  return MaximumCharge(layer->string() + NOT_IMPLEMENTED_MESSAGE);
+}
+
 ChargeAmount ModelEstimator::LayerAddDenseActivation(Ptr<fetch::vm::String> const &layer,
                                                      SizeType const &              inputs,
                                                      SizeType const &              hidden_nodes,
@@ -142,6 +150,15 @@ ChargeAmount ModelEstimator::LayerAddConv(Ptr<String> const &layer, SizeType con
   return MaximumCharge(layer->string() + NOT_IMPLEMENTED_MESSAGE);
 }
 
+ChargeAmount ModelEstimator::LayerAddMaxPool(Ptr<String> const &layer, SizeType const &kernel_size,
+                                             SizeType const &stride_size)
+{
+  FETCH_UNUSED(layer);
+  FETCH_UNUSED(kernel_size);
+  FETCH_UNUSED(stride_size);
+  return MaximumCharge(layer->string() + NOT_IMPLEMENTED_MESSAGE);
+}
+
 ChargeAmount ModelEstimator::LayerAddConvActivation(
     Ptr<String> const &layer, SizeType const &output_channels, SizeType const &input_channels,
     SizeType const &kernel_size, SizeType const &stride_size, Ptr<String> const &activation)
@@ -174,6 +191,14 @@ ChargeAmount ModelEstimator::LayerAddActivation(const fetch::vm::Ptr<String> &la
 {
   FETCH_UNUSED(layer);
   FETCH_UNUSED(activation);
+  return MaximumCharge(layer->string() + NOT_IMPLEMENTED_MESSAGE);
+}
+
+ModelEstimator::ChargeAmount ModelEstimator::LayerAddInput(
+    fetch::vm::Ptr<String> const &layer, fetch::vm::Ptr<vm::Array<math::SizeType>> const &shape)
+{
+  FETCH_UNUSED(layer);
+  FETCH_UNUSED(shape);
   return MaximumCharge(layer->string() + NOT_IMPLEMENTED_MESSAGE);
 }
 
@@ -308,14 +333,6 @@ ChargeAmount ModelEstimator::CompileSequentialWithMetrics(
   }
 
   return CompileSequential(loss, optimiser);
-}
-
-ChargeAmount ModelEstimator::CompileSimple(Ptr<String> const &         optimiser,
-                                           Ptr<Array<SizeType>> const &in_layers)
-{
-  FETCH_UNUSED(optimiser);
-  FETCH_UNUSED(in_layers);
-  return MaximumCharge(optimiser->string() + NOT_IMPLEMENTED_MESSAGE);
 }
 
 ChargeAmount ModelEstimator::Fit(Ptr<math::VMTensor> const &data, Ptr<math::VMTensor> const &labels,

@@ -91,7 +91,7 @@ int main(int ac, char **av)
   auto mnist_labels = fetch::ml::utilities::read_mnist_labels<TensorType>(av[2]);
   mnist_labels      = fetch::ml::utilities::convert_labels_to_onehot(mnist_labels);
 
-  fetch::ml::dataloaders::TensorDataLoader<TensorType, TensorType> data_loader;
+  fetch::ml::dataloaders::TensorDataLoader<TensorType> data_loader;
   data_loader.AddData({mnist_images}, mnist_labels);
 
   bool                                           is_done = data_loader.IsDone();

@@ -39,7 +39,7 @@ namespace ops {
  * @tparam T
  */
 
-template <class T>
+template <typename T>
 class DataHolder : public Ops<T>
 {
 public:
@@ -75,6 +75,17 @@ public:
   }
 
   static constexpr char const *DESCRIPTOR = "DataHolder";
+
+  OpType OperationType() const override  // TODO(ML-466) : move implementation to .cpp
+  {
+    return this->OpCode();
+  }
+  char const *Descriptor() const override  // TODO(ML-466) : move implementation to .cpp
+  {
+    return DESCRIPTOR;
+  }
+
+  OperationsCount ChargeForward() override;
 
 protected:
   TensorPtrType data_;

@@ -52,7 +52,7 @@ ModelType SetupModel(fetch::ml::OptimiserType                 optimiser_type,
                      TypeParam &gt)
 {
   // setup dataloader
-  using DataLoaderType = fetch::ml::dataloaders::TensorDataLoader<TypeParam, TypeParam>;
+  using DataLoaderType = fetch::ml::dataloaders::TensorDataLoader<TypeParam>;
   auto data_loader_ptr = std::make_unique<DataLoaderType>();
   data_loader_ptr->AddData({data}, gt);
 
@@ -236,6 +236,37 @@ TYPED_TEST(SequentialModelTest, sequential_predict_without_dataloader)
   // Predicting without setting a dataloader is fine
   EXPECT_NO_FATAL_FAILURE(model.Predict(train_data, train_labels));
 }
+
+TYPED_TEST(SequentialModelTest, charge_one_dense)
+{
+  using ModelType  = fetch::ml::model::Sequential<TypeParam>;
+  using DataType   = typename TypeParam::Type;
+  using TensorType = fetch::math::Tensor<DataType>;
+  using Dense      = fetch::ml::layers::FullyConnected<TypeParam>;
+
+  fetch::ml::OptimiserType optimiser_type = fetch::ml::OptimiserType::SGD;
+
+  // setup dataloader
+  using DataLoaderType = fetch::ml::dataloaders::TensorDataLoader<TypeParam>;
+  auto data_loader_ptr = std::make_unique<DataLoaderType>();
+
+  TensorType data = TensorType::FromString(R"(1, 2, 3, 4, 5, 6, 7, 8)");
+  TensorType gt   = TensorType::FromString(R"(1, 2, 3, 4, 5, 6, 7, 8)");
+  data_loader_ptr->AddData({data}, gt);
+
+  fetch::ml::model::ModelConfig<DataType> model_config;
+  ModelType                               model = ModelType(model_config);
+
+  model.SetBatchInputShape({data.shape()});
+  model.template Add<Dense>(Dense::AUTODETECT_INPUTS_COUNT, 16);
+  model.SetDataloader(std::move(data_loader_ptr));
+  model.Compile(optimiser_type, fetch::ml::ops::LossType::MEAN_SQUARE_ERROR);
+
+  OperationsCount const cost          = model.ChargeForward();
+  OperationsCount const expected_cost = 65;  // A pre-calculated cost for a Dense with 8 neurons.
+  EXPECT_EQ(cost, expected_cost);
+}
+
 }  // namespace test
 }  // namespace ml
 }  // namespace fetch

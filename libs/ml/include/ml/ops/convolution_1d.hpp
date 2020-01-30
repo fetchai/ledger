@@ -70,6 +70,17 @@ public:
   }
   static constexpr char const *DESCRIPTOR = "Convolution1D";
 
+  OpType OperationType() const override  // TODO(ML-466) : move implementation to .cpp
+  {
+    return this->OpCode();
+  }
+  char const *Descriptor() const override  // TODO(ML-466) : move implementation to .cpp
+  {
+    return DESCRIPTOR;
+  }
+
+  OperationsCount ChargeForward() override;
+
 private:
   void FillVerticalStride(TensorType const &input, TensorType &vertical_stride,
                           SizeType output_channels, SizeType input_channels,
@@ -92,6 +103,8 @@ private:
 
   void ReverseFillOutput(TensorType &gemm_output, TensorType const &output,
                          SizeType output_channels, SizeType output_height, SizeType batch_size);
+
+  SizeType ComputeOutputHeight(SizeType input_height, SizeType kernel_height) const;
 
   SizeType stride_size_;
 };

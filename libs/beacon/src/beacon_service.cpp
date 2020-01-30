@@ -217,6 +217,33 @@ void BeaconService::MostRecentSeen(uint64_t round)
   beacon_most_recent_round_seen_->set(most_recent_round_seen_);
 }
 
+// Determine whether signatures already exist (used rather than entropy
+// since it is persisted across reboots)
+bool SigsAlreadyExist(BeaconService::SharedAeonExecutionUnit const &exe_unit,
+                      BeaconService::SignaturesBeingBuilt const &sigs, char const *LOGGING_NAME)
+{
+  if (sigs.empty())
+  {
+    return false;
+  }
+
+  // If the aeon is correct, its beginning should be higher than all previously generated
+  // signatures. Check last signature against beginning of aeon
+  BeaconService::SignatureInformation const &last_signature = sigs.crbegin()->second;
+
+  if (exe_unit->aeon.round_start > last_signature.round)
+  {
+    return false;
+  }
+
+  FETCH_LOG_WARN(
+      LOGGING_NAME,
+      "Found an aeon in the aeon queue that appears to be old or a duplicate! It starts: ",
+      exe_unit->aeon.round_start, " but we have a signature for round: ", last_signature.round);
+
+  return true;
+}
+
 BeaconService::State BeaconService::OnWaitForSetupCompletionState()
 {
   beacon_state_gauge_->set(static_cast<uint64_t>(state_machine_->state()));
@@ -231,17 +258,24 @@ BeaconService::State BeaconService::OnWaitForSetupCompletionState()
     active_exe_unit_ = aeon_exe_queue_.front();
     aeon_exe_queue_.pop_front();
 
-    // Set the previous block entropy appropriately
-    block_entropy_previous_ =
-        std::make_shared<BlockEntropy>(active_exe_unit_->aeon.block_entropy_previous);
-    block_entropy_being_created_ = std::make_shared<BlockEntropy>(active_exe_unit_->block_entropy);
+    // Guard against erroneous DKG creation if the network were to reset and resync
+    if (SigsAlreadyExist(active_exe_unit_, signatures_being_built_, LOGGING_NAME))
+    {
+      active_exe_unit_.reset();
+    }
+    else
+    {
+      // Set the previous block entropy appropriately
+      block_entropy_previous_ =
+          std::make_shared<BlockEntropy>(active_exe_unit_->aeon.block_entropy_previous);
+      block_entropy_being_created_ =
+          std::make_shared<BlockEntropy>(active_exe_unit_->block_entropy);
 
-    SaveState();
+      // TODO(HUT): re-enable this check after fixing the dealer test
+      /* assert(block_entropy_being_created_->IsAeonBeginning()); */
 
-    // TODO(HUT): re-enable this check after fixing the dealer test
-    /* assert(block_entropy_being_created_->IsAeonBeginning()); */
-
-    return State::PREPARE_ENTROPY_GENERATION;
+      return State::PREPARE_ENTROPY_GENERATION;
+    }
   }
 
   state_machine_->Delay(std::chrono::milliseconds(500));
@@ -360,7 +394,7 @@ BeaconService::State BeaconService::OnCollectSignaturesState()
 BeaconService::State BeaconService::OnVerifySignaturesState()
 {
   beacon_state_gauge_->set(static_cast<uint64_t>(state_machine_->state()));
-  SignatureInformation ret;
+  SignatureInformation ret{};
   uint64_t             index = 0;
 
   {

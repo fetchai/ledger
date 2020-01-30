@@ -19,6 +19,7 @@
 
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/mutex.hpp"
+#include "core/serializers/clock_serializers.hpp"
 #include "core/serializers/main_serializer.hpp"
 #include "crypto/sha1.hpp"
 #include "kademlia/bucket.hpp"
