@@ -91,11 +91,12 @@ public:
   };
 
   using SignatureShare = AeonExecutionUnit::SignatureShare;
+  using BeaconManager  = dkg::BeaconManager;
 
   struct SignatureInformation
   {
-    uint64_t                                                    round{uint64_t(-1)};
-    std::map<dkg::BeaconManager::MuddleAddress, SignatureShare> threshold_signatures;
+    uint64_t                                               round{uint64_t(-1)};
+    std::map<BeaconManager::MuddleAddress, SignatureShare> threshold_signatures;
   };
 
   using Identity                = crypto::Identity;
@@ -104,7 +105,6 @@ public:
   using Certificate             = crypto::Prover;
   using CertificatePtr          = std::shared_ptr<Certificate>;
   using Address                 = muddle::Packet::Address;
-  using BeaconManager           = dkg::BeaconManager;
   using SharedAeonExecutionUnit = std::shared_ptr<AeonExecutionUnit>;
   using Endpoint                = muddle::MuddleEndpoint;
   using MuddleInterface         = muddle::MuddleInterface;
@@ -128,6 +128,7 @@ public:
   using CompletedBlockEntropy   = std::map<uint64_t, BlockEntropyPtr>;
   using ActiveExeUnit           = std::shared_ptr<AeonExecutionUnit>;
   using AeonExeQueue            = std::deque<SharedAeonExecutionUnit>;
+  using SignaturesBeingBuilt    = std::map<uint64_t, SignatureInformation>;
 
   BeaconService()                      = delete;
   BeaconService(BeaconService const &) = delete;

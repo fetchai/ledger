@@ -88,6 +88,15 @@ std::vector<math::SizeType> DataHolder<TensorType>::ComputeOutputShape(
   return data_->shape();
 }
 
+template <typename TensorType>
+OperationsCount DataHolder<TensorType>::ChargeForward()
+{
+  assert(!this->batch_input_shapes_.empty());
+  OperationsCount cost = fetch::ml::charge_estimation::ops::ASSIGN_PER_ELEMENT;
+
+  return cost;
+}
+
 ///////////////////////////////
 /// EXPLICIT INSTANTIATIONS ///
 ///////////////////////////////
