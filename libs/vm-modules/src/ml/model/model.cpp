@@ -40,9 +40,9 @@
 #include "ml/ops/activations/relu.hpp"
 #include "ml/ops/activations/sigmoid.hpp"
 #include "ml/ops/activations/softmax.hpp"
-#include "ml/ops/flatten.hpp"
 #include "ml/ops/avg_pool_1d.hpp"
 #include "ml/ops/avg_pool_2d.hpp"
+#include "ml/ops/flatten.hpp"
 #include "ml/ops/max_pool_1d.hpp"
 #include "ml/ops/max_pool_2d.hpp"
 #include "ml/ops/reshape.hpp"
@@ -488,13 +488,12 @@ void VMModel::AssertLayerTypeMatches(SupportedLayerType                layer,
                                      std::vector<SupportedLayerType> &&valids) const
 {
   static const std::map<SupportedLayerType, std::string> LAYER_NAMES_{
-      {SupportedLayerType::DENSE, "dense"},        {SupportedLayerType::CONV1D, "conv1d"},
-      {SupportedLayerType::CONV2D, "conv2d"},      {SupportedLayerType::FLATTEN, "flatten"},
-      {SupportedLayerType::DROPOUT, "dropout"},    {SupportedLayerType::ACTIVATION, "activation"},
-      {SupportedLayerType::INPUT, "input"},        {SupportedLayerType::MAXPOOL1D, "maxpool1d"},
-      {SupportedLayerType::MAXPOOL2D, "maxpool2d"},
-  {SupportedLayerType::AVGPOOL1D, "avgpool1d"},
-  {SupportedLayerType::AVGPOOL2D, "avgpool2d"}};
+      {SupportedLayerType::DENSE, "dense"},         {SupportedLayerType::CONV1D, "conv1d"},
+      {SupportedLayerType::CONV2D, "conv2d"},       {SupportedLayerType::FLATTEN, "flatten"},
+      {SupportedLayerType::DROPOUT, "dropout"},     {SupportedLayerType::ACTIVATION, "activation"},
+      {SupportedLayerType::INPUT, "input"},         {SupportedLayerType::MAXPOOL1D, "maxpool1d"},
+      {SupportedLayerType::MAXPOOL2D, "maxpool2d"}, {SupportedLayerType::AVGPOOL1D, "avgpool1d"},
+      {SupportedLayerType::AVGPOOL2D, "avgpool2d"}};
   if (std::find(valids.begin(), valids.end(), layer) == valids.end())
   {
     throw std::runtime_error("Invalid params specified for \"" + LAYER_NAMES_.at(layer) +
@@ -821,17 +820,15 @@ void VMModel::LayerAddInput(const fetch::vm::Ptr<String> &                   lay
 }
 
 void VMModel::LayerAddPool(const fetch::vm::Ptr<fetch::vm::String> &layer,
-                              const math::SizeType &kernel_size, const math::SizeType &stride_size)
+                           const math::SizeType &kernel_size, const math::SizeType &stride_size)
 {
   try
   {
     SupportedLayerType const layer_type =
         ParseName(layer->string(), layer_types_, LAYER_TYPE_MESSAGE);
     AssertLayerTypeMatches(layer_type,
-                           {SupportedLayerType::MAXPOOL1D,
-                            SupportedLayerType::MAXPOOL2D,
-                            SupportedLayerType::AVGPOOL1D,
-                            SupportedLayerType::AVGPOOL2D});
+                           {SupportedLayerType::MAXPOOL1D, SupportedLayerType::MAXPOOL2D,
+                            SupportedLayerType::AVGPOOL1D, SupportedLayerType::AVGPOOL2D});
     SequentialModelPtr me = GetMeAsSequentialIfPossible();
     if (layer_type == SupportedLayerType::MAXPOOL1D)
     {

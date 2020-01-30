@@ -151,7 +151,7 @@ ChargeAmount ModelEstimator::LayerAddConv(Ptr<String> const &layer, SizeType con
 }
 
 ChargeAmount ModelEstimator::LayerAddPool(Ptr<String> const &layer, SizeType const &kernel_size,
-                                             SizeType const &stride_size)
+                                          SizeType const &stride_size)
 {
   FETCH_UNUSED(layer);
   FETCH_UNUSED(kernel_size);
