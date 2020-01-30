@@ -17,12 +17,14 @@
 //------------------------------------------------------------------------------
 
 #include "math/tensor/tensor.hpp"
+#include "ml/charge_estimation/ops/constants.hpp"
 #include "ml/core/graph.hpp"
 #include "ml/layers/convolution_1d.hpp"
 #include "ml/layers/fully_connected.hpp"
 #include "ml/ops/activations/relu.hpp"
 #include "ml/ops/add.hpp"
 #include "ml/ops/loss_functions/mean_square_error_loss.hpp"
+#include "ml/ops/matrix_multiply.hpp"
 #include "ml/ops/multiply.hpp"
 #include "ml/ops/placeholder.hpp"
 #include "ml/ops/subtract.hpp"
@@ -1210,6 +1212,98 @@ TYPED_TEST(GraphTest, graph_getWeightsOrder_2)
                                      fetch::math::function_tolerance<DataType>()));
   ASSERT_TRUE(weights.at(5).AllClose(gt_c_weight, fetch::math::function_tolerance<DataType>(),
                                      fetch::math::function_tolerance<DataType>()));
+}
+
+TYPED_TEST(GraphTest, graph_charge_input_only)
+{
+  using TensorType = TypeParam;
+  using namespace fetch::ml::ops;
+
+  TensorType data = TensorType::FromString(R"(01,02,03,04; 11,12,13,14; 21,22,23,24; 31,32,33,34)");
+
+  fetch::ml::Graph<TensorType> g;
+
+  std::string input = g.template AddNode<PlaceHolder<TensorType>>("Input", {});
+
+  g.SetInput(input, data);
+  g.Compile();
+
+  OperationsCount const charge          = g.ChargeForward(input);
+  OperationsCount const expected_charge = 0;  // Placeholder reading is "free" in charge amount.
+
+  ASSERT_EQ(charge, expected_charge);
+}
+
+TYPED_TEST(GraphTest, graph_charge_subtraction)
+{
+  using TensorType = TypeParam;
+  using namespace fetch::ml::ops;
+  using namespace fetch::ml::charge_estimation::ops;
+
+  TensorType data = TensorType::FromString(R"(01,02,03,04; 11,12,13,14; 21,22,23,24; 31,32,33,34)");
+
+  fetch::ml::Graph<TensorType> g;
+
+  std::string left_input  = g.template AddNode<PlaceHolder<TensorType>>("LeftInput", {});
+  std::string right_input = g.template AddNode<PlaceHolder<TensorType>>("RightInput", {});
+  std::string subtract =
+      g.template AddNode<Subtract<TensorType>>("Subtract", {left_input, right_input});
+  g.SetInput(left_input, data);
+  g.SetInput(right_input, data);
+  g.Compile();
+
+  OperationsCount const charge       = g.ChargeForward(subtract);
+  OperationsCount const batch_charge = charge * data.shape().back();
+
+  std::size_t const     total_elements_in_output = 4 * 4;
+  OperationsCount const expected_charge = total_elements_in_output * SUBTRACTION_PER_ELEMENT;
+
+  ASSERT_EQ(batch_charge, expected_charge);
+}
+
+TYPED_TEST(GraphTest, graph_charge_matmul)
+{
+  using namespace fetch::ml::ops;
+  using namespace fetch::ml::charge_estimation::ops;
+  using TensorType = TypeParam;
+  using math::SizeType;
+
+  // MatMul here is intended to multiply 2D weights matrix [2; 4] to a 2D input matrix
+  // [4; n], resulting in 2D matrix of size [2; n]; n == batch_size == 6
+
+  TensorType weights_data = TensorType::FromString(R"(01,02,03,04; 11,12,13,14)");
+  TensorType input_data   = TensorType::FromString(
+      R"(01,02,03,04,05,06; 11,12,13,14,15,16; 21,22,23,24,25,26; 31,32,33,34,35,36)");
+  SizeType const weight_width  = weights_data.shape().front();
+  SizeType const weight_height = weights_data.shape().back();
+  SizeType const input_height  = input_data.shape().front();
+
+  ASSERT_EQ(weight_height, input_height);  // else MatMul is not possible
+
+  SizeType const batch_size = input_data.shape().back();
+
+  fetch::ml::Graph<TensorType> g;
+
+  std::string weights = g.template AddNode<PlaceHolder<TensorType>>("Weights", {});
+  std::string input   = g.template AddNode<PlaceHolder<TensorType>>("Input", {});
+  std::string matmul =
+      g.template AddNode<MatrixMultiply<TensorType>>("MatMul", {"Weights", "Input"});
+
+  g.SetInput(weights, weights_data);
+  g.SetInput(input, input_data);
+  g.Compile();
+
+  math::SizeVector const out_shape = g.GetNode(matmul)->BatchOutputShape();
+  ASSERT_EQ(out_shape.size(), 2);
+  ASSERT_EQ(out_shape.front(), 2);
+
+  OperationsCount const charge       = g.ChargeForward(matmul);
+  OperationsCount const batch_charge = charge * batch_size;
+
+  SizeType const        matmul_ops      = weight_width * input_height * batch_size;
+  OperationsCount const expected_charge = matmul_ops * MULTIPLICATION_PER_ELEMENT;
+
+  ASSERT_EQ(batch_charge, expected_charge);
 }
 
 }  // namespace test

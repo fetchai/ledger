@@ -488,6 +488,16 @@ TEST_F(VMModelTests, model_add_conv_invalid_params_relu)
   TestInvalidLayerAdding(R"(model.add("conv1d", 10u64, 10u64, "relu");)");
 }
 
+TEST_F(VMModelTests, model_add_maxpool1d_invalid_params_relu)
+{
+  TestInvalidLayerAdding(R"(model.add("maxpool1d", 10u64, 10u64, "relu");)");
+}
+
+TEST_F(VMModelTests, model_add_maxpool2d_invalid_params_relu)
+{
+  TestInvalidLayerAdding(R"(model.add("maxpool2d", 10u64, 10u64, "relu");)");
+}
+
 TEST_F(VMModelTests, model_add_activation_invalid_params)
 {
   TestInvalidLayerAdding(R"(model.add("activation", "UNKNOWN_ACTIVATION");)");
@@ -904,6 +914,34 @@ TEST_F(VMModelTests, model_sequential_flatten)
           var model = Model("sequential");
           model.add("flatten");
           model.compile("scel", "adam", {"categorical accuracy"});
+        endfunction
+      )";
+
+  ASSERT_TRUE(toolkit.Compile(SRC_METRIC));
+  ASSERT_TRUE(toolkit.Run(nullptr, ChargeAmount{0}));
+}
+
+TEST_F(VMModelTests, model_sequential_maxpool1d)
+{
+  static char const *SRC_METRIC = R"(
+        function main()
+          var model = Model("sequential");
+          model.addExperimental("maxpool1d", 4u64, 1u64);
+          model.compile("scel", "adam");
+        endfunction
+      )";
+
+  ASSERT_TRUE(toolkit.Compile(SRC_METRIC));
+  ASSERT_TRUE(toolkit.Run(nullptr, ChargeAmount{0}));
+}
+
+TEST_F(VMModelTests, model_sequential_maxpool2d)
+{
+  static char const *SRC_METRIC = R"(
+        function main()
+          var model = Model("sequential");
+          model.addExperimental("maxpool2d", 4u64, 1u64);
+          model.compile("scel", "adam");
         endfunction
       )";
 

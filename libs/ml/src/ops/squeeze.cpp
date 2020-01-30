@@ -106,6 +106,16 @@ std::vector<math::SizeType> Squeeze<TensorType>::ComputeOutputShape(
   }
   return shape;
 }
+
+template <typename TensorType>
+OperationsCount Squeeze<TensorType>::ChargeForward()
+{
+  assert(!this->batch_output_shape_.empty());
+  OperationsCount cost = fetch::ml::charge_estimation::ops::SQUEEZE_PER_ELEMENT *
+                         this->TotalElementsIn({this->batch_input_shapes_});
+  return cost;
+}
+
 ///////////////////////////////
 /// EXPLICIT INSTANTIATIONS ///
 ///////////////////////////////

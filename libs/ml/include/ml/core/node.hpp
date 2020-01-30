@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "math/base_types.hpp"
+#include "ml/charge_estimation/ops/constants.hpp"
 
 #include <functional>
 #include <memory>
@@ -147,6 +148,9 @@ public:
   {
     return static_cast<bool>(cached_output_status_ == CachedOutputState::VALID_CACHE);
   }
+
+  fetch::ml::OperationsCount ChargeForward();
+  fetch::ml::OperationsCount ChargeBackward();
 
 private:
   std::vector<NodeWeakPtrType> input_nodes_;
