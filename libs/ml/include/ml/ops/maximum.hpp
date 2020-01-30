@@ -62,6 +62,8 @@ public:
     return OpType::OP_MAXIMUM;
   }
   static constexpr char const *DESCRIPTOR = "Maximum";
+
+  OperationsCount ChargeForward() override;
 };
 
 }  // namespace ops

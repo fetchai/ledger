@@ -80,6 +80,8 @@ public:
     return DESCRIPTOR;
   }
 
+  OperationsCount ChargeForward() override;
+
 private:
   SizeType axis_;
   DataType epsilon_;
