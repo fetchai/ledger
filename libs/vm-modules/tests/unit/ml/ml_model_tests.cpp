@@ -508,6 +508,16 @@ TEST_F(VMModelTests, model_add_maxpool2d_invalid_params_less_than_needed)
   TestInvalidLayerAdding(R"(model.addExperimental("maxpool2d", 10u64);)");
 }
 
+TEST_F(VMModelTests, model_add_avgpool1d_invalid_params_less_than_needed)
+{
+  TestInvalidLayerAdding(R"(model.addExperimental("avgpool1d", 1u64);)");
+}
+
+TEST_F(VMModelTests, model_add_avgpool2d_invalid_params_less_than_needed)
+{
+  TestInvalidLayerAdding(R"(model.addExperimental("avgpool2d", 10u64);)");
+}
+
 TEST_F(VMModelTests, model_add_activation_invalid_params)
 {
   TestInvalidLayerAdding(R"(model.add("activation", "UNKNOWN_ACTIVATION");)");
@@ -951,6 +961,34 @@ TEST_F(VMModelTests, model_sequential_maxpool2d)
         function main()
           var model = Model("sequential");
           model.addExperimental("maxpool2d", 4u64, 1u64);
+          model.compile("scel", "adam");
+        endfunction
+      )";
+
+  ASSERT_TRUE(toolkit.Compile(SRC_METRIC));
+  ASSERT_TRUE(toolkit.Run(nullptr, ChargeAmount{0}));
+}
+
+TEST_F(VMModelTests, model_sequential_avgpool1d)
+{
+  static char const *SRC_METRIC = R"(
+        function main()
+          var model = Model("sequential");
+          model.addExperimental("avgpool1d", 4u64, 1u64);
+          model.compile("scel", "adam");
+        endfunction
+      )";
+
+  ASSERT_TRUE(toolkit.Compile(SRC_METRIC));
+  ASSERT_TRUE(toolkit.Run(nullptr, ChargeAmount{0}));
+}
+
+TEST_F(VMModelTests, model_sequential_avgpool2d)
+{
+  static char const *SRC_METRIC = R"(
+        function main()
+          var model = Model("sequential");
+          model.addExperimental("avgpool2d", 4u64, 1u64);
           model.compile("scel", "adam");
         endfunction
       )";
