@@ -67,15 +67,13 @@ def static_analysis(Configuration config)
           checkout scm
         }
 
-        set_up_env_for_linux_pipenv {
-          docker.image(STATIC_ANALYSIS_IMAGE).inside {
-            stage('Set Up Static Analysis') {
-              set_up_pipenv()
-            }
+        docker.image(STATIC_ANALYSIS_IMAGE).inside {
+          stage('Set Up Static Analysis') {
+            set_up_pipenv()
+          }
 
-            stage('Run Static Analysis') {
-              sh "pipenv run ./scripts/ci-tool.py --lint ${config.label}"
-            }
+          stage('Run Static Analysis') {
+            sh "pipenv run ./scripts/ci-tool.py --lint ${config.label}"
           }
         }
       }
@@ -177,14 +175,12 @@ full_run = { platform_, config_ ->
 def create_docker_build(Platform platform, Configuration config, stages)
 {
   def build = { build_stages ->
-    set_up_env_for_linux_pipenv {
-      docker.image(platform.docker_image).inside {
-        stage("Set Up ${stage_name_suffix(platform, config)}") {
-          set_up_pipenv()
-        }
-
-        build_stages()
+    docker.image(platform.docker_image).inside {
+      stage("Set Up ${stage_name_suffix(platform, config)}") {
+        set_up_pipenv()
       }
+
+      build_stages()
     }
   }
 
@@ -273,20 +269,18 @@ def run_basic_checks()
         checkout scm
       }
 
-      set_up_env_for_linux_pipenv {
-        docker.image(DOCKER_IMAGE_NAME).inside {
-          stage('Set Up Basic Checks') {
-            set_up_pipenv()
-          }
+      docker.image(DOCKER_IMAGE_NAME).inside {
+        stage('Set Up Basic Checks') {
+          set_up_pipenv()
+        }
 
-          stage('Style Check') {
-            sh 'pipenv run ./scripts/apply_style.py -d'
-          }
+        stage('Style Check') {
+          sh 'pipenv run ./scripts/apply_style.py -d'
+        }
 
-          stage('Circular Dependencies') {
-            sh 'mkdir -p build-deps && cd build-deps && cmake ../'
-            sh 'pipenv run ./scripts/detect-circular-dependencies.py build-deps/'
-          }
+        stage('Circular Dependencies') {
+          sh 'mkdir -p build-deps && cd build-deps && cmake ../'
+          sh 'pipenv run ./scripts/detect-circular-dependencies.py build-deps/'
         }
       }
     }
