@@ -17,9 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include <openssl/bn.h>
-#include <openssl/ec.h>
-#include <openssl/ecdsa.h>
+#include "openssl/bn.h"
+#include "openssl/ec.h"
+#include "openssl/ecdsa.h"
 
 #include <type_traits>
 
