@@ -170,8 +170,13 @@ std::vector<fetch::math::SizeType> MaxPool1D<T>::ComputeOutputShape(
   // output_shape_[0]=number of output channels
   output_shape.emplace_back(inputs.at(0)->shape().at(0));
   // output_shape_[1]=number of stride_size steps over input size
-  output_shape.emplace_back((inputs.at(0)->shape().at(1) - (kernel_size_ - stride_size_)) /
-                            stride_size_);
+  SizeType output_height = ((inputs.at(0)->shape().at(1) - kernel_size_) / stride_size_) + 1;
+  if (output_height == 0 || output_height == std::numeric_limits<SizeType>::max())
+  {
+    throw fetch::math::exceptions::WrongShape(
+        "MaxPool1D::ComputeOutputShape: output shape has 0 or -1 values!");
+  }
+  output_shape.emplace_back(output_height);
   // output_shape_[2]=batch dimension
   output_shape.emplace_back(inputs.at(0)->shape().at(2));
   return output_shape;
