@@ -72,6 +72,7 @@ public:
   }
 
   OperationsCount ChargeForward() override;
+  OperationsCount ChargeBackward() override;
 };
 
 }  // namespace ops
