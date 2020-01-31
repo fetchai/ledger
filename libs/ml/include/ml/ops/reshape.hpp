@@ -70,6 +70,8 @@ public:
     return DESCRIPTOR;
   }
 
+  OperationsCount ChargeForward() override;
+
 private:
   std::vector<SizeType> new_shape_;
   SizeType              new_size_{0};

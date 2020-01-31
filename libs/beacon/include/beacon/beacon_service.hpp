@@ -68,13 +68,21 @@ public:
     OBSERVE_ENTROPY_GENERATION
   };
 
+  using SignatureShare = AeonExecutionUnit::SignatureShare;
+  using BeaconManager  = dkg::BeaconManager;
+
+  struct SignatureInformation
+  {
+    uint64_t                                               round{uint64_t(-1)};
+    std::map<BeaconManager::MuddleAddress, SignatureShare> threshold_signatures;
+  };
+
   using Identity                = crypto::Identity;
   using Prover                  = crypto::Prover;
   using ProverPtr               = std::shared_ptr<Prover>;
   using Certificate             = crypto::Prover;
   using CertificatePtr          = std::shared_ptr<Certificate>;
   using Address                 = muddle::Packet::Address;
-  using BeaconManager           = dkg::BeaconManager;
   using SharedAeonExecutionUnit = std::shared_ptr<AeonExecutionUnit>;
   using Endpoint                = muddle::MuddleEndpoint;
   using MuddleInterface         = muddle::MuddleInterface;
@@ -87,12 +95,12 @@ public:
   using SubscriptionPtr         = muddle::MuddleEndpoint::SubscriptionPtr;
   using StateMachine            = core::StateMachine<State>;
   using StateMachinePtr         = std::shared_ptr<StateMachine>;
-  using SignatureShare          = AeonExecutionUnit::SignatureShare;
   using Serializer              = serializers::MsgPackSerializer;
   using SharedEventManager      = EventManager::SharedEventManager;
   using BlockEntropyPtr         = std::shared_ptr<beacon::BlockEntropy>;
   using DeadlineTimer           = fetch::moment::DeadlineTimer;
   using OldStateStore           = fetch::storage::ObjectStore<AeonExecutionUnit>;
+  using SignaturesBeingBuilt    = std::map<uint64_t, SignatureInformation>;
 
   BeaconService()                      = delete;
   BeaconService(BeaconService const &) = delete;
@@ -113,12 +121,6 @@ public:
   /// @}
 
   friend class BeaconServiceProtocol;
-
-  struct SignatureInformation
-  {
-    uint64_t                                               round{uint64_t(-1)};
-    std::map<BeaconManager::MuddleAddress, SignatureShare> threshold_signatures;
-  };
 
 protected:
   /// State methods

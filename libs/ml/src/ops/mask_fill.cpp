@@ -103,6 +103,16 @@ std::vector<fetch::math::SizeType> MaskFill<TensorType>::ComputeOutputShape(
   return inputs.at(1)->shape();
 }
 
+template <typename TensorType>
+OperationsCount MaskFill<TensorType>::ChargeForward()
+{
+  assert(!this->batch_input_shapes_.empty());
+
+  OperationsCount cost = fetch::ml::charge_estimation::ops::MASK_FILL_PER_ELEMENT *
+                         this->TotalElementsIn({this->batch_input_shapes_});
+  return cost;
+}
+
 ///////////////////////////////
 /// EXPLICIT INSTANTIATIONS ///
 ///////////////////////////////
