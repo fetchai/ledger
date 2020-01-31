@@ -57,6 +57,12 @@ constexpr auto Accumulate(F &&f, A &&a, B &&b, Seq &&... seq)
                     std::forward<Seq>(seq)...);
 }
 
+template <class... Ts>
+constexpr auto Sum(Ts &&... ts)
+{
+  return Accumulate(std::plus<void>{}, std::forward<Ts>(ts)...);
+}
+
 template <class T>
 constexpr std::add_const_t<T> &AsConst(T const &t)
 {

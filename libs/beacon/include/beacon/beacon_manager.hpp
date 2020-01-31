@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "beacon/dkg_output.hpp"
+#include "core/serializers/map_serializer_boilerplate.hpp"
 #include "crypto/mcl_dkg.hpp"
 #include "dkg/dkg_messages.hpp"
 
@@ -111,8 +112,8 @@ public:
   //
 
 private:
-  template <typename T, typename D>
-  friend struct serializers::MapSerializer;
+  template <uint8_t KEY, class MemberVariable, MemberVariable MEMBER_VARIABLE>
+  friend struct ExpectedKeyMember;
 
   // What the DKG should return
   PrivateKey              secret_share_;       ///< Share of group private key (x_i)
@@ -165,74 +166,25 @@ namespace serializers {
 
 template <typename D>
 struct MapSerializer<dkg::BeaconManager, D>
+  : MapSerializerBoilerplate<dkg::BeaconManager, D,
+                             EXPECTED_KEY_MEMBER(1, dkg::BeaconManager::secret_share_),
+                             EXPECTED_KEY_MEMBER(2, dkg::BeaconManager::public_key_),
+                             EXPECTED_KEY_MEMBER(3, dkg::BeaconManager::public_key_shares_),
+                             EXPECTED_KEY_MEMBER(4, dkg::BeaconManager::qual_),
+                             EXPECTED_KEY_MEMBER(5, dkg::BeaconManager::identity_to_index_),
+                             EXPECTED_KEY_MEMBER(6, dkg::BeaconManager::polynomial_degree_),
+                             EXPECTED_KEY_MEMBER(7, dkg::BeaconManager::cabinet_size_),
+                             EXPECTED_KEY_MEMBER(8, dkg::BeaconManager::cabinet_index_)>
 {
-public:
-  using Type       = dkg::BeaconManager;
-  using DriverType = D;
-
-  static uint8_t const SECRET_SHARE      = 1;
-  static uint8_t const PUBLIC_KEY        = 2;
-  static uint8_t const PUBLIC_KEY_SHARES = 3;
-  static uint8_t const QUAL              = 4;
-  static uint8_t const IDENTITY_TO_INDEX = 5;
-  static uint8_t const POLYNOMIAL_DEGREE = 6;
-  static uint8_t const CABINET_SIZE      = 7;
-  static uint8_t const CABINET_INDEX     = 8;
-
-  template <typename Constructor>
-  static void Serialize(Constructor &map_constructor, Type const &item)
-  {
-    auto map = map_constructor(8);
-
-    map.Append(SECRET_SHARE, item.secret_share_);
-    map.Append(PUBLIC_KEY, item.public_key_);
-    map.Append(PUBLIC_KEY_SHARES, item.public_key_shares_);
-    map.Append(QUAL, item.qual_);
-    map.Append(IDENTITY_TO_INDEX, item.identity_to_index_);
-    map.Append(POLYNOMIAL_DEGREE, item.polynomial_degree_);
-    map.Append(CABINET_SIZE, item.cabinet_size_);
-    map.Append(CABINET_INDEX, item.cabinet_index_);
-  }
-
-  template <typename MapDeserializer>
-  static void Deserialize(MapDeserializer &map, Type &item)
-  {
-    map.ExpectKeyGetValue(SECRET_SHARE, item.secret_share_);
-    map.ExpectKeyGetValue(PUBLIC_KEY, item.public_key_);
-    map.ExpectKeyGetValue(PUBLIC_KEY_SHARES, item.public_key_shares_);
-    map.ExpectKeyGetValue(QUAL, item.qual_);
-    map.ExpectKeyGetValue(IDENTITY_TO_INDEX, item.identity_to_index_);
-    map.ExpectKeyGetValue(POLYNOMIAL_DEGREE, item.polynomial_degree_);
-    map.ExpectKeyGetValue(CABINET_SIZE, item.cabinet_size_);
-    map.ExpectKeyGetValue(CABINET_INDEX, item.cabinet_index_);
-  }
 };
 
 template <typename D>
 struct MapSerializer<dkg::BeaconManager::SignedMessage, D>
+  : MapSerializerBoilerplate<dkg::BeaconManager::SignedMessage, D,
+                             EXPECTED_KEY_MEMBER(0, dkg::BeaconManager::SignedMessage::signature),
+                             EXPECTED_KEY_MEMBER(1, dkg::BeaconManager::SignedMessage::identity)>
 {
-public:
-  using Type       = dkg::BeaconManager::SignedMessage;
-  using DriverType = D;
-
-  static uint8_t const SIGNATURE = 0;
-  static uint8_t const IDENTITY  = 1;
-
-  template <typename Constructor>
-  static void Serialize(Constructor &map_constructor, Type const &member)
-  {
-    auto map = map_constructor(2);
-
-    map.Append(SIGNATURE, member.signature);
-    map.Append(IDENTITY, member.identity);
-  }
-
-  template <typename MapDeserializer>
-  static void Deserialize(MapDeserializer &map, Type &member)
-  {
-    map.ExpectKeyGetValue(SIGNATURE, member.signature);
-    map.ExpectKeyGetValue(IDENTITY, member.identity);
-  }
 };
+
 }  // namespace serializers
 }  // namespace fetch

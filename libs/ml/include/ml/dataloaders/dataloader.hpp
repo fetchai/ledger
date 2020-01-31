@@ -19,6 +19,7 @@
 
 #include "core/random.hpp"
 #include "core/serializers/group_definitions.hpp"
+#include "core/serializers/map_serializer_boilerplate.hpp"
 #include "math/base_types.hpp"
 #include "ml/meta/ml_type_traits.hpp"
 
@@ -96,29 +97,10 @@ namespace serializers {
  * @tparam TensorType
  */
 template <typename D>
-struct MapSerializer<ml::dataloaders::DataLoaderMode, D>
+    struct MapSerializer<ml::dataloaders::DataLoaderMode, D> : MapSerializerBoilerplate <
+                                                               ml::dataloaders::DataLoaderMode,
+    D, SimplySerializedAs<1, uint16_t>
 {
-  using Type       = ml::dataloaders::DataLoaderMode;
-  using DriverType = D;
-
-  static uint8_t const OP_CODE = 1;
-
-  template <typename Constructor>
-  static void Serialize(Constructor &map_constructor, Type const &body)
-  {
-    auto map      = map_constructor(1);
-    auto enum_val = static_cast<uint16_t>(body);
-    map.Append(OP_CODE, enum_val);
-  }
-
-  template <typename MapDeserializer>
-  static void Deserialize(MapDeserializer &map, Type &body)
-  {
-    uint16_t op_code_int = 0;
-    map.ExpectKeyGetValue(OP_CODE, op_code_int);
-
-    body = static_cast<Type>(op_code_int);
-  }
 };
 
 /**

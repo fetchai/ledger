@@ -83,55 +83,39 @@ struct BlockEntropy : public BlockEntropyInterface
 
 namespace serializers {
 
-template <typename D>
-struct MapSerializer<beacon::BlockEntropy, D>
+struct BlockEntropyHashSelf
 {
-public:
-  using Type       = beacon::BlockEntropy;
-  using DriverType = D;
+  static constexpr std::size_t LOGICAL_SIZE = 0;
 
-  static uint8_t const QUALIFIED            = 1;
-  static uint8_t const GROUP_PUBLIC_KEY     = 2;
-  static uint8_t const BLOCK_NUMBER         = 3;
-  static uint8_t const CONFIRMATIONS        = 4;
-  static uint8_t const GROUP_SIGNATURE      = 5;
-  static uint8_t const NOTARISATION_KEYS    = 6;
-  static uint8_t const NOTARISATION         = 7;
-  static uint8_t const NOTARISATION_MEMBERS = 8;
+  template <class Map>
+  static constexpr void Serialize(Map const & /*unused_map*/,
+                                  BlockEntropy const & /*unused_member*/) noexcept
+  {}
 
-  template <typename Constructor>
-  static void Serialize(Constructor &map_constructor, Type const &member)
+  template <class Map>
+  static constexpr void Deserialize(Map const & /*unused_map*/, BlockEntropy &member)
   {
-    auto map = map_constructor(8);
-
-    map.Append(QUALIFIED, member.qualified);
-    map.Append(GROUP_PUBLIC_KEY, member.group_public_key);
-    map.Append(BLOCK_NUMBER, member.block_number);
-    map.Append(CONFIRMATIONS, member.confirmations);
-    map.Append(GROUP_SIGNATURE, member.group_signature);
-    map.Append(NOTARISATION_KEYS, member.aeon_notarisation_keys);
-    map.Append(NOTARISATION, member.block_notarisation.first);
-    map.Append(NOTARISATION_MEMBERS, member.block_notarisation.second);
-  }
-
-  template <typename MapDeserializer>
-  static void Deserialize(MapDeserializer &map, Type &member)
-  {
-    map.ExpectKeyGetValue(QUALIFIED, member.qualified);
-    map.ExpectKeyGetValue(GROUP_PUBLIC_KEY, member.group_public_key);
-    map.ExpectKeyGetValue(BLOCK_NUMBER, member.block_number);
-    map.ExpectKeyGetValue(CONFIRMATIONS, member.confirmations);
-    map.ExpectKeyGetValue(GROUP_SIGNATURE, member.group_signature);
-    map.ExpectKeyGetValue(NOTARISATION_KEYS, member.aeon_notarisation_keys);
-    map.ExpectKeyGetValue(NOTARISATION, member.block_notarisation.first);
-    map.ExpectKeyGetValue(NOTARISATION_MEMBERS, member.block_notarisation.second);
-
     if (!member.confirmations.empty())
     {
       member.HashSelf();
     }
   }
 };
-}  // namespace serializers
 
+template <typename D>
+struct MapSerializer<beacon::BlockEntropy, D>
+  : MapSerializerBoilerplate<
+        beacon::BlockEntropy, D, EXPECTED_KEY_MEMBER(1, beacon::BlockEntropy::qualified),
+        EXPECTED_KEY_MEMBER(2, beacon::BlockEntropy::group_public_key),
+        EXPECTED_KEY_MEMBER(3, beacon::BlockEntropy::block_number),
+        EXPECTED_KEY_MEMBER(4, beacon::BlockEntropy::confirmations),
+        EXPECTED_KEY_MEMBER(5, beacon::BlockEntropy::group_signature),
+        EXPECTED_KEY_MEMBER(6, beacon::BlockEntropy::aeon_notarisation_keys),
+        EXPECTED_KEY_MEMBER(7, beacon::BlockEntropy::block_notarisation.first),
+        EXPECTED_KEY_MEMBER(8, beacon::BlockEntropy::block_notarisation.second),
+        BlockEntropyHashSelf>
+{
+};
+
+}  // namespace serializers
 }  // namespace fetch

@@ -20,6 +20,7 @@
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/serializers/group_definitions.hpp"
 #include "core/serializers/main_serializer.hpp"
+#include "core/serializers/map_serializer_boilerplate.hpp"
 
 #include <vector>
 
@@ -63,8 +64,8 @@ private:
   Container      leaf_nodes_;
   mutable Digest root_;
 
-  template <typename T, typename D>
-  friend struct serializers::MapSerializer;
+  template <uint8_t KEY, class MemberVariable, MemberVariable MEMBER_VARIABLE>
+  friend struct ExpectedKeyMember;
 };
 
 }  // namespace crypto
@@ -73,28 +74,10 @@ namespace serializers {
 
 template <typename D>
 struct MapSerializer<crypto::MerkleTree, D>
+  : MapSerializerBoilerplate<crypto::MerkleTree, D,
+                             EXPECTED_KEY_MEMBER(1, crypto::MerkleTree::leaf_nodes_),
+                             EXPECTED_KEY_MEMBER(2, crypto::MerkleTree::root_)>
 {
-public:
-  using Type       = crypto::MerkleTree;
-  using DriverType = D;
-
-  static constexpr uint8_t LEAF_NODES = 1;
-  static constexpr uint8_t ROOT       = 2;
-
-  template <typename Constructor>
-  static void Serialize(Constructor &map_constructor, Type const &data)
-  {
-    auto map = map_constructor(2);
-    map.Append(LEAF_NODES, data.leaf_nodes_);
-    map.Append(ROOT, data.root_);
-  }
-
-  template <typename MapDeserializer>
-  static void Deserialize(MapDeserializer &map, Type &data)
-  {
-    map.ExpectKeyGetValue(LEAF_NODES, data.leaf_nodes_);
-    map.ExpectKeyGetValue(ROOT, data.root_);
-  }
 };
 
 }  // namespace serializers

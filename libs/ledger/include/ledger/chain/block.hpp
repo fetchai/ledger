@@ -23,7 +23,7 @@
 #include "chain/transaction_layout_rpc_serializers.hpp"
 #include "core/byte_array/byte_array.hpp"
 #include "core/digest.hpp"
-#include "core/serializers/base_types.hpp"
+#include "core/serializers/map_serializer_boilerplate.hpp"
 #include "ledger/dag/dag_epoch.hpp"
 #include "moment/clocks.hpp"
 
@@ -104,61 +104,20 @@ namespace serializers {
 
 template <typename D>
 struct MapSerializer<ledger::Block, D>
+  : MapSerializerBoilerplate<ledger::Block, D, EXPECTED_KEY_MEMBER(1, ledger::Block::weight),
+                             EXPECTED_KEY_MEMBER(2, ledger::Block::total_weight),
+                             EXPECTED_KEY_MEMBER(3, ledger::Block::miner_signature),
+                             EXPECTED_KEY_MEMBER(4, ledger::Block::hash),
+                             EXPECTED_KEY_MEMBER(5, ledger::Block::previous_hash),
+                             EXPECTED_KEY_MEMBER(6, ledger::Block::merkle_hash),
+                             EXPECTED_KEY_MEMBER(7, ledger::Block::block_number),
+                             EXPECTED_KEY_MEMBER(8, ledger::Block::miner_id),
+                             EXPECTED_KEY_MEMBER(9, ledger::Block::log2_num_lanes),
+                             EXPECTED_KEY_MEMBER(10, ledger::Block::slices),
+                             EXPECTED_KEY_MEMBER(11, ledger::Block::dag_epoch),
+                             EXPECTED_KEY_MEMBER(12, ledger::Block::timestamp),
+                             EXPECTED_KEY_MEMBER(13, ledger::Block::block_entropy)>
 {
-public:
-  using Type       = ledger::Block;
-  using DriverType = D;
-
-  static uint8_t const WEIGHT          = 1;
-  static uint8_t const TOTAL_WEIGHT    = 2;
-  static uint8_t const MINER_SIGNATURE = 3;
-  static uint8_t const HASH            = 4;
-  static uint8_t const PREVIOUS_HASH   = 5;
-  static uint8_t const MERKLE_HASH     = 6;
-  static uint8_t const BLOCK_NUMBER    = 7;
-  static uint8_t const MINER_ID        = 8;
-  static uint8_t const LOG2_NUM_LANES  = 9;
-  static uint8_t const SLICES          = 10;
-  static uint8_t const DAG_EPOCH       = 11;
-  static uint8_t const TIMESTAMP       = 12;
-  static uint8_t const ENTROPY         = 13;
-
-  template <typename Constructor>
-  static void Serialize(Constructor &map_constructor, Type const &block)
-  {
-    auto map = map_constructor(13);
-    map.Append(WEIGHT, block.weight);
-    map.Append(TOTAL_WEIGHT, block.total_weight);
-    map.Append(MINER_SIGNATURE, block.miner_signature);
-    map.Append(HASH, block.hash);
-    map.Append(PREVIOUS_HASH, block.previous_hash);
-    map.Append(MERKLE_HASH, block.merkle_hash);
-    map.Append(BLOCK_NUMBER, block.block_number);
-    map.Append(MINER_ID, block.miner_id);
-    map.Append(LOG2_NUM_LANES, block.log2_num_lanes);
-    map.Append(SLICES, block.slices);
-    map.Append(DAG_EPOCH, block.dag_epoch);
-    map.Append(TIMESTAMP, block.timestamp);
-    map.Append(ENTROPY, block.block_entropy);
-  }
-
-  template <typename MapDeserializer>
-  static void Deserialize(MapDeserializer &map, Type &block)
-  {
-    map.ExpectKeyGetValue(WEIGHT, block.weight);
-    map.ExpectKeyGetValue(TOTAL_WEIGHT, block.total_weight);
-    map.ExpectKeyGetValue(MINER_SIGNATURE, block.miner_signature);
-    map.ExpectKeyGetValue(HASH, block.hash);
-    map.ExpectKeyGetValue(PREVIOUS_HASH, block.previous_hash);
-    map.ExpectKeyGetValue(MERKLE_HASH, block.merkle_hash);
-    map.ExpectKeyGetValue(BLOCK_NUMBER, block.block_number);
-    map.ExpectKeyGetValue(MINER_ID, block.miner_id);
-    map.ExpectKeyGetValue(LOG2_NUM_LANES, block.log2_num_lanes);
-    map.ExpectKeyGetValue(SLICES, block.slices);
-    map.ExpectKeyGetValue(DAG_EPOCH, block.dag_epoch);
-    map.ExpectKeyGetValue(TIMESTAMP, block.timestamp);
-    map.ExpectKeyGetValue(ENTROPY, block.block_entropy);
-  }
 };
 
 }  // namespace serializers

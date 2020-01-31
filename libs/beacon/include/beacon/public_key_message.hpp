@@ -40,33 +40,31 @@ struct PublicKeyMessage
 
 namespace serializers {
 
-template <typename D>
-struct MapSerializer<beacon::PublicKeyMessage, D>
+struct PublicKeyMessageGroupPublicKey
 {
-public:
-  using Type       = beacon::PublicKeyMessage;
-  using DriverType = D;
-
-  static uint8_t const ROUND            = 0;
   static uint8_t const GROUP_PUBLIC_KEY = 1;
 
-  template <typename Constructor>
-  static void Serialize(Constructor &map_constructor, Type const &vv)
+  template <class Map>
+  static constexpr void Serialize(Map &map, beacon::PublicKeyMessage const &vv)
   {
-    auto map = map_constructor(2);
-
-    map.Append(ROUND, vv.round);
     map.Append(GROUP_PUBLIC_KEY, vv.group_public_key.getStr());
   }
 
-  template <typename MapDeserializer>
-  static void Deserialize(MapDeserializer &map, Type &vv)
+  template <class Map>
+  static constexpr void Deserialize(Map &map, beacon::PublicKeyMessage const &vv)
   {
-    map.ExpectKeyGetValue(ROUND, vv.round);
     std::string key_str;
     map.ExpectKeyGetValue(GROUP_PUBLIC_KEY, key_str);
     vv.group_public_key.setStr(key_str);
   }
+};
+
+template <typename D>
+struct MapSerializer<beacon::PublicKeyMessage, D>
+  : MapSerializerBoilerplate<beacon::PublicKeyMessage, D,
+                             EXPECTED_KEY_MEMBER(0, beacon::PublicKeyMessage::round),
+                             PublicKeyMessageGroupPublicKey>
+{
 };
 
 }  // namespace serializers

@@ -22,6 +22,7 @@
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/digest.hpp"
 #include "core/serializers/main_serializer_definition.hpp"
+#include "core/serializers/map_serializer_boilerplate.hpp"
 #include "crypto/prover.hpp"
 
 #include <atomic>
@@ -75,71 +76,22 @@ namespace serializers {
 
 template <typename D>
 struct MapSerializer<beacon::Aeon, D>
+  : MapSerializerBoilerplate<beacon::Aeon, D, EXPECTED_KEY_MEMBER(1, beacon::Aeon::members),
+                             EXPECTED_KEY_MEMBER(2, beacon::Aeon::round_start),
+                             EXPECTED_KEY_MEMBER(3, beacon::Aeon::round_end),
+                             EXPECTED_KEY_MEMBER(4, beacon::Aeon::block_entropy_previous),
+                             EXPECTED_KEY_MEMBER(5, beacon::Aeon::start_reference_timepoint)>
 {
-public:
-  using Type       = beacon::Aeon;
-  using DriverType = D;
-
-  static uint8_t const MEMBERS                   = 1;
-  static uint8_t const ROUND_START               = 2;
-  static uint8_t const ROUND_END                 = 3;
-  static uint8_t const BLOCK_ENTROPY_PREVIOUS    = 4;
-  static uint8_t const START_REFERENCE_TIMEPOINT = 5;
-
-  template <typename Constructor>
-  static void Serialize(Constructor &map_constructor, Type const &item)
-  {
-    auto map = map_constructor(5);
-
-    map.Append(MEMBERS, item.members);
-    map.Append(ROUND_START, item.round_start);
-    map.Append(ROUND_END, item.round_end);
-    map.Append(BLOCK_ENTROPY_PREVIOUS, item.block_entropy_previous);
-    map.Append(START_REFERENCE_TIMEPOINT, item.start_reference_timepoint);
-  }
-
-  template <typename MapDeserializer>
-  static void Deserialize(MapDeserializer &map, Type &item)
-  {
-    map.ExpectKeyGetValue(MEMBERS, item.members);
-    map.ExpectKeyGetValue(ROUND_START, item.round_start);
-    map.ExpectKeyGetValue(ROUND_END, item.round_end);
-    map.ExpectKeyGetValue(BLOCK_ENTROPY_PREVIOUS, item.block_entropy_previous);
-    map.ExpectKeyGetValue(START_REFERENCE_TIMEPOINT, item.start_reference_timepoint);
-  }
 };
 
 template <typename D>
 struct MapSerializer<beacon::AeonExecutionUnit, D>
+  : MapSerializerBoilerplate<beacon::AeonExecutionUnit, D,
+                             EXPECTED_KEY_MEMBER(1, beacon::AeonExecutionUnit::block_entropy),
+                             EXPECTED_KEY_MEMBER(2, beacon::AeonExecutionUnit::manager),
+                             EXPECTED_KEY_MEMBER(3, beacon::AeonExecutionUnit::member_share),
+                             EXPECTED_KEY_MEMBER(4, beacon::AeonExecutionUnit::aeon)>
 {
-public:
-  using Type       = beacon::AeonExecutionUnit;
-  using DriverType = D;
-
-  static uint8_t const BLOCK_ENTROPY = 1;
-  static uint8_t const MANAGER       = 2;
-  static uint8_t const MEMBER_SHARE  = 3;
-  static uint8_t const AEON          = 4;
-
-  template <typename Constructor>
-  static void Serialize(Constructor &map_constructor, Type const &item)
-  {
-    auto map = map_constructor(4);
-
-    map.Append(BLOCK_ENTROPY, item.block_entropy);
-    map.Append(MANAGER, item.manager);
-    map.Append(MEMBER_SHARE, item.member_share);
-    map.Append(AEON, item.aeon);
-  }
-
-  template <typename MapDeserializer>
-  static void Deserialize(MapDeserializer &map, Type &item)
-  {
-    map.ExpectKeyGetValue(BLOCK_ENTROPY, item.block_entropy);
-    map.ExpectKeyGetValue(MANAGER, item.manager);
-    map.ExpectKeyGetValue(MEMBER_SHARE, item.member_share);
-    map.ExpectKeyGetValue(AEON, item.aeon);
-  }
 };
 
 }  // namespace serializers

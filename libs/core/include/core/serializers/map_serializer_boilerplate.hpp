@@ -22,31 +22,88 @@
 namespace fetch {
 namespace serializers {
 
-template<class T, class D, class... Fields>
-struct MapSerializerBoilerplate {
-  using Type = T;
+template <class T, class D, class... Fields>
+struct MapSerializerBoilerplate
+{
+  using Type       = T;
   using DriverType = D;
 
-  template<class Constructor>
+  template <class Constructor>
   static constexpr void Serialize(Constructor &map_constructor, Type const &v)
   {
-	  static constexpr auto map_size = sizeof...(Fields);
+    static constexpr auto map_size = value_util::Sum(Fields::LOGICAL_SIZE...);
 
-	  value_util::ForEach(
-		  [map = map_constructor(map_size), &v](auto field) {
-			  field.Serialize(v, map);
-		  }, Fields{}...);
+    value_util::ForEach(
+        [map = map_constructor(map_size), &v](auto field) { field.Serialize(map, v); },
+        Fields{}...);
   }
 
-  template<class MapDeserializer>
+  template <class MapDeserializer>
   static constexpr void Deserialize(MapDeserializer &map, Type &v)
   {
-	  value_util::ForEach(
-		  [&map, &v](auto field) {
-			  field.Deserialize(v, map);
-		  }, Fields{}...);
+    value_util::ForEach([&map, &v](auto field) { field.Deserialize(map, v); }, Fields{}...);
   }
 };
+
+struct ValueSerializer
+{
+  static constexpr std::size_t LOGICAL_SIZE = 1;
+};
+
+struct ExtraChecks
+{
+  static constexpr std::size_t LOGICAL_SIZE = 0;
+};
+
+template <uint8_t KEY, class Data = void>
+struct SimplySerializedAs : ValueSerializer
+{
+  template <class Map, class Object>
+  static constexpr void Serialize(Map &map, Object const &object)
+  {
+    map.Append(KEY, static_cast<Underlying const &>(object));
+  }
+
+  template <class Map, class Object>
+  static constexpr void Deserialize(Map &map, Object &object)
+  {
+    map.ExpectKeyGetValue(Key, static_cast<Underlying &>(object));
+  }
+};
+
+template <uint8_t KEY>
+struct SimplySerializedAs<KEY, void> : ValueSerializer
+{
+  template <class Map, class Object>
+  static constexpr void Serialize(Map &map, Object const &object)
+  {
+    map.Append(KEY, object);
+  }
+
+  template <class Map, class Object>
+  static constexpr void Deserialize(Map &map, Object &object)
+  {
+    map.ExpectKeyGetValue(Key, object);
+  }
+};
+
+template <uint8_t KEY, class MemberVariable, MemberVariable MEMBER_VARIABLE>
+struct ExpectedKeyMember : ValueSerializer
+{
+  template <class Map, class Object>
+  static constexpr void Serialize(Map &map, Object const &object)
+  {
+    map.Append(KEY, object.*MEMBER_VARIABLE);
+  }
+
+  template <class Map, class Object>
+  static constexpr void Deserialize(Map &map, Object &object)
+  {
+    map.ExpectKeyGetValue(KEY, object.*MEMBER_VARIABLE);
+  }
+};
+
+#define EXPECTED_KEY_MEMBER(KEY, ...) ExpectedKeyMember<KEY, decltype(&__VA_ARGS__), &__VA_ARGS__>
 
 }  // namespace serializers
 }  // namespace fetch
