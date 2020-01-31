@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/ops/reshape.hpp"
 #include "math/matrix_operations.hpp"
+#include "ml/ops/reshape.hpp"
 
 namespace fetch {
 namespace ml {
