@@ -52,12 +52,17 @@ TYPED_TEST(Convolution2DTest, set_input_and_evaluate_test)  // Use the class as 
   SizeType const stride_size     = 1;
 
   // Generate input
-  TensorType input({input_channels, input_height, input_width, 1});
+  math::SizeVector const input_shape{input_channels, input_height, input_width, 1};
+  TensorType             input(input_shape);
   input.FillUniformRandom();
 
   // Evaluate
   fetch::ml::layers::Convolution2D<TensorType> conv(output_channels, input_channels, kernel_height,
                                                     stride_size);
+
+  conv.ComputeBatchOutputShape({input_shape});  // necessary for out-of-Graph usage
+  conv.CompleteConstruction();                  // necessary for out-of-Graph usage
+
   conv.SetInput("Conv2D_Input", input);
   TensorType output = conv.Evaluate("Conv2D_Conv2D", true);
 
@@ -87,9 +92,9 @@ TYPED_TEST(Convolution2DTest, ops_forward_test)  // Use the class as an Ops
   SizeType const kernel_height   = 3;
   SizeType const stride_size     = 1;
 
-  math::SizeVector const input_shape{input_channels, input_height, input_width, 1};
   // Generate input
-  TensorType input({input_channels, input_height, input_width, 1});
+  math::SizeVector const input_shape{input_channels, input_height, input_width, 1};
+  TensorType             input(input_shape);
   input.FillUniformRandom();
 
   // Evaluate
