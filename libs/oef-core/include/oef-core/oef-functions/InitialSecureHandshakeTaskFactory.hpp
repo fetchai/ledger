@@ -23,7 +23,7 @@
 #include "oef-base/comms/IOefTaskFactory.hpp"
 #include "oef-core/agents/Agents.hpp"
 
-#include <openssl/ssl.h>
+#include "openssl/ssl.h"
 
 class InitialSecureHandshakeTaskFactory : public IOefTaskFactory<OefAgentEndpoint>
 {
