@@ -42,6 +42,7 @@
 #include "ml/ops/activations/softmax.hpp"
 #include "ml/ops/avg_pool_1d.hpp"
 #include "ml/ops/avg_pool_2d.hpp"
+#include "ml/ops/embeddings.hpp"
 #include "ml/ops/flatten.hpp"
 #include "ml/ops/max_pool_1d.hpp"
 #include "ml/ops/max_pool_2d.hpp"
@@ -66,12 +67,13 @@ using fetch::ml::details::ActivationType;
 using VMPtrString = Ptr<String>;
 
 std::map<std::string, SupportedLayerType> const VMModel::layer_types_{
-    {"dense", SupportedLayerType::DENSE},         {"conv1d", SupportedLayerType::CONV1D},
-    {"conv2d", SupportedLayerType::CONV2D},       {"flatten", SupportedLayerType::FLATTEN},
-    {"dropout", SupportedLayerType::DROPOUT},     {"activation", SupportedLayerType::ACTIVATION},
-    {"input", SupportedLayerType::INPUT},         {"reshape", SupportedLayerType::RESHAPE},
-    {"maxpool1d", SupportedLayerType::MAXPOOL1D}, {"maxpool2d", SupportedLayerType::MAXPOOL2D},
-    {"avgpool1d", SupportedLayerType::AVGPOOL1D}, {"avgpool2d", SupportedLayerType::AVGPOOL2D}};
+    {"dense", SupportedLayerType::DENSE},          {"conv1d", SupportedLayerType::CONV1D},
+    {"conv2d", SupportedLayerType::CONV2D},        {"flatten", SupportedLayerType::FLATTEN},
+    {"dropout", SupportedLayerType::DROPOUT},      {"activation", SupportedLayerType::ACTIVATION},
+    {"input", SupportedLayerType::INPUT},          {"reshape", SupportedLayerType::RESHAPE},
+    {"maxpool1d", SupportedLayerType::MAXPOOL1D},  {"maxpool2d", SupportedLayerType::MAXPOOL2D},
+    {"avgpool1d", SupportedLayerType::AVGPOOL1D},  {"avgpool2d", SupportedLayerType::AVGPOOL2D},
+    {"embeddings", SupportedLayerType::EMBEDDINGS}};
 
 std::map<std::string, ActivationType> const VMModel::activations_{
     {"nothing", ActivationType::NOTHING},
@@ -331,6 +333,8 @@ void VMModel::Bind(Module &module, bool const experimental_enabled)
                               UseEstimator(&ModelEstimator::LayerAddReshape))
         .CreateMemberFunction("addExperimental", &VMModel::LayerAddPool,
                               UseEstimator(&ModelEstimator::LayerAddPool))
+        .CreateMemberFunction("addExperimental", &VMModel::LayerAddEmbeddings,
+                              UseEstimator(&ModelEstimator::LayerAddEmbeddings))
         .CreateMemberFunction("addExperimental", &VMModel::LayerAddDenseActivationExperimental,
                               UseEstimator(&ModelEstimator::LayerAddDenseActivationExperimental))
         .CreateMemberFunction("addExperimental", &VMModel::LayerAddInput,
@@ -494,7 +498,7 @@ void VMModel::AssertLayerTypeMatches(SupportedLayerType                layer,
       {SupportedLayerType::DROPOUT, "dropout"},     {SupportedLayerType::ACTIVATION, "activation"},
       {SupportedLayerType::INPUT, "input"},         {SupportedLayerType::MAXPOOL1D, "maxpool1d"},
       {SupportedLayerType::MAXPOOL2D, "maxpool2d"}, {SupportedLayerType::AVGPOOL1D, "avgpool1d"},
-      {SupportedLayerType::AVGPOOL2D, "avgpool2d"}};
+      {SupportedLayerType::AVGPOOL2D, "avgpool2d"}, {SupportedLayerType::EMBEDDINGS, "embeddings"}};
   if (std::find(valids.begin(), valids.end(), layer) == valids.end())
   {
     throw std::runtime_error("Invalid params specified for \"" + LAYER_NAMES_.at(layer) +
@@ -847,6 +851,27 @@ void VMModel::LayerAddPool(const fetch::vm::Ptr<fetch::vm::String> &layer,
     {
       me->Add<fetch::ml::ops::AvgPool2D<TensorType>>(kernel_size, stride_size);
     }
+    compiled_ = false;
+  }
+  catch (std::exception const &e)
+  {
+    vm_->RuntimeError(IMPOSSIBLE_ADD_MESSAGE + std::string(e.what()));
+    return;
+  }
+}
+
+void VMModel::LayerAddEmbeddings(const fetch::vm::Ptr<fetch::vm::String> &layer,
+                                 const math::SizeType &                   dimensions,
+                                 const math::SizeType &data_points, const bool stub)
+{
+  FETCH_UNUSED(stub);  // a neat trick to make a function signature unique
+  try
+  {
+    SupportedLayerType const layer_type =
+        ParseName(layer->string(), layer_types_, LAYER_TYPE_MESSAGE);
+    AssertLayerTypeMatches(layer_type, {SupportedLayerType::EMBEDDINGS});
+    SequentialModelPtr me = GetMeAsSequentialIfPossible();
+    me->Add<fetch::ml::ops::Embeddings<TensorType>>(dimensions, data_points);
     compiled_ = false;
   }
   catch (std::exception const &e)

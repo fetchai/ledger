@@ -1000,6 +1000,20 @@ TEST_F(VMModelTests, model_sequential_avgpool2d)
   ASSERT_TRUE(toolkit.Run(nullptr, ChargeAmount{0}));
 }
 
+TEST_F(VMModelTests, model_sequential_embeddings)
+{
+  static char const *SRC_METRIC = R"(
+        function main()
+          var model = Model("sequential");
+          model.addExperimental("embeddings", 3u64, 4u64, true);
+          model.compile("scel", "adam");
+        endfunction
+      )";
+
+  ASSERT_TRUE(toolkit.Compile(SRC_METRIC));
+  ASSERT_TRUE(toolkit.Run(nullptr, ChargeAmount{0}));
+}
+
 TEST_F(VMModelTests, model_sequential_conv_maxpool)
 {
   static char const *sequential_model_src = R"(
