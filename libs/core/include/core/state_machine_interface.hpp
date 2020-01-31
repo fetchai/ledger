@@ -28,8 +28,9 @@ public:
 
   /// @name State Machine Interface
   /// @{
-  virtual char const *GetName() const      = 0;
-  virtual char const *GetStateName() const = 0;
+  virtual char const *GetName() const          = 0;
+  virtual char const *GetStateName() const     = 0;
+  virtual char const *GetPrevStateName() const = 0;
   /// @}
 };
 
