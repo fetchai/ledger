@@ -1034,6 +1034,7 @@ TEST_F(VMModelTests, model_sequential_conv_maxpool)
 
         // set up a model
         var model = Model("sequential");
+        model.addExperimental("input", data.shape());
         model.add("conv1d", output_channels, input_channels, kernel_size, stride_size);
         model.addExperimental("maxpool1d", pooling_kernel_size, stride_size);
         model.compile("mse", "adam");
@@ -1101,6 +1102,7 @@ TEST_F(VMModelTests, model_sequential_conv_maxpool_wrong_pooling_kernel_size)
 
         // set up a model
         var model = Model("sequential");
+        model.addExperimental("input", data.shape());
         model.add("conv1d", output_channels, input_channels, kernel_size, stride_size);
         model.addExperimental("maxpool1d", pooling_kernel_size, stride_size);
         model.compile("mse", "adam");
