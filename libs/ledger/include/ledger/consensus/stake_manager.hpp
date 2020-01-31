@@ -134,17 +134,14 @@ inline std::shared_ptr<StakeSnapshot const> StakeManager::GetCurrentStakeSnapsho
 template <typename T>
 void TrimToSize(T &container, uint64_t max_allowed)
 {
-  if (container.size() >= max_allowed)
+  if (container.size() > max_allowed)
   {
     auto const num_to_remove = container.size() - max_allowed;
 
-    if (num_to_remove > 0)
-    {
-      auto end = container.begin();
-      std::advance(end, static_cast<std::ptrdiff_t>(num_to_remove));
+    auto end = container.begin();
+    std::advance(end, static_cast<std::ptrdiff_t>(num_to_remove));
 
-      container.erase(container.begin(), end);
-    }
+    container.erase(container.begin(), end);
   }
 }
 
