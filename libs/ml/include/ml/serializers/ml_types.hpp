@@ -3069,11 +3069,12 @@ struct MapSerializer<ml::LayerConvolution1DSaveableParams<TensorType>, D>
   static uint8_t const INPUT_CHANNELS  = 4;
   static uint8_t const OUTPUT_CHANNELS = 5;
   static uint8_t const STRIDE_SIZE     = 6;
+  static uint8_t const IS_INITIALISED  = 7;
 
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &sp)
   {
-    auto map = map_constructor(6);
+    auto map = map_constructor(IS_INITIALISED);
 
     // serialize parent class first
     auto base_pointer = static_cast<ml::SubGraphSaveableParams<TensorType> const *>(&sp);
@@ -3084,6 +3085,7 @@ struct MapSerializer<ml::LayerConvolution1DSaveableParams<TensorType>, D>
     map.Append(INPUT_CHANNELS, sp.input_channels);
     map.Append(OUTPUT_CHANNELS, sp.output_channels);
     map.Append(STRIDE_SIZE, sp.stride_size);
+    map.Append(IS_INITIALISED, sp.is_initialised);
   }
 
   template <typename MapDeserializer>
@@ -3098,6 +3100,7 @@ struct MapSerializer<ml::LayerConvolution1DSaveableParams<TensorType>, D>
     map.ExpectKeyGetValue(INPUT_CHANNELS, sp.input_channels);
     map.ExpectKeyGetValue(OUTPUT_CHANNELS, sp.output_channels);
     map.ExpectKeyGetValue(STRIDE_SIZE, sp.stride_size);
+    map.ExpectKeyGetValue(IS_INITIALISED, sp.is_initialised);
   }
 };
 

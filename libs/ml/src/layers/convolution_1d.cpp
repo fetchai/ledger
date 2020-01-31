@@ -56,18 +56,8 @@ Convolution1D<TensorType>::Convolution1D(SizeType const output_channels,
 
   this->GetNode(weights)->SetBatchOutputShape({output_channels_, input_channels_, kernel_size_, 1});
 
-  // Preliminary batch shape of a Conv2d layer (channels x 1(w) x 1(batch) ) is used at construction
-  // time to allow usage of this Layer outside of a Graph, when the shapes do not matter; real width
-  // is to be set later during Graph compilation (when expected Input shape of the Model/Graph is
-  // already known) in CompleteConstruction() call.
-  static constexpr SizeType DEFAULT_WIDTH = 1;
-  this->GetNode(input)->SetBatchOutputShape({output_channels_, DEFAULT_WIDTH, 1});
-
   this->AddInputNode(input);
   this->SetOutputNode(output);
-
-  this->Compile();
-  FETCH_LOG_INFO(Descriptor(), "-- Convolution2D initialisation completed. --");
 }
 
 template <typename TensorType>
@@ -89,7 +79,7 @@ void Convolution1D<TensorType>::CompleteConstruction()
   input_node->SetBatchInputShapes(this->batch_input_shapes_);
   input_node->SetBatchOutputShape(this->batch_input_shapes_.front());
 
-  this->ComputeAllNodeShapes();
+  this->Compile();
   FETCH_LOG_INFO(Descriptor(), "-- Convolution1D initialisation completed. --");
   is_initialised_ = true;
 }
