@@ -35,7 +35,7 @@ class TanHTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(TanHTest, fetch::math::test::TensorFloatingTypes);
+TYPED_TEST_SUITE(TanHTest, fetch::math::test::TensorFloatingTypes, );
 
 TYPED_TEST(TanHTest, forward_all_positive_test)
 {
