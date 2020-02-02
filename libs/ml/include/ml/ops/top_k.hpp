@@ -71,6 +71,8 @@ private:
   TensorSizeType indices_;
 
   void UpdateIndices(VecTensorType const &inputs);
+
+  OperationsCount ChargeForward() override;
 };
 
 }  // namespace ops
