@@ -18,9 +18,9 @@
 
 #include "crypto/openssl_hasher.hpp"
 
-#include <openssl/evp.h>
-#include <openssl/md5.h>
-#include <openssl/sha.h>
+#include "openssl/evp.h"
+#include "openssl/md5.h"
+#include "openssl/sha.h"
 
 #include <cassert>
 #include <memory>
