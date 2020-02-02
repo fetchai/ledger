@@ -72,27 +72,10 @@ namespace serializers {
  */
 template <typename TensorType, typename D>
 struct MapSerializer<ml::optimisers::SGDOptimiser<TensorType>, D>
+  : MapSerializerBoilerplate<ml::optimisers::SGDOptimiser<TensorType>, D,
+                             SimplySerializedAs<1, ml::optimisers::Optimiser<TensorType>>>
 {
-  using Type                          = ml::optimisers::SGDOptimiser<TensorType>;
-  using DriverType                    = D;
-  static uint8_t const BASE_OPTIMISER = 1;
-
-  template <typename Constructor>
-  static void Serialize(Constructor &map_constructor, Type const &sp)
-  {
-    auto map = map_constructor(1);
-
-    // serialize the optimiser parent class
-    auto base_pointer = static_cast<ml::optimisers::Optimiser<TensorType> const *>(&sp);
-    map.Append(BASE_OPTIMISER, *base_pointer);
-  }
-
-  template <typename MapDeserializer>
-  static void Deserialize(MapDeserializer &map, Type &sp)
-  {
-    auto base_pointer = static_cast<ml::optimisers::Optimiser<TensorType> *>(&sp);
-    map.ExpectKeyGetValue(BASE_OPTIMISER, *base_pointer);
-  }
 };
+
 }  // namespace serializers
 }  // namespace fetch

@@ -35,33 +35,12 @@ namespace serializers {
  */
 template <typename TensorType, typename D>
 struct MapSerializer<ml::model::Sequential<TensorType>, D>
+  : MapSerializerBoilerplate<
+        ml::model::Sequential<TensorType>, D, SimplySerializedAs<1, ml::model::Model<TensorType>>,
+        EXPECTED_KEY_MEMBER(2, ml::model::Sequential<TensorType>::layer_count_),
+        EXPECTED_KEY_MEMBER(3, ml::model::Sequential<TensorType>::prev_layer_)>
 {
-  using Type                          = ml::model::Sequential<TensorType>;
-  using DriverType                    = D;
-  static uint8_t const BASE_MODEL     = 1;
-  static uint8_t const LAYER_COUNT    = 2;
-  static uint8_t const PREV_LAYER_STR = 3;
-
-  template <typename Constructor>
-  static void Serialize(Constructor &map_constructor, Type const &sp)
-  {
-    auto map = map_constructor(3);
-
-    // serialize the optimiser parent class
-    auto base_pointer = static_cast<ml::model::Model<TensorType> const *>(&sp);
-    map.Append(BASE_MODEL, *base_pointer);
-    map.Append(LAYER_COUNT, sp.layer_count_);
-    map.Append(PREV_LAYER_STR, sp.prev_layer_);
-  }
-
-  template <typename MapDeserializer>
-  static void Deserialize(MapDeserializer &map, Type &sp)
-  {
-    auto base_pointer = static_cast<ml::model::Model<TensorType> *>(&sp);
-    map.ExpectKeyGetValue(BASE_MODEL, *base_pointer);
-    map.ExpectKeyGetValue(LAYER_COUNT, sp.layer_count_);
-    map.ExpectKeyGetValue(PREV_LAYER_STR, sp.prev_layer_);
-  }
 };
+
 }  // namespace serializers
 }  // namespace fetch

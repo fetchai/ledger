@@ -83,10 +83,8 @@ struct BlockEntropy : public BlockEntropyInterface
 
 namespace serializers {
 
-struct BlockEntropyHashSelf
+struct BlockEntropyHashSelf : ExtraChecks
 {
-  static constexpr std::size_t LOGICAL_SIZE = 0;
-
   template <class Map>
   static constexpr void Serialize(Map const & /*unused_map*/,
                                   BlockEntropy const & /*unused_member*/) noexcept
@@ -102,10 +100,11 @@ struct BlockEntropyHashSelf
   }
 };
 
+// clang-format off
 template <typename D>
 struct MapSerializer<beacon::BlockEntropy, D>
-  : MapSerializerBoilerplate<
-        beacon::BlockEntropy, D, EXPECTED_KEY_MEMBER(1, beacon::BlockEntropy::qualified),
+  : MapSerializerBoilerplate<beacon::BlockEntropy, D,
+        EXPECTED_KEY_MEMBER(1, beacon::BlockEntropy::qualified),
         EXPECTED_KEY_MEMBER(2, beacon::BlockEntropy::group_public_key),
         EXPECTED_KEY_MEMBER(3, beacon::BlockEntropy::block_number),
         EXPECTED_KEY_MEMBER(4, beacon::BlockEntropy::confirmations),
@@ -116,6 +115,7 @@ struct MapSerializer<beacon::BlockEntropy, D>
         BlockEntropyHashSelf>
 {
 };
+// clang-format on
 
 }  // namespace serializers
 }  // namespace fetch

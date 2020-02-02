@@ -40,7 +40,7 @@ struct PublicKeyMessage
 
 namespace serializers {
 
-struct PublicKeyMessageGroupPublicKey
+struct PublicKeyMessageGroupPublicKey : ValueSerializer
 {
   static uint8_t const GROUP_PUBLIC_KEY = 1;
 
