@@ -444,7 +444,8 @@ TEST_F(VMModelTests, model_add_flatten)
 
 TEST_F(VMModelTests, model_add_embeddings)
 {
-  TestValidLayerAdding(R"(model.addExperimental("embeddings", 2u64, 3u64, true);)", IGNORE_CHARGE_ESTIMATION);
+  TestValidLayerAdding(R"(model.addExperimental("embeddings", 2u64, 3u64, true);)",
+                       IGNORE_CHARGE_ESTIMATION);
 }
 
 TEST_F(VMModelTests, model_add_activation)
