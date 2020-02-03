@@ -33,7 +33,7 @@ class SubtractTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(SubtractTest, fetch::math::test::TensorFloatingTypes);
+TYPED_TEST_SUITE(SubtractTest, fetch::math::test::TensorFloatingTypes, );
 
 TYPED_TEST(SubtractTest, forward_test)
 {

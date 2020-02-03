@@ -29,7 +29,7 @@ class StandardFunctionTests : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(StandardFunctionTests, TensorFloatingTypes);
+TYPED_TEST_SUITE(StandardFunctionTests, TensorFloatingTypes, );
 
 template <typename TensorType>
 void RandomAssign(TensorType &tensor)

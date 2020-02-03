@@ -88,6 +88,6 @@ TEST_P(TestClass, basic_Test)
   lcg2.Seed(lcg2());
 }
 
-INSTANTIATE_TEST_CASE_P(Basic_test, TestClass, ::testing::Range(0, 100), );
+INSTANTIATE_TEST_SUITE_P(Basic_test, TestClass, ::testing::Range(0, 100));
 
 }  // namespace
