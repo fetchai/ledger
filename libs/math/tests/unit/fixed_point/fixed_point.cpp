@@ -1079,7 +1079,7 @@ TYPED_TEST(BasicTest, Remainder)
               std::remainder(static_cast<double>(m_ten), static_cast<double>(x)),
               static_cast<double>(TypeParam::TOLERANCE));
 
-  e = TypeParam::Remainder(huge, x);  
+  e = TypeParam::Remainder(huge, x);
   EXPECT_NEAR(static_cast<double>(e),
               std::remainder(static_cast<double>(huge), static_cast<double>(x)),
               static_cast<double>(TypeParam::TOLERANCE));
