@@ -128,7 +128,6 @@ public:
   using CompletedBlockEntropy   = std::map<uint64_t, BlockEntropyPtr>;
   using ActiveExeUnit           = std::shared_ptr<AeonExecutionUnit>;
   using AeonExeQueue            = std::deque<SharedAeonExecutionUnit>;
-  using SignaturesBeingBuilt    = std::map<uint64_t, SignatureInformation>;
 
   BeaconService()                      = delete;
   BeaconService(BeaconService const &) = delete;
