@@ -65,7 +65,11 @@ enum class SupportedLayerType : uint8_t
   DROPOUT,
   ACTIVATION,
   RESHAPE,
-  INPUT
+  INPUT,
+  MAXPOOL1D,
+  MAXPOOL2D,
+  AVGPOOL1D,
+  AVGPOOL2D,
 };
 
 class VMModel : public fetch::vm::Object
@@ -169,6 +173,8 @@ public:
 
   void LayerAddInput(fetch::vm::Ptr<fetch::vm::String> const &        layer,
                      fetch::vm::Ptr<vm::Array<math::SizeType>> const &shape);
+  void LayerAddPool(fetch::vm::Ptr<fetch::vm::String> const &layer,
+                    math::SizeType const &kernel_size, math::SizeType const &stride_size);
 
 private:
   ModelPtrType       model_;

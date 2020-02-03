@@ -460,7 +460,7 @@ bool Constellation::OnBringUpLaneServices()
   // create the internal muddle instance
   internal_muddle_ =
       muddle::CreateMuddle("ISRD", internal_identity_, network_manager_,
-                           cfg_.manifest.FindExternalAddress(ServiceIdentifier::Type::CORE));
+                           cfg_.manifest.FindExternalAddress(ServiceIdentifier::Type::CORE), false);
 
   if (!StartInternalMuddle())
   {
@@ -862,8 +862,11 @@ void Constellation::OnTearDownExternalNetwork()
 
 void Constellation::OnTearDownLaneServices()
 {
-  // not strictly necessary but make sure that chain has completely flushed to disk
-  chain_->Flush();
+  if (chain_)
+  {
+    // not strictly necessary but make sure that chain has completely flushed to disk
+    chain_->Flush();
+  }
 
   ResetItem(chain_);
   ResetItem(lane_control_);

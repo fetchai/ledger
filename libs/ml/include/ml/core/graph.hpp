@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ml/charge_estimation/ops/constants.hpp"
 #include "ml/core/node.hpp"
 #include "ml/exceptions/exceptions.hpp"
 #include "ml/ops/constant.hpp"
@@ -150,6 +151,8 @@ public:
   std::vector<std::string> GetTrainableNames();
 
   std::vector<std::pair<std::string, std::vector<std::string>>> Connections();
+
+  fetch::ml::OperationsCount ChargeForward(std::string const &node_name);
 
 protected:
   std::map<std::string, NodePtrType>                            nodes_;

@@ -127,6 +127,16 @@ std::vector<fetch::math::SizeType> Multiply<T>::ComputeOutputShape(
   return inputs.front()->shape();
 }
 
+template <typename TensorType>
+OperationsCount Multiply<TensorType>::ChargeForward()
+{
+  assert(!this->batch_input_shapes_.empty());
+
+  OperationsCount cost = fetch::ml::charge_estimation::ops::MULTIPLICATION_PER_ELEMENT *
+                         this->TotalElementsIn({this->batch_input_shapes_});
+  return cost;
+}
+
 ///////////////////////////////
 /// EXPLICIT INSTANTIATIONS ///
 ///////////////////////////////
@@ -135,10 +145,6 @@ template class Multiply<math::Tensor<int8_t>>;
 template class Multiply<math::Tensor<int16_t>>;
 template class Multiply<math::Tensor<int32_t>>;
 template class Multiply<math::Tensor<int64_t>>;
-template class Multiply<math::Tensor<uint8_t>>;
-template class Multiply<math::Tensor<uint16_t>>;
-template class Multiply<math::Tensor<uint32_t>>;
-template class Multiply<math::Tensor<uint64_t>>;
 template class Multiply<math::Tensor<float>>;
 template class Multiply<math::Tensor<double>>;
 template class Multiply<math::Tensor<fixed_point::fp32_t>>;

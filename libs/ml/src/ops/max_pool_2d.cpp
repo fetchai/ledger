@@ -203,6 +203,18 @@ std::vector<fetch::math::SizeType> MaxPool2D<T>::ComputeOutputShape(
   return output_shape;
 }
 
+template <typename TensorType>
+OperationsCount MaxPool2D<TensorType>::ChargeForward()
+{
+  assert(!this->batch_output_shape_.empty());
+  auto cost = static_cast<OperationsCount>(
+      fetch::ml::charge_estimation::ops::MAX_PER_ELEMENT * this->batch_output_shape_.at(0) *
+      this->batch_output_shape_.at(1) * this->batch_output_shape_.at(2) *
+      this->batch_output_shape_.at(3) *
+      static_cast<OperationsCount>(this->kernel_size_ * this->kernel_size_));
+  return cost;
+}
+
 ///////////////////////////////
 /// EXPLICIT INSTANTIATIONS ///
 ///////////////////////////////
@@ -211,10 +223,6 @@ template class MaxPool2D<math::Tensor<int8_t>>;
 template class MaxPool2D<math::Tensor<int16_t>>;
 template class MaxPool2D<math::Tensor<int32_t>>;
 template class MaxPool2D<math::Tensor<int64_t>>;
-template class MaxPool2D<math::Tensor<uint8_t>>;
-template class MaxPool2D<math::Tensor<uint16_t>>;
-template class MaxPool2D<math::Tensor<uint32_t>>;
-template class MaxPool2D<math::Tensor<uint64_t>>;
 template class MaxPool2D<math::Tensor<float>>;
 template class MaxPool2D<math::Tensor<double>>;
 template class MaxPool2D<math::Tensor<fixed_point::fp32_t>>;

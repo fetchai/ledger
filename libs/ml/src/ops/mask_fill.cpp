@@ -103,6 +103,16 @@ std::vector<fetch::math::SizeType> MaskFill<TensorType>::ComputeOutputShape(
   return inputs.at(1)->shape();
 }
 
+template <typename TensorType>
+OperationsCount MaskFill<TensorType>::ChargeForward()
+{
+  assert(!this->batch_input_shapes_.empty());
+
+  OperationsCount cost = fetch::ml::charge_estimation::ops::MASK_FILL_PER_ELEMENT *
+                         this->TotalElementsIn({this->batch_input_shapes_});
+  return cost;
+}
+
 ///////////////////////////////
 /// EXPLICIT INSTANTIATIONS ///
 ///////////////////////////////
@@ -111,10 +121,6 @@ template class MaskFill<math::Tensor<int8_t>>;
 template class MaskFill<math::Tensor<int16_t>>;
 template class MaskFill<math::Tensor<int32_t>>;
 template class MaskFill<math::Tensor<int64_t>>;
-template class MaskFill<math::Tensor<uint8_t>>;
-template class MaskFill<math::Tensor<uint16_t>>;
-template class MaskFill<math::Tensor<uint32_t>>;
-template class MaskFill<math::Tensor<uint64_t>>;
 template class MaskFill<math::Tensor<float>>;
 template class MaskFill<math::Tensor<double>>;
 template class MaskFill<math::Tensor<fixed_point::fp32_t>>;

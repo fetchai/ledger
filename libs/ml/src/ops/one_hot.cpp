@@ -100,6 +100,15 @@ std::vector<fetch::math::SizeType> OneHot<T>::ComputeOutputShape(
   return shape;
 }
 
+template <typename TensorType>
+OperationsCount OneHot<TensorType>::ChargeForward()
+{
+  assert(!this->batch_input_shapes_.empty());
+  OperationsCount cost = fetch::ml::charge_estimation::ops::ONE_HOT_PER_ELEMENT *
+                         this->TotalElementsIn({this->batch_input_shapes_});
+  return cost;
+}
+
 ///////////////////////////////
 /// EXPLICIT INSTANTIATIONS ///
 ///////////////////////////////
@@ -108,10 +117,6 @@ template class OneHot<math::Tensor<int8_t>>;
 template class OneHot<math::Tensor<int16_t>>;
 template class OneHot<math::Tensor<int32_t>>;
 template class OneHot<math::Tensor<int64_t>>;
-template class OneHot<math::Tensor<uint8_t>>;
-template class OneHot<math::Tensor<uint16_t>>;
-template class OneHot<math::Tensor<uint32_t>>;
-template class OneHot<math::Tensor<uint64_t>>;
 template class OneHot<math::Tensor<float>>;
 template class OneHot<math::Tensor<double>>;
 template class OneHot<math::Tensor<fixed_point::fp32_t>>;

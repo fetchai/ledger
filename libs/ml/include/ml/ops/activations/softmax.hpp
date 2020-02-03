@@ -74,6 +74,8 @@ public:
     return DESCRIPTOR;
   }
 
+  OperationsCount ChargeForward() override;
+
 private:
   SizeType              axis_;
   std::vector<SizeType> axes_;

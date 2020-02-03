@@ -1362,8 +1362,8 @@ TYPED_TEST(OpsSaveParamsTest, maxpool_saveparams_test_1d)
   using TensorType    = TypeParam;
   using DataType      = typename TypeParam::Type;
   using VecTensorType = typename fetch::ml::ops::Ops<TensorType>::VecTensorType;
-  using SPType        = typename fetch::ml::ops::MaxPool<TensorType>::SPType;
-  using OpKind        = typename fetch::ml::ops::MaxPool<TensorType>;
+  using SPType        = typename fetch::ml::ops::MaxPool1D<TensorType>::SPType;
+  using OpKind        = typename fetch::ml::ops::MaxPool1D<TensorType>;
   using SizeType      = typename TypeParam::SizeType;
 
   TensorType          data({2, 5, 2});
@@ -1415,7 +1415,7 @@ TYPED_TEST(OpsSaveParamsTest, maxpool_saveparams_backward_test_1d_2_channels)
   using DataType   = typename TypeParam::Type;
   using TensorType = TypeParam;
   using SizeType   = typename TypeParam::SizeType;
-  using OpKind     = typename fetch::ml::ops::MaxPool<TensorType>;
+  using OpKind     = typename fetch::ml::ops::MaxPool1D<TensorType>;
   using SPType     = typename OpKind::SPType;
 
   TensorType          data({2, 5, 2});
@@ -1439,8 +1439,8 @@ TYPED_TEST(OpsSaveParamsTest, maxpool_saveparams_backward_test_1d_2_channels)
     }
   }
 
-  fetch::ml::ops::MaxPool<TensorType> op(4, 1);
-  std::vector<TensorType>             prediction =
+  fetch::ml::ops::MaxPool1D<TensorType> op(4, 1);
+  std::vector<TensorType>               prediction =
       op.Backward({std::make_shared<const TensorType>(data)}, error);
 
   auto   dsp = serializer_test_utils::SerialiseDeserialiseBuild<SPType, TypeParam>(op);

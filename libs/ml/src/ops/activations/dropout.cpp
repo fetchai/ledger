@@ -137,6 +137,15 @@ std::vector<math::SizeType> Dropout<TensorType>::ComputeOutputShape(
   return inputs.front()->shape();
 }
 
+template <typename TensorType>
+OperationsCount Dropout<TensorType>::ChargeForward()
+{
+  assert(!this->batch_output_shape_.empty());
+  OperationsCount cost = fetch::ml::charge_estimation::ops::DROPOUT_PER_ELEMENT *
+                         this->TotalElementsIn({this->batch_input_shapes_});
+  return cost;
+}
+
 ///////////////////////////////
 /// EXPLICIT INSTANTIATIONS ///
 ///////////////////////////////
@@ -145,10 +154,6 @@ template class Dropout<math::Tensor<int8_t>>;
 template class Dropout<math::Tensor<int16_t>>;
 template class Dropout<math::Tensor<int32_t>>;
 template class Dropout<math::Tensor<int64_t>>;
-template class Dropout<math::Tensor<uint8_t>>;
-template class Dropout<math::Tensor<uint16_t>>;
-template class Dropout<math::Tensor<uint32_t>>;
-template class Dropout<math::Tensor<uint64_t>>;
 template class Dropout<math::Tensor<float>>;
 template class Dropout<math::Tensor<double>>;
 template class Dropout<math::Tensor<fixed_point::fp32_t>>;

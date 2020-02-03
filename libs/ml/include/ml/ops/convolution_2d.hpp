@@ -79,6 +79,8 @@ public:
     return DESCRIPTOR;
   }
 
+  OperationsCount ChargeForward() override;
+
 private:
   void FillVerticalStride(TensorType &input, TensorType &vertical_stride, SizeType output_channels,
                           SizeType input_channels, SizeType kernel_height, SizeType kernel_width);
@@ -102,6 +104,8 @@ private:
   void ReverseFillOutput(TensorType &gemm_output, TensorType const &output,
                          SizeType output_channels, SizeType output_height, SizeType output_width,
                          SizeType batch_size);
+
+  SizeType ComputeOutputDim(SizeType input_dim, SizeType kernel_dim) const;
 
   SizeType stride_size_;
 };

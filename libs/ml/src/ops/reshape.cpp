@@ -118,6 +118,17 @@ std::vector<math::SizeType> Reshape<TensorType>::ComputeOutputShape(
   return output_shape;
 }
 
+template <typename TensorType>
+OperationsCount Reshape<TensorType>::ChargeForward()
+{
+  assert(!this->batch_output_shape_.empty());
+  OperationsCount cost = fetch::ml::charge_estimation::ops::RESHAPE_PER_ELEMENT *
+                             this->TotalElementsIn({this->batch_output_shape_}) +
+                         fetch::ml::charge_estimation::ops::ASSIGN_PER_ELEMENT *
+                             this->TotalElementsIn({this->batch_output_shape_});
+  return cost;
+}
+
 ///////////////////////////////
 /// EXPLICIT INSTANTIATIONS ///
 ///////////////////////////////
@@ -126,10 +137,6 @@ template class Reshape<math::Tensor<int8_t>>;
 template class Reshape<math::Tensor<int16_t>>;
 template class Reshape<math::Tensor<int32_t>>;
 template class Reshape<math::Tensor<int64_t>>;
-template class Reshape<math::Tensor<uint8_t>>;
-template class Reshape<math::Tensor<uint16_t>>;
-template class Reshape<math::Tensor<uint32_t>>;
-template class Reshape<math::Tensor<uint64_t>>;
 template class Reshape<math::Tensor<float>>;
 template class Reshape<math::Tensor<double>>;
 template class Reshape<math::Tensor<fixed_point::fp32_t>>;

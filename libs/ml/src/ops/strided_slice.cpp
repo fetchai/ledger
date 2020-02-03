@@ -134,6 +134,18 @@ std::vector<math::SizeType> StridedSlice<TensorType>::ComputeOutputShape(
   return output_shape;
 }
 
+template <typename TensorType>
+OperationsCount StridedSlice<TensorType>::ChargeForward()
+{
+  assert(!this->batch_input_shapes_.empty());
+  OperationsCount cost = fetch::ml::charge_estimation::ops::SLICE_PER_ELEMENT *
+                             this->TotalElementsIn({this->batch_input_shapes_}) +
+                         fetch::ml::charge_estimation::ops::ASSIGN_PER_ELEMENT *
+                             this->TotalElementsIn({this->batch_input_shapes_});
+  ;
+  return cost;
+}
+
 ///////////////////////////////
 /// EXPLICIT INSTANTIATIONS ///
 ///////////////////////////////
@@ -142,10 +154,6 @@ template class StridedSlice<math::Tensor<int8_t>>;
 template class StridedSlice<math::Tensor<int16_t>>;
 template class StridedSlice<math::Tensor<int32_t>>;
 template class StridedSlice<math::Tensor<int64_t>>;
-template class StridedSlice<math::Tensor<uint8_t>>;
-template class StridedSlice<math::Tensor<uint16_t>>;
-template class StridedSlice<math::Tensor<uint32_t>>;
-template class StridedSlice<math::Tensor<uint64_t>>;
 template class StridedSlice<math::Tensor<float>>;
 template class StridedSlice<math::Tensor<double>>;
 template class StridedSlice<math::Tensor<fixed_point::fp32_t>>;
