@@ -2030,7 +2030,7 @@ constexpr FixedPoint<64, 64> &FixedPoint<64, 64>::operator*=(FixedPoint<64, 64> 
   {
     other = -other;
   }
-  sign = !(this_neg ^ n_neg);
+  sign = ((this_neg ^ n_neg) == false);
 
   // Calculate all products between each uint64_t element in the Ints
   // Use int128_t type to hold the actual product.
@@ -2072,11 +2072,11 @@ constexpr FixedPoint<64, 64> &FixedPoint<64, 64>::operator*=(FixedPoint<64, 64> 
   if (!sign)
   {
     // If it's negative, we need to add one and complement the fractional part
-    uint64_t integer_part    = static_cast<uint64_t>((prod >> FRACTIONAL_BITS) & FRACTIONAL_MASK);
-    uint64_t fractional_part = static_cast<uint64_t>(prod & FRACTIONAL_MASK);
+    auto integer_part    = static_cast<uint64_t>((prod >> FRACTIONAL_BITS) & FRACTIONAL_MASK);
+    auto fractional_part = static_cast<uint64_t>(prod & FRACTIONAL_MASK);
 
     integer_part = ~integer_part + 1;
-    if (fractional_part)
+    if (fractional_part > 0)
     {
       --integer_part;
       fractional_part = ~fractional_part + 1;
