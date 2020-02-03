@@ -1049,33 +1049,38 @@ TYPED_TEST(BasicTest, Remainder)
   TypeParam x{fetch::math::AsType<TypeParam>(1.6519711627625)};
   TypeParam huge(10000);
   huge >>= 2;
-  TypeParam e1 = TypeParam::Remainder(ten, one);
-  TypeParam e2 = TypeParam::Remainder(ten, m_one);
-  TypeParam e3 = TypeParam::Remainder(ten, one_point_five);
-  TypeParam e4 = TypeParam::Remainder(ten, m_one_point_five);
-  TypeParam e5 = TypeParam::Remainder(ten, x);
-  TypeParam e6 = TypeParam::Remainder(m_ten, x);
-  TypeParam e7 = TypeParam::Remainder(huge, x);
-
-  EXPECT_NEAR(static_cast<double>(e1),
+  TypeParam e = TypeParam::Remainder(ten, one);
+  EXPECT_NEAR(static_cast<double>(e),
               std::remainder(static_cast<double>(ten), static_cast<double>(one)),
               static_cast<double>(TypeParam::TOLERANCE));
-  EXPECT_NEAR(static_cast<double>(e2),
+
+  e = TypeParam::Remainder(ten, m_one);
+  EXPECT_NEAR(static_cast<double>(e),
               std::remainder(static_cast<double>(ten), static_cast<double>(m_one)),
               static_cast<double>(TypeParam::TOLERANCE));
-  EXPECT_NEAR(static_cast<double>(e3),
+
+  e = TypeParam::Remainder(ten, one_point_five);
+  EXPECT_NEAR(static_cast<double>(e),
               std::remainder(static_cast<double>(ten), static_cast<double>(one_point_five)),
               static_cast<double>(TypeParam::TOLERANCE));
-  EXPECT_NEAR(static_cast<double>(e4),
+
+  e = TypeParam::Remainder(ten, m_one_point_five);
+  EXPECT_NEAR(static_cast<double>(e),
               std::remainder(static_cast<double>(ten), static_cast<double>(m_one_point_five)),
               static_cast<double>(TypeParam::TOLERANCE));
-  EXPECT_NEAR(static_cast<double>(e5),
+
+  e = TypeParam::Remainder(ten, x);
+  EXPECT_NEAR(static_cast<double>(e),
               std::remainder(static_cast<double>(ten), static_cast<double>(x)),
               static_cast<double>(TypeParam::TOLERANCE));
-  EXPECT_NEAR(static_cast<double>(e6),
+
+  e = TypeParam::Remainder(m_ten, x);
+  EXPECT_NEAR(static_cast<double>(e),
               std::remainder(static_cast<double>(m_ten), static_cast<double>(x)),
               static_cast<double>(TypeParam::TOLERANCE));
-  EXPECT_NEAR(static_cast<double>(e7),
+
+  e = TypeParam::Remainder(huge, x);  
+  EXPECT_NEAR(static_cast<double>(e),
               std::remainder(static_cast<double>(huge), static_cast<double>(x)),
               static_cast<double>(TypeParam::TOLERANCE));
 }

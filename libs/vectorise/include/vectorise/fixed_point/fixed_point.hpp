@@ -89,9 +89,9 @@ struct TypeFromSize<128>
   static constexpr uint64_t  power10   = 10000000000000000000ull;
   static constexpr ValueType tolerance = 0x100000000000;  // 0,00000095367431640625
   static constexpr ValueType max_exp =
-      (static_cast<uint128_t>(0x2b) << 64) | 0xab13e5fca20e0000;  // 43.6682723752765511
+      (static_cast<uint128_t>(0x2b) << 64) | 0xab13e5fca20ef141;  // 43.6682723752765544929
   static constexpr UnsignedType min_exp = (static_cast<uint128_t>(0xffffffffffffffd4) << 64) |
-                                          0x54ec1a035df20000;  // -43.6682723752765511
+                                          0xab13e5fca20ef141;  // -43.6682723752765544929
 };
 #endif
 
@@ -605,6 +605,9 @@ std::function<FixedPoint<I, F>(FixedPoint<I, F> const &x)>
 template <uint16_t I, uint16_t F>
 uint32_t FixedPoint<I, F>::fp_state{FixedPoint<I, F>::STATE_OK};
 
+template<>
+constexpr FixedPoint<64,64> &FixedPoint<64, 64>::operator*=(FixedPoint<64,64> const &n);
+
 template <uint16_t I, uint16_t F>
 constexpr typename FixedPoint<I, F>::Type FixedPoint<I, F>::SMALLEST_FRACTION;
 template <uint16_t I, uint16_t F>
@@ -798,6 +801,7 @@ inline std::ostream &operator<<(std::ostream &s, FixedPoint<I, F> const &n)
   else
   {
     s << std::noshowpos;
+    s << std::dec;
 
     auto power10  = FixedPoint<I, F>::POWER10;
     auto one_mask = FixedPoint<I, F>::ONE_MASK;
@@ -1961,6 +1965,129 @@ constexpr FixedPoint<I, F> &FixedPoint<I, F>::operator*=(FixedPoint<I, F> const 
 }
 
 /**
+ * Multiplication assignment operator, multiply given object to self
+ * @param the given FixedPoint object to multiply against
+ * @return the product of the two FixedPoint objects
+ */
+template <>
+constexpr FixedPoint<64, 64> &FixedPoint<64, 64>::operator*=(FixedPoint<64, 64> const &n)
+{
+  if (IsNaN(*this) || IsNaN(n))
+  {
+    fp_state |= STATE_NAN;
+    *this = NaN;
+    return *this;
+  }
+
+  bool this_pos_inf = IsPosInfinity(*this);
+  bool this_neg_inf = IsNegInfinity(*this);
+  bool n_pos_inf    = IsPosInfinity(n);
+  bool n_neg_inf    = IsNegInfinity(n);
+  bool this_zero    = *this == _0;
+  bool n_zero       = n == _0;
+  bool this_pos     = *this > _0;
+  bool this_neg     = *this < _0;
+  bool n_neg        = n < _0;
+
+  // Multiplying  +∞/-∞ with 0 gives NaN
+  bool nan = (n_zero && (this_pos_inf || this_neg_inf)) || (this_zero && (n_pos_inf || n_neg_inf));
+  // Multiplying +∞ with any positive number (incl +∞) or -∞ with a negative number (incl -∞), gives
+  // +∞
+  bool pos_inf = (this_pos_inf && n > _0) || (n_pos_inf && this_pos) ||
+                 (this_neg_inf && n < _0) || (n_neg_inf && this_neg);
+  // Multiplying +∞ with any negative number (incl -∞) or -∞ with a positive number (incl. +∞) gives
+  // -∞
+  bool neg_inf = (this_pos_inf && n < _0) || (n_pos_inf && this_neg) ||
+                 (this_neg_inf && n > _0) || (n_neg_inf && this_pos);
+
+  if (nan)
+  {
+    fp_state |= STATE_NAN;
+    *this = NaN;
+    return *this;
+  }
+  if (pos_inf)
+  {
+    fp_state |= STATE_INFINITY;
+    *this = POSITIVE_INFINITY;
+    return *this;
+  }
+  if (neg_inf)
+  {
+    fp_state |= STATE_INFINITY;
+    *this = NEGATIVE_INFINITY;
+    return *this;
+  }
+
+  // We duplicate multiplication as done in the Int<> class
+  bool sign = true;
+  if (this_neg)
+  {
+    data_ = -data_;
+  }
+  Type other{n.Data()};
+  if (n_neg)
+  {
+    other = -other;
+  }
+  sign = !(this_neg ^ n_neg);
+
+  // Calculate all products between each uint64_t element in the Ints
+  // Use int128_t type to hold the actual product.
+  uint64_t a[2] = {static_cast<uint64_t>(data_), static_cast<uint64_t>(data_ >> 64)};
+  uint64_t b[2] = {static_cast<uint64_t>(other), static_cast<uint64_t>(other >> 64)};
+
+  /* If a, b, two int128 numbers, with the following elements (little endian order):
+   * |  a[1]  |  a[0]  |
+   * |  b[1]  |  b[0]  |
+   * Then both can be written in the following form:
+   * a = a[0] + (a[1] << 64)
+   * b = b[0] + (b[1] << 64)
+   *
+   * Then a * b is the following, truncating terms left shifted over 192 bits:
+   * a * b =  a[0] * b[0]
+   *       + (a[0] * b[1] + a[1] * b[0]) << 64
+   *       + (a[1] * b[1]) << 128
+   * However, the FixedPoint product as integer value is shifted right FRACTIONAL_BITS
+   * so the quantity (a[1] + b[1]) that would be cropped out, we only shift left 64-bits
+   * and we add it to the other terms AFTER we shift them right FRACTIONAL_BITS.
+   */
+  
+  UnsignedType prod_lo = (static_cast<UnsignedType>(a[0]) * static_cast<UnsignedType>(b[0]));
+  prod_lo >>= size_t(FRACTIONAL_BITS);
+  prod_lo += (static_cast<UnsignedType>(a[0]) * static_cast<UnsignedType>(b[1]))
+           + (static_cast<UnsignedType>(a[1]) * static_cast<UnsignedType>(b[0]));
+  UnsignedType prod = static_cast<UnsignedType>(a[1]) * static_cast<UnsignedType>(b[1]);
+  // If the higher elements have a product larger than INT_MAX then we have an overflow
+  if (prod > static_cast<UnsignedType>(MAX))
+  {
+    fp_state |= STATE_OVERFLOW;
+    data_ = sign ? MAX : MIN;
+    return *this;
+  }
+  // Shift the product 64-bits left
+  prod <<= 64;
+  prod += prod_lo;
+
+  if (!sign)
+  {
+    // If it's negative, we need to add one and complement the fractional part
+    uint64_t integer_part = static_cast<uint64_t>((INTEGER_MASK & prod) >> FRACTIONAL_BITS);
+    uint64_t fractional_part = static_cast<uint64_t>(prod & FRACTIONAL_MASK);
+
+    integer_part = ~integer_part + 1;
+    if (fractional_part)
+    {
+      --integer_part;
+      fractional_part = ~fractional_part + 1;
+    }
+    prod = (static_cast<Type>(integer_part) << FRACTIONAL_BITS) | static_cast<Type>(fractional_part);
+  }
+  data_ = static_cast<Type>(prod);
+  return *this;
+}
+
+/**
  * Division assignment operator, divide self against given object
  * @param the given FixedPoint object to divide against
  * @return the division of the two FixedPoint objects
@@ -2549,7 +2676,7 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::Exp(FixedPoint<I, F> const &x)
     return _1 / Exp(-x);
   }
 
-  if (x > MAX_EXP)
+  if (x >= MAX_EXP)
   {
     fp_state |= STATE_OVERFLOW;
     return FP_MAX;
@@ -2623,28 +2750,39 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::Log2(FixedPoint<I, F> const &x)
     fp_state |= STATE_NAN;
     return NaN;
   }
-  if (x == _1)
+
+  bool x_pos_inf    = IsPosInfinity(x);
+  bool x_one        = (x == _1);
+  bool x_zero       = (x == _0);
+  bool x_neg        = (x < _0);
+
+  bool nan_mask = x_neg;
+  bool pos_inf_mask = x_pos_inf;
+  bool neg_inf_mask = x_zero;
+  bool one_mask     = x_one;
+
+  if (nan_mask)
   {
-    return _0;
+    fp_state |= STATE_NAN;
+    return NaN;
   }
-  if (x == _0)
+  if (neg_inf_mask)
   {
     fp_state |= STATE_INFINITY;
     return NEGATIVE_INFINITY;
   }
-  if (x == CONST_SMALLEST_FRACTION)
-  {
-    return FixedPoint{-FRACTIONAL_BITS};
-  }
-  if (IsPosInfinity(x))
+  if (pos_inf_mask)
   {
     fp_state |= STATE_INFINITY;
     return POSITIVE_INFINITY;
   }
-  if (x < _0)
+  if (one_mask)
   {
-    fp_state |= STATE_NAN;
-    return NaN;
+    return _0;
+  }
+  if (x == CONST_SMALLEST_FRACTION)
+  {
+    return FixedPoint{-FRACTIONAL_BITS};
   }
 
   /* Range Reduction: find k and f such that
@@ -2659,6 +2797,10 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::Log2(FixedPoint<I, F> const &x)
     y = _1 / x;
   }
   Type       k = platform::HighestSetBit(y.Data()) - Type(FRACTIONAL_BITS);
+  if (k == 63) {
+    --k;
+    y *= _half;
+  }
   FixedPoint k_shifted{FixedPoint::FromBase((_1.Data()) << k)};
   FixedPoint r = y / k_shifted;
 
@@ -2735,23 +2877,39 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::Log10(FixedPoint<I, F> const &x)
 template <uint16_t I, uint16_t F>
 constexpr FixedPoint<I, F> FixedPoint<I, F>::Sqrt(FixedPoint<I, F> const &x)
 {
-  if (x == _1)
-  {
-    return _1;
-  }
-  if (x == _0)
-  {
-    return _0;
-  }
-  if (x < _0)
+  if (IsNaN(x))
   {
     fp_state |= STATE_NAN;
     return NaN;
   }
-  if (IsPosInfinity(x))
+
+  bool x_pos_inf    = IsPosInfinity(x);
+  bool x_one        = (x == _1);
+  bool x_zero       = (x == _0);
+  bool x_neg        = (x < _0);
+
+  bool nan_mask     = x_neg;
+  bool pos_inf_mask = x_pos_inf;
+  bool zero_mask    = x_zero;
+  bool one_mask     = x_one;
+
+  if (nan_mask)
+  {
+    fp_state |= STATE_NAN;
+    return NaN;
+  }
+  if (pos_inf_mask)
   {
     fp_state |= STATE_INFINITY;
     return POSITIVE_INFINITY;
+  }
+  if (one_mask)
+  {
+    return _1;
+  }
+  if (zero_mask)
+  {
+    return _0;
   }
 
   FixedPoint r{x};
