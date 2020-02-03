@@ -2030,7 +2030,7 @@ constexpr FixedPoint<64, 64> &FixedPoint<64, 64>::operator*=(FixedPoint<64, 64> 
   {
     other = -other;
   }
-  sign = ((this_neg ^ n_neg) == false);
+  sign = !(this_neg ^ n_neg);  // NOLINT
 
   // Calculate all products between each uint64_t element in the Ints
   // Use int128_t type to hold the actual product.
