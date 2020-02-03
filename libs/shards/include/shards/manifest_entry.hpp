@@ -52,8 +52,8 @@ private:
   network::Uri    uri_{};
   uint16_t        local_port_{0};
 
-  template <typename T, typename D>
-  friend struct serializers::MapSerializer;
+  template <uint8_t KEY, class MemberVariable, MemberVariable MEMBER_VARIABLE, class Underlying>
+  friend struct ExpectedKeyMember;
 };
 
 inline muddle::Address const &ManifestEntry::address() const
@@ -77,6 +77,12 @@ namespace serializers {
 
 template <typename D>
 struct MapSerializer<shards::ManifestEntry, D>
+  : MapSerializerBoilerplate<shards::ManifestEntry, D,
+                             EXPECTED_KEY_MEMBER(1, shards::ManifestEntry::uri_),
+                             EXPECTED_KEY_MEMBER(2, shards::ManifestEntry::local_port_),
+                             EXPECTED_KEY_MEMBER(3, shards::ManifestEntry::address_)>
+{
+};
 {
 public:
   using DriverType = D;
@@ -87,7 +93,7 @@ public:
   static const uint8_t ADDRESS    = 3;
 
   template <typename T>
-  static inline void Serialize(T &map_constructor, Type const &x)
+  static inline void Serialize(T & map_constructor, Type const &x)
   {
     auto map = map_constructor(3);
     map.Append(URI, x.uri_);
@@ -96,7 +102,7 @@ public:
   }
 
   template <typename T>
-  static inline void Deserialize(T &map, Type &x)
+  static inline void Deserialize(T & map, Type & x)
   {
     map.ExpectKeyGetValue(URI, x.uri_);
     map.ExpectKeyGetValue(LOCAL_PORT, x.local_port_);

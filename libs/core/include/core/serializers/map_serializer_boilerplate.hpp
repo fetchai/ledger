@@ -29,9 +29,9 @@ struct MapSerializerBoilerplate
   using DriverType = D;
 
   template <class Constructor>
-  static constexpr void Serialize(Constructor &map_constructor, Type const &v)
+  static constexpr void Serialize(Constructor &map_constructor, Type const &v)
   {
-    static constexpr auto map_size = value_util::Sum(Fields::LOGICAL_SIZE...);
+    constexpr auto map_size = value_util::Sum(Fields::LOGICAL_SIZE...);
 
     value_util::ForEach(
         [map = map_constructor(map_size), &v](auto field) { field.Serialize(map, v); },
@@ -55,7 +55,7 @@ struct ExtraChecks
   static constexpr std::size_t LOGICAL_SIZE = 0;
 };
 
-template <uint8_t KEY, class Data = void>
+template <uint8_t KEY, class Underlying = void>
 struct SimplySerializedAs : ValueSerializer
 {
   template <class Map, class Object>
@@ -87,8 +87,25 @@ struct SimplySerializedAs<KEY, void> : ValueSerializer
   }
 };
 
-template <uint8_t KEY, class MemberVariable, MemberVariable MEMBER_VARIABLE>
+template <uint8_t KEY, class MemberVariable, MemberVariable MEMBER_VARIABLE,
+          class Underlying = void>
 struct ExpectedKeyMember : ValueSerializer
+{
+  template <class Map, class Object>
+  static constexpr void Serialize(Map &map, Object const &object)
+  {
+    map.Append(KEY, static_cast<Underlying const &>(object.*MEMBER_VARIABLE));
+  }
+
+  template <class Map, class Object>
+  static constexpr void Deserialize(Map &map, Object &object)
+  {
+    map.ExpectKeyGetValue(KEY, static_cast<Underlying &>(object.*MEMBER_VARIABLE));
+  }
+};
+
+template <uint8_t KEY, class MemberVariable, MemberVariable MEMBER_VARIABLE>
+struct ExpectedKeyMember<KEY, MemberVariable, MEMBER_VARIABLE, void> : ValueSerializer
 {
   template <class Map, class Object>
   static constexpr void Serialize(Map &map, Object const &object)
@@ -104,6 +121,8 @@ struct ExpectedKeyMember : ValueSerializer
 };
 
 #define EXPECTED_KEY_MEMBER(KEY, ...) ExpectedKeyMember<KEY, decltype(&__VA_ARGS__), &__VA_ARGS__>
+#define EXPECTED_KEY_MEMBER_AS(KEY, member, Type) \
+  ExpectedKeyMember<KEY, decltype(&member), &member, Type>
 
 }  // namespace serializers
 }  // namespace fetch

@@ -980,7 +980,7 @@ struct MapSerializer<ml::NodeSaveableParams<TensorType>, D>
  * Few of the serializers below follow this pattern.
  */
 template <class T, typename D, class Base = ml::OpsSaveableParams, class... Fields>
-struct OpTypeSerializer
+struct BaseAndOpTypeSerializer
 {
   using Type       = T;
   using DriverType = D;
@@ -1019,7 +1019,7 @@ struct OpTypeSerializer
  */
 template <typename TensorType, typename D>
 struct MapSerializer<ml::OpAbsSaveableParams<TensorType>, D>
-  : OpTypeSerializer<ml::OpAbsSaveableParams<TensorType>, D>
+  : BaseAndOpTypeSerializer<ml::OpAbsSaveableParams<TensorType>, D>
 {
 };
 
@@ -1029,8 +1029,8 @@ struct MapSerializer<ml::OpAbsSaveableParams<TensorType>, D>
  */
 template <typename TensorType, typename D>
 struct MapSerializer<ml::OpAddSaveableParams<TensorType>, D>
-  : OpTypeSerializer<ml::OpAddSaveableParams<TensorType>, D, ml::OpsSaveableParams,
-                     EXPECTED_KEY_MEMBER(3, ml::OpAddSaveableParams<TensorType>::axes)>
+  : BaseAndOpTypeSerializer<ml::OpAddSaveableParams<TensorType>, D, ml::OpsSaveableParams,
+                            EXPECTED_KEY_MEMBER(3, ml::OpAddSaveableParams<TensorType>::axes)>
 {
 };
 
@@ -1040,8 +1040,9 @@ struct MapSerializer<ml::OpAddSaveableParams<TensorType>, D>
  */
 template <typename TensorType, typename D>
 struct MapSerializer<ml::OpConcatenateSaveableParams<TensorType>, D>
-  : OpTypeSerializer<ml::OpConcatenateSaveableParams<TensorType>, D, ml::OpsSaveableParams,
-                     EXPECTED_KEY_MEMBER(3, ml::OpConcatenateSaveableParams<TensorType>::axis)>
+  : BaseAndOpTypeSerializer<ml::OpConcatenateSaveableParams<TensorType>, D, ml::OpsSaveableParams,
+                            EXPECTED_KEY_MEMBER(3,
+                                                ml::OpConcatenateSaveableParams<TensorType>::axis)>
 {
 };
 
@@ -1105,9 +1106,9 @@ struct MapSerializer<ml::OpConstantSaveableParams<TensorType>, D>
  */
 template <typename TensorType, typename D>
 struct MapSerializer<ml::OpConvolution1DSaveableParams<TensorType>, D>
-  : OpTypeSerializer<ml::OpConvolution1DSaveableParams<TensorType>, D, ml::OpsSaveableParams,
-                     EXPECTED_KEY_MEMBER(
-                         3, ml::OpConvolution1DSaveableParams<TensorType>::stride_size)>
+  : BaseAndOpTypeSerializer<ml::OpConvolution1DSaveableParams<TensorType>, D, ml::OpsSaveableParams,
+                            EXPECTED_KEY_MEMBER(
+                                3, ml::OpConvolution1DSaveableParams<TensorType>::stride_size)>
 {
 };
 
@@ -1117,9 +1118,9 @@ struct MapSerializer<ml::OpConvolution1DSaveableParams<TensorType>, D>
  */
 template <typename TensorType, typename D>
 struct MapSerializer<ml::OpConvolution2DSaveableParams<TensorType>, D>
-  : OpTypeSerializer<ml::OpConvolution2DSaveableParams<TensorType>, D, ml::OpsSaveableParams,
-                     EXPECTED_KEY_MEMBER(
-                         3, ml::OpConvolution2DSaveableParams<TensorType>::stride_size)>
+  : BaseAndOpTypeSerializer<ml::OpConvolution2DSaveableParams<TensorType>, D, ml::OpsSaveableParams,
+                            EXPECTED_KEY_MEMBER(
+                                3, ml::OpConvolution2DSaveableParams<TensorType>::stride_size)>
 {
 };
 
@@ -1142,7 +1143,7 @@ struct MapSerializer<ml::OpCrossEntropyLossSaveableParams<TensorType>, D>
  */
 template <typename TensorType, typename D>
 struct MapSerializer<ml::OpDataHolderSaveableParams<TensorType>, D>
-  : OpTypeSerializer<ml::OpDataHolderSaveableParams<TensorType>, D>
+  : BaseAndOpTypeSerializer<ml::OpDataHolderSaveableParams<TensorType>, D>
 {
 };
 
@@ -1165,11 +1166,12 @@ struct MapSerializer<ml::OpDivideSaveableParams<TensorType>, D>
  */
 template <typename TensorType, typename D>
 struct MapSerializer<ml::OpDropoutSaveableParams<TensorType>, D>
-  : OpTypeSerializer<ml::OpDropoutSaveableParams<TensorType>, D, ml::OpsSaveableParams,
-                     EXPECTED_KEY_MEMBER(3, ml::OpDropoutSaveableParams<TensorType>::random_seed),
-                     EXPECTED_KEY_MEMBER(4, ml::OpDropoutSaveableParams<TensorType>::probability),
-                     EXPECTED_KEY_MEMBER(5, ml::OpDropoutSaveableParams<TensorType>::buffer),
-                     EXPECTED_KEY_MEMBER(6, ml::OpDropoutSaveableParams<TensorType>::index)>
+  : BaseAndOpTypeSerializer<
+        ml::OpDropoutSaveableParams<TensorType>, D, ml::OpsSaveableParams,
+        EXPECTED_KEY_MEMBER(3, ml::OpDropoutSaveableParams<TensorType>::random_seed),
+        EXPECTED_KEY_MEMBER(4, ml::OpDropoutSaveableParams<TensorType>::probability),
+        EXPECTED_KEY_MEMBER(5, ml::OpDropoutSaveableParams<TensorType>::buffer),
+        EXPECTED_KEY_MEMBER(6, ml::OpDropoutSaveableParams<TensorType>::index)>
 {
 };
 
@@ -1179,8 +1181,8 @@ struct MapSerializer<ml::OpDropoutSaveableParams<TensorType>, D>
  */
 template <typename TensorType, typename D>
 struct MapSerializer<ml::OpEluSaveableParams<TensorType>, D>
-  : OpTypeSerializer<ml::OpEluSaveableParams<TensorType>, D, ml::OpsSaveableParams,
-                     EXPECTED_KEY_MEMBER(3, ml::OpEluSaveableParams<TensorType>::a)>
+  : BaseAndOpTypeSerializer<ml::OpEluSaveableParams<TensorType>, D, ml::OpsSaveableParams,
+                            EXPECTED_KEY_MEMBER(3, ml::OpEluSaveableParams<TensorType>::a)>
 {
 };
 
@@ -1203,7 +1205,7 @@ struct MapSerializer<ml::OpEmbeddingsSaveableParams<TensorType>, D>
  */
 template <typename TensorType, typename D>
 struct MapSerializer<ml::OpExpSaveableParams<TensorType>, D>
-  : OpTypeSerializer<ml::OpExpSaveableParams<TensorType>, D>
+  : BaseAndOpTypeSerializer<ml::OpExpSaveableParams<TensorType>, D>
 {
 };
 
@@ -1213,8 +1215,9 @@ struct MapSerializer<ml::OpExpSaveableParams<TensorType>, D>
  */
 template <typename TensorType, typename D>
 struct MapSerializer<ml::OpFlattenSaveableParams<TensorType>, D>
-  : OpTypeSerializer<ml::OpFlattenSaveableParams<TensorType>, D, ml::OpsSaveableParams,
-                     EXPECTED_KEY_MEMBER(3, ml::OpFlattenSaveableParams<TensorType>::input_shape)>
+  : BaseAndOpTypeSerializer<ml::OpFlattenSaveableParams<TensorType>, D, ml::OpsSaveableParams,
+                            EXPECTED_KEY_MEMBER(
+                                3, ml::OpFlattenSaveableParams<TensorType>::input_shape)>
 {
 };
 
@@ -1224,7 +1227,7 @@ struct MapSerializer<ml::OpFlattenSaveableParams<TensorType>, D>
  */
 template <typename TensorType, typename D>
 struct MapSerializer<ml::OpGeluSaveableParams<TensorType>, D>
-  : OpTypeSerializer<ml::OpGeluSaveableParams<TensorType>, D>
+  : BaseAndOpTypeSerializer<ml::OpGeluSaveableParams<TensorType>, D>
 {
 };
 
@@ -1234,9 +1237,10 @@ struct MapSerializer<ml::OpGeluSaveableParams<TensorType>, D>
  */
 template <typename TensorType, typename D>
 struct MapSerializer<ml::OpLayerNormSaveableParams<TensorType>, D>
-  : OpTypeSerializer<ml::OpLayerNormSaveableParams<TensorType>, D, ml::OpsSaveableParams,
-                     EXPECTED_KEY_MEMBER(3, ml::OpLayerNormSaveableParams<TensorType>::epsilon),
-                     EXPECTED_KEY_MEMBER(4, ml::OpLayerNormSaveableParams<TensorType>::axis)>
+  : BaseAndOpTypeSerializer<ml::OpLayerNormSaveableParams<TensorType>, D, ml::OpsSaveableParams,
+                            EXPECTED_KEY_MEMBER(3,
+                                                ml::OpLayerNormSaveableParams<TensorType>::epsilon),
+                            EXPECTED_KEY_MEMBER(4, ml::OpLayerNormSaveableParams<TensorType>::axis)>
 {
 };
 
@@ -1246,8 +1250,8 @@ struct MapSerializer<ml::OpLayerNormSaveableParams<TensorType>, D>
  */
 template <typename TensorType, typename D>
 struct MapSerializer<ml::OpLeakyReluSaveableParams<TensorType>, D>
-  : OpTypeSerializer<ml::OpLeakyReluSaveableParams<TensorType>, D, ml::OpsSaveableParams,
-                     EXPECTED_KEY_MEMBER(3, ml::OpLeakyReluSaveableParams<TensorType>::a)>
+  : BaseAndOpTypeSerializer<ml::OpLeakyReluSaveableParams<TensorType>, D, ml::OpsSaveableParams,
+                            EXPECTED_KEY_MEMBER(3, ml::OpLeakyReluSaveableParams<TensorType>::a)>
 {
 };
 
@@ -1257,8 +1261,8 @@ struct MapSerializer<ml::OpLeakyReluSaveableParams<TensorType>, D>
  */
 template <typename TensorType, typename D>
 struct MapSerializer<ml::OpPReluOpSaveableParams<TensorType>, D>
-  : OpTypeSerializer<ml::OpPReluOpSaveableParams<TensorType>, D, ml::OpsSaveableParams,
-                     EXPECTED_KEY_MEMBER(3, ml::OpPReluOpSaveableParams<TensorType>::a)>
+  : BaseAndOpTypeSerializer<ml::OpPReluOpSaveableParams<TensorType>, D, ml::OpsSaveableParams,
+                            EXPECTED_KEY_MEMBER(3, ml::OpPReluOpSaveableParams<TensorType>::a)>
 {
 };
 
@@ -1268,7 +1272,7 @@ struct MapSerializer<ml::OpPReluOpSaveableParams<TensorType>, D>
  */
 template <typename TensorType, typename D>
 struct MapSerializer<ml::OpLogSaveableParams<TensorType>, D>
-  : OpTypeSerializer<ml::OpLogSaveableParams<TensorType>, D>
+  : BaseAndOpTypeSerializer<ml::OpLogSaveableParams<TensorType>, D>
 {
 };
 
@@ -1278,7 +1282,7 @@ struct MapSerializer<ml::OpLogSaveableParams<TensorType>, D>
  */
 template <typename TensorType, typename D>
 struct MapSerializer<ml::OpLogSigmoidSaveableParams<TensorType>, D>
-  : OpTypeSerializer<ml::OpLogSigmoidSaveableParams<TensorType>, D>
+  : BaseAndOpTypeSerializer<ml::OpLogSigmoidSaveableParams<TensorType>, D>
 {
 };
 
@@ -1288,8 +1292,9 @@ struct MapSerializer<ml::OpLogSigmoidSaveableParams<TensorType>, D>
  */
 template <typename TensorType, typename D>
 struct MapSerializer<ml::OpLogSoftmaxSaveableParams<TensorType>, D>
-  : OpTypeSerializer<ml::OpLogSoftmaxSaveableParams<TensorType>, D, ml::OpsSaveableParams,
-                     EXPECTED_KEY_MEMBER(3, ml::OpLogSoftmaxSaveableParams<TensorType>::axis)>
+  : BaseAndOpTypeSerializer<ml::OpLogSoftmaxSaveableParams<TensorType>, D, ml::OpsSaveableParams,
+                            EXPECTED_KEY_MEMBER(3,
+                                                ml::OpLogSoftmaxSaveableParams<TensorType>::axis)>
 {
 };
 
@@ -1299,8 +1304,8 @@ struct MapSerializer<ml::OpLogSoftmaxSaveableParams<TensorType>, D>
  */
 template <typename TensorType, typename D>
 struct MapSerializer<ml::OpMaskFillSaveableParams<TensorType>, D>
-  : OpTypeSerializer<ml::OpMaskFillSaveableParams<TensorType>, D, ml::OpsSaveableParams,
-                     EXPECTED_KEY_MEMBER(3, ml::OpMaskFillSaveableParams<TensorType>::axis)>
+  : BaseAndOpTypeSerializer<ml::OpMaskFillSaveableParams<TensorType>, D, ml::OpsSaveableParams,
+                            EXPECTED_KEY_MEMBER(3, ml::OpMaskFillSaveableParams<TensorType>::axis)>
 {
 };
 
@@ -1310,7 +1315,7 @@ struct MapSerializer<ml::OpMaskFillSaveableParams<TensorType>, D>
  */
 template <typename TensorType, typename D>
 struct MapSerializer<ml::OpMatrixMultiplySaveableParams<TensorType>, D>
-  : OpTypeSerializer<
+  : BaseAndOpTypeSerializer<
         ml::OpMatrixMultiplySaveableParams<TensorType>, D, ml::OpsSaveableParams,
         EXPECTED_KEY_MEMBER(3, ml::OpMatrixMultiplySaveableParams<TensorType>::transpose_a),
         EXPECTED_KEY_MEMBER(4, ml::OpMatrixMultiplySaveableParams<TensorType>::transpose_b)>
@@ -1323,9 +1328,10 @@ struct MapSerializer<ml::OpMatrixMultiplySaveableParams<TensorType>, D>
  */
 template <typename TensorType, typename D>
 struct MapSerializer<ml::OpMaxPool1DSaveableParams<TensorType>, D>
-  : OpTypeSerializer<ml::OpMaxPool1DSaveableParams<TensorType>, D, ml::OpsSaveableParams,
-                     EXPECTED_KEY_MEMBER(3, ml::OpMaxPool1DSaveableParams<TensorType>::kernel_size),
-                     EXPECTED_KEY_MEMBER(4, ml::OpMaxPool1DSaveableParams<TensorType>::stride_size)>
+  : BaseAndOpTypeSerializer<
+        ml::OpMaxPool1DSaveableParams<TensorType>, D, ml::OpsSaveableParams,
+        EXPECTED_KEY_MEMBER(3, ml::OpMaxPool1DSaveableParams<TensorType>::kernel_size),
+        EXPECTED_KEY_MEMBER(4, ml::OpMaxPool1DSaveableParams<TensorType>::stride_size)>
 {
 };
 
@@ -1335,9 +1341,10 @@ struct MapSerializer<ml::OpMaxPool1DSaveableParams<TensorType>, D>
  */
 template <typename TensorType, typename D>
 struct MapSerializer<ml::OpMaxPoolSaveableParams<TensorType>, D>
-  : OpTypeSerializer<ml::OpMaxPoolSaveableParams<TensorType>, D, ml::OpsSaveableParams,
-                     EXPECTED_KEY_MEMBER(3, ml::OpMaxPoolSaveableParams<TensorType>::kernel_size),
-                     EXPECTED_KEY_MEMBER(4, ml::OpMaxPoolSaveableParams<TensorType>::stride_size)>
+  : BaseAndOpTypeSerializer<
+        ml::OpMaxPoolSaveableParams<TensorType>, D, ml::OpsSaveableParams,
+        EXPECTED_KEY_MEMBER(3, ml::OpMaxPoolSaveableParams<TensorType>::kernel_size),
+        EXPECTED_KEY_MEMBER(4, ml::OpMaxPoolSaveableParams<TensorType>::stride_size)>
 {
 };
 
@@ -1347,9 +1354,10 @@ struct MapSerializer<ml::OpMaxPoolSaveableParams<TensorType>, D>
  */
 template <typename TensorType, typename D>
 struct MapSerializer<ml::OpMaxPool2DSaveableParams<TensorType>, D>
-  : OpTypeSerializer<ml::OpMaxPool2DSaveableParams<TensorType>, D, ml::OpsSaveableParams,
-                     EXPECTED_KEY_MEMBER(3, ml::OpMaxPool2DSaveableParams<TensorType>::kernel_size),
-                     EXPECTED_KEY_MEMBER(4, ml::OpMaxPool2DSaveableParams<TensorType>::stride_size)>
+  : BaseAndOpTypeSerializer<
+        ml::OpMaxPool2DSaveableParams<TensorType>, D, ml::OpsSaveableParams,
+        EXPECTED_KEY_MEMBER(3, ml::OpMaxPool2DSaveableParams<TensorType>::kernel_size),
+        EXPECTED_KEY_MEMBER(4, ml::OpMaxPool2DSaveableParams<TensorType>::stride_size)>
 {
 };
 
@@ -1359,9 +1367,10 @@ struct MapSerializer<ml::OpMaxPool2DSaveableParams<TensorType>, D>
  */
 template <typename TensorType, typename D>
 struct MapSerializer<ml::OpAvgPool1DSaveableParams<TensorType>, D>
-  : OpTypeSerializer<ml::OpAvgPool1DSaveableParams<TensorType>, D, ml::OpsSaveableParams,
-                     EXPECTED_KEY_MEMBER(3, ml::OpAvgPool1DSaveableParams<TensorType>::kernel_size),
-                     EXPECTED_KEY_MEMBER(4, ml::OpAvgPool1DSaveableParams<TensorType>::stride_size)>
+  : BaseAndOpTypeSerializer<
+        ml::OpAvgPool1DSaveableParams<TensorType>, D, ml::OpsSaveableParams,
+        EXPECTED_KEY_MEMBER(3, ml::OpAvgPool1DSaveableParams<TensorType>::kernel_size),
+        EXPECTED_KEY_MEMBER(4, ml::OpAvgPool1DSaveableParams<TensorType>::stride_size)>
 {
 };
 
@@ -1371,9 +1380,10 @@ struct MapSerializer<ml::OpAvgPool1DSaveableParams<TensorType>, D>
  */
 template <typename TensorType, typename D>
 struct MapSerializer<ml::OpAvgPool2DSaveableParams<TensorType>, D>
-  : OpTypeSerializer<ml::OpAvgPool2DSaveableParams<TensorType>, D, ml::OpsSaveableParams,
-                     EXPECTED_KEY_MEMBER(3, ml::OpAvgPool2DSaveableParams<TensorType>::kernel_size),
-                     EXPECTED_KEY_MEMBER(4, ml::OpAvgPool2DSaveableParams<TensorType>::stride_size)>
+  : BaseAndOpTypeSerializer<
+        ml::OpAvgPool2DSaveableParams<TensorType>, D, ml::OpsSaveableParams,
+        EXPECTED_KEY_MEMBER(3, ml::OpAvgPool2DSaveableParams<TensorType>::kernel_size),
+        EXPECTED_KEY_MEMBER(4, ml::OpAvgPool2DSaveableParams<TensorType>::stride_size)>
 {
 };
 
@@ -1383,9 +1393,9 @@ struct MapSerializer<ml::OpAvgPool2DSaveableParams<TensorType>, D>
  */
 template <typename TensorType, typename D>
 struct MapSerializer<ml::OpMeanSquareErrorSaveableParams<TensorType>, D>
-  : OpTypeSerializer<ml::OpMeanSquareErrorSaveableParams<TensorType>, D, ml::OpsSaveableParams,
-                     EXPECTED_KEY_MEMBER(
-                         3, ml::OpMeanSquareErrorSaveableParams<TensorType>::weightings)>
+  : BaseAndOpTypeSerializer<
+        ml::OpMeanSquareErrorSaveableParams<TensorType>, D, ml::OpsSaveableParams,
+        EXPECTED_KEY_MEMBER(3, ml::OpMeanSquareErrorSaveableParams<TensorType>::weightings)>
 {
 };
 
@@ -1395,9 +1405,9 @@ struct MapSerializer<ml::OpMeanSquareErrorSaveableParams<TensorType>, D>
  */
 template <typename TensorType, typename D>
 struct MapSerializer<ml::OpCategoricalAccuracySaveableParams<TensorType>, D>
-  : OpTypeSerializer<ml::OpCategoricalAccuracySaveableParams<TensorType>, D, ml::OpsSaveableParams,
-                     EXPECTED_KEY_MEMBER(
-                         3, ml::OpCategoricalAccuracySaveableParams<TensorType>::weightings)>
+  : BaseAndOpTypeSerializer<
+        ml::OpCategoricalAccuracySaveableParams<TensorType>, D, ml::OpsSaveableParams,
+        EXPECTED_KEY_MEMBER(3, ml::OpCategoricalAccuracySaveableParams<TensorType>::weightings)>
 {
 };
 
@@ -1407,7 +1417,7 @@ struct MapSerializer<ml::OpCategoricalAccuracySaveableParams<TensorType>, D>
  */
 template <typename TensorType, typename D>
 struct MapSerializer<ml::OpMaximumSaveableParams<TensorType>, D>
-  : OpTypeSerializer<ml::OpMaximumSaveableParams<TensorType>, D>
+  : BaseAndOpTypeSerializer<ml::OpMaximumSaveableParams<TensorType>, D>
 {
 };
 
@@ -1417,7 +1427,7 @@ struct MapSerializer<ml::OpMaximumSaveableParams<TensorType>, D>
  */
 template <typename TensorType, typename D>
 struct MapSerializer<ml::OpMultiplySaveableParams<TensorType>, D>
-  : OpTypeSerializer<ml::OpMultiplySaveableParams<TensorType>, D>
+  : BaseAndOpTypeSerializer<ml::OpMultiplySaveableParams<TensorType>, D>
 {
 };
 
@@ -1427,7 +1437,7 @@ struct MapSerializer<ml::OpMultiplySaveableParams<TensorType>, D>
  */
 template <typename TensorType, typename D>
 struct MapSerializer<ml::OpPlaceholderSaveableParams<TensorType>, D>
-  : OpTypeSerializer<ml::OpPlaceholderSaveableParams<TensorType>, D>
+  : BaseAndOpTypeSerializer<ml::OpPlaceholderSaveableParams<TensorType>, D>
 {
 };
 
@@ -1437,7 +1447,7 @@ struct MapSerializer<ml::OpPlaceholderSaveableParams<TensorType>, D>
  */
 template <typename TensorType, typename D>
 struct MapSerializer<ml::OpRandomisedReluSaveableParams<TensorType>, D>
-  : OpTypeSerializer<
+  : BaseAndOpTypeSerializer<
         ml::OpRandomisedReluSaveableParams<TensorType>, D, ml::OpsSaveableParams,
         EXPECTED_KEY_MEMBER(3, ml::OpRandomisedReluSaveableParams<TensorType>::lower_bound),
         EXPECTED_KEY_MEMBER(4, ml::OpRandomisedReluSaveableParams<TensorType>::upper_bound),
@@ -1454,7 +1464,7 @@ struct MapSerializer<ml::OpRandomisedReluSaveableParams<TensorType>, D>
  */
 template <typename TensorType, typename D>
 struct MapSerializer<ml::OpReluSaveableParams<TensorType>, D>
-  : OpTypeSerializer<ml::OpReluSaveableParams<TensorType>, D>
+  : BaseAndOpTypeSerializer<ml::OpReluSaveableParams<TensorType>, D>
 {
 };
 
@@ -1464,9 +1474,10 @@ struct MapSerializer<ml::OpReluSaveableParams<TensorType>, D>
  */
 template <typename TensorType, typename D>
 struct MapSerializer<ml::OpReshapeSaveableParams<TensorType>, D>
-  : OpTypeSerializer<ml::OpReshapeSaveableParams<TensorType>, D, ml::OpsSaveableParams,
-                     EXPECTED_KEY_MEMBER(3, ml::OpReshapeSaveableParams<TensorType>::new_shape),
-                     EXPECTED_KEY_MEMBER(4, ml::OpReshapeSaveableParams<TensorType>::new_size)>
+  : BaseAndOpTypeSerializer<
+        ml::OpReshapeSaveableParams<TensorType>, D, ml::OpsSaveableParams,
+        EXPECTED_KEY_MEMBER(3, ml::OpReshapeSaveableParams<TensorType>::new_shape),
+        EXPECTED_KEY_MEMBER(4, ml::OpReshapeSaveableParams<TensorType>::new_size)>
 {
 };
 
@@ -1476,7 +1487,7 @@ struct MapSerializer<ml::OpReshapeSaveableParams<TensorType>, D>
  */
 template <typename TensorType, typename D>
 struct MapSerializer<ml::OpSigmoidSaveableParams<TensorType>, D>
-  : OpTypeSerializer<ml::OpSigmoidSaveableParams<TensorType>, D>
+  : BaseAndOpTypeSerializer<ml::OpSigmoidSaveableParams<TensorType>, D>
 {
 };
 
@@ -1486,13 +1497,14 @@ struct MapSerializer<ml::OpSigmoidSaveableParams<TensorType>, D>
  */
 template <typename TensorType, typename D>
 struct MapSerializer<ml::OpSliceSaveableParams<TensorType>, D>
-  : OpTypeSerializer<ml::OpSliceSaveableParams<TensorType>, D, ml::OpsSaveableParams,
-                     EXPECTED_KEY_MEMBER(3, ml::OpSliceSaveableParams<TensorType>::axes),
-                     EXPECTED_KEY_MEMBER(4, ml::OpSliceSaveableParams<TensorType>::indices),
-                     EXPECTED_KEY_MEMBER(5, ml::OpSliceSaveableParams<TensorType>::axis),
-                     EXPECTED_KEY_MEMBER(6, ml::OpSliceSaveableParams<TensorType>::index),
-                     EXPECTED_KEY_MEMBER(7, ml::OpSliceSaveableParams<TensorType>::slice_type),
-                     EXPECTED_KEY_MEMBER(8, ml::OpSliceSaveableParams<TensorType>::start_end_slice)>
+  : BaseAndOpTypeSerializer<
+        ml::OpSliceSaveableParams<TensorType>, D, ml::OpsSaveableParams,
+        EXPECTED_KEY_MEMBER(3, ml::OpSliceSaveableParams<TensorType>::axes),
+        EXPECTED_KEY_MEMBER(4, ml::OpSliceSaveableParams<TensorType>::indices),
+        EXPECTED_KEY_MEMBER(5, ml::OpSliceSaveableParams<TensorType>::axis),
+        EXPECTED_KEY_MEMBER(6, ml::OpSliceSaveableParams<TensorType>::index),
+        EXPECTED_KEY_MEMBER(7, ml::OpSliceSaveableParams<TensorType>::slice_type),
+        EXPECTED_KEY_MEMBER(8, ml::OpSliceSaveableParams<TensorType>::start_end_slice)>
 {
 };
 
@@ -1502,10 +1514,11 @@ struct MapSerializer<ml::OpSliceSaveableParams<TensorType>, D>
  */
 template <typename TensorType, typename D>
 struct MapSerializer<ml::OpStridedSliceSaveableParams<TensorType>, D>
-  : OpTypeSerializer<ml::OpStridedSliceSaveableParams<TensorType>, D, ml::OpsSaveableParams,
-                     EXPECTED_KEY_MEMBER(3, ml::OpStridedSliceSaveableParams<TensorType>::begins),
-                     EXPECTED_KEY_MEMBER(4, ml::OpStridedSliceSaveableParams<TensorType>::ends),
-                     EXPECTED_KEY_MEMBER(5, ml::OpStridedSliceSaveableParams<TensorType>::strides)>
+  : BaseAndOpTypeSerializer<
+        ml::OpStridedSliceSaveableParams<TensorType>, D, ml::OpsSaveableParams,
+        EXPECTED_KEY_MEMBER(3, ml::OpStridedSliceSaveableParams<TensorType>::begins),
+        EXPECTED_KEY_MEMBER(4, ml::OpStridedSliceSaveableParams<TensorType>::ends),
+        EXPECTED_KEY_MEMBER(5, ml::OpStridedSliceSaveableParams<TensorType>::strides)>
 {
 };
 
@@ -1515,7 +1528,7 @@ struct MapSerializer<ml::OpStridedSliceSaveableParams<TensorType>, D>
  */
 template <typename TensorType, typename D>
 struct MapSerializer<ml::OpSqueezeSaveableParams<TensorType>, D>
-  : OpTypeSerializer<ml::OpSqueezeSaveableParams<TensorType>, D>
+  : BaseAndOpTypeSerializer<ml::OpSqueezeSaveableParams<TensorType>, D>
 {
 };
 
@@ -1525,8 +1538,9 @@ struct MapSerializer<ml::OpSqueezeSaveableParams<TensorType>, D>
  */
 template <typename TensorType, typename D>
 struct MapSerializer<ml::OpReduceMeanSaveableParams<TensorType>, D>
-  : OpTypeSerializer<ml::OpReduceMeanSaveableParams<TensorType>, D, ml::OpsSaveableParams,
-                     EXPECTED_KEY_MEMBER(3, ml::OpReduceMeanSaveableParams<TensorType>::axis)>
+  : BaseAndOpTypeSerializer<ml::OpReduceMeanSaveableParams<TensorType>, D, ml::OpsSaveableParams,
+                            EXPECTED_KEY_MEMBER(3,
+                                                ml::OpReduceMeanSaveableParams<TensorType>::axis)>
 {
 };
 
@@ -1536,9 +1550,9 @@ struct MapSerializer<ml::OpReduceMeanSaveableParams<TensorType>, D>
  */
 template <typename TensorType, typename D>
 struct MapSerializer<ml::OpSoftmaxSaveableParams<TensorType>, D>
-  : OpTypeSerializer<ml::OpSoftmaxSaveableParams<TensorType>, D, ml::OpsSaveableParams,
-                     EXPECTED_KEY_MEMBER(3, ml::OpSoftmaxSaveableParams<TensorType>::axis),
-                     EXPECTED_KEY_MEMBER(4, ml::OpSoftmaxSaveableParams<TensorType>::axes)>
+  : BaseAndOpTypeSerializer<ml::OpSoftmaxSaveableParams<TensorType>, D, ml::OpsSaveableParams,
+                            EXPECTED_KEY_MEMBER(3, ml::OpSoftmaxSaveableParams<TensorType>::axis),
+                            EXPECTED_KEY_MEMBER(4, ml::OpSoftmaxSaveableParams<TensorType>::axes)>
 {
 };
 
@@ -1548,7 +1562,7 @@ struct MapSerializer<ml::OpSoftmaxSaveableParams<TensorType>, D>
  */
 template <typename TensorType, typename D>
 struct MapSerializer<ml::OpSoftmaxCrossEntropySaveableParams<TensorType>, D>
-  : OpTypeSerializer<ml::OpSoftmaxCrossEntropySaveableParams<TensorType>, D>
+  : BaseAndOpTypeSerializer<ml::OpSoftmaxCrossEntropySaveableParams<TensorType>, D>
 {
 };
 
@@ -1558,7 +1572,7 @@ struct MapSerializer<ml::OpSoftmaxCrossEntropySaveableParams<TensorType>, D>
  */
 template <typename TensorType, typename D>
 struct MapSerializer<ml::OpSwitchSaveableParams<TensorType>, D>
-  : OpTypeSerializer<ml::OpSwitchSaveableParams<TensorType>, D>
+  : BaseAndOpTypeSerializer<ml::OpSwitchSaveableParams<TensorType>, D>
 {
 };
 
@@ -1568,7 +1582,7 @@ struct MapSerializer<ml::OpSwitchSaveableParams<TensorType>, D>
  */
 template <typename TensorType, typename D>
 struct MapSerializer<ml::OpSQRTSaveableParams<TensorType>, D>
-  : OpTypeSerializer<ml::OpSQRTSaveableParams<TensorType>, D>
+  : BaseAndOpTypeSerializer<ml::OpSQRTSaveableParams<TensorType>, D>
 {
 };
 
@@ -1578,7 +1592,7 @@ struct MapSerializer<ml::OpSQRTSaveableParams<TensorType>, D>
  */
 template <typename TensorType, typename D>
 struct MapSerializer<ml::OpSubtractSaveableParams<TensorType>, D>
-  : OpTypeSerializer<ml::OpSubtractSaveableParams<TensorType>, D>
+  : BaseAndOpTypeSerializer<ml::OpSubtractSaveableParams<TensorType>, D>
 {
 };
 
@@ -1588,7 +1602,7 @@ struct MapSerializer<ml::OpSubtractSaveableParams<TensorType>, D>
  */
 template <typename TensorType, typename D>
 struct MapSerializer<ml::OpTanhSaveableParams<TensorType>, D>
-  : OpTypeSerializer<ml::OpTanhSaveableParams<TensorType>, D>
+  : BaseAndOpTypeSerializer<ml::OpTanhSaveableParams<TensorType>, D>
 {
 };
 
@@ -1598,9 +1612,9 @@ struct MapSerializer<ml::OpTanhSaveableParams<TensorType>, D>
  */
 template <typename TensorType, typename D>
 struct MapSerializer<ml::OpTransposeSaveableParams<TensorType>, D>
-  : OpTypeSerializer<ml::OpTransposeSaveableParams<TensorType>, D, ml::OpsSaveableParams,
-                     EXPECTED_KEY_MEMBER(
-                         3, ml::OpTransposeSaveableParams<TensorType>::transpose_vector)>
+  : BaseAndOpTypeSerializer<ml::OpTransposeSaveableParams<TensorType>, D, ml::OpsSaveableParams,
+                            EXPECTED_KEY_MEMBER(
+                                3, ml::OpTransposeSaveableParams<TensorType>::transpose_vector)>
 {
 };
 
@@ -1610,11 +1624,12 @@ struct MapSerializer<ml::OpTransposeSaveableParams<TensorType>, D>
  */
 template <typename TensorType, typename D>
 struct MapSerializer<ml::OpOneHotSaveableParams<TensorType>, D>
-  : OpTypeSerializer<ml::OpOneHotSaveableParams<TensorType>, D, ml::OpsSaveableParams,
-                     EXPECTED_KEY_MEMBER(3, ml::OpOneHotSaveableParams<TensorType>::depth),
-                     EXPECTED_KEY_MEMBER(4, ml::OpOneHotSaveableParams<TensorType>::axis),
-                     EXPECTED_KEY_MEMBER(5, ml::OpOneHotSaveableParams<TensorType>::on_value),
-                     EXPECTED_KEY_MEMBER(6, ml::OpOneHotSaveableParams<TensorType>::off_value)>
+  : BaseAndOpTypeSerializer<
+        ml::OpOneHotSaveableParams<TensorType>, D, ml::OpsSaveableParams,
+        EXPECTED_KEY_MEMBER(3, ml::OpOneHotSaveableParams<TensorType>::depth),
+        EXPECTED_KEY_MEMBER(4, ml::OpOneHotSaveableParams<TensorType>::axis),
+        EXPECTED_KEY_MEMBER(5, ml::OpOneHotSaveableParams<TensorType>::on_value),
+        EXPECTED_KEY_MEMBER(6, ml::OpOneHotSaveableParams<TensorType>::off_value)>
 {
 };
 
@@ -1624,9 +1639,9 @@ struct MapSerializer<ml::OpOneHotSaveableParams<TensorType>, D>
  */
 template <typename TensorType, typename D>
 struct MapSerializer<ml::OpTopKSaveableParams<TensorType>, D>
-  : OpTypeSerializer<ml::OpTopKSaveableParams<TensorType>, D, ml::OpsSaveableParams,
-                     EXPECTED_KEY_MEMBER(3, ml::OpTopKSaveableParams<TensorType>::k),
-                     EXPECTED_KEY_MEMBER(4, ml::OpTopKSaveableParams<TensorType>::sorted)>
+  : BaseAndOpTypeSerializer<ml::OpTopKSaveableParams<TensorType>, D, ml::OpsSaveableParams,
+                            EXPECTED_KEY_MEMBER(3, ml::OpTopKSaveableParams<TensorType>::k),
+                            EXPECTED_KEY_MEMBER(4, ml::OpTopKSaveableParams<TensorType>::sorted)>
 {
 };
 
@@ -1726,7 +1741,7 @@ struct MapSerializer<ml::OpVariableSaveableParams<TensorType>, D>
  */
 template <typename TensorType, typename D>
 struct MapSerializer<ml::OpWeightsSaveableParams<TensorType>, D>
-  : OpTypeSerializer<ml::OpWeightsSaveableParams<TensorType>, D>
+  : BaseAndOpTypeSerializer<ml::OpWeightsSaveableParams<TensorType>, D>
 {
 };
 
@@ -1740,7 +1755,7 @@ struct MapSerializer<ml::OpWeightsSaveableParams<TensorType>, D>
  */
 template <typename TensorType, typename D>
 struct MapSerializer<ml::LayerConvolution1DSaveableParams<TensorType>, D>
-  : OpTypeSerializer<
+  : BaseAndOpTypeSerializer<
         ml::LayerConvolution1DSaveableParams<TensorType>, D, ml::SubGraphSaveableParams<TensorType>,
         EXPECTED_KEY_MEMBER(3, ml::LayerConvolution1DSaveableParams<TensorType>::kernel_size),
         EXPECTED_KEY_MEMBER(4, ml::LayerConvolution1DSaveableParams<TensorType>::input_channels),
@@ -1755,7 +1770,7 @@ struct MapSerializer<ml::LayerConvolution1DSaveableParams<TensorType>, D>
  */
 template <typename TensorType, typename D>
 struct MapSerializer<ml::LayerConvolution2DSaveableParams<TensorType>, D>
-  : OpTypeSerializer<
+  : BaseAndOpTypeSerializer<
         ml::LayerConvolution2DSaveableParams<TensorType>, D, ml::SubGraphSaveableParams<TensorType>,
         EXPECTED_KEY_MEMBER(3, ml::LayerConvolution2DSaveableParams<TensorType>::kernel_size),
         EXPECTED_KEY_MEMBER(4, ml::LayerConvolution2DSaveableParams<TensorType>::input_channels),
@@ -1770,7 +1785,7 @@ struct MapSerializer<ml::LayerConvolution2DSaveableParams<TensorType>, D>
  */
 template <typename TensorType, typename D>
 struct MapSerializer<ml::LayerFullyConnectedSaveableParams<TensorType>, D>
-  : OpTypeSerializer<
+  : BaseAndOpTypeSerializer<
         ml::LayerFullyConnectedSaveableParams<TensorType>, D,
         ml::SubGraphSaveableParams<TensorType>,
         EXPECTED_KEY_MEMBER(3, ml::LayerFullyConnectedSaveableParams<TensorType>::total_inputs_),
@@ -1789,7 +1804,7 @@ struct MapSerializer<ml::LayerFullyConnectedSaveableParams<TensorType>, D>
  */
 template <typename TensorType, typename D>
 struct MapSerializer<ml::LayerLayerNormSaveableParams<TensorType>, D>
-  : OpTypeSerializer<
+  : BaseAndOpTypeSerializer<
         ml::LayerLayerNormSaveableParams<TensorType>, D, ml::SubGraphSaveableParams<TensorType>,
         EXPECTED_KEY_MEMBER(3, ml::LayerLayerNormSaveableParams<TensorType>::data_shape),
         EXPECTED_KEY_MEMBER(4, ml::LayerLayerNormSaveableParams<TensorType>::axis),
@@ -1803,7 +1818,7 @@ struct MapSerializer<ml::LayerLayerNormSaveableParams<TensorType>, D>
  */
 template <typename TensorType, typename D>
 struct MapSerializer<ml::LayerMultiHeadSaveableParams<TensorType>, D>
-  : OpTypeSerializer<
+  : BaseAndOpTypeSerializer<
         ml::LayerMultiHeadSaveableParams<TensorType>, D, ml::SubGraphSaveableParams<TensorType>,
         EXPECTED_KEY_MEMBER(3, ml::LayerMultiHeadSaveableParams<TensorType>::value_dim),
         EXPECTED_KEY_MEMBER(4, ml::LayerMultiHeadSaveableParams<TensorType>::key_dim),
@@ -1820,8 +1835,8 @@ struct MapSerializer<ml::LayerMultiHeadSaveableParams<TensorType>, D>
 template <typename TensorType, typename D>
 struct MapSerializer<ml::LayerPReluSaveableParams<TensorType>,
                      D> struct MapSerializer<ml::LayerPReluSaveableParams<TensorType>, D>
-  : OpTypeSerializer<ml::LayerPReluSaveableParams<TensorType>, D,
-                     ml::SubGraphSaveableParams<TensorType>>
+  : BaseAndOpTypeSerializer<ml::LayerPReluSaveableParams<TensorType>, D,
+                            ml::SubGraphSaveableParams<TensorType>>
 {
 };
 
@@ -1831,12 +1846,13 @@ struct MapSerializer<ml::LayerPReluSaveableParams<TensorType>,
  */
 template <typename TensorType, typename D>
 struct MapSerializer<ml::LayerScaledDotProductAttentionSaveableParams<TensorType>, D>
-  : OpTypeSerializer<ml::LayerScaledDotProductAttentionSaveableParams<TensorType>, D,
-                     ml::SubGraphSaveableParams<TensorType>,
-                     EXPECTED_KEY_MEMBER(
-                         3, ml::LayerScaledDotProductAttentionSaveableParams<TensorType>::key_dim),
-                     EXPECTED_KEY_MEMBER(
-                         4, ml::LayerScaledDotProductAttentionSaveableParams<TensorType>::dropout)>
+  : BaseAndOpTypeSerializer<
+        ml::LayerScaledDotProductAttentionSaveableParams<TensorType>, D,
+        ml::SubGraphSaveableParams<TensorType>,
+        EXPECTED_KEY_MEMBER(3,
+                            ml::LayerScaledDotProductAttentionSaveableParams<TensorType>::key_dim),
+        EXPECTED_KEY_MEMBER(4,
+                            ml::LayerScaledDotProductAttentionSaveableParams<TensorType>::dropout)>
 {
 };
 
@@ -1846,7 +1862,7 @@ struct MapSerializer<ml::LayerScaledDotProductAttentionSaveableParams<TensorType
  */
 template <typename TensorType, typename D>
 struct MapSerializer<ml::LayerSelfAttentionEncoderSaveableParams<TensorType>, D>
-  : OpTypeSerializer<
+  : BaseAndOpTypeSerializer<
         ml::LayerSelfAttentionEncoderSaveableParams<TensorType>, D,
         ml::SubGraphSaveableParams<TensorType>,
         EXPECTED_KEY_MEMBER(3, ml::LayerSelfAttentionEncoderSaveableParams<TensorType>::n_heads),
@@ -1867,11 +1883,11 @@ struct MapSerializer<ml::LayerSelfAttentionEncoderSaveableParams<TensorType>, D>
  */
 template <typename TensorType, typename D>
 struct MapSerializer<ml::LayerSkipGramSaveableParams<TensorType>, D>
-  : OpTypeSerializer<ml::LayerSkipGramSaveableParams<TensorType>, D,
-                     ml::SubGraphSaveableParams<TensorType>,
-                     EXPECTED_KEY_MEMBER(3, ml::LayerSkipGramSaveableParams<TensorType>::in_size),
-                     EXPECTED_KEY_MEMBER(4, ml::LayerSkipGramSaveableParams<TensorType>::out_size),
-                     EXPECTED_KEY_MEMBER(5, ml::LayerSkipGramSaveableParams<TensorType>::embed_in)>
+  : BaseAndOpTypeSerializer<
+        ml::LayerSkipGramSaveableParams<TensorType>, D, ml::SubGraphSaveableParams<TensorType>,
+        EXPECTED_KEY_MEMBER(3, ml::LayerSkipGramSaveableParams<TensorType>::in_size),
+        EXPECTED_KEY_MEMBER(4, ml::LayerSkipGramSaveableParams<TensorType>::out_size),
+        EXPECTED_KEY_MEMBER(5, ml::LayerSkipGramSaveableParams<TensorType>::embed_in)>
 {
 };
 
@@ -1885,7 +1901,7 @@ struct OptimiserGetGraphSaveableParams : ValueSerializer
   template <class Map, class Object>
   static constexpr void Serialize(Map &map, Object const &object)
   {
-                        map.Append(KEY, object.graph_->GetGraphSaveableParams();
+    map.Append(KEY, object.graph_->GetGraphSaveableParams();
   }
   template <class Map, class Object>
   static constexpr void Deserializer(Map &map, Object &object)
@@ -1927,57 +1943,20 @@ struct MapSerializer<ml::optimisers::Optimiser<TensorType>, D>
  * @tparam TensorType
  */
 template <typename TensorType, typename D>
-truct MapSerializer<ml::optimisers::AdamOptimiser<TensorType>, D>
+struct MapSerializer<ml::optimisers::AdamOptimiser<TensorType>, D>
+  : MapSerializerBoilerplate<
+        ml::optimisers::AdamOptimiser<TensorType>, D,
+        SimplySerializedAs<1, ml::optimisers::Optimiser<TensorType>>,
+        EXPECTED_KEY_MEMBER(2, ml::optimisers::AdamOptimiser<TensorType>::cache_),
+        EXPECTED_KEY_MEMBER(3, ml::optimisers::AdamOptimiser<TensorType>::momentum_),
+        EXPECTED_KEY_MEMBER(4, ml::optimisers::AdamOptimiser<TensorType>::mt_),
+        EXPECTED_KEY_MEMBER(5, ml::optimisers::AdamOptimiser<TensorType>::vt_),
+        EXPECTED_KEY_MEMBER(6, ml::optimisers::AdamOptimiser<TensorType>::beta1_),
+        EXPECTED_KEY_MEMBER(7, ml::optimisers::AdamOptimiser<TensorType>::beta2_),
+        EXPECTED_KEY_MEMBER(8, ml::optimisers::AdamOptimiser<TensorType>::beta1_t_),
+        EXPECTED_KEY_MEMBER(9, ml::optimisers::AdamOptimiser<TensorType>::beta2_t_),
+        EXPECTED_KEY_MEMBER(10, ml::optimisers::AdamOptimiser<TensorType>::epsilon_)>
 {
-  using Type                          = ml::optimisers::AdamOptimiser<TensorType>;
-  using DriverType                    = D;
-  static uint8_t const BASE_OPTIMISER = 1;
-  static uint8_t const CACHE          = 2;
-  static uint8_t const MOMENTUM       = 3;
-  static uint8_t const MT             = 4;
-  static uint8_t const VT             = 5;
-  static uint8_t const BETA1          = 6;
-  static uint8_t const BETA2          = 7;
-  static uint8_t const BETA1_T        = 8;
-  static uint8_t const BETA2_T        = 9;
-  static uint8_t const EPSILON        = 10;
-
-  template <typename Constructor>
-  static void Serialize(Constructor & map_constructor, Type const &sp)
-  {
-    auto map = map_constructor(10);
-
-    // serialize the optimiser parent class
-    auto base_pointer = static_cast<ml::optimisers::Optimiser<TensorType> const *>(&sp);
-    map.Append(BASE_OPTIMISER, *base_pointer);
-
-    map.Append(CACHE, sp.cache_);
-    map.Append(MOMENTUM, sp.momentum_);
-    map.Append(MT, sp.mt_);
-    map.Append(VT, sp.vt_);
-    map.Append(BETA1, sp.beta1_);
-    map.Append(BETA2, sp.beta2_);
-    map.Append(BETA1_T, sp.beta1_t_);
-    map.Append(BETA2_T, sp.beta2_t_);
-    map.Append(EPSILON, sp.epsilon_);
-  }
-
-  template <typename MapDeserializer>
-  static void Deserialize(MapDeserializer & map, Type & sp)
-  {
-    auto base_pointer = static_cast<ml::optimisers::Optimiser<TensorType> *>(&sp);
-    map.ExpectKeyGetValue(BASE_OPTIMISER, *base_pointer);
-
-    map.ExpectKeyGetValue(CACHE, sp.cache_);
-    map.ExpectKeyGetValue(MOMENTUM, sp.momentum_);
-    map.ExpectKeyGetValue(MT, sp.mt_);
-    map.ExpectKeyGetValue(VT, sp.vt_);
-    map.ExpectKeyGetValue(BETA1, sp.beta1_);
-    map.ExpectKeyGetValue(BETA2, sp.beta2_);
-    map.ExpectKeyGetValue(BETA1_T, sp.beta1_t_);
-    map.ExpectKeyGetValue(BETA2_T, sp.beta2_t_);
-    map.ExpectKeyGetValue(EPSILON, sp.epsilon_);
-  }
 };
 
 /**
@@ -1986,59 +1965,20 @@ truct MapSerializer<ml::optimisers::AdamOptimiser<TensorType>, D>
  */
 template <typename TensorType, typename D>
 struct MapSerializer<ml::optimisers::LazyAdamOptimiser<TensorType>, D>
+  : MapSerializerBoilerplate<
+        ml::optimisers::LazyAdamOptimiser<TensorType>, D,
+        SimplySerializedAs<1, ml::optimisers::Optimiser<TensorType>>,
+        EXPECTED_KEY_MEMBER(2, ml::optimisers::LazyAdamOptimiser<TensorType>::cache_),
+        EXPECTED_KEY_MEMBER(3, ml::optimisers::LazyAdamOptimiser<TensorType>::momentum_),
+        EXPECTED_KEY_MEMBER(4, ml::optimisers::LazyAdamOptimiser<TensorType>::mt_),
+        EXPECTED_KEY_MEMBER(5, ml::optimisers::LazyAdamOptimiser<TensorType>::vt_),
+        EXPECTED_KEY_MEMBER(6, ml::optimisers::LazyAdamOptimiser<TensorType>::beta1_),
+        EXPECTED_KEY_MEMBER(7, ml::optimisers::LazyAdamOptimiser<TensorType>::beta2_),
+        EXPECTED_KEY_MEMBER(8, ml::optimisers::LazyAdamOptimiser<TensorType>::beta1_t_),
+        EXPECTED_KEY_MEMBER(9, ml::optimisers::LazyAdamOptimiser<TensorType>::beta2_t_),
+        EXPECTED_KEY_MEMBER(10, ml::optimisers::LazyAdamOptimiser<TensorType>::sparsity_threshold),
+        EXPECTED_KEY_MEMBER(11, ml::optimisers::LazyAdamOptimiser<TensorType>::epsilon_)>
 {
-  using Type                              = ml::optimisers::LazyAdamOptimiser<TensorType>;
-  using DriverType                        = D;
-  static uint8_t const BASE_OPTIMISER     = 1;
-  static uint8_t const CACHE              = 2;
-  static uint8_t const MOMENTUM           = 3;
-  static uint8_t const MT                 = 4;
-  static uint8_t const VT                 = 5;
-  static uint8_t const BETA1              = 6;
-  static uint8_t const BETA2              = 7;
-  static uint8_t const BETA1_T            = 8;
-  static uint8_t const BETA2_T            = 9;
-  static uint8_t const SPARSITY_THRESHOLD = 10;
-  static uint8_t const EPSILON            = 11;
-
-  template <typename Constructor>
-  static void Serialize(Constructor &map_constructor, Type const &sp)
-  {
-    auto map = map_constructor(11);
-
-    // serialize the optimiser parent class
-    auto base_pointer = static_cast<ml::optimisers::Optimiser<TensorType> const *>(&sp);
-    map.Append(BASE_OPTIMISER, *base_pointer);
-
-    map.Append(CACHE, sp.cache_);
-    map.Append(MOMENTUM, sp.momentum_);
-    map.Append(MT, sp.mt_);
-    map.Append(VT, sp.vt_);
-    map.Append(BETA1, sp.beta1_);
-    map.Append(BETA2, sp.beta2_);
-    map.Append(BETA1_T, sp.beta1_t_);
-    map.Append(BETA2_T, sp.beta2_t_);
-    map.Append(SPARSITY_THRESHOLD, sp.sparsity_threshold);
-    map.Append(EPSILON, sp.epsilon_);
-  }
-
-  template <typename MapDeserializer>
-  static void Deserialize(MapDeserializer &map, Type &sp)
-  {
-    auto base_pointer = static_cast<ml::optimisers::Optimiser<TensorType> *>(&sp);
-    map.ExpectKeyGetValue(BASE_OPTIMISER, *base_pointer);
-
-    map.ExpectKeyGetValue(CACHE, sp.cache_);
-    map.ExpectKeyGetValue(MOMENTUM, sp.momentum_);
-    map.ExpectKeyGetValue(MT, sp.mt_);
-    map.ExpectKeyGetValue(VT, sp.vt_);
-    map.ExpectKeyGetValue(BETA1, sp.beta1_);
-    map.ExpectKeyGetValue(BETA2, sp.beta2_);
-    map.ExpectKeyGetValue(BETA1_T, sp.beta1_t_);
-    map.ExpectKeyGetValue(BETA2_T, sp.beta2_t_);
-    map.ExpectKeyGetValue(SPARSITY_THRESHOLD, sp.sparsity_threshold);
-    map.ExpectKeyGetValue(EPSILON, sp.epsilon_);
-  }
 };
 
 /**
@@ -2047,42 +1987,14 @@ struct MapSerializer<ml::optimisers::LazyAdamOptimiser<TensorType>, D>
  */
 template <typename T, typename D>
 struct MapSerializer<ml::optimisers::LearningRateParam<T>, D>
+  : MapSerializerBoilerplate<
+        ml::optimisers::LearningRateParam<T>, D,
+        EXPECTED_KEY_MEMBER_AS(1, ml::optimisers::LearningRateParam<T>::mode, uint8_t),
+        EXPECTED_KEY_MEMBER(2, ml::optimisers::LearningRateParam<T>::starting_learning_rate),
+        EXPECTED_KEY_MEMBER(3, ml::optimisers::LearningRateParam<T>::ending_learning_rate),
+        EXPECTED_KEY_MEMBER(4, ml::optimisers::LearningRateParam<T>::linear_decay_rate),
+        EXPECTED_KEY_MEMBER(5, ml::optimisers::LearningRateParam<T>::exponential_decay_rate)>
 {
-  using Type       = ml::optimisers::LearningRateParam<T>;
-  using DriverType = D;
-
-  static uint8_t const LEARNING_RATE_DECAY_MODE = 1;
-  static uint8_t const STARTING_LEARNING_RATE   = 2;
-  static uint8_t const ENDING_LEARNING_RATE     = 3;
-  static uint8_t const LINEAR_DECAY_RATE        = 4;
-  static uint8_t const EXPONENTIAL_DECAY_RATE   = 5;
-
-  template <typename Constructor>
-  static void Serialize(Constructor &map_constructor, Type const &sp)
-  {
-    auto map = map_constructor(5);
-
-    map.Append(LEARNING_RATE_DECAY_MODE, static_cast<uint8_t>(sp.mode));
-
-    map.Append(STARTING_LEARNING_RATE, sp.starting_learning_rate);
-    map.Append(ENDING_LEARNING_RATE, sp.ending_learning_rate);
-    map.Append(LINEAR_DECAY_RATE, sp.linear_decay_rate);
-    map.Append(EXPONENTIAL_DECAY_RATE, sp.exponential_decay_rate);
-  }
-
-  template <typename MapDeserializer>
-  static void Deserialize(MapDeserializer &map, Type &sp)
-  {
-    uint8_t lrdm;
-    map.ExpectKeyGetValue(LEARNING_RATE_DECAY_MODE, lrdm);
-    sp.mode =
-        static_cast<typename fetch::ml::optimisers::LearningRateParam<T>::LearningRateDecay>(lrdm);
-
-    map.ExpectKeyGetValue(STARTING_LEARNING_RATE, sp.starting_learning_rate);
-    map.ExpectKeyGetValue(ENDING_LEARNING_RATE, sp.ending_learning_rate);
-    map.ExpectKeyGetValue(LINEAR_DECAY_RATE, sp.linear_decay_rate);
-    map.ExpectKeyGetValue(EXPONENTIAL_DECAY_RATE, sp.exponential_decay_rate);
-  }
 };
 
 /**
@@ -2091,31 +2003,12 @@ struct MapSerializer<ml::optimisers::LearningRateParam<T>, D>
  */
 template <typename TensorType, typename D>
 struct MapSerializer<ml::utilities::MinMaxScaler<TensorType>, D>
+  : MapSerializerBoilerplate<
+        ml::utilities::MinMaxScaler<TensorType>, D,
+        EXPECTED_KEY_MEMBER(1, ml::utilities::MinMaxScaler<TensorType>::x_min_),
+        EXPECTED_KEY_MEMBER(2, ml::utilities::MinMaxScaler<TensorType>::x_max_),
+        EXPECTED_KEY_MEMBER(3, ml::utilities::MinMaxScaler<TensorType>::x_range_)>
 {
-  using Type       = ml::utilities::MinMaxScaler<TensorType>;
-  using DriverType = D;
-
-  static uint8_t const MIN_VAL = 1;
-  static uint8_t const MAX_VAL = 2;
-  static uint8_t const RANGE   = 3;
-
-  template <typename Constructor>
-  static void Serialize(Constructor &map_constructor, Type const &sp)
-  {
-    auto map = map_constructor(3);
-
-    map.Append(MIN_VAL, sp.x_min_);
-    map.Append(MAX_VAL, sp.x_max_);
-    map.Append(RANGE, sp.x_range_);
-  }
-
-  template <typename MapDeserializer>
-  static void Deserialize(MapDeserializer &map, Type &sp)
-  {
-    map.ExpectKeyGetValue(MIN_VAL, sp.x_min_);
-    map.ExpectKeyGetValue(MAX_VAL, sp.x_max_);
-    map.ExpectKeyGetValue(RANGE, sp.x_range_);
-  }
 };
 
 }  // namespace serializers

@@ -38,27 +38,8 @@ namespace serializers {
  */
 template <typename D>
 struct MapSerializer<ml::RegularisationType, D>
+  : MapSerializerBoilerplate<ml::RegularisationType, D, SimplySerializedAs<1, uint8_t>>
 {
-  using Type       = ml::RegularisationType;
-  using DriverType = D;
-
-  static uint8_t const REG_TYPE = 1;
-
-  template <typename Constructor>
-  static void Serialize(Constructor &map_constructor, Type const &body)
-  {
-    auto map      = map_constructor(1);
-    auto reg_type = static_cast<uint8_t>(body);
-    map.Append(REG_TYPE, reg_type);
-  }
-
-  template <typename MapDeserializer>
-  static void Deserialize(MapDeserializer &map, Type &body)
-  {
-    uint8_t reg_type = 0;
-    map.ExpectKeyGetValue(REG_TYPE, reg_type);
-    body = static_cast<ml::RegularisationType>(reg_type);
-  }
 };
 
 }  // namespace serializers

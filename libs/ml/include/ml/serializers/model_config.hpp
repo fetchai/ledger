@@ -21,59 +21,32 @@ namespace fetch {
 
 namespace ml {
 namespace model {
+
 template <typename DataType>
 struct ModelConfig;
+
 }  // namespace model
 }  // namespace ml
 
 namespace serializers {
+
 /**
  * serializer for ModelConfig
  * @tparam TensorType
  */
 template <typename DataType, typename D>
 struct MapSerializer<fetch::ml::model::ModelConfig<DataType>, D>
+  : MapSerializerBoilerplate<
+        fetch::ml::model::ModelConfig<DataType>, D,
+        EXPECTED_KEY_MEMBER(1, fetch::ml::model::ModelConfig<DataType>::early_stopping),
+        EXPECTED_KEY_MEMBER(2, fetch::ml::model::ModelConfig<DataType>::test),
+        EXPECTED_KEY_MEMBER(3, fetch::ml::model::ModelConfig<DataType>::patience),
+        EXPECTED_KEY_MEMBER(4, fetch::ml::model::ModelConfig<DataType>::min_delta),
+        EXPECTED_KEY_MEMBER(6, fetch::ml::model::ModelConfig<DataType>::learning_rate_param),
+        EXPECTED_KEY_MEMBER(7, fetch::ml::model::ModelConfig<DataType>::batch_size),
+        EXPECTED_KEY_MEMBER(8, fetch::ml::model::ModelConfig<DataType>::subset_size),
+        EXPECTED_KEY_MEMBER(9, fetch::ml::model::ModelConfig<DataType>::print_stats)>
 {
-  using Type       = fetch::ml::model::ModelConfig<DataType>;
-  using DriverType = D;
-
-  // public member variables
-  static uint8_t const EARLY_STOPPING      = 1;
-  static uint8_t const TEST                = 2;
-  static uint8_t const PATIENCE            = 3;
-  static uint8_t const MIN_DELTA           = 4;
-  static uint8_t const LEARNING_RATE_PARAM = 6;
-  static uint8_t const BATCH_SIZE          = 7;
-  static uint8_t const SUSBET_SIZE         = 8;
-  static uint8_t const PRINT_STATS         = 9;
-
-  template <typename Constructor>
-  static void Serialize(Constructor &map_constructor, Type const &sp)
-  {
-    auto map = map_constructor(9);
-
-    map.Append(EARLY_STOPPING, sp.early_stopping);
-    map.Append(TEST, sp.test);
-    map.Append(PATIENCE, sp.patience);
-    map.Append(MIN_DELTA, sp.min_delta);
-    map.Append(LEARNING_RATE_PARAM, sp.learning_rate_param);
-    map.Append(BATCH_SIZE, sp.batch_size);
-    map.Append(SUSBET_SIZE, sp.subset_size);
-    map.Append(PRINT_STATS, sp.print_stats);
-  }
-
-  template <typename MapDeserializer>
-  static void Deserialize(MapDeserializer &map, Type &sp)
-  {
-    map.ExpectKeyGetValue(EARLY_STOPPING, sp.early_stopping);
-    map.ExpectKeyGetValue(TEST, sp.test);
-    map.ExpectKeyGetValue(PATIENCE, sp.patience);
-    map.ExpectKeyGetValue(MIN_DELTA, sp.min_delta);
-    map.ExpectKeyGetValue(LEARNING_RATE_PARAM, sp.learning_rate_param);
-    map.ExpectKeyGetValue(BATCH_SIZE, sp.batch_size);
-    map.ExpectKeyGetValue(SUSBET_SIZE, sp.subset_size);
-    map.ExpectKeyGetValue(PRINT_STATS, sp.print_stats);
-  }
 };
 
 }  // namespace serializers
