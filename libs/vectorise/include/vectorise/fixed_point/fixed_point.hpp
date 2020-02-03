@@ -2072,7 +2072,7 @@ constexpr FixedPoint<64, 64> &FixedPoint<64, 64>::operator*=(FixedPoint<64, 64> 
   if (!sign)
   {
     // If it's negative, we need to add one and complement the fractional part
-    uint64_t integer_part    = static_cast<uint64_t>((INTEGER_MASK & prod) >> FRACTIONAL_BITS);
+    uint64_t integer_part    = (INTEGER_MASK & static_cast<uint64_t>(prod)) >> FRACTIONAL_BITS;
     uint64_t fractional_part = static_cast<uint64_t>(prod & FRACTIONAL_MASK);
 
     integer_part = ~integer_part + 1;
@@ -2081,8 +2081,8 @@ constexpr FixedPoint<64, 64> &FixedPoint<64, 64>::operator*=(FixedPoint<64, 64> 
       --integer_part;
       fractional_part = ~fractional_part + 1;
     }
-    prod =
-        (static_cast<Type>(integer_part) << FRACTIONAL_BITS) | static_cast<Type>(fractional_part);
+    prod = static_cast<UnsignedType>((static_cast<Type>(integer_part) << FRACTIONAL_BITS) |
+                                     static_cast<Type>(fractional_part));
   }
   data_ = static_cast<Type>(prod);
   return *this;
