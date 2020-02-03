@@ -36,7 +36,7 @@ class Convolution2DTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(Convolution2DTest, math::test::TensorFloatingTypes);
+TYPED_TEST_SUITE(Convolution2DTest, math::test::TensorFloatingTypes, );
 
 TYPED_TEST(Convolution2DTest, set_input_and_evaluate_test)  // Use the class as a subgraph
 {

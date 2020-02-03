@@ -43,7 +43,7 @@ class GraphTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(GraphTest, math::test::TensorFloatingTypes);
+TYPED_TEST_SUITE(GraphTest, math::test::TensorFloatingTypes, );
 
 template <class TensorType>
 std::shared_ptr<fetch::ml::Graph<TensorType>> MakeGraph()

@@ -36,10 +36,10 @@ class GraphRebuildTest : public ::testing::Test
 {
 };
 
-// TYPED_TEST_CASE(SaveParamsTest, ::fetch::math::test::TensorFloatingTypes);
-TYPED_TEST_CASE(SerializersTestWithInt, ::fetch::math::test::TensorIntAndFloatingTypes);
-TYPED_TEST_CASE(SerializersTestNoInt, ::fetch::math::test::TensorFloatingTypes);
-TYPED_TEST_CASE(GraphRebuildTest, ::fetch::math::test::HighPrecisionTensorFloatingTypes);
+// TYPED_TEST_SUITE(SaveParamsTest, ::fetch::math::test::TensorFloatingTypes,);
+TYPED_TEST_SUITE(SerializersTestWithInt, ::fetch::math::test::TensorIntAndFloatingTypes, );
+TYPED_TEST_SUITE(SerializersTestNoInt, ::fetch::math::test::TensorFloatingTypes, );
+TYPED_TEST_SUITE(GraphRebuildTest, ::fetch::math::test::HighPrecisionTensorFloatingTypes, );
 
 //////////////////////////////
 /// GRAPH OP SERIALISATION ///

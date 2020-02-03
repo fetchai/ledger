@@ -125,7 +125,7 @@ using MyFPTypes =
                      fetch::vectorise::VectorRegister<fetch::fixed_point::fp64_t, 64>>;
 #endif
 
-TYPED_TEST_CASE(VectorRegisterTest, MyTypes);
+TYPED_TEST_SUITE(VectorRegisterTest, MyTypes, );
 TYPED_TEST(VectorRegisterTest, rotate_tests)
 {
   using type = typename TypeParam::type;
@@ -261,7 +261,7 @@ class VectorReduceTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(VectorReduceTest, MyFPTypes);
+TYPED_TEST_SUITE(VectorReduceTest, MyFPTypes, );
 TYPED_TEST(VectorReduceTest, reduce_tests)
 {
   using type       = typename TypeParam::type;
@@ -369,7 +369,7 @@ template <typename T>
 class VectorNaNInfTest : public ::testing::Test
 {
 };
-TYPED_TEST_CASE(VectorNaNInfTest, MyFPTypes);
+TYPED_TEST_SUITE(VectorNaNInfTest, MyFPTypes, );
 TYPED_TEST(VectorNaNInfTest, nan_inf_tests)
 {
   using type = typename TypeParam::type;

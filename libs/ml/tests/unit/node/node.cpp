@@ -32,7 +32,7 @@ class NodeTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(NodeTest, math::test::TensorIntAndFloatingTypes);
+TYPED_TEST_SUITE(NodeTest, math::test::TensorIntAndFloatingTypes, );
 
 TYPED_TEST(NodeTest, node_placeholder)
 {
