@@ -91,7 +91,7 @@ struct TypeFromSize<128>
   static constexpr ValueType max_exp =
       (static_cast<uint128_t>(0x2b) << 64) | 0xab13e5fca20ef141;  // 43.6682723752765544929
   static constexpr UnsignedType min_exp = (static_cast<uint128_t>(0xffffffffffffffd4) << 64) |
-                                          0xab13e5fca20ef141;  // -43.6682723752765544929
+                                          0x54ec1a035df10ebf;  // -43.6682723752765544929
 };
 #endif
 

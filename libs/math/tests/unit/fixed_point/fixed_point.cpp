@@ -656,9 +656,9 @@ TEST(FixedPointTest, Constants_64_64)
   EXPECT_EQ(fp128_t::MAX, (static_cast<uint128_t>(0x7ffffffffffffffe) << 64) | 0xffffffffffffffff);
   EXPECT_EQ(fp128_t::MIN, (static_cast<uint128_t>(0x8000000000000001) << 64) | 0x0000000000000001);
 
-  EXPECT_EQ(fp128_t::MAX_EXP.Data(), (static_cast<uint128_t>(0x2b) << 64) | 0xab13e5fca20e0000);
+  EXPECT_EQ(fp128_t::MAX_EXP.Data(), (static_cast<uint128_t>(0x2b) << 64) | 0xab13e5fca20ef141);
   EXPECT_EQ(fp128_t::MIN_EXP.Data(),
-            (static_cast<uint128_t>(0xffffffffffffffd4) << 64) | 0x54ec1a035df20000);
+            (static_cast<uint128_t>(0xffffffffffffffd4) << 64) | 0x54ec1a035df10ebf);
 }
 
 template <typename T>
