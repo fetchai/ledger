@@ -665,7 +665,7 @@ template <typename T>
 class ConversionTest : public ::testing::Test
 {
 };
-TYPED_TEST_CASE(ConversionTest, FixedPointTypes);
+TYPED_TEST_SUITE(ConversionTest, FixedPointTypes, );
 TYPED_TEST(ConversionTest, Conversion)
 {
   // Positive
@@ -714,7 +714,7 @@ template <typename T>
 class BasicArithmeticTest : public ::testing::Test
 {
 };
-TYPED_TEST_CASE(BasicArithmeticTest, FixedPointTypes);
+TYPED_TEST_SUITE(BasicArithmeticTest, FixedPointTypes, );
 TYPED_TEST(BasicArithmeticTest, Addition)
 {
   // Positive
@@ -878,7 +878,7 @@ template <typename T>
 class BitOperationsTest : public ::testing::Test
 {
 };
-TYPED_TEST_CASE(BitOperationsTest, FixedPointTypes);
+TYPED_TEST_SUITE(BitOperationsTest, FixedPointTypes, );
 TYPED_TEST(BitOperationsTest, ShiftLeft)
 {
   // Positive
@@ -911,7 +911,7 @@ template <typename T>
 class ComparisonTest : public ::testing::Test
 {
 };
-TYPED_TEST_CASE(ComparisonTest, FixedPointTypes);
+TYPED_TEST_SUITE(ComparisonTest, FixedPointTypes, );
 TYPED_TEST(ComparisonTest, Comparison)
 {
   TypeParam zero(0);
@@ -1011,7 +1011,7 @@ template <typename T>
 class BasicTest : public ::testing::Test
 {
 };
-TYPED_TEST_CASE(BasicTest, FixedPointTypes);
+TYPED_TEST_SUITE(BasicTest, FixedPointTypes, );
 TYPED_TEST(BasicTest, Abs)
 {
   TypeParam one(1);
@@ -1111,7 +1111,7 @@ template <typename T>
 class TranscendentalTest : public ::testing::Test
 {
 };
-TYPED_TEST_CASE(TranscendentalTest, FixedPointTypes);
+TYPED_TEST_SUITE(TranscendentalTest, FixedPointTypes, );
 TYPED_TEST(TranscendentalTest, Exp)
 {
   TypeParam one(1);
@@ -1431,7 +1431,7 @@ template <typename T>
 class TrigonometryTest : public ::testing::Test
 {
 };
-TYPED_TEST_CASE(TrigonometryTest, FixedPointTypes);
+TYPED_TEST_SUITE(TrigonometryTest, FixedPointTypes, );
 TYPED_TEST(TrigonometryTest, Sin)
 {
   TypeParam one(1);
@@ -1789,7 +1789,7 @@ template <typename T>
 class HyperbolicTest : public ::testing::Test
 {
 };
-TYPED_TEST_CASE(HyperbolicTest, FixedPointTypes);
+TYPED_TEST_SUITE(HyperbolicTest, FixedPointTypes, );
 TYPED_TEST(HyperbolicTest, SinH)
 {
   double    r;
@@ -1932,7 +1932,7 @@ template <typename T>
 class NanInfinityTest : public ::testing::Test
 {
 };
-TYPED_TEST_CASE(NanInfinityTest, FixedPointTypes);
+TYPED_TEST_SUITE(NanInfinityTest, FixedPointTypes, );
 TYPED_TEST(NanInfinityTest, nan_inf_tests)
 {
   TypeParam m_inf{TypeParam::NEGATIVE_INFINITY};

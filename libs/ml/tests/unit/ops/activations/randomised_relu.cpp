@@ -32,7 +32,7 @@ class RandomisedReluTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(RandomisedReluTest, math::test::TensorFloatingTypes);
+TYPED_TEST_SUITE(RandomisedReluTest, math::test::TensorFloatingTypes, );
 
 /**
  * @tparam DataType

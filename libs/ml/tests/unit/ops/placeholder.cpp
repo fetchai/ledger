@@ -37,8 +37,8 @@ class PlaceholderNonIntTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(PlaceholderAllTest, fetch::math::test::TensorIntAndFloatingTypes);
-TYPED_TEST_CASE(PlaceholderNonIntTest, fetch::math::test::TensorFloatingTypes);
+TYPED_TEST_SUITE(PlaceholderAllTest, fetch::math::test::TensorIntAndFloatingTypes, );
+TYPED_TEST_SUITE(PlaceholderNonIntTest, fetch::math::test::TensorFloatingTypes, );
 
 TYPED_TEST(PlaceholderAllTest, set_data)
 {
