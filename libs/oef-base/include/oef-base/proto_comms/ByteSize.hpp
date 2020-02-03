@@ -21,28 +21,39 @@
 #include <utility>
 
 namespace fetch {
-
 namespace byte_size {
 
-class ByteSize {
+class ByteSize
+{
 private:
-	struct Yes {};
-	struct No {};
-	
-	template<class T> static constexpr auto HasByteSizeLong(T &&t) -> decltype(t.ByteSizeLong(), Yes{});
-	static constexpr No HasByteSizeLong(...);
+  struct Yes
+  {
+  };
+  struct No
+  {
+  };
 
-	template<class T> static constexpr bool has_long_v = std::is_same<decltype(HasByteSizeLong(std::declval<T>())), Yes>::value;
+  template <class T>
+  static constexpr auto HasByteSizeLong(T &&t) -> decltype(t.ByteSizeLong(), Yes{});
+  static constexpr No   HasByteSizeLong(...);
+
+  template <class T>
+  static constexpr bool has_long_v =
+      std::is_same<decltype(HasByteSizeLong(std::declval<T>())), Yes>::value;
+
 public:
-	template<class T> static constexpr std::enable_if_t<has_long_v<T>, std::size_t> Call(T &&t) {
-		return t.ByteSizeLong();
-	}
+  template <class T>
+  static constexpr std::enable_if_t<has_long_v<T>, std::size_t> Call(T &&t)
+  {
+    return t.ByteSizeLong();
+  }
 
-	template<class T> static constexpr std::enable_if_t<!has_long_v<T>, std::size_t> Call(T &&t) {
-		return t.ByteSize();
-	}
+  template <class T>
+  static constexpr std::enable_if_t<!has_long_v<T>, std::size_t> Call(T &&t)
+  {
+    return t.ByteSize();
+  }
 };
 
-}
-
-}
+}  // namespace byte_size
+}  // namespace fetch
