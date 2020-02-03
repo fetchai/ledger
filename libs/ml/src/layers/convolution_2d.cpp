@@ -58,20 +58,8 @@ Convolution2D<TensorType>::Convolution2D(SizeType const output_channels,
   this->GetNode(weights)->SetBatchOutputShape(
       {output_channels_, input_channels_, kernel_size_, kernel_size_, 1});
 
-  // TODO(ML-470): Preliminary batch shape of a Conv2d layer (channels x 32(h) x 32(w) x
-  // 1(batch) ), is used here now, however, real width and height are to be set later on graph
-  // compilation (when expected Input shape of the Model/Graph is already known). Thus the
-  // convolutional weight init can be done on constructions, but this->input shape has to be
-  // inited only in this->CompleteInitialisation() override.
-  static constexpr SizeType DEFAULT_HEIGHT = 32;
-  static constexpr SizeType DEFAULT_WIDTH  = 32;
-  this->GetNode(input)->SetBatchOutputShape({output_channels_, DEFAULT_HEIGHT, DEFAULT_WIDTH, 1});
-
   this->AddInputNode(input);
   this->SetOutputNode(output);
-
-  this->Compile();
-  FETCH_LOG_INFO(Descriptor(), "-- Convolution2D initialisation completed. --");
 }
 
 template <typename TensorType>
@@ -92,6 +80,7 @@ std::shared_ptr<OpsSaveableParams> Convolution2D<TensorType>::GetOpSaveableParam
   ret->input_channels  = input_channels_;
   ret->output_channels = output_channels_;
   ret->stride_size     = stride_size_;
+  ret->is_initialised  = is_initialised_;
 
   return ret;
 }
@@ -104,6 +93,31 @@ void Convolution2D<TensorType>::SetOpSaveableParams(SPType const &sp)
   input_channels_  = sp.input_channels;
   output_channels_ = sp.output_channels;
   stride_size_     = sp.stride_size;
+  is_initialised_  = sp.is_initialised;
+}
+
+template <typename TensorType>
+void Convolution2D<TensorType>::CompleteConstruction()
+{
+  if (is_initialised_)
+  {
+    return;
+  }
+  using NodePtrType = std::shared_ptr<fetch::ml::Node<TensorType>>;
+  FETCH_LOG_INFO(Descriptor(), "-- Finalising Convolution2D initialisation ... --");
+
+  assert(!this->batch_input_shapes_.empty());
+  assert(!this->batch_output_shape_.empty());
+  assert(this->input_node_names_.size() == 1);  // Only 1 input node is allowed
+  assert(output_channels_ == this->batch_output_shape_.front());
+
+  NodePtrType input_node = this->nodes_.at(this->input_node_names_.front());
+  input_node->SetBatchInputShapes(this->batch_input_shapes_);
+  input_node->SetBatchOutputShape(this->batch_input_shapes_.front());
+
+  this->Compile();
+  FETCH_LOG_INFO(Descriptor(), "-- Convolution2D initialisation completed. --");
+  is_initialised_ = true;
 }
 
 template <typename TensorType>

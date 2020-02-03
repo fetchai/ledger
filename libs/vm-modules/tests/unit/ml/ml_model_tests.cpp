@@ -48,13 +48,14 @@ std::string const ADD_VALID_LAYER_TEST_SOURCE = R"(
 
 std::string const ACTIVATION_LAYER_TEST_SOURCE = R"(
      function main() : Tensor
-         var model = Model("sequential");
-         model.add("activation", "<<ACTIVATION>>");
-         model.compile("mse", "sgd");
-
          var x = Tensor();
 
          x.fromString("<<INPUT>>");
+
+         var model = Model("sequential");
+         model.addExperimental("input", x.shape());
+         model.add("activation", "<<ACTIVATION>>");
+         model.compile("mse", "sgd");
 
          var activated = model.predict(x);
 
@@ -743,6 +744,7 @@ TEST_F(VMModelTests, conv1d_sequential_model_test)
 
       // set up a model
       var model = Model("sequential");
+      model.addExperimental("input", data.shape());
       model.add("conv1d", output_channels, input_channels, kernel_size, stride_size);
       model.compile("mse", "adam");
 
@@ -816,6 +818,7 @@ TEST_F(VMModelTests, conv2d_sequential_model_test)
 
       // set up a model
       var model = Model("sequential");
+      model.addExperimental("input", data.shape());
       model.add("conv2d", output_channels, input_channels, kernel_size, stride_size);
       model.compile("mse", "adam");
 
@@ -1031,6 +1034,7 @@ TEST_F(VMModelTests, model_sequential_conv_maxpool)
 
         // set up a model
         var model = Model("sequential");
+        model.addExperimental("input", data.shape());
         model.add("conv1d", output_channels, input_channels, kernel_size, stride_size);
         model.addExperimental("maxpool1d", pooling_kernel_size, stride_size);
         model.compile("mse", "adam");
@@ -1098,6 +1102,7 @@ TEST_F(VMModelTests, model_sequential_conv_maxpool_wrong_pooling_kernel_size)
 
         // set up a model
         var model = Model("sequential");
+        model.addExperimental("input", data.shape());
         model.add("conv1d", output_channels, input_channels, kernel_size, stride_size);
         model.addExperimental("maxpool1d", pooling_kernel_size, stride_size);
         model.compile("mse", "adam");
@@ -1145,6 +1150,7 @@ TEST_F(VMModelTests, model_sequential_flatten_tensor_data)
           var data = x.unsqueeze();
 
           var model = Model("sequential");
+          model.addExperimental("input", x.shape());
           model.add("flatten");
           model.compile("scel", "adam", {"categorical accuracy"});
           var prediction = model.predict(data);
@@ -1183,6 +1189,7 @@ TEST_F(VMModelTests, model_sequential_flatten_2d_in_2d_out)
                 x.fromString(str_vals);
 
                 var model = Model("sequential");
+                model.addExperimental("input", x.shape());
                 model.add("flatten");
                 model.compile("scel", "adam");
                 var prediction = model.predict(x);
@@ -1217,6 +1224,7 @@ TEST_F(VMModelTests, model_sequential_reshape_2d_in_2d_out)
                           to_shape[1] = 1u64;
 
                           var model = Model("sequential");
+                          model.addExperimental("input", x.shape());
                           model.add("reshape", to_shape);
                           model.compile("scel", "adam");
                           var prediction = model.predict(x);
@@ -1255,6 +1263,7 @@ TEST_F(VMModelTests, model_sequential_reshape_2d_in_2d_out_wrong_shape)
                           to_shape[1] = 4u64;
 
                           var model = Model("sequential");
+                          model.addExperimental("input", x.shape());
                           model.add("reshape", to_shape);
                           model.compile("scel", "adam");
                           var prediction = model.predict(x);
@@ -1280,6 +1289,7 @@ TEST_F(VMModelTests, model_sequential_reshape_3d_in_2d_out)
                 to_shape[1] = 1u64;
 
                 var model = Model("sequential");
+                model.addExperimental("input", x.shape());
                 model.add("reshape", to_shape);
                 model.compile("scel", "adam");
                 var prediction = model.predict(x);
@@ -1324,6 +1334,7 @@ TEST_F(VMModelTests, model_sequential_reshape_2d_in_3d_out)
                           to_shape[2] = 1u64;
 
                           var model = Model("sequential");
+                          model.addExperimental("input", x.shape());
                           model.add("reshape", to_shape);
                           model.compile("scel", "adam");
                           var prediction = model.predict(x);
@@ -1368,6 +1379,7 @@ TEST_F(VMModelTests, model_sequential_reshape_5d_in_3d_out)
                           to_shape[2] = 1u64;
 
                           var model = Model("sequential");
+                          model.addExperimental("input", x.shape());
                           model.add("reshape", to_shape);
                           model.compile("scel", "adam");
                           var prediction = model.predict(x);
@@ -1414,6 +1426,7 @@ TEST_F(VMModelTests, model_sequential_reshape_2d_in_8d_out)
                           to_shape[7] = 1u64;
 
                           var model = Model("sequential");
+                          model.addExperimental("input", x.shape());
                           model.add("reshape", to_shape);
                           model.compile("scel", "adam");
                           var prediction = model.predict(x);
@@ -1451,6 +1464,7 @@ TEST_F(VMModelTests, model_sequential_flatten_4d_in_2d_out)
                 x = x.unsqueeze();
 
                 var model = Model("sequential");
+                model.addExperimental("input", x.shape());
                 model.add("flatten");
                 model.compile("scel", "adam");
                 var prediction = model.predict(x);
@@ -1548,20 +1562,22 @@ TEST_F(VMModelTests, model_sequential_activation_layer_gelu)
 TEST_F(VMModelTests, model_sequential_flatten_1d_in_2d_out)
 {
   static char const *SRC_METRIC = R"(
-              function main() : Tensor
-                var shape = Array<UInt64>(1);
-                shape[0] = 1u64;
-                var x = Tensor(shape);
+      function main() : Tensor
+        var shape = Array<UInt64>(2);
+        shape[0] = 1u64;
+        shape[1] = 1u64;
+        var x = Tensor(shape);
 
-                var model = Model("sequential");
-                model.add("flatten");
-                model.compile("scel", "adam");
-                var prediction = model.predict(x);
-                print(prediction.toString());
+        var model = Model("sequential");
+        model.addExperimental("input", x.shape());
+        model.add("flatten");
+        model.compile("scel", "adam");
+        var prediction = model.predict(x);
+        print(prediction.toString());
 
-                return prediction;
-              endfunction
-      )";
+        return prediction;
+      endfunction
+  )";
 
   Variant res;
   ASSERT_TRUE(toolkit.Compile(SRC_METRIC));

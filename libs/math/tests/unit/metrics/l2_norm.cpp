@@ -29,7 +29,7 @@ class L2NormTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(L2NormTest, TensorFloatingTypes);
+TYPED_TEST_SUITE(L2NormTest, TensorFloatingTypes, );
 
 TYPED_TEST(L2NormTest, value_test)
 {

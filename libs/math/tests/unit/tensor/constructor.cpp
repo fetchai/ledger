@@ -29,7 +29,7 @@ class TensorConstructorTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(TensorConstructorTest, IntAndFloatingTypes);
+TYPED_TEST_SUITE(TensorConstructorTest, IntAndFloatingTypes, );
 
 TYPED_TEST(TensorConstructorTest, string_construction)
 {
