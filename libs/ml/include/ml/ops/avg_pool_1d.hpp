@@ -63,6 +63,8 @@ public:
   }
   static constexpr char const *DESCRIPTOR = "AvgPool1D";
 
+  OperationsCount ChargeForward() override;
+
 private:
   SizeType kernel_size_;
   SizeType stride_size_;

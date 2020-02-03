@@ -188,8 +188,12 @@ math::SizeType Convolution1D<TensorType>::ComputeOutputHeight(SizeType const inp
                                                               SizeType const kernel_height) const
 {
   // output_height=number of stride_size steps over input size
-  SizeType output_height = (input_height - kernel_height + this->stride_size_) / this->stride_size_;
-
+  SizeType output_height = ((input_height - kernel_height) / this->stride_size_) + 1;
+  if (output_height == 0 || output_height == std::numeric_limits<SizeType>::max())
+  {
+    throw fetch::math::exceptions::WrongShape(
+        "Convolution1D::ComputeOutputHeight: output shape has 0 or -1 values!");
+  }
   return output_height;
 }
 

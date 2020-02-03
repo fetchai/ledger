@@ -862,8 +862,11 @@ void Constellation::OnTearDownExternalNetwork()
 
 void Constellation::OnTearDownLaneServices()
 {
-  // not strictly necessary but make sure that chain has completely flushed to disk
-  chain_->Flush();
+  if (chain_)
+  {
+    // not strictly necessary but make sure that chain has completely flushed to disk
+    chain_->Flush();
+  }
 
   ResetItem(chain_);
   ResetItem(lane_control_);
