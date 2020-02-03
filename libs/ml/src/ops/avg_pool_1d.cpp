@@ -173,6 +173,20 @@ std::vector<math::SizeType> AvgPool1D<TensorType>::ComputeOutputShape(
   return output_shape;
 }
 
+template <typename TensorType>
+OperationsCount AvgPool1D<TensorType>::ChargeForward()
+{
+  assert(!this->batch_output_shape_.empty());
+  OperationsCount num_output_shape_ops = this->batch_output_shape_.at(0) *
+                                         this->batch_output_shape_.at(1) *
+                                         this->batch_output_shape_.at(2);
+  OperationsCount cost =
+      fetch::ml::charge_estimation::ops::DIVISION_PER_ELEMENT * num_output_shape_ops +
+      fetch::ml::charge_estimation::ops::ADDITION_PER_ELEMENT * num_output_shape_ops *
+          this->kernel_size_;
+  return cost;
+}
+
 ///////////////////////////////
 /// EXPLICIT INSTANTIATIONS ///
 ///////////////////////////////

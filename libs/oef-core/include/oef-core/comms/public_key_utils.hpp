@@ -24,9 +24,9 @@
 #include <cstdio>  // for fopen
 #include <exception>
 
-#include <openssl/crypto.h>
-#include <openssl/evp.h>
-#include <openssl/rsa.h>
+#include "openssl/crypto.h"
+#include "openssl/evp.h"
+#include "openssl/rsa.h"
 
 // both can be used separately
 // using PublicKey  = class EvpPublicKey;
