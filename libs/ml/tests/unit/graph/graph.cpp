@@ -1349,6 +1349,52 @@ TYPED_TEST(GraphTest, graph_charge_conv2d)
   ASSERT_EQ(batch_charge, expected_charge);
 }
 
+TYPED_TEST(GraphTest, graph_charge_diamond)
+{
+  using TensorType = TypeParam;
+  using namespace fetch::ml::ops;
+  using namespace fetch::ml::charge_estimation::ops;
+
+  static const TensorType  data = TensorType::FromString(R"(01; 11; 21; 31; 41; 51; 61; 71;)");
+  static const std::size_t total_data_elements = data.shape()[0];
+
+  fetch::ml::Graph<TensorType> g;
+
+  //    i_n_p_u_t {8,1}
+  //      |   |
+  //     A_d_d_1
+  //      |   |
+  //     A_d_d_2
+  //      |   |
+  //     A_d_d_3
+  //      |   |
+  //       ...
+  //      |   |
+  //     A_d_d_N {8,1}
+
+  std::string              input     = g.template AddNode<PlaceHolder<TensorType>>("Input", {});
+  static const std::size_t N         = 16;
+  std::string              first_add = g.template AddNode<Add<TensorType>>("Add1", {input, input});
+  std::string              prev_node = first_add;
+  for (std::size_t i{2}; i <= N; ++i)
+  {
+    prev_node =
+        g.template AddNode<Add<TensorType>>("Add" + std::to_string(i), {prev_node, prev_node});
+  }
+  std::string const output = prev_node;
+
+  g.SetInput(input, data);
+  g.Compile();
+
+  static const std::size_t expected_calls_to_add = (2 * (N - 1) + 1);
+  OperationsCount const    charge                = g.ChargeForward(output);
+  OperationsCount const    expected_charge =
+      ADDITION_PER_ELEMENT * total_data_elements * expected_calls_to_add +
+      PLACEHOLDER_READING_PER_ELEMENT * total_data_elements;
+
+  ASSERT_EQ(charge, expected_charge);
+}
+
 }  // namespace test
 }  // namespace ml
 }  // namespace fetch

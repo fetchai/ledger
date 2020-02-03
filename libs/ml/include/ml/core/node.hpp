@@ -149,7 +149,7 @@ public:
     return static_cast<bool>(cached_output_status_ == CachedOutputState::VALID_CACHE);
   }
 
-  fetch::ml::OperationsCount ChargeForward();
+  fetch::ml::OperationsCount ChargeForward(std::unordered_set<std::string> &visited_nodes) const;
   fetch::ml::OperationsCount ChargeBackward();
 
 private:

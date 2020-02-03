@@ -16,9 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ml/core/graph.hpp"
+
+#include <unordered_set>
+
 #include "math/tensor/tensor.hpp"
 #include "math/tensor/tensor_slice_iterator.hpp"
-#include "ml/core/graph.hpp"
 #include "ml/ops/weights.hpp"
 
 namespace fetch {
@@ -1112,7 +1115,7 @@ std::vector<std::pair<std::string, std::vector<std::string>>> Graph<TensorType>:
 }
 
 template <typename TensorType>
-fetch::ml::OperationsCount Graph<TensorType>::ChargeForward(const std::string &node_name)
+fetch::ml::OperationsCount Graph<TensorType>::ChargeForward(const std::string &node_name) const
 {
   if (nodes_.find(node_name) == nodes_.end())
   {
@@ -1120,10 +1123,15 @@ fetch::ml::OperationsCount Graph<TensorType>::ChargeForward(const std::string &n
     return 0;
   }
 
-  this->Compile();  // Without compiling and shape-computing charge estimation is not possible.
+  if (this->graph_state_ == GraphState::NOT_COMPILED)
+  {
+    throw fetch::ml::exceptions::InvalidMode(
+        "Can not compute charge estimate for a forward pass: graph is not compiled.");
+  }
 
-  NodePtrType node = nodes_.at(node_name);
-  return node->ChargeForward();
+  NodePtrType                     node = nodes_.at(node_name);
+  std::unordered_set<std::string> visited_nodes;
+  return node->ChargeForward(visited_nodes);
 }
 
 /**
