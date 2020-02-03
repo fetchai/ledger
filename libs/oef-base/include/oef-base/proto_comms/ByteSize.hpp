@@ -45,13 +45,13 @@ public:
   template <class T>
   static constexpr std::enable_if_t<has_long_v<T>, std::size_t> Call(T &&t)
   {
-    return t.ByteSizeLong();
+    return static_cast<std::size_t>(t.ByteSizeLong());
   }
 
   template <class T>
   static constexpr std::enable_if_t<!has_long_v<T>, std::size_t> Call(T &&t)
   {
-    return t.ByteSize();
+    return static_cast<std::size_t>(t.ByteSize());
   }
 };
 
