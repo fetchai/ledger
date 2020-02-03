@@ -2,7 +2,7 @@ DOCKER_IMAGE_NAME = 'gcr.io/organic-storm-201412/fetch-ledger-develop:v0.4.5'
 STATIC_ANALYSIS_IMAGE = 'gcr.io/organic-storm-201412/ledger-ci-clang-tidy:v0.1.3'
 
 HIGH_LOAD_NODE_LABEL = 'ledger'
-MACOS_NODE_LABEL = 'mac-mini'
+MACOS_NODE_LABEL = 'osx'
 
 enum Platform
 {

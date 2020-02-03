@@ -31,7 +31,7 @@ class TensorOperationsTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(TensorOperationsTest, fetch::math::test::FloatIntAndUIntTypes);
+TYPED_TEST_SUITE(TensorOperationsTest, fetch::math::test::FloatIntAndUIntTypes, );
 
 template <typename TypeParam>
 void ReshapeTest(std::vector<SizeType> const &initial_shape,
