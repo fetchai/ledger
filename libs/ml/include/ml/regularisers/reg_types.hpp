@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/serializers/base_types.hpp"
+#include "core/serializers/map_serializer_boilerplate.hpp"
 
 namespace fetch {
 namespace ml {

@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/serializers/group_definitions.hpp"
+#include "core/serializers/map_serializer_boilerplate.hpp"
 #include "muddle/address.hpp"
 #include "network/uri.hpp"
 #include "shards/service_identifier.hpp"
@@ -82,32 +83,6 @@ struct MapSerializer<shards::ManifestEntry, D>
                              EXPECTED_KEY_MEMBER(2, shards::ManifestEntry::local_port_),
                              EXPECTED_KEY_MEMBER(3, shards::ManifestEntry::address_)>
 {
-};
-{
-public:
-  using DriverType = D;
-  using Type       = shards::ManifestEntry;
-
-  static const uint8_t URI        = 1;
-  static const uint8_t LOCAL_PORT = 2;
-  static const uint8_t ADDRESS    = 3;
-
-  template <typename T>
-  static inline void Serialize(T & map_constructor, Type const &x)
-  {
-    auto map = map_constructor(3);
-    map.Append(URI, x.uri_);
-    map.Append(LOCAL_PORT, x.local_port_);
-    map.Append(ADDRESS, x.address_);
-  }
-
-  template <typename T>
-  static inline void Deserialize(T & map, Type & x)
-  {
-    map.ExpectKeyGetValue(URI, x.uri_);
-    map.ExpectKeyGetValue(LOCAL_PORT, x.local_port_);
-    map.ExpectKeyGetValue(ADDRESS, x.address_);
-  }
 };
 
 }  // namespace serializers

@@ -69,5 +69,72 @@ constexpr std::add_const_t<T> &AsConst(T const &t)
   return t;
 }
 
+template <class Constant = void, class...>
+struct NoOp
+{
+  template <class... Ts>
+  constexpr auto operator()(Ts &&... /*unused*/) const noexcept
+  {
+    return Constant::value;
+  }
+};
+
+template <class... Rest>
+struct NoOp<void, Rest...>
+{
+  template <class... Ts>
+  constexpr void operator()(Ts &&... /*unused*/) const noexcept
+  {}
+};
+
+template <class F>
+constexpr void ForEach(F &&f) noexcept
+{
+  return NoOp<>{}(std::forward<F>(f));
+}
+
+template <class F, class T1>
+constexpr auto ForEach(F &&f, T1 &&t1)
+{
+  return std::forward<F>(f)(std::forward<T1>(t1));
+}
+
+template <class F, class T1, class T2>
+constexpr auto ForEach(F &&f, T1 &&t1, T2 &&t2)
+{
+  f(std::forward<T1>(t1));
+  return std::forward<F>(f)(std::forward<T2>(t2));
+}
+
+template <class F, class T1, class T2, class T3>
+constexpr auto ForEach(F &&f, T1 &&t1, T2 &&t2, T3 &&t3)
+{
+  f(std::forward<T1>(t1));
+  f(std::forward<T2>(t2));
+  return std::forward<F>(f)(std::forward<T3>(t3));
+}
+
+template <class F, class T1, class T2, class T3, class T4>
+constexpr auto ForEach(F &&f, T1 &&t1, T2 &&t2, T3 &&t3, T4 &&t4)
+{
+  f(std::forward<T1>(t1));
+  f(std::forward<T2>(t2));
+  f(std::forward<T3>(t3));
+  return std::forward<F>(f)(std::forward<T4>(t4));
+}
+
+template <class F, class T1, class T2, class T3, class T4, class... Ts>
+constexpr auto ForEach(F &&f, T1 &&t1, T2 &&t2, T3 &&t3, T4 &&t4, Ts &&... ts);
+
+template <class F, class T1, class T2, class T3, class T4, class... Ts>
+constexpr auto ForEach(F &&f, T1 &&t1, T2 &&t2, T3 &&t3, T4 &&t4, Ts &&... ts)
+{
+  f(std::forward<T1>(t1));
+  f(std::forward<T2>(t2));
+  f(std::forward<T3>(t3));
+  f(std::forward<T4>(t4));
+  ForEach(std::forward<F>(f), std::forward<Ts>(ts)...);
+}
+
 }  // namespace value_util
 }  // namespace fetch

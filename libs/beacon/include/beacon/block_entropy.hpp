@@ -83,16 +83,29 @@ struct BlockEntropy : public BlockEntropyInterface
 
 namespace serializers {
 
-struct BlockEntropyHashSelf : ExtraChecks
+struct BlockEntropyNotarisationAndHashSelf
 {
-  template <class Map>
-  static constexpr void Serialize(Map const & /*unused_map*/,
-                                  BlockEntropy const & /*unused_member*/) noexcept
-  {}
+  static constexpr std::size_t LogicalSize() noexcept
+  {
+    return 2;
+  }
+
+  static uint8_t const NOTARISATION         = 7;
+  static uint8_t const NOTARISATION_MEMBERS = 8;
 
   template <class Map>
-  static constexpr void Deserialize(Map const & /*unused_map*/, BlockEntropy &member)
+  static constexpr void Serialize(Map const &map, beacon::BlockEntropy const &member) noexcept
   {
+    map.Append(NOTARISATION, member.block_notarisation.first);
+    map.Append(NOTARISATION_MEMBERS, member.block_notarisation.second);
+  }
+
+  template <class Map>
+  static constexpr void Deserialize(Map const &map, beacon::BlockEntropy &member)
+  {
+    map.ExpectKeyGetValue(NOTARISATION, member.block_notarisation.first);
+    map.ExpectKeyGetValue(NOTARISATION_MEMBERS, member.block_notarisation.second);
+
     if (!member.confirmations.empty())
     {
       member.HashSelf();
@@ -110,9 +123,7 @@ struct MapSerializer<beacon::BlockEntropy, D>
         EXPECTED_KEY_MEMBER(4, beacon::BlockEntropy::confirmations),
         EXPECTED_KEY_MEMBER(5, beacon::BlockEntropy::group_signature),
         EXPECTED_KEY_MEMBER(6, beacon::BlockEntropy::aeon_notarisation_keys),
-        EXPECTED_KEY_MEMBER(7, beacon::BlockEntropy::block_notarisation.first),
-        EXPECTED_KEY_MEMBER(8, beacon::BlockEntropy::block_notarisation.second),
-        BlockEntropyHashSelf>
+        BlockEntropyNotarisationAndHashSelf>
 {
 };
 // clang-format on

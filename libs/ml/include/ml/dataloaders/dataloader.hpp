@@ -97,9 +97,8 @@ namespace serializers {
  * @tparam TensorType
  */
 template <typename D>
-    struct MapSerializer<ml::dataloaders::DataLoaderMode, D> : MapSerializerBoilerplate <
-                                                               ml::dataloaders::DataLoaderMode,
-    D, SimplySerializedAs<1, uint16_t>
+struct MapSerializer<ml::dataloaders::DataLoaderMode, D>
+  : MapSerializerBoilerplate<ml::dataloaders::DataLoaderMode, D, SimplySerializedAs<1, uint16_t>>
 {
 };
 

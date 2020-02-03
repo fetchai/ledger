@@ -929,15 +929,16 @@ struct MapSerializer<ml::GraphSaveableParams<TensorType>, D>
  */
 template <typename TensorType, typename D>
 struct MapSerializer<ml::SubGraphSaveableParams<TensorType>, D>
-  : MapSerializerBoilerplate<ml::SubGraphSaveableParams<TensorType>, D,
-                             // serialize parent class first
-                             SimplySerializedAs<1, ml::GraphSaveableParams<TensorType>>,
-                             // serialize parent class first
-                             SimplySerializedAs<2, ml::OpsSaveableParams>,
+  : MapSerializerBoilerplate<
+        ml::SubGraphSaveableParams<TensorType>, D,
+        // serialize parent class first
+        SimplySerializedAs<1, ml::GraphSaveableParams<TensorType>>,
+        // serialize parent class first
+        SimplySerializedAs<2, ml::OpsSaveableParams>,
 
-                             EXPECTED_KEY_MEMBER(3, ml::SubGraphSaveableParams::op_type),
-                             EXPECTED_KEY_MEMBER(4, ml::SubGraphSaveableParams::input_node_names),
-                             EXPECTED_KEY_MEMBER(5, ml::SubGraphSaveableParams::output_node_name)>
+        EXPECTED_KEY_MEMBER(3, ml::SubGraphSaveableParams<TensorType>::op_type),
+        EXPECTED_KEY_MEMBER(4, ml::SubGraphSaveableParams<TensorType>::input_node_names),
+        EXPECTED_KEY_MEMBER(5, ml::SubGraphSaveableParams<TensorType>::output_node_name)>
 {
 };
 
@@ -988,28 +989,25 @@ struct BaseAndOpTypeSerializer
   static uint8_t const BASE    = 1;
   static uint8_t const OP_CODE = 2;
 
-  template <typename Constructora>
+  template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &v)
   {
     auto map = map_constructor(2 + sizeof...(Fields));
 
     // serialize parent class first
-    map.Append(BASE, static_cast<Base const &>(v);
+    map.Append(BASE, static_cast<Base const &>(v));
 
     map.Append(OP_CODE, v.op_type);
-    value_util::ForEach([&map, &v](auto field) {
-      field.Serialize(map, v); }, Fields{}...);
+    value_util::ForEach([&map, &v](auto field) { field.Serialize(map, v); }, Fields{}...);
   }
 
   template <typename MapDeserializer>
-  static void Deserialize(MapDeserializer &map, Type &t)
+  static void Deserialize(MapDeserializer &map, Type &v)
   {
-    auto base_pointer = static_cast<ml::SubGraphSaveableParams<TensorType> *>(&sp);
-    map.ExpectKeyGetValue(SUB_GRAPH, static_cast<Base &>(t);
+    map.ExpectKeyGetValue(BASE, static_cast<Base &>(v));
 
-    map.ExpectKeyGetValue(OP_CODE, sp.op_type);
-    value_util::ForEach([&map, &v](auto field) {
-      field.Deserialize(map, v); }, Fields{}...);
+    map.ExpectKeyGetValue(OP_CODE, v.op_type);
+    value_util::ForEach([&map, &v](auto field) { field.Deserialize(map, v); }, Fields{}...);
   }
 };
 
@@ -1833,8 +1831,7 @@ struct MapSerializer<ml::LayerMultiHeadSaveableParams<TensorType>, D>
  * @tparam TensorType
  */
 template <typename TensorType, typename D>
-struct MapSerializer<ml::LayerPReluSaveableParams<TensorType>,
-                     D> struct MapSerializer<ml::LayerPReluSaveableParams<TensorType>, D>
+struct MapSerializer<ml::LayerPReluSaveableParams<TensorType>, D>
   : BaseAndOpTypeSerializer<ml::LayerPReluSaveableParams<TensorType>, D,
                             ml::SubGraphSaveableParams<TensorType>>
 {
@@ -1895,13 +1892,13 @@ struct MapSerializer<ml::LayerSkipGramSaveableParams<TensorType>, D>
  * serializer for Optimiser
  * @tparam TensorType
  */
-template <uint8_t KEY>
+template <uint8_t KEY, class TensorType>
 struct OptimiserGetGraphSaveableParams : ValueSerializer
 {
   template <class Map, class Object>
   static constexpr void Serialize(Map &map, Object const &object)
   {
-    map.Append(KEY, object.graph_->GetGraphSaveableParams();
+    map.Append(KEY, object.graph_->GetGraphSaveableParams());
   }
   template <class Map, class Object>
   static constexpr void Deserializer(Map &map, Object &object)
@@ -1917,7 +1914,7 @@ struct OptimiserGetGraphSaveableParams : ValueSerializer
 template <typename TensorType, typename D>
 struct MapSerializer<ml::optimisers::Optimiser<TensorType>, D>
   : MapSerializerBoilerplate<
-        ml::optimisers::Optimiser<TensorType>, D, OptimiserGetGraphSaveableParams<1>,
+        ml::optimisers::Optimiser<TensorType>, D, OptimiserGetGraphSaveableParams<1, TensorType>,
         EXPECTED_KEY_MEMBER(2, ml::optimisers::Optimiser<TensorType>::input_node_names_),
         EXPECTED_KEY_MEMBER(3, ml::optimisers::Optimiser<TensorType>::label_node_name_),
         EXPECTED_KEY_MEMBER(4, ml::optimisers::Optimiser<TensorType>::output_node_name_),
