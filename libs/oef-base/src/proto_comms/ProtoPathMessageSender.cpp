@@ -19,6 +19,7 @@
 #include "oef-base/proto_comms/ProtoPathMessageSender.hpp"
 
 #include "oef-base/monitoring/Counter.hpp"
+#include "oef-base/proto_comms/ByteSize.hpp"
 #include "oef-base/proto_comms/ProtoMessageEndpoint.hpp"
 #include "oef-base/utils/Uri.hpp"
 #include "oef-messages/transport.hpp"
@@ -66,8 +67,8 @@ ProtoPathMessageSender::consumed_needed_pair ProtoPathMessageSender::CheckForSpa
       uint32_t leader_head_size  = sizeof(uint32_t);
       uint32_t payload_head_size = sizeof(uint32_t);
 
-      auto payload_size = static_cast<uint32_t>(txq.front().second->ByteSize());
-      auto leader_size  = static_cast<uint32_t>(leader.ByteSize());
+      auto payload_size = static_cast<uint32_t>(fetch::byte_size::ByteSize::Call(*txq.front().second));
+      auto leader_size  = static_cast<uint32_t>(fetch::byte_size::ByteSize::Call(leader));
 
       uint32_t mesg_size = leader_head_size + leader_size + payload_head_size + payload_size;
       if (chars.RemainingSpace() < mesg_size)
