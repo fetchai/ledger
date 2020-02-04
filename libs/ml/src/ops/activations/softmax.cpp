@@ -131,7 +131,7 @@ std::vector<math::SizeType> Softmax<TensorType>::ComputeOutputShape(
 }
 
 template <typename TensorType>
-OperationsCount Softmax<TensorType>::ChargeForward()
+OperationsCount Softmax<TensorType>::ChargeForward() const
 {
   assert(!this->batch_output_shape_.empty());
   OperationsCount cost = fetch::ml::charge_estimation::ops::SOFTMAX_PER_ELEMENT *
