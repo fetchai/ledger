@@ -61,7 +61,7 @@ public:
   }
   static constexpr char const *DESCRIPTOR = "Sqrt";
 
-  OperationsCount ChargeForward() override;
+  OperationsCount ChargeForward() const override;
 };
 
 }  // namespace ops

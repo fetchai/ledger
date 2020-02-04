@@ -194,7 +194,7 @@ std::vector<math::SizeType> AvgPool2D<TensorType>::ComputeOutputShape(
 }
 
 template <typename TensorType>
-OperationsCount AvgPool2D<TensorType>::ChargeForward()
+OperationsCount AvgPool2D<TensorType>::ChargeForward() const
 {
   assert(!this->batch_output_shape_.empty());
   OperationsCount num_output_shape_ops =

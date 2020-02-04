@@ -99,7 +99,7 @@ std::vector<math::SizeType> TanH<TensorType>::ComputeOutputShape(VecTensorType c
 }
 
 template <typename TensorType>
-OperationsCount TanH<TensorType>::ChargeForward()
+OperationsCount TanH<TensorType>::ChargeForward() const
 {
   assert(!this->batch_input_shapes_.empty());
   OperationsCount cost = fetch::ml::charge_estimation::ops::TANH_PER_ELEMENT *

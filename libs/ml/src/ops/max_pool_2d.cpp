@@ -204,7 +204,7 @@ std::vector<fetch::math::SizeType> MaxPool2D<T>::ComputeOutputShape(
 }
 
 template <typename TensorType>
-OperationsCount MaxPool2D<TensorType>::ChargeForward()
+OperationsCount MaxPool2D<TensorType>::ChargeForward() const
 {
   assert(!this->batch_output_shape_.empty());
   auto cost = static_cast<OperationsCount>(

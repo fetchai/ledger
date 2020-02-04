@@ -124,7 +124,7 @@ std::vector<math::SizeType> Divide<TensorType>::ComputeOutputShape(
 }
 
 template <typename TensorType>
-OperationsCount Divide<TensorType>::ChargeForward()
+OperationsCount Divide<TensorType>::ChargeForward() const
 {
   assert(!this->batch_input_shapes_.empty());
   OperationsCount cost = fetch::ml::charge_estimation::ops::DIVISION_PER_ELEMENT *

@@ -127,10 +127,9 @@ std::vector<fetch::math::SizeType> Convolution1D<TensorType>::ComputeOutputShape
 }
 
 template <class TensorType>
-OperationsCount Convolution1D<TensorType>::ChargeForward()
+OperationsCount Convolution1D<TensorType>::ChargeForward() const
 {
-  auto ptr = dynamic_cast<Graph<TensorType> *>(this);
-  return ptr->ChargeForward(this->output_node_name_);
+  return Graph<TensorType>::ChargeForward(this->output_node_name_);
 }
 
 ///////////////////////////////

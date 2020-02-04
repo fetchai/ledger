@@ -61,7 +61,7 @@ public:
   }
   static constexpr char const *DESCRIPTOR = "LogSoftmax";
 
-  OperationsCount ChargeForward() override;
+  OperationsCount ChargeForward() const override;
   OperationsCount ChargeBackward() override;
 
 private:
