@@ -34,7 +34,7 @@ class PReluOpTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(PReluOpTest, fetch::math::test::TensorFloatingTypes);
+TYPED_TEST_SUITE(PReluOpTest, fetch::math::test::TensorFloatingTypes, );
 
 TYPED_TEST(PReluOpTest, forward_test)
 {

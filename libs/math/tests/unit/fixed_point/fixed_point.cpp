@@ -656,16 +656,16 @@ TEST(FixedPointTest, Constants_64_64)
   EXPECT_EQ(fp128_t::MAX, (static_cast<uint128_t>(0x7ffffffffffffffe) << 64) | 0xffffffffffffffff);
   EXPECT_EQ(fp128_t::MIN, (static_cast<uint128_t>(0x8000000000000001) << 64) | 0x0000000000000001);
 
-  EXPECT_EQ(fp128_t::MAX_EXP.Data(), (static_cast<uint128_t>(0x2b) << 64) | 0xab13e5fca20e0000);
+  EXPECT_EQ(fp128_t::MAX_EXP.Data(), (static_cast<uint128_t>(0x2b) << 64) | 0xab13e5fca20ef141);
   EXPECT_EQ(fp128_t::MIN_EXP.Data(),
-            (static_cast<uint128_t>(0xffffffffffffffd4) << 64) | 0x54ec1a035df20000);
+            (static_cast<uint128_t>(0xffffffffffffffd4) << 64) | 0x54ec1a035df10ebf);
 }
 
 template <typename T>
 class ConversionTest : public ::testing::Test
 {
 };
-TYPED_TEST_CASE(ConversionTest, FixedPointTypes);
+TYPED_TEST_SUITE(ConversionTest, FixedPointTypes, );
 TYPED_TEST(ConversionTest, Conversion)
 {
   // Positive
@@ -714,7 +714,7 @@ template <typename T>
 class BasicArithmeticTest : public ::testing::Test
 {
 };
-TYPED_TEST_CASE(BasicArithmeticTest, FixedPointTypes);
+TYPED_TEST_SUITE(BasicArithmeticTest, FixedPointTypes, );
 TYPED_TEST(BasicArithmeticTest, Addition)
 {
   // Positive
@@ -878,7 +878,7 @@ template <typename T>
 class BitOperationsTest : public ::testing::Test
 {
 };
-TYPED_TEST_CASE(BitOperationsTest, FixedPointTypes);
+TYPED_TEST_SUITE(BitOperationsTest, FixedPointTypes, );
 TYPED_TEST(BitOperationsTest, ShiftLeft)
 {
   // Positive
@@ -911,7 +911,7 @@ template <typename T>
 class ComparisonTest : public ::testing::Test
 {
 };
-TYPED_TEST_CASE(ComparisonTest, FixedPointTypes);
+TYPED_TEST_SUITE(ComparisonTest, FixedPointTypes, );
 TYPED_TEST(ComparisonTest, Comparison)
 {
   TypeParam zero(0);
@@ -1011,7 +1011,7 @@ template <typename T>
 class BasicTest : public ::testing::Test
 {
 };
-TYPED_TEST_CASE(BasicTest, FixedPointTypes);
+TYPED_TEST_SUITE(BasicTest, FixedPointTypes, );
 TYPED_TEST(BasicTest, Abs)
 {
   TypeParam one(1);
@@ -1049,33 +1049,38 @@ TYPED_TEST(BasicTest, Remainder)
   TypeParam x{fetch::math::AsType<TypeParam>(1.6519711627625)};
   TypeParam huge(10000);
   huge >>= 2;
-  TypeParam e1 = TypeParam::Remainder(ten, one);
-  TypeParam e2 = TypeParam::Remainder(ten, m_one);
-  TypeParam e3 = TypeParam::Remainder(ten, one_point_five);
-  TypeParam e4 = TypeParam::Remainder(ten, m_one_point_five);
-  TypeParam e5 = TypeParam::Remainder(ten, x);
-  TypeParam e6 = TypeParam::Remainder(m_ten, x);
-  TypeParam e7 = TypeParam::Remainder(huge, x);
-
-  EXPECT_NEAR(static_cast<double>(e1),
+  TypeParam e = TypeParam::Remainder(ten, one);
+  EXPECT_NEAR(static_cast<double>(e),
               std::remainder(static_cast<double>(ten), static_cast<double>(one)),
               static_cast<double>(TypeParam::TOLERANCE));
-  EXPECT_NEAR(static_cast<double>(e2),
+
+  e = TypeParam::Remainder(ten, m_one);
+  EXPECT_NEAR(static_cast<double>(e),
               std::remainder(static_cast<double>(ten), static_cast<double>(m_one)),
               static_cast<double>(TypeParam::TOLERANCE));
-  EXPECT_NEAR(static_cast<double>(e3),
+
+  e = TypeParam::Remainder(ten, one_point_five);
+  EXPECT_NEAR(static_cast<double>(e),
               std::remainder(static_cast<double>(ten), static_cast<double>(one_point_five)),
               static_cast<double>(TypeParam::TOLERANCE));
-  EXPECT_NEAR(static_cast<double>(e4),
+
+  e = TypeParam::Remainder(ten, m_one_point_five);
+  EXPECT_NEAR(static_cast<double>(e),
               std::remainder(static_cast<double>(ten), static_cast<double>(m_one_point_five)),
               static_cast<double>(TypeParam::TOLERANCE));
-  EXPECT_NEAR(static_cast<double>(e5),
+
+  e = TypeParam::Remainder(ten, x);
+  EXPECT_NEAR(static_cast<double>(e),
               std::remainder(static_cast<double>(ten), static_cast<double>(x)),
               static_cast<double>(TypeParam::TOLERANCE));
-  EXPECT_NEAR(static_cast<double>(e6),
+
+  e = TypeParam::Remainder(m_ten, x);
+  EXPECT_NEAR(static_cast<double>(e),
               std::remainder(static_cast<double>(m_ten), static_cast<double>(x)),
               static_cast<double>(TypeParam::TOLERANCE));
-  EXPECT_NEAR(static_cast<double>(e7),
+
+  e = TypeParam::Remainder(huge, x);
+  EXPECT_NEAR(static_cast<double>(e),
               std::remainder(static_cast<double>(huge), static_cast<double>(x)),
               static_cast<double>(TypeParam::TOLERANCE));
 }
@@ -1111,7 +1116,7 @@ template <typename T>
 class TranscendentalTest : public ::testing::Test
 {
 };
-TYPED_TEST_CASE(TranscendentalTest, FixedPointTypes);
+TYPED_TEST_SUITE(TranscendentalTest, FixedPointTypes, );
 TYPED_TEST(TranscendentalTest, Exp)
 {
   TypeParam one(1);
@@ -1431,7 +1436,7 @@ template <typename T>
 class TrigonometryTest : public ::testing::Test
 {
 };
-TYPED_TEST_CASE(TrigonometryTest, FixedPointTypes);
+TYPED_TEST_SUITE(TrigonometryTest, FixedPointTypes, );
 TYPED_TEST(TrigonometryTest, Sin)
 {
   TypeParam one(1);
@@ -1789,7 +1794,7 @@ template <typename T>
 class HyperbolicTest : public ::testing::Test
 {
 };
-TYPED_TEST_CASE(HyperbolicTest, FixedPointTypes);
+TYPED_TEST_SUITE(HyperbolicTest, FixedPointTypes, );
 TYPED_TEST(HyperbolicTest, SinH)
 {
   double    r;
@@ -1932,7 +1937,7 @@ template <typename T>
 class NanInfinityTest : public ::testing::Test
 {
 };
-TYPED_TEST_CASE(NanInfinityTest, FixedPointTypes);
+TYPED_TEST_SUITE(NanInfinityTest, FixedPointTypes, );
 TYPED_TEST(NanInfinityTest, nan_inf_tests)
 {
   TypeParam m_inf{TypeParam::NEGATIVE_INFINITY};

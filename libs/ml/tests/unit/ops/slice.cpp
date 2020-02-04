@@ -32,7 +32,7 @@ class SliceTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(SliceTest, fetch::math::test::TensorIntAndFloatingTypes);
+TYPED_TEST_SUITE(SliceTest, fetch::math::test::TensorIntAndFloatingTypes, );
 
 TYPED_TEST(SliceTest, multi_axes_forward_shape_test)
 {

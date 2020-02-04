@@ -73,6 +73,7 @@ public:
   }
 
   OperationsCount ChargeForward() override;
+  OperationsCount ChargeBackward() override;
 
 private:
   TensorType weightings_;

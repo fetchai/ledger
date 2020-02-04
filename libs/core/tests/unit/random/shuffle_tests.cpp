@@ -32,7 +32,7 @@ class ShuffleTest : public ::testing::Test
 using MyTypes =
     ::testing::Types<int, float, double, fetch::fixed_point::fp32_t, fetch::fixed_point::fp64_t>;
 
-TYPED_TEST_CASE(ShuffleTest, MyTypes);
+TYPED_TEST_SUITE(ShuffleTest, MyTypes, );
 
 TYPED_TEST(ShuffleTest, lfg_test)
 {
