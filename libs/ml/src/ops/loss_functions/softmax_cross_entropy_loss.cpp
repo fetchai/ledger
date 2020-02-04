@@ -102,7 +102,7 @@ OperationsCount SoftmaxCrossEntropyLoss<TensorType>::ChargeForward() const
 }
 
 template <typename TensorType>
-OperationsCount SoftmaxCrossEntropyLoss<TensorType>::ChargeBackward()
+OperationsCount SoftmaxCrossEntropyLoss<TensorType>::ChargeBackward() const
 {
   assert(!this->batch_input_shapes_.empty());
   OperationsCount cost =

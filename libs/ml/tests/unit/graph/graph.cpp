@@ -1216,7 +1216,7 @@ TYPED_TEST(GraphTest, graph_getWeightsOrder_2)
                                      fetch::math::function_tolerance<DataType>()));
 }
 
-TYPED_TEST(GraphTest, graph_charge_foward_input_only)
+TYPED_TEST(GraphTest, graph_charge_forward_input_only)
 {
   using TensorType = TypeParam;
   using namespace fetch::ml::ops;
@@ -1236,7 +1236,7 @@ TYPED_TEST(GraphTest, graph_charge_foward_input_only)
   ASSERT_EQ(charge, expected_charge);
 }
 
-TYPED_TEST(GraphTest, graph_charge_foward_subtraction)
+TYPED_TEST(GraphTest, graph_charge_forward_subtraction)
 {
   using TensorType = TypeParam;
   using namespace fetch::ml::ops;
@@ -1263,7 +1263,7 @@ TYPED_TEST(GraphTest, graph_charge_foward_subtraction)
   ASSERT_EQ(batch_charge, expected_charge);
 }
 
-TYPED_TEST(GraphTest, graph_charge_foward_matmul)
+TYPED_TEST(GraphTest, graph_charge_forward_matmul)
 {
   using namespace fetch::ml::ops;
   using namespace fetch::ml::charge_estimation::ops;
@@ -1308,7 +1308,7 @@ TYPED_TEST(GraphTest, graph_charge_foward_matmul)
   ASSERT_EQ(batch_charge, expected_charge);
 }
 
-TYPED_TEST(GraphTest, graph_charge_foward_conv2d)
+TYPED_TEST(GraphTest, graph_charge_forward_conv2d)
 {
   using namespace fetch::ml::ops;
   using namespace fetch::ml::layers;
@@ -1350,7 +1350,7 @@ TYPED_TEST(GraphTest, graph_charge_foward_conv2d)
   ASSERT_EQ(batch_charge, expected_charge);
 }
 
-TYPED_TEST(GraphTest, graph_charge_foward_diamond)
+TYPED_TEST(GraphTest, graph_charge_forward_diamond)
 {
   using TensorType = TypeParam;
   using namespace fetch::ml::ops;

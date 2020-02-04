@@ -101,7 +101,7 @@ OperationsCount LogSigmoid<TensorType>::ChargeForward() const
 }
 
 template <typename TensorType>
-OperationsCount LogSigmoid<TensorType>::ChargeBackward()
+OperationsCount LogSigmoid<TensorType>::ChargeBackward() const
 {
   assert(!this->batch_input_shapes_.empty());
   OperationsCount cost = fetch::ml::charge_estimation::ops::LOG_SIGMOID_BACKWARD_PER_ELEMENT *

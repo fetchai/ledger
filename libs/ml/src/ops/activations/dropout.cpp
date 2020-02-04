@@ -147,7 +147,7 @@ OperationsCount Dropout<TensorType>::ChargeForward() const
 }
 
 template <typename TensorType>
-OperationsCount Dropout<TensorType>::ChargeBackward()
+OperationsCount Dropout<TensorType>::ChargeBackward() const
 {
   assert(!this->batch_input_shapes_.empty());
   OperationsCount cost = fetch::ml::charge_estimation::ops::MULTIPLICATION_PER_ELEMENT *

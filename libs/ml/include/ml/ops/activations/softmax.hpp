@@ -75,7 +75,7 @@ public:
   }
 
   OperationsCount ChargeForward() const override;
-  OperationsCount ChargeBackward() override;
+  OperationsCount ChargeBackward() const override;
 
 private:
   SizeType              axis_;

@@ -140,7 +140,7 @@ OperationsCount Softmax<TensorType>::ChargeForward() const
 }
 
 template <typename TensorType>
-OperationsCount Softmax<TensorType>::ChargeBackward()
+OperationsCount Softmax<TensorType>::ChargeBackward() const
 {
   assert(!this->batch_input_shapes_.empty());
   OperationsCount cost = fetch::ml::charge_estimation::ops::SOFTMAX_BACKWARD_PER_ELEMENT *
