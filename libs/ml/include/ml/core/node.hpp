@@ -150,7 +150,7 @@ public:
   }
 
   fetch::ml::OperationsCount ChargeForward(std::unordered_set<std::string> &visited_nodes) const;
-  fetch::ml::OperationsCount ChargeBackward();
+  fetch::ml::OperationsCount ChargeBackward(std::unordered_set<std::string> &visited_nodes) const;
 
 private:
   std::vector<NodeWeakPtrType> input_nodes_;

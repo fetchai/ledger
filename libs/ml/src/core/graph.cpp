@@ -1134,6 +1134,26 @@ fetch::ml::OperationsCount Graph<TensorType>::ChargeForward(const std::string &n
   return node->ChargeForward(visited_nodes);
 }
 
+template <typename TensorType>
+OperationsCount Graph<TensorType>::ChargeBackward(const std::string &node_name) const
+{
+  if (nodes_.find(node_name) == nodes_.end())
+  {
+    FETCH_LOG_ERROR(DESCRIPTOR, "The graph does not contain a node with name " + node_name);
+    return 0;
+  }
+
+  if (this->graph_state_ == GraphState::NOT_COMPILED)
+  {
+    throw fetch::ml::exceptions::InvalidMode(
+        "Can not compute charge estimate for a backward pass: graph is not compiled.");
+  }
+
+  NodePtrType                     node = nodes_.at(node_name);
+  std::unordered_set<std::string> visited_nodes;
+  return node->ChargeBackward(visited_nodes);
+}
+
 /**
  * Return list of all node names in format GRAPH1/...SUBGRAPHS../LEAF
  * @return std::vector<std::string> list of names of all nodes in all subgraphs
