@@ -1477,6 +1477,17 @@ BlockStatus MainChain::InsertBlock(IntBlockPtr const &block, bool evaluate_loose
     }
   }
 
+  if (evaluate_loose_blocks)  // normal case - not being called from inside CompleteLooseBlocks
+  {
+    // First check if block already exists (not checking in object store)
+    if (IsBlockInCache(block->hash))
+    {
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Attempting to add already seen block");
+      return BlockStatus::DUPLICATE;
+    }
+  }
+
+  // check for duplicate TXs in the blockchain (only
   auto const duplicates = DetectDuplicateTransactions(block->previous_hash, txs);
   if (!duplicates.empty())
   {
@@ -1492,13 +1503,6 @@ BlockStatus MainChain::InsertBlock(IntBlockPtr const &block, bool evaluate_loose
   IntBlockPtr prev_block{};
   if (evaluate_loose_blocks)  // normal case - not being called from inside CompleteLooseBlocks
   {
-    // First check if block already exists (not checking in object store)
-    if (IsBlockInCache(block->hash))
-    {
-      FETCH_LOG_DEBUG(LOGGING_NAME, "Attempting to add already seen block");
-      return BlockStatus::DUPLICATE;
-    }
-
     // Determine if the block is present in the cache
     if (LookupBlock(block->previous_hash, prev_block))
     {
@@ -2001,7 +2005,11 @@ DigestSet MainChain::DetectDuplicateTransactions(BlockHash const &           sta
   DigestSet potential_duplicates{};
   for (auto const &tx_layout : transactions)
   {
-    if (bloom_filter_.Match(tx_layout.digest(), tx_layout.valid_from(), tx_layout.valid_until()))
+    auto const default_valid_from =
+        tx_layout.valid_until() -
+        std::min(chain::Transaction::MAXIMUM_TX_VALIDITY_PERIOD, tx_layout.valid_until());
+    auto const from_calculated = std::max(tx_layout.valid_from(), default_valid_from);
+    if (bloom_filter_.Match(tx_layout.digest(), from_calculated, tx_layout.valid_until()))
     {
       potential_duplicates.insert(tx_layout.digest());
     }

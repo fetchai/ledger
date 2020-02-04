@@ -18,6 +18,7 @@
 
 #include "ledger/protocols/main_chain_rpc_service.hpp"
 
+#include "chain/constants.hpp"
 #include "chain/transaction_layout_rpc_serializers.hpp"
 #include "core/byte_array/encoders.hpp"
 #include "core/serializers/counter.hpp"
@@ -69,6 +70,9 @@ MainChainRpcService::MainChainRpcService(MuddleEndpoint &             endpoint,
   , rpc_client_(rpc_client)
   , state_machine_{std::make_shared<StateMachine>("MainChain", State::SYNCHRONISING,
                                                   [](State state) { return ToString(state); })}
+  , gossiped_blocks_dropped_{telemetry::Registry::Instance().CreateCounter(
+        "ledger_mainchain_service_gossiped_blocks_dropped",
+        "The number of gossiped blocks dropped from the network")}
   , recv_block_count_{telemetry::Registry::Instance().CreateCounter(
         "ledger_mainchain_service_recv_block_total",
         "The number of received blocks from the network")}
@@ -141,6 +145,7 @@ MainChainRpcService::MainChainRpcService(MuddleEndpoint &             endpoint,
                                                 Packet::Payload const &payload,
                                                 Address                transmitter) {
     telemetry::FunctionTimer timer{*new_block_duration_};
+    FETCH_MILLI_TIMER_EX("GossipBlockHandler", 100);
 
     BlockSerializer serialiser(payload);
 
@@ -150,6 +155,18 @@ MainChainRpcService::MainChainRpcService(MuddleEndpoint &             endpoint,
 
     // recalculate the block hash
     block.UpdateDigest();
+
+    auto const head_height        = chain_.GetHeaviestBlock()->block_number;
+    auto const gossip_lower_bound = head_height - std::min(head_height, chain::FINALITY_PERIOD);
+
+    // determine if it is too old to care about - do not attempt to add it if so.
+    if (block.block_number < gossip_lower_bound)
+    {
+      FETCH_LOG_INFO(LOGGING_NAME,
+                     "Found gossiped block block lower than we are interested in. Block height: ",
+                     block.block_number, " chain HEAD height: ", head_height);
+      return;
+    }
 
     // dispatch the event
     OnNewBlock(from, block, transmitter);
@@ -190,7 +207,6 @@ void MainChainRpcService::OnNewBlock(Address const &from, Block &block, Address 
 
   if (!ValidBlock(block, "new block"))
   {
-
     ++loose_blocks_seen_;
     return;
   }

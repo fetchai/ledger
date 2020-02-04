@@ -231,6 +231,7 @@ private:
 
   /// @name Telemetry
   /// @{
+  telemetry::CounterPtr         gossiped_blocks_dropped_;
   telemetry::CounterPtr         recv_block_count_;
   telemetry::CounterPtr         recv_block_valid_count_;
   telemetry::CounterPtr         recv_block_loose_count_;
