@@ -97,7 +97,7 @@ std::vector<math::SizeType> Concatenate<TensorType>::ComputeOutputShape(
 }
 
 template <typename TensorType>
-OperationsCount Concatenate<TensorType>::ChargeForward()
+OperationsCount Concatenate<TensorType>::ChargeForward() const
 {
   assert(!this->batch_input_shapes_.empty());
   OperationsCount cost =

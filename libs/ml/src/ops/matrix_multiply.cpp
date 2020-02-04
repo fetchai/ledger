@@ -286,7 +286,7 @@ std::vector<typename fetch::math::SizeType> MatrixMultiply<T>::ComputeOutputShap
 }
 
 template <typename T>
-OperationsCount MatrixMultiply<T>::ChargeForward()
+OperationsCount MatrixMultiply<T>::ChargeForward() const
 {
   assert(!this->batch_input_shapes_.empty());
 

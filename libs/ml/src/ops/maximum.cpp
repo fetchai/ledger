@@ -108,7 +108,7 @@ std::vector<fetch::math::SizeType> Maximum<T>::ComputeOutputShape(const VecTenso
 }
 
 template <typename TensorType>
-OperationsCount Maximum<TensorType>::ChargeForward()
+OperationsCount Maximum<TensorType>::ChargeForward() const
 {
   assert(!this->batch_input_shapes_.empty());
 

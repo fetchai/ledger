@@ -110,7 +110,7 @@ std::vector<math::SizeType> Transpose<TensorType>::ComputeOutputShape(
 }
 
 template <typename TensorType>
-OperationsCount Transpose<TensorType>::ChargeForward()
+OperationsCount Transpose<TensorType>::ChargeForward() const
 {
   assert(!this->batch_input_shapes_.empty());
   OperationsCount cost = fetch::ml::charge_estimation::ops::TRANSPOSE_PER_ELEMENT *
