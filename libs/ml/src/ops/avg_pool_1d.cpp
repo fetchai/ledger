@@ -187,6 +187,19 @@ OperationsCount AvgPool1D<TensorType>::ChargeForward() const
   return cost;
 }
 
+template <typename TensorType>
+OperationsCount AvgPool1D<TensorType>::ChargeBackward()
+{
+  assert(!this->batch_output_shape_.empty());
+  OperationsCount num_output_shape_ops = this->batch_output_shape_.at(0) *
+                                         this->batch_output_shape_.at(1) *
+                                         this->batch_output_shape_.at(2) * this->kernel_size_;
+  OperationsCount cost = num_output_shape_ops *
+                         fetch::ml::charge_estimation::ops::DIVISION_PER_ELEMENT *
+                         fetch::ml::charge_estimation::ops::ADDITION_PER_ELEMENT;
+  return cost;
+}
+
 ///////////////////////////////
 /// EXPLICIT INSTANTIATIONS ///
 ///////////////////////////////
