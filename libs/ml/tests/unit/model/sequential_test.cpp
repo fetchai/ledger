@@ -37,7 +37,7 @@ class SequentialModelTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(SequentialModelTest, math::test::HighPrecisionTensorFloatingTypes);
+TYPED_TEST_SUITE(SequentialModelTest, math::test::HighPrecisionTensorFloatingTypes, );
 namespace sequential_details {
 template <typename TypeParam>
 void PrepareTestDataAndLabels1D(TypeParam &train_data, TypeParam &train_label)
