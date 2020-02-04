@@ -33,7 +33,7 @@ class ReluTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(ReluTest, math::test::TensorFloatingTypes);
+TYPED_TEST_SUITE(ReluTest, math::test::TensorFloatingTypes, );
 
 TYPED_TEST(ReluTest, forward_all_positive_test)
 {

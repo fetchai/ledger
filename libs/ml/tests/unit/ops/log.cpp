@@ -30,7 +30,7 @@ class LogTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(LogTest, fetch::math::test::TensorFloatingTypes);
+TYPED_TEST_SUITE(LogTest, fetch::math::test::TensorFloatingTypes, );
 
 TYPED_TEST(LogTest, forward_all_positive_test)
 {

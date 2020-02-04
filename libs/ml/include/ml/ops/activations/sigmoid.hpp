@@ -71,6 +71,7 @@ public:
   }
 
   OperationsCount ChargeForward() override;
+  OperationsCount ChargeBackward() override;
 
 private:
   // minimum possible output value of the sigmoid should not be zero, but actually epsilon

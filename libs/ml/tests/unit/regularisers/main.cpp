@@ -32,7 +32,7 @@ class WeightsTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(WeightsTest, math::test::TensorFloatingTypes);
+TYPED_TEST_SUITE(WeightsTest, math::test::TensorFloatingTypes, );
 
 TYPED_TEST(WeightsTest, allocation_test)
 {

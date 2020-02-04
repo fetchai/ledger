@@ -75,6 +75,7 @@ public:
   }
 
   OperationsCount ChargeForward() override;
+  OperationsCount ChargeBackward() override;
 
 private:
   SizeType              axis_;

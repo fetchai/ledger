@@ -70,6 +70,7 @@ public:
   }
 
   OperationsCount ChargeForward() override;
+  OperationsCount ChargeBackward() override;
 
 private:
   TensorType drop_values_;
