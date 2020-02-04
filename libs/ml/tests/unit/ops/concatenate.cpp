@@ -31,7 +31,7 @@ class ConcatenateTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(ConcatenateTest, fetch::math::test::TensorIntAndFloatingTypes);
+TYPED_TEST_SUITE(ConcatenateTest, fetch::math::test::TensorIntAndFloatingTypes, );
 
 TYPED_TEST(ConcatenateTest, forward_test)
 {

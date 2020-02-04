@@ -32,7 +32,7 @@ class FreeFunctionsTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(FreeFunctionsTest, TensorFloatingTypes);
+TYPED_TEST_SUITE(FreeFunctionsTest, TensorFloatingTypes, );
 
 TYPED_TEST(FreeFunctionsTest, BooleanMask_SetAll)
 {

@@ -203,7 +203,7 @@ protected:
 //  manager_->Stop();
 //}
 
-INSTANTIATE_TEST_CASE_P(Param, ExecutionManagerStateTests,
-                        ::testing::ValuesIn(BlockConfig::REDUCED_SET), );
+INSTANTIATE_TEST_SUITE_P(Param, ExecutionManagerStateTests,
+                         ::testing::ValuesIn(BlockConfig::REDUCED_SET));
 
 }  // namespace

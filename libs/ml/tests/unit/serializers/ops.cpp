@@ -26,7 +26,7 @@ class OpsSaveParamsTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(OpsSaveParamsTest, ::fetch::math::test::TensorFloatingTypes);
+TYPED_TEST_SUITE(OpsSaveParamsTest, ::fetch::math::test::TensorFloatingTypes, );
 
 ///////////
 /// OPS ///
