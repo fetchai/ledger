@@ -31,7 +31,7 @@ class TensorViewTests : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(TensorViewTests, FloatIntAndUIntTypes);
+TYPED_TEST_SUITE(TensorViewTests, FloatIntAndUIntTypes, );
 
 using namespace fetch::math;
 

@@ -34,7 +34,7 @@ class MaximumTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(MaximumTest, fetch::math::test::TensorFloatingTypes);
+TYPED_TEST_SUITE(MaximumTest, fetch::math::test::TensorFloatingTypes, );
 
 TYPED_TEST(MaximumTest, forward_test)
 {

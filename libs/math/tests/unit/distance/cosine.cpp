@@ -30,7 +30,7 @@ class DistanceTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(DistanceTest, TensorFloatingTypes);
+TYPED_TEST_SUITE(DistanceTest, TensorFloatingTypes, );
 
 TYPED_TEST(DistanceTest, cosine_distance)
 {

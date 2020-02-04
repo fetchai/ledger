@@ -36,7 +36,7 @@ class PReluTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(PReluTest, math::test::TensorFloatingTypes);
+TYPED_TEST_SUITE(PReluTest, math::test::TensorFloatingTypes, );
 
 TYPED_TEST(PReluTest, set_input_and_evaluate_test)  // Use the class as a subgraph
 {

@@ -20,6 +20,7 @@
 #include "ml/charge_estimation/ops/constants.hpp"
 #include "ml/core/graph.hpp"
 #include "ml/layers/convolution_1d.hpp"
+#include "ml/layers/convolution_2d.hpp"
 #include "ml/layers/fully_connected.hpp"
 #include "ml/ops/activations/relu.hpp"
 #include "ml/ops/add.hpp"
@@ -42,7 +43,7 @@ class GraphTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(GraphTest, math::test::TensorFloatingTypes);
+TYPED_TEST_SUITE(GraphTest, math::test::TensorFloatingTypes, );
 
 template <class TensorType>
 std::shared_ptr<fetch::ml::Graph<TensorType>> MakeGraph()
@@ -1302,6 +1303,48 @@ TYPED_TEST(GraphTest, graph_charge_matmul)
 
   SizeType const        matmul_ops      = weight_width * input_height * batch_size;
   OperationsCount const expected_charge = matmul_ops * MULTIPLICATION_PER_ELEMENT;
+
+  ASSERT_EQ(batch_charge, expected_charge);
+}
+
+TYPED_TEST(GraphTest, graph_charge_conv2d)
+{
+  using namespace fetch::ml::ops;
+  using namespace fetch::ml::layers;
+  using namespace fetch::ml::charge_estimation::ops;
+  using TensorType = TypeParam;
+  using math::SizeType;
+
+  // An RGB 3-channel image of 64*128 pixels, 16 images in a batch
+  SizeType const num_channels = 3;
+  SizeType const input_height = 64;
+  SizeType const input_width  = 128;
+  SizeType const batch_size   = 16;
+
+  math::SizeVector shape{num_channels, input_height, input_width, batch_size};
+  TensorType       input_data(shape);
+
+  SizeType const outputs     = 16;
+  SizeType const kernel_size = 3;
+  SizeType const stride_size = 1;
+
+  fetch::ml::Graph<TensorType> g;
+
+  std::string input  = g.template AddNode<PlaceHolder<TensorType>>("Input", {});
+  std::string conv2d = g.template AddNode<Convolution2D<TensorType>>(
+      "Conv2d", {"Input"}, outputs, num_channels, kernel_size, stride_size);
+
+  g.SetInput(input, input_data);
+  g.Compile();
+
+  math::SizeVector const out_shape = g.GetNode(conv2d)->BatchOutputShape();
+  ASSERT_EQ(out_shape.size(), shape.size());
+  ASSERT_EQ(out_shape.front(), outputs);
+
+  OperationsCount const charge       = g.ChargeForward(conv2d);
+  OperationsCount const batch_charge = charge * batch_size;
+
+  OperationsCount const expected_charge = 161989632;  // TODO(VH): calc proper expected charge
 
   ASSERT_EQ(batch_charge, expected_charge);
 }

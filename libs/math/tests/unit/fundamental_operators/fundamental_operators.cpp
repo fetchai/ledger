@@ -42,13 +42,13 @@ class FundamentalOperatorsNonIntTypeTest : public ::testing::Test
 };
 
 using MyUnsignIntegralTypes = ::testing::Types<uint32_t, uint64_t>;
-TYPED_TEST_CASE(FundamentalOperatorsUIntTypeTest, MyUnsignIntegralTypes);
+TYPED_TEST_SUITE(FundamentalOperatorsUIntTypeTest, MyUnsignIntegralTypes, );
 
 using MySignedIntegralTypes = ::testing::Types<int32_t, int64_t>;
-TYPED_TEST_CASE(FundamentalOperatorsIntTypeTest, MySignedIntegralTypes);
+TYPED_TEST_SUITE(FundamentalOperatorsIntTypeTest, MySignedIntegralTypes, );
 
 using MyNonIntegralTypes = ::testing::Types<double, fetch::fixed_point::FixedPoint<32, 32>>;
-TYPED_TEST_CASE(FundamentalOperatorsNonIntTypeTest, MyNonIntegralTypes);
+TYPED_TEST_SUITE(FundamentalOperatorsNonIntTypeTest, MyNonIntegralTypes, );
 
 ///// Addition tests
 // UInt
