@@ -139,6 +139,15 @@ OperationsCount Softmax<TensorType>::ChargeForward()
   return cost;
 }
 
+template <typename TensorType>
+OperationsCount Softmax<TensorType>::ChargeBackward()
+{
+  assert(!this->batch_input_shapes_.empty());
+  OperationsCount cost = fetch::ml::charge_estimation::ops::SOFTMAX_BACKWARD_PER_ELEMENT *
+                         this->TotalElementsIn({this->batch_input_shapes_});
+  return cost;
+}
+
 ///////////////////////////////
 /// EXPLICIT INSTANTIATIONS ///
 ///////////////////////////////
