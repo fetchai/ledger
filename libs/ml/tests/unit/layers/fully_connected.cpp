@@ -66,7 +66,7 @@ class FullyConnectedTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(FullyConnectedTest, math::test::TensorFloatingTypes);
+TYPED_TEST_SUITE(FullyConnectedTest, math::test::TensorFloatingTypes, );
 
 TYPED_TEST(FullyConnectedTest, set_input_and_evaluate_test)  // Use the class as a subgraph
 {

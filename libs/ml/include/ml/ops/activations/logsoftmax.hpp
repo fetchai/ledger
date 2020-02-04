@@ -62,6 +62,7 @@ public:
   static constexpr char const *DESCRIPTOR = "LogSoftmax";
 
   OperationsCount ChargeForward() override;
+  OperationsCount ChargeBackward() override;
 
 private:
   SizeType axis_;

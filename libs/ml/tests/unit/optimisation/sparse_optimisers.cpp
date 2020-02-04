@@ -33,7 +33,7 @@ class SparseOptimisersTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(SparseOptimisersTest, math::test::HighPrecisionTensorFloatingTypes);
+TYPED_TEST_SUITE(SparseOptimisersTest, math::test::HighPrecisionTensorFloatingTypes, );
 
 //////////////////////////
 /// reusable functions ///

@@ -33,7 +33,7 @@ class EmbeddingsTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(EmbeddingsTest, fetch::math::test::TensorIntAndFloatingTypes);
+TYPED_TEST_SUITE(EmbeddingsTest, fetch::math::test::TensorIntAndFloatingTypes, );
 
 TYPED_TEST(EmbeddingsTest, forward_shape)
 {

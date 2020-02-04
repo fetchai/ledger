@@ -33,7 +33,7 @@ class C2vLoaderTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(C2vLoaderTest, math::test::TensorIntAndFloatingTypes);
+TYPED_TEST_SUITE(C2vLoaderTest, math::test::TensorIntAndFloatingTypes, );
 
 TYPED_TEST(C2vLoaderTest, loader_test)
 {

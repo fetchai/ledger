@@ -407,4 +407,4 @@ TEST_F(Base58Tests, CheckDecodeContinuous1GoingBeyondBufferEndBoundary)
 
 }  // namespace
 
-INSTANTIATE_TEST_CASE_P(ParamBased, Base58Tests, ::testing::ValuesIn(TEST_CASES), );
+INSTANTIATE_TEST_SUITE_P(ParamBased, Base58Tests, ::testing::ValuesIn(TEST_CASES));

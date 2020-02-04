@@ -89,8 +89,17 @@ std::vector<math::SizeType> Sigmoid<TensorType>::ComputeOutputShape(
 template <typename TensorType>
 OperationsCount Sigmoid<TensorType>::ChargeForward()
 {
-  assert(!this->batch_output_shape_.empty());
+  assert(!this->batch_input_shapes_.empty());
   OperationsCount cost = fetch::ml::charge_estimation::ops::SIGMOID_PER_ELEMENT *
+                         this->TotalElementsIn({this->batch_input_shapes_});
+  return cost;
+}
+
+template <typename TensorType>
+OperationsCount Sigmoid<TensorType>::ChargeBackward()
+{
+  assert(!this->batch_input_shapes_.empty());
+  OperationsCount cost = fetch::ml::charge_estimation::ops::SIGMOID_BACKWARD_PER_ELEMENT *
                          this->TotalElementsIn({this->batch_input_shapes_});
   return cost;
 }

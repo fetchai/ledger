@@ -115,6 +115,15 @@ OperationsCount CrossEntropyLoss<TensorType>::ChargeForward()
   return cost;
 }
 
+template <typename TensorType>
+OperationsCount CrossEntropyLoss<TensorType>::ChargeBackward()
+{
+  assert(!this->batch_input_shapes_.empty());
+  OperationsCount cost = fetch::ml::charge_estimation::ops::CROSS_ENTROPY_BACKWARD_PER_ELEMENT *
+                         this->TotalElementsIn({this->batch_input_shapes_.at(0)});
+  return cost;
+}
+
 ///////////////////////////////
 /// EXPLICIT INSTANTIATIONS ///
 ///////////////////////////////

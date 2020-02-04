@@ -61,9 +61,9 @@ class FloatGaugeTests : public GeneralGaugeTests<T>
 {
 };
 
-TYPED_TEST_CASE(IntegerGaugeTests, IntegerTypes);
-TYPED_TEST_CASE(FloatGaugeTests, FloatTypes);
-TYPED_TEST_CASE(GeneralGaugeTests, AllTypes);
+TYPED_TEST_SUITE(IntegerGaugeTests, IntegerTypes, );
+TYPED_TEST_SUITE(FloatGaugeTests, FloatTypes, );
+TYPED_TEST_SUITE(GeneralGaugeTests, AllTypes, );
 
 TYPED_TEST(IntegerGaugeTests, CheckIncrement)
 {
