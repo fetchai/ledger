@@ -25,6 +25,7 @@
 #include <chrono>
 #include <cstdint>
 #include <functional>
+#include <string>
 
 namespace fetch {
 namespace core {
@@ -49,6 +50,7 @@ public:
   bool        IsReadyToExecute() const final;
   void        Execute() final;
   std::string GetId() const final;
+  std::string GetDebug() const final;
   /// @}
 
   /// @name Periodic Runnable Interface
@@ -63,6 +65,7 @@ public:
 private:
   Timepoint                     last_executed_;
   Duration                      interval_{};
+  std::string                   name_;
   telemetry::GaugePtr<uint64_t> state_gauge_;
 };
 
