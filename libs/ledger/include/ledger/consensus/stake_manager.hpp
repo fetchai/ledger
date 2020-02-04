@@ -167,7 +167,7 @@ public:
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &stake_manager)
   {
-    auto map = map_constructor(5);
+    auto map = map_constructor(4);
     map.Append(UPDATE_QUEUE, stake_manager.update_queue_);
     map.Append(STAKE_HISTORY, stake_manager.stake_history_);
     map.Append(CURRENT_SNAPSHOT, stake_manager.current_);
@@ -185,5 +185,4 @@ public:
 };
 
 }  // namespace serializers
-
 }  // namespace fetch
