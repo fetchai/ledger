@@ -108,7 +108,7 @@ std::vector<math::SizeType> Squeeze<TensorType>::ComputeOutputShape(
 }
 
 template <typename TensorType>
-OperationsCount Squeeze<TensorType>::ChargeForward()
+OperationsCount Squeeze<TensorType>::ChargeForward() const
 {
   assert(!this->batch_output_shape_.empty());
   OperationsCount cost = fetch::ml::charge_estimation::ops::SQUEEZE_PER_ELEMENT *

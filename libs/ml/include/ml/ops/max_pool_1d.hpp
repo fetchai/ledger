@@ -65,7 +65,7 @@ public:
   }
   static constexpr char const *DESCRIPTOR = "MaxPool1D";
 
-  OperationsCount ChargeForward() override;
+  OperationsCount ChargeForward() const override;
 
 private:
   SizeType kernel_size_;

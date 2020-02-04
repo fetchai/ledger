@@ -72,7 +72,7 @@ public:
     return DESCRIPTOR;
   }
 
-  OperationsCount ChargeForward() override;
+  OperationsCount ChargeForward() const override;
 
 private:
   DataType fill_value_;
