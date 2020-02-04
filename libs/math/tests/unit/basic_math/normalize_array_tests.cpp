@@ -29,7 +29,7 @@ class NormalizeArrayTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(NormalizeArrayTest, TensorFloatingTypes);
+TYPED_TEST_SUITE(NormalizeArrayTest, TensorFloatingTypes, );
 
 TYPED_TEST(NormalizeArrayTest, conditional_distance)
 {

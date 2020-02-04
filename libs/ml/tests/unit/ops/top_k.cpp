@@ -34,7 +34,7 @@ class TopKOpTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(TopKOpTest, fetch::math::test::TensorFloatingTypes);
+TYPED_TEST_SUITE(TopKOpTest, fetch::math::test::TensorFloatingTypes, );
 
 TYPED_TEST(TopKOpTest, forward_test)
 {

@@ -30,7 +30,7 @@ class KlDivergenceTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(KlDivergenceTest, TensorFloatingTypes);
+TYPED_TEST_SUITE(KlDivergenceTest, TensorFloatingTypes, );
 
 TYPED_TEST(KlDivergenceTest, same_tensors_divergence_test)
 {

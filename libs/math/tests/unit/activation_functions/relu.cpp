@@ -29,7 +29,7 @@ class ReluTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(ReluTest, TensorIntAndFloatingTypes);
+TYPED_TEST_SUITE(ReluTest, TensorIntAndFloatingTypes, );
 
 template <typename ArrayType>
 ArrayType RandomArrayNegative(std::size_t n)

@@ -623,8 +623,8 @@ TEST_P(TCPClientServerTest, DISABLED_basic_test)
   }
 }
 
-INSTANTIATE_TEST_CASE_P(MyGroup, TCPClientServerTest, testing::Values<std::size_t>(4),
-                        testing::PrintToStringParamName());
+INSTANTIATE_TEST_SUITE_P(MyGroup, TCPClientServerTest, testing::Values<std::size_t>(4),
+                         testing::PrintToStringParamName());
 // testing::Values<std::size_t>(4): 4 is the number of iterations to run this test under 30 sec.
 // Change the number of iteration to increase/decrease test execution time.
 

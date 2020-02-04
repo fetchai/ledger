@@ -29,7 +29,7 @@ class SoftmaxTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(SoftmaxTest, TensorFloatingTypes);
+TYPED_TEST_SUITE(SoftmaxTest, TensorFloatingTypes, );
 
 TYPED_TEST(SoftmaxTest, equal_proportion_test)
 {
