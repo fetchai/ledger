@@ -215,6 +215,18 @@ OperationsCount MaxPool2D<TensorType>::ChargeForward()
   return cost;
 }
 
+template <typename TensorType>
+OperationsCount MaxPool2D<TensorType>::ChargeBackward()
+{
+  assert(!this->batch_output_shape_.empty());
+  auto cost = static_cast<OperationsCount>(
+      fetch::ml::charge_estimation::ops::MAX_PER_ELEMENT * this->batch_output_shape_.at(0) *
+      this->batch_output_shape_.at(1) * this->batch_output_shape_.at(2) *
+      this->batch_output_shape_.at(3) *
+      static_cast<OperationsCount>(this->kernel_size_ * this->kernel_size_));
+  return cost;
+}
+
 ///////////////////////////////
 /// EXPLICIT INSTANTIATIONS ///
 ///////////////////////////////
