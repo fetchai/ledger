@@ -71,7 +71,7 @@ MainChainRpcService::MainChainRpcService(MuddleEndpoint &             endpoint,
   , state_machine_{std::make_shared<StateMachine>("MainChain", State::SYNCHRONISING,
                                                   [](State state) { return ToString(state); })}
   , gossiped_blocks_dropped_{telemetry::Registry::Instance().CreateCounter(
-        "ledger_mainchain_service_gossiped_blocks_dropped",
+        "ledger_mainchain_service_gossiped_blocks_dropped_total",
         "The number of gossiped blocks dropped from the network")}
   , recv_block_count_{telemetry::Registry::Instance().CreateCounter(
         "ledger_mainchain_service_recv_block_total",
@@ -165,6 +165,7 @@ MainChainRpcService::MainChainRpcService(MuddleEndpoint &             endpoint,
       FETCH_LOG_INFO(LOGGING_NAME,
                      "Found gossiped block block lower than we are interested in. Block height: ",
                      block.block_number, " chain HEAD height: ", head_height);
+      gossiped_blocks_dropped_->increment();
       return;
     }
 
