@@ -33,7 +33,7 @@ class ReshapeTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(ReshapeTest, fetch::math::test::TensorFloatingTypes);
+TYPED_TEST_SUITE(ReshapeTest, fetch::math::test::TensorFloatingTypes, );
 
 template <typename TensorType>
 void ReshapeTestForward(std::vector<SizeType> const &initial_shape,

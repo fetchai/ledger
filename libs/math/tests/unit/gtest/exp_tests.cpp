@@ -48,7 +48,7 @@ class ExpTests : public ::testing::Test
 
 // TODO (private 1016)
 using MyTypes = ::testing::Types<double>;
-TYPED_TEST_CASE(ExpTests, MyTypes);
+TYPED_TEST_SUITE(ExpTests, MyTypes, );
 
 TYPED_TEST(ExpTests, exp_0_0)
 {

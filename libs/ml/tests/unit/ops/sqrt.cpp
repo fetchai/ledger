@@ -34,7 +34,7 @@ class SqrtTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(SqrtTest, fetch::math::test::TensorFloatingTypes);
+TYPED_TEST_SUITE(SqrtTest, fetch::math::test::TensorFloatingTypes, );
 
 TYPED_TEST(SqrtTest, forward_all_positive_test)
 {

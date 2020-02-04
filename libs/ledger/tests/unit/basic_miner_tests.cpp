@@ -240,4 +240,4 @@ TEST_P(BasicMinerTests, RejectReplayedTransactions)
   }
 }
 
-INSTANTIATE_TEST_CASE_P(ParamBased, BasicMinerTests, ::testing::Values(10, 20), );
+INSTANTIATE_TEST_SUITE_P(ParamBased, BasicMinerTests, ::testing::Values(10, 20));

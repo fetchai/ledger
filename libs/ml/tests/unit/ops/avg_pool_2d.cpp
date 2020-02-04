@@ -33,7 +33,7 @@ class AvgPool2DTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(AvgPool2DTest, fetch::math::test::TensorFloatingTypes);
+TYPED_TEST_SUITE(AvgPool2DTest, fetch::math::test::TensorFloatingTypes, );
 
 TYPED_TEST(AvgPool2DTest, forward_test_3_2)
 {

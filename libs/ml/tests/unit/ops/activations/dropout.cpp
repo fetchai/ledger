@@ -35,7 +35,7 @@ class DropoutTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(DropoutTest, math::test::TensorFloatingTypes);
+TYPED_TEST_SUITE(DropoutTest, math::test::TensorFloatingTypes, );
 
 namespace {
 template <typename TensorType>
