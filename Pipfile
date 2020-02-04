@@ -13,4 +13,4 @@ fetchai-netutils = {editable = true,path = "./scripts/fetchai_netutils"}
 pyyaml = "==5.3"
 
 [packages]
-fetchai-ledger-api = "==1.0.0rc1"
+fetchai-ledger-api = "==1.0.0rc2"
