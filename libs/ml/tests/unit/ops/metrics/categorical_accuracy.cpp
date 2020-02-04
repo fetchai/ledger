@@ -34,7 +34,7 @@ class CategoricalAccuracyTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(CategoricalAccuracyTest, math::test::HighPrecisionTensorFloatingTypes);
+TYPED_TEST_SUITE(CategoricalAccuracyTest, math::test::HighPrecisionTensorFloatingTypes, );
 
 TYPED_TEST(CategoricalAccuracyTest, perfect_match_forward_test)
 {

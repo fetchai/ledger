@@ -32,7 +32,7 @@ class SqueezeTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(SqueezeTest, fetch::math::test::TensorFloatingTypes);
+TYPED_TEST_SUITE(SqueezeTest, fetch::math::test::TensorFloatingTypes, );
 
 TYPED_TEST(SqueezeTest, forward_1_6_1_test)
 {

@@ -33,7 +33,7 @@ class MinkowskiTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(MinkowskiTest, TensorFloatingTypes);
+TYPED_TEST_SUITE(MinkowskiTest, TensorFloatingTypes, );
 
 TYPED_TEST(MinkowskiTest, simple_test)
 {

@@ -51,15 +51,21 @@ public:
   Reactor &operator=(Reactor const &) = delete;
   Reactor &operator=(Reactor &&) = delete;
 
+  uint64_t &ExecutionTooLongMs();
+  uint64_t &ThreadWatcherCheckMs();
+  uint32_t  ExecutionsTooLongCounter() const;
+  uint32_t  ExecutionsWayTooLongCounter() const;
+
 private:
   using RunnableMap     = Protected<std::map<Runnable const *, WeakRunnable>>;
   using Flag            = std::atomic<bool>;
   using ProtectedThread = Protected<std::thread>;
   using ThreadPtr       = std::unique_ptr<ProtectedThread>;
 
-  void StartWorker();
-  void StopWorker();
+  void StartWorkerAndWatcher();
+  void StopWorkerAndWatcher();
   void Monitor();
+  void ReactorWatch();
 
   telemetry::HistogramPtr       CreateHistogram(char const *name, char const *description) const;
   telemetry::CounterPtr         CreateCounter(char const *name, char const *description) const;
@@ -67,9 +73,26 @@ private:
 
   std::string const name_;
   Flag              running_{false};
+  Flag              not_destructing_{true};
 
   RunnableMap work_map_{};
   ThreadPtr   worker_{};
+  ThreadPtr   watcher_{};
+
+  // Keeping track of the last item executed
+  std::atomic<uint32_t> execution_counter_{0};
+  WeakRunnable          last_executed_runnable_;
+  Flag                  currently_executing_{false};
+
+  uint64_t execution_too_long_ms_{200};
+  uint64_t thread_watcher_check_ms_{1000};
+
+  std::atomic<uint32_t> executions_too_long_{0};
+  std::atomic<uint32_t> executions_way_too_long_{0};
+
+  // The watcher will sleep unless awoken early via a condition variable
+  std::condition_variable cv_;
+  std::mutex              cv_m_;
 
   // telemetry
   telemetry::HistogramPtr       runnables_time_;
@@ -80,6 +103,8 @@ private:
   telemetry::CounterPtr         success_total_;
   telemetry::CounterPtr         failure_total_;
   telemetry::CounterPtr         expired_total_;
+  telemetry::CounterPtr         too_long_total_;
+  telemetry::CounterPtr         way_too_long_total_;
   telemetry::GaugePtr<uint64_t> work_queue_length_;
   telemetry::GaugePtr<uint64_t> work_queue_max_length_;
 };

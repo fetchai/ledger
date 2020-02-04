@@ -97,8 +97,17 @@ std::vector<math::SizeType> LogSoftmax<TensorType>::ComputeOutputShape(
 template <typename TensorType>
 OperationsCount LogSoftmax<TensorType>::ChargeForward()
 {
-  assert(!this->batch_output_shape_.empty());
+  assert(!this->batch_input_shapes_.empty());
   OperationsCount cost = fetch::ml::charge_estimation::ops::LOG_SOFTMAX_PER_ELEMENT *
+                         this->TotalElementsIn({this->batch_input_shapes_});
+  return cost;
+}
+
+template <typename TensorType>
+OperationsCount LogSoftmax<TensorType>::ChargeBackward()
+{
+  assert(!this->batch_input_shapes_.empty());
+  OperationsCount cost = fetch::ml::charge_estimation::ops::LOG_SOFTMAX_BACKWARD_PER_ELEMENT *
                          this->TotalElementsIn({this->batch_input_shapes_});
   return cost;
 }

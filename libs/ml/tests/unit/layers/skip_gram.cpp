@@ -33,7 +33,7 @@ class SkipGramTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(SkipGramTest, math::test::TensorFloatingTypes);
+TYPED_TEST_SUITE(SkipGramTest, math::test::TensorFloatingTypes, );
 
 }  // namespace test
 }  // namespace ml

@@ -40,6 +40,8 @@
 #include "ml/ops/activations/relu.hpp"
 #include "ml/ops/activations/sigmoid.hpp"
 #include "ml/ops/activations/softmax.hpp"
+#include "ml/ops/avg_pool_1d.hpp"
+#include "ml/ops/avg_pool_2d.hpp"
 #include "ml/ops/flatten.hpp"
 #include "ml/ops/max_pool_1d.hpp"
 #include "ml/ops/max_pool_2d.hpp"
@@ -68,7 +70,8 @@ std::map<std::string, SupportedLayerType> const VMModel::layer_types_{
     {"conv2d", SupportedLayerType::CONV2D},       {"flatten", SupportedLayerType::FLATTEN},
     {"dropout", SupportedLayerType::DROPOUT},     {"activation", SupportedLayerType::ACTIVATION},
     {"input", SupportedLayerType::INPUT},         {"reshape", SupportedLayerType::RESHAPE},
-    {"maxpool1d", SupportedLayerType::MAXPOOL1D}, {"maxpool2d", SupportedLayerType::MAXPOOL2D}};
+    {"maxpool1d", SupportedLayerType::MAXPOOL1D}, {"maxpool2d", SupportedLayerType::MAXPOOL2D},
+    {"avgpool1d", SupportedLayerType::AVGPOOL1D}, {"avgpool2d", SupportedLayerType::AVGPOOL2D}};
 
 std::map<std::string, ActivationType> const VMModel::activations_{
     {"nothing", ActivationType::NOTHING},
@@ -303,7 +306,8 @@ void VMModel::Bind(Module &module, bool const experimental_enabled)
                             UseEstimator(&ModelEstimator::CompileSequentialWithMetrics))
       .CreateMemberFunction("fit", &VMModel::Fit, UseEstimator(&ModelEstimator::Fit))
       .CreateMemberFunction("evaluate", &VMModel::Evaluate, UseEstimator(&ModelEstimator::Evaluate))
-      .CreateMemberFunction("predict", &VMModel::Predict, UseEstimator(&ModelEstimator::Predict))
+      .CreateMemberFunction("predict", &VMModel::Predict,
+                            UseMemberEstimator(&VMModel::EstimatePredict))
       .CreateMemberFunction("serializeToString", &VMModel::SerializeToString,
                             UseEstimator(&ModelEstimator::SerializeToString))
       .CreateMemberFunction("deserializeFromString", &VMModel::DeserializeFromString,
@@ -325,8 +329,8 @@ void VMModel::Bind(Module &module, bool const experimental_enabled)
                               UseEstimator(&ModelEstimator::LayerAddActivation))
         .CreateMemberFunction("add", &VMModel::LayerAddReshape,
                               UseEstimator(&ModelEstimator::LayerAddReshape))
-        .CreateMemberFunction("addExperimental", &VMModel::LayerAddMaxPool,
-                              UseEstimator(&ModelEstimator::LayerAddMaxPool))
+        .CreateMemberFunction("addExperimental", &VMModel::LayerAddPool,
+                              UseEstimator(&ModelEstimator::LayerAddPool))
         .CreateMemberFunction("addExperimental", &VMModel::LayerAddDenseActivationExperimental,
                               UseEstimator(&ModelEstimator::LayerAddDenseActivationExperimental))
         .CreateMemberFunction("addExperimental", &VMModel::LayerAddInput,
@@ -485,11 +489,12 @@ void VMModel::AssertLayerTypeMatches(SupportedLayerType                layer,
                                      std::vector<SupportedLayerType> &&valids) const
 {
   static const std::map<SupportedLayerType, std::string> LAYER_NAMES_{
-      {SupportedLayerType::DENSE, "dense"},        {SupportedLayerType::CONV1D, "conv1d"},
-      {SupportedLayerType::CONV2D, "conv2d"},      {SupportedLayerType::FLATTEN, "flatten"},
-      {SupportedLayerType::DROPOUT, "dropout"},    {SupportedLayerType::ACTIVATION, "activation"},
-      {SupportedLayerType::INPUT, "input"},        {SupportedLayerType::MAXPOOL1D, "maxpool1d"},
-      {SupportedLayerType::MAXPOOL2D, "maxpool2d"}};
+      {SupportedLayerType::DENSE, "dense"},         {SupportedLayerType::CONV1D, "conv1d"},
+      {SupportedLayerType::CONV2D, "conv2d"},       {SupportedLayerType::FLATTEN, "flatten"},
+      {SupportedLayerType::DROPOUT, "dropout"},     {SupportedLayerType::ACTIVATION, "activation"},
+      {SupportedLayerType::INPUT, "input"},         {SupportedLayerType::MAXPOOL1D, "maxpool1d"},
+      {SupportedLayerType::MAXPOOL2D, "maxpool2d"}, {SupportedLayerType::AVGPOOL1D, "avgpool1d"},
+      {SupportedLayerType::AVGPOOL2D, "avgpool2d"}};
   if (std::find(valids.begin(), valids.end(), layer) == valids.end())
   {
     throw std::runtime_error("Invalid params specified for \"" + LAYER_NAMES_.at(layer) +
@@ -815,15 +820,16 @@ void VMModel::LayerAddInput(const fetch::vm::Ptr<String> &                   lay
   }
 }
 
-void VMModel::LayerAddMaxPool(const fetch::vm::Ptr<fetch::vm::String> &layer,
-                              const math::SizeType &kernel_size, const math::SizeType &stride_size)
+void VMModel::LayerAddPool(const fetch::vm::Ptr<fetch::vm::String> &layer,
+                           const math::SizeType &kernel_size, const math::SizeType &stride_size)
 {
   try
   {
     SupportedLayerType const layer_type =
         ParseName(layer->string(), layer_types_, LAYER_TYPE_MESSAGE);
     AssertLayerTypeMatches(layer_type,
-                           {SupportedLayerType::MAXPOOL1D, SupportedLayerType::MAXPOOL2D});
+                           {SupportedLayerType::MAXPOOL1D, SupportedLayerType::MAXPOOL2D,
+                            SupportedLayerType::AVGPOOL1D, SupportedLayerType::AVGPOOL2D});
     SequentialModelPtr me = GetMeAsSequentialIfPossible();
     if (layer_type == SupportedLayerType::MAXPOOL1D)
     {
@@ -833,6 +839,14 @@ void VMModel::LayerAddMaxPool(const fetch::vm::Ptr<fetch::vm::String> &layer,
     {
       me->Add<fetch::ml::ops::MaxPool2D<TensorType>>(kernel_size, stride_size);
     }
+    else if (layer_type == SupportedLayerType::AVGPOOL1D)
+    {
+      me->Add<fetch::ml::ops::AvgPool1D<TensorType>>(kernel_size, stride_size);
+    }
+    else if (layer_type == SupportedLayerType::AVGPOOL2D)
+    {
+      me->Add<fetch::ml::ops::AvgPool2D<TensorType>>(kernel_size, stride_size);
+    }
     compiled_ = false;
   }
   catch (std::exception const &e)
@@ -840,6 +854,21 @@ void VMModel::LayerAddMaxPool(const fetch::vm::Ptr<fetch::vm::String> &layer,
     vm_->RuntimeError(IMPOSSIBLE_ADD_MESSAGE + std::string(e.what()));
     return;
   }
+}
+
+/**
+ * @brief VMModel::EstimatePredict calculates a charge amount, required for a forward pass
+ * @param data
+ * @return charge estimation
+ */
+ChargeAmount VMModel::EstimatePredict(const vm::Ptr<math::VMTensor> &data)
+{
+  ChargeAmount const cost       = model_->ChargeForward();
+  SizeType const     batch_size = data->shape().back();
+  ChargeAmount const batch_cost = batch_size * cost;
+  FETCH_LOG_INFO("Model", " forward pass estimated batch cost is " + std::to_string(batch_size) +
+                              " * " + std::to_string(cost) + " = " + std::to_string(batch_cost));
+  return batch_cost;
 }
 
 /**

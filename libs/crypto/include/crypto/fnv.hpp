@@ -17,9 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/byte_array/byte_array.hpp"
-#include "core/byte_array/const_byte_array.hpp"
-#include "crypto/fnv_detail.hpp"
 #include "crypto/hasher_interface.hpp"
 
 #include <cstddef>
@@ -42,7 +39,7 @@ public:
   static constexpr std::size_t SIZE_IN_BYTES = 8u;
 
   FNV();
-  ~FNV() override  = default;
+  ~FNV() override;
   FNV(FNV const &) = delete;
   FNV(FNV &&)      = delete;
 
@@ -55,7 +52,7 @@ public:
   std::size_t HashSizeInBytes() const override;
 
 private:
-  std::shared_ptr<internal::FnvHasherInternals> impl_;
+  std::unique_ptr<internal::FnvHasherInternals> impl_;
 };
 
 }  // namespace crypto

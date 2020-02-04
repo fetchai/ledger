@@ -22,7 +22,7 @@
 #include "crypto/openssl_memory.hpp"
 #include "crypto/signature_register.hpp"
 
-#include <openssl/obj_mac.h>
+#include "openssl/obj_mac.h"
 
 #include <cstddef>
 #include <stdexcept>

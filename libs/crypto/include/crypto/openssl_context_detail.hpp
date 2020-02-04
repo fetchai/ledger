@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include <openssl/bn.h>
+#include "openssl/bn.h"
 
 namespace fetch {
 namespace crypto {
