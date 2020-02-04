@@ -107,7 +107,7 @@ std::vector<math::SizeType> CrossEntropyLoss<TensorType>::ComputeOutputShape(
 }
 
 template <typename TensorType>
-OperationsCount CrossEntropyLoss<TensorType>::ChargeForward()
+OperationsCount CrossEntropyLoss<TensorType>::ChargeForward() const
 {
   assert(!this->batch_output_shape_.empty());
   OperationsCount cost = fetch::ml::charge_estimation::ops::CROSS_ENTROPY_PER_ELEMENT *

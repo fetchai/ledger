@@ -183,7 +183,7 @@ std::vector<fetch::math::SizeType> MaxPool1D<T>::ComputeOutputShape(
 }
 
 template <typename TensorType>
-OperationsCount MaxPool1D<TensorType>::ChargeForward()
+OperationsCount MaxPool1D<TensorType>::ChargeForward() const
 {
   assert(!this->batch_output_shape_.empty());
   OperationsCount cost = fetch::ml::charge_estimation::ops::MAX_PER_ELEMENT *

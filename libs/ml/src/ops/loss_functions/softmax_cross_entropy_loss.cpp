@@ -93,7 +93,7 @@ std::vector<math::SizeType> SoftmaxCrossEntropyLoss<TensorType>::ComputeOutputSh
 }
 
 template <typename TensorType>
-OperationsCount SoftmaxCrossEntropyLoss<TensorType>::ChargeForward()
+OperationsCount SoftmaxCrossEntropyLoss<TensorType>::ChargeForward() const
 {
   assert(!this->batch_input_shapes_.empty());
   OperationsCount cost = fetch::ml::charge_estimation::ops::SOFTMAX_CROSS_ENTROPY_PER_ELEMENT *

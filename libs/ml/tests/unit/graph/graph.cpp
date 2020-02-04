@@ -20,7 +20,9 @@
 #include "ml/charge_estimation/ops/constants.hpp"
 #include "ml/core/graph.hpp"
 #include "ml/layers/convolution_1d.hpp"
+#include "ml/layers/convolution_2d.hpp"
 #include "ml/layers/fully_connected.hpp"
+#include "ml/ops/activations/dropout.hpp"
 #include "ml/ops/activations/relu.hpp"
 #include "ml/ops/add.hpp"
 #include "ml/ops/loss_functions/mean_square_error_loss.hpp"
@@ -1214,7 +1216,7 @@ TYPED_TEST(GraphTest, graph_getWeightsOrder_2)
                                      fetch::math::function_tolerance<DataType>()));
 }
 
-TYPED_TEST(GraphTest, graph_charge_input_only)
+TYPED_TEST(GraphTest, graph_charge_foward_input_only)
 {
   using TensorType = TypeParam;
   using namespace fetch::ml::ops;
@@ -1234,7 +1236,7 @@ TYPED_TEST(GraphTest, graph_charge_input_only)
   ASSERT_EQ(charge, expected_charge);
 }
 
-TYPED_TEST(GraphTest, graph_charge_subtraction)
+TYPED_TEST(GraphTest, graph_charge_foward_subtraction)
 {
   using TensorType = TypeParam;
   using namespace fetch::ml::ops;
@@ -1261,7 +1263,7 @@ TYPED_TEST(GraphTest, graph_charge_subtraction)
   ASSERT_EQ(batch_charge, expected_charge);
 }
 
-TYPED_TEST(GraphTest, graph_charge_matmul)
+TYPED_TEST(GraphTest, graph_charge_foward_matmul)
 {
   using namespace fetch::ml::ops;
   using namespace fetch::ml::charge_estimation::ops;
@@ -1306,6 +1308,167 @@ TYPED_TEST(GraphTest, graph_charge_matmul)
   ASSERT_EQ(batch_charge, expected_charge);
 }
 
+TYPED_TEST(GraphTest, graph_charge_foward_conv2d)
+{
+  using namespace fetch::ml::ops;
+  using namespace fetch::ml::layers;
+  using namespace fetch::ml::charge_estimation::ops;
+  using TensorType = TypeParam;
+  using math::SizeType;
+
+  // An RGB 3-channel image of 64*128 pixels, 16 images in a batch
+  SizeType const num_channels = 3;
+  SizeType const input_height = 64;
+  SizeType const input_width  = 128;
+  SizeType const batch_size   = 16;
+
+  math::SizeVector shape{num_channels, input_height, input_width, batch_size};
+  TensorType       input_data(shape);
+
+  SizeType const outputs     = 16;
+  SizeType const kernel_size = 3;
+  SizeType const stride_size = 1;
+
+  fetch::ml::Graph<TensorType> g;
+
+  std::string input  = g.template AddNode<PlaceHolder<TensorType>>("Input", {});
+  std::string conv2d = g.template AddNode<Convolution2D<TensorType>>(
+      "Conv2d", {"Input"}, outputs, num_channels, kernel_size, stride_size);
+
+  g.SetInput(input, input_data);
+  g.Compile();
+
+  math::SizeVector const out_shape = g.GetNode(conv2d)->BatchOutputShape();
+  ASSERT_EQ(out_shape.size(), shape.size());
+  ASSERT_EQ(out_shape.front(), outputs);
+
+  OperationsCount const charge       = g.ChargeForward(conv2d);
+  OperationsCount const batch_charge = charge * batch_size;
+
+  OperationsCount const expected_charge = 161989632;  // TODO(VH): calc proper expected charge
+
+  ASSERT_EQ(batch_charge, expected_charge);
+}
+
+TYPED_TEST(GraphTest, graph_charge_foward_diamond)
+{
+  using TensorType = TypeParam;
+  using namespace fetch::ml::ops;
+  using namespace fetch::ml::charge_estimation::ops;
+
+  static const TensorType  data = TensorType::FromString(R"(01; 11; 21; 31; 41; 51; 61; 71;)");
+  static const std::size_t total_data_elements = data.shape()[0];
+
+  fetch::ml::Graph<TensorType> g;
+
+  //    i_n_p_u_t {8,1}
+  //      |   |
+  //     A_d_d_1
+  //      |   |
+  //     A_d_d_2
+  //      |   |
+  //     A_d_d_3
+  //      |   |
+  //       ...
+  //      |   |
+  //     A_d_d_N {8,1}
+
+  std::string              input     = g.template AddNode<PlaceHolder<TensorType>>("Input", {});
+  static const std::size_t N         = 16;
+  std::string              first_add = g.template AddNode<Add<TensorType>>("Add1", {input, input});
+  std::string              prev_node = first_add;
+  for (std::size_t i{2}; i <= N; ++i)
+  {
+    prev_node =
+        g.template AddNode<Add<TensorType>>("Add" + std::to_string(i), {prev_node, prev_node});
+  }
+  std::string const output = prev_node;
+
+  g.SetInput(input, data);
+  g.Compile();
+
+  static const std::size_t expected_calls_to_add = (2 * (N - 1) + 1);
+  OperationsCount const    charge                = g.ChargeForward(output);
+  OperationsCount const    expected_charge =
+      ADDITION_PER_ELEMENT * total_data_elements * expected_calls_to_add +
+      PLACEHOLDER_READING_PER_ELEMENT * total_data_elements;
+
+  ASSERT_EQ(charge, expected_charge);
+}
+
+TYPED_TEST(GraphTest, graph_charge_backward_input_only)
+{
+  using TensorType = TypeParam;
+  using DataType   = typename TypeParam::Type;
+  using namespace fetch::ml::ops;
+  using namespace fetch::ml::charge_estimation::ops;
+
+  TensorType const data =
+      TensorType::FromString(R"(01,02,03,04; 11,12,13,14; 21,22,23,24; 31,32,33,34)");
+
+  fetch::ml::Graph<TensorType> g;
+
+  std::string const input = g.template AddNode<PlaceHolder<TensorType>>("Input", {});
+  std::string const output =
+      g.template AddNode<Dropout<TensorType>>("Dropout", {input}, DataType{1});
+
+  g.SetInput(input, data);
+  g.Compile();
+
+  OperationsCount const charge = g.ChargeBackward(output);
+  // Dropout backward operation is multiplication.
+  OperationsCount const expected_charge = MULTIPLICATION_PER_ELEMENT * data.shape()[0];
+
+  ASSERT_EQ(charge, expected_charge);
+}
+
+TYPED_TEST(GraphTest, graph_charge_backward_diamond)
+{
+  using TensorType = TypeParam;
+  using DataType   = typename TypeParam::Type;
+  using namespace fetch::ml::ops;
+  using namespace fetch::ml::charge_estimation::ops;
+
+  static const TensorType  data = TensorType::FromString(R"(01; 11; 21; 31; 41; 51; 61; 71;)");
+  static const std::size_t total_data_elements = data.shape()[0];
+
+  fetch::ml::Graph<TensorType> g;
+
+  //    i_n_p_u_t {8,1}
+  //      |   |
+  //     Dropout1
+  //      |   |
+  //     Dropout2
+  //      |   |
+  //     Dropout3
+  //      |   |
+  //       ...
+  //      |   |
+  //     DropoutN {8,1}
+
+  std::string              input = g.template AddNode<PlaceHolder<TensorType>>("Input", {});
+  static const std::size_t N     = 16;
+  std::string              first_add =
+      g.template AddNode<Dropout<TensorType>>("Add1", {input, input}, DataType{1});
+  std::string prev_node = first_add;
+  for (std::size_t i{2}; i <= N; ++i)
+  {
+    prev_node = g.template AddNode<Dropout<TensorType>>("Dropout" + std::to_string(i),
+                                                        {prev_node, prev_node}, DataType{1});
+  }
+  std::string const output = prev_node;
+
+  g.SetInput(input, data);
+  g.Compile();
+
+  static const std::size_t expected_calls_to_dropout = (2 * (N - 1) + 1);
+  OperationsCount const    charge                    = g.ChargeBackward(output);
+  OperationsCount const    expected_charge =
+      MULTIPLICATION_PER_ELEMENT * total_data_elements * expected_calls_to_dropout +
+      PLACEHOLDER_READING_PER_ELEMENT * total_data_elements;
+
+  ASSERT_EQ(charge, expected_charge);
+}
 }  // namespace test
 }  // namespace ml
 }  // namespace fetch

@@ -129,7 +129,7 @@ std::vector<math::SizeType> PReluOp<TensorType>::ComputeOutputShape(
 }
 
 template <typename TensorType>
-OperationsCount PReluOp<TensorType>::ChargeForward()
+OperationsCount PReluOp<TensorType>::ChargeForward() const
 {
   assert(!this->batch_output_shape_.empty());
   OperationsCount cost = fetch::ml::charge_estimation::ops::LEAKY_RELU_PER_ELEMENT *

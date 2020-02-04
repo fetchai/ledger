@@ -131,7 +131,7 @@ std::vector<math::SizeType> LayerNorm<TensorType>::ComputeOutputShape(
 }
 
 template <typename TensorType>
-OperationsCount LayerNorm<TensorType>::ChargeForward()
+OperationsCount LayerNorm<TensorType>::ChargeForward() const
 {
   assert(!this->batch_input_shapes_.empty());
 
