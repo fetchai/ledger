@@ -32,7 +32,7 @@ class SparseTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(SparseTest, math::test::TensorFloatingTypes);
+TYPED_TEST_SUITE(SparseTest, math::test::TensorFloatingTypes, );
 TYPED_TEST(SparseTest, from_sparse_test)
 {
   using SizeType = fetch::math::SizeType;

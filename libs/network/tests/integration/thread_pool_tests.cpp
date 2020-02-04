@@ -229,6 +229,6 @@ TEST_P(ThreadPoolTests, DISABLED_SaturationCheck)
   ASSERT_TRUE(workers_stopped);
 }
 
-INSTANTIATE_TEST_CASE_P(ParamBased, ThreadPoolTests, ::testing::Values(1, 10), );
+INSTANTIATE_TEST_SUITE_P(ParamBased, ThreadPoolTests, ::testing::Values(1, 10));
 
 }  // namespace

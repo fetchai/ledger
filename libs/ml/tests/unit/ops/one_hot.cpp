@@ -32,7 +32,7 @@ class OneHotOpTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(OneHotOpTest, fetch::math::test::TensorFloatingTypes);
+TYPED_TEST_SUITE(OneHotOpTest, fetch::math::test::TensorFloatingTypes, );
 
 TYPED_TEST(OneHotOpTest, forward_test)
 {

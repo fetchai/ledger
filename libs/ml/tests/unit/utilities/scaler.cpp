@@ -32,7 +32,7 @@ class ScalerTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(ScalerTest, math::test::TensorFloatingTypes);
+TYPED_TEST_SUITE(ScalerTest, math::test::TensorFloatingTypes, );
 
 TYPED_TEST(ScalerTest, min_max_2d_test)
 {

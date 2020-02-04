@@ -30,7 +30,7 @@ class TrigTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(TrigTest, HighPrecisionFloatingTypes);
+TYPED_TEST_SUITE(TrigTest, HighPrecisionFloatingTypes, );
 
 TYPED_TEST(TrigTest, sin)
 {

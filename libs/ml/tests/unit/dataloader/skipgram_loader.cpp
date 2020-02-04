@@ -44,7 +44,7 @@ class SkipGramDataloaderTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(SkipGramDataloaderTest, math::test::TensorFloatingTypes);
+TYPED_TEST_SUITE(SkipGramDataloaderTest, math::test::TensorFloatingTypes, );
 
 TYPED_TEST(SkipGramDataloaderTest, loader_test)
 {
