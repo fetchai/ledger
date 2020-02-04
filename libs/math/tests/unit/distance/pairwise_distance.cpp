@@ -30,7 +30,7 @@ class PairWiseDistanceTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(PairWiseDistanceTest, TensorFloatingTypes);
+TYPED_TEST_SUITE(PairWiseDistanceTest, TensorFloatingTypes, );
 
 TYPED_TEST(PairWiseDistanceTest, simple_test)
 {

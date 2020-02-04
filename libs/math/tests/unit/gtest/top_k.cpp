@@ -31,7 +31,7 @@ class TopKTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(TopKTest, TensorFloatingTypes);
+TYPED_TEST_SUITE(TopKTest, TensorFloatingTypes, );
 
 TYPED_TEST(TopKTest, top_k_2D_test_sorted)
 {

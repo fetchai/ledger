@@ -140,9 +140,18 @@ std::vector<math::SizeType> Dropout<TensorType>::ComputeOutputShape(
 template <typename TensorType>
 OperationsCount Dropout<TensorType>::ChargeForward()
 {
-  assert(!this->batch_output_shape_.empty());
+  assert(!this->batch_input_shapes_.empty());
   OperationsCount cost = fetch::ml::charge_estimation::ops::DROPOUT_PER_ELEMENT *
                          this->TotalElementsIn({this->batch_input_shapes_});
+  return cost;
+}
+
+template <typename TensorType>
+OperationsCount Dropout<TensorType>::ChargeBackward()
+{
+  assert(!this->batch_input_shapes_.empty());
+  OperationsCount cost = fetch::ml::charge_estimation::ops::MULTIPLICATION_PER_ELEMENT *
+                         this->TotalElementsIn({this->batch_input_shapes_.at(0)});
   return cost;
 }
 

@@ -32,7 +32,7 @@ class LogSigmoidTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(LogSigmoidTest, math::test::HighPrecisionTensorFloatingTypes);
+TYPED_TEST_SUITE(LogSigmoidTest, math::test::HighPrecisionTensorFloatingTypes, );
 
 TYPED_TEST(LogSigmoidTest, forward_test)
 {

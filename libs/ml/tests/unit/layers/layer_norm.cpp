@@ -34,7 +34,7 @@ class LayerNormTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(LayerNormTest, math::test::TensorFloatingTypes);
+TYPED_TEST_SUITE(LayerNormTest, math::test::TensorFloatingTypes, );
 
 TYPED_TEST(LayerNormTest, set_input_and_evaluate_test_2D)  // Use the class as a subgraph
 {

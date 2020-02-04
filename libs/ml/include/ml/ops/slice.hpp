@@ -74,6 +74,8 @@ public:
     return OpType::OP_SLICE;
   }
 
+  OperationsCount ChargeForward() override;
+
   static constexpr char const *DESCRIPTOR = "Slice";
 };
 

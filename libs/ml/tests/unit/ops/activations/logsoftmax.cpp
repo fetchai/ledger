@@ -32,7 +32,7 @@ class LogSoftmaxTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(LogSoftmaxTest, math::test::HighPrecisionTensorFloatingTypes);
+TYPED_TEST_SUITE(LogSoftmaxTest, math::test::HighPrecisionTensorFloatingTypes, );
 
 TYPED_TEST(LogSoftmaxTest, forward_test)
 {

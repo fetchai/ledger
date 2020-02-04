@@ -86,6 +86,15 @@ std::vector<math::SizeType> Exp<TensorType>::ComputeOutputShape(VecTensorType co
   return inputs.front()->shape();
 }
 
+template <typename TensorType>
+OperationsCount Exp<TensorType>::ChargeForward()
+{
+  assert(!this->batch_input_shapes_.empty());
+  OperationsCount cost = fetch::ml::charge_estimation::ops::EXP_PER_ELEMENT *
+                         this->TotalElementsIn({this->batch_input_shapes_});
+  return cost;
+}
+
 ///////////////////////////////
 /// EXPLICIT INSTANTIATIONS ///
 ///////////////////////////////

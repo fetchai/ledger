@@ -32,7 +32,7 @@ class MatrixMultiplyTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(MatrixMultiplyTest, fetch::math::test::TensorIntAndFloatingTypes);
+TYPED_TEST_SUITE(MatrixMultiplyTest, fetch::math::test::TensorIntAndFloatingTypes, );
 
 TYPED_TEST(MatrixMultiplyTest, forward_test)
 {

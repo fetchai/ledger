@@ -36,8 +36,8 @@ class TsneFixedPointTests : public ::testing::Test
 };
 
 // we do not test for fp32 since that tends to overflow
-TYPED_TEST_CASE(TsneFloatTests, math::test::HighPrecisionTensorNoFixedPointFloatingTypes);
-TYPED_TEST_CASE(TsneFixedPointTests, math::test::HighPrecisionTensorFixedPointTypes);
+TYPED_TEST_SUITE(TsneFloatTests, math::test::HighPrecisionTensorNoFixedPointFloatingTypes, );
+TYPED_TEST_SUITE(TsneFixedPointTests, math::test::HighPrecisionTensorFixedPointTypes, );
 
 template <typename TypeParam>
 TypeParam RunTest(typename TypeParam::SizeType n_output_feature_size,

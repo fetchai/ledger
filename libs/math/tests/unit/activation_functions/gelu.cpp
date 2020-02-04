@@ -29,7 +29,7 @@ class GeluTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(GeluTest, TensorFloatingTypes);
+TYPED_TEST_SUITE(GeluTest, TensorFloatingTypes, );
 
 TYPED_TEST(GeluTest, exact_value_test)
 {
