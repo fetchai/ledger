@@ -225,7 +225,7 @@ public:
   void Close()
   {
     is_open_ = false;
-    CloseConnnection();
+    // CloseConnnection();
     manager_.Leave(handle_);
   }
 
