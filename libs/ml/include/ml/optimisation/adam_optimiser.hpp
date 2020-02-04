@@ -20,6 +20,12 @@
 #include "ml/optimisation/optimiser.hpp"
 
 namespace fetch {
+namespace serializers {
+
+template <class TensorType>
+struct AdamOptimiserSerialiser;
+}
+
 namespace ml {
 namespace optimisers {
 
@@ -63,6 +69,9 @@ public:
   {
     return OptimiserType::ADAM;
   }
+
+  template <class OtherTensorType>
+  friend struct serializers::AdamOptimiserSerialiser;
 
 protected:
   std::vector<TensorType> cache_;

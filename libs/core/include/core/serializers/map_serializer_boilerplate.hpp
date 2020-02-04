@@ -19,6 +19,8 @@
 
 #include "meta/value_util.hpp"
 
+#include <type_traits>
+
 namespace fetch {
 namespace serializers {
 
@@ -45,6 +47,40 @@ struct MapSerializerBoilerplate
   }
 };
 
+namespace detail_ {
+
+template <class Underlying, class Map, class Key, class Actual>
+std::enable_if_t<std::is_base_of<Underlying, Actual>::value> SerialiseAs(Map &map, Key key,
+                                                                         Actual const &actual)
+{
+  map.Append(key, static_cast<Underlying const &>(actual));
+}
+
+template <class Underlying, class Map, class Key, class Actual>
+std::enable_if_t<!std::is_base_of<Underlying, Actual>::value> SerialiseAs(Map &map, Key key,
+                                                                          Actual actual)
+{
+  map.Append(key, static_cast<Underlying>(actual));
+}
+
+template <class Underlying, class Map, class Key, class Actual>
+std::enable_if_t<std::is_base_of<Underlying, Actual>::value> DeserialiseAs(Map &map, Key key,
+                                                                           Actual &actual)
+{
+  map.ExpectKeyGetValue(key, static_cast<Underlying &>(actual));
+}
+
+template <class Underlying, class Map, class Key, class Actual>
+std::enable_if_t<!std::is_base_of<Underlying, Actual>::value> DeserialiseAs(Map &map, Key key,
+                                                                            Actual &actual)
+{
+  Underlying raw_data;
+  map.ExpectKeyGetValue(key, raw_data);
+  actual = static_cast<Actual>(raw_data);
+}
+
+}  // namespace detail_
+
 struct ValueSerializer
 {
   static constexpr std::size_t LogicalSize() noexcept
@@ -67,15 +103,13 @@ struct SimplySerializedAs : ValueSerializer
   template <class Map, class Object>
   static constexpr void Serialize(Map &map, Object const &object)
   {
-    map.Append(KEY, static_cast<Underlying>(object));
+    detail_::SerialiseAs<Underlying>(map, KEY, object);
   }
 
   template <class Map, class Object>
   static constexpr void Deserialize(Map &map, Object &object)
   {
-    Underlying receiver;
-    map.ExpectKeyGetValue(KEY, receiver);
-    object = static_cast<Object>(receiver);
+    detail_::DeserialiseAs<Underlying>(map, KEY, object);
   }
 };
 
@@ -102,16 +136,13 @@ struct ExpectedKeyMember : ValueSerializer
   template <class Map, class Object>
   static constexpr void Serialize(Map &map, Object const &object)
   {
-    map.Append(KEY, static_cast<Underlying>(object.*MEMBER_VARIABLE));
+    detail_::SerialiseAs<Underlying>(map, KEY, object.*MEMBER_VARIABLE);
   }
 
   template <class Map, class Object>
   static constexpr void Deserialize(Map &map, Object &object)
   {
-    Underlying receiver;
-    map.ExpectKeyGetValue(KEY, receiver);
-    using Actual            = decltype(object.*MEMBER_VARIABLE);
-    object.*MEMBER_VARIABLE = static_cast<Actual>(receiver);
+    detail_::DeserialiseAs<Underlying>(map, KEY, object.*MEMBER_VARIABLE);
   }
 };
 

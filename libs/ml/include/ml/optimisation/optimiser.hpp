@@ -86,6 +86,9 @@ public:
   friend struct serializers::MapSerializer;
   virtual OptimiserType OptimiserCode() = 0;
 
+  template <uint8_t KEY, class MemberVariable, MemberVariable MEMBER_VARIABLE, class Underlying>
+  friend struct serializers::ExpectedKeyMember;
+
 protected:
   std::shared_ptr<Graph<T>> graph_;
   std::vector<std::string>  input_node_names_ = {};

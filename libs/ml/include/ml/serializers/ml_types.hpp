@@ -1303,7 +1303,8 @@ struct MapSerializer<ml::OpLogSoftmaxSaveableParams<TensorType>, D>
 template <typename TensorType, typename D>
 struct MapSerializer<ml::OpMaskFillSaveableParams<TensorType>, D>
   : BaseAndOpTypeSerializer<ml::OpMaskFillSaveableParams<TensorType>, D, ml::OpsSaveableParams,
-                            EXPECTED_KEY_MEMBER(3, ml::OpMaskFillSaveableParams<TensorType>::axis)>
+                            EXPECTED_KEY_MEMBER(
+                                3, ml::OpMaskFillSaveableParams<TensorType>::fill_value)>
 {
 };
 
@@ -1939,20 +1940,29 @@ struct MapSerializer<ml::optimisers::Optimiser<TensorType>, D>
  * serializer for SGDOptimiser
  * @tparam TensorType
  */
+template <class TensorType>
+struct AdamOptimiserSerialiser
+{
+  template <typename D>
+  struct Impl : MapSerializerBoilerplate<
+                    ml::optimisers::AdamOptimiser<TensorType>, D,
+                    SimplySerializedAs<1, ml::optimisers::Optimiser<TensorType>>,
+                    EXPECTED_KEY_MEMBER(2, ml::optimisers::AdamOptimiser<TensorType>::cache_),
+                    EXPECTED_KEY_MEMBER(3, ml::optimisers::AdamOptimiser<TensorType>::momentum_),
+                    EXPECTED_KEY_MEMBER(4, ml::optimisers::AdamOptimiser<TensorType>::mt_),
+                    EXPECTED_KEY_MEMBER(5, ml::optimisers::AdamOptimiser<TensorType>::vt_),
+                    EXPECTED_KEY_MEMBER(6, ml::optimisers::AdamOptimiser<TensorType>::beta1_),
+                    EXPECTED_KEY_MEMBER(7, ml::optimisers::AdamOptimiser<TensorType>::beta2_),
+                    EXPECTED_KEY_MEMBER(8, ml::optimisers::AdamOptimiser<TensorType>::beta1_t_),
+                    EXPECTED_KEY_MEMBER(9, ml::optimisers::AdamOptimiser<TensorType>::beta2_t_),
+                    EXPECTED_KEY_MEMBER(10, ml::optimisers::AdamOptimiser<TensorType>::epsilon_)>
+  {
+  };
+};
+
 template <typename TensorType, typename D>
 struct MapSerializer<ml::optimisers::AdamOptimiser<TensorType>, D>
-  : MapSerializerBoilerplate<
-        ml::optimisers::AdamOptimiser<TensorType>, D,
-        SimplySerializedAs<1, ml::optimisers::Optimiser<TensorType>>,
-        EXPECTED_KEY_MEMBER(2, ml::optimisers::AdamOptimiser<TensorType>::cache_),
-        EXPECTED_KEY_MEMBER(3, ml::optimisers::AdamOptimiser<TensorType>::momentum_),
-        EXPECTED_KEY_MEMBER(4, ml::optimisers::AdamOptimiser<TensorType>::mt_),
-        EXPECTED_KEY_MEMBER(5, ml::optimisers::AdamOptimiser<TensorType>::vt_),
-        EXPECTED_KEY_MEMBER(6, ml::optimisers::AdamOptimiser<TensorType>::beta1_),
-        EXPECTED_KEY_MEMBER(7, ml::optimisers::AdamOptimiser<TensorType>::beta2_),
-        EXPECTED_KEY_MEMBER(8, ml::optimisers::AdamOptimiser<TensorType>::beta1_t_),
-        EXPECTED_KEY_MEMBER(9, ml::optimisers::AdamOptimiser<TensorType>::beta2_t_),
-        EXPECTED_KEY_MEMBER(10, ml::optimisers::AdamOptimiser<TensorType>::epsilon_)>
+  : AdamOptimiserSerialiser<TensorType>::template Impl<D>
 {
 };
 

@@ -94,14 +94,14 @@ struct BlockEntropyNotarisationAndHashSelf
   static uint8_t const NOTARISATION_MEMBERS = 8;
 
   template <class Map>
-  static constexpr void Serialize(Map const &map, beacon::BlockEntropy const &member) noexcept
+  static constexpr void Serialize(Map &map, beacon::BlockEntropy const &member) noexcept
   {
     map.Append(NOTARISATION, member.block_notarisation.first);
     map.Append(NOTARISATION_MEMBERS, member.block_notarisation.second);
   }
 
   template <class Map>
-  static constexpr void Deserialize(Map const &map, beacon::BlockEntropy &member)
+  static constexpr void Deserialize(Map &map, beacon::BlockEntropy &member)
   {
     map.ExpectKeyGetValue(NOTARISATION, member.block_notarisation.first);
     map.ExpectKeyGetValue(NOTARISATION_MEMBERS, member.block_notarisation.second);
