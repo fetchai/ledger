@@ -37,10 +37,12 @@ public:
 }  // namespace internal
 
 FNV::FNV()
-  : impl_(std::make_shared<internal::FnvHasherInternals>())
+  : impl_(std::make_unique<internal::FnvHasherInternals>())
 {
   impl_->ctx.reset();
 }
+
+FNV::~FNV() = default;
 
 void FNV::Reset()
 {
