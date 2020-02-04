@@ -656,9 +656,9 @@ TEST(FixedPointTest, Constants_64_64)
   EXPECT_EQ(fp128_t::MAX, (static_cast<uint128_t>(0x7ffffffffffffffe) << 64) | 0xffffffffffffffff);
   EXPECT_EQ(fp128_t::MIN, (static_cast<uint128_t>(0x8000000000000001) << 64) | 0x0000000000000001);
 
-  EXPECT_EQ(fp128_t::MAX_EXP.Data(), (static_cast<uint128_t>(0x2b) << 64) | 0xab13e5fca20e0000);
+  EXPECT_EQ(fp128_t::MAX_EXP.Data(), (static_cast<uint128_t>(0x2b) << 64) | 0xab13e5fca20ef141);
   EXPECT_EQ(fp128_t::MIN_EXP.Data(),
-            (static_cast<uint128_t>(0xffffffffffffffd4) << 64) | 0x54ec1a035df20000);
+            (static_cast<uint128_t>(0xffffffffffffffd4) << 64) | 0x54ec1a035df10ebf);
 }
 
 template <typename T>
@@ -1049,33 +1049,38 @@ TYPED_TEST(BasicTest, Remainder)
   TypeParam x{fetch::math::AsType<TypeParam>(1.6519711627625)};
   TypeParam huge(10000);
   huge >>= 2;
-  TypeParam e1 = TypeParam::Remainder(ten, one);
-  TypeParam e2 = TypeParam::Remainder(ten, m_one);
-  TypeParam e3 = TypeParam::Remainder(ten, one_point_five);
-  TypeParam e4 = TypeParam::Remainder(ten, m_one_point_five);
-  TypeParam e5 = TypeParam::Remainder(ten, x);
-  TypeParam e6 = TypeParam::Remainder(m_ten, x);
-  TypeParam e7 = TypeParam::Remainder(huge, x);
-
-  EXPECT_NEAR(static_cast<double>(e1),
+  TypeParam e = TypeParam::Remainder(ten, one);
+  EXPECT_NEAR(static_cast<double>(e),
               std::remainder(static_cast<double>(ten), static_cast<double>(one)),
               static_cast<double>(TypeParam::TOLERANCE));
-  EXPECT_NEAR(static_cast<double>(e2),
+
+  e = TypeParam::Remainder(ten, m_one);
+  EXPECT_NEAR(static_cast<double>(e),
               std::remainder(static_cast<double>(ten), static_cast<double>(m_one)),
               static_cast<double>(TypeParam::TOLERANCE));
-  EXPECT_NEAR(static_cast<double>(e3),
+
+  e = TypeParam::Remainder(ten, one_point_five);
+  EXPECT_NEAR(static_cast<double>(e),
               std::remainder(static_cast<double>(ten), static_cast<double>(one_point_five)),
               static_cast<double>(TypeParam::TOLERANCE));
-  EXPECT_NEAR(static_cast<double>(e4),
+
+  e = TypeParam::Remainder(ten, m_one_point_five);
+  EXPECT_NEAR(static_cast<double>(e),
               std::remainder(static_cast<double>(ten), static_cast<double>(m_one_point_five)),
               static_cast<double>(TypeParam::TOLERANCE));
-  EXPECT_NEAR(static_cast<double>(e5),
+
+  e = TypeParam::Remainder(ten, x);
+  EXPECT_NEAR(static_cast<double>(e),
               std::remainder(static_cast<double>(ten), static_cast<double>(x)),
               static_cast<double>(TypeParam::TOLERANCE));
-  EXPECT_NEAR(static_cast<double>(e6),
+
+  e = TypeParam::Remainder(m_ten, x);
+  EXPECT_NEAR(static_cast<double>(e),
               std::remainder(static_cast<double>(m_ten), static_cast<double>(x)),
               static_cast<double>(TypeParam::TOLERANCE));
-  EXPECT_NEAR(static_cast<double>(e7),
+
+  e = TypeParam::Remainder(huge, x);
+  EXPECT_NEAR(static_cast<double>(e),
               std::remainder(static_cast<double>(huge), static_cast<double>(x)),
               static_cast<double>(TypeParam::TOLERANCE));
 }
