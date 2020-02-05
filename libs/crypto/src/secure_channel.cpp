@@ -25,8 +25,8 @@
 #include "crypto/secure_channel.hpp"
 #include "crypto/sha256.hpp"
 
-using fetch::byte_array::ConstByteArray;
 using fetch::byte_array::ByteArray;
+using fetch::byte_array::ConstByteArray;
 
 namespace fetch {
 namespace crypto {

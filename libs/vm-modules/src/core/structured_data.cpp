@@ -41,11 +41,11 @@ namespace vm_modules {
 
 namespace {
 
-using fetch::byte_array::ConstByteArray;
 using fetch::byte_array::ByteArray;
+using fetch::byte_array::ConstByteArray;
+using fetch::vm::Fixed128;
 using fetch::vm_modules::ByteArrayWrapper;
 using fetch::vm_modules::math::UInt256Wrapper;
-using fetch::vm::Fixed128;
 
 template <typename T>
 meta::EnableIf<vm::IsString<meta::Decay<T>>, Ptr<T>> FromByteArray(VM *vm,
