@@ -29,6 +29,53 @@ MutexRegister mutex_register;
 
 std::atomic<bool> MutexRegister::throw_on_deadlock_{false};
 
+void MutexRegister::RegisterMutexAcquisition(DebugMutex *mutex, std::thread::id thread,
+                                             LockLocation location)
+{
+  FETCH_LOCK(mutex_);
+
+  // Registering the matrix diagonal
+  auto lock_owners_it = lock_owners_.emplace(mutex, thread).first;
+  try
+  {
+    lock_location_.emplace(mutex, std::move(location));
+    waiting_for_.erase(thread);
+    waiting_location_.erase(thread);
+  }
+  catch (...)
+  {
+    lock_owners_.erase(lock_owners_it);
+    throw;
+  }
+}
+
+void MutexRegister::UnregisterMutexAcquisition(DebugMutex *mutex, std::thread::id /*thread*/)
+{
+  FETCH_LOCK(mutex_);
+
+  if (lock_owners_.erase(mutex) != 0)
+  {
+    lock_location_.erase(mutex);
+  }
+}
+
+void MutexRegister::QueueUpFor(DebugMutex *mutex, std::thread::id thread, LockLocation location)
+{
+  FETCH_LOCK(mutex_);
+
+  FindDeadlock(mutex, thread, location);
+  auto waiting_for_it = waiting_for_.emplace(thread, mutex).first;
+  try
+  {
+    waiting_location_.emplace(thread, std::move(location));
+  }
+  catch (...)
+  {
+    waiting_for_.erase(waiting_for_it);
+    throw;
+  }
+}
+
 void MutexRegister::FindDeadlock(TypeErased first_mutex, std::thread::id thread,
                                  LockLocation const &location)
 {
