@@ -77,7 +77,8 @@ MainChain::MainChain(Mode mode, bool dirty_block_functionality)
   , dirty_blocks_attempt_add_(telemetry::Registry::Instance().CreateCounter(
         "ledger_main_chain_dirty_blocks_attempt_add_total", "Total attempts to add a dirty block"))
   , children_on_storage_checks_total_(telemetry::Registry::Instance().CreateCounter(
-        "ledger_main_chain_children_on_storage_checks_total", "Total checks for block's children on storage")
+        "ledger_main_chain_children_on_storage_checks_total",
+        "Total checks for block's children on storage"))
 {
   if (Mode::IN_MEMORY_DB != mode)
   {
