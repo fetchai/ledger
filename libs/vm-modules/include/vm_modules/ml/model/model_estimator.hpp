@@ -72,7 +72,7 @@ public:
                             math::SizeType const &kernel_size, math::SizeType const &stride_size);
   ChargeAmount LayerAddEmbeddings(fetch::vm::Ptr<fetch::vm::String> const &layer,
                                   math::SizeType const &                   dimensions,
-                                  math::SizeType const &data_points, bool const stub = 0);
+                                  math::SizeType const &data_points, bool stub);
   ChargeAmount LayerAddConvActivation(fetch::vm::Ptr<fetch::vm::String> const &layer,
                                       math::SizeType const &                   output_channels,
                                       math::SizeType const &                   input_channels,

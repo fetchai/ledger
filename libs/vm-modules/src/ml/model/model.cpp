@@ -862,7 +862,7 @@ void VMModel::LayerAddPool(const fetch::vm::Ptr<fetch::vm::String> &layer,
 
 void VMModel::LayerAddEmbeddings(const fetch::vm::Ptr<fetch::vm::String> &layer,
                                  const math::SizeType &                   dimensions,
-                                 const math::SizeType &data_points, const bool stub)
+                                 const math::SizeType &data_points, bool stub)
 {
   FETCH_UNUSED(stub);  // a neat trick to make a function signature unique
   try

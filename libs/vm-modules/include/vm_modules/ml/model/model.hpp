@@ -180,7 +180,7 @@ public:
                     math::SizeType const &kernel_size, math::SizeType const &stride_size);
   void LayerAddEmbeddings(fetch::vm::Ptr<fetch::vm::String> const &layer,
                           math::SizeType const &dimensions, math::SizeType const &data_points,
-                          bool const stub = 0);
+                          bool stub);
 
 private:
   ModelPtrType       model_;

@@ -161,7 +161,7 @@ ChargeAmount ModelEstimator::LayerAddPool(Ptr<String> const &layer, SizeType con
 
 ChargeAmount ModelEstimator::LayerAddEmbeddings(fetch::vm::Ptr<fetch::vm::String> const &layer,
                                                 math::SizeType const &                   dimensions,
-                                                math::SizeType const &data_points, bool const stub)
+                                                math::SizeType const &data_points, bool stub)
 {
   FETCH_UNUSED(layer);
   FETCH_UNUSED(dimensions);
