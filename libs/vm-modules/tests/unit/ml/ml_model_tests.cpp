@@ -1019,6 +1019,7 @@ TEST_F(VMModelTests, model_sequential_embeddings)
           var str_vals = "1.5; 2.1; 3.1; 4.2; 5.1; 6.; 7.1; 8.1; 9.0;";
           x.fromString(str_vals);
           var model = Model("sequential");
+          model.addExperimental("input", x.shape());
           model.addExperimental("embeddings", 10u64, 4u64, true);
           model.compile("scel", "adam");
           var prediction = model.predict(x);
