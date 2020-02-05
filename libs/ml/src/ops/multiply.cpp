@@ -128,7 +128,7 @@ std::vector<fetch::math::SizeType> Multiply<T>::ComputeOutputShape(
 }
 
 template <typename TensorType>
-OperationsCount Multiply<TensorType>::ChargeForward()
+OperationsCount Multiply<TensorType>::ChargeForward() const
 {
   assert(!this->batch_input_shapes_.empty());
 

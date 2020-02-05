@@ -104,7 +104,7 @@ std::vector<fetch::math::SizeType> MaskFill<TensorType>::ComputeOutputShape(
 }
 
 template <typename TensorType>
-OperationsCount MaskFill<TensorType>::ChargeForward()
+OperationsCount MaskFill<TensorType>::ChargeForward() const
 {
   assert(!this->batch_input_shapes_.empty());
 

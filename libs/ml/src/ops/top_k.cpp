@@ -154,7 +154,7 @@ void TopK<TensorType>::UpdateIndices(VecTensorType const &inputs)
 }
 
 template <typename TensorType>
-OperationsCount TopK<TensorType>::ChargeForward()
+OperationsCount TopK<TensorType>::ChargeForward() const
 {
   assert(!this->batch_input_shapes_.empty());
   OperationsCount cost = fetch::ml::charge_estimation::ops::TOPK_PER_ELEMENT *
