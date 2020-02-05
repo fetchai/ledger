@@ -254,7 +254,7 @@ MainChainRpcService::Address MainChainRpcService::GetRandomTrustedPeer() const
 
   auto const direct_peers = endpoint_.GetDirectlyConnectedPeers();
 
-  FETCH_LOG_DEBUG(LOGGING_NAME, "Main chain connected peers: ", direct_peers.size());
+  FETCH_LOG_INFO(LOGGING_NAME, "Main chain connected peers: ", direct_peers.size());
 
   if (!direct_peers.empty())
   {
