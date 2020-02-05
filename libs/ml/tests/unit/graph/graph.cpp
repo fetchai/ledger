@@ -1216,7 +1216,7 @@ TYPED_TEST(GraphTest, graph_getWeightsOrder_2)
                                      fetch::math::function_tolerance<DataType>()));
 }
 
-TYPED_TEST(GraphTest, graph_charge_foward_input_only)
+TYPED_TEST(GraphTest, graph_charge_forward_input_only)
 {
   using TensorType = TypeParam;
   using namespace fetch::ml::ops;
@@ -1236,7 +1236,7 @@ TYPED_TEST(GraphTest, graph_charge_foward_input_only)
   ASSERT_EQ(charge, expected_charge);
 }
 
-TYPED_TEST(GraphTest, graph_charge_foward_subtraction)
+TYPED_TEST(GraphTest, graph_charge_forward_subtraction)
 {
   using TensorType = TypeParam;
   using namespace fetch::ml::ops;
@@ -1263,7 +1263,7 @@ TYPED_TEST(GraphTest, graph_charge_foward_subtraction)
   ASSERT_EQ(batch_charge, expected_charge);
 }
 
-TYPED_TEST(GraphTest, graph_charge_foward_matmul)
+TYPED_TEST(GraphTest, graph_charge_forward_matmul)
 {
   using namespace fetch::ml::ops;
   using namespace fetch::ml::charge_estimation::ops;
@@ -1308,7 +1308,7 @@ TYPED_TEST(GraphTest, graph_charge_foward_matmul)
   ASSERT_EQ(batch_charge, expected_charge);
 }
 
-TYPED_TEST(GraphTest, graph_charge_foward_conv2d)
+TYPED_TEST(GraphTest, graph_charge_forward_conv2d)
 {
   using namespace fetch::ml::ops;
   using namespace fetch::ml::layers;
@@ -1350,7 +1350,7 @@ TYPED_TEST(GraphTest, graph_charge_foward_conv2d)
   ASSERT_EQ(batch_charge, expected_charge);
 }
 
-TYPED_TEST(GraphTest, graph_charge_foward_diamond)
+TYPED_TEST(GraphTest, graph_charge_forward_diamond)
 {
   using TensorType = TypeParam;
   using namespace fetch::ml::ops;
@@ -1396,7 +1396,7 @@ TYPED_TEST(GraphTest, graph_charge_foward_diamond)
   ASSERT_EQ(charge, expected_charge);
 }
 
-TYPED_TEST(GraphTest, graph_charge_backward_input_only)
+TYPED_TEST(GraphTest, graph_charge_backward_dropout)
 {
   using TensorType = TypeParam;
   using DataType   = typename TypeParam::Type;
@@ -1468,6 +1468,49 @@ TYPED_TEST(GraphTest, graph_charge_backward_diamond)
       PLACEHOLDER_READING_PER_ELEMENT * total_data_elements;
 
   ASSERT_EQ(charge, expected_charge);
+}
+
+// ML-517 : disabled until implementation of CHargeBackward for Add, MatMul and others
+TYPED_TEST(GraphTest, DISABLED_graph_charge_backward_conv_dense)
+{
+  using namespace fetch::ml::ops;
+  using namespace fetch::ml::layers;
+  using namespace fetch::ml::charge_estimation::ops;
+  using TensorType = TypeParam;
+  using math::SizeType;
+  using Dense = fetch::ml::layers::FullyConnected<TensorType>;
+
+  // An RGB 3-channel image of 64*128 pixels, 16 images in a batch
+  SizeType const num_channels = 3;
+  SizeType const input_height = 64;
+  SizeType const input_width  = 128;
+  SizeType const batch_size   = 16;
+
+  math::SizeVector shape{num_channels, input_height, input_width, batch_size};
+  TensorType       data(shape);
+
+  SizeType const outputs     = 16;
+  SizeType const kernel_size = 3;
+  SizeType const stride_size = 1;
+
+  fetch::ml::Graph<TensorType> g;
+
+  std::string input  = g.template AddNode<PlaceHolder<TensorType>>("Input", {});
+  std::string conv2d = g.template AddNode<Convolution2D<TensorType>>(
+      "Conv2d", {"Input"}, outputs, num_channels, kernel_size, stride_size);
+  std::string dense =
+      g.template AddNode<Dense>("FC1", {"Input"}, Dense::AUTODETECT_INPUTS_COUNT, 1);
+
+  g.SetInput(input, data);
+  g.Compile();
+
+  OperationsCount const charge          = g.ChargeBackward(dense);
+  OperationsCount const expected_charge = 98305;  // Pre-calculated backward charge for give shape.
+
+  ASSERT_EQ(charge, expected_charge);
+
+  OperationsCount const foward_charge = g.ChargeForward(dense);
+  ASSERT_NE(foward_charge, expected_charge);  // A smoke test to prevent calling Forward instead.
 }
 }  // namespace test
 }  // namespace ml
