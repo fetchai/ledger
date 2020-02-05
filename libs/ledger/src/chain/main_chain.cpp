@@ -2007,8 +2007,7 @@ DigestSet MainChain::DetectDuplicateTransactions(BlockHash const &           sta
   for (auto const &tx_layout : transactions)
   {
     auto const default_valid_from =
-        tx_layout.valid_until() -
-        std::min(chain::Transaction::MAXIMUM_TX_VALIDITY_PERIOD, tx_layout.valid_until());
+        tx_layout.valid_until() - std::min(MAXIMUM_TX_VALIDITY_PERIOD, tx_layout.valid_until());
     auto const from_calculated = std::max(tx_layout.valid_from(), default_valid_from);
     if (bloom_filter_.Match(tx_layout.digest(), from_calculated, tx_layout.valid_until()))
     {
@@ -2020,8 +2019,7 @@ DigestSet MainChain::DetectDuplicateTransactions(BlockHash const &           sta
 
   // calculate the maximum search depth
   uint64_t const last_block_num =
-      block->block_number -
-      std::min(block->block_number, uint64_t{chain::Transaction::MAXIMUM_TX_VALIDITY_PERIOD});
+      block->block_number - std::min(block->block_number, uint64_t{MAXIMUM_TX_VALIDITY_PERIOD});
 
   // filter the potential duplicates by traversing back down the chain
   DigestSet duplicates{};
