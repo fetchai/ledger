@@ -47,7 +47,7 @@ class DebugLockGuard;
 struct LockLocation
 {
   std::string filename;
-  int32_t     line{};
+  uint32_t    line{};
 };
 
 class MutexRegister
@@ -171,7 +171,7 @@ public:
   DebugMutex()  = default;
   ~DebugMutex() = default;
 
-  void lock(std::string filename, int32_t line)
+  void lock(std::string filename, uint32_t line)
   {
     LockLocation loc{std::move(filename), line};
     QueueUpFor(this, std::this_thread::get_id(), loc);
@@ -181,9 +181,7 @@ public:
 
   void lock()
   {
-    QueueUpFor(this, std::this_thread::get_id());
-    UnderlyingMutex::lock();
-    RegisterMutexAcquisition(this, std::this_thread::get_id());
+    lock(std::string{}, uint32_t{});
   }
 
   void unlock()
@@ -213,7 +211,7 @@ public:
   DebugMutex()  = default;
   ~DebugMutex() = default;
 
-  void lock(std::string filename, int32_t line)
+  void lock(std::string filename, uint32_t line)
   {
     LockLocation loc{std::move(filename), line};
     bool         needs_reg = recursion_depth_ == 0;
@@ -234,20 +232,7 @@ public:
 
   void lock()
   {
-    bool needs_reg = recursion_depth_ == 0;
-
-    if (needs_reg)
-    {
-      QueueUpFor(this, std::this_thread::get_id());
-    }
-
-    UnderlyingMutex::lock();
-    ++recursion_depth_;
-
-    if (needs_reg)
-    {
-      RegisterMutexAcquisition(this, std::this_thread::get_id());
-    }
+    lock(std::string{}, uint32_t{});
   }
 
   void unlock()
@@ -283,7 +268,7 @@ class DebugLockGuard
 public:
   using Lockable = T;
 
-  DebugLockGuard(Lockable &lockable, std::string const & /*filename*/, int32_t /*line*/)
+  DebugLockGuard(Lockable &lockable, std::string const & /*filename*/, uint32_t /*line*/)
     : lockable_{lockable}
   {
     lockable_.lock();
@@ -304,7 +289,7 @@ class DebugLockGuard<DebugMutex<UnderlyingMutex>>
 public:
   using Lockable = DebugMutex<UnderlyingMutex>;
 
-  DebugLockGuard(Lockable &lockable, std::string const &filename, int32_t line)
+  DebugLockGuard(Lockable &lockable, std::string const &filename, uint32_t line)
     : lockable_{lockable}
   {
     lockable_.lock(filename, line);
