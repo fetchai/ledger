@@ -368,15 +368,21 @@ void MainChain::KeepBlock(IntBlockPtr const &block) const
   record.block = *block;
 
   // detect if any of this block's children has made it to the store already
-  auto forward_refs{forward_references_.equal_range(hash)};
-  for (auto ref_it{forward_refs.first}; ref_it != forward_refs.second; ++ref_it)
+  //
+  //
   {
-    auto const &child{ref_it->second};
-    if (block_store_->Has(storage::ResourceID(child)))
-    {
-      record.next_hash = child;
-      CacheReference(hash, child, true);
-      break;
+    MilliTimer tmr("ChildrenOnStore", 2000);
+    children_on_storage_checks_total_->increment();
+    auto forward_refs{forward_references_.equal_range(hash)};
+    for (auto ref_it{forward_refs.first}; ref_it != forward_refs.second; ++ref_it)
+     {
+      auto const &child{ref_it->second};
+      if (block_store_->Has(storage::ResourceID(child)))
+      {
+        record.next_hash = child;
+        CacheReference(hash, child, true);
+        break;
+      }
     }
   }
 

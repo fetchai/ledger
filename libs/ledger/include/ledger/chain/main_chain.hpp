@@ -346,6 +346,7 @@ private:
   telemetry::CounterPtr            bloom_filter_positive_count_;
   telemetry::CounterPtr            bloom_filter_false_positive_count_;
   telemetry::CounterPtr            dirty_blocks_attempt_add_;
+  telemetry::CounterPtr            children_on_storage_checks_total_;
 };
 
 }  // namespace ledger
