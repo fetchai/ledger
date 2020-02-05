@@ -375,7 +375,7 @@ void MainChain::KeepBlock(IntBlockPtr const &block) const
     children_on_storage_checks_total_->increment();
     auto forward_refs{forward_references_.equal_range(hash)};
     for (auto ref_it{forward_refs.first}; ref_it != forward_refs.second; ++ref_it)
-     {
+    {
       auto const &child{ref_it->second};
       if (block_store_->Has(storage::ResourceID(child)))
       {
