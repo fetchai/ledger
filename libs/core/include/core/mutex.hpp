@@ -18,6 +18,8 @@
 //------------------------------------------------------------------------------
 
 #include "meta/type_util.hpp"
+#include "moment/clock_interfaces.hpp"
+#include "moment/clocks.hpp"
 
 #include <atomic>
 #include <condition_variable>
@@ -53,35 +55,20 @@ struct LockLocation
   uint32_t    line{};
 };
 
-class DeadlockDetector
+class DeadlockHandler
 {
 public:
-  void DeadlockDetected(std::string message)
-  {
-    if (static_cast<bool>(throw_on_deadlock_))
-    {
-      throw std::runtime_error(std::move(message));
-    }
+  void DeadlockDetected(std::string message);
 
-    std::cerr << message << std::endl;
-    abort();
-  }
+  static void ThrowOnDeadlock();
 
-  static void ThrowOnDeadlock()
-  {
-    throw_on_deadlock_ = true;
-  }
-
-  static void AbortOnDeadlock()
-  {
-    throw_on_deadlock_ = false;
-  }
+  static void AbortOnDeadlock();
 
 private:
   static std::atomic<bool> throw_on_deadlock_{};
 };
 
-class MutexRegister : public DeadlockDetector
+class MutexRegister : public DeadlockHandler
 {
 public:
   void RegisterMutexAcquisition(DebugMutex *mutex, std::thread::id thread, LockLocation location);
@@ -105,7 +92,7 @@ private:
   std::unordered_map<std::thread::id, LockLocation> waiting_location_;
 };
 
-class RecursiveMutexRegister : public DeadlockDetector
+class RecursiveMutexRegister : public DeadlockHandler
 {
 public:
   void RegisterMutexAcquisition(DebugRecursiveMutex *mutex, std::thread::id thread,
@@ -116,15 +103,23 @@ public:
   void QueueUpFor(DebugRecursiveMutex *mutex, std::thread::id thread, LockLocation location);
 
 private:
+  struct OwnerRecord
+  {
+    std::thread::id                   thread;
+    moment::ClockInterface::Timestamp taken_at;
+    uint64_t                          recursion_depth;
+  };
+
   void FindDeadlock(DebugRecursiveMutex *first_mutex, std::thread::id thread,
                     LockLocation const &location);
 
   std::string CreateTrace(DebugRecursiveMutex *first_mutex, std::thread::id thread,
                           LockLocation const &location);
 
-  std::mutex mutex_;
+  std::mutex       mutex_;
+  moment::ClockPtr clock_ = moment::GetClock("RecursiveMutexRegister");
 
-  std::unordered_map<DebugRecursiveMutex *, std::thread::id> lock_owners_;
+  std::unordered_map<DebugRecursiveMutex *, OwnerRecord>     lock_owners_;
   std::unordered_map<std::thread::id, DebugRecursiveMutex *> waiting_for_;
 
   std::unordered_map<DebugRecursiveMutex *, LockLocation> lock_location_;
@@ -132,12 +127,13 @@ private:
 };
 
 template <class Mutex>
-std::conditional_t<std::is_same<Mutex, DebugMutex>::value, Mutex Register, RecursiveMutexRegister>
+std::conditional_t<std::is_same<Mutex, DebugMutex>::value, MutexRegister, RecursiveMutexRegister>
     &ProperMutexRegister()
 {
-  static_assert < std::is_same < using RetVal =
-      std::conditional_t<std::is_same<Mutex, DebugMutex>::value, Mutex Register,
-                         RecursiveMutexRegister>;
+  static_assert(type_util::IsAnyOfV<Mutex, DebugMutex, DebugRecursiveMutex>, "Unknown mutex type");
+
+  using RetVal = std::conditional_t<std::is_same<Mutex, DebugMutex>::value, MutexRegister,
+                                    RecursiveMutexRegister>;
 
   static RetVal ret_val;
   return ret_val;
@@ -162,9 +158,10 @@ void UnregisterMutexAcquisition(Mutex *mutex, std::thread::id thread)
   ProperMutexRegister<Mutex>().UnregisterMutexAcquisition(mutex, thread);
 }
 
-template <class UnderlyingMutex>
-class DebugMutex : UnderlyingMutex
+class DebugMutex : std::mutex
 {
+  using UnderlyingMutex = std::mutex;
+
 public:
   DebugMutex()  = default;
   ~DebugMutex() = default;
@@ -199,8 +196,7 @@ public:
   }
 };
 
-template <>
-class DebugMutex<std::recursive_mutex> : std::recursive_mutex
+class DebugRecursiveMutex : std::recursive_mutex
 {
   using UnderlyingMutex = std::recursive_mutex;
 
