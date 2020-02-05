@@ -1396,7 +1396,7 @@ TYPED_TEST(GraphTest, graph_charge_forward_diamond)
   ASSERT_EQ(charge, expected_charge);
 }
 
-TYPED_TEST(GraphTest, graph_charge_backward_input_only)
+TYPED_TEST(GraphTest, graph_charge_backward_dropout)
 {
   using TensorType = TypeParam;
   using DataType   = typename TypeParam::Type;
