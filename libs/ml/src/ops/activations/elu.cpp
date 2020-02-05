@@ -109,7 +109,7 @@ std::vector<math::SizeType> Elu<TensorType>::ComputeOutputShape(VecTensorType co
 }
 
 template <typename TensorType>
-OperationsCount Elu<TensorType>::ChargeForward()
+OperationsCount Elu<TensorType>::ChargeForward() const
 {
   assert(!this->batch_input_shapes_.empty());
   OperationsCount cost = fetch::ml::charge_estimation::ops::ELU_PER_ELEMENT *
