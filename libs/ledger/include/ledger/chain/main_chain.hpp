@@ -215,7 +215,7 @@ private:
   using LooseBlockMap = std::unordered_map<BlockHash, BlockHashList>;
   using BlockStore    = fetch::storage::ObjectStore<DbRecord>;
   using BlockStorePtr = std::unique_ptr<BlockStore>;
-  using RMutex        = std::recursive_mutex;
+  using RMutex        = fetch::RMutex;
   using RLock         = std::unique_lock<RMutex>;
 
   class HeaviestTip : Tip

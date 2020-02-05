@@ -84,7 +84,7 @@ private:
   using DAGTipID        = uint64_t;
   using DAGTipPtr       = std::shared_ptr<DAGTip>;
   using DAGNodePtr      = std::shared_ptr<DAGNode>;
-  using Mutex           = std::recursive_mutex;
+  using Mutex           = RMutex;
   using CertificatePtr  = std::shared_ptr<crypto::Prover>;
   using DAGTypes        = DAGInterface::DAGTypes;
 

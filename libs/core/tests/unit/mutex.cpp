@@ -27,43 +27,46 @@
 
 #ifdef FETCH_DEBUG_MUTEX
 
+using fetch::Mutex;
+using fetch::RMutex;
+
 TEST(DebugMutex, SimpleProblem)
 {
   fetch::MutexRegister::ThrowOnDeadlock();
   {
-    fetch::DebugMutex                  mutex;
-    std::lock_guard<fetch::DebugMutex> guard1(mutex);
-    EXPECT_THROW(std::lock_guard<fetch::DebugMutex> guard2(mutex), std::runtime_error);
+    Mutex                  mutex;
+    std::lock_guard<Mutex> guard1(mutex);
+    EXPECT_THROW(std::lock_guard<Mutex> guard2(mutex), std::runtime_error);
   }
 
   {
-    fetch::DebugMutex                  mutex1;
-    fetch::DebugMutex                  mutex2;
-    std::lock_guard<fetch::DebugMutex> guard1(mutex1);
-    std::lock_guard<fetch::DebugMutex> guard2(mutex2);
+    Mutex                  mutex1;
+    Mutex                  mutex2;
+    std::lock_guard<Mutex> guard1(mutex1);
+    std::lock_guard<Mutex> guard2(mutex2);
 
-    EXPECT_THROW(std::lock_guard<fetch::DebugMutex> guard3(mutex2), std::runtime_error);
+    EXPECT_THROW(std::lock_guard<Mutex> guard3(mutex2), std::runtime_error);
   }
 }
 
 TEST(DebugMutex, MultiThreadDeadlock)
 {
   fetch::MutexRegister::ThrowOnDeadlock();
-  fetch::DebugMutex m[5];
-  auto              f = [&m](int32_t n) {
-    std::lock_guard<fetch::DebugMutex> guard1(m[n]);
+  Mutex m[5];
+  auto  f = [&m](int32_t n) {
+    std::lock_guard<Mutex> guard1(m[n]);
     std::this_thread::sleep_for(std::chrono::seconds(1));
 
     if (n != 0)
     {
-      std::lock_guard<fetch::DebugMutex> guard2(m[n - 1]);
+      std::lock_guard<Mutex> guard2(m[n - 1]);
     }
   };
 
   std::vector<std::thread> threads;
 
   {
-    std::lock_guard<fetch::DebugMutex> guard1(m[0]);
+    std::lock_guard<Mutex> guard1(m[0]);
     threads.emplace_back(f, 1);
     threads.emplace_back(f, 2);
     threads.emplace_back(f, 3);
@@ -71,7 +74,7 @@ TEST(DebugMutex, MultiThreadDeadlock)
 
     std::this_thread::sleep_for(std::chrono::seconds(2));
 
-    EXPECT_THROW(std::lock_guard<fetch::DebugMutex> guard2(m[4]), std::runtime_error);
+    EXPECT_THROW(std::lock_guard<Mutex> guard2(m[4]), std::runtime_error);
   }
   //  t0.join();
   threads[0].join();
@@ -84,8 +87,8 @@ TEST(DebugMutex, MultiThreadDeadlock)
 TEST(DebugMutex, DISABLED_MultiThreadDeadlock2)
 {
   fetch::MutexRegister::AbortOnDeadlock();
-  fetch::DebugMutex m[5];
-  auto              f = [&m](int32_t n) {
+  Mutex m[5];
+  auto  f = [&m](int32_t n) {
     FETCH_LOCK(m[n]);
     std::this_thread::sleep_for(std::chrono::seconds(1));
 
@@ -114,6 +117,51 @@ TEST(DebugMutex, DISABLED_MultiThreadDeadlock2)
   threads[2].join();
   threads[3].join();
   threads.clear();
+}
+
+TEST(DebugMutex, Recursive)
+{
+  fetch::MutexRegister::ThrowOnDeadlock();
+  RMutex m;
+
+  EXPECT_TRUE(m.try_lock());
+  EXPECT_TRUE(m.try_lock());
+  EXPECT_TRUE(m.try_lock());
+  EXPECT_TRUE(m.try_lock());
+  m.unlock();
+  m.unlock();
+  m.unlock();
+  m.unlock();
+
+  std::string rv;
+
+  auto f = [&m, &rv](char c) {
+    m.lock();
+    m.lock();
+    m.lock();
+    m.lock();
+
+    rv += c;
+    rv += c;
+    rv += c;
+    rv += c;
+
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+
+    m.unlock();
+    m.unlock();
+    m.unlock();
+    m.unlock();
+  };
+
+  std::vector<std::thread> threads;
+  threads.emplace_back(f, 'a');
+  threads.emplace_back(f, 'b');
+
+  threads[0].join();
+  threads[1].join();
+
+  ASSERT_TRUE(rv == "aaaabbbb" || rv == "bbbbaaaa");
 }
 
 #endif  // FETCH_DEBUG_MUTEX

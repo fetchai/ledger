@@ -25,61 +25,14 @@ namespace fetch {
 
 #ifdef FETCH_DEBUG_MUTEX
 
-namespace {
 MutexRegister mutex_register;
-}
 
 std::atomic<bool> MutexRegister::throw_on_deadlock_{false};
 
-void QueueUpFor(DebugMutex *mutex, std::thread::id thread, LockLocation const &location)
-{
-  mutex_register.QueueUpFor(mutex, thread, location);
-}
-
-void RegisterMutexAcquisition(DebugMutex *mutex, std::thread::id thread,
-                              LockLocation const &location)
-{
-  mutex_register.RegisterMutexAcquisition(mutex, thread, location);
-}
-
-void UnregisterMutexAcquisition(DebugMutex *mutex, std::thread::id thread)
-{
-  mutex_register.UnregisterMutexAcquisition(mutex, thread);
-}
-
-void MutexRegister::QueueUpFor(DebugMutex *mutex, std::thread::id thread,
-                               LockLocation const &location)
-{
-  FETCH_LOCK(mutex_);
-
-  FindDeadlock(mutex, thread, location);
-  waiting_for_.insert({thread, mutex});
-  waiting_location_.insert({thread, location});
-}
-
-void MutexRegister::RegisterMutexAcquisition(DebugMutex *mutex, std::thread::id thread,
-                                             LockLocation const &location)
-{
-  FETCH_LOCK(mutex_);
-
-  // Registering the matrix diagonal
-  lock_owners_.insert({mutex, thread});
-  lock_location_.insert({mutex, location});
-  waiting_for_.erase(thread);
-  waiting_location_.erase(thread);
-}
-
-void MutexRegister::UnregisterMutexAcquisition(DebugMutex *mutex, std::thread::id /*thread*/)
-{
-  FETCH_LOCK(mutex_);
-  lock_owners_.erase(mutex);
-  lock_location_.erase(mutex);
-}
-
-void MutexRegister::FindDeadlock(DebugMutex *first_mutex, std::thread::id thread,
+void MutexRegister::FindDeadlock(TypeErased first_mutex, std::thread::id thread,
                                  LockLocation const &location)
 {
-  DebugMutex *mutex = first_mutex;
+  TypeErased mutex = first_mutex;
   while (true)
   {
     auto own_it = lock_owners_.find(mutex);
@@ -107,15 +60,15 @@ void MutexRegister::FindDeadlock(DebugMutex *first_mutex, std::thread::id thread
   }
 }
 
-std::string MutexRegister::CreateTrace(DebugMutex *first_mutex, std::thread::id thread,
+std::string MutexRegister::CreateTrace(TypeErased first_mutex, std::thread::id thread,
                                        LockLocation const &location)
 {
   std::stringstream ss{""};
-  ss << "Deadlock occur when acquiring lock in " << location.filename << ":" << location.line
+  ss << "Deadlock occured when acquiring lock in " << location.filename << ":" << location.line
      << std::endl;
 
-  DebugMutex *mutex = first_mutex;
-  int         n{0};
+  TypeErased mutex = first_mutex;
+  int        n{0};
   while (true)
   {
     auto own_it = lock_owners_.find(mutex);
@@ -152,7 +105,7 @@ std::string MutexRegister::CreateTrace(DebugMutex *first_mutex, std::thread::id 
     ++n;
   }
 
-  return "Magically escaped an infinite loop";
+  return "This never happened.";
 }
 
 #endif  // FETCH_DEBUG_MUTEX

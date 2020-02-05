@@ -133,7 +133,7 @@ protected:
 
 private:
   using AtomicState = std::atomic<State>;
-  using Condition   = std::condition_variable;
+  using Condition   = ConditionVariable;
 
   void UpdateState(State state) const;
   void DispatchCallbacks() const;

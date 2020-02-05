@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include <atomic>
+#include <condition_variable>
 #include <cstdlib>
 #include <iostream>
 #include <mutex>
@@ -33,26 +34,80 @@ namespace fetch {
 
 #ifdef FETCH_DEBUG_MUTEX
 
+#define FETCH_LOCK(lockable)                                          \
+  fetch::DebugLockGuard<std::decay_t<decltype(lockable)>> FETCH_JOIN( \
+      mutex_locked_on_line, __LINE__)(lockable, __FILE__, __LINE__)
+
+template <class UnderlyingMutex>
 class DebugMutex;
+
+template <typename Mutex>
+class DebugLockGuard;
 
 struct LockLocation
 {
-  std::string filename{};
+  std::string filename;
   int32_t     line{};
 };
 
 class MutexRegister
 {
 public:
-  void RegisterMutexAcquisition(DebugMutex *mutex, std::thread::id thread,
-                                LockLocation const &location);
-  void UnregisterMutexAcquisition(DebugMutex *mutex, std::thread::id thread);
-  void QueueUpFor(DebugMutex *mutex, std::thread::id thread, LockLocation const &location);
-  void DeadlockDetected(std::string const &message)
+  template <class UnderlyingMutex>
+  void RegisterMutexAcquisition(DebugMutex<UnderlyingMutex> *mutex, std::thread::id thread,
+                                LockLocation location)
+  {
+    FETCH_LOCK(mutex_);
+
+    // Registering the matrix diagonal
+    auto lock_owners_it = lock_owners_.emplace(mutex, thread).first;
+    try
+    {
+      lock_location_.emplace(mutex, std::move(location));
+      waiting_for_.erase(thread);
+      waiting_location_.erase(thread);
+    }
+    catch (...)
+    {
+      lock_owners_.erase(lock_owners_it);
+      throw;
+    }
+  }
+
+  template <class UnderlyingMutex>
+  void UnregisterMutexAcquisition(DebugMutex<UnderlyingMutex> *mutex, std::thread::id /*thread*/)
+  {
+    FETCH_LOCK(mutex_);
+
+    if (lock_owners_.erase(mutex) != 0)
+    {
+      lock_location_.erase(mutex);
+    }
+  }
+
+  template <class UnderlyingMutex>
+  void QueueUpFor(DebugMutex<UnderlyingMutex> *mutex, std::thread::id thread, LockLocation location)
+  {
+    FETCH_LOCK(mutex_);
+
+    FindDeadlock(mutex, thread, location);
+    auto waiting_for_it = waiting_for_.emplace(thread, mutex).first;
+    try
+    {
+      waiting_location_.emplace(thread, std::move(location));
+    }
+    catch (...)
+    {
+      waiting_for_.erase(waiting_for_it);
+      throw;
+    }
+  }
+
+  void DeadlockDetected(std::string message)
   {
     if (static_cast<bool>(throw_on_deadlock_))
     {
-      throw std::runtime_error(message);
+      throw std::runtime_error(std::move(message));
     }
 
     std::cerr << message << std::endl;
@@ -70,55 +125,76 @@ public:
   }
 
 private:
-  void FindDeadlock(DebugMutex *first_mutex, std::thread::id thread, LockLocation const &location);
-  std::string CreateTrace(DebugMutex *first_mutex, std::thread::id thread,
+  using TypeErased = void *;
+
+  void FindDeadlock(TypeErased first_mutex, std::thread::id thread, LockLocation const &location);
+
+  std::string CreateTrace(TypeErased first_mutex, std::thread::id thread,
                           LockLocation const &location);
 
-  static std::atomic<bool>                          throw_on_deadlock_;
-  std::mutex                                        mutex_;
-  std::unordered_map<DebugMutex *, std::thread::id> lock_owners_;
-  std::unordered_map<std::thread::id, DebugMutex *> waiting_for_;
+  static std::atomic<bool> throw_on_deadlock_;
+  std::mutex               mutex_;
 
-  std::unordered_map<DebugMutex *, LockLocation>    lock_location_;
+  std::unordered_map<TypeErased, std::thread::id> lock_owners_;
+  std::unordered_map<std::thread::id, TypeErased> waiting_for_;
+
+  std::unordered_map<TypeErased, LockLocation>      lock_location_;
   std::unordered_map<std::thread::id, LockLocation> waiting_location_;
 };
 
-void RegisterMutexAcquisition(DebugMutex *mutex, std::thread::id thread,
-                              LockLocation const &location = LockLocation());
-void UnregisterMutexAcquisition(DebugMutex *mutex, std::thread::id thread);
-void QueueUpFor(DebugMutex *mutex, std::thread::id thread,
-                LockLocation const &location = LockLocation());
+extern MutexRegister mutex_register;
 
-class DebugMutex : public std::mutex
+template <class UnderlyingMutex>
+void QueueUpFor(DebugMutex<UnderlyingMutex> *mutex, std::thread::id thread,
+                LockLocation location = LockLocation())
+{
+  mutex_register.QueueUpFor(mutex, thread, std::move(location));
+}
+
+template <class UnderlyingMutex>
+void RegisterMutexAcquisition(DebugMutex<UnderlyingMutex> *mutex, std::thread::id thread,
+                              LockLocation location = LockLocation())
+{
+  mutex_register.RegisterMutexAcquisition(mutex, thread, std::move(location));
+}
+
+template <class UnderlyingMutex>
+void UnregisterMutexAcquisition(DebugMutex<UnderlyingMutex> *mutex, std::thread::id thread)
+{
+  mutex_register.UnregisterMutexAcquisition(mutex, thread);
+}
+
+template <class UnderlyingMutex>
+class DebugMutex : UnderlyingMutex
 {
 public:
   DebugMutex()  = default;
   ~DebugMutex() = default;
 
-  void lock(std::string const &filename, int32_t line)
+  void lock(std::string filename, int32_t line)
   {
-    LockLocation loc{filename, line};
+    LockLocation loc{std::move(filename), line};
     QueueUpFor(this, std::this_thread::get_id(), loc);
-    std::mutex::lock();
-    RegisterMutexAcquisition(this, std::this_thread::get_id(), loc);
+    UnderlyingMutex::lock();
+    RegisterMutexAcquisition(this, std::this_thread::get_id(), std::move(loc));
   }
 
   void lock()
   {
     QueueUpFor(this, std::this_thread::get_id());
-    std::mutex::lock();
+    UnderlyingMutex::lock();
     RegisterMutexAcquisition(this, std::this_thread::get_id());
   }
 
   void unlock()
   {
     UnregisterMutexAcquisition(this, std::this_thread::get_id());
-    std::mutex::unlock();
+    UnderlyingMutex::unlock();
   }
 
   bool try_lock()
   {
-    if (std::mutex::try_lock())
+    if (UnderlyingMutex::try_lock())
     {
       RegisterMutexAcquisition(this, std::this_thread::get_id());
       return true;
@@ -128,11 +204,86 @@ public:
   }
 };
 
+template <>
+class DebugMutex<std::recursive_mutex> : std::recursive_mutex
+{
+  using UnderlyingMutex = std::recursive_mutex;
+
+public:
+  DebugMutex()  = default;
+  ~DebugMutex() = default;
+
+  void lock(std::string filename, int32_t line)
+  {
+    LockLocation loc{std::move(filename), line};
+    bool         needs_reg = recursion_depth_ == 0;
+
+    if (needs_reg)
+    {
+      QueueUpFor(this, std::this_thread::get_id(), loc);
+    }
+
+    UnderlyingMutex::lock();
+    ++recursion_depth_;
+
+    if (needs_reg)
+    {
+      RegisterMutexAcquisition(this, std::this_thread::get_id(), std::move(loc));
+    }
+  }
+
+  void lock()
+  {
+    bool needs_reg = recursion_depth_ == 0;
+
+    if (needs_reg)
+    {
+      QueueUpFor(this, std::this_thread::get_id());
+    }
+
+    UnderlyingMutex::lock();
+    ++recursion_depth_;
+
+    if (needs_reg)
+    {
+      RegisterMutexAcquisition(this, std::this_thread::get_id());
+    }
+  }
+
+  void unlock()
+  {
+    if (recursion_depth_-- == 1)
+    {
+      UnregisterMutexAcquisition(this, std::this_thread::get_id());
+    }
+    UnderlyingMutex::unlock();
+  }
+
+  bool try_lock()
+  {
+    if (UnderlyingMutex::try_lock())
+    {
+      if (++recursion_depth_ == 1)
+      {
+        RegisterMutexAcquisition(this, std::this_thread::get_id());
+      }
+      return true;
+    }
+
+    return false;
+  }
+
+private:
+  uint64_t recursion_depth_{};
+};
+
 template <typename T>
 class DebugLockGuard
 {
 public:
-  DebugLockGuard(T &lockable, std::string const & /*filename*/, int32_t /*line*/)
+  using Lockable = T;
+
+  DebugLockGuard(Lockable &lockable, std::string const & /*filename*/, int32_t /*line*/)
     : lockable_{lockable}
   {
     lockable_.lock();
@@ -144,14 +295,16 @@ public:
   }
 
 private:
-  T &lockable_;
+  Lockable &lockable_;
 };
 
-template <>
-class DebugLockGuard<DebugMutex>
+template <class UnderlyingMutex>
+class DebugLockGuard<DebugMutex<UnderlyingMutex>>
 {
 public:
-  DebugLockGuard(DebugMutex &lockable, std::string const &filename, int32_t line)
+  using Lockable = DebugMutex<UnderlyingMutex>;
+
+  DebugLockGuard(Lockable &lockable, std::string const &filename, int32_t line)
     : lockable_{lockable}
   {
     lockable_.lock(filename, line);
@@ -163,21 +316,22 @@ public:
   }
 
 private:
-  DebugMutex &lockable_;
+  Lockable &lockable_;
 };
 
-using Mutex = DebugMutex;
-
-#define FETCH_LOCK(lockable)                                                       \
-  fetch::DebugLockGuard<typename std::decay<decltype(lockable)>::type> FETCH_JOIN( \
-      mutex_locked_on_line, __LINE__)(lockable, __FILE__, __LINE__)
+using Mutex             = DebugMutex<std::mutex>;
+using RMutex            = DebugMutex<std::recursive_mutex>;
+using ConditionVariable = std::condition_variable_any;
 
 #else  // !FETCH_DEBUG_MUTEX
 
-using Mutex = std::mutex;
+#define FETCH_LOCK(lockable)                                                         \
+  std::lock_guard<std::decay_t<decltype(lockable)>> FETCH_JOIN(mutex_locked_on_line, \
+                                                               __LINE__)(lockable)
 
-#define FETCH_LOCK(lockable) \
-  std::lock_guard<decltype(lockable)> FETCH_JOIN(mutex_locked_on_line, __LINE__)(lockable)
+using Mutex             = std::mutex;
+using RMutex            = std::recursive_mutex;
+using ConditionVariable = std::condition_variable;
 
 #endif  // FETCH_DEBUG_MUTEX
 

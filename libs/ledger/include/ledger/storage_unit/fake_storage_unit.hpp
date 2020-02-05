@@ -88,12 +88,12 @@ private:
   using StateHistory     = std::unordered_map<Hash, StatePtr>;
   using StateHashStack   = std::vector<Hash>;
 
-  mutable std::recursive_mutex lock_;
-  TransactionStore             transaction_store_{};
-  StatePtr                     state_{std::make_shared<State>()};
-  StateHistory                 state_history_{};
-  StateHashStack               state_history_stack_{fetch::chain::GetGenesisDigest()};
-  Hash                         current_hash_{fetch::chain::GetGenesisMerkleRoot()};
+  mutable RMutex   lock_;
+  TransactionStore transaction_store_{};
+  StatePtr         state_{std::make_shared<State>()};
+  StateHistory     state_history_{};
+  StateHashStack   state_history_stack_{fetch::chain::GetGenesisDigest()};
+  Hash             current_hash_{fetch::chain::GetGenesisMerkleRoot()};
 };
 
 }  // namespace ledger

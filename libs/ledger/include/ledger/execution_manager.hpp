@@ -97,7 +97,7 @@ private:
   using StateHashCache    = storage::ObjectStore<StateHash>;
   using ThreadPtr         = std::unique_ptr<std::thread>;
   using BlockSliceList    = ledger::Block::Slices;
-  using Condition         = std::condition_variable;
+  using Condition         = ConditionVariable;
   using ResourceID        = storage::ResourceID;
   using AtomicState       = std::atomic<State>;
   using CounterPtr        = telemetry::CounterPtr;
