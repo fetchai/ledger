@@ -16,6 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "chain/transaction.hpp"
 #include "chain/transaction_layout_rpc_serializers.hpp"
 #include "chain/transaction_validity_period.hpp"
 #include "core/assert.hpp"

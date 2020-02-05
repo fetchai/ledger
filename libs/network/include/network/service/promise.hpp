@@ -133,7 +133,8 @@ protected:
 
 private:
   using AtomicState = std::atomic<State>;
-  using Condition   = std::condition_variable;
+  using Condition   = std::condition_variable_any;
+  using RMutex      = std::recursive_mutex;
 
   void UpdateState(State state) const;
   void DispatchCallbacks() const;
@@ -157,8 +158,8 @@ private:
   mutable Callback callback_failure_;
   mutable Callback callback_completion_;
 
-  mutable std::mutex notify_lock_;
-  mutable Condition  notify_;
+  mutable RMutex    notify_lock_;
+  mutable Condition notify_;
 };
 
 class PromiseBuilder
