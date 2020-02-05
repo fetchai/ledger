@@ -1016,7 +1016,7 @@ TEST_F(VMModelTests, model_sequential_embeddings)
   static char const *sequential_model_src = R"(
         function main()
           var x = Tensor();
-          var str_vals = "1.5; 2.1; 3.1; 4.2; 5.1; 6.; 7.1; 8.1; 9.0;";
+          var str_vals = "1; 2; 3; 4; 5; 6; 7; 8; 9;";
           x.fromString(str_vals);
           var model = Model("sequential");
           model.addExperimental("input", x.shape());
