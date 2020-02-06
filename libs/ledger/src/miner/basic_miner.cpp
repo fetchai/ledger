@@ -219,7 +219,7 @@ void BasicMiner::GenerateBlock(Block &block, std::size_t num_lanes, std::size_t 
   std::size_t const remaining_transactions = mining_pool_.size();
   std::size_t const packed_transactions    = pool_size_before - remaining_transactions;
 
-  FETCH_LOG_DEBUG(LOGGING_NAME, "Finished block packing (packed: ", packed_transactions,
+  FETCH_LOG_INFO(LOGGING_NAME, "Finished block packing (packed: ", packed_transactions,
                   " remaining: ", remaining_transactions, ")");
 }
 
