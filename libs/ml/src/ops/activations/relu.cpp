@@ -102,7 +102,7 @@ std::vector<math::SizeType> Relu<TensorType>::ComputeOutputShape(VecTensorType c
 }
 
 template <typename TensorType>
-OperationsCount Relu<TensorType>::ChargeForward()
+OperationsCount Relu<TensorType>::ChargeForward() const
 {
   assert(!this->batch_input_shapes_.empty());
   OperationsCount cost = fetch::ml::charge_estimation::ops::RELU_PER_ELEMENT *
@@ -111,7 +111,7 @@ OperationsCount Relu<TensorType>::ChargeForward()
 }
 
 template <typename TensorType>
-OperationsCount Relu<TensorType>::ChargeBackward()
+OperationsCount Relu<TensorType>::ChargeBackward() const
 {
   assert(!this->batch_input_shapes_.empty());
   OperationsCount cost = fetch::ml::charge_estimation::ops::RELU_BACKWARD_PER_ELEMENT *

@@ -105,7 +105,7 @@ const char *Flatten<TensorType>::Descriptor() const
 }
 
 template <class TensorType>
-OperationsCount Flatten<TensorType>::ChargeForward()
+OperationsCount Flatten<TensorType>::ChargeForward() const
 {
   assert(!this->batch_input_shapes_.empty());
   OperationsCount cost = fetch::ml::charge_estimation::ops::FLATTEN_PER_ELEMENT *

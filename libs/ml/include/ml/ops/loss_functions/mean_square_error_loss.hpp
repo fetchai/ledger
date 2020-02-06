@@ -72,8 +72,8 @@ public:
     return DESCRIPTOR;
   }
 
-  OperationsCount ChargeForward() override;
-  OperationsCount ChargeBackward() override;
+  OperationsCount ChargeForward() const override;
+  OperationsCount ChargeBackward() const override;
 
 private:
   TensorType weightings_;

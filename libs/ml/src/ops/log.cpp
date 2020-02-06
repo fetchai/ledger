@@ -86,7 +86,7 @@ std::vector<math::SizeType> Log<TensorType>::ComputeOutputShape(VecTensorType co
 }
 
 template <typename TensorType>
-OperationsCount Log<TensorType>::ChargeForward()
+OperationsCount Log<TensorType>::ChargeForward() const
 {
   assert(!this->batch_input_shapes_.empty());
 
