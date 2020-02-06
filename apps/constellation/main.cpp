@@ -40,9 +40,9 @@
 #include "network/uri.hpp"
 #include "settings.hpp"
 #include "shards/manifest.hpp"
+#include "vectorise/platform.hpp"
 #include "version/cli_header.hpp"
 #include "version/fetch_version.hpp"
-#include "vectorise/platform.hpp"
 
 #include <atomic>
 #include <csignal>
@@ -185,8 +185,8 @@ bool HasVersionFlag(int argc, char **argv)
  * @param uris The initial set of nodes
  * @return The new bootstrap pointer if one exists
  */
-BootstrapPtr CreateBootstrap(Settings &settings, Config &config,
-                             ProverPtr const &prover, UriSet &uris)
+BootstrapPtr CreateBootstrap(Settings &settings, Config &config, ProverPtr const &prover,
+                             UriSet &uris)
 {
   BootstrapPtr bootstrap{};
 
@@ -304,7 +304,6 @@ int main(int argc, char **argv)
       // create the bootrap monitor (if configued to do so)
       auto initial_peers = ToUriSet(settings.peers.value());
       auto bootstrap     = CreateBootstrap(settings, cfg, p2p_key, initial_peers);
-
 
       FETCH_LOG_INFO(LOGGING_NAME, "Configuration:\n", settings, "-\n", cfg);
 

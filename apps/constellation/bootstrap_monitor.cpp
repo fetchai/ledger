@@ -45,14 +45,8 @@ char const *               BOOTSTRAP_HOST = "http://127.0.0.1:8000";
 const std::chrono::seconds UPDATE_INTERVAL{30};
 constexpr char const *     LOGGING_NAME = "bootstrap";
 
-StringSet const VALID_PARAMETERS{
-  "-block-interval",
-  "-lanes",
-  "-slices",
-  "-experimental",
-  "-aeon-period",
-  "-pos"
-};
+StringSet const VALID_PARAMETERS{"-block-interval", "-lanes",       "-slices",
+                                 "-experimental",   "-aeon-period", "-pos"};
 
 /**
  * Helper object containing all the fields required to make the attestation
@@ -294,7 +288,8 @@ bool BootstrapMonitor::RunDiscovery(DiscoveryResult &output)
   {
     if (!ParseDiscoveryV1(result, output))
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Malformed response from bootstrap server (unable to parse v1 response)");
+      FETCH_LOG_WARN(LOGGING_NAME,
+                     "Malformed response from bootstrap server (unable to parse v1 response)");
       return false;
     }
   }
@@ -312,19 +307,22 @@ bool BootstrapMonitor::RunDiscovery(DiscoveryResult &output)
     {
       if (!ParseDiscoveryV2(result, output))
       {
-        FETCH_LOG_WARN(LOGGING_NAME, "Malformed response from bootstrap server (can't parse V2 response)");
+        FETCH_LOG_WARN(LOGGING_NAME,
+                       "Malformed response from bootstrap server (can't parse V2 response)");
         return false;
       }
     }
     else
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Malformed response from bootstrap server (version ", version, " not supported)");
+      FETCH_LOG_WARN(LOGGING_NAME, "Malformed response from bootstrap server (version ", version,
+                     " not supported)");
       return false;
     }
   }
   else
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Malformed response from bootstrap server (unable to identify payload)");
+    FETCH_LOG_WARN(LOGGING_NAME,
+                   "Malformed response from bootstrap server (unable to identify payload)");
     return false;
   }
 
@@ -332,7 +330,7 @@ bool BootstrapMonitor::RunDiscovery(DiscoveryResult &output)
   return true;
 }
 
-bool BootstrapMonitor::ParseDiscoveryV1(Variant const &arr,DiscoveryResult &result)
+bool BootstrapMonitor::ParseDiscoveryV1(Variant const &arr, DiscoveryResult &result)
 {
   return ParseNodeList(arr, result.uris);
 }
@@ -439,7 +437,6 @@ bool BootstrapMonitor::ParseConfigurationUpdates(Variant const &obj, ConfigUpdat
     success = true;
 
     obj.IterateObject([&updates, &success](ConstByteArray const &key, Variant const &value) {
-
       // the type of the value must be a string to be valid
       if (!value.IsString())
       {
@@ -469,7 +466,8 @@ bool BootstrapMonitor::ParseConfigurationUpdates(Variant const &obj, ConfigUpdat
   // ensure if we are not succesful that any partial updates are not stored in the output variable
   if (!success)
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Failed to parse configuration updates section of bootstrap config");
+    FETCH_LOG_WARN(LOGGING_NAME,
+                   "Failed to parse configuration updates section of bootstrap config");
     updates.clear();
   }
 

@@ -46,7 +46,6 @@ const uint32_t NUM_SYSTEM_THREADS = static_cast<uint32_t>(std::thread::hardware_
 class ArgvWrapper
 {
 public:
-
   explicit ArgvWrapper(Settings::UpdateBatch const &batch)
     : batch_(batch)
     , argc_((batch_.size() * 2) + 1)
@@ -59,7 +58,7 @@ public:
     {
       assert(idx + 1 < argv_.size());
 
-      argv_[idx] = element.first.c_str();
+      argv_[idx]     = element.first.c_str();
       argv_[idx + 1] = element.second.c_str();
 
       idx += 2;
@@ -71,15 +70,15 @@ public:
     return static_cast<int>(argc_);
   }
 
-  char** argv() const
+  char **argv() const
   {
-    return const_cast<char**>(argv_.data());
+    return const_cast<char **>(argv_.data());
   }
 
 private:
   Settings::UpdateBatch const &batch_;
-  std::size_t                                argc_{0};
-  std::vector<char const *>                  argv_;
+  std::size_t                  argc_{0};
+  std::vector<char const *>    argv_;
 };
 
 }  // namespace

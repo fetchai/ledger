@@ -89,14 +89,14 @@ private:
 
   /// @name Actions
   /// @{
-  bool UpdateExternalAddress();
-  bool RunDiscovery(DiscoveryResult &result);
+  bool        UpdateExternalAddress();
+  bool        RunDiscovery(DiscoveryResult &result);
   static bool ParseDiscoveryV1(Variant const &arr, DiscoveryResult &result);
   static bool ParseDiscoveryV2(Variant const &obj, DiscoveryResult &result);
   static bool ParseNodeList(Variant const &arr, UriSet &peers);
   static bool ParseGenesisConfiguration(Variant const &obj, std::string &genesis);
   static bool ParseConfigurationUpdates(Variant const &obj, ConfigUpdates &updates);
-  bool NotifyNode();
+  bool        NotifyNode();
   /// @}
 
   static char const *ToString(State state);
