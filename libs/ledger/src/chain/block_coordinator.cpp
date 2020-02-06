@@ -174,6 +174,9 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr dag,
   , panic_block_total_{telemetry::Registry::Instance().CreateCounter(
         "ledger_block_coordinator_panic_block_total",
         "The total number of times that the block coordinator has paniced")}
+  , panic_search_total_{telemetry::Registry::Instance().CreateCounter(
+        "ledger_block_coordinator_panic_search_total",
+        "The total number of times that the main chain has been searched for a block")}
   , tx_sync_times_{telemetry::Registry::Instance().CreateHistogram(
         {0.001, 0.01, 0.1, 1, 10, 100}, "ledger_block_coordinator_tx_sync_times",
         "The histogram of the time it takes to sync transactions")}
@@ -869,14 +872,11 @@ void BlockCoordinator::Panic()
 {
   FETCH_LOG_ERROR(LOGGING_NAME, "In Panic -> Reverting to Genesis");
 
-  // attempt to locate the point at check
-  bool        revert_successful{false};
-  std::size_t revert_attempts{0};
-
-  // walk down the chain trying to find the closest hash to the one that we
+  bool                revert_successful{false};
+  std::size_t         revert_attempts{0};
   MainChain::BlockPtr block{};
 
-  // attempt to perform a number of reverts. we only try and revert back to genesis at the point
+  // walk down the chain trying to find the closest hash merkle hash that we can revert to
   while (revert_attempts < MAX_ATTEMPTED_PANIC_REVERTS)
   {
     // on the first loop, or a failure to lookup the previous block then restart from the head of
@@ -917,6 +917,8 @@ void BlockCoordinator::Panic()
     // continue to walk down the chain - this might fail in the case of a large amount of forking,
     // however, this will be caught at the start of the next loop
     block = chain_.GetBlock(block->previous_hash);
+
+    panic_search_total_->increment();
   }
 
   // in the worst case when this process completely fails then revert back to the catch all of
