@@ -22,22 +22,23 @@ BraceWrapping:
   BeforeElse: true
   SplitEmptyFunction: false
 BreakBeforeBraces: Custom
-BreakConstructorInitializersBeforeComma: true
 BreakConstructorInitializers: BeforeComma
 ColumnLimit: 100
 ConstructorInitializerAllOnOneLineOrOnePerLine: false
 ConstructorInitializerIndentWidth: 2
 ContinuationIndentWidth: 4
 DerivePointerAlignment: false
+IncludeBlocks: Regroup
 IncludeCategories:
-  - Regex: '^<ext/.*\.h>'
+  - Regex: '^<.*\.h>$'
+    Priority: 3
+  - Regex: '^<.*>$'
+    Priority: 4
+  - Regex: '^"(gtest)|(gmock)|(benchmark)/.+"$'
     Priority: 2
-  - Regex: '^<.*\.h>'
-    Priority: 2
-  - Regex: '^<.*'
-    Priority: 2
-  - Regex: '.*'
+  - Regex: '^.+$'
     Priority: 1
+IncludeIsMainRegex: ''
 IndentCaseLabels: false
 IndentWidth: 2
 KeepEmptyLinesAtTheStartOfBlocks: true
