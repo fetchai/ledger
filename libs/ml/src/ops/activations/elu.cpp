@@ -118,7 +118,7 @@ OperationsCount Elu<TensorType>::ChargeForward() const
 }
 
 template <typename TensorType>
-OperationsCount Elu<TensorType>::ChargeBackward()
+OperationsCount Elu<TensorType>::ChargeBackward() const
 {
   assert(!this->batch_input_shapes_.empty());
   OperationsCount cost = fetch::ml::charge_estimation::ops::ELU_BACKWARD_PER_ELEMENT *

@@ -216,7 +216,7 @@ OperationsCount MaxPool2D<TensorType>::ChargeForward() const
 }
 
 template <typename TensorType>
-OperationsCount MaxPool2D<TensorType>::ChargeBackward()
+OperationsCount MaxPool2D<TensorType>::ChargeBackward() const
 {
   assert(!this->batch_output_shape_.empty());
   auto cost = static_cast<OperationsCount>(
