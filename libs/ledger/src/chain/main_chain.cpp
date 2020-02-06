@@ -2015,63 +2015,49 @@ DigestSet MainChain::DetectDuplicateTransactions(BlockHash const &           sta
     return {};
   }
 
-  // evaluate the bloom filter and determine the potential duplicates
   DigestSet potential_duplicates{};
   for (auto const &tx_layout : transactions)
   {
-    auto const default_valid_from =
-        tx_layout.valid_until() - std::min(MAXIMUM_TX_VALIDITY_PERIOD, tx_layout.valid_until());
-    auto const from_calculated = std::max(tx_layout.valid_from(), default_valid_from);
-    if (bloom_filter_.Match(tx_layout.digest(), from_calculated, tx_layout.valid_until()))
+    std::pair<bool, std::size_t> const result =
+        bloom_filter_.Match(tx_layout.digest(), tx_layout.valid_until());
+    bloom_filter_queried_bit_count_->set(result.second);
+    if (result.first)
     {
+      bloom_filter_positive_count_->increment();
       potential_duplicates.insert(tx_layout.digest());
     }
-
     bloom_filter_query_count_->increment();
   }
 
-  // calculate the maximum search depth
-  uint64_t const last_block_num =
-      block->block_number - std::min(block->block_number, uint64_t{MAXIMUM_TX_VALIDITY_PERIOD});
-
-  // filter the potential duplicates by traversing back down the chain
   DigestSet duplicates{};
-  for (;;)
+  if (!potential_duplicates.empty())
   {
-    // Traversing the chain fully is costly: break out early if we know the transactions are all
-    // duplicated (or both sets are empty)
-    if (potential_duplicates.size() == duplicates.size())
+    for (;;)
     {
-      break;
-    }
-
-    // check the transactions for the current block
-    for (auto const &slice : block->slices)
-    {
-      for (auto const &tx : slice)
+      for (auto const &slice : block->slices)
       {
-        if (potential_duplicates.find(tx.digest()) != potential_duplicates.end())
+        for (auto const &tx : slice)
         {
-          duplicates.insert(tx.digest());
+          if (potential_duplicates.count(tx.digest()) > 0)
+          {
+            duplicates.insert(tx.digest());
+          }
         }
       }
-    }
 
-    // exit the search loop if we have reached the last possible point to search back in time
-    if (last_block_num == block->block_number)
-    {
-      break;
-    }
-
-    // exit the loop once we can no longer find the block
-    if (!LookupBlock(block->previous_hash, block))
-    {
-      break;
+      // Exit the loop once all known transactions are duplicates.
+      if (potential_duplicates.size() == duplicates.size()
+          // or we can no longer find the block
+          || !LookupBlock(block->previous_hash, block))
+      {
+        break;
+      }
     }
   }
 
-  bloom_filter_false_positive_count_->add(potential_duplicates.size() - duplicates.size());
-  bloom_filter_positive_count_->add(duplicates.size());
+  auto const false_positives = potential_duplicates.size() - duplicates.size();
+
+  bloom_filter_false_positive_count_->add(false_positives);
 
   return duplicates;
 }
