@@ -71,6 +71,7 @@ const std::chrono::seconds      WAIT_BEFORE_ASKING_FOR_MISSING_TX_INTERVAL{5};
 const std::size_t               MIN_BLOCK_SYNC_SLIPPAGE_FOR_WAITLESS_SYNC_OF_MISSING_TXS{30};
 const std::chrono::seconds      WAIT_FOR_TX_TIMEOUT_INTERVAL{240};
 const uint32_t                  THRESHOLD_FOR_FAST_SYNCING{100u};
+const std::size_t               MAX_ATTEMPTED_PANIC_REVERTS{10};
 
 }  // namespace
 
@@ -868,21 +869,76 @@ void BlockCoordinator::Panic()
 {
   FETCH_LOG_ERROR(LOGGING_NAME, "In Panic -> Reverting to Genesis");
 
-  auto const genesis_digest = chain::GetGenesisDigest();
-  auto const genesis_merkle = chain::GetGenesisMerkleRoot();
+  // attempt to locate the point at check
+  bool        revert_successful{false};
+  std::size_t revert_attempts{0};
 
-  if (!storage_unit_.RevertToHash(genesis_merkle, 0))
+  // walk down the chain trying to find the closest hash to the one that we
+  MainChain::BlockPtr block{};
+
+  // attempt to perform a number of reverts. we only try and revert back to genesis at the point
+  while (revert_attempts < MAX_ATTEMPTED_PANIC_REVERTS)
   {
-    FETCH_LOG_CRITICAL(LOGGING_NAME, "Unable to revert back to Genesis!!!");
+    // on the first loop, or a failure to lookup the previous block then restart from the head of
+    // the chain again
+    if (!block)
+    {
+      // lookup the heaviest block
+      block = chain_.GetHeaviestBlock();
+
+      // edge case - something is very broken with the main chain
+      if (!block)
+      {
+        break;
+      }
+    }
+
+    // break from the search loop as soon as we have found a known check point that we can revert
+    // back to
+    if (storage_unit_.HashExists(block->merkle_hash, block->block_number))
+    {
+      // attempt the revert -  we expect this to work almost 100% of the time, however, in rare
+      // cases it could be the case that the underlying main chain service has made some updates to
+      // the chain and in which case this might not be present.
+      //
+      // In this failure mode we simply continue our search back down the chain. If there are
+      // greater than MAX_ATTEMPTED_PANIC_REVERTS then, something serious has occurred. In order to
+      // proceed revert back to the genesis state
+      if (RevertToBlock(*block))
+      {
+        revert_successful = true;
+        break;
+      }
+
+      // failed to revert the
+      ++revert_attempts;
+    }
+
+    // continue to walk down the chain - this might fail in the case of a large amount of forking,
+    // however, this will be caught at the start of the next loop
+    block = chain_.GetBlock(block->previous_hash);
   }
 
-  if (dag_ && !dag_->RevertToEpoch(0))
+  // in the worst case when this process completely fails then revert back to the catch all of
+  // reverting back to genesis
+  if (!revert_successful)
   {
-    FETCH_LOG_CRITICAL(LOGGING_NAME, "Unable to revert DAG back to genesis!");
-  }
+    auto const genesis_digest = chain::GetGenesisDigest();
+    auto const genesis_merkle = chain::GetGenesisMerkleRoot();
 
-  last_executed_block_.ApplyVoid([&](auto &digest) { digest = genesis_digest; });
-  execution_manager_.SetLastProcessedBlock(genesis_digest);
+    if (!storage_unit_.RevertToHash(genesis_merkle, 0))
+    {
+      FETCH_LOG_CRITICAL(LOGGING_NAME, "Unable to revert back to Genesis!!!");
+    }
+
+    if (dag_ && !dag_->RevertToEpoch(0))
+    {
+      FETCH_LOG_CRITICAL(LOGGING_NAME, "Unable to revert DAG back to genesis!");
+    }
+
+    last_executed_block_.ApplyVoid([&](auto &digest) { digest = genesis_digest; });
+    execution_manager_.SetLastProcessedBlock(genesis_digest);
+  }
 
   // delay the state machine in these error cases, to allow the network to catch up if the issue
   // is network related and if nothing else restrict logs being spammed
