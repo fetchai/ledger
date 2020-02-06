@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "math/tensor/tensor.hpp"
+#include "ml/charge_estimation/ops/constants.hpp"
 #include "ml/dataloaders/dataloader.hpp"
 #include "ml/optimisation/learning_rate_params.hpp"
 
@@ -86,6 +87,8 @@ public:
   friend struct serializers::MapSerializer;
   virtual OptimiserType OptimiserCode() = 0;
 
+  fetch::ml::OperationsCount ChargeEstimate() const;
+
 protected:
   std::shared_ptr<Graph<T>> graph_;
   std::vector<std::string>  input_node_names_ = {};
@@ -95,6 +98,8 @@ protected:
   std::vector<std::shared_ptr<fetch::ml::ops::Trainable<TensorType>>> graph_trainables_;
   std::vector<TensorType>                                             gradients_;
   SizeType                                                            epoch_ = SIZE_NOT_SET;
+
+  virtual fetch::ml::OperationsCount ChargeApplyGradients() const;
 
 private:
   DataType                                       loss_{};

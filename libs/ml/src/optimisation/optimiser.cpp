@@ -418,6 +418,27 @@ typename Optimiser<TensorType>::SizeType Optimiser<TensorType>::UpdateBatchSize(
 }
 
 template <typename TensorType>
+OperationsCount Optimiser<TensorType>::ChargeEstimate() const
+{
+  // TODO(VH) ML-520 implement estimation
+  // while ( ... batch_size? ) {
+  // forward, <-- graph.ChargeForward()
+  // back, <-- graph.ChargeBackward()
+  // applyGradients, <-- this.ChargeApplyGradients()
+  // UpdateLearningRate, <-- a constant (?)
+  // printStats, <-- a constant (?)
+  return graph_->ChargeForward(output_node_name_) + graph_->ChargeBackward(output_node_name_) +
+         this->ChargeApplyGradients() /* + ... */;
+}
+
+template <typename TensorType>
+OperationsCount Optimiser<TensorType>::ChargeApplyGradients() const
+{
+  // TODO(ML-520): make a pure virtual and override in each Optimizer.
+  return 0;
+}
+
+template <typename TensorType>
 void Optimiser<TensorType>::ResetGradients()
 {
   this->graph_->ResetGradients();

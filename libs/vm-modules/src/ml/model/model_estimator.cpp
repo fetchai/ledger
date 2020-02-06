@@ -159,6 +159,17 @@ ChargeAmount ModelEstimator::LayerAddPool(Ptr<String> const &layer, SizeType con
   return MaximumCharge(layer->string() + NOT_IMPLEMENTED_MESSAGE);
 }
 
+ChargeAmount ModelEstimator::LayerAddEmbeddings(fetch::vm::Ptr<fetch::vm::String> const &layer,
+                                                math::SizeType const &                   dimensions,
+                                                math::SizeType const &data_points, bool stub)
+{
+  FETCH_UNUSED(layer);
+  FETCH_UNUSED(dimensions);
+  FETCH_UNUSED(data_points);
+  FETCH_UNUSED(stub);
+  return MaximumCharge(layer->string() + NOT_IMPLEMENTED_MESSAGE);
+}
+
 ChargeAmount ModelEstimator::LayerAddConvActivation(
     Ptr<String> const &layer, SizeType const &output_channels, SizeType const &input_channels,
     SizeType const &kernel_size, SizeType const &stride_size, Ptr<String> const &activation)
