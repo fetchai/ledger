@@ -132,7 +132,7 @@ std::vector<math::SizeType> Gelu<TensorType>::ComputeOutputShape(VecTensorType c
 }
 
 template <typename TensorType>
-OperationsCount Gelu<TensorType>::ChargeForward()
+OperationsCount Gelu<TensorType>::ChargeForward() const
 {
   assert(!this->batch_input_shapes_.empty());
   OperationsCount cost = fetch::ml::charge_estimation::ops::GELU_PER_ELEMENT *
@@ -141,7 +141,7 @@ OperationsCount Gelu<TensorType>::ChargeForward()
 }
 
 template <typename TensorType>
-OperationsCount Gelu<TensorType>::ChargeBackward()
+OperationsCount Gelu<TensorType>::ChargeBackward() const
 {
   assert(!this->batch_input_shapes_.empty());
   OperationsCount cost = fetch::ml::charge_estimation::ops::GELU_BACKWARD_PER_ELEMENT *

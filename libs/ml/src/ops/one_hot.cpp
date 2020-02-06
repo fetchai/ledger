@@ -101,7 +101,7 @@ std::vector<fetch::math::SizeType> OneHot<T>::ComputeOutputShape(
 }
 
 template <typename TensorType>
-OperationsCount OneHot<TensorType>::ChargeForward()
+OperationsCount OneHot<TensorType>::ChargeForward() const
 {
   assert(!this->batch_input_shapes_.empty());
   OperationsCount cost = fetch::ml::charge_estimation::ops::ONE_HOT_PER_ELEMENT *

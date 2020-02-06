@@ -406,7 +406,7 @@ bool Model<TensorType>::DataLoaderIsSet()
 }
 
 template <typename TensorType>
-OperationsCount Model<TensorType>::ChargeForward()
+OperationsCount Model<TensorType>::ChargeForward() const
 {
   return this->graph_ptr_->ChargeForward(this->output_);
 }
