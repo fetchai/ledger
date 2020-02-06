@@ -193,7 +193,7 @@ OperationsCount MaxPool1D<TensorType>::ChargeForward() const
 }
 
 template <typename TensorType>
-OperationsCount MaxPool1D<TensorType>::ChargeBackward()
+OperationsCount MaxPool1D<TensorType>::ChargeBackward() const
 {
   assert(!this->batch_output_shape_.empty());
   OperationsCount cost = fetch::ml::charge_estimation::ops::MAX_PER_ELEMENT *
