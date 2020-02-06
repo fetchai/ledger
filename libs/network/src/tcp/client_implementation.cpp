@@ -246,7 +246,7 @@ void TCPClientImplementation::ReadHeader() noexcept
     else if (!posted_close_)
     {
       // We expect to get an ec here when the socked is closed via a post
-      FETCH_LOG_INFO(LOGGING_NAME, "Socket closed inside ReadHeader: ", ec.message());
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Socket closed inside ReadHeader: ", ec.message());
       SignalLeave();
     }
   };
@@ -428,7 +428,7 @@ void TCPClientImplementation::WriteNext(SharedSelfType const &selfLock)
   {
     if (!posted_close_)
     {
-      FETCH_LOG_ERROR(LOGGING_NAME, "Failed to lock socket in WriteNext!");
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Failed to lock socket in WriteNext!");
     }
 
     SignalLeave();

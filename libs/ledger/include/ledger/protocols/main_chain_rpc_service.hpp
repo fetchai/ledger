@@ -101,7 +101,7 @@ public:
     START_SYNC_WITH_PEER,
     REQUEST_NEXT_BLOCKS,
     WAIT_FOR_NEXT_BLOCKS,
-    COMPLETE_SYNC_WITH_PEER
+    COMPLETE_SYNC_WITH_PEER,
   };
 
   using MuddleEndpoint  = muddle::MuddleEndpoint;
@@ -168,15 +168,17 @@ public:
   MainChainRpcService &operator=(MainChainRpcService &&) = delete;
 
 private:
+  using BlockList       = fetch::ledger::MainChainProtocol::Blocks;
   using StateMachine    = core::StateMachine<State>;
   using StateMachinePtr = std::shared_ptr<StateMachine>;
+  using BlockPtr        = MainChain::BlockPtr;
   using DeadlineTimer   = fetch::moment::DeadlineTimer;
 
   /// @name Utilities
   /// @{
   Address GetRandomTrustedPeer() const;
 
-  void HandleChainResponse(Address const &address, Blocks blocks);
+  void HandleChainResponse(Address const &address, BlockList blocks);
   template <class Begin, class End>
   void HandleChainResponse(Address const &address, Begin begin, End end);
   /// @}
@@ -190,8 +192,7 @@ private:
   State OnWaitForBlocks();
   State OnCompleteSyncWithPeer();
 
-  bool  ValidBlock(Block const &block) const;
-  State WalkBack();
+  bool ValidBlock(Block const &block, char const *action) const;
   /// @}
 
   /// @name System Components
@@ -226,12 +227,11 @@ private:
   bool                  healthy_{false};
   BlockHash             current_missing_block_;
   std::atomic<uint16_t> loose_blocks_seen_{0};
-
-  std::size_t back_stride_{1};
   /// @}
 
   /// @name Telemetry
   /// @{
+  telemetry::CounterPtr         gossiped_blocks_dropped_;
   telemetry::CounterPtr         recv_block_count_;
   telemetry::CounterPtr         recv_block_valid_count_;
   telemetry::CounterPtr         recv_block_loose_count_;
