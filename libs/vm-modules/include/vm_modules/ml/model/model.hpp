@@ -128,6 +128,10 @@ public:
 
   fetch::vm::ChargeAmount EstimatePredict(vm::Ptr<vm_modules::math::VMTensor> const &data);
 
+  fetch::vm::ChargeAmount EstimateFit(vm::Ptr<vm_modules::math::VMTensor> const &data);
+
+  fetch::vm::ChargeAmount EstimateEvaluate(vm::Ptr<vm_modules::math::VMTensor> const &data);
+
   static void Bind(fetch::vm::Module &module, bool experimental_enabled);
 
   void SetModel(ModelPtrType const &instance);

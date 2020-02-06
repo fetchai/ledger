@@ -897,6 +897,35 @@ ChargeAmount VMModel::EstimatePredict(const vm::Ptr<math::VMTensor> &data)
 }
 
 /**
+ * @brief VMModel::EstimatePredict calculates a charge amount, required for a 1 epoch training
+ * @param data
+ * @return charge estimation
+ */
+ChargeAmount VMModel::EstimateFit(const vm::Ptr<math::VMTensor> &data)
+{
+  ChargeAmount const cost =
+      model_->ChargeForward() + model_->ChargeBackward() + model_->ChargeOptimiser();
+  SizeType const     batch_size = data->shape().back();
+  ChargeAmount const batch_cost = batch_size * cost;
+  FETCH_LOG_INFO("Model", " 1 epoch training estimated batch cost is " +
+                              std::to_string(batch_size) + " * " + std::to_string(cost) + " = " +
+                              std::to_string(batch_cost));
+  return batch_cost;
+}
+
+/**
+ * @brief VMModel::EstimateEvaluate calculates a charge amount, required for model evaluation
+ * @param data
+ * @return charge estimation
+ */
+ChargeAmount VMModel::EstimateEvaluate(const vm::Ptr<math::VMTensor> &data)
+{
+  FETCH_UNUSED(data);
+  // TODO(VH): implement cost calculation
+  return 0;
+}
+
+/**
  * for regressor and classifier we can't prepare the dataloder until after compile has begun
  * because model_ isn't ready until then.
  */
