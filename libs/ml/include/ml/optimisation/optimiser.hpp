@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "math/tensor/tensor.hpp"
+#include "ml/charge_estimation/ops/constants.hpp"
 #include "ml/dataloaders/dataloader.hpp"
 #include "ml/optimisation/learning_rate_params.hpp"
 
@@ -85,6 +86,8 @@ public:
   template <typename X, typename D>
   friend struct serializers::MapSerializer;
   virtual OptimiserType OptimiserCode() = 0;
+
+  fetch::ml::OperationsCount ChargeEstimate() const;
 
 protected:
   std::shared_ptr<Graph<T>> graph_;

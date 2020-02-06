@@ -418,6 +418,13 @@ typename Optimiser<TensorType>::SizeType Optimiser<TensorType>::UpdateBatchSize(
 }
 
 template <typename TensorType>
+OperationsCount Optimiser<TensorType>::ChargeEstimate() const
+{
+  // TODO(VH) ML-520 implement estimation
+  return 0;
+}
+
+template <typename TensorType>
 void Optimiser<TensorType>::ResetGradients()
 {
   this->graph_->ResetGradients();

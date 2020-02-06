@@ -110,6 +110,8 @@ public:
   friend class fetch::vm_modules::ml::model::ModelEstimator;
 
   virtual fetch::ml::OperationsCount ChargeForward() const;
+  virtual fetch::ml::OperationsCount ChargeBackward() const;
+  virtual fetch::ml::OperationsCount ChargeOptimiser() const;
 
 protected:
   ModelConfig<DataType> model_config_;
