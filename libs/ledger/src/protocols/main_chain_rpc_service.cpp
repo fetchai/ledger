@@ -72,6 +72,9 @@ MainChainRpcService::MainChainRpcService(MuddleEndpoint &             endpoint,
   , rpc_client_(rpc_client)
   , state_machine_{std::make_shared<StateMachine>("MainChain", State::SYNCHRONISING,
                                                   [](State state) { return ToString(state); })}
+  , gossiped_blocks_dropped_{telemetry::Registry::Instance().CreateCounter(
+        "ledger_mainchain_service_gossiped_blocks_dropped_total",
+        "The number of gossiped blocks dropped from the network")}
   , recv_block_count_{telemetry::Registry::Instance().CreateCounter(
         "ledger_mainchain_service_recv_block_total",
         "The number of received blocks from the network")}
