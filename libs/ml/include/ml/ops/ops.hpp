@@ -170,7 +170,7 @@ public:
    * @return estimated charge amount, necessary for performing a backward pass on data of given
    * shapes.
    */
-  virtual OperationsCount ChargeBackward()
+  virtual OperationsCount ChargeBackward() const
   {
     // TODO(ML-483): make a pure virtual method after all Ops have their overrides;
     FETCH_LOG_ERROR(Descriptor(),

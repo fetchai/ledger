@@ -109,6 +109,13 @@ OperationsCount OneHot<TensorType>::ChargeForward() const
   return cost;
 }
 
+template <typename TensorType>
+OperationsCount OneHot<TensorType>::ChargeBackward() const
+{
+  OperationsCount cost = 0;
+  return cost;
+}
+
 ///////////////////////////////
 /// EXPLICIT INSTANTIATIONS ///
 ///////////////////////////////

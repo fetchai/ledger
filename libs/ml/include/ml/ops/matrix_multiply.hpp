@@ -72,6 +72,7 @@ public:
   }
 
   OperationsCount ChargeForward() const override;
+  OperationsCount ChargeBackward() const override;
 
 private:
   // caching tensors and shapes

@@ -63,6 +63,7 @@ public:
   char const *Descriptor() const override;
 
   OperationsCount ChargeForward() const override;
+  OperationsCount ChargeBackward() const override;
 };
 
 }  // namespace ops

@@ -90,9 +90,18 @@ std::vector<math::SizeType> Sqrt<TensorType>::ComputeOutputShape(VecTensorType c
 template <typename TensorType>
 OperationsCount Sqrt<TensorType>::ChargeForward() const
 {
-  assert(!this->batch_output_shape_.empty());
+  assert(!this->batch_input_shapes_.empty());
   OperationsCount cost = fetch::ml::charge_estimation::ops::SQRT_PER_ELEMENT *
                          this->TotalElementsIn({this->batch_input_shapes_});
+  return cost;
+}
+
+template <typename TensorType>
+OperationsCount Sqrt<TensorType>::ChargeBackward() const
+{
+  assert(!this->batch_output_shape_.empty());
+  OperationsCount cost = fetch::ml::charge_estimation::ops::SQRT_BACKWARD_PER_ELEMENT *
+                         this->TotalElementsIn({this->batch_output_shape_});
   return cost;
 }
 

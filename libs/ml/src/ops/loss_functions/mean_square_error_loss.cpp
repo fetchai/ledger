@@ -257,7 +257,7 @@ OperationsCount MeanSquareErrorLoss<TensorType>::ChargeForward() const
 }
 
 template <typename TensorType>
-OperationsCount MeanSquareErrorLoss<TensorType>::ChargeBackward()
+OperationsCount MeanSquareErrorLoss<TensorType>::ChargeBackward() const
 {
   assert(!this->batch_input_shapes_.empty());
   OperationsCount cost = fetch::ml::charge_estimation::ops::MEAN_SQ_ERROR_BACKWARD_PER_ELEMENT *
