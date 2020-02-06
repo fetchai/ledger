@@ -44,7 +44,7 @@ void LeakyRelu(ArrayType const &t, typename ArrayType::Type const &a, ArrayType 
   while (it.is_valid())
   {
     *rit = fetch::vectorise::Max(*it, typename ArrayType::Type(0));
-    if (*it >= static_cast<DataType>(0))
+    if (*it >= DataType{0})
     {
       // f(x)=x for x>=0
       *rit = *it;
@@ -99,7 +99,7 @@ void LeakyRelu(ArrayType const &t, ArrayType const &a, ArrayType &ret)
     while (it.is_valid())
     {
       *rit = fetch::vectorise::Max(*it, typename ArrayType::Type(0));
-      if (*it >= static_cast<DataType>(0))
+      if (*it >= DataType{0})
       {
         // f(x)=x for x>=0
         *rit = *it;

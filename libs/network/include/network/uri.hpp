@@ -20,7 +20,6 @@
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/byte_array/encoders.hpp"
 #include "core/serializers/group_definitions.hpp"
-#include "crypto/fnv.hpp"
 #include "network/peer.hpp"
 
 #include <cassert>
@@ -84,6 +83,7 @@ public:
   Uri &operator=(Uri &&) = default;
   bool operator==(Uri const &other) const;
   bool operator!=(Uri const &other) const;
+  bool operator<(Uri const &other) const;
 
   std::string ToString() const;
 
@@ -123,6 +123,11 @@ inline bool Uri::operator==(Uri const &other) const
 inline bool Uri::operator!=(Uri const &other) const
 {
   return !(*this == other);
+}
+
+inline bool Uri::operator<(Uri const &other) const
+{
+  return uri_ < other.uri_;
 }
 
 }  // namespace network

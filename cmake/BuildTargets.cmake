@@ -318,6 +318,14 @@ function (configure_vendor_targets)
   set(UTF8_SAMPLES OFF CACHE BOOL "Enable building samples for UTF8-CPP" FORCE)
   add_subdirectory(${FETCH_ROOT_VENDOR_DIR}/utfcpp)
 
+  # noisec
+  set(USE_SODIUM OFF CACHE BOOL "Use Libsodium for crypto" FORCE)
+  set(EXTERNAL_OPENSSL vendor-openssl CACHE STRING "Use vendor-openssl in NoiseC" FORCE)
+  add_subdirectory(${FETCH_ROOT_VENDOR_DIR}/noisec)
+  add_library(vendor-noisec INTERFACE)
+  target_link_libraries(vendor-noisec INTERFACE noise_protocol)
+  target_include_directories(vendor-noisec INTERFACE ${FETCH_ROOT_VENDOR_DIR}/noisec/include)
+
 endfunction (configure_vendor_targets)
 
 function (configure_library_targets)
@@ -325,15 +333,6 @@ function (configure_library_targets)
   set(library_root ${FETCH_ROOT_DIR}/libs)
 
   file(GLOB children RELATIVE ${library_root} ${library_root}/*)
-
-  if (APPLE)
-    # Temporarily disable oef builds
-    list(FILTER
-         children
-         EXCLUDE
-         REGEX
-         ".*oef-core.*")
-  endif (APPLE)
 
   set(dirlist "")
   foreach (child ${children})

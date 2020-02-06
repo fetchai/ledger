@@ -18,6 +18,7 @@
 
 #include "ledger/protocols/main_chain_rpc_service.hpp"
 
+#include "chain/constants.hpp"
 #include "chain/transaction_layout_rpc_serializers.hpp"
 #include "core/byte_array/encoders.hpp"
 #include "core/serializers/counter.hpp"
@@ -54,6 +55,8 @@ using PromiseState           = fetch::service::PromiseState;
 using State                  = MainChainRpcService::State;
 using Mode                   = MainChainRpcService::Mode;
 
+constexpr uint64_t MAX_SENSIBLE_STEP_BACK = 10000;
+
 }  // namespace
 
 MainChainRpcService::MainChainRpcService(MuddleEndpoint &             endpoint,
@@ -84,6 +87,9 @@ MainChainRpcService::MainChainRpcService(MuddleEndpoint &             endpoint,
   , recv_block_invalid_count_{telemetry::Registry::Instance().CreateCounter(
         "ledger_mainchain_service_recv_block_invalid_total",
         " The total number of invalid blocks received from the network")}
+  , recv_block_dirty_count_{telemetry::Registry::Instance().CreateCounter(
+        "ledger_mainchain_service_recv_block_dirty_total",
+        " The total number of dirty blocks received from the network")}
   , state_synchronising_{telemetry::Registry::Instance().CreateCounter(
         "ledger_mainchain_service_state_synchronising_total",
         "The number of times in the synchronisiing state")}
@@ -103,7 +109,7 @@ MainChainRpcService::MainChainRpcService(MuddleEndpoint &             endpoint,
         "ledger_mainchain_service_state_complete_sync_with_peer_total",
         "The number of times in the complete sync with peer state")}
   , state_current_{telemetry::Registry::Instance().CreateGauge<uint32_t>(
-        "ledger_mainchain_service_state_complete_sync_with_peer_total",
+        "ledger_mainchain_service_state",
         "The number of times in the complete sync with peer state")}
   , new_block_duration_{telemetry::Registry::Instance().CreateHistogram(
         {1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1, 1.0, 1e1, 1e2, 1e3},
@@ -118,10 +124,10 @@ MainChainRpcService::MainChainRpcService(MuddleEndpoint &             endpoint,
   // clang-format off
   state_machine_->RegisterHandler(State::SYNCHRONISING,           this, &MainChainRpcService::OnSynchronising);
   state_machine_->RegisterHandler(State::SYNCHRONISED,            this, &MainChainRpcService::OnSynchronised);
-  state_machine_->RegisterHandler(State::START_SYNC_WITH_PEER,  this, &MainChainRpcService::OnStartSyncWithPeer);
-  state_machine_->RegisterHandler(State::REQUEST_NEXT_BLOCKS, this, &MainChainRpcService::OnRequestNextSetOfBlocks);
+  state_machine_->RegisterHandler(State::START_SYNC_WITH_PEER,    this, &MainChainRpcService::OnStartSyncWithPeer);
+  state_machine_->RegisterHandler(State::REQUEST_NEXT_BLOCKS,     this, &MainChainRpcService::OnRequestNextSetOfBlocks);
   state_machine_->RegisterHandler(State::WAIT_FOR_NEXT_BLOCKS,    this, &MainChainRpcService::OnWaitForBlocks);
-  state_machine_->RegisterHandler(State::COMPLETE_SYNC_WITH_PEER,    this, &MainChainRpcService::OnCompleteSyncWithPeer);
+  state_machine_->RegisterHandler(State::COMPLETE_SYNC_WITH_PEER, this, &MainChainRpcService::OnCompleteSyncWithPeer);
   // clang-format on
 
   state_machine_->OnStateChange([](State current, State previous) {
@@ -185,10 +191,9 @@ void MainChainRpcService::OnNewBlock(Address const &from, Block &block, Address 
 
   trust_.AddFeedback(transmitter, p2p::TrustSubject::BLOCK, p2p::TrustQuality::NEW_INFORMATION);
 
-  if (!ValidBlock(block, "new block"))
+  if (!ValidBlock(block))
   {
-    FETCH_LOG_WARN(LOGGING_NAME,
-                   "Gossiped block did not prove valid. Loose blocks seen: ", loose_blocks_seen_);
+
     ++loose_blocks_seen_;
     return;
   }
@@ -196,31 +201,29 @@ void MainChainRpcService::OnNewBlock(Address const &from, Block &block, Address 
   // add the new block to the chain
   auto const status = chain_.AddBlock(block);
 
-  char const *status_text = "Unknown";
   switch (status)
   {
   case BlockStatus::ADDED:
-    status_text = "Added";
     recv_block_valid_count_->increment();
     break;
   case BlockStatus::LOOSE:
-    status_text = "Loose";
     recv_block_loose_count_->increment();
     ++loose_blocks_seen_;
     break;
   case BlockStatus::DUPLICATE:
-    status_text = "Duplicate";
     recv_block_duplicate_count_->increment();
     break;
   case BlockStatus::INVALID:
-    status_text = "Invalid";
+    recv_block_invalid_count_->increment();
+    break;
+  case BlockStatus::DIRTY:
     recv_block_invalid_count_->increment();
     break;
   }
 
-  FETCH_LOG_INFO(LOGGING_NAME, "New Block: 0x", block.hash.ToHex(), " (from peer: ", ToBase64(from),
-                 " num txs: ", block.GetTransactionCount(), " num: ", block.block_number,
-                 " status: ", status_text, ")");
+  FETCH_LOG_INFO(LOGGING_NAME, "New Block: #", block.block_number, " 0x", block.hash.ToHex(),
+                 " (from peer: ", ToBase64(from), " num txs: ", block.GetTransactionCount(),
+                 " status: ", ToString(status), ")");
 }
 
 MainChainRpcService::Address MainChainRpcService::GetRandomTrustedPeer() const
@@ -245,7 +248,7 @@ MainChainRpcService::Address MainChainRpcService::GetRandomTrustedPeer() const
   return address;
 }
 
-void MainChainRpcService::HandleChainResponse(Address const &address, BlockList blocks)
+void MainChainRpcService::HandleChainResponse(Address const &address, Blocks blocks)
 {
   // default expectations is that blocks are returned in reverse order, later-to-earlier
   HandleChainResponse(address, blocks.rbegin(), blocks.rend());
@@ -254,68 +257,52 @@ void MainChainRpcService::HandleChainResponse(Address const &address, BlockList 
 template <class Begin, class End>
 void MainChainRpcService::HandleChainResponse(Address const &address, Begin begin, End end)
 {
-  std::size_t added{0};
-  std::size_t loose{0};
-  std::size_t duplicate{0};
-  std::size_t invalid{0};
+  std::map<BlockStatus, std::size_t> status_stats;
 
   for (auto it = begin; it != end; ++it)
   {
+    auto block = *it;
+
     // skip the genesis block
-    if (it->IsGenesis())
+    if (block->IsGenesis())
     {
       continue;
     }
 
     // recompute the digest
-    it->UpdateDigest();
+    block->UpdateDigest();
 
     // add the block
-    if (!ValidBlock(*it, "during fwd sync"))
+    if (!ValidBlock(*block))
     {
-      FETCH_LOG_DEBUG(LOGGING_NAME, "Synced bad proof block: 0x", it->hash.ToHex(),
-                      " from: muddle://", ToBase64(address));
-      ++invalid;
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Synced bad proof block 0x", block->hash.ToHex(),
+                      " from muddle://", ToBase64(address));
+      ++status_stats[BlockStatus::INVALID];
       continue;
     }
 
-    auto const status = chain_.AddBlock(*it);
+    auto const status = chain_.AddBlock(std::move(block));
 
-    switch (status)
-    {
-    case BlockStatus::ADDED:
-      FETCH_LOG_DEBUG(LOGGING_NAME, "Synced new block: 0x", it->hash.ToHex(), " from: muddle://",
-                      ToBase64(address));
-      ++added;
-      break;
-    case BlockStatus::LOOSE:
-      FETCH_LOG_DEBUG(LOGGING_NAME, "Synced loose block: 0x", it->hash.ToHex(), " from: muddle://",
-                      ToBase64(address));
-      ++loose;
-      break;
-    case BlockStatus::DUPLICATE:
-      FETCH_LOG_DEBUG(LOGGING_NAME, "Synced duplicate block: 0x", it->hash.ToHex(),
-                      " from: muddle://", ToBase64(address));
-      ++duplicate;
-      break;
-    case BlockStatus::INVALID:
-      FETCH_LOG_DEBUG(LOGGING_NAME, "Synced invalid block: 0x", it->hash.ToHex(),
-                      " from: muddle://", ToBase64(address));
-      ++invalid;
-      break;
-    }
+    ++status_stats[status];
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Sync: ", ToString(status), " block 0x", (*it)->hash.ToHex(),
+                    " from muddle://", ToBase64(address));
   }
 
-  if (invalid != 0u)
+  if (status_stats.count(BlockStatus::INVALID) != 0u)
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Synced Summary: Invalid: ", invalid, " Added: ", added,
-                   " Loose: ", loose, " Duplicate: ", duplicate, " from: muddle://",
-                   ToBase64(address));
+    FETCH_LOG_WARN(
+        LOGGING_NAME, "Synced Summary:", " Invalid: ", status_stats[BlockStatus::INVALID],
+        " Added: ", status_stats[BlockStatus::ADDED], " Loose: ", status_stats[BlockStatus::LOOSE],
+        " Duplicate: ", status_stats[BlockStatus::DUPLICATE],
+        " Dirty: ", status_stats[BlockStatus::DIRTY], " from muddle://", ToBase64(address));
   }
   else
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Synced Summary: Added: ", added, " Loose: ", loose,
-                   " Duplicate: ", duplicate, " from: muddle://", ToBase64(address));
+    FETCH_LOG_INFO(LOGGING_NAME, "Synced Summary:", " Added: ", status_stats[BlockStatus::ADDED],
+                   " Loose: ", status_stats[BlockStatus::LOOSE],
+                   " Duplicate: ", status_stats[BlockStatus::DUPLICATE],
+                   " Dirty: ", status_stats[BlockStatus::DIRTY], " from muddle://",
+                   ToBase64(address));
   }
 }
 
@@ -364,7 +351,7 @@ State MainChainRpcService::OnSynchronised(State current, State previous)
   }
   else if (resync_interval_.HasExpired())
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Kicking forward sync periodically");
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Kicking forward sync periodically");
 
     next_state = State::SYNCHRONISING;
   }
@@ -388,9 +375,9 @@ State MainChainRpcService::OnStartSyncWithPeer()
 
   if (block_resolving_ && !current_peer_address_.empty())
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Resolving: #", block_resolving_->block_number, " 0x",
-                   block_resolving_->hash.ToHex(), " from: muddle://",
-                   current_peer_address_.ToBase64());
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Resolving: #", block_resolving_->block_number, " 0x",
+                    block_resolving_->hash.ToHex(), " from: muddle://",
+                    current_peer_address_.ToBase64());
   }
 
   return State::REQUEST_NEXT_BLOCKS;
@@ -433,15 +420,15 @@ State MainChainRpcService::OnWaitForBlocks()
 
   // if we are still waiting for the promise to resolve
   auto const status = current_request_->state();
-  if (status == PromiseState::WAITING)
+  switch (status)
   {
+  case PromiseState::WAITING:
     state_machine_->Delay(std::chrono::milliseconds{100});
     return State::WAIT_FOR_NEXT_BLOCKS;
-  }
 
-  // at this point the promise has either resolved successfully or not.
-  if ((status == PromiseState::FAILED) || (status == PromiseState::TIMEDOUT))
-  {
+    // at this point the promise has either resolved successfully or not.
+  case PromiseState::FAILED:
+  case PromiseState::TIMEDOUT:
     if (++consecutive_failures_ >= 3)
     {
       // too many failures give up on this peer
@@ -450,10 +437,12 @@ State MainChainRpcService::OnWaitForBlocks()
 
     state_machine_->Delay(std::chrono::milliseconds{100 * consecutive_failures_});
     return State::REQUEST_NEXT_BLOCKS;
+  case PromiseState::SUCCESS:;
   }
 
   // If we have passed all these checks then we have successfully retrieved a travelogue from our
   // peer
+  healthy_ = true;
   MainChainProtocol::Travelogue log{};
   if (!current_request_->GetResult(log))
   {
@@ -467,11 +456,11 @@ State MainChainRpcService::OnWaitForBlocks()
   // this point
   if (log.status == TravelogueStatus::NOT_FOUND)
   {
-    // if the responding block was not found then walk back by one block
-    block_resolving_ = chain_.GetBlock(block_resolving_->previous_hash);
-
-    return State::REQUEST_NEXT_BLOCKS;
+    // if the responding block was not found then start walking back slowly
+    return WalkBack();
   }
+  // The remote peer did not respond with NOT_FOUND, we can reset the stride.
+  back_stride_ = 1;
 
   // We always expect at least 1 block to be synced during this process, failure to do this is not
   // normal and implies we should try and sync with another peer
@@ -485,10 +474,11 @@ State MainChainRpcService::OnWaitForBlocks()
 
   // we have now reached the heaviest tip
   auto const &latest_block = log.blocks.back();
+  assert(!latest_block->hash.empty());  // should be set by HandleChainResponse()
 
   // check to see if we have either reached the heaviest tip or we are starting to advance past the
   // heaviest block number of the peer (presumably we are chasing an side branch)
-  if ((latest_block.hash == log.heaviest_hash) || (latest_block.block_number > log.block_number))
+  if ((latest_block->hash == log.heaviest_hash) || (latest_block->block_number > log.block_number))
   {
     block_resolving_ = {};
   }
@@ -498,7 +488,7 @@ State MainChainRpcService::OnWaitForBlocks()
     // to request the information from
     for (auto it = log.blocks.rbegin(); it != log.blocks.rend(); ++it)
     {
-      block_resolving_ = chain_.GetBlock(it->hash);
+      block_resolving_ = chain_.GetBlock((*it)->hash);
       if (block_resolving_)
       {
         break;
@@ -522,17 +512,78 @@ State MainChainRpcService::OnCompleteSyncWithPeer()
   return State::SYNCHRONISED;
 }
 
-bool MainChainRpcService::ValidBlock(Block const &block, char const *action) const
+bool MainChainRpcService::ValidBlock(Block const &block) const
 {
-  try
+  return !consensus_ || consensus_->ValidBlock(block) == ConsensusInterface::Status::YES;
+}
+
+State MainChainRpcService::WalkBack()
+{
+  assert(block_resolving_);
+  using chain::GetGenesisDigest;
+
+  std::size_t current_height = block_resolving_->block_number;
+  switch (current_height)
   {
-    return !consensus_ || consensus_->ValidBlock(block) == ConsensusInterface::Status::YES;
+  case 0:
+    assert(block_resolving_->IsGenesis());
+    // genesis digest mismatch, stop sync with this peer
+    block_resolving_.reset();
+    back_stride_ = 1;
+    return State::COMPLETE_SYNC_WITH_PEER;
+
+  case 1:
+    assert(block_resolving_->previous_hash == chain::GetGenesisDigest());
+    block_resolving_ = chain_.GetBlock(GetGenesisDigest());
+    if (!block_resolving_)
+    {
+      FETCH_LOG_CRITICAL(LOGGING_NAME, __func__, ": genesis block is not on the chain");
+      back_stride_ = 1;
+      return State::SYNCHRONISING;
+    }
+    return State::REQUEST_NEXT_BLOCKS;
   }
-  catch (std::runtime_error const &ex)
+
+  std::size_t blocks_back = back_stride_;
+  if (blocks_back >= current_height)
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Exception in consensus on validating ", action, ": ", ex.what());
-    return false;
+    // we don't need to (and actually can't) leap back as far
+    // let's descend down to genesis logarithmically!
+    blocks_back = current_height / 2;
   }
+  else if (back_stride_ < MAX_SENSIBLE_STEP_BACK)
+  {
+    // speed up, unless we're already fast enough
+    back_stride_ *= 2;
+  }
+
+  // TODO (nobody): we should consider once if this linear crawlback is worth improving
+  for (std::size_t i = 0; i < blocks_back; ++i)
+  {
+    assert(!block_resolving_->IsGenesis());
+    auto next_block_resolving = chain_.GetBlock(block_resolving_->previous_hash);
+    if (!next_block_resolving)
+    {
+      FETCH_LOG_CRITICAL(LOGGING_NAME, __func__, ": block 0x",
+                         block_resolving_->previous_hash.ToHex(),
+                         ", previous to current resolving 0x", block_resolving_->hash.ToHex(),
+                         ", is not on the chain");
+      return State::SYNCHRONISING;
+    }
+    block_resolving_ = std::move(next_block_resolving);
+  }
+
+  // now re-try requesting blocks from this point
+  return State::REQUEST_NEXT_BLOCKS;
+}
+
+/**
+ * Return whether the service is healthy or not. Currently it is considered
+ * healthy when it has made at least one successful RPC call to a peer
+ */
+bool MainChainRpcService::IsHealthy() const
+{
+  return healthy_;
 }
 
 }  // namespace ledger

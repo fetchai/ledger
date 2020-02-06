@@ -31,7 +31,7 @@ namespace math {
 template <typename Type>
 meta::IfIsNonFixedPointArithmetic<Type, void> Pow(Type const &x, Type const &y, Type &ret)
 {
-  ret = std::pow(x, y);
+  ret = static_cast<Type>(std::pow(x, y));
 }
 
 template <typename T>

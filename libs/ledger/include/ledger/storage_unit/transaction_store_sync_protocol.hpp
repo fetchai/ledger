@@ -85,7 +85,6 @@ private:
     {}
 
     chain::Transaction data;
-    AddressSet         delivered_to;
     Timepoint          created{Clock::now()};
   };
 

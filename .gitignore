@@ -37,3 +37,6 @@ tags
 
 *.DS_Store
 *.ipynb_checkpoints/
+
+# Legacy Editors
+build-profile-summary.csv

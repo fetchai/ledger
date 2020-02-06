@@ -64,7 +64,7 @@ public:
 
     std::size_t const num_transactions = generator_.unspent_count();
 
-    FETCH_LOG_INFO(LOGGING_NAME, "Starting block packing (Backlog: ", num_transactions, ")");
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Starting block packing (Backlog: ", num_transactions, ")");
 
     if (num_transactions <= num_lanes)
     {

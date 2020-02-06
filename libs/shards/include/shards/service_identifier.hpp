@@ -52,7 +52,9 @@ public:
   std::string ToString() const;
 
   // Operators
-  bool               operator==(ServiceIdentifier const &other) const;
+  bool operator==(ServiceIdentifier const &other) const;
+  bool operator<(ServiceIdentifier const &other) const;
+
   ServiceIdentifier &operator=(ServiceIdentifier const &) = default;
 
 private:

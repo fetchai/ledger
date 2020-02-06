@@ -1,0 +1,322 @@
+//------------------------------------------------------------------------------
+//
+//   Copyright 2018-2020 Fetch.AI Limited
+//
+//   Licensed under the Apache License, Version 2.0 (the "License");
+//   you may not use this file except in compliance with the License.
+//   You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+//   Unless required by applicable law or agreed to in writing, software
+//   distributed under the License is distributed on an "AS IS" BASIS,
+//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//   See the License for the specific language governing permissions and
+//   limitations under the License.
+//
+//------------------------------------------------------------------------------
+
+#include "beacon/beacon_service.hpp"
+#include "beacon/create_new_certificate.hpp"
+#include "beacon/trusted_dealer.hpp"
+#include "beacon/trusted_dealer_beacon_service.hpp"
+#include "core/reactor.hpp"
+#include "muddle/create_muddle_fake.hpp"
+#include "muddle/muddle_interface.hpp"
+#include "shards/manifest_cache_interface.hpp"
+
+#include "gtest/gtest.h"
+
+#include <iostream>
+
+using namespace fetch;
+using namespace fetch::muddle;
+using namespace fetch::core;
+using namespace fetch::crypto;
+using namespace fetch::beacon;
+
+using fetch::crypto::Prover;
+
+using std::chrono::milliseconds;
+using std::this_thread::sleep_for;
+using MuddleAddress = byte_array::ConstByteArray;
+
+class DummyManifestCache : public fetch::shards::ManifestCacheInterface
+{
+public:
+  DummyManifestCache()           = default;
+  ~DummyManifestCache() override = default;
+
+  bool QueryManifest(Address const & /*address*/, fetch::shards::Manifest & /*manifest*/) override
+  {
+    return true;
+  }
+};
+
+struct TrustedDealerCabinetNode
+{
+  using Certificate    = crypto::Prover;
+  using CertificatePtr = std::shared_ptr<Certificate>;
+  using Muddle         = muddle::MuddlePtr;
+  using Address        = fetch::muddle::Packet::Address;
+
+  EventManager::SharedEventManager event_manager;
+  uint16_t                         muddle_port;
+  network::NetworkManager          network_manager;
+  core::Reactor                    reactor;
+  ProverPtr                        muddle_certificate;
+  Muddle                           muddle;
+  DummyManifestCache               manifest_cache;
+  TrustedDealerSetupService        setup_service;
+  BeaconService                    beacon_service;
+  crypto::Identity                 identity;
+
+  TrustedDealerCabinetNode(uint16_t port_number, uint16_t index, double threshold,
+                           uint64_t aeon_period)
+    : event_manager{EventManager::New()}
+    , muddle_port{port_number}
+    , network_manager{"NetworkManager" + std::to_string(index), 1}
+    , reactor{"ReactorName" + std::to_string(index)}
+    , muddle_certificate{CreateNewCertificate()}
+    , muddle{muddle::CreateMuddle("Test", muddle_certificate, network_manager, "127.0.0.1")}
+    , setup_service{*muddle, manifest_cache, muddle_certificate, threshold, aeon_period}
+    , beacon_service{*muddle, muddle_certificate, setup_service, event_manager}
+    , identity{muddle_certificate->identity()}
+  {
+    network_manager.Start();
+    muddle->Start({muddle_port});
+  }
+
+  muddle::Address GetMuddleAddress() const
+  {
+    return muddle->GetAddress();
+  }
+
+  network::Uri GetHint() const
+  {
+    return fetch::network::Uri{"tcp://127.0.0.1:" + std::to_string(muddle_port)};
+  }
+};
+
+void RunTrustedDealer(uint16_t total_renewals = 4, uint32_t cabinet_size = 4,
+                      double threshold = 0.5, uint64_t aeon_period = 10)
+{
+  fetch::crypto::mcl::details::MCLInitialiser();
+
+  std::cout << "- Setup" << std::endl;
+
+  std::vector<std::unique_ptr<TrustedDealerCabinetNode>> cabinet;
+  for (uint16_t ii = 0; ii < cabinet_size; ++ii)
+  {
+    auto port_number = static_cast<uint16_t>(10000 + ii);
+    cabinet.emplace_back(new TrustedDealerCabinetNode{port_number, ii, threshold, aeon_period});
+  }
+  std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+  // Connect muddles together (localhost for this example)
+  for (uint32_t ii = 0; ii < cabinet_size; ii++)
+  {
+    for (uint32_t jj = ii + 1; jj < cabinet_size; jj++)
+    {
+      cabinet[ii]->muddle->ConnectTo(cabinet[jj]->GetMuddleAddress(), cabinet[jj]->GetHint());
+    }
+  }
+
+  // wait for all the nodes to completely connect
+  std::unordered_set<uint32_t> pending_nodes;
+  for (uint32_t ii = 0; ii < cabinet_size; ++ii)
+  {
+    pending_nodes.emplace(ii);
+  }
+
+  uint64_t timer = 0;
+  while (!pending_nodes.empty())
+  {
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+    for (auto it = pending_nodes.begin(); it != pending_nodes.end();)
+    {
+      auto &muddle = *(cabinet[*it]->muddle);
+
+      if (static_cast<uint32_t>(muddle.GetNumDirectlyConnectedPeers() + 1) >= cabinet_size)
+      {
+        it = pending_nodes.erase(it);
+      }
+      else
+      {
+        ++it;
+      }
+
+      if (timer == 100)
+      {
+        FETCH_LOG_ERROR("TrustedDealerTest", "Only connected to: ",
+                        static_cast<uint32_t>(muddle.GetNumDirectlyConnectedPeers()));
+      }
+    }
+    ++timer;
+
+    if (timer > 100)
+    {
+      throw std::runtime_error("Could not connect to other cabinet members");
+    }
+  }
+
+  std::set<MuddleAddress> cabinet_addresses;
+  for (auto &member : cabinet)
+  {
+    cabinet_addresses.insert(member->muddle_certificate->identity().identifier());
+  }
+
+  // Attaching the cabinet logic
+  for (auto &member : cabinet)
+  {
+    member->reactor.Attach(member->beacon_service.GetWeakRunnable());
+  }
+
+  // Starting the beacon
+  for (auto &member : cabinet)
+  {
+    member->reactor.Start();
+  }
+
+  // Create previous entropy
+  BlockEntropy prev_entropy;
+  prev_entropy.group_signature = "Hello";
+
+  // Ready
+  uint64_t i = 0;
+  while (i < total_renewals)
+  {
+    std::cout << "- Scheduling round " << i << std::endl;
+    TrustedDealer dealer(cabinet_addresses, threshold);
+    uint64_t      start_time =
+        GetTime(fetch::moment::GetClock("default", fetch::moment::ClockType::SYSTEM)) + 5;
+    for (auto &member : cabinet)
+    {
+      member->setup_service.StartNewCabinet(cabinet_addresses, i * aeon_period, start_time,
+                                            prev_entropy,
+                                            dealer.GetDkgKeys(member->identity.identifier()));
+
+      // Note, to avoid limiting the 'look ahead' entropy gen, set the block to ahead of numbers per
+      // aeon
+      member->beacon_service.MostRecentSeen((i * aeon_period) + aeon_period - 1);
+    }
+
+    // Wait for everyone to finish
+    pending_nodes.clear();
+    for (uint32_t ii = 0; ii < cabinet_size; ++ii)
+    {
+      pending_nodes.emplace(ii);
+    }
+    while (!pending_nodes.empty())
+    {
+      std::this_thread::sleep_for(std::chrono::milliseconds(100));
+      for (auto it = pending_nodes.begin(); it != pending_nodes.end();)
+      {
+        fetch::beacon::EventCabinetCompletedWork event;
+        if (cabinet[*it]->event_manager->Poll(event))
+        {
+          it = pending_nodes.erase(it);
+        }
+        else
+        {
+          ++it;
+        }
+      }
+    }
+    ++i;
+  }
+
+  std::cout << " - Stopping" << std::endl;
+  for (auto &member : cabinet)
+  {
+    member->reactor.Stop();
+    member->muddle->Stop();
+    member->network_manager.Stop();
+  }
+}
+
+TEST(beacon_service, trusted_dealer)
+{
+  RunTrustedDealer(1, 4, 0.5, 10);
+}
+
+// Simply test that the beacon service saves and recovers the necessary
+// state to continue operating as if nothing happened. Inherit to gain access
+// to private functions and avoid complicated construction setup
+class BeaconServiceStateRecovery : public BeaconService
+{
+public:
+  BeaconServiceStateRecovery(MuddleInterface &muddle, const CertificatePtr &certificate,
+                             BeaconSetupService &beacon_setup, SharedEventManager event_manager,
+                             bool load_and_reload_on_crash)
+    : BeaconService(muddle, certificate, beacon_setup, std::move(event_manager),
+                    load_and_reload_on_crash)
+  {}
+
+  // getters/setters for the variables that should change
+  SignaturesBeingBuilt &signatures_being_built()
+  {
+    return signatures_being_built_;
+  }
+
+  BlockEntropyPtr &block_entropy_being_created()
+  {
+    return block_entropy_being_created_;
+  }
+
+  void Reload()
+  {
+    State dummy;
+    ReloadState(dummy);
+  }
+
+  void Save()
+  {
+    SaveState();
+  }
+};
+
+TEST(beacon_service, correctly_recovers_state)
+{
+  fetch::crypto::mcl::details::MCLInitialiser();
+
+  // Create dummy values to construct the service with - since we
+  // do not attach the reactor it will do nothing beyond construction
+  EventManager::SharedEventManager dummy_event_manager;
+  ProverPtr                        dummy_certificate{CreateNewCertificate()};
+  network::NetworkManager          network_manager{"NetworkManager", 1};
+  muddle::MuddlePtr                dummy_muddle{
+      muddle::CreateMuddleFake("Test", dummy_certificate, network_manager, "127.0.0.1")};
+  DummyManifestCache        dummy_manifest_cache;
+  TrustedDealerSetupService dummy_beacon_setup{*dummy_muddle, dummy_manifest_cache,
+                                               dummy_certificate, 0, 0};
+
+  {
+    BeaconServiceStateRecovery initial{*dummy_muddle, dummy_certificate, dummy_beacon_setup,
+                                       dummy_event_manager, true};
+
+    // Must be manually called since no attached reactor
+    // Note this also checks reloading an empty file is not invalid
+    initial.Reload();
+
+    // Set some specific state for the variable we expect to be saved. For ease
+    // we just use its default constructors and check the size is correct afterwards
+    initial.signatures_being_built()[0].round = 0;
+    initial.signatures_being_built()[1].round = 1;
+    initial.signatures_being_built()[2].round = 2;
+
+    initial.block_entropy_being_created()               = std::make_shared<BlockEntropy>();
+    initial.block_entropy_being_created()->block_number = 99;
+
+    initial.Save();
+  }
+
+  // Scope ends, re-load
+  BeaconServiceStateRecovery recovered{*dummy_muddle, dummy_certificate, dummy_beacon_setup,
+                                       dummy_event_manager, true};
+  recovered.Reload();
+
+  ASSERT_EQ(recovered.signatures_being_built().size(), 3);
+  ASSERT_EQ(recovered.block_entropy_being_created()->block_number, 99);
+}

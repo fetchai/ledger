@@ -27,8 +27,9 @@ namespace math {
 template <typename ArrayType>
 meta::IfIsMathFixedPointArray<ArrayType, typename ArrayType::Type> L2Loss(ArrayType const &A)
 {
-  auto tmp = Sum(Square(A));
-  tmp      = (tmp / 2);
+  using Type = typename ArrayType::Type;
+  auto tmp   = Sum(Square(A));
+  tmp /= Type{2};
   return tmp;
 }
 
@@ -40,7 +41,7 @@ meta::IfIsMathNonFixedPointArray<ArrayType, typename ArrayType::Type> L2Loss(Arr
   using Type = typename ArrayType::Type;
 
   Type l2loss = a.in_parallel().SumReduce([](auto const &x) { return x * x; });
-  l2loss /= 2;
+  l2loss /= Type{2};
   return l2loss;
 }
 

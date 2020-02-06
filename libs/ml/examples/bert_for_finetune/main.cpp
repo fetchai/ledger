@@ -21,6 +21,7 @@
 #include "ml/core/graph.hpp"
 #include "ml/layers/fully_connected.hpp"
 #include "ml/ops/loss_functions/cross_entropy_loss.hpp"
+#include "ml/ops/placeholder.hpp"
 #include "ml/ops/slice.hpp"
 #include "ml/optimisation/adam_optimiser.hpp"
 #include "ml/serializers/ml_types.hpp"
@@ -39,7 +40,6 @@ using TensorType = fetch::math::Tensor<DataType>;
 using SizeVector = typename TensorType::SizeVector;
 
 using GraphType     = typename fetch::ml::Graph<TensorType>;
-using StateDictType = typename fetch::ml::StateDict<TensorType>;
 using OptimiserType = typename fetch::ml::optimisers::AdamOptimiser<TensorType>;
 
 using RegType         = fetch::ml::RegularisationType;
@@ -93,8 +93,8 @@ int main(int ac, char **av)
   std::string classification_output =
       g.template AddNode<fetch::ml::layers::FullyConnected<TensorType>>(
           "ClassificationOutput", {cls_token_output}, config.model_dims, 2u,
-          ActivationType::SOFTMAX, RegType::NONE, static_cast<DataType>(0),
-          WeightsInitType::XAVIER_GLOROT, false);
+          ActivationType::SOFTMAX, RegType::NONE, DataType{0}, WeightsInitType::XAVIER_GLOROT,
+          false);
 
   // Set up error signal
   std::string label = g.template AddNode<PlaceHolder<TensorType>>("Label", {});

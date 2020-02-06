@@ -75,5 +75,15 @@ bool ServiceIdentifier::operator==(ServiceIdentifier const &other) const
   return (type_ == other.type_) && (instance_ == other.instance_);
 }
 
+bool ServiceIdentifier::operator<(ServiceIdentifier const &other) const
+{
+  if (type_ == other.type_)
+  {
+    return instance_ < other.instance_;
+  }
+
+  return type_ < other.type_;
+}
+
 }  // namespace shards
 }  // namespace fetch

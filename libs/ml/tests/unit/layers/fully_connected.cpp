@@ -18,12 +18,13 @@
 
 #include "gtest/gtest.h"
 #include "ml/layers/fully_connected.hpp"
-#include "ml/ops/loss_functions.hpp"
+#include "ml/ops/loss_functions/mean_square_error_loss.hpp"
+#include "ml/ops/placeholder.hpp"
 #include "ml/optimisation/sgd_optimiser.hpp"
 #include "ml/serializers/ml_types.hpp"
-#include "ml/utilities/graph_builder.hpp"
 #include "test_types.hpp"
 #include <memory>
+
 namespace fetch {
 namespace ml {
 namespace test {
@@ -65,7 +66,7 @@ class FullyConnectedTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(FullyConnectedTest, math::test::TensorFloatingTypes);
+TYPED_TEST_SUITE(FullyConnectedTest, math::test::TensorFloatingTypes, );
 
 TYPED_TEST(FullyConnectedTest, set_input_and_evaluate_test)  // Use the class as a subgraph
 {
@@ -89,11 +90,11 @@ TYPED_TEST(FullyConnectedTest,
   using RegType         = fetch::ml::RegularisationType;
   using WeightsInitType = fetch::ml::ops::WeightsInitialisation;
   using ActivationType  = fetch::ml::details::ActivationType;
+  using FullyConnected  = fetch::ml::layers::FullyConnected<TypeParam>;
 
-  fetch::ml::layers::FullyConnected<TypeParam> fc(10u, 5u, ActivationType::NOTHING, RegType::NONE,
-                                                  DataType{0}, WeightsInitType::XAVIER_GLOROT,
-                                                  true);
-  TypeParam input_data(std::vector<typename TypeParam::SizeType>({10, 10, 2}));
+  FullyConnected fc(10u, 5u, ActivationType::NOTHING, RegType::NONE, DataType{0},
+                    WeightsInitType::XAVIER_GLOROT, FullyConnected::TIME_DISTRIBUTED);
+  TypeParam      input_data(std::vector<typename TypeParam::SizeType>({10, 10, 2}));
   fc.SetInput("TimeDistributed_FullyConnected_Input", input_data);
   TypeParam output = fc.Evaluate("TimeDistributed_FullyConnected_MatrixMultiply", true);
 
@@ -490,50 +491,6 @@ TYPED_TEST(FullyConnectedTest, graph_forward_test)  // Use the class as a Node
   ASSERT_EQ(prediction.shape()[1], 2);
 }
 
-TYPED_TEST(FullyConnectedTest, getStateDict)
-{
-  using DataType = typename TypeParam::Type;
-  using RegType  = fetch::ml::RegularisationType;
-
-  fetch::ml::layers::FullyConnected<TypeParam> fc(
-      50, 10, fetch::ml::details::ActivationType::NOTHING, RegType::NONE, DataType{0});
-  fetch::ml::StateDict<TypeParam> sd = fc.StateDict();
-
-  EXPECT_EQ(sd.weights_, nullptr);
-  EXPECT_EQ(sd.dict_.size(), 2);
-
-  ASSERT_NE(sd.dict_["FullyConnected_Weights"].weights_, nullptr);
-  EXPECT_EQ(sd.dict_["FullyConnected_Weights"].weights_->shape(),
-            std::vector<typename TypeParam::SizeType>({10, 50}));
-
-  ASSERT_NE(sd.dict_["FullyConnected_Bias"].weights_, nullptr);
-  EXPECT_EQ(sd.dict_["FullyConnected_Bias"].weights_->shape(),
-            std::vector<typename TypeParam::SizeType>({10, 1}));
-}
-
-TYPED_TEST(FullyConnectedTest, getStateDict_time_distributed)
-{
-  using DataType        = typename TypeParam::Type;
-  using RegType         = fetch::ml::RegularisationType;
-  using WeightsInitType = fetch::ml::ops::WeightsInitialisation;
-
-  fetch::ml::layers::FullyConnected<TypeParam> fc(
-      50, 10, fetch::ml::details::ActivationType::NOTHING, RegType::NONE, DataType{0},
-      WeightsInitType::XAVIER_GLOROT, true);
-  fetch::ml::StateDict<TypeParam> sd = fc.StateDict();
-
-  EXPECT_EQ(sd.weights_, nullptr);
-  EXPECT_EQ(sd.dict_.size(), 2);
-
-  ASSERT_NE(sd.dict_["TimeDistributed_FullyConnected_Weights"].weights_, nullptr);
-  EXPECT_EQ(sd.dict_["TimeDistributed_FullyConnected_Weights"].weights_->shape(),
-            std::vector<typename TypeParam::SizeType>({10, 50}));
-
-  ASSERT_NE(sd.dict_["TimeDistributed_FullyConnected_Bias"].weights_, nullptr);
-  EXPECT_EQ(sd.dict_["TimeDistributed_FullyConnected_Bias"].weights_->shape(),
-            std::vector<typename TypeParam::SizeType>({10, 1, 1}));
-}
-
 TYPED_TEST(FullyConnectedTest, training_should_change_output)
 {
   using DataType  = typename TypeParam::Type;
@@ -585,112 +542,6 @@ TYPED_TEST(FullyConnectedTest, training_should_change_output)
   TypeParam prediction3 = layer.Evaluate(output_name);
 
   EXPECT_FALSE(prediction.AllClose(prediction3, fetch::math::function_tolerance<DataType>(),
-                                   fetch::math::function_tolerance<DataType>()));
-}
-
-TYPED_TEST(FullyConnectedTest, saveparams_test)
-{
-  using DataType  = typename TypeParam::Type;
-  using SizeType  = fetch::math::SizeType;
-  using LayerType = fetch::ml::layers::FullyConnected<TypeParam>;
-  using SPType    = typename LayerType::SPType;
-
-  SizeType data_size       = 10;
-  SizeType input_features  = 10;
-  SizeType output_features = 20;
-
-  std::string input_name  = "FullyConnected_Input";
-  std::string output_name = "FullyConnected_Add";
-
-  // create input
-  TypeParam input({data_size, input_features});
-  input.FillUniformRandom();
-
-  // create labels
-  TypeParam labels({output_features, data_size});
-  labels.FillUniformRandom();
-
-  // Create layer
-  LayerType layer(input_features, output_features);
-
-  // add label node
-  std::string label_name =
-      layer.template AddNode<fetch::ml::ops::PlaceHolder<TypeParam>>("label", {});
-
-  // Add loss function
-  std::string error_output = layer.template AddNode<fetch::ml::ops::MeanSquareErrorLoss<TypeParam>>(
-      "num_error", {output_name, label_name});
-
-  // set input and evaluate
-  layer.SetInput(input_name, input);
-  TypeParam prediction;
-  prediction = layer.Evaluate(output_name, true);
-
-  // extract saveparams
-  auto sp = layer.GetOpSaveableParams();
-
-  // downcast to correct type
-  auto dsp = std::dynamic_pointer_cast<SPType>(sp);
-
-  // serialize
-  fetch::serializers::MsgPackSerializer b;
-  b << *dsp;
-
-  // deserialize
-  b.seek(0);
-  auto dsp2 = std::make_shared<SPType>();
-  b >> *dsp2;
-
-  // rebuild
-  auto layer2 = *(fetch::ml::utilities::BuildLayer<TypeParam, LayerType>(dsp2));
-
-  // test equality
-  layer.SetInput(input_name, input);
-  prediction = layer.Evaluate(output_name, true);
-  layer2.SetInput(input_name, input);
-  TypeParam prediction2 = layer2.Evaluate(output_name, true);
-
-  EXPECT_TRUE(prediction.AllClose(prediction2, fetch::math::function_tolerance<DataType>(),
-                                  fetch::math::function_tolerance<DataType>()));
-
-  // train g
-  layer.SetInput(label_name, labels);
-  TypeParam loss = layer.Evaluate(error_output);
-  layer.BackPropagate(error_output);
-  auto grads = layer.GetGradients();
-  for (auto &grad : grads)
-  {
-    grad *= fetch::math::Type<DataType>("-0.1");
-  }
-  layer.ApplyGradients(grads);
-
-  // train g2
-  layer2.SetInput(label_name, labels);
-  TypeParam loss2 = layer2.Evaluate(error_output);
-  layer2.BackPropagate(error_output);
-  auto grads2 = layer2.GetGradients();
-  for (auto &grad : grads2)
-  {
-    grad *= fetch::math::Type<DataType>("-0.1");
-  }
-  layer2.ApplyGradients(grads2);
-
-  EXPECT_TRUE(loss.AllClose(loss2, fetch::math::function_tolerance<DataType>(),
-                            fetch::math::function_tolerance<DataType>()));
-
-  // new random input
-  input.FillUniformRandom();
-
-  layer.SetInput(input_name, input);
-  TypeParam prediction3 = layer.Evaluate(output_name);
-
-  layer2.SetInput(input_name, input);
-  TypeParam prediction4 = layer2.Evaluate(output_name);
-
-  EXPECT_FALSE(prediction.AllClose(prediction3, fetch::math::function_tolerance<DataType>(),
-                                   fetch::math::function_tolerance<DataType>()));
-
-  EXPECT_TRUE(prediction3.AllClose(prediction4, fetch::math::function_tolerance<DataType>(),
                                    fetch::math::function_tolerance<DataType>()));
 }
 

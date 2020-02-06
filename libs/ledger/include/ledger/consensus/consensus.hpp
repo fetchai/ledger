@@ -30,6 +30,8 @@
 
 #include "ledger/consensus/stake_manager.hpp"
 
+#include "telemetry/telemetry.hpp"
+
 #include <cmath>
 #include <unordered_map>
 
@@ -51,7 +53,7 @@ public:
   using BlockEntropy          = ledger::Block::BlockEntropy;
   using NotarisationPtr       = std::shared_ptr<ledger::NotarisationService>;
   using NotarisationResult    = NotarisationService::NotarisationResult;
-  using BlockPtr              = MainChain::BlockPtr;
+  using ConsensusInterface::NextBlockPtr;
 
   // Construction / Destruction
   Consensus(StakeManagerPtr stake, BeaconSetupServicePtr beacon_setup, BeaconServicePtr beacon,
@@ -62,7 +64,7 @@ public:
   Consensus(Consensus &&)      = delete;
   ~Consensus() override        = default;
 
-  void         UpdateCurrentBlock(Block const &current) override;
+  bool         UpdateCurrentBlock(Block const &current) override;
   NextBlockPtr GenerateNextBlock() override;
   Status       ValidBlock(Block const &current) const override;
   bool         VerifyNotarisation(Block const &block) const;
@@ -81,15 +83,17 @@ public:
   Consensus &operator=(Consensus const &) = delete;
   Consensus &operator=(Consensus &&) = delete;
 
+  // TODO (LGDR-698): the only reason this function is public is it's used in a single POS test.
   uint64_t GetBlockGenerationWeight(Block const &current, Identity const &identity) const;
 
 private:
   static constexpr std::size_t HISTORY_LENGTH = 1000;
 
-  using Cabinet        = StakeManager::Cabinet;
-  using CabinetPtr     = std::shared_ptr<Cabinet const>;
-  using BlockIndex     = uint64_t;
-  using CabinetHistory = std::map<BlockIndex, CabinetPtr>;
+  using Cabinet            = StakeManager::Cabinet;
+  using CabinetPtr         = std::shared_ptr<Cabinet const>;
+  using BlockIndex         = uint64_t;
+  using CabinetHistory     = std::map<BlockIndex, CabinetPtr>;
+  using AeonBeginningCache = std::map<BlockIndex, Block>;
 
   StorageInterface &    storage_;
   StakeManagerPtr       stake_;
@@ -107,14 +111,17 @@ private:
   // Consensus' view on the heaviest block etc.
   Block  current_block_;
   Block  previous_block_;
-  Block  beginning_of_aeon_;
   Digest last_triggered_cabinet_;
 
   uint64_t       default_start_time_ = 0;
   CabinetHistory cabinet_history_{};  ///< Cache of historical cabinets
   uint64_t       block_interval_ms_{std::numeric_limits<uint64_t>::max()};
 
+  Block                      GetBeginningOfAeon(Block const &current, MainChain const &chain) const;
+  mutable AeonBeginningCache aeon_beginning_cache_;
+
   NotarisationPtr notarisation_;
+  mutable Mutex   mutex_;
 
   CabinetPtr GetCabinet(Block const &previous) const;
 
@@ -123,6 +130,15 @@ private:
   bool     EnoughQualSigned(Block const &previous, Block const &current) const;
   uint32_t GetThreshold(Block const &block) const;
   void     AddCabinetToHistory(uint64_t block_number, CabinetPtr const &cabinet);
+
+  telemetry::GaugePtr<uint64_t> consensus_last_validate_block_failure_;
+  telemetry::CounterPtr         consensus_validate_block_failures_total_;
+  telemetry::CounterPtr         consensus_non_heaviest_blocks_total_;
+  telemetry::CounterPtr         failed_to_generate_entropy_total_;
+  telemetry::CounterPtr         block_generation_exception_total_;
+  telemetry::CounterPtr         block_generation_unknown_failure_total_;
+  telemetry::CounterPtr         invalid_block_timing_total_;
+  telemetry::CounterPtr         notarisation_is_not_ready_yet_total_;
 };
 
 }  // namespace ledger

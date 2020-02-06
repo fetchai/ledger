@@ -26,9 +26,6 @@
 
 namespace fetch {
 namespace ledger {
-namespace {
-
-}  // namespace
 
 TransactionValidator::TransactionValidator(StorageInterface &storage, TokenContract &token_contract)
   : storage_{storage}

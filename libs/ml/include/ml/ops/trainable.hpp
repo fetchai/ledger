@@ -17,12 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/assert.hpp"
-#include "math/tensor/tensor.hpp"
 #include "ml/ops/ops.hpp"
-#include "ml/regularisers/reg_types.hpp"
-#include "ml/regularisers/regulariser.hpp"
-#include "ml/state_dict.hpp"
 
 #include <functional>
 #include <memory>
@@ -30,6 +25,12 @@
 
 namespace fetch {
 namespace ml {
+
+namespace regularisers {
+template <typename TensorType>
+class Regulariser;
+}  // namespace regularisers
+
 namespace ops {
 
 /**
@@ -46,38 +47,22 @@ public:
   using DataType     = typename TensorType::Type;
   using RegPtrType   = std::shared_ptr<fetch::ml::regularisers::Regulariser<T>>;
 
-  virtual fetch::ml::StateDict<T> StateDict() const                                        = 0;
-  virtual void                    LoadStateDict(fetch::ml::StateDict<T> const &dict)       = 0;
-  virtual TensorType const &      GetWeights() const                                       = 0;
-  virtual void                    SetWeights(TensorType const &new_value)                  = 0;
-  virtual TensorType const &      GetGradientsReferences() const                           = 0;
-  virtual SizeSet const &         GetUpdatedRowsReferences() const                         = 0;
-  virtual TensorType              GetGradients() const                                     = 0;
-  virtual std::pair<TensorType const, SizeSet const> GetSparseGradientsReferences() const  = 0;
-  virtual void                                       ResetGradients()                      = 0;
-  virtual void                                       ApplyGradient(TensorType const &grad) = 0;
-  virtual void ApplySparseGradient(TensorType const &grad, SizeSet &update_rows)           = 0;
-  virtual void ApplyRegularisation()                                                       = 0;
+  virtual TensorType const &                         GetWeights() const                      = 0;
+  virtual void                                       SetWeights(TensorType const &new_value) = 0;
+  virtual TensorType const &                         GetGradientsReferences() const          = 0;
+  virtual SizeSet const &                            GetUpdatedRowsReferences() const        = 0;
+  virtual TensorType                                 GetGradients() const                    = 0;
+  virtual std::pair<TensorType const, SizeSet const> GetSparseGradientsReferences() const    = 0;
+  virtual void                                       ResetGradients()                        = 0;
+  virtual void                                       ApplyGradient(TensorType const &grad)   = 0;
+  virtual void ApplySparseGradient(TensorType const &grad, SizeSet &update_rows)             = 0;
+  virtual void ApplyRegularisation()                                                         = 0;
 
-  void SetRegularisation(RegPtrType regulariser, DataType regularisation_rate = DataType{0})
-  {
-    regulariser_         = regulariser;
-    regularisation_rate_ = regularisation_rate;
-  }
+  void SetRegularisation(RegPtrType regulariser, DataType regularisation_rate = DataType{0});
 
-  /**
-   * Enable or disable trainable gradient update freezing
-   * @param new_frozen_state
-   */
-  void SetFrozenState(bool new_frozen_state)
-  {
-    value_frozen_ = new_frozen_state;
-  }
+  void SetFrozenState(bool new_frozen_state);
 
-  bool GetFrozenState() const
-  {
-    return value_frozen_;
-  }
+  bool GetFrozenState() const;
 
 protected:
   RegPtrType regulariser_;

@@ -34,7 +34,7 @@ class CategoricalAccuracyTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(CategoricalAccuracyTest, math::test::HighPrecisionTensorFloatingTypes);
+TYPED_TEST_SUITE(CategoricalAccuracyTest, math::test::HighPrecisionTensorFloatingTypes, );
 
 TYPED_TEST(CategoricalAccuracyTest, perfect_match_forward_test)
 {
@@ -181,7 +181,7 @@ TYPED_TEST(CategoricalAccuracyTest, saveparams_test)
   {
     for (math::SizeType j{0}; j < n_classes; ++j)
     {
-      data1.Set(j, i, DataType(logits[counter]));
+      data1.Set(j, i, fetch::math::AsType<DataType>(logits[counter]));
       ++counter;
     }
   }

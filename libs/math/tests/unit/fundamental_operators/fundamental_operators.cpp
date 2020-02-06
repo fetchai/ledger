@@ -42,13 +42,13 @@ class FundamentalOperatorsNonIntTypeTest : public ::testing::Test
 };
 
 using MyUnsignIntegralTypes = ::testing::Types<uint32_t, uint64_t>;
-TYPED_TEST_CASE(FundamentalOperatorsUIntTypeTest, MyUnsignIntegralTypes);
+TYPED_TEST_SUITE(FundamentalOperatorsUIntTypeTest, MyUnsignIntegralTypes, );
 
 using MySignedIntegralTypes = ::testing::Types<int32_t, int64_t>;
-TYPED_TEST_CASE(FundamentalOperatorsIntTypeTest, MySignedIntegralTypes);
+TYPED_TEST_SUITE(FundamentalOperatorsIntTypeTest, MySignedIntegralTypes, );
 
 using MyNonIntegralTypes = ::testing::Types<double, fetch::fixed_point::FixedPoint<32, 32>>;
-TYPED_TEST_CASE(FundamentalOperatorsNonIntTypeTest, MyNonIntegralTypes);
+TYPED_TEST_SUITE(FundamentalOperatorsNonIntTypeTest, MyNonIntegralTypes, );
 
 ///// Addition tests
 // UInt
@@ -174,10 +174,8 @@ TYPED_TEST(FundamentalOperatorsNonIntTypeTest, AdditionNonIntTest)
   for (int i{0}; i < 100; ++i)
   {
     // values range from - half max to + half max
-    a = TypeParam((fetch::random::Random::generator.AsType<TypeParam>() * double(max_val)) -
-                  (double(max_val) / 2.0));
-    b = TypeParam((fetch::random::Random::generator.AsType<TypeParam>() * double(max_val)) -
-                  (double(max_val) / 2.0));
+    a = (fetch::random::Random::generator.AsType<TypeParam>() * max_val) - max_val / TypeParam{2};
+    b = (fetch::random::Random::generator.AsType<TypeParam>() * max_val) - max_val / TypeParam{2};
 
     fetch::math::Add(a, b, ret);
     EXPECT_EQ(ret, a + b);
@@ -265,8 +263,8 @@ TYPED_TEST(FundamentalOperatorsIntTypeTest, SubtractionIntTest)
   for (int i{0}; i < 100; ++i)
   {
     // values range from - half max to + half max
-    a = (fetch::random::Random::generator.AsType<TypeParam>() * max_val) - (max_val) / TypeParam(2);
-    b = (fetch::random::Random::generator.AsType<TypeParam>() * max_val) - (max_val / TypeParam(2));
+    a = (fetch::random::Random::generator.AsType<TypeParam>() * max_val) - max_val / TypeParam{2};
+    b = (fetch::random::Random::generator.AsType<TypeParam>() * max_val) - max_val / TypeParam{2};
 
     fetch::math::Subtract(a, b, ret);
     EXPECT_EQ(ret, a - b);
@@ -308,10 +306,8 @@ TYPED_TEST(FundamentalOperatorsNonIntTypeTest, SubtractionNonIntTest)
   for (int i{0}; i < 100; ++i)
   {
     // values range from - half max to + half max
-    a = TypeParam((fetch::random::Random::generator.AsType<TypeParam>() * double(max_val)) -
-                  (double(max_val) / 2.0));
-    b = TypeParam((fetch::random::Random::generator.AsType<TypeParam>() * double(max_val)) -
-                  (double(max_val) / 2.0));
+    a = (fetch::random::Random::generator.AsType<TypeParam>() * max_val) - max_val / TypeParam{2};
+    b = (fetch::random::Random::generator.AsType<TypeParam>() * max_val) - max_val / TypeParam{2};
 
     fetch::math::Subtract(a, b, ret);
     EXPECT_EQ(ret, a - b);
@@ -395,8 +391,8 @@ TYPED_TEST(FundamentalOperatorsIntTypeTest, MultiplicationIntTest)
   for (int i{0}; i < 100; ++i)
   {
     // values range from - half max to + half max
-    a = (fetch::random::Random::generator.AsType<TypeParam>() * max_val) - (max_val / TypeParam(2));
-    b = (fetch::random::Random::generator.AsType<TypeParam>() * max_val) - (max_val / TypeParam(2));
+    a = (fetch::random::Random::generator.AsType<TypeParam>() * max_val) - max_val / TypeParam{2};
+    b = (fetch::random::Random::generator.AsType<TypeParam>() * max_val) - max_val / TypeParam{2};
 
     fetch::math::Multiply(a, b, ret);
     EXPECT_EQ(ret, a * b);
@@ -438,10 +434,8 @@ TYPED_TEST(FundamentalOperatorsNonIntTypeTest, MultiplicationNonIntTest)
   for (int i{0}; i < 100; ++i)
   {
     // values range from - half max to + half max
-    a = TypeParam((fetch::random::Random::generator.AsType<TypeParam>() * double(max_val)) -
-                  (double(max_val) / 2.0));
-    b = TypeParam((fetch::random::Random::generator.AsType<TypeParam>() * double(max_val)) -
-                  (double(max_val) / 2.0));
+    a = (fetch::random::Random::generator.AsType<TypeParam>() * max_val) - max_val / TypeParam{2};
+    b = (fetch::random::Random::generator.AsType<TypeParam>() * max_val) - max_val / TypeParam{2};
 
     fetch::math::Multiply(a, b, ret);
     EXPECT_EQ(ret, a * b);
@@ -489,10 +483,8 @@ TYPED_TEST(FundamentalOperatorsUIntTypeTest, DivisionUIntTest)
   for (std::size_t i{0}; i < 100; ++i)
   {
     // values range from 0 - std::numeric_limits<Type>::max()
-    a = static_cast<TypeParam>(fetch::random::Random::generator.AsType<double>() *
-                               static_cast<double>(max_val));
-    b = static_cast<TypeParam>(fetch::random::Random::generator.AsType<double>() *
-                               static_cast<double>(max_val));
+    a = (fetch::random::Random::generator.AsType<TypeParam>() * max_val) - max_val / TypeParam{2};
+    b = (fetch::random::Random::generator.AsType<TypeParam>() * max_val) - max_val / TypeParam{2};
 
     fetch::math::Divide(a, b, ret);
     EXPECT_EQ(ret, a / b);

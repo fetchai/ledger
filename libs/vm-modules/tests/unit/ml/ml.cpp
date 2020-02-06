@@ -684,7 +684,7 @@ TEST_F(MLTests, DISABLED_graph_step_test)
 
   auto const loss_reduction = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
 
-  EXPECT_GT(loss_reduction->GetTensor().At(0, 0), 0);
+  EXPECT_GT(loss_reduction->GetTensor().At(0, 0), DataType{0});
 }
 
 }  // namespace

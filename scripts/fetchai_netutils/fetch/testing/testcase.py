@@ -14,9 +14,11 @@ from fetch.cluster.chain import ChainSyncTesting
 
 from fetchai.ledger.api.common import ApiEndpoint
 from fetchai.ledger.api import LedgerApi
-from fetchai.ledger.crypto import Entity
-from fetchai.ledger.genesis import *
+from fetchai.ledger.crypto import Entity, Address
 from fetch.cluster.chain import ChainSyncTesting
+
+TOTAL_SUPPLY_FET = 1152997575
+TEN_ZERO = 10000000000
 
 
 class TestCase(object):
@@ -89,7 +91,8 @@ class ConstellationTestCase(TestCase):
 
         # In order for the tests to have tokens, allocate
         # a benefactor address enough at genesis
-        self._benefactor_address = Entity()
+        self._benefactor_entity = Entity()
+        self._benefactor_address = Address(self._benefactor_entity)
 
         # Variables related to temporary pos mode
         self._pos_mode = False
@@ -187,26 +190,32 @@ class ConstellationTestCase(TestCase):
             needs a more complex genesis file
         """
 
-        nodes_identities = []
-
-        nodes_identities.append(
-            (self._benefactor_address, 100000000, 0))
-
         # Only do this once to avoid different genesis due to timestamp
         if not self._genesis_file_location:
-            genesis_file = GenesisFile(
-                nodes_identities, 20, 5, self._block_interval)
+
+            genesis = {
+                'version': 4,
+                'accounts': [{
+                    'address': str(self._benefactor_address),
+                    'balance': TOTAL_SUPPLY_FET,
+                    'stake': 0,
+                }],
+            }
+
             self._genesis_file_location = os.path.abspath(
                 os.path.join(self._workspace, "genesis_file.json"))
-            genesis_file.dump_to_file(self._genesis_file_location)
+            with open(self._genesis_file_location, 'w') as genesis_file:
+                json.dump(genesis, genesis_file)
 
         # Give all nodes this stake file
         # for index in range(self._number_of_nodes):
         shutil.copy(self._genesis_file_location, self._nodes[index].root)
 
     def setup_pos_for_nodes(self):
+        DEFAULT_STAKE = 1000
 
-        nodes_identities = []
+        genesis_accounts = []
+        genesis_stakers = []
 
         # First give each node that is mining a unique identity
         for index in range(self._number_of_nodes):
@@ -221,23 +230,51 @@ class ConstellationTestCase(TestCase):
                 print('Giving node the identity: {}'.format(
                     node._entity.public_key))
 
-            nodes_identities.append(
-                (node._entity, 10000000, 10000 if node.mining else 0))
+            if index == 0:
+                balance = TOTAL_SUPPLY_FET - \
+                    (self._number_of_nodes * DEFAULT_STAKE)
+            else:
+                balance = 0
+
+            genesis_accounts.append({
+                'address': str(Address(node._entity)),
+                'balance': balance,
+                'stake': DEFAULT_STAKE,
+            })
+            genesis_stakers.append({
+                'identity': node._entity.public_key,
+                'amount': DEFAULT_STAKE * TEN_ZERO,
+            })
 
         # set benefactor to node1
-        self._benefactor_address = self._nodes[index]._entity
+        self._benefactor_entity = self._nodes[0]._entity
+        self._benefactor_address = Address(self._benefactor_entity)
+
+        genesis = {
+            'version': 4,
+            'accounts': genesis_accounts,
+            'consensus': {
+                'aeonOffset': 100,
+                'aeonPeriodicity': 25,
+                'cabinetSize': 20,
+                'entropyRunahead': 2,
+                'minimumStake': DEFAULT_STAKE,
+                'startTime': int(time.time()) + 5,
+                'stakers': genesis_stakers,
+            }
+        }
 
         # Force overwrite of POS case
-        genesis_file = GenesisFile(
-            nodes_identities, 20, 5, self._block_interval)
         self._genesis_file_location = os.path.abspath(
             os.path.join(self._workspace, "genesis_file.json"))
-        genesis_file.dump_to_file(self._genesis_file_location)
+        # genesis_file.dump_to_file(self._genesis_file_location)
+        with open(self._genesis_file_location, 'w') as genesis_file:
+            json.dump(genesis, genesis_file)
 
         # Give all nodes this stake file, plus append POS flag for when node starts
         for index in range(self._number_of_nodes):
-            shutil.copy(genesis_file_location, self._nodes[index].root)
-            self._nodes[index].append_to_cmd(["-pos", "-private-network", ])
+            shutil.copy(self._genesis_file_location, self._nodes[index].root)
+            self._nodes[index].append_to_cmd(["-pos", "-private-network"])
 
     def restart_node(self, index, remove_db=False):
         print('Restarting Node {}...'.format(index))

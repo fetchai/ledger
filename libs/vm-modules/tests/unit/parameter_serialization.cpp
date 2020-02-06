@@ -162,6 +162,32 @@ TEST(ParameterSerialization, NativeCPPTypes)
   CreateVMAndRunScript(script, task);
 }
 
+TEST(ParameterSerialization, PairSerialization)
+{
+  MsgPackSerializer serializer;
+
+  std::pair<int, std::string> pair_in_1;
+  pair_in_1.first  = 1;
+  pair_in_1.second = "SOMETHING";
+
+  std::pair<std::string, int> pair_in_2;
+  pair_in_2.first  = "ELSE";
+  pair_in_2.second = -2;
+
+  serializer << pair_in_1;
+  serializer << pair_in_2;
+
+  std::pair<int, std::string> pair_out_1;
+  std::pair<std::string, int> pair_out_2;
+
+  auto deserializer = MsgPackSerializer{serializer.data()};
+  deserializer >> pair_out_1;
+  deserializer >> pair_out_2;
+
+  EXPECT_EQ(pair_in_1, pair_out_1);
+  EXPECT_EQ(pair_in_2, pair_out_2);
+}
+
 TEST(ParameterSerialization, VariantTypes)
 {
   auto script = R"(

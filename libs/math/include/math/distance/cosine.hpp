@@ -30,7 +30,7 @@ template <typename ArrayType>
 typename ArrayType::Type Cosine(ArrayType const &a, ArrayType const &b)
 {
   using Type = typename ArrayType::Type;
-  return Type(1) - fetch::math::correlation::Cosine(a, b);
+  return static_cast<Type>(Type(1) - fetch::math::correlation::Cosine(a, b));
 }
 
 }  // namespace distance
