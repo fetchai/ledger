@@ -25,10 +25,9 @@
 #include "ledger/storage_unit/lane_service.hpp"
 #include "ledger/storage_unit/transaction_storage_engine.hpp"
 #include "ledger/storage_unit/transaction_store.hpp"
+#include "tx_generation.hpp"
 
 #include "benchmark/benchmark.h"
-
-#include "tx_generation.hpp"
 
 #include <vector>
 

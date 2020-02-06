@@ -21,9 +21,9 @@
 #include "ledger/storage_unit/transaction_memory_pool.hpp"
 #include "transaction_generator.hpp"
 
-#include <vector>
-
 #include "gtest/gtest.h"
+
+#include <vector>
 
 namespace {
 

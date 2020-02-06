@@ -19,14 +19,13 @@
 
 #include "logging/logging.hpp"
 #include "network/fetch_asio.hpp"
+#include "openssl/crypto.h"
+#include "openssl/evp.h"
+#include "openssl/rsa.h"
 
 #include <cerrno>  // for fopen
 #include <cstdio>  // for fopen
 #include <exception>
-
-#include "openssl/crypto.h"
-#include "openssl/evp.h"
-#include "openssl/rsa.h"
 
 // both can be used separately
 // using PublicKey  = class EvpPublicKey;

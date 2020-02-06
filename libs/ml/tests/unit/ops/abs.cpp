@@ -21,6 +21,7 @@
 #include "test_types.hpp"
 
 #include "gtest/gtest.h"
+
 #include <vector>
 
 namespace {

@@ -16,10 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "gtest/gtest.h"
 #include "math/base_types.hpp"
 #include "math/metrics/kl_divergence.hpp"
 #include "test_types.hpp"
+
+#include "gtest/gtest.h"
 
 namespace fetch {
 namespace math {

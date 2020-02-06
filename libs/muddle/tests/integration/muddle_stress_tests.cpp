@@ -16,11 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "muddle.hpp"
-
 #include "core/byte_array/decoders.hpp"
 #include "core/macros.hpp"
 #include "crypto/ecdsa.hpp"
+#include "muddle.hpp"
 #include "muddle/rpc/client.hpp"
 #include "muddle/rpc/server.hpp"
 #include "network/management/network_manager.hpp"

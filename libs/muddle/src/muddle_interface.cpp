@@ -16,12 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "muddle.hpp"
-#include "muddle_fake.hpp"
-
 #include "crypto/ecdsa.hpp"
+#include "muddle.hpp"
 #include "muddle/muddle_interface.hpp"
 #include "muddle/network_id.hpp"
+#include "muddle_fake.hpp"
 
 namespace fetch {
 namespace muddle {

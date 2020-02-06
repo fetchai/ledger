@@ -17,7 +17,6 @@
 //------------------------------------------------------------------------------
 
 #include "aes.hpp"
-
 #include "crypto/block_cipher.hpp"
 
 namespace fetch {

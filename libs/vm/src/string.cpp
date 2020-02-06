@@ -17,10 +17,9 @@
 //------------------------------------------------------------------------------
 
 #include "core/string/trim.hpp"
+#include "utf8.h"
 #include "vm/array.hpp"
 #include "vm/string.hpp"
-
-#include "utf8.h"
 
 #include <algorithm>
 #include <cstddef>

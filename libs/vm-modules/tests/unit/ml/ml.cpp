@@ -16,12 +16,13 @@
 //
 //------------------------------------------------------------------------------
 
-#include "gmock/gmock.h"
 #include "vm/pair.hpp"
 #include "vm_modules/math/tensor/tensor.hpp"
 #include "vm_modules/math/type.hpp"
 #include "vm_modules/ml/dataloaders/dataloader.hpp"
 #include "vm_test_toolkit.hpp"
+
+#include "gmock/gmock.h"
 
 #include <regex>
 #include <sstream>

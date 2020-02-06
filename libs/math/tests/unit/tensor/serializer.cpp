@@ -17,9 +17,10 @@
 //------------------------------------------------------------------------------
 
 #include "core/serializers/main_serializer.hpp"
-#include "gtest/gtest.h"
 #include "math/tensor/tensor.hpp"
 #include "test_types.hpp"
+
+#include "gtest/gtest.h"
 
 namespace fetch {
 namespace math {

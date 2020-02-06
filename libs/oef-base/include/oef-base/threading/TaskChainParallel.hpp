@@ -17,15 +17,15 @@
 //
 //------------------------------------------------------------------------------
 
-#include <memory>
-#include <mutex>
-#include <queue>
-#include <utility>
-
 #include "ExitState.hpp"
 #include "core/mutex.hpp"
 #include "logging/logging.hpp"
 #include "oef-base/threading/StateMachineTask.hpp"
+
+#include <memory>
+#include <mutex>
+#include <queue>
+#include <utility>
 
 namespace fetch {
 namespace oef {

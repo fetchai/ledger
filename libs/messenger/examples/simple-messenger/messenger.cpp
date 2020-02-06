@@ -20,7 +20,6 @@
 #include "core/serializers/base_types.hpp"
 #include "crypto/ecdsa.hpp"
 #include "messenger/messenger_prototype.hpp"
-
 #include "muddle/muddle_endpoint.hpp"
 #include "muddle/rpc/client.hpp"
 #include "muddle/rpc/server.hpp"

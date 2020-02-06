@@ -20,7 +20,6 @@
 #include "core/serializers/main_serializer.hpp"
 #include "crypto/ecdsa.hpp"
 #include "digest_matcher.hpp"
-#include "gtest/gtest.h"
 #include "ledger/chain/block.hpp"
 #include "ledger/chain/main_chain.hpp"
 #include "ledger/protocols/main_chain_rpc_service.hpp"
@@ -31,6 +30,8 @@
 #include "mock_trust_system.hpp"
 #include "moment/clocks.hpp"
 #include "muddle/network_id.hpp"
+
+#include "gtest/gtest.h"
 
 #include <string>
 #include <unordered_map>

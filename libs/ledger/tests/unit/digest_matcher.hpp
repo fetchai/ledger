@@ -20,11 +20,11 @@
 #include "core/byte_array/const_byte_array.hpp"
 #include "ledger/chain/block.hpp"
 
-#include <string>
-#include <unordered_map>
-
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
+
+#include <string>
+#include <unordered_map>
 
 using ::testing::MatchResultListener;
 using ::testing::Matcher;

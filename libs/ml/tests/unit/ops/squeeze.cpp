@@ -16,11 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
-#include "gtest/gtest.h"
 #include "math/base_types.hpp"
 #include "ml/ops/squeeze.hpp"
-
 #include "test_types.hpp"
+
+#include "gtest/gtest.h"
+
 #include <vector>
 
 namespace {

@@ -18,8 +18,6 @@
 //------------------------------------------------------------------------------
 
 #include "blacklist.hpp"
-#include "subscription_registrar.hpp"
-
 #include "core/mutex.hpp"
 #include "crypto/prover.hpp"
 #include "crypto/secure_channel.hpp"
@@ -29,6 +27,7 @@
 #include "muddle/router_configuration.hpp"
 #include "network/details/thread_pool.hpp"
 #include "network/management/abstract_connection.hpp"
+#include "subscription_registrar.hpp"
 #include "telemetry/telemetry.hpp"
 
 #include <atomic>

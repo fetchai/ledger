@@ -16,10 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "subscription_feed.hpp"
-
 #include "core/mutex.hpp"
 #include "muddle/subscription.hpp"
+#include "subscription_feed.hpp"
 
 #include <cstdint>
 #include <memory>

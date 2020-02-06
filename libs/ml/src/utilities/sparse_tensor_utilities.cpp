@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "math/tensor/tensor.hpp"
+
 #include <ml/utilities/sparse_tensor_utilities.hpp>
 #include <vector>
 

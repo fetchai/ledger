@@ -16,11 +16,13 @@
 //
 //------------------------------------------------------------------------------
 
-#include "gtest/gtest.h"
 #include "math/base_types.hpp"
 #include "ml/utilities/min_max_scaler.hpp"
 #include "test_types.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
+
+#include "gtest/gtest.h"
+
 #include <vector>
 
 namespace fetch {

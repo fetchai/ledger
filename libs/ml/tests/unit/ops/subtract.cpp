@@ -16,10 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "gtest/gtest.h"
 #include "math/base_types.hpp"
 #include "ml/ops/subtract.hpp"
 #include "test_types.hpp"
+
+#include "gtest/gtest.h"
 
 #include <memory>
 #include <vector>

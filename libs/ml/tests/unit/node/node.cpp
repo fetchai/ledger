@@ -16,12 +16,13 @@
 //
 //------------------------------------------------------------------------------
 
-#include "gtest/gtest.h"
 #include "ml/core/node.hpp"
 #include "ml/meta/ml_type_traits.hpp"
 #include "ml/ops/activations/relu.hpp"
 #include "ml/ops/placeholder.hpp"
 #include "test_types.hpp"
+
+#include "gtest/gtest.h"
 
 namespace fetch {
 namespace ml {

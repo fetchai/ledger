@@ -22,8 +22,9 @@
 #include "oef-base/utils/Uri.hpp"
 #include "oef-messages/dap_interface.hpp"
 
-#include <functional>
 #include <google/protobuf/repeated_field.h>
+
+#include <functional>
 #include <regex>
 #include <string>
 #include <unordered_map>

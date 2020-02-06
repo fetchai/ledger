@@ -17,13 +17,13 @@
 //
 //------------------------------------------------------------------------------
 
-#include <memory>
-#include <vector>
-
 #include "Leaf.hpp"
 #include "Node.hpp"
 #include "logging/logging.hpp"
 #include "oef-messages/dap_interface.hpp"
+
+#include <memory>
+#include <vector>
 
 class Branch : public Node, public std::enable_shared_from_this<Branch>
 {

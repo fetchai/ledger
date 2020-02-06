@@ -20,7 +20,6 @@
 #include "muddle.hpp"
 #include "muddle/muddle_endpoint.hpp"
 #include "muddle/muddle_interface.hpp"
-
 #include "network_helpers.hpp"
 #include "router.hpp"
 

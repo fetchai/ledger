@@ -16,8 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "gtest/gtest.h"
 #include "oef-base/utils/Uri.hpp"
+
+#include "gtest/gtest.h"
 
 class OefBaseUtilsTests : public testing::Test
 {

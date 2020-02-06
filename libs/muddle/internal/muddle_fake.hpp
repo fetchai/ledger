@@ -18,10 +18,8 @@
 //------------------------------------------------------------------------------
 
 #include "fake_network.hpp"
-
 #include "muddle.hpp"
 #include "muddle/muddle_endpoint.hpp"
-
 #include "muddle_logging_name.hpp"
 
 namespace fetch {

@@ -17,27 +17,23 @@
 //------------------------------------------------------------------------------
 
 #include "MtSearch.hpp"
-
-#include <fstream>
-#include <iostream>
-
 #include "oef-base/comms/Core.hpp"
 #include "oef-base/comms/Endpoint.hpp"
 #include "oef-base/comms/IOefListener.hpp"
 #include "oef-base/comms/OefListenerSet.hpp"
-
 #include "oef-base/monitoring/Monitoring.hpp"
 #include "oef-base/threading/MonitoringTask.hpp"
-
 #include "oef-base/utils/Uri.hpp"
-
 #include "oef-messages/fetch_protobuf.hpp"
 #include "oef-search/comms/OefListenerStarterTask.hpp"
 #include "oef-search/comms/OefSearchEndpoint.hpp"
 #include "oef-search/dap_comms/OutboundDapConversationCreator.hpp"
-#include <stdio.h>
 
 #include <ctype.h>
+#include <stdio.h>
+
+#include <fstream>
+#include <iostream>
 
 using namespace std::placeholders;
 

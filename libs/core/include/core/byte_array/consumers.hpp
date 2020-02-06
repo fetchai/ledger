@@ -20,9 +20,9 @@
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/byte_array/tokenizer/tokenizer.hpp"
 
-#include <cctype>
-
 #include <emmintrin.h>
+
+#include <cctype>
 
 namespace fetch {
 namespace byte_array {

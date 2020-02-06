@@ -16,10 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "settings.hpp"
-
 #include "core/commandline/parameter_parser.hpp"
 #include "logging/logging.hpp"
+#include "settings.hpp"
 #include "vectorise/platform.hpp"
 
 #include <cstddef>

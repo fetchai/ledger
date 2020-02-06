@@ -23,10 +23,9 @@
 #include "core/random/lcg.hpp"
 #include "crypto/ecdsa.hpp"
 #include "ledger/storage_unit/lane_service.hpp"
+#include "tx_generation.hpp"
 
 #include "benchmark/benchmark.h"
-
-#include "tx_generation.hpp"
 
 #include <vector>
 

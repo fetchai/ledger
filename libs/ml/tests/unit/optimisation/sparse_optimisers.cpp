@@ -16,7 +16,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "gtest/gtest.h"
 #include "ml/core/graph.hpp"
 #include "ml/ops/embeddings.hpp"
 #include "ml/ops/loss_functions/mean_square_error_loss.hpp"
@@ -24,6 +23,8 @@
 #include "ml/optimisation/lazy_adam_optimiser.hpp"
 #include "ml/serializers/ml_types.hpp"
 #include "test_types.hpp"
+
+#include "gtest/gtest.h"
 
 namespace fetch {
 namespace ml {

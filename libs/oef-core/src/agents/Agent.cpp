@@ -16,11 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include <utility>
-
 #include "oef-core/agents/Agent.hpp"
-
 #include "oef-core/comms/OefAgentEndpoint.hpp"
+
+#include <utility>
 
 fetch::oef::base::Notification::NotificationBuilder Agent::send(
     std::shared_ptr<google::protobuf::Message> s)

@@ -16,12 +16,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "kademlia/peer_tracker.hpp"
-#include "muddle_logging_name.hpp"
-#include "muddle_register.hpp"
-#include "router.hpp"
-#include "routing_message.hpp"
-
 #include "core/byte_array/encoders.hpp"
 #include "core/containers/set_intersection.hpp"
 #include "core/serializers/base_types.hpp"
@@ -29,8 +23,13 @@
 #include "core/service_ids.hpp"
 #include "crypto/fnv.hpp"
 #include "crypto/secure_channel.hpp"
+#include "kademlia/peer_tracker.hpp"
 #include "logging/logging.hpp"
 #include "muddle/packet.hpp"
+#include "muddle_logging_name.hpp"
+#include "muddle_register.hpp"
+#include "router.hpp"
+#include "routing_message.hpp"
 #include "telemetry/counter.hpp"
 #include "telemetry/gauge.hpp"
 #include "telemetry/histogram.hpp"

@@ -18,9 +18,9 @@
 
 #include "math/base_types.hpp"
 #include "ml/ops/reshape.hpp"
+#include "test_types.hpp"
 
 #include "gtest/gtest.h"
-#include "test_types.hpp"
 
 #include <vector>
 

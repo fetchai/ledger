@@ -16,9 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "gtest/gtest.h"
 #include "math/activation_functions/gelu.hpp"
 #include "test_types.hpp"
+
+#include "gtest/gtest.h"
 
 namespace fetch {
 namespace math {

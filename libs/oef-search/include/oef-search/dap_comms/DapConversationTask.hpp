@@ -17,9 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include <memory>
-#include <utility>
-
 #include "logging/logging.hpp"
 #include "oef-base/conversation/OutboundConversation.hpp"
 #include "oef-base/conversation/OutboundConversations.hpp"
@@ -27,6 +24,9 @@
 #include "oef-base/threading/ExitState.hpp"
 #include "oef-base/threading/StateMachineTask.hpp"
 #include "oef-base/utils/Uri.hpp"
+
+#include <memory>
+#include <utility>
 
 template <typename IN_PROTO, typename OUT_PROTO>
 class DapConversationTask

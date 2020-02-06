@@ -16,7 +16,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "gtest/gtest.h"
 #include "math/activation_functions/softmax.hpp"
 #include "math/statistics/mean.hpp"
 #include "ml/layers/fully_connected.hpp"
@@ -28,6 +27,8 @@
 #include "ml/ops/loss_functions/softmax_cross_entropy_loss.hpp"
 #include "ml/ops/placeholder.hpp"
 #include "test_types.hpp"
+
+#include "gtest/gtest.h"
 
 namespace fetch {
 namespace ml {

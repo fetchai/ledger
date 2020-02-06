@@ -18,9 +18,9 @@
 //------------------------------------------------------------------------------
 
 #include "network/fetch_asio.hpp"
-#include <memory>
-
 #include "oef-base/comms/ISocketOwner.hpp"
+
+#include <memory>
 
 using asio::ip::tcp;
 

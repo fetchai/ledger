@@ -17,9 +17,10 @@
 //------------------------------------------------------------------------------
 
 #include "core/random/lcg.hpp"
-#include "gtest/gtest.h"
 #include "math/distance/manhattan.hpp"
 #include "test_types.hpp"
+
+#include "gtest/gtest.h"
 
 namespace fetch {
 namespace math {

@@ -16,7 +16,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "gtest/gtest.h"
 #include "ml/layers/convolution_2d.hpp"
 #include "ml/meta/ml_type_traits.hpp"
 #include "ml/ops/convolution_2d.hpp"
@@ -24,6 +23,8 @@
 #include "ml/ops/placeholder.hpp"
 #include "ml/serializers/ml_types.hpp"
 #include "test_types.hpp"
+
+#include "gtest/gtest.h"
 
 #include <memory>
 
