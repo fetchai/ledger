@@ -43,6 +43,45 @@ const uint32_t DEFAULT_MAX_PEERS          = 3;
 const uint32_t DEFAULT_TRANSIENT_PEERS    = 1;
 const uint32_t NUM_SYSTEM_THREADS = static_cast<uint32_t>(std::thread::hardware_concurrency());
 
+class ArgvWrapper
+{
+public:
+
+  explicit ArgvWrapper(Settings::UpdateBatch const &batch)
+    : batch_(batch)
+    , argc_((batch_.size() * 2) + 1)
+    , argv_(argc_, nullptr)
+  {
+    argv_[0] = "wrapper";
+
+    std::size_t idx{1};
+    for (auto const &element : batch_)
+    {
+      assert(idx + 1 < argv_.size());
+
+      argv_[idx] = element.first.c_str();
+      argv_[idx + 1] = element.second.c_str();
+
+      idx += 2;
+    }
+  }
+
+  int argc() const
+  {
+    return static_cast<int>(argc_);
+  }
+
+  char** argv() const
+  {
+    return const_cast<char**>(argv_.data());
+  }
+
+private:
+  Settings::UpdateBatch const &batch_;
+  std::size_t                                argc_{0};
+  std::vector<char const *>                  argv_;
+};
+
 }  // namespace
 
 // clang-format off
@@ -97,6 +136,14 @@ bool Settings::Update(int argc, char **argv)
 {
   UpdateFromEnv("CONSTELLATION_");
   UpdateFromArgs(argc, argv);
+  return Validate();
+}
+
+bool Settings::Update(UpdateBatch const &batch)
+{
+  ArgvWrapper wrapper{batch};
+  UpdateFromArgs(wrapper.argc(), wrapper.argv());
+
   return Validate();
 }
 

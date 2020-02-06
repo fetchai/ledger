@@ -42,6 +42,7 @@
 #include "shards/manifest.hpp"
 #include "version/cli_header.hpp"
 #include "version/fetch_version.hpp"
+#include "vectorise/platform.hpp"
 
 #include <atomic>
 #include <csignal>
@@ -184,7 +185,7 @@ bool HasVersionFlag(int argc, char **argv)
  * @param uris The initial set of nodes
  * @return The new bootstrap pointer if one exists
  */
-BootstrapPtr CreateBootstrap(Settings const &settings, Config const &config,
+BootstrapPtr CreateBootstrap(Settings &settings, Config &config,
                              ProverPtr const &prover, UriSet &uris)
 {
   BootstrapPtr bootstrap{};
@@ -207,7 +208,36 @@ BootstrapPtr CreateBootstrap(Settings const &settings, Config const &config,
         settings.discoverable.value(), settings.token.value(), core_service_peer.address());
 
     // run the discover
-    bootstrap->DiscoverPeers(uris, core_service_peer.address());
+    BootstrapMonitor::DiscoveryResult result;
+    if (bootstrap->DiscoverPeers(result, core_service_peer.address()))
+    {
+      // updates the URIs
+      uris = std::move(result.uris);
+
+      // if the user did not specify an explicit genesis file location, then we override the
+      // genesis configuration
+      if (settings.genesis_file_location.value().empty())
+      {
+        // also apply any of the settings that are necessary
+        settings.Update(result.config_updates);
+
+        // ensure that the settings are all configured correctly
+        config.genesis_file_contents = result.genesis;
+        config.block_interval_ms     = settings.block_interval.value();
+        config.log2_num_lanes        = fetch::platform::ToLog2(settings.num_lanes.value());
+        config.num_slices            = settings.num_slices.value();
+        config.features              = settings.experimental_features.value();
+        config.aeon_period           = settings.aeon_period.value();
+        config.proof_of_stake        = settings.proof_of_stake.value();
+      }
+    }
+    else
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Discovery failed, disabling bootstrap support");
+
+      // disable bootstrap support
+      bootstrap.reset();
+    }
   }
 
   return bootstrap;
@@ -265,16 +295,18 @@ int main(int argc, char **argv)
       auto p2p_key = fetch::crypto::GenerateP2PKey();
 
       // attempt to build the configuration for constellation
-      fetch::constellation::Constellation::Config cfg = BuildConstellationConfig(settings);
-
-      FETCH_LOG_INFO(LOGGING_NAME, "Configuration:\n", settings, "-\n", cfg);
-
       // setting policy for critical signals
       shutdown_on_critical_failure = settings.graceful_failure.value();
+
+      // must be before
+      fetch::constellation::Constellation::Config cfg = BuildConstellationConfig(settings);
 
       // create the bootrap monitor (if configued to do so)
       auto initial_peers = ToUriSet(settings.peers.value());
       auto bootstrap     = CreateBootstrap(settings, cfg, p2p_key, initial_peers);
+
+
+      FETCH_LOG_INFO(LOGGING_NAME, "Configuration:\n", settings, "-\n", cfg);
 
       for (auto const &uri : initial_peers)
       {
