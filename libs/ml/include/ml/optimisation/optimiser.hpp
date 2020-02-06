@@ -99,6 +99,8 @@ protected:
   std::vector<TensorType>                                             gradients_;
   SizeType                                                            epoch_ = SIZE_NOT_SET;
 
+  virtual fetch::ml::OperationsCount ChargeApplyGradients() const;
+
 private:
   DataType                                       loss_{};
   DataType                                       loss_sum_{};
