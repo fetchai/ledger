@@ -160,12 +160,6 @@ TSSP::TxArray TransactionStoreSyncProtocol::PullObjects(service::CallContext con
     }
   }
 
-  if (!ret.empty())
-  {
-    FETCH_LOG_INFO(LOGGING_NAME, "Lane ", lane_, ": PullObjects: Sending back ", ret.size(),
-                   " TXs");
-  }
-
   return ret;
 }
 
@@ -209,6 +203,12 @@ TSSP::TxArray TransactionStoreSyncProtocol::PullSpecificObjects(DigestSet const 
     {
       ret.push_back(tx);
     }
+  }
+
+  if (!ret.empty())
+  {
+    FETCH_LOG_INFO(LOGGING_NAME, "Lane ", lane_, ": PullSpecificObjects: Sending back ", ret.size(),
+                   " TXs");
   }
 
   return ret;

@@ -164,7 +164,7 @@ void BasicMiner::GenerateBlock(Block &block, std::size_t num_lanes, std::size_t 
   // cache the size of the mining pool
   std::size_t const pool_size_before = mining_pool_.size();
 
-  FETCH_LOG_INFO(LOGGING_NAME, "Starting block packing. Pool Size: ", pool_size_before);
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Starting block packing. Pool Size: ", pool_size_before);
 
   // determine how many of the threads should be used in this block generation
   auto const num_threads = Clip3<std::size_t>(mining_pool_.size() / 1000u, 1u, max_num_threads_);
@@ -219,8 +219,8 @@ void BasicMiner::GenerateBlock(Block &block, std::size_t num_lanes, std::size_t 
   std::size_t const remaining_transactions = mining_pool_.size();
   std::size_t const packed_transactions    = pool_size_before - remaining_transactions;
 
-  FETCH_LOG_INFO(LOGGING_NAME, "Finished block packing (packed: ", packed_transactions,
-                 " remaining: ", remaining_transactions, ")");
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Finished block packing (packed: ", packed_transactions,
+                  " remaining: ", remaining_transactions, ")");
 }
 
 /**

@@ -463,6 +463,7 @@ TransactionStoreSyncService::State TransactionStoreSyncService::OnResolvingObjec
   if (counts.failed != 0u)
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Lane ", cfg_.lane_id, ": ", "Failed promises: ", counts.failed);
+    pending_objects_.DiscardFailures();
   }
 
   return State::TRIM_CACHE;
