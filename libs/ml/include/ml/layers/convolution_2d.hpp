@@ -79,7 +79,7 @@ public:
     return DESCRIPTOR;
   }
 
-  OperationsCount ChargeForward() override;
+  OperationsCount ChargeForward() const override;
 
 private:
   void Initialise(TensorType &weights, WeightsInit init_mode)

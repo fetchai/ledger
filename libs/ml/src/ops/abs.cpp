@@ -103,7 +103,7 @@ std::vector<math::SizeType> Abs<TensorType>::ComputeOutputShape(VecTensorType co
 }
 
 template <typename TensorType>
-OperationsCount Abs<TensorType>::ChargeForward()
+OperationsCount Abs<TensorType>::ChargeForward() const
 {
   assert(!this->batch_input_shapes_.empty());
   OperationsCount cost = fetch::ml::charge_estimation::ops::ABS_PER_ELEMENT *

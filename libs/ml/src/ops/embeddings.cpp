@@ -133,7 +133,7 @@ std::vector<math::SizeType> Embeddings<TensorType>::ComputeOutputShape(
 }
 
 template <typename TensorType>
-OperationsCount Embeddings<TensorType>::ChargeForward()
+OperationsCount Embeddings<TensorType>::ChargeForward() const
 {
   assert(!this->batch_input_shapes_.empty());
   assert(!this->batch_output_shape_.empty());

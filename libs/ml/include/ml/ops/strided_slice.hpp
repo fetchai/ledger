@@ -66,7 +66,7 @@ public:
     return OpType::OP_STRIDED_SLICE;
   }
 
-  OperationsCount ChargeForward() override;
+  OperationsCount ChargeForward() const override;
 
   static constexpr char const *DESCRIPTOR = "StridedSlice";
 };
