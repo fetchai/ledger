@@ -33,7 +33,6 @@
 namespace fetch {
 namespace {
 
-using variant::Variant;
 using variant::Extract;
 using network::Uri;
 using http::JsonClient;

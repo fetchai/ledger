@@ -90,7 +90,7 @@ private:
   /// @name Actions
   /// @{
   bool        UpdateExternalAddress();
-  bool        RunDiscovery(DiscoveryResult &result);
+  bool        RunDiscovery(DiscoveryResult &output);
   static bool ParseDiscoveryV1(Variant const &arr, DiscoveryResult &result);
   static bool ParseDiscoveryV2(Variant const &obj, DiscoveryResult &result);
   static bool ParseNodeList(Variant const &arr, UriSet &peers);
