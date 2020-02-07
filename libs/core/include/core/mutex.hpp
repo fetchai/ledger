@@ -145,6 +145,12 @@ class MutexRegister : public DeadlockHandler, DeadlockPolicy
   using Parent::Depopulate;
 
 public:
+  /**
+   * Once a thread locked a mutex successfully, update the tables.
+   *
+   * @param mutex Pointer to the mutex locked
+   * @param location Code point the lock is performed at
+   */
   static void RegisterMutexAcquisition(MutexPtr mutex, LockLocation location = LockLocation())
   {
     auto &         instance = Instance();
@@ -171,6 +177,11 @@ public:
     instance.waiting_location_.erase(thread);
   }
 
+  /**
+   * Before a thread fully releases a mutex, update the tables.
+   *
+   * @param mutex A pointer to the mutex to be released
+   */
   static void UnregisterMutexAcquisition(MutexPtr mutex)
   {
     auto &         instance = Instance();
@@ -186,6 +197,12 @@ public:
     }
   }
 
+  /**
+   * Announce that a thread is after a mutex.
+   *
+   * @param mutex A pointer to a mutex to be locked
+   * @param location Code point the lock is performed at
+   */
   static void QueueUpFor(MutexPtr mutex, LockLocation location)
   {
     auto &         instance = Instance();
@@ -220,6 +237,12 @@ private:
   using Parent::IsDeadlocked;
   using Parent::SafeToLock;
 
+  /**
+   * Check if there's a deadlock in the current lock graph.
+   *
+   * @param mutex Pointer to the mutex to be locked
+   * @param location Code point the lock is performed at
+   */
   void CheckForDeadlocks(MutexPtr mutex, LockLocation const &location)
   {
     auto own_it = lock_owners_.find(mutex);
@@ -245,6 +268,12 @@ private:
     }
   }
 
+  /**
+   * When a deadlock detected, create an error message to be thrown/printed to stderr.
+   *
+   * @param mutex A pointer to mutex locked deadly
+   * @param location Code point the lock is performed at
+   */
   std::string CreateTrace(MutexPtr mutex, LockLocation const &location)
   {
     std::stringstream ss{""};
