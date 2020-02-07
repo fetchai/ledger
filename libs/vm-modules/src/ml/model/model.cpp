@@ -903,7 +903,9 @@ ChargeAmount VMModel::EstimatePredict(const vm::Ptr<math::VMTensor> &data)
  */
 ChargeAmount VMModel::EstimateFit(const vm::Ptr<math::VMTensor> &data)
 {
-  ChargeAmount const cost =
+  // TODO(ML-520): check if calculations are correct here.
+  // TODO(ML-520): Add DataLoader cost to the calculation.
+  ChargeAmount const cost = /* + DataLoader loading cost + */
       model_->ChargeForward() + model_->ChargeBackward() + model_->ChargeOptimiser();
   SizeType const     batch_size = data->shape().back();
   ChargeAmount const batch_cost = batch_size * cost;
@@ -921,7 +923,8 @@ ChargeAmount VMModel::EstimateFit(const vm::Ptr<math::VMTensor> &data)
 ChargeAmount VMModel::EstimateEvaluate(const vm::Ptr<math::VMTensor> &data)
 {
   FETCH_UNUSED(data);
-  // TODO(VH): implement cost calculation
+  // TODO(VH): implement cost calculation, it should be aware of deep copy of the output Tensor.
+  // but it is almostr the same as a forward run estimation.
   return 0;
 }
 
