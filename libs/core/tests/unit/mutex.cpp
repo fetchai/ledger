@@ -32,7 +32,7 @@ using fetch::RMutex;
 
 TEST(DebugMutex, SimpleProblem)
 {
-  fetch::MutexRegister::ThrowOnDeadlock();
+  fetch::DeadlockHandler::ThrowOnDeadlock();
   {
     Mutex                  mutex;
     std::lock_guard<Mutex> guard1(mutex);
@@ -51,7 +51,7 @@ TEST(DebugMutex, SimpleProblem)
 
 TEST(DebugMutex, MultiThreadDeadlock)
 {
-  fetch::MutexRegister::ThrowOnDeadlock();
+  fetch::DeadlockHandler::ThrowOnDeadlock();
   Mutex m[5];
   auto  f = [&m](int32_t n) {
     std::lock_guard<Mutex> guard1(m[n]);
@@ -86,7 +86,7 @@ TEST(DebugMutex, MultiThreadDeadlock)
 
 TEST(DebugMutex, DISABLED_MultiThreadDeadlock2)
 {
-  fetch::MutexRegister::AbortOnDeadlock();
+  fetch::DeadlockHandler::AbortOnDeadlock();
   Mutex m[5];
   auto  f = [&m](int32_t n) {
     FETCH_LOCK(m[n]);
@@ -119,9 +119,9 @@ TEST(DebugMutex, DISABLED_MultiThreadDeadlock2)
   threads.clear();
 }
 
-TEST(DebugMutex, Recursive)
+TEST(DebugMutex, CorrectRecursive)
 {
-  fetch::MutexRegister::ThrowOnDeadlock();
+  fetch::DeadlockHandler::ThrowOnDeadlock();
   RMutex m;
 
   EXPECT_TRUE(m.try_lock());
@@ -143,13 +143,17 @@ TEST(DebugMutex, Recursive)
 
     rv += c;
     rv += c;
-    rv += c;
-    rv += c;
 
-    std::this_thread::sleep_for(std::chrono::seconds(1));
+    std::this_thread::sleep_for(std::chrono::milliseconds(250));
 
     m.unlock();
     m.unlock();
+
+    rv += c;
+    rv += c;
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(250));
+
     m.unlock();
     m.unlock();
   };
@@ -162,6 +166,30 @@ TEST(DebugMutex, Recursive)
   threads[1].join();
 
   ASSERT_TRUE(rv == "aaaabbbb" || rv == "bbbbaaaa");
+}
+
+TEST(DebugMutex, IncorrectRecursive)
+{
+  fetch::DeadlockHandler::ThrowOnDeadlock();
+  RMutex m;
+
+  std::vector<std::thread> threads;
+
+  threads.emplace_back([&m] {
+    FETCH_LOCK(m);
+    FETCH_LOCK(m);
+    std::this_thread::sleep_for(std::chrono::seconds(4));
+  });
+
+  threads.emplace_back([&m] {
+    std::this_thread::sleep_for(std::chrono::seconds(3));
+    EXPECT_THROW(std::lock_guard<RMutex> failed_guard(m), std::runtime_error);
+  });
+
+  for (auto &t : threads)
+  {
+    t.join();
+  }
 }
 
 #endif  // FETCH_DEBUG_MUTEX
