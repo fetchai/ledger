@@ -64,7 +64,7 @@ public:
   static constexpr char const *DESCRIPTOR = "RandomisedRelu";
 
   OperationsCount ChargeForward() const override;
-  OperationsCount ChargeBackward() override;
+  OperationsCount ChargeBackward() const override;
 
 private:
   void UpdateRandomValue()

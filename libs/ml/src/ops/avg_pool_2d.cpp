@@ -208,7 +208,7 @@ OperationsCount AvgPool2D<TensorType>::ChargeForward() const
 }
 
 template <typename TensorType>
-OperationsCount AvgPool2D<TensorType>::ChargeBackward()
+OperationsCount AvgPool2D<TensorType>::ChargeBackward() const
 {
   assert(!this->batch_output_shape_.empty());
   OperationsCount num_output_shape_ops =

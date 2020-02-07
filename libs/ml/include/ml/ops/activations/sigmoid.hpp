@@ -71,7 +71,7 @@ public:
   }
 
   OperationsCount ChargeForward() const override;
-  OperationsCount ChargeBackward() override;
+  OperationsCount ChargeBackward() const override;
 
 private:
   // minimum possible output value of the sigmoid should not be zero, but actually epsilon

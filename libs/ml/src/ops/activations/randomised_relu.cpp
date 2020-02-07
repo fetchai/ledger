@@ -146,7 +146,7 @@ OperationsCount RandomisedRelu<TensorType>::ChargeForward() const
 }
 
 template <typename TensorType>
-OperationsCount RandomisedRelu<TensorType>::ChargeBackward()
+OperationsCount RandomisedRelu<TensorType>::ChargeBackward() const
 {
   assert(!this->batch_input_shapes_.empty());
   OperationsCount cost = fetch::ml::charge_estimation::ops::RANDOMISED_RELU_BACKWARD_PER_ELEMENT *
