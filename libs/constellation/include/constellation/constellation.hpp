@@ -171,8 +171,7 @@ private:
   using ShardManagementService   = shards::ShardManagementService;
   using ShardMgmtServicePtr      = std::shared_ptr<ShardManagementService>;
   using ShardConfigs             = ledger::ShardConfigs;
-  using TxStatusCache            = ledger::TransactionStatusCache;
-  using TxStatusCachePtr         = std::shared_ptr<TxStatusCache>;
+  using TxStatusCachePtr         = std::shared_ptr<ledger::TransactionStatusInterface>;
 
   using OpenAPIHttpModulePtr     = std::shared_ptr<OpenAPIHttpModule>;
   using HealthCheckHttpModulePtr = std::shared_ptr<HealthCheckHttpModule>;

@@ -18,13 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/digest.hpp"
-#include "core/mutex.hpp"
-#include "core/synchronisation/waitable.hpp"
 #include "ledger/execution_result.hpp"
-#include "network/generics/milli_timer.hpp"
-
-#include <chrono>
-#include <unordered_map>
 
 namespace fetch {
 namespace ledger {
@@ -61,10 +55,10 @@ constexpr char const *ToString(TransactionStatus status)
   return "Unknown";
 }
 
-class TransactionStatusCache
+class TransactionStatusInterface
 {
 public:
-  using ShrdPtr = std::shared_ptr<TransactionStatusCache>;
+  using TransactionStatusPtr = std::shared_ptr<TransactionStatusInterface>;
 
   struct TxStatus
   {
@@ -72,17 +66,41 @@ public:
     ContractExecutionResult contract_exec_result{};
   };
 
-  virtual ~TransactionStatusCache() = default;
+  // Factory Methods
+  static TransactionStatusPtr CreateTimeBasedCache();
+  static TransactionStatusPtr CreatePersistentCache();
 
-  virtual TxStatus Query(Digest digest) const                                 = 0;
-  virtual void     Update(Digest digest, TransactionStatus status)            = 0;
-  virtual void     Update(Digest digest, ContractExecutionResult exec_result) = 0;
+  // Construction / Destruction
+  TransactionStatusInterface()          = default;
+  virtual ~TransactionStatusInterface() = default;
 
-  // Operators
-  TransactionStatusCache &operator=(TransactionStatusCache const &) = delete;
-  TransactionStatusCache &operator=(TransactionStatusCache &&) = delete;
+  /// @name Transaction Status Interface
+  /// @{
 
-  static ShrdPtr factory();
+  /**
+   * Query the status of a specified transaction
+   *
+   * @param digest The digest of the transaction
+   * @return The status object associated for this transaction
+   */
+  virtual TxStatus Query(Digest digest) const = 0;
+
+  /**
+   * Update the status of a transaction with the specified status enum
+   *
+   * @param digest The transaction to be updated
+   * @param status The status value that should be set
+   */
+  virtual void Update(Digest digest, TransactionStatus status) = 0;
+
+  /**
+   * Update the contract execution result for the specified transaction
+   *
+   * @param digest The transaction to be updated
+   * @param exec_result The contract execution result
+   */
+  virtual void Update(Digest digest, ContractExecutionResult exec_result) = 0;
+  /// @}
 };
 
 }  // namespace ledger

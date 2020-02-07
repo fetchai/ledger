@@ -384,7 +384,7 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
   , http_network_manager_{"Http", HTTP_THREADS}
   , internal_identity_{std::make_shared<crypto::ECDSASigner>()}
   , external_identity_{std::move(certificate)}
-  , tx_status_cache_(TxStatusCache::factory())
+  , tx_status_cache_(ledger::TransactionStatusInterface::CreateTimeBasedCache())
   , uptime_{telemetry::Registry::Instance().CreateCounter(
         "ledger_uptime_ticks_total",
         "The number of intervals that ledger instance has been alive for")}

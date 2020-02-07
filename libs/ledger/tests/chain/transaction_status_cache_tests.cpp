@@ -17,68 +17,30 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/byte_array.hpp"
-#include "core/macros.hpp"
 #include "core/random/lcg.hpp"
-#include "ledger/transaction_status_cache_impl.hpp"
+#include "time_based_transaction_status_cache.hpp"
 
-#include "gmock/gmock.h"
+#include "gtest/gtest.h"
 
 #include <memory>
 
 namespace {
 
-using namespace fetch;
-using namespace fetch::ledger;
-
 using fetch::byte_array::ByteArray;
 using fetch::random::LinearCongruentialGenerator;
-using StatusCachePtr = TransactionStatusCache::ShrdPtr;
-using RngWord        = LinearCongruentialGenerator::RandomType;
+using fetch::ledger::TimeBasedTransactionStatusCache;
+using fetch::ledger::TransactionStatus;
+using fetch::ledger::ContractExecutionResult;
+using fetch::ledger::ContractExecutionStatus;
+using fetch::Digest;
 
-using testing::Return;
-using testing::HasSubstr;
-
-struct ClockSystemClockMock;
-
-struct ClockMock : public std::chrono::steady_clock
-{
-  static std::shared_ptr<ClockSystemClockMock> mock;
-  static time_point                            now() noexcept;
-};
-std::shared_ptr<ClockSystemClockMock> ClockMock::mock;
-
-struct ClockSystemClockMock
-{
-  MOCK_CONST_METHOD0(now, ClockMock::time_point());
-};
-
-ClockMock::time_point ClockMock::now() noexcept
-{
-  return mock->now();
-}
-
-using TransactionStatusCacheForTest = TransactionStatusCacheImpl<ClockMock>;
-using Clock                         = TransactionStatusCacheForTest::Clock;
-using Timepoint                     = TransactionStatusCacheForTest::Timepoint;
+using AdjustableClockPtr = fetch::moment::AdjustableClockPtr;
+using Timestamp          = fetch::moment::ClockInterface::Timestamp;
+using RngWord            = LinearCongruentialGenerator::RandomType;
 
 class TransactionStatusCacheTests : public ::testing::Test
 {
 protected:
-  void SetUp() override
-  {
-    clock_mock_     = std::make_shared<ClockSystemClockMock>();
-    ClockMock::mock = clock_mock_;
-    EXPECT_CALL(*clock_mock_, now()).WillOnce(Return(Timepoint::min()));
-    cache_ = std::make_shared<TransactionStatusCacheForTest>();
-  }
-
-  void TearDown() override
-  {
-    ClockMock::mock.reset();
-    clock_mock_.reset();
-    cache_.reset();
-  }
-
   Digest GenerateDigest()
   {
     static constexpr std::size_t DIGEST_BIT_LENGTH  = 256u;
@@ -100,9 +62,9 @@ protected:
     return Digest{digest};
   }
 
-  StatusCachePtr                        cache_{};
-  LinearCongruentialGenerator           rng_{};
-  std::shared_ptr<ClockSystemClockMock> clock_mock_{};
+  AdjustableClockPtr              clock_{fetch::moment::CreateAdjustableClock("tx-status")};
+  TimeBasedTransactionStatusCache cache_{};
+  LinearCongruentialGenerator     rng_{};
 };
 
 TEST_F(TransactionStatusCacheTests, CheckBasicUpdate)
@@ -111,72 +73,46 @@ TEST_F(TransactionStatusCacheTests, CheckBasicUpdate)
   auto tx2 = GenerateDigest();
   auto tx3 = GenerateDigest();
 
-  EXPECT_CALL(*clock_mock_, now()).WillOnce(Return(Timepoint::min()));
-  cache_->Update(tx1, TransactionStatus::SUBMITTED);
+  // make updates for a series of TXs
+  cache_.Update(tx1, TransactionStatus::SUBMITTED);
+  cache_.Update(tx2, TransactionStatus::PENDING);
+  cache_.Update(tx3, TransactionStatus::MINED);
 
-  EXPECT_CALL(*clock_mock_, now()).WillOnce(Return(Timepoint::min()));
-  cache_->Update(tx2, TransactionStatus::PENDING);
+  ASSERT_EQ(TransactionStatus::SUBMITTED, cache_.Query(tx1).status);
+  ASSERT_EQ(TransactionStatus::PENDING, cache_.Query(tx2).status);
+  ASSERT_EQ(TransactionStatus::MINED, cache_.Query(tx3).status);
 
-  EXPECT_CALL(*clock_mock_, now()).WillOnce(Return(Timepoint::min()));
-  cache_->Update(tx3, TransactionStatus::MINED);
+  cache_.Update(tx1, TransactionStatus::PENDING);
+  cache_.Update(tx2, TransactionStatus::MINED);
 
-  ASSERT_EQ(TransactionStatus::SUBMITTED, cache_->Query(tx1).status);
-  ASSERT_EQ(TransactionStatus::PENDING, cache_->Query(tx2).status);
-  ASSERT_EQ(TransactionStatus::MINED, cache_->Query(tx3).status);
-
-  EXPECT_CALL(*clock_mock_, now()).WillOnce(Return(Timepoint::min()));
-  cache_->Update(tx1, TransactionStatus::PENDING);
-
-  EXPECT_CALL(*clock_mock_, now()).WillOnce(Return(Timepoint::min()));
-  cache_->Update(tx2, TransactionStatus::MINED);
-
-  EXPECT_EQ(TransactionStatus::PENDING, cache_->Query(tx1).status);
-  EXPECT_EQ(TransactionStatus::MINED, cache_->Query(tx2).status);
-  EXPECT_EQ(TransactionStatus::MINED, cache_->Query(tx3).status);
+  EXPECT_EQ(TransactionStatus::PENDING, cache_.Query(tx1).status);
+  EXPECT_EQ(TransactionStatus::MINED, cache_.Query(tx2).status);
+  EXPECT_EQ(TransactionStatus::MINED, cache_.Query(tx3).status);
 }
 
 TEST_F(TransactionStatusCacheTests, CheckTxStatusUpdateFailsForExecutedStatus)
 {
   auto tx1 = GenerateDigest();
 
-  Timepoint start{ClockMock::time_point::min()};
+  cache_.Update(tx1, TransactionStatus::PENDING);
+  ASSERT_EQ(TransactionStatus::PENDING, cache_.Query(tx1).status);
 
-  EXPECT_CALL(*clock_mock_, now()).WillOnce(Return(start));
-  cache_->Update(tx1, TransactionStatus::PENDING);
-  ASSERT_EQ(TransactionStatus::PENDING, cache_->Query(tx1).status);
-
-  EXPECT_CALL(*clock_mock_, now()).WillOnce(Return(start));
-  bool ex_thrown{false};
-  try
-  {
-    cache_->Update(tx1, TransactionStatus::EXECUTED);
-  }
-  catch (std::exception const &ex)
-  {
-    EXPECT_THAT(ex.what(), HasSubstr("Using inappropriate method to update"));
-    ex_thrown = true;
-  }
-
-  EXPECT_TRUE(ex_thrown);
+  ASSERT_THROW(cache_.Update(tx1, TransactionStatus::EXECUTED), std::runtime_error);
 }
 
 TEST_F(TransactionStatusCacheTests, CheckUpdateForContractExecutionResult)
 {
   auto tx1 = GenerateDigest();
 
-  Timepoint start{ClockMock::time_point::min()};
-
-  EXPECT_CALL(*clock_mock_, now()).WillOnce(Return(start));
-  cache_->Update(tx1, TransactionStatus::PENDING);
-  ASSERT_EQ(TransactionStatus::PENDING, cache_->Query(tx1).status);
+  cache_.Update(tx1, TransactionStatus::PENDING);
+  ASSERT_EQ(TransactionStatus::PENDING, cache_.Query(tx1).status);
 
   ContractExecutionResult const expected_result{
       ContractExecutionStatus::INEXPLICABLE_FAILURE, 1, 2, 3, 4, -2};
 
-  EXPECT_CALL(*clock_mock_, now()).WillOnce(Return(start));
-  cache_->Update(tx1, expected_result);
+  cache_.Update(tx1, expected_result);
 
-  auto const received_result{cache_->Query(tx1)};
+  auto const received_result{cache_.Query(tx1)};
   EXPECT_EQ(TransactionStatus::EXECUTED, received_result.status);
   EXPECT_EQ(expected_result.status, received_result.contract_exec_result.status);
   EXPECT_EQ(expected_result.return_value, received_result.contract_exec_result.return_value);
@@ -192,25 +128,20 @@ TEST_F(TransactionStatusCacheTests, CheckPruning)
   auto tx2 = GenerateDigest();
   auto tx3 = GenerateDigest();
 
-  Timepoint start{ClockMock::time_point::min()};
+  cache_.Update(tx1, TransactionStatus::PENDING);
+  cache_.Update(tx2, TransactionStatus::MINED);
 
-  EXPECT_CALL(*clock_mock_, now()).WillOnce(Return(start));
-  cache_->Update(tx1, TransactionStatus::PENDING);
+  ASSERT_EQ(TransactionStatus::PENDING, cache_.Query(tx1).status);
+  ASSERT_EQ(TransactionStatus::MINED, cache_.Query(tx2).status);
 
-  EXPECT_CALL(*clock_mock_, now()).WillOnce(Return(start));
-  cache_->Update(tx2, TransactionStatus::MINED);
+  // advance our clock by other the cache threshold
+  clock_->Advance(std::chrono::hours{25});
 
-  ASSERT_EQ(TransactionStatus::PENDING, cache_->Query(tx1).status);
-  ASSERT_EQ(TransactionStatus::MINED, cache_->Query(tx2).status);
+  cache_.Update(tx3, TransactionStatus::SUBMITTED);
 
-  Timepoint const future_time_point = start + std::chrono::hours{25};
-
-  EXPECT_CALL(*clock_mock_, now()).WillRepeatedly(Return(future_time_point));
-  cache_->Update(tx3, TransactionStatus::SUBMITTED);
-
-  EXPECT_EQ(TransactionStatus::UNKNOWN, cache_->Query(tx1).status);
-  EXPECT_EQ(TransactionStatus::UNKNOWN, cache_->Query(tx2).status);
-  EXPECT_EQ(TransactionStatus::SUBMITTED, cache_->Query(tx3).status);
+  EXPECT_EQ(TransactionStatus::UNKNOWN, cache_.Query(tx1).status);
+  EXPECT_EQ(TransactionStatus::UNKNOWN, cache_.Query(tx2).status);
+  EXPECT_EQ(TransactionStatus::SUBMITTED, cache_.Query(tx3).status);
 }
 
 }  // namespace
