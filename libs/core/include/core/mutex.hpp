@@ -72,7 +72,7 @@ struct LockLocation
 class DeadlockHandler
 {
 public:
-  void DeadlockDetected(std::string message);
+  static void DeadlockDetected(std::string message);
 
   static void ThrowOnDeadlock();
 
