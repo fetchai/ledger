@@ -208,7 +208,7 @@ inline VectorRegister<fixed_point::fp64_t, 128> Exp(
   constexpr std::size_t           size = VectorRegister<fixed_point::fp64_t, 128>::E_BLOCK_COUNT;
   alignas(16) fixed_point::fp64_t A[size];
   x.Store(A);
-  for (std::size_t i = 1; i < size; i++)
+  for (std::size_t i = 0; i < size; i++)
   {
     A[i] = fixed_point::fp64_t::Exp(A[i]);
   }
@@ -221,7 +221,7 @@ inline VectorRegister<fixed_point::fp64_t, 256> Exp(
   constexpr std::size_t           size = VectorRegister<fixed_point::fp64_t, 256>::E_BLOCK_COUNT;
   alignas(32) fixed_point::fp64_t A[size];
   x.Store(A);
-  for (std::size_t i = 1; i < size; i++)
+  for (std::size_t i = 0; i < size; i++)
   {
     A[i] = fixed_point::fp64_t::Exp(A[i]);
   }
@@ -234,7 +234,7 @@ inline VectorRegister<float, 256> Exp(
   constexpr std::size_t size = VectorRegister<float, 256>::E_BLOCK_COUNT;
   alignas(32) float     A[size];
   x.Store(A);
-  for (std::size_t i = 1; i < size; i++)
+  for (std::size_t i = 0; i < size; i++)
   {
     A[i] = static_cast<float>(std::exp(static_cast<double>(A[i])));
   }
@@ -247,7 +247,7 @@ inline VectorRegister<double, 256> Exp(
   constexpr std::size_t size = VectorRegister<double, 256>::E_BLOCK_COUNT;
   alignas(32) double    A[size];
   x.Store(A);
-  for (std::size_t i = 1; i < size; i++)
+  for (std::size_t i = 0; i < size; i++)
   {
     A[i] = std::exp(A[i]);
   }
@@ -260,7 +260,7 @@ inline VectorRegister<int64_t, 256> Exp(
   constexpr std::size_t size = VectorRegister<int64_t, 256>::E_BLOCK_COUNT;
   alignas(32) int64_t     A[size];
   x.Store(A);
-  for (std::size_t i = 1; i < size; i++)
+  for (std::size_t i = 0; i < size; i++)
   {
     A[i] = static_cast<int64_t>(std::exp(static_cast<int64_t>(A[i])));
   }
@@ -273,7 +273,7 @@ inline VectorRegister<int32_t, 256> Exp(
   constexpr std::size_t size = VectorRegister<int32_t, 256>::E_BLOCK_COUNT;
   alignas(32) int32_t     A[size];
   x.Store(A);
-  for (std::size_t i = 1; i < size; i++)
+  for (std::size_t i = 0; i < size; i++)
   {
     A[i] = static_cast<int32_t>(std::exp(static_cast<int32_t>(A[i])));
   }
@@ -286,7 +286,7 @@ inline VectorRegister<int16_t, 256> Exp(
   constexpr std::size_t size = VectorRegister<int16_t, 256>::E_BLOCK_COUNT;
   alignas(32) int16_t     A[size];
   x.Store(A);
-  for (std::size_t i = 1; i < size; i++)
+  for (std::size_t i = 0; i < size; i++)
   {
     A[i] = static_cast<int16_t>(std::exp(static_cast<int16_t>(A[i])));
   }
@@ -299,7 +299,7 @@ inline VectorRegister<int8_t, 256> Exp(
   constexpr std::size_t size = VectorRegister<int8_t, 256>::E_BLOCK_COUNT;
   alignas(32) int8_t     A[size];
   x.Store(A);
-  for (std::size_t i = 1; i < size; i++)
+  for (std::size_t i = 0; i < size; i++)
   {
     A[i] = static_cast<int8_t>(std::exp(static_cast<int8_t>(A[i])));
   }
