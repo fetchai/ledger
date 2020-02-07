@@ -85,6 +85,7 @@ using Identity              = crypto::Identity;
 using LaneIndex             = uint32_t;
 using MainChain             = ledger::MainChain;
 using StakeManagerPtr       = std::shared_ptr<ledger::StakeManager>;
+using TransactionStatusPtr  = ledger::TransactionStatusInterface::TransactionStatusPtr;
 
 constexpr char const *LOGGING_NAME = "constellation";
 
@@ -359,6 +360,18 @@ Constellation::MessengerAPIPtr CreateMessengerAPI(Config const &cfg, muddle::Mud
   return ret;
 }
 
+TransactionStatusPtr CreateTransactionStatusCache(Config const &config)
+{
+  if (config.persistent_tx_status)
+  {
+    return ledger::TransactionStatusInterface::CreatePersistentCache();
+  }
+  else
+  {
+    return ledger::TransactionStatusInterface::CreateTimeBasedCache();
+  }
+}
+
 /**
  * Construct a constellation instance
  *
@@ -384,7 +397,7 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
   , http_network_manager_{"Http", HTTP_THREADS}
   , internal_identity_{std::make_shared<crypto::ECDSASigner>()}
   , external_identity_{std::move(certificate)}
-  , tx_status_cache_(ledger::TransactionStatusInterface::CreateTimeBasedCache())
+  , tx_status_cache_{CreateTransactionStatusCache(cfg_)}
   , uptime_{telemetry::Registry::Instance().CreateCounter(
         "ledger_uptime_ticks_total",
         "The number of intervals that ledger instance has been alive for")}

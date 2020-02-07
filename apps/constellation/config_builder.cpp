@@ -304,6 +304,7 @@ Constellation::Config BuildConstellationConfig(Settings const &settings)
   cfg.disable_signing       = settings.disable_signing.value();
   cfg.sign_broadcasts       = false;
   cfg.kademlia_routing      = settings.kademlia_routing.value();
+  cfg.persistent_tx_status  = settings.persistent_status.value();
   cfg.proof_of_stake        = settings.proof_of_stake.value();
   cfg.network_mode          = GetNetworkMode(settings);
   cfg.features              = settings.experimental_features.value();

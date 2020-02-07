@@ -105,6 +105,7 @@ public:
     bool           disable_signing{false};
     bool           sign_broadcasts{false};
     bool           kademlia_routing{true};
+    bool           persistent_tx_status{false};
     ConstByteArray genesis_file_contents{};
     bool           proof_of_stake{false};
     NetworkMode    network_mode{NetworkMode::PUBLIC_NETWORK};
