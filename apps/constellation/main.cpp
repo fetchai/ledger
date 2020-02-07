@@ -158,7 +158,7 @@ void ThrowException(int signal)
  * @param argv The array of arguments
  * @return true if the version flag is present, otherwise false
  */
-bool HasVersionFlag(int argc, char **argv)
+bool HasVersionFlag(int argc, char const *const *argv)
 {
   static const std::string FULL_VERSION_FLAG{"--version"};
   static const std::string SHORT_VERSION_FLAG{"-v"};
@@ -261,7 +261,7 @@ WeakRunnable ExtractRunnable(BootstrapPtr const &bootstrap)
 
 }  // namespace
 
-int main(int argc, char **argv)
+int main(int argc, char const *const *argv)
 {
   int exit_code = EXIT_FAILURE;
 

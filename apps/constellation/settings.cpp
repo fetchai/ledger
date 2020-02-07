@@ -70,9 +70,9 @@ public:
     return static_cast<int>(argc_);
   }
 
-  char **argv() const
+  char const *const *argv() const
   {
-    return const_cast<char **>(argv_.data());
+    return argv_.data();
   }
 
 private:
@@ -131,7 +131,7 @@ Settings::Settings()
  * @param argc The number of command line arguments
  * @param argv The array of command line arguments
  */
-bool Settings::Update(int argc, char **argv)
+bool Settings::Update(int argc, char const *const *argv)
 {
   UpdateFromEnv("CONSTELLATION_");
   UpdateFromArgs(argc, argv);

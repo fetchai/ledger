@@ -43,7 +43,7 @@ public:
   Settings(Settings &&)      = delete;
   ~Settings()                = default;
 
-  bool Update(int argc, char **argv);
+  bool Update(int argc, char const *const *argv);
   bool Update(UpdateBatch const &batch);
 
   /// @name High Level Network Settings
