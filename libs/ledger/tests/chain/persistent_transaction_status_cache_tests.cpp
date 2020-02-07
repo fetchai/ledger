@@ -31,17 +31,13 @@ using fetch::ledger::ContractExecutionResult;
 using fetch::ledger::ContractExecutionStatus;
 using fetch::Digest;
 
-using AdjustableClockPtr = fetch::moment::AdjustableClockPtr;
-using Timestamp          = fetch::moment::ClockInterface::Timestamp;
-
-class TransactionStatusCacheTests : public TransactionStatusCacheTest
+class PersistentTransactionStatusCacheTests : public TransactionStatusCacheTest
 {
 protected:
-  AdjustableClockPtr              clock_{fetch::moment::CreateAdjustableClock("tx-status")};
   TimeBasedTransactionStatusCache cache_{};
 };
 
-TEST_F(TransactionStatusCacheTests, CheckBasicUpdate)
+TEST_F(PersistentTransactionStatusCacheTests, CheckBasicUpdate)
 {
   auto tx1 = GenerateDigest();
   auto tx2 = GenerateDigest();
@@ -64,7 +60,7 @@ TEST_F(TransactionStatusCacheTests, CheckBasicUpdate)
   EXPECT_EQ(TransactionStatus::MINED, cache_.Query(tx3).status);
 }
 
-TEST_F(TransactionStatusCacheTests, CheckTxStatusUpdateFailsForExecutedStatus)
+TEST_F(PersistentTransactionStatusCacheTests, CheckTxStatusUpdateFailsForExecutedStatus)
 {
   auto tx1 = GenerateDigest();
 
@@ -74,7 +70,7 @@ TEST_F(TransactionStatusCacheTests, CheckTxStatusUpdateFailsForExecutedStatus)
   ASSERT_THROW(cache_.Update(tx1, TransactionStatus::EXECUTED), std::runtime_error);
 }
 
-TEST_F(TransactionStatusCacheTests, CheckUpdateForContractExecutionResult)
+TEST_F(PersistentTransactionStatusCacheTests, CheckUpdateForContractExecutionResult)
 {
   auto tx1 = GenerateDigest();
 
@@ -94,28 +90,6 @@ TEST_F(TransactionStatusCacheTests, CheckUpdateForContractExecutionResult)
   EXPECT_EQ(expected_result.charge_limit, received_result.contract_exec_result.charge_limit);
   EXPECT_EQ(expected_result.charge_rate, received_result.contract_exec_result.charge_rate);
   EXPECT_EQ(expected_result.charge, received_result.contract_exec_result.charge);
-}
-
-TEST_F(TransactionStatusCacheTests, CheckPruning)
-{
-  auto tx1 = GenerateDigest();
-  auto tx2 = GenerateDigest();
-  auto tx3 = GenerateDigest();
-
-  cache_.Update(tx1, TransactionStatus::PENDING);
-  cache_.Update(tx2, TransactionStatus::MINED);
-
-  ASSERT_EQ(TransactionStatus::PENDING, cache_.Query(tx1).status);
-  ASSERT_EQ(TransactionStatus::MINED, cache_.Query(tx2).status);
-
-  // advance our clock by other the cache threshold
-  clock_->Advance(std::chrono::hours{25});
-
-  cache_.Update(tx3, TransactionStatus::SUBMITTED);
-
-  EXPECT_EQ(TransactionStatus::UNKNOWN, cache_.Query(tx1).status);
-  EXPECT_EQ(TransactionStatus::UNKNOWN, cache_.Query(tx2).status);
-  EXPECT_EQ(TransactionStatus::SUBMITTED, cache_.Query(tx3).status);
 }
 
 }  // namespace

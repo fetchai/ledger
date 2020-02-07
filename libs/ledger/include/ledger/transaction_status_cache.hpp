@@ -25,11 +25,11 @@ namespace ledger {
 
 enum class TransactionStatus : uint8_t
 {
-  UNKNOWN,    ///< The status of the transaction is unknown
-  PENDING,    ///< The transaction is waiting to be mined
-  MINED,      ///< The transaction has been mined
-  EXECUTED,   ///< The transaction has been executed
-  SUBMITTED,  ///< Special case for the data based synergetic transactions
+  UNKNOWN = 0,  ///< The status of the transaction is unknown
+  PENDING,      ///< The transaction is waiting to be mined
+  MINED,        ///< The transaction has been mined
+  EXECUTED,     ///< The transaction has been executed
+  SUBMITTED,    ///< Special case for the data based synergetic transactions
 };
 
 constexpr char const *ToString(TransactionStatus status)
