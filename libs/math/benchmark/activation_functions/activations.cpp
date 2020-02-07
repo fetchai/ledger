@@ -22,19 +22,21 @@
 #include "math/activation_functions/sigmoid.hpp"
 #include "math/activation_functions/softmax.hpp"
 #include "math/tensor/tensor.hpp"
+#include "vectorise/fixed_point/fixed_point.hpp"
 
 #include "benchmark/benchmark.h"
 
 #include <sstream>
 
 using namespace fetch::math;
+using namespace fetch::fixed_point;
 
 template <typename T, SizeType L, SizeType H, SizeType W>
 void BM_Elu(benchmark::State &state)
 {
   Tensor<T> input({L, H, W});
   Tensor<T> output({L, H, W});
-  auto      a = T(0.2);
+  auto      a = fetch::math::Type<T>("0.2");
 
   for (auto _ : state)
   {
@@ -44,12 +46,18 @@ void BM_Elu(benchmark::State &state)
 
 BENCHMARK_TEMPLATE(BM_Elu, float, 2, 4, 16)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_Elu, double, 2, 4, 16)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_Elu, fp32_t, 2, 4, 16)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_Elu, fp64_t, 2, 4, 16)->Unit(benchmark::kMicrosecond);
 
 BENCHMARK_TEMPLATE(BM_Elu, float, 2, 8, 128)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_Elu, double, 2, 8, 128)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_Elu, fp32_t, 2, 8, 128)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_Elu, fp64_t, 2, 8, 128)->Unit(benchmark::kMicrosecond);
 
 BENCHMARK_TEMPLATE(BM_Elu, float, 256, 256, 256)->Unit(benchmark::kMillisecond);
 BENCHMARK_TEMPLATE(BM_Elu, double, 256, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_Elu, fp32_t, 256, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_Elu, fp64_t, 256, 256, 256)->Unit(benchmark::kMillisecond);
 
 template <typename T, SizeType L, SizeType H, SizeType W>
 void BM_Relu(benchmark::State &state)
@@ -66,14 +74,20 @@ void BM_Relu(benchmark::State &state)
 BENCHMARK_TEMPLATE(BM_Relu, int, 2, 2, 2)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_Relu, float, 2, 2, 2)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_Relu, double, 2, 2, 2)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_Relu, fp32_t, 2, 2, 2)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_Relu, fp64_t, 2, 2, 2)->Unit(benchmark::kMicrosecond);
 
 BENCHMARK_TEMPLATE(BM_Relu, int, 2, 8, 128)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_Relu, float, 2, 8, 128)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_Relu, double, 2, 8, 128)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_Relu, fp32_t, 2, 8, 128)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_Relu, fp64_t, 2, 8, 128)->Unit(benchmark::kMicrosecond);
 
 BENCHMARK_TEMPLATE(BM_Relu, int, 256, 256, 256)->Unit(benchmark::kMillisecond);
 BENCHMARK_TEMPLATE(BM_Relu, float, 256, 256, 256)->Unit(benchmark::kMillisecond);
 BENCHMARK_TEMPLATE(BM_Relu, double, 256, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_Relu, fp32_t, 256, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_Relu, fp64_t, 256, 256, 256)->Unit(benchmark::kMillisecond);
 
 template <typename T, SizeType L, SizeType H, SizeType W>
 void BM_LeakyRelu(benchmark::State &state)
@@ -90,14 +104,20 @@ void BM_LeakyRelu(benchmark::State &state)
 BENCHMARK_TEMPLATE(BM_LeakyRelu, int, 2, 2, 2)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_LeakyRelu, float, 2, 2, 2)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_LeakyRelu, double, 2, 2, 2)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_LeakyRelu, fp32_t, 2, 2, 2)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_LeakyRelu, fp64_t, 2, 2, 2)->Unit(benchmark::kMicrosecond);
 
 BENCHMARK_TEMPLATE(BM_LeakyRelu, int, 2, 8, 128)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_LeakyRelu, float, 2, 8, 128)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_LeakyRelu, double, 2, 8, 128)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_LeakyRelu, fp32_t, 2, 8, 128)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_LeakyRelu, fp64_t, 2, 8, 128)->Unit(benchmark::kMicrosecond);
 
 BENCHMARK_TEMPLATE(BM_LeakyRelu, int, 256, 256, 256)->Unit(benchmark::kMillisecond);
 BENCHMARK_TEMPLATE(BM_LeakyRelu, float, 256, 256, 256)->Unit(benchmark::kMillisecond);
 BENCHMARK_TEMPLATE(BM_LeakyRelu, double, 256, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_LeakyRelu, fp32_t, 256, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_LeakyRelu, fp64_t, 256, 256, 256)->Unit(benchmark::kMillisecond);
 
 template <typename T, SizeType L, SizeType H, SizeType W>
 void BM_Sigmoid(benchmark::State &state)
@@ -114,14 +134,20 @@ void BM_Sigmoid(benchmark::State &state)
 BENCHMARK_TEMPLATE(BM_Sigmoid, int, 2, 2, 2)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_Sigmoid, float, 2, 2, 2)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_Sigmoid, double, 2, 2, 2)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_Sigmoid, fp32_t, 2, 2, 2)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_Sigmoid, fp64_t, 2, 2, 2)->Unit(benchmark::kMicrosecond);
 
 BENCHMARK_TEMPLATE(BM_Sigmoid, int, 2, 8, 128)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_Sigmoid, float, 2, 8, 128)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_Sigmoid, double, 2, 8, 128)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_Sigmoid, fp32_t, 2, 8, 128)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_Sigmoid, fp64_t, 2, 8, 128)->Unit(benchmark::kMicrosecond);
 
 BENCHMARK_TEMPLATE(BM_Sigmoid, int, 256, 256, 256)->Unit(benchmark::kMillisecond);
 BENCHMARK_TEMPLATE(BM_Sigmoid, float, 256, 256, 256)->Unit(benchmark::kMillisecond);
 BENCHMARK_TEMPLATE(BM_Sigmoid, double, 256, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_Sigmoid, fp32_t, 256, 256, 256)->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_Sigmoid, fp64_t, 256, 256, 256)->Unit(benchmark::kMillisecond);
 
 template <typename T, SizeType L, SizeType H>
 void BM_Softmax(benchmark::State &state)
@@ -138,13 +164,19 @@ void BM_Softmax(benchmark::State &state)
 BENCHMARK_TEMPLATE(BM_Softmax, int, 2, 2)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_Softmax, float, 2, 2)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_Softmax, double, 2, 2)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_Softmax, fp32_t, 2, 2)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_Softmax, fp64_t, 2, 2)->Unit(benchmark::kMicrosecond);
 
 BENCHMARK_TEMPLATE(BM_Softmax, int, 8, 128)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_Softmax, float, 8, 128)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_Softmax, double, 8, 128)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_Softmax, fp32_t, 8, 128)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_Softmax, fp64_t, 8, 128)->Unit(benchmark::kMicrosecond);
 
 BENCHMARK_TEMPLATE(BM_Softmax, int, 256, 256)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_Softmax, float, 256, 256)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_Softmax, double, 256, 256)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_Softmax, fp32_t, 256, 256)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_Softmax, fp64_t, 256, 256)->Unit(benchmark::kMicrosecond);
 
 BENCHMARK_MAIN();
