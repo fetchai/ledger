@@ -34,7 +34,8 @@ namespace fetch {
 class Settings : private settings::SettingCollection
 {
 public:
-  using PeerList = std::vector<network::Uri>;
+  using PeerList    = std::vector<network::Uri>;
+  using UpdateBatch = std::unordered_map<std::string, std::string>;
 
   // Construction / Destruction
   Settings();
@@ -42,7 +43,8 @@ public:
   Settings(Settings &&)      = delete;
   ~Settings()                = default;
 
-  bool Update(int argc, char **argv);
+  bool Update(int argc, char const *const *argv);
+  bool Update(UpdateBatch const &batch);
 
   /// @name High Level Network Settings
   /// @{

@@ -93,7 +93,7 @@ void SettingCollection::Add(SettingBase &setting)
  * @param argc
  * @param argv
  */
-void SettingCollection::UpdateFromArgs(int argc, char **argv)
+void SettingCollection::UpdateFromArgs(int argc, char const *const *argv)
 {
   ParamsParser parser;
   parser.Parse(argc, argv);

@@ -33,15 +33,19 @@
 namespace fetch {
 namespace {
 
-using variant::Variant;
 using variant::Extract;
 using network::Uri;
 using http::JsonClient;
 using byte_array::ConstByteArray;
 
-char const *               BOOTSTRAP_HOST = "https://bootstrap.fetch.ai";
+using StringSet = std::unordered_set<ConstByteArray>;
+
+char const *               BOOTSTRAP_HOST = "http://127.0.0.1:8000";
 const std::chrono::seconds UPDATE_INTERVAL{30};
 constexpr char const *     LOGGING_NAME = "bootstrap";
+
+StringSet const VALID_PARAMETERS{"-block-interval", "-lanes",       "-slices",
+                                 "-experimental",   "-aeon-period", "-pos"};
 
 /**
  * Helper object containing all the fields required to make the attestation
@@ -104,6 +108,9 @@ http::JsonClient::Headers BuildHeaders(std::string const &token)
     headers["Authorization"] = "Token " + token;
   }
 
+  // signal that we want to have the V2 response from the server
+  headers["Accept"] = "application/vnd.fetch.bootstrap.v2+json";
+
   return headers;
 }
 
@@ -133,7 +140,7 @@ BootstrapMonitor::BootstrapMonitor(ProverPtr entity, uint16_t p2p_port, std::str
   state_machine_->RegisterHandler(State::Notify, this, &BootstrapMonitor::OnNotify);
 }
 
-bool BootstrapMonitor::DiscoverPeers(UriSet &peers, std::string const &external_address)
+bool BootstrapMonitor::DiscoverPeers(DiscoveryResult &output, std::string const &external_address)
 {
   FETCH_LOG_INFO(LOGGING_NAME, "Bootstrapping network node @ ", BOOTSTRAP_HOST);
 
@@ -149,7 +156,7 @@ bool BootstrapMonitor::DiscoverPeers(UriSet &peers, std::string const &external_
   }
 
   // request the peers list
-  if (!RunDiscovery(peers))
+  if (!RunDiscovery(output))
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Failed to discover initial peers from the bootstrap server");
     return false;
@@ -191,10 +198,8 @@ bool BootstrapMonitor::UpdateExternalAddress()
   return success;
 }
 
-bool BootstrapMonitor::RunDiscovery(UriSet &peers)
+bool BootstrapMonitor::RunDiscovery(DiscoveryResult &output)
 {
-  bool success{false};
-
   // make the response
   std::ostringstream oss;
   oss << "/discovery/";
@@ -276,20 +281,98 @@ bool BootstrapMonitor::RunDiscovery(UriSet &peers)
   }
 
   auto const &result = response["result"];
-  if (!result.IsArray())
+
+  // payload detection
+  if (result.IsArray())
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Malformed response from bootstrap server (result not array)");
-    FETCH_LOG_WARN(LOGGING_NAME, "Server Response: ", response);
+    if (!ParseDiscoveryV1(result, output))
+    {
+      FETCH_LOG_WARN(LOGGING_NAME,
+                     "Malformed response from bootstrap server (unable to parse v1 response)");
+      return false;
+    }
+  }
+  else if (result.IsObject())
+  {
+    // parse the version number from the field
+    int64_t version{0};
+    if (!Extract(result, "version", version))
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Malformed response from bootstrap server (no version field)");
+      return false;
+    }
+
+    if (version == 2)
+    {
+      if (!ParseDiscoveryV2(result, output))
+      {
+        FETCH_LOG_WARN(LOGGING_NAME,
+                       "Malformed response from bootstrap server (can't parse V2 response)");
+        return false;
+      }
+    }
+    else
+    {
+      FETCH_LOG_WARN(LOGGING_NAME, "Malformed response from bootstrap server (version ", version,
+                     " not supported)");
+      return false;
+    }
+  }
+  else
+  {
+    FETCH_LOG_WARN(LOGGING_NAME,
+                   "Malformed response from bootstrap server (unable to identify payload)");
     return false;
   }
 
   // assume all goes well
-  success = true;
+  return true;
+}
+
+bool BootstrapMonitor::ParseDiscoveryV1(Variant const &arr, DiscoveryResult &result)
+{
+  return ParseNodeList(arr, result.uris);
+}
+
+bool BootstrapMonitor::ParseDiscoveryV2(Variant const &obj, DiscoveryResult &result)
+{
+  if (!obj.IsObject())
+  {
+    return false;
+  }
+
+  bool const all_fields_present = obj.Has("genesis") && obj.Has("nodes");
+  if (!all_fields_present)
+  {
+    return false;
+  }
+
+  auto const &genesis = obj["genesis"];
+  auto const &nodes   = obj["nodes"];
+
+  bool all_sub_fields_present =
+      nodes.IsArray() && genesis.IsObject() && genesis.Has("contents") && genesis.Has("parameters");
+  if (!all_sub_fields_present)
+  {
+    return false;
+  }
+
+  return ParseNodeList(nodes, result.uris) &&
+         ParseGenesisConfiguration(genesis["contents"], result.genesis) &&
+         ParseConfigurationUpdates(genesis["parameters"], result.config_updates);
+}
+
+bool BootstrapMonitor::ParseNodeList(Variant const &arr, UriSet &peers)
+{
+  if (!arr.IsArray())
+  {
+    return false;
+  }
 
   // loop through all the results
-  for (std::size_t i = 0, size = result.size(); i < size; ++i)
+  for (std::size_t i = 0, size = arr.size(); i < size; ++i)
   {
-    auto const &peer_object = result[i];
+    auto const &peer_object = arr[i];
 
     // formatting is correct check
     if (!peer_object.IsObject())
@@ -303,7 +386,6 @@ bool BootstrapMonitor::RunDiscovery(UriSet &peers)
     if (!(Extract(peer_object, "host", host) && Extract(peer_object, "port", port)))
     {
       FETCH_LOG_WARN(LOGGING_NAME, "Malformed response from bootstrap server (no host, no port)");
-      FETCH_LOG_WARN(LOGGING_NAME, "Server Response: ", response);
       return false;
     }
 
@@ -317,6 +399,75 @@ bool BootstrapMonitor::RunDiscovery(UriSet &peers)
     }
 
     peers.emplace(std::move(uri));
+  }
+
+  return true;
+}
+
+bool BootstrapMonitor::ParseGenesisConfiguration(Variant const &obj, std::string &genesis)
+{
+  if (!obj.IsObject())
+  {
+    return false;
+  }
+
+  try
+  {
+    std::ostringstream oss;
+    oss << obj;
+
+    genesis = oss.str();
+  }
+  catch (std::exception const &ex)
+  {
+    FETCH_LOG_WARN(LOGGING_NAME, "Failed to process genesis configuration: ", ex.what());
+    return false;
+  }
+
+  return true;
+}
+
+bool BootstrapMonitor::ParseConfigurationUpdates(Variant const &obj, ConfigUpdates &updates)
+{
+  bool success{false};
+
+  if (obj.IsObject())
+  {
+    success = true;
+
+    obj.IterateObject([&updates, &success](ConstByteArray const &key, Variant const &value) {
+      // the type of the value must be a string to be valid
+      if (!value.IsString())
+      {
+        success = false;
+        return false;
+      }
+
+      // the key of the parameter must be a part of the valid set
+      if (VALID_PARAMETERS.find(key) == VALID_PARAMETERS.end())
+      {
+        success = false;
+        return false;
+      }
+
+      // add the value to the configuration updates
+      updates.emplace(key, value.As<std::string>());
+
+      return true;
+    });
+  }
+  else if (obj.IsNull())
+  {
+    // the configuration updates can be null to signal that no updates are required
+    success = true;
+  }
+
+  // ensure if we are not succesful that any partial updates are not stored in the output variable
+  if (!success)
+  {
+    FETCH_LOG_WARN(LOGGING_NAME,
+                   "Failed to parse configuration updates section of bootstrap config");
+    updates.clear();
   }
 
   return success;

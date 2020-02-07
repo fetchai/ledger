@@ -41,10 +41,18 @@ namespace fetch {
 class BootstrapMonitor
 {
 public:
-  using UriSet    = constellation::Constellation::UriSet;
-  using Prover    = crypto::Prover;
-  using ProverPtr = std::shared_ptr<Prover>;
-  using Identity  = crypto::Identity;
+  using UriSet        = constellation::Constellation::UriSet;
+  using Prover        = crypto::Prover;
+  using ProverPtr     = std::shared_ptr<Prover>;
+  using Identity      = crypto::Identity;
+  using ConfigUpdates = std::unordered_map<std::string, std::string>;
+
+  struct DiscoveryResult
+  {
+    UriSet        uris{};
+    std::string   genesis{};
+    ConfigUpdates config_updates{};
+  };
 
   // Construction / Destruction
   BootstrapMonitor(ProverPtr entity, uint16_t p2p_port, std::string network_name, bool discoverable,
@@ -53,7 +61,7 @@ public:
   BootstrapMonitor(BootstrapMonitor &&)      = delete;
   ~BootstrapMonitor()                        = default;
 
-  bool DiscoverPeers(UriSet &peers, std::string const &external_address);
+  bool DiscoverPeers(DiscoveryResult &output, std::string const &external_address);
 
   std::string const &external_address() const;
 
@@ -69,6 +77,7 @@ private:
     Notify,
   };
 
+  using Variant         = variant::Variant;
   using ConstByteArray  = byte_array::ConstByteArray;
   using StateMachine    = core::StateMachine<State>;
   using StateMachinePtr = std::shared_ptr<StateMachine>;
@@ -80,9 +89,14 @@ private:
 
   /// @name Actions
   /// @{
-  bool UpdateExternalAddress();
-  bool RunDiscovery(UriSet &peers);
-  bool NotifyNode();
+  bool        UpdateExternalAddress();
+  bool        RunDiscovery(DiscoveryResult &output);
+  static bool ParseDiscoveryV1(Variant const &arr, DiscoveryResult &result);
+  static bool ParseDiscoveryV2(Variant const &obj, DiscoveryResult &result);
+  static bool ParseNodeList(Variant const &arr, UriSet &peers);
+  static bool ParseGenesisConfiguration(Variant const &obj, std::string &genesis);
+  static bool ParseConfigurationUpdates(Variant const &obj, ConfigUpdates &updates);
+  bool        NotifyNode();
   /// @}
 
   static char const *ToString(State state);
