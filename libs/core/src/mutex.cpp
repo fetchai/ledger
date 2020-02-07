@@ -36,6 +36,8 @@ moment::ClockInterface::Timestamp Now()
   return clock->Now();
 }
 
+static constexpr std::chrono::seconds DEADLOCK_TIMEOUT{2};
+
 }  // namespace
 
 std::atomic<bool> DeadlockHandler::throw_on_deadlock_{false};
@@ -88,9 +90,7 @@ bool RecursiveDeadlock::SafeToLock(OwnerId const &owner) noexcept
 
 bool RecursiveDeadlock::IsDeadlocked(OwnerId const &owner)
 {
-  static constexpr std::chrono::seconds deadlock_timeout{2};
-
-  return owner.id != std::this_thread::get_id() && Now() >= owner.taken_at + deadlock_timeout;
+  return owner.id != std::this_thread::get_id() && Now() >= owner.taken_at + DEADLOCK_TIMEOUT;
 }
 
 #endif  // FETCH_DEBUG_MUTEX
