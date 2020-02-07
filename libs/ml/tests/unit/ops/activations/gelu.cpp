@@ -21,7 +21,6 @@
 #include "ml/ops/activations/gelu.hpp"
 #include "ml/serializers/ml_types.hpp"
 #include "test_types.hpp"
-#include "vectorise/fixed_point/fixed_point.hpp"
 #include <vector>
 
 namespace fetch {
@@ -33,7 +32,7 @@ class GeluTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(GeluTest, math::test::HighPrecisionTensorFloatingTypes);
+TYPED_TEST_SUITE(GeluTest, math::test::HighPrecisionTensorFloatingTypes, );
 
 TYPED_TEST(GeluTest, forward_test_3d)
 {

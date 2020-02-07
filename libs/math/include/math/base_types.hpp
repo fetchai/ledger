@@ -242,5 +242,24 @@ static constexpr meta::IfIsFixedPoint<T, T> Type(std::string const &val)
   return T(val);
 }
 
+template <typename T, typename U>
+static constexpr meta::IfIsFloat<T, T> AsType(U val, meta::IfIsInteger<U> * /*unused*/ = nullptr)
+{
+  return static_cast<T>(val);
+}
+
+template <typename T, typename U>
+static constexpr meta::IfIsFixedPoint<T, T> AsType(U val,
+                                                   meta::IfIsInteger<U> * /*unused*/ = nullptr)
+{
+  return static_cast<T>(val);
+}
+
+template <typename T, typename U>
+static constexpr meta::IfIsFloat<T, T> AsType(U val, meta::IfIsFloat<U> * /*unused*/ = nullptr)
+{
+  return static_cast<T>(val);
+}
+
 }  // namespace math
 }  // namespace fetch

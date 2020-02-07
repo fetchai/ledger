@@ -55,7 +55,7 @@ int main(int argc, char const **argv)
 
   for (std::size_t i = 0; i < N; ++i)
   {
-    A[i] = type(fetch::math::Exp(type(-0.1) * type(i)));
+    A[i] = type(fetch::math::Exp(fetch::math::AsType<type>(-0.1) * type(i)));
   }
 
   std::chrono::high_resolution_clock::time_point t1  = std::chrono::high_resolution_clock::now();

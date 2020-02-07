@@ -17,10 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/assert.hpp"
 #include "ml/ops/dataholder.hpp"
-#include "ml/saveparams/saveable_params.hpp"
-
 #include <cassert>
 #include <memory>
 #include <vector>
@@ -51,38 +48,16 @@ public:
 
   PlaceHolder() = default;
 
-  explicit PlaceHolder(SPType const &sp)
-    : DataHolder<T>(sp)
-  {}
+  explicit PlaceHolder(SPType const &sp);
 
   ~PlaceHolder() override = default;
 
-  std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override
-  {
-    return std::make_shared<SPType>();
-  }
+  std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override;
 
-  /**
-   * Placeholders should not be shared, therefore a layer sharing its elements
-   * with another node should use a new (unshared) placeholder op
-   * @param me
-   * @return
-   */
   std::shared_ptr<fetch::ml::ops::Ops<TensorType>> MakeSharedCopy(
-      std::shared_ptr<fetch::ml::ops::Ops<TensorType>> me) override
-  {
-    FETCH_UNUSED(me);
-    assert(me.get() == this);
+      std::shared_ptr<fetch::ml::ops::Ops<TensorType>> me) override;
 
-    auto copyshare = std::make_shared<MyType>(*this);
-
-    if (this->data_)
-    {
-      copyshare->data_ = std::make_shared<TensorType>(this->data_->Copy());
-    }
-
-    return copyshare;
-  }
+  bool SetData(TensorType const &data) override;
 
   static constexpr OpType OpCode()
   {
@@ -90,6 +65,11 @@ public:
   }
 
   static constexpr char const *DESCRIPTOR = "PlaceHolder";
+
+  OpType      OperationType() const override;
+  char const *Descriptor() const override;
+
+  OperationsCount ChargeForward() const override;
 };
 
 }  // namespace ops

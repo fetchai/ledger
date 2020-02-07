@@ -183,6 +183,8 @@ class ConstellationInstance(Instance):
         if self._slices:
             cmd += ['-slices', self._slices]
 
+        cmd += ["-genesis-file-location", "genesis_file.json"]
+
         if self._feature_flags:
             cmd += ['-experimental', ','.join(self._feature_flags)]
 

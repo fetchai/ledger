@@ -18,11 +18,19 @@
 //------------------------------------------------------------------------------
 
 #include "meta/type_traits.hpp"
-#include "vectorise/fixed_point/fixed_point.hpp"
 
 #include <type_traits>
 
 namespace fetch {
+
+namespace fixed_point {
+struct BaseFixedpointType;
+template <uint16_t I, uint16_t F>
+class FixedPoint;
+using fp32_t  = FixedPoint<16, 16>;
+using fp64_t  = FixedPoint<32, 32>;
+using fp128_t = FixedPoint<64, 64>;
+}  // namespace fixed_point
 namespace math {
 namespace meta {
 
@@ -103,6 +111,18 @@ using IfIsFixedPoint128 = fetch::meta::EnableIf<IsFixedPoint128<DataType>, Retur
 
 template <typename DataType, typename ReturnType = void>
 using IfIsNotFixedPoint128 = fetch::meta::EnableIf<IsNotFixedPoint128<DataType>, ReturnType>;
+
+template <typename T>
+constexpr bool Is32bitType = (IsInteger<T> || IsFloat<T> || IsFixedPoint<T>)&&(sizeof(T) == 4);
+
+template <typename T>
+constexpr bool Is64bitType = (IsInteger<T> || IsFloat<T> || IsFixedPoint<T>)&&(sizeof(T) == 8);
+
+template <typename DataType, typename ReturnType = void>
+using IfIs32bitType = fetch::meta::EnableIf<Is32bitType<DataType>, ReturnType>;
+
+template <typename DataType, typename ReturnType = void>
+using IfIs64bitType = fetch::meta::EnableIf<Is32bitType<DataType>, ReturnType>;
 
 }  // namespace meta
 }  // namespace math

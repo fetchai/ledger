@@ -17,6 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include "vectorise/arch/avx2/register_int8.hpp"
+
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
@@ -340,6 +342,45 @@ inline int32_t first_element(VectorRegister<int32_t, 256> const &x)
   return static_cast<int32_t>(_mm256_extract_epi32(x.data(), 0));
 }
 
+template <int32_t elements>
+inline VectorRegister<int32_t, 128> rotate_elements_left(VectorRegister<int32_t, 128> const &x)
+{
+  __m128i n = x.data();
+  n         = _mm_alignr_epi8(n, n, elements * 4);
+  return {n};
+}
+
+template <int32_t elements>
+inline VectorRegister<int32_t, 256> rotate_elements_left(VectorRegister<int32_t, 256> const &x);
+
+template <>
+inline VectorRegister<int32_t, 256> rotate_elements_left<0>(VectorRegister<int32_t, 256> const &x)
+{
+  return x;
+}
+
+FETCH_ROTATE_ELEMENTS_LEFT(int32_t, 1)
+FETCH_ROTATE_ELEMENTS_LEFT(int32_t, 2)
+FETCH_ROTATE_ELEMENTS_LEFT(int32_t, 3)
+
+template <>
+inline VectorRegister<int32_t, 256> rotate_elements_left<4>(VectorRegister<int32_t, 256> const &x)
+{
+  __m128i hi = _mm256_extractf128_si256(x.data(), 1);
+  __m128i lo = _mm256_extractf128_si256(x.data(), 0);
+  return {_mm256_set_m128i(lo, hi)};
+}
+
+FETCH_ROTATE_ELEMENTS_LEFT(int32_t, 5)
+FETCH_ROTATE_ELEMENTS_LEFT(int32_t, 6)
+FETCH_ROTATE_ELEMENTS_LEFT(int32_t, 7)
+
+template <>
+inline VectorRegister<int32_t, 256> rotate_elements_left<8>(VectorRegister<int32_t, 256> const &x)
+{
+  return rotate_elements_left<0>(x);
+}
+
 inline VectorRegister<int32_t, 128> shift_elements_left(VectorRegister<int32_t, 128> const &x)
 {
   __m128i n = _mm_bslli_si128(x.data(), 4);
@@ -373,10 +414,12 @@ inline int32_t reduce(VectorRegister<int32_t, 128> const &x)
 
 inline int32_t reduce(VectorRegister<int32_t, 256> const &x)
 {
-  VectorRegister<int32_t, 128> hi{_mm256_extractf128_si256(x.data(), 1)};
-  VectorRegister<int32_t, 128> lo{_mm256_extractf128_si256(x.data(), 0)};
-  hi = hi + lo;
-  return reduce(hi);
+  __m256i r   = _mm256_hadd_epi32(x.data(), _mm256_setzero_si256());
+  r           = _mm256_hadd_epi32(r, _mm256_setzero_si256());
+  __m128i hi  = _mm256_extractf128_si256(r, 1);
+  __m128i lo  = _mm256_extractf128_si256(r, 0);
+  __m128i sum = _mm_add_epi32(hi, lo);
+  return static_cast<int32_t>(_mm_extract_epi32(sum, 0));  // NOLINT
 }
 
 inline bool all_less_than(VectorRegister<int32_t, 128> const &x,

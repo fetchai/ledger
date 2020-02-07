@@ -20,6 +20,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <memory>
+#include <vector>
 
 namespace fetch {
 namespace ledger {
@@ -33,14 +34,17 @@ class BlockGenerator
 public:
   using BlockPtr      = std::shared_ptr<Block>;
   using BlockPtrConst = std::shared_ptr<Block const>;
+  using BlockPtrs     = std::vector<BlockPtr>;
 
   BlockGenerator(std::size_t num_lanes, std::size_t num_slices);
 
   void Reset();
 
-  BlockPtr Generate(BlockPtrConst const &from = BlockPtr{}, uint64_t weight = 1u);
+  BlockPtr Generate(BlockPtrConst const &from = {}, uint64_t weight = 1u);
 
-  BlockPtr operator()(BlockPtrConst const &from = BlockPtr{}, uint64_t weight = 1u);
+  BlockPtr operator()(BlockPtrConst const &from = {}, uint64_t weight = 1u);
+
+  BlockPtrs operator()(std::size_t amount, BlockPtrConst from = BlockPtr{}, uint64_t weight = 1u);
 
 private:
   uint64_t    block_count_{0};

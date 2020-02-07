@@ -30,7 +30,7 @@ class TensorBasicTests : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(TensorBasicTests, FloatIntAndUIntTypes);
+TYPED_TEST_SUITE(TensorBasicTests, FloatIntAndUIntTypes, );
 
 // template for producing a random array of FixedPoints
 template <uint16_t I, uint16_t F>

@@ -31,6 +31,7 @@
 #include "math/meta/math_type_traits.hpp"
 #include "math/tensor/tensor_reduce.hpp"
 #include "vectorise/math/standard_functions.hpp"
+#include "vectorise/memory/parallel_dispatcher.hpp"
 
 #include <cassert>
 #include <numeric>
@@ -41,19 +42,6 @@ namespace math {
 
 // TODO (private 854) - vectorisation implementations not yet called
 namespace details_vectorisation {
-
-/**
- * Min function for returning the smallest value in an array
- * @tparam ArrayType
- * @param array
- * @return
- */
-template <typename ArrayType>
-void Min(ArrayType const &array, typename ArrayType::Type &ret)
-{
-  ret = array.data().in_parallel().Reduce(memory::Range(0, array.size()),
-                                          [](auto const &a, auto const &b) { return min(a, b); });
-}
 
 /**
  * return the product of all elements in the array
@@ -158,7 +146,7 @@ meta::IfIsMathArray<ArrayType, void> BooleanMask(ArrayType const &input_array,
   SizeType counter{0};
   while (rit.is_valid())
   {
-    assert((*it2 == 1) || (*it2 == 0));
+    assert((*it2 == typename ArrayType::Type{1}) || (*it2 == typename ArrayType::Type{0}));
     if (static_cast<uint64_t>(*it2))
     {
       *rit = *it1;
@@ -274,12 +262,21 @@ T Product(std::vector<T> const &obj1)
 template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, void> Max(ArrayType const &array, typename ArrayType::Type &ret)
 {
-  ret = numeric_lowest<typename ArrayType::Type>();
-  for (typename ArrayType::Type const &e : array)
+  if (array.size() >= array.data().padded_size())
   {
-    if (e > ret)
+    ret = array.data().in_parallel().Reduce(
+        [](auto const &a, auto const &b) { return fetch::vectorise::Max(a, b); },
+        [](auto const &a) { return fetch::vectorise::Max(a); });
+  }
+  else
+  {
+    ret = numeric_lowest<typename ArrayType::Type>();
+    for (typename ArrayType::Type const &e : array)
     {
-      ret = e;
+      if (e > ret)
+      {
+        ret = e;
+      }
     }
   }
 }
@@ -394,12 +391,22 @@ T Max(std::vector<T> const &obj1)
 template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, void> Min(ArrayType const &array, typename ArrayType::Type &ret)
 {
-  ret = numeric_max<typename ArrayType::Type>();
-  for (typename ArrayType::Type const &e : array)
+  if (array.size() >= array.data().padded_size())
   {
-    if (e < ret)
+    ret = array.data().in_parallel().Reduce(
+        [](auto const &a, auto const &b) { return fetch::vectorise::Min(a, b); },
+        [](auto const &a) { return fetch::vectorise::Min(a); },
+        fetch::math::numeric_max<typename ArrayType::Type>());
+  }
+  else
+  {
+    ret = numeric_max<typename ArrayType::Type>();
+    for (typename ArrayType::Type const &e : array)
     {
-      ret = e;
+      if (e < ret)
+      {
+        ret = e;
+      }
     }
   }
 }
@@ -560,7 +567,7 @@ void ReduceSum(ArrayType const &obj1, SizeType axis, ArrayType &ret)
 {
 
   using DataType = typename ArrayType::Type;
-  ret.Fill(static_cast<DataType>(0));
+  ret.Fill(DataType{0});
 
   Reduce(axis, [](DataType const &x, DataType &y) { y = static_cast<DataType>(y + x); }, obj1, ret);
 }
@@ -594,9 +601,9 @@ void ReduceSum(ArrayType const &obj1, std::vector<SizeType> axes, ArrayType &ret
 {
 
   using DataType = typename ArrayType::Type;
-  ret.Fill(static_cast<DataType>(0));
+  ret.Fill(DataType{0});
 
-  Reduce(axes, [](DataType const &x, DataType &y) { y += x; }, obj1, ret);
+  Reduce(axes, [](DataType const &x, DataType &y) { y = static_cast<DataType>(y + x); }, obj1, ret);
 }
 
 /**
@@ -1063,7 +1070,9 @@ fetch::math::meta::IfIsMathArray<ArrayType, void> Dot(ArrayType const &A, ArrayT
 
   if (aview.width() != bview.height())
   {
-    throw fetch::math::exceptions::WrongShape("expected A width to equal B height.");
+    throw fetch::math::exceptions::WrongShape("expected A width (" + std::to_string(aview.width()) +
+                                              ") equal to B height (" +
+                                              std::to_string(bview.height()) + ").");
   }
 
   if (ret.shape() != std::vector<SizeType>({aview.height(), bview.width()}))

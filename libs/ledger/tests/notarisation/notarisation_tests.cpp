@@ -52,7 +52,7 @@ struct DummyManifestCache : public fetch::shards::ManifestCacheInterface
 
 using Certificate    = fetch::crypto::Prover;
 using CertificatePtr = std::shared_ptr<Certificate>;
-using BlockPtr       = Consensus::NextBlockPtr;
+using NextBlockPtr   = Consensus::NextBlockPtr;
 using Muddle         = muddle::MuddlePtr;
 using ConstByteArray = byte_array::ConstByteArray;
 using MuddleAddress  = ConstByteArray;
@@ -96,6 +96,8 @@ struct NotarisationNode
                 aeon_period,    cabinet_size,
                 1000,           notarisation_service}
   {
+    consensus.UpdateCurrentBlock(*chain.GetHeaviestBlock());
+
     network_manager.Start();
     muddle->Start({muddle_port});
   }
@@ -229,8 +231,8 @@ TEST(notarisation, notarise_blocks)
   // Generate blocks and notarise for 2 aeons
   for (uint16_t block_number = 1; block_number < aeon_period * 2 + 1; block_number++)
   {
-    std::vector<BlockPtr> blocks_this_round;
-    uint32_t              count = 0;
+    std::vector<NextBlockPtr> blocks_this_round;
+    uint32_t                  count = 0;
     while (count == 0)
     {
       for (auto &node : nodes)
@@ -274,7 +276,7 @@ TEST(notarisation, notarise_blocks)
       for (auto &block : blocks_this_round)
       {
         node->chain.AddBlock(*block);
-        node->consensus.UpdateCurrentBlock(*block);
+        EXPECT_TRUE(node->consensus.UpdateCurrentBlock(*block));
       }
     }
   }

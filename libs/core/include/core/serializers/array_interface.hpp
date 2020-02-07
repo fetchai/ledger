@@ -42,7 +42,7 @@ public:
     if (pos_ > size_)
     {
       throw SerializableException(
-          std::string("exceded number of allocated elements in array serialization"));
+          std::string("exceeded number of allocated elements in array serialization"));
     }
 
     serializer_ << val;
@@ -54,7 +54,7 @@ public:
     if (pos_ > size_)
     {
       throw SerializableException(
-          std::string("exceded number of allocated elements in array serialization"));
+          std::string("exceeded number of allocated elements in array serialization"));
     }
     return serialize_function(serializer_);
   }

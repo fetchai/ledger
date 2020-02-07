@@ -778,6 +778,24 @@ inline VectorRegister<fixed_point::fp64_t, 128> vector_zero_above_element(
   return {fixed_point::fp64_t{}};
 }
 
+template <int32_t elements>
+inline VectorRegister<fixed_point::fp64_t, 128> rotate_elements_left(
+    VectorRegister<fixed_point::fp64_t, 128> const &x)
+{
+  VectorRegister<int64_t, 128> ret =
+      rotate_elements_left<elements>(VectorRegister<int64_t, 128>(x.data()));
+  return {ret.data()};
+}
+
+template <int32_t elements>
+inline VectorRegister<fixed_point::fp64_t, 256> rotate_elements_left(
+    VectorRegister<fixed_point::fp64_t, 256> const &x)
+{
+  VectorRegister<int64_t, 256> ret =
+      rotate_elements_left<elements>(VectorRegister<int64_t, 256>(x.data()));
+  return {ret.data()};
+}
+
 inline VectorRegister<fixed_point::fp64_t, 128> shift_elements_left(
     VectorRegister<fixed_point::fp64_t, 128> const & /*x*/)
 {
@@ -837,25 +855,23 @@ inline fixed_point::fp64_t reduce(VectorRegister<fixed_point::fp64_t, 256> const
 
   alignas(VectorRegister<fixed_point::fp64_t, 256>::E_REGISTER_SIZE) fixed_point::fp64_t x_[4];
   x.Store(x_);
-  fixed_point::fp64_t sum{x_[0]};
+  fixed_point::fp64_t       sum{x_[0]};
+  fixed_point::fp64_t::Type tmp;
   for (size_t i = 1; i < 4; i++)
   {
-    if (fixed_point::fp64_t::CheckOverflow(
-            static_cast<fixed_point::fp64_t::NextType>(sum.Data()) +
-            static_cast<fixed_point::fp64_t::NextType>(x_[i].Data())))
+    tmp = sum.Data() + x_[i].Data();
+    if (fixed_point::fp64_t::CheckSumOverflow(sum.Data(), x_[i].Data(), tmp))
     {
       fixed_point::fp64_t::fp_state |= fixed_point::fp64_t::STATE_OVERFLOW;
       return fixed_point::fp64_t::FP_MAX;
     }
-    if (fixed_point::fp64_t::CheckUnderflow(
-            static_cast<fixed_point::fp64_t::NextType>(sum.Data()) +
-            static_cast<fixed_point::fp64_t::NextType>(x_[i].Data())))
+    if (fixed_point::fp64_t::CheckSumUnderflow(sum.Data(), x_[i].Data(), tmp))
     {
       fixed_point::fp64_t::fp_state |= fixed_point::fp64_t::STATE_OVERFLOW;
       return fixed_point::fp64_t::FP_MIN;
     }
 
-    sum.Data() += x_[i].Data();
+    sum.SetData(tmp);
   }
   return sum;
 }

@@ -1,19 +1,16 @@
 #!/usr/bin/env python3
 import argparse
 import json
-import struct
-import hashlib
 import base64
 import sys
-import binascii
-import base58
 import time
 
-from fetchai.ledger.crypto import Identity
-from fetchai.ledger.genesis import GenesisFile
+from fetchai.ledger.crypto import Identity, Address
 
 
-TOTAL_SUPPLY = 11529975750000000000
+TOTAL_SUPPLY = 1152997575
+DEFAULT_STAKE = 1000
+TEN_ZERO = 10000000000
 MUDDLE_ADDDRESS_RAW_LENGTH = 64
 
 
@@ -29,18 +26,8 @@ def parse_commandline():
     parser = argparse.ArgumentParser()
     parser.add_argument('addresses', nargs='+', type=_muddle_address,
                         help='The initial set of base64 encoded muddle addresses')
-    parser.add_argument('-s', '--stake-percentage', nargs='?', type=int,
-                        default=1, help='The percentage of tokens to be staked')
     parser.add_argument(
         '-o', '--output', default='genesis_file.json', help='Path to generated file')
-    parser.add_argument('-t', '--threshold', type=float,
-                        default=0.6, help='The required threshold')
-    parser.add_argument('-m', '--max-cabinet', type=int,
-                        help='The maximum cabinet size allowed')
-    parser.add_argument('-n', '--no-formatting', action='store_true',
-                        help='Whether to format the output file for readability')
-    parser.add_argument('-b', '--block-interval', type=int,
-                        default=8000, help='The block interval for the chain')
     parser.add_argument('-w', '--when-start', required=True, type=int,
                         help='The genesis block has a time for the blockchain to start.  Specify how far from now in seconds it should be')
     return parser.parse_args()
@@ -49,36 +36,45 @@ def parse_commandline():
 def main():
     args = parse_commandline()
 
-    # build up the stake information
-    individual_balance = TOTAL_SUPPLY // len(args.addresses)
-    individual_stake = (min(args.stake_percentage, 100)
-                        * individual_balance) // 100
-
-    max_cabinet = 0
-    if not args.max_cabinet:
-        max_cabinet = len(args.addresses)
-    else:
-        max_cabinet = args.max_cabinet
+    max_cabinet = len(args.addresses)
 
     # build up the configuration for all the stakers
-    members = []
-    for address in args.addresses:
-        members.append((
-            Identity.from_base64(address),
-            individual_balance,
-            individual_stake,
-        ))
+    accounts = []
+    stakers = []
+    for n, address in enumerate(args.addresses):
+        identity = Identity.from_base64(address)
+        if n == 0:
+            balance = TOTAL_SUPPLY - (max_cabinet * DEFAULT_STAKE)
+        else:
+            balance = 0
+
+        accounts.append({
+            'address': str(Address(identity)),
+            'balance': balance,
+            'stake': DEFAULT_STAKE,
+        })
+        stakers.append({
+            'identity': identity.public_key,
+            'amount': DEFAULT_STAKE * TEN_ZERO,
+        })
+
+    genesis = {
+        'version': 4,
+        'accounts': accounts,
+        'consensus': {
+            'aeonOffset': 100,
+            'aeonPeriodicity': 25,
+            'cabinetSize': max_cabinet,
+            'entropyRunahead': 2,
+            'minimumStake': DEFAULT_STAKE,
+            'startTime': int(time.time()) + args.when_start,
+            'stakers': stakers,
+        }
+    }
 
     # create the genesis configuration
-    genesis = GenesisFile(
-        members,
-        max_cabinet,
-        args.when_start,
-        args.block_interval
-    )
-
-    # flush the file to disk
-    genesis.dump_to_file(args.output, args.no_formatting)
+    with open(args.output, 'w') as genesis_file:
+        json.dump(genesis, genesis_file)
 
 
 if __name__ == '__main__':

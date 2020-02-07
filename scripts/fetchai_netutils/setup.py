@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='fetchai-netutils',
-    version='0.0.6a1',
+    version='0.0.6a2',
     description='Tools and utilities for interacting with the fetch network',
     url='https://github.com/fetchai/',
     author='Ed FitzGerald',

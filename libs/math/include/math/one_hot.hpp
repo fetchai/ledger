@@ -17,6 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include "math/base_types.hpp"
+
 namespace fetch {
 namespace math {
 

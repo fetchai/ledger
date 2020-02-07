@@ -17,9 +17,13 @@
 //
 //------------------------------------------------------------------------------
 
+#include "math/base_types.hpp"
 #include "ml/meta/ml_type_traits.hpp"
+#include "ml/regularisers/reg_types.hpp"
 
+#include <string>
 #include <unordered_map>
+#include <vector>
 
 namespace fetch {
 namespace ml {
@@ -33,19 +37,36 @@ struct OpsSaveableParams
 
   virtual ~OpsSaveableParams() = default;
 
-  fetch::ml::OpType op_type     = OpType::NONE;
-  bool              is_training = true;
+  fetch::ml::OpType                    op_type     = OpType::NONE;
+  bool                                 is_training = true;
+  std::vector<fetch::math::SizeVector> batch_input_shapes{};
+  fetch::math::SizeVector              batch_output_shape{};
 };
 
-////////////////////////////
-/// FORWARD DECLARATIONS ///
-////////////////////////////
+template <typename TensorType>
+struct OpDataHolderSaveableParams : public OpsSaveableParams
+{
+  fetch::ml::OpType           op_type = OpType::OP_DATAHOLDER;
+  std::shared_ptr<TensorType> data;
+};
 
 template <typename TensorType>
-struct OpWeightsSaveableParams;
+struct OpVariableSaveableParams : public OpDataHolderSaveableParams<TensorType>
+{
+  using DataType                      = typename TensorType::Type;
+  fetch::ml::OpType           op_type = OpType::OP_PLACEHOLDER;
+  std::shared_ptr<TensorType> data;
+  std::shared_ptr<TensorType> gradient_accumulation;
+  RegularisationType          regularisation_type = RegularisationType::NONE;
+  DataType                    regularisation_rate = fetch::math::numeric_max<DataType>();
+  bool                        value_frozen        = false;
+};
 
-template <typename TensorType>
-struct OpVariableSaveableParams;
+template <class TensorType>
+struct OpWeightsSaveableParams : public OpVariableSaveableParams<TensorType>
+{
+  fetch::ml::OpType op_type = OpType::OP_WEIGHTS;
+};
 
 template <typename TensorType>
 struct NodeSaveableParams
@@ -244,6 +265,7 @@ struct LayerConvolution1DSaveableParams : SubGraphSaveableParams<TensorType>
   SizeType input_channels{};
   SizeType output_channels{};
   SizeType stride_size{};
+  bool     is_initialised = false;
 };
 
 template <typename TensorType>
@@ -257,6 +279,7 @@ struct LayerConvolution2DSaveableParams : SubGraphSaveableParams<TensorType>
   SizeType input_channels{};
   SizeType output_channels{};
   SizeType stride_size{};
+  bool     is_initialised = false;
 };
 
 /**
@@ -268,9 +291,13 @@ struct LayerFullyConnectedSaveableParams : SubGraphSaveableParams<TensorType>
 {
   using SizeType                     = typename TensorType::SizeType;
   fetch::ml::OpType op_type          = OpType::LAYER_FULLY_CONNECTED;
-  SizeType          in_size          = fetch::math::numeric_max<SizeType>();
-  SizeType          out_size         = fetch::math::numeric_max<SizeType>();
+  SizeType          total_inputs_    = 0;
+  SizeType          total_outputs_   = 0;
   bool              time_distributed = false;
+  bool              is_initialised   = false;
+  std::string       weights_name{};
+  std::string       bias_name{};
+  int               init_mode = 0;
 };
 
 /**
@@ -549,13 +576,6 @@ struct LayerMultiHeadSaveableParams : public SubGraphSaveableParams<TensorType>
   SizeType n_heads{};
   SizeType model_dim{};
   DataType dropout{};
-};
-
-template <typename TensorType>
-struct OpDataHolderSaveableParams : public OpsSaveableParams
-{
-  fetch::ml::OpType           op_type = OpType::OP_DATAHOLDER;
-  std::shared_ptr<TensorType> data;
 };
 
 template <typename TensorType>

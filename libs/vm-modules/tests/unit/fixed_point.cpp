@@ -108,7 +108,7 @@ TEST_F(FixedPointTest, divide_fixed_point)
       print(a);
     endfunction
   )";
-  auto        gt   = static_cast<double>(fp32_t(1.5));
+  auto        gt   = static_cast<double>(fetch::math::AsType<fp32_t>(1.5));
   EXPECT_TRUE(RunTest(toolkit, stdout, TEXT, gt));
 }
 

@@ -589,7 +589,7 @@ meta::IfIsMathArray<ArrayType, void> Divide(T const &scalar, ArrayType const &ar
 template <typename S>
 meta::IfIsArithmetic<S, void> Add(S const &scalar1, S const &scalar2, S &ret)
 {
-  ret = scalar1 + scalar2;
+  ret = static_cast<S>(scalar1 + scalar2);
 }
 
 template <typename S>
@@ -659,7 +659,7 @@ meta::IfIsMathArray<ArrayType, ArrayType> Add(ArrayType const &array1, ArrayType
 template <typename S>
 meta::IfIsArithmetic<S, void> Subtract(S const &scalar1, S const &scalar2, S &ret)
 {
-  ret = scalar1 - scalar2;
+  ret = static_cast<S>(scalar1 - scalar2);
 }
 
 template <typename S>
@@ -736,7 +736,7 @@ meta::IfIsMathArray<ArrayType, ArrayType> Subtract(ArrayType const &obj1, ArrayT
 template <typename S>
 meta::IfIsArithmetic<S, void> Multiply(S const &scalar1, S const &scalar2, S &ret)
 {
-  ret = scalar1 * scalar2;
+  ret = static_cast<S>(scalar1 * scalar2);
 }
 
 template <typename ArrayType, typename T,
@@ -887,7 +887,7 @@ meta::IfIsMathArray<ArrayType, ArrayType> Divide(ArrayType const &obj1, ArrayTyp
 
 /**
  * Implementation for scalar division. Implementing this helps keeps a uniform interface
- * @tparam T
+ * @tparam Type
  * @param scalar1
  * @param scalar2
  * @param ret
@@ -895,7 +895,7 @@ meta::IfIsMathArray<ArrayType, ArrayType> Divide(ArrayType const &obj1, ArrayTyp
 template <typename S>
 meta::IfIsArithmetic<S, void> Divide(S const &scalar1, S const &scalar2, S &ret)
 {
-  ret = scalar1 / scalar2;
+  ret = static_cast<S>(scalar1 / scalar2);
 }
 
 template <typename S>

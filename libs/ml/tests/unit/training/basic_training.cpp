@@ -20,9 +20,13 @@
 #include "math/activation_functions/softmax.hpp"
 #include "math/statistics/mean.hpp"
 #include "ml/layers/fully_connected.hpp"
-#include "ml/ops/activation.hpp"
-#include "ml/ops/loss_functions.hpp"
-#include "ml/ops/weights.hpp"
+#include "ml/ops/activations/relu.hpp"
+#include "ml/ops/activations/sigmoid.hpp"
+#include "ml/ops/activations/softmax.hpp"
+#include "ml/ops/loss_functions/cross_entropy_loss.hpp"
+#include "ml/ops/loss_functions/mean_square_error_loss.hpp"
+#include "ml/ops/loss_functions/softmax_cross_entropy_loss.hpp"
+#include "ml/ops/placeholder.hpp"
 #include "test_types.hpp"
 
 namespace fetch {
@@ -385,7 +389,7 @@ class BasicTrainingTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(BasicTrainingTest, math::test::HighPrecisionTensorFloatingTypes);
+TYPED_TEST_SUITE(BasicTrainingTest, math::test::HighPrecisionTensorFloatingTypes, );
 
 TYPED_TEST(BasicTrainingTest, plus_one_relu_test)
 {

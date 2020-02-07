@@ -18,21 +18,8 @@
 //------------------------------------------------------------------------------
 
 #include "ml/core/subgraph.hpp"
-#include "ml/meta/ml_type_traits.hpp"
 #include "ml/ops/activation.hpp"
-#include "ml/ops/add.hpp"
-#include "ml/ops/flatten.hpp"
-#include "ml/ops/matrix_multiply.hpp"
-#include "ml/ops/placeholder.hpp"
 #include "ml/ops/weights.hpp"
-#include "ml/regularisers/regularisation.hpp"
-#include "ml/regularisers/regulariser.hpp"
-#include "ml/saveparams/saveable_params.hpp"
-
-#include <functional>
-#include <memory>
-#include <string>
-#include <vector>
 
 namespace fetch {
 namespace ml {
@@ -43,7 +30,7 @@ class FullyConnected : public SubGraph<T>
 {
 public:
   using TensorType    = T;
-  using ArrayPtrType  = std::shared_ptr<TensorType>;
+  using NodePtrType   = std::shared_ptr<fetch::ml::Node<TensorType>>;
   using SizeType      = fetch::math::SizeType;
   using DataType      = typename TensorType::Type;
   using WeightsInit   = fetch::ml::ops::WeightsInitialisation;
@@ -56,7 +43,15 @@ public:
   using WeightsType    = fetch::ml::ops::Weights<TensorType>;
   using WeightsPtrType = std::shared_ptr<WeightsType>;
 
-  FullyConnected() = default;
+  /**
+   * @brief FullyConnected default constructor without parameters is used to create an empty
+   * object during deserialisation. After deserialisation the object is treated as an initialised
+   * one.
+   */
+  FullyConnected()
+    : SubGraph<T>()
+    , is_initialised_(true)
+  {}
 
   /**
    * Normal fully connected layer constructor
@@ -71,123 +66,24 @@ public:
                  details::ActivationType       activation_type = details::ActivationType::NOTHING,
                  fetch::ml::RegularisationType regulariser = fetch::ml::RegularisationType::NONE,
                  DataType                      regularisation_rate = DataType{0},
-                 WeightsInit init_mode = WeightsInit::XAVIER_GLOROT, bool time_distributed = false)
-    : in_size_(in)
-    , out_size_(out)
-    , time_distributed_(time_distributed)
-  {
-    // get correct name for the layer
-    std::string name = GetName();
+                 WeightsInit                   init_mode           = WeightsInit::XAVIER_GLOROT,
+                 bool                          time_distributed    = !TIME_DISTRIBUTED);
 
-    // start to set up the structure
-    std::string input =
-        this->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>(name + "_Input", {});
+  std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override;
 
-    // for non time distributed layer, flatten the input
-    std::string flat_input = input;
-    if (!time_distributed_)
-    {
-      flat_input =
-          this->template AddNode<fetch::ml::ops::Flatten<TensorType>>(name + "_Flatten", {input});
-    }
+  void SetOpSaveableParams(SPType const &sp);
 
-    std::string weights =
-        this->template AddNode<fetch::ml::ops::Weights<TensorType>>(name + "_Weights", {});
-    std::string weights_matmul = this->template AddNode<fetch::ml::ops::MatrixMultiply<TensorType>>(
-        name + "_MatrixMultiply", {weights, flat_input});
-    std::string bias =
-        this->template AddNode<fetch::ml::ops::Weights<TensorType>>(name + "_Bias", {});
-    std::string output = this->template AddNode<fetch::ml::ops::Add<TensorType>>(
-        name + "_Add", {weights_matmul, bias});
+  OpPtrType MakeSharedCopy(OpPtrType me) override;
 
-    output = fetch::ml::details::AddActivationNode<T>(activation_type, this, name + "_Activation",
-                                                      output);
+  void CompleteConstruction() override;
 
-    this->AddInputNode(input);
-    this->SetOutputNode(output);
-    this->SetRegularisation(fetch::ml::details::CreateRegulariser<T>(regulariser),
-                            regularisation_rate);
+  OperationsCount ChargeForward() const override;
+  OperationsCount ChargeBackward() const override;
 
-    // initialize weight with specified method
-    TensorType weights_data(std::vector<SizeType>({out_size_, in_size_}));
-    this->Initialise(weights_data, init_mode);
-    this->SetInput(name + "_Weights", weights_data);
+  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override;
 
-    // initialize bias with right shape and set to all zero
-    TensorType bias_data;
-    if (time_distributed_)
-    {
-      bias_data = TensorType(std::vector<SizeType>({out_size_, 1, 1}));
-    }
-    else
-    {
-      bias_data = TensorType(std::vector<SizeType>({out_size_, 1}));
-    }
-    this->SetInput(name + "_Bias", bias_data);
-    this->Compile();
-  }
-
-  OpPtrType MakeSharedCopy(OpPtrType me) override
-  {
-    FETCH_UNUSED(me);
-    assert(me.get() == this);  // used for compatability
-
-    auto copyshare = std::make_shared<FullyConnected<TensorType>>();
-
-    copyshare->time_distributed_ = time_distributed_;
-    copyshare->in_size_          = in_size_;
-    copyshare->out_size_         = out_size_;
-
-    SubGraph<TensorType>::InsertSharedCopy(copyshare);
-
-    return copyshare;
-  }
-
-  std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override
-  {
-    auto ret = std::make_shared<SPType>();
-    // get base class saveable params
-    std::shared_ptr<OpsSaveableParams> sgsp = SubGraph<TensorType>::GetOpSaveableParams();
-
-    // assign base class saveable params to ret
-    auto sg_ptr1 = std::dynamic_pointer_cast<typename SubGraph<TensorType>::SPType>(sgsp);
-    auto sg_ptr2 = std::static_pointer_cast<typename SubGraph<TensorType>::SPType>(ret);
-    *sg_ptr2     = *sg_ptr1;
-
-    // asign layer specific params
-    ret->in_size          = in_size_;
-    ret->out_size         = out_size_;
-    ret->time_distributed = time_distributed_;
-
-    return ret;
-  }
-
-  void SetOpSaveableParams(SPType const &sp)
-  {
-    // assign layer specific params
-    in_size_          = sp.in_size;
-    out_size_         = sp.out_size;
-    time_distributed_ = sp.time_distributed;
-  }
-
-  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
-  {
-    if (!time_distributed_)
-    {
-      SizeType total_in_size = 1;
-      for (std::size_t i = 0; i < inputs.front()->shape().size() - 1; i++)
-      {
-        total_in_size *= inputs.front()->shape(i);
-      }
-      assert(total_in_size == this->in_size_);
-      return {this->out_size_, inputs.front()->shape(inputs.front()->shape().size() - 1)};
-    }
-
-    assert(inputs.front()->shape().size() == 3);
-    assert(inputs.front()->shape(0) == in_size_);
-    return {this->out_size_, inputs.front()->shape(inputs.front()->shape().size() - 2),
-            inputs.front()->shape(inputs.front()->shape().size() - 1)};
-  }
+  math::SizeVector ComputeBatchOutputShape(
+      std::vector<math::SizeVector> const &input_shapes) override;
 
   static constexpr OpType OpCode()
   {
@@ -196,25 +92,30 @@ public:
 
   static constexpr char const *DESCRIPTOR = "FullyConnected";
 
+  inline OpType OperationType() const override
+  {
+    return this->OpCode();
+  }
+  inline char const *Descriptor() const override
+  {
+    return DESCRIPTOR;
+  }
+
+  static constexpr SizeType AUTODETECT_INPUTS_COUNT = 0;
+  static constexpr bool     TIME_DISTRIBUTED        = true;
+
 private:
-  SizeType in_size_          = fetch::math::numeric_max<SizeType>();
-  SizeType out_size_         = fetch::math::numeric_max<SizeType>();
-  bool     time_distributed_ = false;
+  SizeType    total_inputs_     = AUTODETECT_INPUTS_COUNT;
+  SizeType    total_outputs_    = 0;
+  bool        time_distributed_ = false;
+  bool        is_initialised_   = false;
+  std::string weights_name_{};
+  std::string bias_name_{};
+  WeightsInit init_mode_ = WeightsInit::XAVIER_GLOROT;
 
-  void Initialise(TensorType &weights, WeightsInit init_mode)
-  {
-    fetch::ml::ops::Weights<TensorType>::Initialise(weights, in_size_, out_size_, init_mode);
-  }
+  std::string GetName();
 
-  std::string GetName()
-  {
-    std::string name = DESCRIPTOR;
-    if (time_distributed_)
-    {
-      name = "TimeDistributed_" + name;
-    }
-    return name;
-  }
+  typename std::shared_ptr<fetch::ml::Node<TensorType>> FindNodeByOpCode(OpType code);
 };
 
 }  // namespace layers
