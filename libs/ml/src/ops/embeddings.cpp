@@ -143,6 +143,18 @@ OperationsCount Embeddings<TensorType>::ChargeForward() const
   return cost;
 }
 
+template <typename TensorType>
+OperationsCount Embeddings<TensorType>::ChargeBackward() const
+{
+  assert(!this->batch_input_shapes_.empty());
+
+  OperationsCount cost = fetch::ml::charge_estimation::ops::ADDITION_PER_ELEMENT *
+                         this->TotalElementsIn({this->batch_input_shapes_});
+  ;
+
+  return cost;
+}
+
 ///////////////////////////////
 /// EXPLICIT INSTANTIATIONS ///
 ///////////////////////////////
