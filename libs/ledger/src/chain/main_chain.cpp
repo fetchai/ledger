@@ -16,6 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "chain/transaction.hpp"
 #include "chain/transaction_layout_rpc_serializers.hpp"
 #include "chain/transaction_validity_period.hpp"
 #include "core/assert.hpp"
@@ -96,6 +97,9 @@ MainChain::MainChain(Mode mode, Config const &cfg)
         "Total number of false positive queries to the Ledger Main Chain Bloom filter"))
   , dirty_blocks_attempt_add_(telemetry::Registry::Instance().CreateCounter(
         "ledger_main_chain_dirty_blocks_attempt_add_total", "Total attempts to add a dirty block"))
+  , children_on_storage_checks_total_(telemetry::Registry::Instance().CreateCounter(
+        "ledger_main_chain_children_on_storage_checks_total",
+        "Total checks for block's children on storage"))
 {
   if (Mode::IN_MEMORY_DB != mode_)
   {
@@ -368,15 +372,21 @@ void MainChain::KeepBlock(IntBlockPtr const &block) const
   record.block = *block;
 
   // detect if any of this block's children has made it to the store already
-  auto forward_refs{forward_references_.equal_range(hash)};
-  for (auto ref_it{forward_refs.first}; ref_it != forward_refs.second; ++ref_it)
+  //
+  //
   {
-    auto const &child{ref_it->second};
-    if (block_store_->Has(storage::ResourceID(child)))
+    MilliTimer tmr("ChildrenOnStore", 2000);
+    children_on_storage_checks_total_->increment();
+    auto forward_refs{forward_references_.equal_range(hash)};
+    for (auto ref_it{forward_refs.first}; ref_it != forward_refs.second; ++ref_it)
     {
-      record.next_hash = child;
-      CacheReference(hash, child, true);
-      break;
+      auto const &child{ref_it->second};
+      if (block_store_->Has(storage::ResourceID(child)))
+      {
+        record.next_hash = child;
+        CacheReference(hash, child, true);
+        break;
+      }
     }
   }
 
@@ -1477,6 +1487,17 @@ BlockStatus MainChain::InsertBlock(IntBlockPtr const &block, bool evaluate_loose
     }
   }
 
+  if (evaluate_loose_blocks)  // normal case - not being called from inside CompleteLooseBlocks
+  {
+    // First check if block already exists (not checking in object store)
+    if (IsBlockInCache(block->hash))
+    {
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Attempting to add already seen block");
+      return BlockStatus::DUPLICATE;
+    }
+  }
+
+  // check for duplicate TXs in the blockchain (only
   auto const duplicates = DetectDuplicateTransactions(block->previous_hash, txs);
   if (!duplicates.empty())
   {
@@ -1492,13 +1513,6 @@ BlockStatus MainChain::InsertBlock(IntBlockPtr const &block, bool evaluate_loose
   IntBlockPtr prev_block{};
   if (evaluate_loose_blocks)  // normal case - not being called from inside CompleteLooseBlocks
   {
-    // First check if block already exists (not checking in object store)
-    if (IsBlockInCache(block->hash))
-    {
-      FETCH_LOG_DEBUG(LOGGING_NAME, "Attempting to add already seen block");
-      return BlockStatus::DUPLICATE;
-    }
-
     // Determine if the block is present in the cache
     if (LookupBlock(block->previous_hash, prev_block))
     {
@@ -2001,7 +2015,10 @@ DigestSet MainChain::DetectDuplicateTransactions(BlockHash const &           sta
   DigestSet potential_duplicates{};
   for (auto const &tx_layout : transactions)
   {
-    if (bloom_filter_.Match(tx_layout.digest(), tx_layout.valid_from(), tx_layout.valid_until()))
+    auto const default_valid_from =
+        tx_layout.valid_until() - std::min(MAXIMUM_TX_VALIDITY_PERIOD, tx_layout.valid_until());
+    auto const from_calculated = std::max(tx_layout.valid_from(), default_valid_from);
+    if (bloom_filter_.Match(tx_layout.digest(), from_calculated, tx_layout.valid_until()))
     {
       potential_duplicates.insert(tx_layout.digest());
     }
@@ -2011,8 +2028,7 @@ DigestSet MainChain::DetectDuplicateTransactions(BlockHash const &           sta
 
   // calculate the maximum search depth
   uint64_t const last_block_num =
-      block->block_number -
-      std::min(block->block_number, uint64_t{chain::Transaction::MAXIMUM_TX_VALIDITY_PERIOD});
+      block->block_number - std::min(block->block_number, uint64_t{MAXIMUM_TX_VALIDITY_PERIOD});
 
   // filter the potential duplicates by traversing back down the chain
   DigestSet duplicates{};

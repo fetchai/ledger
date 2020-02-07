@@ -156,7 +156,8 @@ bool PromiseImplementation::Wait(bool throw_exception, uint64_t extend_wait_by) 
     return false;
   }
 
-  std::unique_lock<std::mutex> lock(notify_lock_);
+  std::unique_lock<RMutex> lock(notify_lock_);
+
   while (State::WAITING == state())
   {
     if (std::cv_status::timeout == notify_.wait_until(lock, recalculated_deadline))
