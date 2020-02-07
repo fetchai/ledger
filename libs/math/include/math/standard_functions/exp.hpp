@@ -19,6 +19,7 @@
 
 #include "math/meta/math_type_traits.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
+#include "vectorise/math/standard_functions.hpp"
 
 #include <cassert>
 
@@ -40,8 +41,6 @@ meta::IfIsNonFixedPointArithmetic<Type, void> Exp(Type const &x, Type &ret)
   ret = static_cast<Type>(std::exp(static_cast<double>(x)));
 }
 
-// TODO(800) - native implementations of fixed point are required; casting to double will not be
-// permissible
 template <typename T>
 meta::IfIsFixedPoint<T, void> Exp(T const &n, T &ret)
 {
@@ -64,13 +63,20 @@ template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, void> Exp(ArrayType const &array, ArrayType &ret)
 {
   assert(ret.shape() == array.shape());
-  auto it1 = array.cbegin();
-  auto rit = ret.begin();
-  while (it1.is_valid())
+  if (array.size() >= array.data().padded_size())
   {
-    Exp(*it1, *rit);
-    ++it1;
-    ++rit;
+    ret.data().in_parallel().Apply([](auto const &a, auto &c) { c = fetch::vectorise::Exp(a); }, array.data());
+  }
+  else
+  {
+    auto it1 = array.cbegin();
+    auto rit = ret.begin();
+    while (it1.is_valid())
+    {
+      Exp(*it1, *rit);
+      ++it1;
+      ++rit;
+    }
   }
 }
 
