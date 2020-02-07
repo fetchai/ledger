@@ -56,6 +56,9 @@ public:
     return OptimiserType::SGD;
   }
 
+protected:
+  virtual fetch::ml::OperationsCount ChargeApplyGradients() const override;
+
 private:
   // ApplyGradientSparse if number_of_rows_to_update * sparsity_threshold_ <= total_rows
   SizeType sparsity_threshold_ = 2;

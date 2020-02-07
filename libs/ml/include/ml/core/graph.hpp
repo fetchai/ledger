@@ -154,6 +154,7 @@ public:
 
   fetch::ml::OperationsCount ChargeForward(std::string const &node_name) const;
   fetch::ml::OperationsCount ChargeBackward(std::string const &node_name) const;
+  fetch::ml::OperationsCount ChargeApplyGradients() const;
 
 protected:
   std::map<std::string, NodePtrType>                            nodes_;
@@ -218,8 +219,8 @@ private:
 
   bool IsValidNodeName(std::string const &node_name) const;
 
-  std::map<std::string, NodePtrType> &GetTrainableLookup();
-  std::map<std::string, NodePtrType> &GetNodesLookup();
+  std::map<std::string, NodePtrType> &      GetNodesLookup();
+  std::map<std::string, NodePtrType> const &GetTrainableLookup() const;
 
   template <typename LookupFunction>
   void GetNamesRecursively(std::vector<std::string> &ret, LookupFunction lookup_function,

@@ -1101,7 +1101,8 @@ void Graph<TensorType>::GetNamesRecursively(std::vector<std::string> &ret,
 template <typename TensorType>
 std::vector<std::string> Graph<TensorType>::GetTrainableNames()
 {
-  using graph_func_signature = std::map<std::string, NodePtrType> &(Graph<TensorType>::*)();
+  using graph_func_signature =
+      std::map<std::string, NodePtrType> const &(Graph<TensorType>::*)() const;
 
   std::vector<std::string> ret;
   GetNamesRecursively<graph_func_signature>(ret, &Graph<TensorType>::GetTrainableLookup);
@@ -1155,6 +1156,19 @@ OperationsCount Graph<TensorType>::ChargeBackward(const std::string &node_name) 
 }
 
 /**
+ * Returns estimated operations count for applying sparse gradients to all trainables.
+ */
+template <typename TensorType>
+OperationsCount Graph<TensorType>::ChargeApplyGradients() const
+{
+  using namespace fetch::ml::charge_estimation::ops;
+  // TODO (ML-520): it might be better to ask each Trainable for an estimation of applying a
+  // gradient to it.
+
+  return MULTIPLICATION_PER_ELEMENT * trainable_lookup_.size();
+}
+
+/**
  * Return list of all node names in format GRAPH1/...SUBGRAPHS../LEAF
  * @return std::vector<std::string> list of names of all nodes in all subgraphs
  */
@@ -1176,8 +1190,8 @@ bool Graph<TensorType>::IsValidNodeName(std::string const &node_name) const
 }
 
 template <typename TensorType>
-std::map<std::string, typename Graph<TensorType>::NodePtrType>
-    &Graph<TensorType>::GetTrainableLookup()
+std::map<std::string, typename Graph<TensorType>::NodePtrType> const &
+Graph<TensorType>::GetTrainableLookup() const
 {
   return trainable_lookup_;
 }

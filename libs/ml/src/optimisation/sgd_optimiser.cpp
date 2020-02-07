@@ -48,6 +48,19 @@ SGDOptimiser<T>::SGDOptimiser(
   : Optimiser<T>(graph, input_node_names, label_node_name, output_node_name, learning_rate_param)
 {}
 
+template <class T>
+OperationsCount SGDOptimiser<T>::ChargeApplyGradients() const
+{
+  using namespace fetch::ml::charge_estimation::ops;
+  // TODO(ML-520): check if the calculation is correct.
+  SizeType const total_gradients = this->gradients_.size();
+  // Total number of operations is O(n^2) in worst case, where n is number of gradients.
+  SizeType const        total_multiplications = total_gradients * total_gradients;
+  OperationsCount const application_cost      = MULTIPLICATION_PER_ELEMENT * total_multiplications;
+  OperationsCount const total_sparse_ops      = this->graph_->ChargeApplyGradients();
+  return application_cost + total_sparse_ops;
+}
+
 // private
 
 template <class T>
