@@ -84,6 +84,15 @@ const char *PlaceHolder<TensorType>::Descriptor() const
   return DESCRIPTOR;
 }
 
+template <typename TensorType>
+ OperationsCount PlaceHolder<TensorType>::ChargeForward() const
+ {
+   assert(!this->batch_output_shape_.empty());
+   OperationsCount cost = fetch::ml::charge_estimation::ops::PLACEHOLDER_READING_PER_ELEMENT *
+                          this->TotalElementsIn({this->batch_output_shape_});
+   return cost;
+ }
+
 ///////////////////////////////
 /// EXPLICIT INSTANTIATIONS ///
 ///////////////////////////////
