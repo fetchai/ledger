@@ -30,6 +30,18 @@
 namespace fetch {
 namespace vectorise {
 
+template <typename T>
+inline math::meta::IfIsNonFixedPointArithmetic<T, VectorRegister<T, 8 * sizeof(T)>> Exp(VectorRegister<T, 8 * sizeof(T)> const &x)
+{
+  return VectorRegister<T, 8 * sizeof(T)>(static_cast<T>(std::exp(static_cast<double>(x.data()))));
+}
+
+template <typename T>
+inline math::meta::IfIsFixedPoint<T, VectorRegister<T, 8 * sizeof(T)>> Exp(VectorRegister<T, 8 * sizeof(T)> const &x)
+{
+  return VectorRegister<T, 8 * sizeof(T)>(T::Exp(x.data()));
+}
+
 template <typename T, std::size_t S>
 VectorRegister<T, S> exp(VectorRegister<T, S> x, T const &precision = 0.00001)
 {
