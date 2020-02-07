@@ -183,7 +183,7 @@ TEST(DebugMutex, IncorrectRecursive)
 
   threads.emplace_back([&m] {
     std::this_thread::sleep_for(std::chrono::seconds(3));
-    EXPECT_THROW(std::lock_guard<RMutex>(m), std::runtime_error);
+    EXPECT_THROW(std::lock_guard<RMutex> failed_guard(m), std::runtime_error);
   });
 
   for (auto &t : threads)
