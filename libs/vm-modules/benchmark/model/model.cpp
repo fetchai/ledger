@@ -785,6 +785,42 @@ BENCHMARK(BM_Activation)->Args({100, 1, getId("relu")})->Unit(::benchmark::kMicr
 BENCHMARK(BM_Activation)->Args({1000, 1, getId("relu")})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Activation)->Args({10, 10, getId("relu")})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_Activation)->Args({100, 10, getId("relu")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({1, 1, getId("leaky_relu")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({10, 1, getId("leaky_relu")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({100, 1, getId("leaky_relu")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({1000, 1, getId("leaky_relu")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({10, 10, getId("leaky_relu")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({100, 10, getId("leaky_relu")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({1, 1, getId("log_sigmoid")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({10, 1, getId("log_sigmoid")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({100, 1, getId("log_sigmoid")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({1000, 1, getId("log_sigmoid")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({10, 10, getId("log_sigmoid")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({100, 10, getId("log_sigmoid")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({1, 1, getId("softmax")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({10, 1, getId("softmax")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({100, 1, getId("softmax")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({1000, 1, getId("softmax")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({10, 10, getId("softmax")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({100, 10, getId("softmax")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({1, 1, getId("gelu")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({10, 1, getId("gelu")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({100, 1, getId("gelu")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({1000, 1, getId("gelu")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({10, 10, getId("gelu")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({100, 10, getId("gelu")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({1, 1, getId("sigmoid")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({10, 1, getId("sigmoid")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({100, 1, getId("sigmoid")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({1000, 1, getId("sigmoid")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({10, 10, getId("sigmoid")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({100, 10, getId("sigmoid")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({1, 1, getId("log_softmax")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({10, 1, getId("log_softmax")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({100, 1, getId("log_softmax")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({1000, 1, getId("log_softmax")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({10, 10, getId("log_softmax")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({100, 10, getId("log_softmax")})->Unit(::benchmark::kMicrosecond);
 
 struct BM_AddActivation_config
 {
@@ -814,9 +850,9 @@ void BM_AddActivation(::benchmark::State &state)
     auto model = vmSequentialModel(vm);
 
     // arguments list
-    auto layer_type       = vmString(vm, "activation");
-    auto activation       = activations_[config.activation_id];
-    auto activation_type  = vmString(vm, activation);
+    auto layer_type      = vmString(vm, "activation");
+    auto activation      = activations_[config.activation_id];
+    auto activation_type = vmString(vm, activation);
 
     state.counters["charge"] =
         static_cast<double>(model->Estimator().LayerAddActivation(layer_type, activation_type));
