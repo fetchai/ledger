@@ -720,9 +720,9 @@ int64_t getId(std::string const &str)
   return static_cast<int64_t>(activations_.find(str)->second);
 }
 
-struct BM_AddActivation_config
+struct BM_Activation_config
 {
-  explicit BM_AddActivation_config(::benchmark::State const &state)
+  explicit BM_Activation_config(::benchmark::State const &state)
   {
     input_size    = static_cast<SizeType>(state.range(0));
     batch_size    = static_cast<SizeType>(state.range(1));
@@ -734,10 +734,10 @@ struct BM_AddActivation_config
   SizeType activation_id;
 };
 
-void BM_AddActivation(::benchmark::State &state)
+void BM_Activation(::benchmark::State &state)
 {
   // Get config
-  BM_AddActivation_config config{state};
+  BM_Activation_config config{state};
 
   std::vector<std::string> const activations_{"leaky_relu", "log_sigmoid", "log_softmax", "relu",
                                               "sigmoid",    "softmax",     "gelu"};
@@ -779,12 +779,64 @@ void BM_AddActivation(::benchmark::State &state)
   }
 }
 
-BENCHMARK(BM_AddActivation)->Args({1, 1, getId("relu")})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_AddActivation)->Args({10, 1, getId("relu")})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_AddActivation)->Args({100, 1, getId("relu")})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_AddActivation)->Args({1000, 1, getId("relu")})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_AddActivation)->Args({10, 10, getId("relu")})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_AddActivation)->Args({100, 10, getId("relu")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({1, 1, getId("relu")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({10, 1, getId("relu")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({100, 1, getId("relu")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({1000, 1, getId("relu")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({10, 10, getId("relu")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({100, 10, getId("relu")})->Unit(::benchmark::kMicrosecond);
+
+struct BM_AddActivation_config
+{
+  explicit BM_AddActivation_config(::benchmark::State const &state)
+  {
+    activation_id = static_cast<SizeType>(state.range(0));
+  }
+
+  SizeType activation_id;
+};
+
+void BM_AddActivation(::benchmark::State &state)
+{
+  // Get config
+  BM_AddActivation_config config{state};
+
+  std::vector<std::string> const activations_{"leaky_relu", "log_sigmoid", "log_softmax", "relu",
+                                              "sigmoid",    "softmax",     "gelu"};
+
+  for (auto _ : state)
+  {
+
+    state.PauseTiming();
+
+    // model
+    auto vm    = NewVM();
+    auto model = vmSequentialModel(vm);
+
+    // arguments list
+    auto layer_type       = vmString(vm, "activation");
+    auto activation       = activations_[config.activation_id];
+    auto activation_type  = vmString(vm, activation);
+
+    state.counters["charge"] =
+        static_cast<double>(model->Estimator().LayerAddActivation(layer_type, activation_type));
+    state.counters["ForwardCost"]    = static_cast<double>(model->Estimator().GetForwardCost());
+    state.counters["OpsCount"]       = static_cast<double>(model->Estimator().GetOpsCount());
+    state.counters["PaddedSizesSum"] = static_cast<double>(model->Estimator().GetPaddedSizesSum());
+    state.counters["SizesSum"]       = static_cast<double>(model->Estimator().GetSizesSum());
+
+    state.ResumeTiming();
+    model->LayerAddActivation(layer_type, activation_type);
+  }
+}
+
+BENCHMARK(BM_AddActivation)->Args({getId("relu")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_AddActivation)->Args({getId("leaky_relu")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_AddActivation)->Args({getId("log_sigmoid")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_AddActivation)->Args({getId("log_softmax")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_AddActivation)->Args({getId("gelu")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_AddActivation)->Args({getId("softmax")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_AddActivation)->Args({getId("sigmoid")})->Unit(::benchmark::kMicrosecond);
 
 ///*
 struct BM_SerializeToString_config
