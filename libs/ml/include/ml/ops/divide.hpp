@@ -80,7 +80,7 @@ public:
     return DESCRIPTOR;
   }
 
-  OperationsCount ChargeForward() override;
+  OperationsCount ChargeForward() const override;
 };
 
 }  // namespace ops

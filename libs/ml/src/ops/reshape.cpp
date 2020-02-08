@@ -119,7 +119,7 @@ std::vector<math::SizeType> Reshape<TensorType>::ComputeOutputShape(
 }
 
 template <typename TensorType>
-OperationsCount Reshape<TensorType>::ChargeForward()
+OperationsCount Reshape<TensorType>::ChargeForward() const
 {
   assert(!this->batch_output_shape_.empty());
   OperationsCount cost = fetch::ml::charge_estimation::ops::RESHAPE_PER_ELEMENT *

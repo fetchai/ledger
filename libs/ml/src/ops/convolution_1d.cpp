@@ -188,8 +188,12 @@ math::SizeType Convolution1D<TensorType>::ComputeOutputHeight(SizeType const inp
                                                               SizeType const kernel_height) const
 {
   // output_height=number of stride_size steps over input size
-  SizeType output_height = (input_height - kernel_height + this->stride_size_) / this->stride_size_;
-
+  SizeType output_height = ((input_height - kernel_height) / this->stride_size_) + 1;
+  if (output_height == 0 || output_height == std::numeric_limits<SizeType>::max())
+  {
+    throw fetch::math::exceptions::WrongShape(
+        "Convolution1D::ComputeOutputHeight: output shape has 0 or -1 values!");
+  }
   return output_height;
 }
 
@@ -401,7 +405,7 @@ void Convolution1D<TensorType>::ReverseFillOutput(TensorType &gemm_output, Tenso
 }
 
 template <typename TensorType>
-OperationsCount Convolution1D<TensorType>::ChargeForward()
+OperationsCount Convolution1D<TensorType>::ChargeForward() const
 {
   assert(!this->batch_output_shape_.empty());
   assert(this->batch_input_shapes_.size() == 2);

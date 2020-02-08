@@ -16,32 +16,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vm_test_toolkit.hpp"
+#include "benchmark/benchmark.h"
 
-#include "gtest/gtest.h"
-
-#include <sstream>
-
-namespace {
-
-class VMTests : public ::testing::Test
-{
-public:
-  std::ostringstream output;
-  VmTestToolkit      toolkit{&output};
-};
-
-// Test we can compile and run a fairly inoffensive smart contract
-TEST_F(VMTests, CheckCompileAndExecute)
-{
-  static char const *TEXT = R"(
-    function main()
-      printLn("Hello, world");
-    endfunction
-  )";
-
-  ASSERT_TRUE(toolkit.Compile(TEXT));
-  ASSERT_TRUE(toolkit.Run());
-}
-
-}  // namespace
+BENCHMARK_MAIN();

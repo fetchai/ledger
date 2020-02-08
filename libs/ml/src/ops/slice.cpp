@@ -185,7 +185,7 @@ std::vector<math::SizeType> Slice<TensorType>::ComputeOutputShape(VecTensorType 
 }
 
 template <typename TensorType>
-OperationsCount Slice<TensorType>::ChargeForward()
+OperationsCount Slice<TensorType>::ChargeForward() const
 {
   assert(!this->batch_input_shapes_.empty());
   OperationsCount cost = fetch::ml::charge_estimation::ops::SLICE_PER_ELEMENT *

@@ -68,9 +68,11 @@ public:
                             math::SizeType const &                   output_channels,
                             math::SizeType const &input_channels, math::SizeType const &kernel_size,
                             math::SizeType const &stride_size);
-  ChargeAmount LayerAddMaxPool(fetch::vm::Ptr<fetch::vm::String> const &layer,
-                               math::SizeType const &                   kernel_size,
-                               math::SizeType const &                   stride_size);
+  ChargeAmount LayerAddPool(fetch::vm::Ptr<fetch::vm::String> const &layer,
+                            math::SizeType const &kernel_size, math::SizeType const &stride_size);
+  ChargeAmount LayerAddEmbeddings(fetch::vm::Ptr<fetch::vm::String> const &layer,
+                                  math::SizeType const &                   dimensions,
+                                  math::SizeType const &data_points, bool stub);
   ChargeAmount LayerAddConvActivation(fetch::vm::Ptr<fetch::vm::String> const &layer,
                                       math::SizeType const &                   output_channels,
                                       math::SizeType const &                   input_channels,

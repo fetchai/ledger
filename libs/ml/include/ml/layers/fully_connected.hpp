@@ -77,7 +77,8 @@ public:
 
   void CompleteConstruction() override;
 
-  OperationsCount ChargeForward() override;
+  OperationsCount ChargeForward() const override;
+  OperationsCount ChargeBackward() const override;
 
   std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override;
 

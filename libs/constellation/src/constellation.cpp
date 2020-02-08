@@ -740,20 +740,31 @@ bool Constellation::OnBringUpExternalNetwork(
   // Start the main syncing state machine for main chain service
   reactor_.Attach(main_chain_service_->GetWeakRunnable());
 
-  // The block coordinator needs to access correctly started lanes to recover state in the case of
-  // a crash.
-  reactor_.Attach(block_coordinator_->GetWeakRunnable());
-
   return true;
 }
 
 bool Constellation::OnRunning(core::WeakRunnable const &bootstrap_monitor)
 {
-  bool start_up_in_progress{true};
+  bool       start_up_in_progress{true};
+  bool       attached_block_coord{false};
+  bool const standalone_mode = cfg_.network_mode == NetworkMode::STANDALONE;
 
   // monitor loop
   while (active_)
   {
+    // The block coordinator needs to access correctly started lanes to recover state in the case of
+    // a crash. Additionally, delay starting it until the main chain sync has started to avoid
+    // immediately generating blocks on an old chain
+    if (!attached_block_coord)
+    {
+      if (standalone_mode || main_chain_service_->IsHealthy())
+      {
+        FETCH_LOG_INFO(LOGGING_NAME, "Starting the block coordinator.");
+        reactor_.Attach(block_coordinator_->GetWeakRunnable());
+        attached_block_coord = true;
+      }
+    }
+
     // determine the status of the main chain server
     bool const is_in_sync = main_chain_service_->IsSynced() && block_coordinator_->IsSynced();
 
@@ -862,8 +873,11 @@ void Constellation::OnTearDownExternalNetwork()
 
 void Constellation::OnTearDownLaneServices()
 {
-  // not strictly necessary but make sure that chain has completely flushed to disk
-  chain_->Flush();
+  if (chain_)
+  {
+    // not strictly necessary but make sure that chain has completely flushed to disk
+    chain_->Flush();
+  }
 
   ResetItem(chain_);
   ResetItem(lane_control_);

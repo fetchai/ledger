@@ -29,7 +29,7 @@ class L2LossTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(L2LossTest, TensorFloatingTypes);
+TYPED_TEST_SUITE(L2LossTest, TensorFloatingTypes, );
 
 TYPED_TEST(L2LossTest, value_test)
 {

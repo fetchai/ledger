@@ -216,8 +216,8 @@ Block Consensus::GetBeginningOfAeon(Block const &current, MainChain const &chain
   if ((current.block_number % aeon_period_) == 0)
   {
     nearest_aeon = (current.block_number - aeon_period_) + 1;
-    FETCH_LOG_INFO(LOGGING_NAME, "Finding nearest aeon: ", nearest_aeon,
-                   " with current: ", current.block_number);
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Finding nearest aeon: ", nearest_aeon,
+                    " with current: ", current.block_number);
   }
 
   // Attempt to lookup from cache to avoid chain walk
@@ -365,13 +365,13 @@ bool Consensus::ValidBlockTiming(Block const &previous, Block const &proposed) c
 
   if (qualified_cabinet.find(identity.identifier()) == qualified_cabinet.end())
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "Miner ", identity.identifier().ToBase64(),
+    FETCH_LOG_WARN(LOGGING_NAME, "Miner ", identity.identifier().ToBase64(),
                    " attempted to mine block ", previous.block_number + 1,
                    " but was not part of qual:");
 
     for (auto const &member : qualified_cabinet)
     {
-      FETCH_LOG_INFO(LOGGING_NAME, member.ToBase64());
+      FETCH_LOG_WARN(LOGGING_NAME, member.ToBase64());
     }
 
     return false;
@@ -612,7 +612,6 @@ NextBlockPtr Consensus::GenerateNextBlock()
     if (entgen_status != EntropyGeneratorInterface::Status::OK)
     {
       failed_to_generate_entropy_total_->increment();
-      FETCH_LOG_INFO(LOGGING_NAME, "Failed to generate entropy: ", ToString(entgen_status));
       return {};
     }
   }
@@ -644,7 +643,6 @@ NextBlockPtr Consensus::GenerateNextBlock()
   if (!ValidBlockTiming(current_block_, *ret))
   {
     invalid_block_timing_total_->increment();
-    FETCH_LOG_INFO(LOGGING_NAME, "Invalid block timing");
     return {};
   }
 
@@ -656,7 +654,6 @@ NextBlockPtr Consensus::GenerateNextBlock()
     {
       // Notarisation for head of chain is not ready yet so wait
       notarisation_is_not_ready_yet_total_->increment();
-      FETCH_LOG_INFO(LOGGING_NAME, "Notarisation is not ready yet");
       return {};
     }
     ret->block_entropy.block_notarisation = notarisation;

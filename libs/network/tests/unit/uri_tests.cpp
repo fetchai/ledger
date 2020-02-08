@@ -105,4 +105,4 @@ TEST_P(UriTests, CheckParsing)
   }
 }
 
-INSTANTIATE_TEST_CASE_P(ParamBased, UriTests, testing::ValuesIn(TEST_CASES), );
+INSTANTIATE_TEST_SUITE_P(ParamBased, UriTests, testing::ValuesIn(TEST_CASES));

@@ -444,7 +444,7 @@ void Convolution2D<TensorType>::ReverseFillOutput(TensorType &gemm_output, Tenso
 }
 
 template <typename TensorType>
-OperationsCount Convolution2D<TensorType>::ChargeForward()
+OperationsCount Convolution2D<TensorType>::ChargeForward() const
 {
   assert(!this->batch_output_shape_.empty());
   assert(this->batch_input_shapes_.size() == 2);

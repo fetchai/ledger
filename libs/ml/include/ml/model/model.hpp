@@ -109,7 +109,7 @@ public:
   friend struct serializers::MapSerializer;
   friend class fetch::vm_modules::ml::model::ModelEstimator;
 
-  virtual fetch::ml::OperationsCount ChargeForward();
+  virtual fetch::ml::OperationsCount ChargeForward() const;
 
 protected:
   ModelConfig<DataType> model_config_;
