@@ -57,7 +57,7 @@ public:
 
   virtual ~Optimiser() = default;
 
-  inline void SetGraph(std::shared_ptr<Graph<T>> graph)
+  void SetGraph(std::shared_ptr<Graph<T>> graph)
   {
     graph_ = graph;
   }
