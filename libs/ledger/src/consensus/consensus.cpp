@@ -28,8 +28,8 @@
 #include <random>
 #include <utility>
 
-using fetch::generics::MilliTimer;
 using fetch::core::TrimToSize;
+using fetch::generics::MilliTimer;
 
 /**
  * Consensus enforcement class.
