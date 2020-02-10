@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "beacon/block_entropy.hpp"
+#include "core/containers/trim_to_size.hpp"
 #include "core/mutex.hpp"
 #include "core/random/lcg.hpp"
 #include "ledger/chain/block.hpp"
@@ -28,6 +29,7 @@
 #include <utility>
 
 using fetch::generics::MilliTimer;
+using fetch::core::TrimToSize;
 
 /**
  * Consensus enforcement class.
