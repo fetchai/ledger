@@ -21,7 +21,7 @@
 #include "telemetry/registry.hpp"
 
 namespace {
-inline std::string ToLowerCase(std::string data)
+std::string ToLowerCase(std::string data)
 {
   std::transform(data.begin(), data.end(), data.begin(),
                  [](unsigned char c) { return std::tolower(c); });

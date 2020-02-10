@@ -309,7 +309,7 @@ inline VectorRegister<float, 256> vector_zero_above_element(VectorRegister<float
 }
 
 template <int32_t elements>
-inline VectorRegister<float, 128> rotate_elements_left(VectorRegister<float, 128> const &x)
+VectorRegister<float, 128> rotate_elements_left(VectorRegister<float, 128> const &x)
 {
   __m128i                      xi = _mm_castps_si128(x.data());
   VectorRegister<int32_t, 128> ret =
@@ -318,7 +318,7 @@ inline VectorRegister<float, 128> rotate_elements_left(VectorRegister<float, 128
 }
 
 template <int32_t elements>
-inline VectorRegister<float, 256> rotate_elements_left(VectorRegister<float, 256> const &x)
+VectorRegister<float, 256> rotate_elements_left(VectorRegister<float, 256> const &x)
 {
   __m256i                      xi = _mm256_castps_si256(x.data());
   VectorRegister<int32_t, 256> ret =
