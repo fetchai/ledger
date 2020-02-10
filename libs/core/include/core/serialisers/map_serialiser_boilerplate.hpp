@@ -181,7 +181,7 @@ struct Deprecated : ValueSerialiser
 #define serialiseD_STRUCT_FIELD(KEY, ...) \
   serialisers::SerialisedStructField<KEY, decltype(&__VA_ARGS__), &__VA_ARGS__>
 #define serialiseD_STRUCT_FIELD_AS(KEY, member, Type) \
-  serialisers::SerialisedStructField<KEY, decltype(&member), &member, Type>
+  serialisers::SerialisedStructField<KEY, decltype(&(member)), &(member), Type>
 
 }  // namespace serialisers
 }  // namespace fetch
