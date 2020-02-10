@@ -21,6 +21,8 @@
 
 #include "gtest/gtest.h"
 
+namespace {
+
 using namespace fetch::storage;
 
 class TestClass
@@ -226,3 +228,5 @@ TEST(cache_line_random_access_stack, file_writing_and_recovery)
     stack.Close();
   }
 }
+
+}  // namespace

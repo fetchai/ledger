@@ -75,9 +75,9 @@ struct StaticMockDeleterPrimitive<TestType, eDeleteStrategy::clearing>
 };
 
 template <typename T, const eDeleteStrategy P_DeleteStrategy = eDeleteStrategy::canonical>
-using OpenSSLDeleter_forTesting = OpenSSLDeleter<
-    T, P_DeleteStrategy,
-    StaticMockDeleterPrimitive<typename std::remove_const<T>::type, P_DeleteStrategy>>;
+using OpenSSLDeleter_forTesting =
+    OpenSSLDeleter<T, P_DeleteStrategy,
+                   StaticMockDeleterPrimitive<std::remove_const_t<T>, P_DeleteStrategy>>;
 
 class OpenSSLDeleterTest : public testing::Test
 {

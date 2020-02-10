@@ -64,6 +64,7 @@ public:
   static constexpr char const *DESCRIPTOR = "Maximum";
 
   OperationsCount ChargeForward() const override;
+  OperationsCount ChargeBackward() const override;
 };
 
 }  // namespace ops
