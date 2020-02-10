@@ -163,6 +163,18 @@ std::string SelfAttentionEncoder<TensorType>::residual_connection(
   return normalized_residual;
 }
 
+template <class TensorType>
+OperationsCount SelfAttentionEncoder<TensorType>::ChargeForward() const
+{
+  return Graph<TensorType>::ChargeForward(this->output_node_name_);
+}
+
+template <class TensorType>
+OperationsCount SelfAttentionEncoder<TensorType>::ChargeBackward() const
+{
+  return Graph<TensorType>::ChargeBackward(this->output_node_name_);
+}
+
 ///////////////////////////////
 /// EXPLICIT INSTANTIATIONS ///
 ///////////////////////////////
