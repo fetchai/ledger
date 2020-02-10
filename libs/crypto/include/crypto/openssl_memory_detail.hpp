@@ -72,7 +72,7 @@ const FreeFunctionPtr<ECDSA_SIG> DeleterPrimitive<ECDSA_SIG>::function;
 
 template <typename T, eDeleteStrategy P_DeleteStrategy = eDeleteStrategy::canonical,
           typename T_DeleterPrimitive =
-              detail::DeleterPrimitive<typename std::remove_const<T>::type, P_DeleteStrategy>>
+              detail::DeleterPrimitive<std::remove_const_t<T>, P_DeleteStrategy>>
 struct OpenSSLDeleter
 {
   using Type                                      = T;
@@ -83,7 +83,7 @@ struct OpenSSLDeleter
 
   void operator()(T *ptr) const
   {
-    (DeleterPrimitive::function)(const_cast<typename std::remove_const<T>::type *>(ptr));
+    (DeleterPrimitive::function)(const_cast<std::remove_const_t<T> *>(ptr));
   }
 };
 

@@ -40,7 +40,7 @@ public:
   template <typename Key, template <typename, typename> class Container>
   static Ptr<IMap> inner(TypeId value_type_id, VM *vm, TypeId type_id);
 
-  static inline Ptr<IMap> outer(TypeId key_type_id, TypeId value_type_id, VM *vm, TypeId type_id);
+  static Ptr<IMap> outer(TypeId key_type_id, TypeId value_type_id, VM *vm, TypeId type_id);
 
 protected:
   IMap(VM *vm, TypeId type_id)
