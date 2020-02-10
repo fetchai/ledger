@@ -694,6 +694,186 @@ BENCHMARK(BM_Fit)
     ->Unit(::benchmark::kMicrosecond);
 //*/
 
+fetch::vm::Ptr<fetch::vm::Array<uint64_t>> CreateArray(std::shared_ptr<fetch::vm::VM> &vm,
+                                                       std::vector<uint64_t> const &   values)
+{
+  std::size_t                                size = values.size();
+  fetch::vm::Ptr<fetch::vm::Array<uint64_t>> array =
+      vm->CreateNewObject<fetch::vm::Array<uint64_t>>(vm->GetTypeId<uint64_t>(),
+                                                      static_cast<int32_t>(size));
+
+  for (std::size_t i{0}; i < size; ++i)
+  {
+    array->elements[i] = values[i];
+  }
+
+  return array;
+}
+
+int64_t getId(std::string const &str)
+{
+  std::map<std::string, SizeType> const activations_{
+      {"leaky_relu", 0}, {"log_sigmoid", 1}, {"log_softmax", 2}, {"relu", 3},
+      {"sigmoid", 4},    {"softmax", 5},     {"gelu", 6},
+  };
+
+  return static_cast<int64_t>(activations_.find(str)->second);
+}
+
+struct BM_Activation_config
+{
+  explicit BM_Activation_config(::benchmark::State const &state)
+  {
+    input_size    = static_cast<SizeType>(state.range(0));
+    batch_size    = static_cast<SizeType>(state.range(1));
+    activation_id = static_cast<SizeType>(state.range(2));
+  }
+
+  SizeType input_size;
+  SizeType batch_size;
+  SizeType activation_id;
+};
+
+void BM_Activation(::benchmark::State &state)
+{
+  // Get config
+  BM_Activation_config config{state};
+
+  std::vector<std::string> const activations_{"leaky_relu", "log_sigmoid", "log_softmax", "relu",
+                                              "sigmoid",    "softmax",     "gelu"};
+
+  for (auto _ : state)
+  {
+
+    state.PauseTiming();
+
+    // model
+    auto vm    = NewVM();
+    auto model = vmSequentialModel(vm);
+
+    // arguments list
+    auto layer_type       = vmString(vm, "activation");
+    auto input_layer_type = vmString(vm, "input");
+    auto activation       = activations_[config.activation_id];
+    auto activation_type  = vmString(vm, activation);
+    auto loss             = vmString(vm, "mse");
+    auto optimiser        = vmString(vm, "adam");
+
+    std::vector<SizeType> data_shape{config.input_size, config.batch_size};
+    auto                  data        = vmTensor(vm, data_shape);
+    auto                  input_shape = CreateArray(vm, data_shape);
+
+    state.counters["charge"] =
+        static_cast<double>(model->Estimator().LayerAddActivation(layer_type, activation_type));
+    state.counters["ForwardCost"]    = static_cast<double>(model->Estimator().GetForwardCost());
+    state.counters["OpsCount"]       = static_cast<double>(model->Estimator().GetOpsCount());
+    state.counters["PaddedSizesSum"] = static_cast<double>(model->Estimator().GetPaddedSizesSum());
+    state.counters["SizesSum"]       = static_cast<double>(model->Estimator().GetSizesSum());
+
+    model->LayerAddInput(input_layer_type, input_shape);
+    model->LayerAddActivation(layer_type, activation_type);
+    model->CompileSequential(loss, optimiser);
+
+    state.ResumeTiming();
+    auto res = model->Predict(data);
+  }
+}
+
+BENCHMARK(BM_Activation)->Args({1, 1, getId("relu")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({10, 1, getId("relu")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({100, 1, getId("relu")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({1000, 1, getId("relu")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({10, 10, getId("relu")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({100, 10, getId("relu")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({1, 1, getId("leaky_relu")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({10, 1, getId("leaky_relu")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({100, 1, getId("leaky_relu")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({1000, 1, getId("leaky_relu")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({10, 10, getId("leaky_relu")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({100, 10, getId("leaky_relu")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({1, 1, getId("log_sigmoid")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({10, 1, getId("log_sigmoid")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({100, 1, getId("log_sigmoid")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({1000, 1, getId("log_sigmoid")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({10, 10, getId("log_sigmoid")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({100, 10, getId("log_sigmoid")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({1, 1, getId("softmax")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({10, 1, getId("softmax")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({100, 1, getId("softmax")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({1000, 1, getId("softmax")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({10, 10, getId("softmax")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({100, 10, getId("softmax")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({1, 1, getId("gelu")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({10, 1, getId("gelu")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({100, 1, getId("gelu")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({1000, 1, getId("gelu")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({10, 10, getId("gelu")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({100, 10, getId("gelu")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({1, 1, getId("sigmoid")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({10, 1, getId("sigmoid")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({100, 1, getId("sigmoid")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({1000, 1, getId("sigmoid")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({10, 10, getId("sigmoid")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({100, 10, getId("sigmoid")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({1, 1, getId("log_softmax")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({10, 1, getId("log_softmax")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({100, 1, getId("log_softmax")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({1000, 1, getId("log_softmax")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({10, 10, getId("log_softmax")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({100, 10, getId("log_softmax")})->Unit(::benchmark::kMicrosecond);
+
+struct BM_AddActivation_config
+{
+  explicit BM_AddActivation_config(::benchmark::State const &state)
+  {
+    activation_id = static_cast<SizeType>(state.range(0));
+  }
+
+  SizeType activation_id;
+};
+
+void BM_AddActivation(::benchmark::State &state)
+{
+  // Get config
+  BM_AddActivation_config config{state};
+
+  std::vector<std::string> const activations_{"leaky_relu", "log_sigmoid", "log_softmax", "relu",
+                                              "sigmoid",    "softmax",     "gelu"};
+
+  for (auto _ : state)
+  {
+
+    state.PauseTiming();
+
+    // model
+    auto vm    = NewVM();
+    auto model = vmSequentialModel(vm);
+
+    // arguments list
+    auto layer_type      = vmString(vm, "activation");
+    auto activation      = activations_[config.activation_id];
+    auto activation_type = vmString(vm, activation);
+
+    state.counters["charge"] =
+        static_cast<double>(model->Estimator().LayerAddActivation(layer_type, activation_type));
+    state.counters["ForwardCost"]    = static_cast<double>(model->Estimator().GetForwardCost());
+    state.counters["OpsCount"]       = static_cast<double>(model->Estimator().GetOpsCount());
+    state.counters["PaddedSizesSum"] = static_cast<double>(model->Estimator().GetPaddedSizesSum());
+    state.counters["SizesSum"]       = static_cast<double>(model->Estimator().GetSizesSum());
+
+    state.ResumeTiming();
+    model->LayerAddActivation(layer_type, activation_type);
+  }
+}
+
+BENCHMARK(BM_AddActivation)->Args({getId("relu")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_AddActivation)->Args({getId("leaky_relu")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_AddActivation)->Args({getId("log_sigmoid")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_AddActivation)->Args({getId("log_softmax")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_AddActivation)->Args({getId("gelu")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_AddActivation)->Args({getId("softmax")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_AddActivation)->Args({getId("sigmoid")})->Unit(::benchmark::kMicrosecond);
+
 ///*
 struct BM_SerialiseToString_config
 {
