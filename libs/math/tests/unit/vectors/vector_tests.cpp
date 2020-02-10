@@ -204,10 +204,10 @@ TYPED_TEST(VectorRegisterTest, minmax_tests)
     // type's limits
     a[i] = fetch::math::Type<type>(
         std::to_string((static_cast<double>(std::rand()) / static_cast<double>(RAND_MAX)) *
-                       static_cast<double>(fetch::math::numeric_max<type>()) / 2.0));
+                       static_cast<double>(100)));
     b[i] = fetch::math::Type<type>(
         std::to_string((static_cast<double>(std::rand()) / static_cast<double>(RAND_MAX)) *
-                       static_cast<double>(fetch::math::numeric_max<type>()) / 2.0));
+                       static_cast<double>(100)));
     b[i]     = b[i] == 0 ? a[i] : b[i];
     sum[i]   = static_cast<type>(a[i] + b[i]);
     diff[i]  = static_cast<type>(a[i] - b[i]);
