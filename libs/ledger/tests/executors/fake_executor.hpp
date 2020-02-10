@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/digest.hpp"
+#include "core/macros.hpp"
 #include "ledger/executor_interface.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 #include "storage/resource_mapper.hpp"
