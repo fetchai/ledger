@@ -107,11 +107,20 @@ std::vector<math::SizeType> CrossEntropyLoss<TensorType>::ComputeOutputShape(
 }
 
 template <typename TensorType>
-OperationsCount CrossEntropyLoss<TensorType>::ChargeForward()
+OperationsCount CrossEntropyLoss<TensorType>::ChargeForward() const
 {
   assert(!this->batch_output_shape_.empty());
   OperationsCount cost = fetch::ml::charge_estimation::ops::CROSS_ENTROPY_PER_ELEMENT *
                          this->TotalElementsIn({this->batch_input_shapes_});
+  return cost;
+}
+
+template <typename TensorType>
+OperationsCount CrossEntropyLoss<TensorType>::ChargeBackward() const
+{
+  assert(!this->batch_input_shapes_.empty());
+  OperationsCount cost = fetch::ml::charge_estimation::ops::CROSS_ENTROPY_BACKWARD_PER_ELEMENT *
+                         this->TotalElementsIn({this->batch_input_shapes_.at(0)});
   return cost;
 }
 

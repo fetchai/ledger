@@ -157,7 +157,7 @@ public:
    * @return estimated charge amount, necessary for performing a forward pass on data of given
    * shapes.
    */
-  virtual OperationsCount ChargeForward()
+  virtual OperationsCount ChargeForward() const
   {
     // TODO(ML-483): make a pure virtual method after all Ops have their overrides;
     FETCH_LOG_ERROR(Descriptor(),

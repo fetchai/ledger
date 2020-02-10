@@ -69,7 +69,8 @@ public:
     return DESCRIPTOR;
   }
 
-  OperationsCount ChargeForward() override;
+  OperationsCount ChargeForward() const override;
+  OperationsCount ChargeBackward() const override;
 };
 
 }  // namespace ops

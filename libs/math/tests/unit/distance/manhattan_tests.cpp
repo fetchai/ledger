@@ -29,7 +29,7 @@ template <typename T>
 class ManhattanTest : public ::testing::Test
 {
 };
-TYPED_TEST_CASE(ManhattanTest, TensorFloatingTypes);
+TYPED_TEST_SUITE(ManhattanTest, TensorFloatingTypes, );
 
 TYPED_TEST(ManhattanTest, simple_test)
 {

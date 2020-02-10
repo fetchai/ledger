@@ -151,10 +151,15 @@ void FullyConnected<TensorType>::CompleteConstruction()
 }
 
 template <typename TensorType>
-OperationsCount FullyConnected<TensorType>::ChargeForward()
+OperationsCount FullyConnected<TensorType>::ChargeForward() const
 {
-  auto ptr = dynamic_cast<Graph<TensorType> *>(this);
-  return ptr->ChargeForward(this->output_node_name_);
+  return Graph<TensorType>::ChargeForward(this->output_node_name_);
+}
+
+template <typename TensorType>
+OperationsCount FullyConnected<TensorType>::ChargeBackward() const
+{
+  return Graph<TensorType>::ChargeBackward(this->output_node_name_);
 }
 
 template <typename TensorType>

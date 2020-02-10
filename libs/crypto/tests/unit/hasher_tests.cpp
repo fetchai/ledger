@@ -269,6 +269,6 @@ std::vector<HasherTestParam> params{
                     "9654b13e864968ab29cf2cf10654e826ed2a57d9")};
 // clang-format on
 
-INSTANTIATE_TEST_CASE_P(HasherTestsPrefix, HasherTests, ::testing::ValuesIn(params), );
+INSTANTIATE_TEST_SUITE_P(HasherTestsPrefix, HasherTests, ::testing::ValuesIn(params));
 
 }  // namespace
