@@ -21,6 +21,7 @@
 #include "vm/common.hpp"
 #include "vm/generator.hpp"
 #include "vm/object.hpp"
+#include "vm/opcode_charges.hpp"
 #include "vm/opcodes.hpp"
 #include "vm/string.hpp"
 #include "vm/user_defined_object.hpp"
@@ -1997,7 +1998,7 @@ IfIsExternal<T, bool> ParameterPack::AddSingle(T val)
   {
     throw std::runtime_error("Cannot copy construct C++-to-Etch objects without a VM instance.");
   }
-  using DecayedType = typename std::decay<T>::type;
+  using DecayedType = std::decay_t<T>;
 
   if (!vm_->HasCPPCopyConstructor<DecayedType>())
   {

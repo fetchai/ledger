@@ -23,6 +23,8 @@
 
 #include <vector>
 
+namespace {
+
 using namespace fetch::storage;
 
 class TestClass
@@ -163,3 +165,5 @@ TEST(versioned_random_access_stack_gtest, storage_of_large_objects)
   }
   EXPECT_TRUE(all_equal);
 }
+
+}  // namespace
