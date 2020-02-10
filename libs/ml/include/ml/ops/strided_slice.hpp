@@ -67,6 +67,7 @@ public:
   }
 
   OperationsCount ChargeForward() const override;
+  OperationsCount ChargeBackward() const override;
 
   static constexpr char const *DESCRIPTOR = "StridedSlice";
 };
