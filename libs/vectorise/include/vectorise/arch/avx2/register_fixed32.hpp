@@ -611,14 +611,15 @@ inline VectorRegister<fixed_point::fp32_t, 128> operator*(
   __m256i vb      = _mm256_cvtepi32_epi64(b.data());
   __m256i prod256 = _mm256_mul_epi32(va, vb);
 
+  // shift the products right by 16-bits, keep only the lower 32-bits
+  prod256 = _mm256_srli_epi64(prod256, 16);
+
   // compute mask of elements larger than FP_MAX and smaller than FP_MIN
   __m256i max      = _mm256_set1_epi64x(fixed_point::fp32_t::MAX);
   __m256i min      = _mm256_set1_epi64x(fixed_point::fp32_t::MIN);
   __m256i mask_max = _mm256_cmpgt_epi64(prod256, max);
   __m256i mask_min = _mm256_cmpgt_epi64(min, prod256);
 
-  // shift the products right by 16-bits, keep only the lower 32-bits
-  prod256 = _mm256_srli_epi64(prod256, 16);
   prod256 = _mm256_blendv_epi8(prod256, max, mask_max);
   prod256 = _mm256_blendv_epi8(prod256, min, mask_min);
 
