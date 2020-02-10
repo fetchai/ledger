@@ -527,7 +527,7 @@ TEST_F(VMModelEstimatorTests, estimator_fit_and_predict_test)
 
           predict_val = predict_val * static_cast<DataType>(fetch::vm::COMPUTE_CHARGE_COST);
 
-          EXPECT_TRUE(model_estimator.Predict(vm_ptr_tensor_data) ==
+          EXPECT_TRUE(model.EstimatePredict(vm_ptr_tensor_data) ==
                       static_cast<SizeType>(predict_val) + 1);
         }
       }
@@ -656,7 +656,7 @@ TEST_F(VMModelEstimatorTests, estimator_evaluate_with_metrics)
 
           // Calling Fit is needed to set the data
           model_estimator.Fit(vm_ptr_tensor_data, vm_ptr_tensor_labels, batch_size);
-          EXPECT_EQ(model_estimator.Evaluate(), static_cast<ChargeAmount>(val) + 1);
+          EXPECT_EQ(model.EstimateEvaluate(), static_cast<ChargeAmount>(val) + 1);
         }
       }
     }

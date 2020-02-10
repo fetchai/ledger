@@ -374,20 +374,6 @@ ChargeAmount ModelEstimator::Fit(Ptr<math::VMTensor> const &data, Ptr<math::VMTe
   return ToChargeAmount(estimate) * COMPUTE_CHARGE_COST;
 }
 
-ChargeAmount ModelEstimator::Evaluate()
-{
-  DataType estimate{"0"};
-
-  // Forward pass
-  estimate += state_.forward_pass_cost * state_.subset_size;
-  estimate += PREDICT_BATCH_LAYER_COEF * state_.subset_size * state_.ops_count;
-  estimate += PREDICT_CONST_COEF;
-
-  // Metrics
-  estimate += state_.metrics_cost;
-  return ToChargeAmount(estimate) * COMPUTE_CHARGE_COST;
-}
-
 ChargeAmount ModelEstimator::SerializeToString()
 {
   DataType estimate{"0"};

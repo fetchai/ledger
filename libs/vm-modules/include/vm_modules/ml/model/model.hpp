@@ -124,6 +124,8 @@ public:
 
   vm::Ptr<vm::Array<math::DataType>> Evaluate();
 
+  fetch::vm::ChargeAmount EstimateEvaluate();
+
   vm::Ptr<VMTensor> Predict(vm::Ptr<VMTensor> const &data);
 
   fetch::vm::ChargeAmount EstimatePredict(vm::Ptr<vm_modules::math::VMTensor> const &data);
