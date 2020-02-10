@@ -65,7 +65,7 @@ std::ostream &operator<<(std::ostream &s, MainChainRpcService::State state)
 namespace fetch {
 namespace byte_array {
 
-inline void PrintTo(ConstByteArray const &digest, std::ostream *s)
+void PrintTo(ConstByteArray const &digest, std::ostream *s)
 {
   *s << "" << std::string(digest.ToHex()).substr(0, 8);
 }

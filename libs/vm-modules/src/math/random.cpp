@@ -79,12 +79,21 @@ fetch::math::meta::IfIsNotFixedPoint128<T, T> Rand(VM *vm, T const &a = T{.0}, T
   return fetch::math::AsType<T>(std::uniform_real_distribution<double>{a_dbl, b_dbl}(mt));
 }
 
-// We cannot use default values for parameters a & b, as they would have to be of the form:
-// a = Ptr<T>(new vm::Fixed128(vm, fixed_point::fp128_t::_0))
-// however vm variable is not accessible in this context.
 template <typename T>
-IfIsPtrFixed128<T, Ptr<T>> Rand(VM *vm, Ptr<T> const &a, Ptr<T> const &b)
+IfIsPtrFixed128<T, Ptr<T>> Rand(VM *vm, Ptr<T> const &a_, Ptr<T> const &b_)
 {
+  Ptr<T> a{a_};
+  Ptr<T> b{b_};
+  if (a == nullptr)
+  {
+    a = vm->CreateNewObject<T>(fixed_point::fp128_t::_0);
+  }
+
+  if (b == nullptr)
+  {
+    b = vm->CreateNewObject<T>(fixed_point::fp128_t::_1);
+  }
+
   if (a->data_ >= b->data_)
   {
     vm->RuntimeError("Invalid argument: rand(a, b) must satisfy a < b");
@@ -101,6 +110,18 @@ IfIsPtrFixed128<T, Ptr<T>> Rand(VM *vm, Ptr<T> const &a, Ptr<T> const &b)
   return Ptr<Fixed128>(new Fixed128(vm, x));
 }
 
+template <typename T>
+IfIsPtrFixed128<T, Ptr<T>> RandOne(VM *vm, Ptr<T> const &a)
+{
+  return Rand<T>(vm, a, {});
+}
+
+template <typename T>
+IfIsPtrFixed128<T, Ptr<T>> RandZero(VM *vm)
+{
+  return Rand<T>(vm, {}, {});
+}
+
 }  // namespace
 
 void BindRand(Module &module, bool const enable_experimental)
@@ -115,7 +136,10 @@ void BindRand(Module &module, bool const enable_experimental)
     module.CreateFreeFunction("rand", &Rand<uint64_t>, ChargeAmount{1});
     module.CreateFreeFunction("rand", &Rand<fixed_point::fp32_t>, ChargeAmount{4});
     module.CreateFreeFunction("rand", &Rand<fixed_point::fp64_t>, ChargeAmount{6});
+
     module.CreateFreeFunction("rand", &Rand<vm::Fixed128>, ChargeAmount{12});
+    module.CreateFreeFunction("rand", &RandOne<vm::Fixed128>, ChargeAmount{12});
+    module.CreateFreeFunction("rand", &RandZero<vm::Fixed128>, ChargeAmount{12});
   }
 }
 
