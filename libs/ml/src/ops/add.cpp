@@ -98,7 +98,16 @@ const char *Add<TensorType>::Descriptor() const
 }
 
 template <typename TensorType>
-OperationsCount Add<TensorType>::ChargeForward()
+OperationsCount Add<TensorType>::ChargeForward() const
+{
+  assert(!this->batch_output_shape_.empty());
+  OperationsCount cost = fetch::ml::charge_estimation::ops::ADDITION_PER_ELEMENT *
+                         this->TotalElementsIn({this->batch_output_shape_});
+  return cost;
+}
+
+template <typename TensorType>
+OperationsCount Add<TensorType>::ChargeBackward() const
 {
   assert(!this->batch_output_shape_.empty());
   OperationsCount cost = fetch::ml::charge_estimation::ops::ADDITION_PER_ELEMENT *

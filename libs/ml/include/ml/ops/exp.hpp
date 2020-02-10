@@ -67,7 +67,8 @@ public:
   }
   static constexpr char const *DESCRIPTOR = "Exp";
 
-  OperationsCount ChargeForward() override;
+  OperationsCount ChargeForward() const override;
+  OperationsCount ChargeBackward() const override;
 };
 
 }  // namespace ops

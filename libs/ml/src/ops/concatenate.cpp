@@ -97,11 +97,21 @@ std::vector<math::SizeType> Concatenate<TensorType>::ComputeOutputShape(
 }
 
 template <typename TensorType>
-OperationsCount Concatenate<TensorType>::ChargeForward()
+OperationsCount Concatenate<TensorType>::ChargeForward() const
 {
   assert(!this->batch_input_shapes_.empty());
   OperationsCount cost =
       fetch::ml::charge_estimation::ops::CONCAT_PER_ELEMENT * this->batch_input_shapes_.size();
+
+  return cost;
+}
+
+template <typename TensorType>
+OperationsCount Concatenate<TensorType>::ChargeBackward() const
+{
+  assert(!this->batch_input_shapes_.empty());
+  OperationsCount cost =
+      fetch::ml::charge_estimation::ops::SPLIT_PER_ELEMENT * this->batch_input_shapes_.size();
 
   return cost;
 }

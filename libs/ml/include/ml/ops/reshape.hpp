@@ -70,7 +70,8 @@ public:
     return DESCRIPTOR;
   }
 
-  OperationsCount ChargeForward() override;
+  OperationsCount ChargeForward() const override;
+  OperationsCount ChargeBackward() const override;
 
 private:
   std::vector<SizeType> new_shape_;

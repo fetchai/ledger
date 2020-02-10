@@ -105,11 +105,22 @@ const char *Flatten<TensorType>::Descriptor() const
 }
 
 template <class TensorType>
-OperationsCount Flatten<TensorType>::ChargeForward()
+OperationsCount Flatten<TensorType>::ChargeForward() const
 {
   assert(!this->batch_input_shapes_.empty());
   OperationsCount cost = fetch::ml::charge_estimation::ops::FLATTEN_PER_ELEMENT *
                          this->TotalElementsIn(this->batch_input_shapes_);
+  return cost;
+}
+
+template <class TensorType>
+OperationsCount Flatten<TensorType>::ChargeBackward() const
+{
+  assert(!this->batch_input_shapes_.empty());
+  OperationsCount cost = fetch::ml::charge_estimation::ops::RESHAPE_PER_ELEMENT *
+                             this->TotalElementsIn(this->batch_input_shapes_) +
+                         fetch::ml::charge_estimation::ops::ASSIGN_PER_ELEMENT *
+                             this->TotalElementsIn(this->batch_input_shapes_);
   return cost;
 }
 

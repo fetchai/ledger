@@ -66,7 +66,8 @@ public:
   }
   static constexpr char const *DESCRIPTOR = "Log";
 
-  OperationsCount ChargeForward() override;
+  OperationsCount ChargeForward() const override;
+  OperationsCount ChargeBackward() const override;
 };
 
 }  // namespace ops

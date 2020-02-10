@@ -22,6 +22,7 @@ target_link_libraries(fetch-vm
                              fetch-variant
                              fetch-chain
                              fetch-logging)
+
 if (_is_clang_compiler)
   target_compile_options(fetch-vm PRIVATE -Wshadow)
 endif ()

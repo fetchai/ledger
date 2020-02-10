@@ -28,7 +28,7 @@ class ConstantTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(ConstantTest, fetch::math::test::TensorIntAndFloatingTypes);
+TYPED_TEST_SUITE(ConstantTest, fetch::math::test::TensorIntAndFloatingTypes, );
 
 TYPED_TEST(ConstantTest, set_data)
 {

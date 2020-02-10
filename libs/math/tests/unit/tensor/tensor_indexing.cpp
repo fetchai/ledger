@@ -29,7 +29,7 @@ class TensorIndexingTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(TensorIndexingTest, FloatIntAndUIntTypes);
+TYPED_TEST_SUITE(TensorIndexingTest, FloatIntAndUIntTypes, );
 
 TYPED_TEST(TensorIndexingTest, empty_tensor_test)
 {

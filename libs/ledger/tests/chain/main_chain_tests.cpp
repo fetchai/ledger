@@ -995,8 +995,8 @@ TEST_P(MainChainTests, AddingBlockWithDuplicateTxInSameBlockFails)
   ASSERT_EQ(chain_->GetHeaviestBlockHash(), genesis->hash);
 }
 
-INSTANTIATE_TEST_CASE_P(ParamBased, MainChainTests,
-                        ::testing::Values(MainChain::Mode::CREATE_PERSISTENT_DB,
-                                          MainChain::Mode::IN_MEMORY_DB), );
+INSTANTIATE_TEST_SUITE_P(ParamBased, MainChainTests,
+                         ::testing::Values(MainChain::Mode::CREATE_PERSISTENT_DB,
+                                           MainChain::Mode::IN_MEMORY_DB));
 
 }  // namespace
