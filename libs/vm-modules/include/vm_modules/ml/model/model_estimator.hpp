@@ -109,8 +109,6 @@ public:
 
   ChargeAmount Evaluate();
 
-  ChargeAmount Predict(vm::Ptr<vm_modules::math::VMTensor> const &data);
-
   ChargeAmount SerializeToString();
 
   ChargeAmount DeserializeFromString(fetch::vm::Ptr<fetch::vm::String> const &model_string);

@@ -153,7 +153,7 @@ public:
 
   ChargeAmount PredictCharge(VmModelPtr &model, VmTensorPtr const &data)
   {
-    return model->Estimator().Predict(data);
+    return model->EstimatePredict(data);
   }
 
   ChargeAmount SerializeToStringCharge(VmModelPtr &model)

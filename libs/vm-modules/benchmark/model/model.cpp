@@ -253,7 +253,7 @@ void BM_Predict(::benchmark::State &state)
     // predict
     std::vector<SizeType> data_shape{config.sizes[0], config.batch_size};
     auto                  data    = vmTensor(vm, data_shape);
-    state.counters["charge"]      = static_cast<double>(model->Estimator().Predict(data));
+    state.counters["charge"]      = static_cast<double>(model->EstimatePredict(data));
     state.counters["ForwardCost"] = static_cast<double>(model->Estimator().GetForwardCost());
     state.counters["OpsCount"]    = static_cast<double>(model->Estimator().GetOpsCount());
 

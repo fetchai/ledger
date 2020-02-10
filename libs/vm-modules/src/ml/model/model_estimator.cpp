@@ -388,18 +388,6 @@ ChargeAmount ModelEstimator::Evaluate()
   return ToChargeAmount(estimate) * COMPUTE_CHARGE_COST;
 }
 
-ChargeAmount ModelEstimator::Predict(Ptr<math::VMTensor> const &data)
-{
-  DataType estimate{"0"};
-  SizeType batch_size = data->GetTensor().shape().at(data->GetTensor().shape().size() - 1);
-
-  estimate += state_.forward_pass_cost * batch_size;
-  estimate += PREDICT_BATCH_LAYER_COEF * batch_size * state_.ops_count;
-  estimate += PREDICT_CONST_COEF;
-
-  return ToChargeAmount(estimate) * COMPUTE_CHARGE_COST;
-}
-
 ChargeAmount ModelEstimator::SerializeToString()
 {
   DataType estimate{"0"};
