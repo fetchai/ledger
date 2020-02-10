@@ -18,8 +18,9 @@
 
 #include "muddle_logging_name.hpp"
 #include "muddle_register.hpp"
-#include "network/management/abstract_connection.hpp"
 #include "router.hpp"
+
+#include "network/management/abstract_connection.hpp"
 #include "telemetry/counter.hpp"
 #include "telemetry/gauge.hpp"
 #include "telemetry/registry.hpp"

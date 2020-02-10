@@ -16,6 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include "muddle.hpp"
+#include "router.hpp"
+
 #include "core/byte_array/encoders.hpp"
 #include "core/random/lfg.hpp"
 #include "crypto/ecdsa.hpp"
@@ -24,9 +27,7 @@
 #include "kademlia/address_priority.hpp"
 #include "kademlia/peer_tracker.hpp"
 #include "kademlia/table.hpp"
-#include "muddle.hpp"
 #include "network/management/network_manager.hpp"
-#include "router.hpp"
 
 #include "gtest/gtest.h"
 

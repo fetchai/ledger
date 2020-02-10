@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "fetch_pybind.hpp"
+
 #include "json/exceptions.hpp"
 
 namespace fetch {

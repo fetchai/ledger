@@ -16,8 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/statistics/entropy.hpp"
 #include "test_types.hpp"
+
+#include "math/statistics/entropy.hpp"
 
 #include "gtest/gtest.h"
 

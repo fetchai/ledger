@@ -16,9 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include "test_types.hpp"
+
 #include "core/random/lcg.hpp"
 #include "math/distance/hamming.hpp"
-#include "test_types.hpp"
 
 #include "gtest/gtest.h"
 

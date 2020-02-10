@@ -17,14 +17,17 @@
 //
 //------------------------------------------------------------------------------
 
+#include "direct_message_service.hpp"
+#include "discovery_service.hpp"
+#include "peer_list.hpp"
+#include "router.hpp"
+
 #include "core/macros.hpp"
 #include "core/mutex.hpp"
 #include "core/periodic_functor.hpp"
 #include "core/reactor.hpp"
 #include "crypto/ecdsa.hpp"
 #include "crypto/prover.hpp"
-#include "direct_message_service.hpp"
-#include "discovery_service.hpp"
 #include "muddle/muddle_interface.hpp"
 #include "muddle/network_id.hpp"
 #include "muddle/rpc/server.hpp"
@@ -32,8 +35,6 @@
 #include "network/service/promise.hpp"
 #include "network/tcp/abstract_server.hpp"
 #include "network/uri.hpp"
-#include "peer_list.hpp"
-#include "router.hpp"
 
 #include <chrono>
 #include <memory>

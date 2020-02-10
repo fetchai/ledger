@@ -19,6 +19,7 @@
 
 #include "Leaf.hpp"
 #include "Node.hpp"
+
 #include "logging/logging.hpp"
 #include "oef-messages/dap_interface.hpp"
 

@@ -16,6 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include "tx_storage_client.hpp"
+
 #include "chain/transaction.hpp"
 #include "chain/transaction_rpc_serializers.hpp"
 #include "core/digest.hpp"
@@ -24,7 +26,6 @@
 #include "ledger/storage_unit/transaction_storage_protocol.hpp"
 #include "logging/logging.hpp"
 #include "storage/resource_mapper.hpp"
-#include "tx_storage_client.hpp"
 #include "vectorise/platform.hpp"
 
 using fetch::Digest;

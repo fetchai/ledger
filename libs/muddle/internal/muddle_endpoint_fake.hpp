@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "fake_network.hpp"
+
 #include "muddle/muddle_endpoint.hpp"
 
 namespace fetch {

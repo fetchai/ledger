@@ -16,8 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/normalize_array.hpp"
 #include "test_types.hpp"
+
+#include "math/normalize_array.hpp"
 
 #include "gtest/gtest.h"
 

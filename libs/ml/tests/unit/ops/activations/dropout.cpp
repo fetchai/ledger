@@ -16,12 +16,13 @@
 //
 //------------------------------------------------------------------------------
 
+#include "test_types.hpp"
+
 #include "core/serializers/main_serializer_definition.hpp"
 #include "math/base_types.hpp"
 #include "math/standard_functions/sqrt.hpp"
 #include "ml/ops/activations/dropout.hpp"
 #include "ml/serializers/ml_types.hpp"
-#include "test_types.hpp"
 
 #include "gtest/gtest.h"
 

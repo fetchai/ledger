@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "fake_io_observer.hpp"
+
 #include "vm/io_observer_interface.hpp"
 
 #include "gmock/gmock.h"

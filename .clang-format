@@ -30,14 +30,18 @@ ContinuationIndentWidth: 4
 DerivePointerAlignment: false
 IncludeBlocks: Regroup
 IncludeCategories:
-  - Regex: '^<.*\.h>$'
-    Priority: 3
-  - Regex: '^<.*>$'
-    Priority: 4
-  - Regex: '^"(gtest)|(gmock)|(benchmark)/.+"$'
-    Priority: 2
-  - Regex: '^.+$'
+  - Regex: '.*\.\..*'
     Priority: 1
+  - Regex: '^<.*\.h.*>$'
+    Priority: 5
+  - Regex: '^<.*>$'
+    Priority: 6
+  - Regex: '^"(gtest)|(gmock)|(benchmark)/.*"$'
+    Priority: 4
+  - Regex: '.*/.*'
+    Priority: 3
+  - Regex: '.*'
+    Priority: 2
 IncludeIsMainRegex: ''
 IndentCaseLabels: false
 IndentWidth: 2

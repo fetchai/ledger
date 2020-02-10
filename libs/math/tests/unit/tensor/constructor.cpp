@@ -16,8 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/tensor/tensor.hpp"
 #include "test_types.hpp"
+
+#include "math/tensor/tensor.hpp"
 
 #include "gtest/gtest.h"
 

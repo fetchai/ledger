@@ -17,10 +17,11 @@
 //
 //------------------------------------------------------------------------------
 
+#include "router.hpp"
+
 #include "core/serializers/main_serializer.hpp"
 #include "logging/logging.hpp"
 #include "network/tcp/abstract_server.hpp"
-#include "router.hpp"
 
 #include <memory>
 #include <type_traits>

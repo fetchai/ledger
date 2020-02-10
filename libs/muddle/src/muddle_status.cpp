@@ -16,13 +16,14 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/string/trim.hpp"
-#include "kademlia/peer_tracker.hpp"
 #include "muddle.hpp"
-#include "muddle/muddle_status.hpp"
 #include "muddle_register.hpp"
 #include "muddle_registry.hpp"
 #include "peer_list.hpp"
+
+#include "core/string/trim.hpp"
+#include "kademlia/peer_tracker.hpp"
+#include "muddle/muddle_status.hpp"
 #include "variant/variant.hpp"
 
 #include <chrono>

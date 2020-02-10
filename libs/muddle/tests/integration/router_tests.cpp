@@ -16,11 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
+#include "muddle.hpp"
+#include "router.hpp"
+
 #include "crypto/ecdsa.hpp"
 #include "crypto/prover.hpp"
-#include "muddle.hpp"
 #include "network/management/network_manager.hpp"
-#include "router.hpp"
 
 #include "gtest/gtest.h"
 

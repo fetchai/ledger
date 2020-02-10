@@ -16,13 +16,14 @@
 //
 //------------------------------------------------------------------------------
 
+#include "test_types.hpp"
+
 #include "ml/dataloaders/tensor_dataloader.hpp"
 #include "ml/layers/fully_connected.hpp"
 #include "ml/model/sequential.hpp"
 #include "ml/ops/activation.hpp"
 #include "ml/saveparams/saveable_params.hpp"
 #include "ml/serializers/ml_types.hpp"
-#include "test_types.hpp"
 
 #include "gtest/gtest.h"
 

@@ -16,9 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include "test_types.hpp"
+
 #include "core/serializers/main_serializer.hpp"
 #include "math/tensor/tensor.hpp"
-#include "test_types.hpp"
 
 #include "gtest/gtest.h"
 

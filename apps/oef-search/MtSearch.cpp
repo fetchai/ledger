@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "MtSearch.hpp"
+
 #include "oef-base/comms/Core.hpp"
 #include "oef-base/comms/Endpoint.hpp"
 #include "oef-base/comms/IOefListener.hpp"

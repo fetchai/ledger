@@ -25,10 +25,11 @@
 
 #include "benchmark/benchmark.h"
 
+#include <vm_modules/vm_factory.hpp>
+
 #include <algorithm>
 #include <cmath>
 #include <fstream>
-#include <vm_modules/vm_factory.hpp>
 
 using fetch::vm::VM;
 using fetch::vm_modules::VMFactory;

@@ -16,17 +16,18 @@
 //
 //------------------------------------------------------------------------------
 
+#include "muddle.hpp"
+#include "muddle_logging_name.hpp"
+#include "muddle_register.hpp"
+#include "muddle_registry.hpp"
+#include "muddle_server.hpp"
+
 #include "core/containers/set_intersection.hpp"
 #include "core/serializers/base_types.hpp"
 #include "core/serializers/main_serializer.hpp"
 #include "core/service_ids.hpp"
 #include "kademlia/peer_tracker.hpp"
 #include "logging/logging.hpp"
-#include "muddle.hpp"
-#include "muddle_logging_name.hpp"
-#include "muddle_register.hpp"
-#include "muddle_registry.hpp"
-#include "muddle_server.hpp"
 #include "network/tcp/tcp_client.hpp"
 #include "network/tcp/tcp_server.hpp"
 

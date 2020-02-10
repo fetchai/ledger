@@ -16,11 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
+#include "tx_storage_tool.hpp"
+#include "wait_for_connections.hpp"
+
 #include "chain/transaction.hpp"
 #include "chain/transaction_serializer.hpp"
 #include "core/filesystem/read_file_contents.hpp"
-#include "tx_storage_tool.hpp"
-#include "wait_for_connections.hpp"
 
 #include <chrono>
 

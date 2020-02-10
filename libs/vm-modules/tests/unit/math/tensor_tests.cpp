@@ -16,12 +16,13 @@
 //
 //------------------------------------------------------------------------------
 
+#include "vm_test_toolkit.hpp"
+
 #include "math/standard_functions/abs.hpp"
 #include "vm/array.hpp"
 #include "vm_modules/math/math.hpp"
 #include "vm_modules/math/tensor/tensor.hpp"
 #include "vm_modules/math/type.hpp"
-#include "vm_test_toolkit.hpp"
 
 #include "gmock/gmock.h"
 

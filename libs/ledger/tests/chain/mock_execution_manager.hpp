@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "fake_execution_manager.hpp"
+
 #include "ledger/execution_manager_interface.hpp"
 
 #include "gmock/gmock.h"

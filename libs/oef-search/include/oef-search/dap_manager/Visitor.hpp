@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "Branch.hpp"
+
 #include "logging/logging.hpp"
 #include "oef-base/threading/ExitState.hpp"
 #include "oef-base/threading/Task.hpp"

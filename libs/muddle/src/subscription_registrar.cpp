@@ -16,11 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
+#include "muddle_logging_name.hpp"
+#include "subscription_registrar.hpp"
+
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/mutex.hpp"
 #include "logging/logging.hpp"
-#include "muddle_logging_name.hpp"
-#include "subscription_registrar.hpp"
 
 #include <cstdint>
 #include <string>

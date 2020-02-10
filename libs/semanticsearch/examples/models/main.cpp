@@ -19,8 +19,9 @@
 #include "semanticsearch/query/query_compiler.hpp"
 #include "semanticsearch/query/query_executor.hpp"
 
-#include <chrono>
 #include <core/random/lfg.hpp>
+
+#include <chrono>
 #include <exception>
 #include <fstream>
 #include <iostream>
