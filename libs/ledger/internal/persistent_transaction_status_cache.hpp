@@ -54,8 +54,8 @@ private:
   using Mutex = fetch::Mutex;
   using Store = storage::ObjectStore<TxStatus>;
 
-  TxStatus LookupStatus(Digest digest) const;
-  void     UpdateStatus(Digest digest, TxStatus status);
+  TxStatus LookupStatus(Digest const &digest) const;
+  void     UpdateStatus(Digest const &digest, TxStatus const &status);
 
   mutable Mutex lock_;
   mutable Store store_;

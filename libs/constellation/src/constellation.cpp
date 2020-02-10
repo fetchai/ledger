@@ -366,10 +366,8 @@ TransactionStatusPtr CreateTransactionStatusCache(Config const &config)
   {
     return ledger::TransactionStatusInterface::CreatePersistentCache();
   }
-  else
-  {
-    return ledger::TransactionStatusInterface::CreateTimeBasedCache();
-  }
+
+  return ledger::TransactionStatusInterface::CreateTimeBasedCache();
 }
 
 /**

@@ -193,7 +193,7 @@ using TxStatus = PersistentTransactionStatusCache::TxStatus;
 
 storage::ResourceID CreateRID(Digest digest)
 {
-  return storage::ResourceID{digest};
+  return storage::ResourceID{std::move(digest)};
 }
 
 }  // namespace
@@ -290,7 +290,7 @@ void PersistentTransactionStatusCache::Update(Digest digest, ContractExecutionRe
  * @param digest The digest to lookup
  * @return The returned status, or default if it fails
  */
-TxStatus PersistentTransactionStatusCache::LookupStatus(Digest digest) const
+TxStatus PersistentTransactionStatusCache::LookupStatus(Digest const &digest) const
 {
   TxStatus status{};
 
@@ -313,7 +313,7 @@ TxStatus PersistentTransactionStatusCache::LookupStatus(Digest digest) const
  * @param digest The digest of the transaction
  * @param status The status information
  */
-void PersistentTransactionStatusCache::UpdateStatus(Digest digest, TxStatus status)
+void PersistentTransactionStatusCache::UpdateStatus(Digest const &digest, TxStatus const &status)
 {
   try
   {
