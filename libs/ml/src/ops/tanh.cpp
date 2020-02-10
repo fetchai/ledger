@@ -107,6 +107,15 @@ OperationsCount TanH<TensorType>::ChargeForward() const
   return cost;
 }
 
+template <typename TensorType>
+OperationsCount TanH<TensorType>::ChargeBackward() const
+{
+  assert(!this->batch_output_shape_.empty());
+  OperationsCount cost = fetch::ml::charge_estimation::ops::TANH_BACKWARD_PER_ELEMENT *
+                         this->TotalElementsIn({this->batch_output_shape_});
+  return cost;
+}
+
 ///////////////////////////////
 /// EXPLICIT INSTANTIATIONS ///
 ///////////////////////////////

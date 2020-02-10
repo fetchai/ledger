@@ -72,6 +72,7 @@ public:
   char const *Descriptor() const override;
 
   OperationsCount ChargeForward() const override;
+  OperationsCount ChargeBackward() const override;
 
 private:
   std::vector<SizeType> input_shape_;

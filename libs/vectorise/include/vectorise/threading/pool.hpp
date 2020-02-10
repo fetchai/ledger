@@ -71,9 +71,9 @@ public:
   }
 
   template <typename F, typename... Args>
-  std::future<typename std::result_of<F(Args...)>::type> Dispatch(F &&f, Args &&... args)
+  std::future<std::result_of_t<F(Args...)>> Dispatch(F &&f, Args &&... args)
   {
-    using ReturnType = typename std::result_of<F(Args...)>::type;
+    using ReturnType = std::result_of_t<F(Args...)>;
     using TaskType   = std::packaged_task<ReturnType()>;
 
     std::shared_ptr<TaskType> task =

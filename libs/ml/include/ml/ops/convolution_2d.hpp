@@ -80,6 +80,7 @@ public:
   }
 
   OperationsCount ChargeForward() const override;
+  OperationsCount ChargeBackward() const override;
 
 private:
   void FillVerticalStride(TensorType &input, TensorType &vertical_stride, SizeType output_channels,

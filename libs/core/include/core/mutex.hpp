@@ -168,8 +168,8 @@ private:
 
 using Mutex = DebugMutex;
 
-#define FETCH_LOCK(lockable)                                                       \
-  fetch::DebugLockGuard<typename std::decay<decltype(lockable)>::type> FETCH_JOIN( \
+#define FETCH_LOCK(lockable)                                          \
+  fetch::DebugLockGuard<std::decay_t<decltype(lockable)>> FETCH_JOIN( \
       mutex_locked_on_line, __LINE__)(lockable, __FILE__, __LINE__)
 
 #else  // !FETCH_DEBUG_MUTEX

@@ -37,6 +37,7 @@ static constexpr OperationsCount MULTIPLICATION_PER_ELEMENT      = 3;
 static constexpr OperationsCount DIVISION_PER_ELEMENT            = 1;
 static constexpr OperationsCount ABS_PER_ELEMENT                 = 1;
 static constexpr OperationsCount CONCAT_PER_ELEMENT              = 1;
+static constexpr OperationsCount SPLIT_PER_ELEMENT               = 1;
 static constexpr OperationsCount ASSIGN_PER_ELEMENT              = 1;
 static constexpr OperationsCount VIEW_PER_ELEMENT                = 1;
 static constexpr OperationsCount PLACEHOLDER_READING_PER_ELEMENT = 0;
@@ -49,6 +50,7 @@ static constexpr OperationsCount SLICE_PER_ELEMENT               = 1;
 static constexpr OperationsCount COPY_PER_ELEMENT                = 1;
 static constexpr OperationsCount TOPK_PER_ELEMENT                = 1;
 static constexpr OperationsCount TRANSPOSE_PER_ELEMENT           = 1;
+static constexpr OperationsCount BROADCAST_PER_ELEMENT           = 1;
 static constexpr OperationsCount SQUEEZE_PER_ELEMENT   = RESHAPE_PER_ELEMENT + COPY_PER_ELEMENT;
 static constexpr OperationsCount EMBEDDING_PER_ELEMENT = 2 * VIEW_PER_ELEMENT + ASSIGN_PER_ELEMENT;
 static constexpr OperationsCount CROSS_ENTROPY_PER_ELEMENT =
@@ -108,8 +110,19 @@ static constexpr OperationsCount LOG_SOFTMAX_BACKWARD_PER_ELEMENT =
 static constexpr OperationsCount LAYER_NORM_PER_ELEMENT =
     2 * MEAN_PER_ELEMENT + SUBTRACTION_PER_ELEMENT + POW_PER_ELEMENT + ADDITION_PER_ELEMENT +
     SQRT_PER_ELEMENT + 2 * DIVISION_PER_ELEMENT;
+static constexpr OperationsCount LAYER_NORM_BACKWARD_PER_ELEMENT =
+    2 * MULTIPLICATION_PER_ELEMENT + 2 * ADDITION_PER_ELEMENT + SUBTRACTION_PER_ELEMENT +
+    DIVISION_PER_ELEMENT;
 static constexpr OperationsCount MASK_FILL_PER_ELEMENT =
     2 * MULTIPLICATION_PER_ELEMENT + SUBTRACTION_PER_ELEMENT + ADDITION_PER_ELEMENT;
+static constexpr OperationsCount DIVISION_BACKWARD_PER_ELEMENT =
+    2 * DIVISION_PER_ELEMENT + 2 * MULTIPLICATION_PER_ELEMENT;
+static constexpr OperationsCount MULTIPLICATION_BACKWARD_PER_ELEMENT =
+    2 * MULTIPLICATION_PER_ELEMENT + ADDITION_PER_ELEMENT + RESHAPE_PER_ELEMENT;
+static constexpr OperationsCount SQRT_BACKWARD_PER_ELEMENT =
+    SQRT_PER_ELEMENT + DIVISION_PER_ELEMENT + MULTIPLICATION_PER_ELEMENT;
+static constexpr OperationsCount TANH_BACKWARD_PER_ELEMENT =
+    TANH_PER_ELEMENT + 2 * MULTIPLICATION_PER_ELEMENT + SUBTRACTION_PER_ELEMENT;
 
 }  // namespace ops
 }  // namespace charge_estimation
