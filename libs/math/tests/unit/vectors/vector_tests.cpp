@@ -245,7 +245,8 @@ TYPED_TEST(VectorRegisterTest, minmax_tests)
   {
     hsum = static_cast<type>(hsum + sum[i]);
   }
-  EXPECT_EQ(hsum, reduce1);
+  EXPECT_NEAR(static_cast<double>(hsum), static_cast<double>(reduce1),
+              static_cast<double>(function_tolerance<type>()));
 
   TypeParam vmax = Max(va, vb);
   type      max  = Max(vmax);
