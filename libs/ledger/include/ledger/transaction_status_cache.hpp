@@ -55,11 +55,13 @@ constexpr char const *ToString(TransactionStatus status)
   return "Unknown";
 }
 
+class TransactionStatusInterface;
+
+using TransactionStatusPtr = std::shared_ptr<TransactionStatusInterface>;
+
 class TransactionStatusInterface
 {
 public:
-  using TransactionStatusPtr = std::shared_ptr<TransactionStatusInterface>;
-
   struct TxStatus
   {
     TransactionStatus       status{TransactionStatus::UNKNOWN};

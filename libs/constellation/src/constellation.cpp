@@ -85,7 +85,7 @@ using Identity              = crypto::Identity;
 using LaneIndex             = uint32_t;
 using MainChain             = ledger::MainChain;
 using StakeManagerPtr       = std::shared_ptr<ledger::StakeManager>;
-using TransactionStatusPtr  = ledger::TransactionStatusInterface::TransactionStatusPtr;
+using TransactionStatusPtr  = ledger::TransactionStatusPtr;
 
 constexpr char const *LOGGING_NAME = "constellation";
 

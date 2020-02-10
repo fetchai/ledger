@@ -59,9 +59,9 @@ protected:
     executors_.clear();
 
     // create the manager
-    manager_ = std::make_shared<ExecutionManager>(config.executors, 0, mock_storage_,
-                                                  [this]() { return CreateExecutor(); },
-                                                  TransactionStatusCache::factory());
+    manager_ = std::make_shared<ExecutionManager>(
+        config.executors, 0, mock_storage_, [this]() { return CreateExecutor(); },
+        TransactionStatusInterface::CreateTimeBasedCache());
   }
 
   FakeExecutorPtr CreateExecutor()

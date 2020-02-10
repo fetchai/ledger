@@ -18,17 +18,13 @@
 
 #include "ledger/transaction_status_cache.hpp"
 
+#include "persistent_transaction_status_cache.hpp"
 #include "time_based_transaction_status_cache.hpp"
 
 #include <memory>
 
 namespace fetch {
 namespace ledger {
-namespace {
-
-using TransactionStatusPtr = TransactionStatusInterface::TransactionStatusPtr;
-
-}  // namespace
 
 TransactionStatusPtr TransactionStatusInterface::CreateTimeBasedCache()
 {
@@ -37,7 +33,8 @@ TransactionStatusPtr TransactionStatusInterface::CreateTimeBasedCache()
 
 TransactionStatusPtr TransactionStatusInterface::CreatePersistentCache()
 {
-  return {};
+  return std::make_shared<PersistentTransactionStatusCache>(
+      PersistentTransactionStatusCache::Mode::LOAD_EXISTING);
 }
 
 }  // namespace ledger

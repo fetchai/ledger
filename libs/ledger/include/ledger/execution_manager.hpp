@@ -52,10 +52,9 @@ class ExecutionManager : public ExecutionManagerInterface,
                          public std::enable_shared_from_this<ExecutionManager>
 {
 public:
-  using StorageUnitPtr       = std::shared_ptr<StorageUnitInterface>;
-  using ExecutorPtr          = std::shared_ptr<ExecutorInterface>;
-  using ExecutorFactory      = std::function<ExecutorPtr()>;
-  using TransactionStatusPtr = TransactionStatusInterface::TransactionStatusPtr;
+  using StorageUnitPtr  = std::shared_ptr<StorageUnitInterface>;
+  using ExecutorPtr     = std::shared_ptr<ExecutorInterface>;
+  using ExecutorFactory = std::function<ExecutorPtr()>;
 
   // Construction / Destruction
   ExecutionManager(std::size_t num_executors, uint32_t log2_num_lanes, StorageUnitPtr storage,
