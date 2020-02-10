@@ -89,10 +89,10 @@ bool StakeManager::Save(StorageInterface &storage)
 
   try
   {
-    serializers::LargeObjectSerializeHelper serializer{};
-    serializer << *this;
+    serialisers::LargeObjectSerialiseHelper serialiser{};
+    serialiser << *this;
 
-    storage.Set(STAKE_STORAGE_ADDRESS, serializer.data());
+    storage.Set(STAKE_STORAGE_ADDRESS, serialiser.data());
 
     success = true;
   }
@@ -114,8 +114,8 @@ bool StakeManager::Load(StorageInterface &storage)
 
     if (!result.document.empty())
     {
-      serializers::LargeObjectSerializeHelper serializer{result.document};
-      serializer >> *this;
+      serialisers::LargeObjectSerialiseHelper serialiser{result.document};
+      serialiser >> *this;
     }
 
     success = true;

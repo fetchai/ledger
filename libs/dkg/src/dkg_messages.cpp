@@ -32,7 +32,7 @@ constexpr char const *LOGGING_NAME = "DKGMessage";
  */
 std::shared_ptr<DKGMessage> DKGEnvelope::Message() const
 {
-  DKGSerializer serialiser{serialisedMessage_};
+  DKGSerialiser serialiser{serialisedMessage_};
   switch (type_)
   {
   case MessageType::CONNECTIONS:

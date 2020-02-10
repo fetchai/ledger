@@ -18,7 +18,7 @@
 
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/const_byte_array.hpp"
-#include "core/serializers/main_serializer.hpp"
+#include "core/serialisers/main_serialiser.hpp"
 #include "crypto/hash.hpp"
 #include "crypto/sha256.hpp"
 #include "ledger/dag/dag_epoch.hpp"
@@ -37,7 +37,7 @@ void DAGEpoch::Finalise()
 {
   // strictly speaking this is a bit of a weird hash because it will also contain all the weird
   // serialisation metadata
-  serializers::MsgPackSerializer buf;
+  serialisers::MsgPackSerialiser buf;
   buf << *this;
 
   this->hash.type = DAGHash::Type::EPOCH;

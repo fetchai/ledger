@@ -108,7 +108,7 @@ struct ServerWithFakeMailbox
   using SharedJsonClient    = std::shared_ptr<JsonClient>;
   using Variant             = fetch::variant::Variant;
   using ConstByteArray      = fetch::byte_array::ConstByteArray;
-  using MsgPackSerializer   = fetch::serializers::MsgPackSerializer;
+  using MsgPackSerialiser   = fetch::serialisers::MsgPackSerialiser;
 
   explicit ServerWithFakeMailbox(uint16_t port_offset)
     : certificate{CertificateGenerator::New()}
@@ -156,7 +156,7 @@ struct Server
   using SharedJsonClient    = std::shared_ptr<JsonClient>;
   using Variant             = fetch::variant::Variant;
   using ConstByteArray      = fetch::byte_array::ConstByteArray;
-  using MsgPackSerializer   = fetch::serializers::MsgPackSerializer;
+  using MsgPackSerialiser   = fetch::serialisers::MsgPackSerialiser;
 
   explicit Server(uint16_t port_offset)
     : certificate{CertificateGenerator::New()}
@@ -210,7 +210,7 @@ struct Messenger
   using SharedJsonClient    = std::shared_ptr<JsonClient>;
   using Variant             = fetch::variant::Variant;
   using ConstByteArray      = fetch::byte_array::ConstByteArray;
-  using MsgPackSerializer   = fetch::serializers::MsgPackSerializer;
+  using MsgPackSerialiser   = fetch::serialisers::MsgPackSerialiser;
 
   explicit Messenger(uint16_t port)
     : certificate{CertificateGenerator::New()}
@@ -261,7 +261,7 @@ struct HTTPMessenger
   using SharedJsonClient    = std::shared_ptr<JsonClient>;
   using Variant             = fetch::variant::Variant;
   using ConstByteArray      = fetch::byte_array::ConstByteArray;
-  using MsgPackSerializer   = fetch::serializers::MsgPackSerializer;
+  using MsgPackSerialiser   = fetch::serialisers::MsgPackSerialiser;
 
   explicit HTTPMessenger(uint16_t port)
     : certificate{CertificateGenerator::New()}
@@ -297,7 +297,7 @@ struct HTTPMessenger
 
   bool SendMessage(Message const &msg)
   {
-    MsgPackSerializer buffer;
+    MsgPackSerialiser buffer;
 
     buffer << msg;
 
@@ -325,7 +325,7 @@ struct HTTPMessenger
       return {};
     }
 
-    MsgPackSerializer buffer{
+    MsgPackSerialiser buffer{
         fetch::byte_array::FromBase64(result["messages"].As<ConstByteArray>())};
     MessageList ret;
     buffer >> ret;

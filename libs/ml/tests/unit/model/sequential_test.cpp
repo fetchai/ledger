@@ -23,7 +23,7 @@
 #include "ml/layers/fully_connected.hpp"
 #include "ml/ops/activation.hpp"
 #include "ml/saveparams/saveable_params.hpp"
-#include "ml/serializers/ml_types.hpp"
+#include "ml/serialisers/ml_types.hpp"
 #include "test_types.hpp"
 
 namespace fetch {
@@ -181,7 +181,7 @@ TYPED_TEST(SequentialModelTest, sgd_sequential_serialisation)
   TypeParam pred2({3, 1});
 
   // serialise the model
-  fetch::serializers::MsgPackSerializer b;
+  fetch::serialisers::MsgPackSerialiser b;
   b << model;
 
   // deserialise the model

@@ -100,13 +100,13 @@ private:
   void SendShares(MuddleAddress const &                        destination,
                   std::pair<MessageShare, MessageShare> const &shares)
   {
-    fetch::serializers::SizeCounter counter;
+    fetch::serialisers::SizeCounter counter;
     counter << shares;
 
-    fetch::serializers::MsgPackSerializer serializer;
-    serializer.Reserve(counter.size());
-    serializer << shares;
-    endpoint_.Send(destination, SERVICE_DKG, CHANNEL_SECRET_KEY, serializer.data());
+    fetch::serialisers::MsgPackSerialiser serialiser;
+    serialiser.Reserve(counter.size());
+    serialiser << shares;
+    endpoint_.Send(destination, SERVICE_DKG, CHANNEL_SECRET_KEY, serialiser.data());
   }
 
   void BroadcastShares() override

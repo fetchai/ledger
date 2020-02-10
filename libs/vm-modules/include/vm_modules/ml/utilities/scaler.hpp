@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/serializers/ml_types.hpp"
+#include "ml/serialisers/ml_types.hpp"
 #include "vm/object.hpp"
 #include "vm_modules/math/type.hpp"
 
@@ -68,9 +68,9 @@ public:
 
   static void Bind(fetch::vm::Module &module, bool enable_experimental);
 
-  bool SerializeTo(serializers::MsgPackSerializer &buffer) override;
+  bool SerialiseTo(serialisers::MsgPackSerialiser &buffer) override;
 
-  bool DeserializeFrom(serializers::MsgPackSerializer &buffer) override;
+  bool DeserialiseFrom(serialisers::MsgPackSerialiser &buffer) override;
 
   std::shared_ptr<ScalerType> scaler_;
 };
@@ -79,14 +79,14 @@ public:
 }  // namespace ml
 }  // namespace vm_modules
 
-namespace serializers {
+namespace serialisers {
 
 /**
- * serializer for VMScaler
+ * serialiser for VMScaler
  * @tparam TensorType
  */
 template <typename D>
-struct MapSerializer<fetch::vm_modules::ml::utilities::VMScaler, D>
+struct MapSerialiser<fetch::vm_modules::ml::utilities::VMScaler, D>
 {
   using Type       = fetch::vm_modules::ml::utilities::VMScaler;
   using DriverType = D;
@@ -94,15 +94,15 @@ struct MapSerializer<fetch::vm_modules::ml::utilities::VMScaler, D>
   static uint8_t const SCALER = 1;
 
   template <typename Constructor>
-  static void Serialize(Constructor &map_constructor, Type const &sp)
+  static void Serialise(Constructor &map_constructor, Type const &sp)
   {
     auto map = map_constructor(1);
     map.Append(SCALER, (*std::static_pointer_cast<fetch::ml::utilities::MinMaxScaler<
                             fetch::math::Tensor<fetch::vm_modules::math::DataType>>>(sp.scaler_)));
   }
 
-  template <typename MapDeserializer>
-  static void Deserialize(MapDeserializer &map, Type &sp)
+  template <typename MapDeserialiser>
+  static void Deserialise(MapDeserialiser &map, Type &sp)
   {
     auto scaler_ptr = std::make_shared<fetch::ml::utilities::MinMaxScaler<
         fetch::math::Tensor<fetch::vm_modules::math::DataType>>>();
@@ -111,5 +111,5 @@ struct MapSerializer<fetch::vm_modules::ml::utilities::VMScaler, D>
   }
 };
 
-}  // namespace serializers
+}  // namespace serialisers
 }  // namespace fetch

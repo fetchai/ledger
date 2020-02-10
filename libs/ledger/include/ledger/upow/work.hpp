@@ -74,16 +74,16 @@ private:
   BlockIndex       block_index_{0};
 
   template <typename T, typename S>
-  friend struct serializers::MapSerializer;
+  friend struct serialisers::MapSerialiser;
 };
 
 using WorkPtr = std::shared_ptr<Work>;
 
 }  // namespace ledger
 
-namespace serializers {
+namespace serialisers {
 template <typename D>
-struct MapSerializer<ledger::Work, D>
+struct MapSerialiser<ledger::Work, D>
 {
 public:
   using Type       = ledger::Work;
@@ -93,20 +93,20 @@ public:
   static uint8_t const SCORE = 2;
 
   template <typename Constructor>
-  static void Serialize(Constructor &map_constructor, Type const &work)
+  static void Serialise(Constructor &map_constructor, Type const &work)
   {
     auto map = map_constructor(2);
     map.Append(NONCE, work.nonce_);
     map.Append(SCORE, work.score_);
   }
 
-  template <typename MapDeserializer>
-  static void Deserialize(MapDeserializer &map, Type &work)
+  template <typename MapDeserialiser>
+  static void Deserialise(MapDeserialiser &map, Type &work)
   {
     map.ExpectKeyGetValue(NONCE, work.nonce_);
     map.ExpectKeyGetValue(SCORE, work.score_);
   }
 };
-}  // namespace serializers
+}  // namespace serialisers
 
 }  // namespace fetch

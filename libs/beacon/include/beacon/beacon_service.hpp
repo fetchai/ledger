@@ -117,7 +117,7 @@ public:
   using SubscriptionPtr         = muddle::MuddleEndpoint::SubscriptionPtr;
   using StateMachine            = core::StateMachine<State>;
   using StateMachinePtr         = std::shared_ptr<StateMachine>;
-  using Serializer              = serializers::MsgPackSerializer;
+  using Serialiser              = serialisers::MsgPackSerialiser;
   using SharedEventManager      = EventManager::SharedEventManager;
   using BlockEntropyPtr         = std::shared_ptr<beacon::BlockEntropy>;
   using DeadlineTimer           = fetch::moment::DeadlineTimer;
@@ -246,15 +246,15 @@ private:
   friend class BeaconServiceProtocol;
 
   template <typename T, typename D>
-  friend struct serializers::MapSerializer;
+  friend struct serialisers::MapSerialiser;
 };
 
 }  // namespace beacon
 
-namespace serializers {
+namespace serialisers {
 
 template <typename D>
-struct ArraySerializer<beacon::BeaconService::SignatureInformation, D>
+struct ArraySerialiser<beacon::BeaconService::SignatureInformation, D>
 {
 
 public:
@@ -262,20 +262,20 @@ public:
   using DriverType = D;
 
   template <typename Constructor>
-  static void Serialize(Constructor &array_constructor, Type const &b)
+  static void Serialise(Constructor &array_constructor, Type const &b)
   {
     auto array = array_constructor(2);
     array.Append(b.round);
     array.Append(b.threshold_signatures);
   }
 
-  template <typename ArrayDeserializer>
-  static void Deserialize(ArrayDeserializer &array, Type &b)
+  template <typename ArrayDeserialiser>
+  static void Deserialise(ArrayDeserialiser &array, Type &b)
   {
     array.GetNextValue(b.round);
     array.GetNextValue(b.threshold_signatures);
   }
 };
 
-}  // namespace serializers
+}  // namespace serialisers
 }  // namespace fetch

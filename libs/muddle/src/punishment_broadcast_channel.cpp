@@ -200,7 +200,7 @@ PunishmentBroadcastChannel::State PunishmentBroadcastChannel::OnResolvePromises(
 
       if (!promise->GetResult(recvd_question))
       {
-        FETCH_LOG_WARN(LOGGING_NAME, "Failed to deserialize response from: ", address.ToBase64());
+        FETCH_LOG_WARN(LOGGING_NAME, "Failed to deserialise response from: ", address.ToBase64());
       }
       else
       {

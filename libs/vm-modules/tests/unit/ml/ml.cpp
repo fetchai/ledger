@@ -372,7 +372,7 @@ TEST_F(MLTests, DISABLED_graph_string_serialisation_test)
       graph.setInput("Input", data_tensor);
       graph.setInput("Label", label_tensor);
 
-      var graph_string = graph.serializeToString();
+      var graph_string = graph.serialiseToString();
 
       var state = State<String>("graph_state");
       state.set(graph_string);
@@ -395,7 +395,7 @@ TEST_F(MLTests, DISABLED_graph_string_serialisation_test)
       var graph_string = state.get();
 
       var graph = Graph();
-      graph = graph.deserializeFromString(graph_string);
+      graph = graph.deserialiseFromString(graph_string);
 
       var tensor_shape = Array<UInt64>(2);
       tensor_shape[0] = 2u64;

@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/assert.hpp"
-#include "core/serializers/group_definitions.hpp"
+#include "core/serialisers/group_definitions.hpp"
 #include "crypto/fnv.hpp"
 #include "crypto/hash.hpp"
 #include "crypto/sha256.hpp"
@@ -61,7 +61,7 @@ private:
   byte_array::ConstByteArray id_;  ///< The byte array containing the hashed resource address
 
   template <typename T, typename D>
-  friend struct serializers::ForwardSerializer;
+  friend struct serialisers::ForwardSerialiser;
 };
 
 /**
@@ -99,29 +99,29 @@ private:
 
 }  // namespace storage
 
-namespace serializers {
+namespace serialisers {
 
 template <typename D>
-struct ForwardSerializer<storage::ResourceID, D>
+struct ForwardSerialiser<storage::ResourceID, D>
 {
 public:
   using Type       = storage::ResourceID;
   using DriverType = D;
 
-  template <typename Serializer>
-  static void Serialize(Serializer &s, Type const &b)
+  template <typename Serialiser>
+  static void Serialise(Serialiser &s, Type const &b)
   {
     s << b.id_;
   }
 
-  template <typename Serializer>
-  static void Deserialize(Serializer &s, Type &b)
+  template <typename Serialiser>
+  static void Deserialise(Serialiser &s, Type &b)
   {
     s >> b.id_;
   }
 };
 
-}  // namespace serializers
+}  // namespace serialisers
 }  // namespace fetch
 
 namespace std {

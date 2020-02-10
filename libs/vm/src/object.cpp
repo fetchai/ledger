@@ -427,15 +427,15 @@ ChargeAmount Object::InplaceRightDivideChargeEstimator(Ptr<Object> const & /* lh
   return OpcodeCharges::DEFAULT_OBJECT_CHARGE;
 }
 
-bool Object::SerializeTo(MsgPackSerializer & /*buffer*/)
+bool Object::SerialiseTo(MsgPackSerialiser & /*buffer*/)
 {
-  vm_->RuntimeError("Serializer for " + GetTypeName() + " is not defined.");
+  vm_->RuntimeError("Serialiser for " + GetTypeName() + " is not defined.");
   return false;
 }
 
-bool Object::DeserializeFrom(MsgPackSerializer & /*buffer*/)
+bool Object::DeserialiseFrom(MsgPackSerialiser & /*buffer*/)
 {
-  vm_->RuntimeError("Deserializer for " + GetTypeName() + " is not defined.");
+  vm_->RuntimeError("Deserialiser for " + GetTypeName() + " is not defined.");
   return false;
 }
 
@@ -446,14 +446,14 @@ std::string Object::GetTypeName() const
 
 bool Object::ToJSON(JSONVariant &variant)
 {
-  variant = "JSON serializer for " + GetTypeName() + " is not defined.";
-  vm_->RuntimeError("JSON serializer for " + GetTypeName() + " is not defined.");
+  variant = "JSON serialiser for " + GetTypeName() + " is not defined.";
+  vm_->RuntimeError("JSON serialiser for " + GetTypeName() + " is not defined.");
   return false;
 }
 
 bool Object::FromJSON(JSONVariant const & /*variant*/)
 {
-  vm_->RuntimeError("JSON deserializer for " + GetTypeName() + " is not defined.");
+  vm_->RuntimeError("JSON deserialiser for " + GetTypeName() + " is not defined.");
   return false;
 }
 

@@ -18,7 +18,7 @@
 
 #include "chain/transaction.hpp"
 #include "chain/transaction_builder.hpp"
-#include "chain/transaction_serializer.hpp"
+#include "chain/transaction_serialiser.hpp"
 #include "core/macros.hpp"
 #include "crypto/prover.hpp"
 #include "crypto/sha256.hpp"
@@ -62,7 +62,7 @@ TransactionBuilder::Sealer::Sealer(TransactionPtr tx)
   }
 
   // serialise the payload of the transaction which can be used for signing
-  serialized_payload_ = TransactionSerializer::SerializePayload(*partial_transaction_);
+  serialised_payload_ = TransactionSerialiser::SerialisePayload(*partial_transaction_);
 }
 
 /**
@@ -84,13 +84,13 @@ TransactionBuilder::Sealer &TransactionBuilder::Sealer::Sign(crypto::Prover cons
   // ensure that we have found the target signatory
   if (it != signatories.end())
   {
-    // sign the serialized payload
-    it->signature = prover.Sign(serialized_payload_);
+    // sign the serialised payload
+    it->signature = prover.Sign(serialised_payload_);
     if (!it->signature.empty())
     {
       FETCH_LOG_DEBUG(LOGGING_NAME, "Signed: 0x", it->signature.ToHex(),
                       " len: ", it->signature.size());
-      FETCH_LOG_DEBUG(LOGGING_NAME, "- Payload: 0x", serialized_payload_.ToHex());
+      FETCH_LOG_DEBUG(LOGGING_NAME, "- Payload: 0x", serialised_payload_.ToHex());
     }
     else
     {
@@ -111,7 +111,7 @@ TransactionBuilder::TransactionPtr TransactionBuilder::Sealer::Build()
   using Signatory = Transaction::Signatory;
 
   crypto::SHA256 hash_function{};
-  hash_function.Update(serialized_payload_);
+  hash_function.Update(serialised_payload_);
 
   auto const &signatories = partial_transaction_->signatories();
 

@@ -20,10 +20,10 @@
 #include "beacon/block_entropy.hpp"
 #include "chain/address.hpp"
 #include "chain/transaction_layout.hpp"
-#include "chain/transaction_layout_rpc_serializers.hpp"
+#include "chain/transaction_layout_rpc_serialisers.hpp"
 #include "core/byte_array/byte_array.hpp"
 #include "core/digest.hpp"
-#include "core/serializers/map_serializer_boilerplate.hpp"
+#include "core/serialisers/map_serialiser_boilerplate.hpp"
 #include "ledger/dag/dag_epoch.hpp"
 #include "moment/clocks.hpp"
 
@@ -75,7 +75,7 @@ public:
   // The qual miner must sign the block hash
   Digest miner_signature;
 
-  /// @name Metadata for block management (not hashed/serialized)
+  /// @name Metadata for block management (not hashed/serialised)
   /// @{
   Weight   total_weight = 1;
   bool     is_loose     = false;
@@ -100,25 +100,25 @@ using Blocks    = std::vector<BlockPtr>;
 
 }  // namespace ledger
 
-namespace serializers {
+namespace serialisers {
 
 template <typename D>
-struct MapSerializer<ledger::Block, D>
-  : MapSerializerBoilerplate<ledger::Block, D, EXPECTED_KEY_MEMBER(1, ledger::Block::weight),
-                             EXPECTED_KEY_MEMBER(2, ledger::Block::total_weight),
-                             EXPECTED_KEY_MEMBER(3, ledger::Block::miner_signature),
-                             EXPECTED_KEY_MEMBER(4, ledger::Block::hash),
-                             EXPECTED_KEY_MEMBER(5, ledger::Block::previous_hash),
-                             EXPECTED_KEY_MEMBER(6, ledger::Block::merkle_hash),
-                             EXPECTED_KEY_MEMBER(7, ledger::Block::block_number),
-                             EXPECTED_KEY_MEMBER(8, ledger::Block::miner_id),
-                             EXPECTED_KEY_MEMBER(9, ledger::Block::log2_num_lanes),
-                             EXPECTED_KEY_MEMBER(10, ledger::Block::slices),
-                             EXPECTED_KEY_MEMBER(11, ledger::Block::dag_epoch),
-                             EXPECTED_KEY_MEMBER(12, ledger::Block::timestamp),
-                             EXPECTED_KEY_MEMBER(13, ledger::Block::block_entropy)>
+struct MapSerialiser<ledger::Block, D>
+  : MapSerialiserBoilerplate<ledger::Block, D, serialiseD_STRUCT_FIELD(1, ledger::Block::weight),
+                             serialiseD_STRUCT_FIELD(2, ledger::Block::total_weight),
+                             serialiseD_STRUCT_FIELD(3, ledger::Block::miner_signature),
+                             serialiseD_STRUCT_FIELD(4, ledger::Block::hash),
+                             serialiseD_STRUCT_FIELD(5, ledger::Block::previous_hash),
+                             serialiseD_STRUCT_FIELD(6, ledger::Block::merkle_hash),
+                             serialiseD_STRUCT_FIELD(7, ledger::Block::block_number),
+                             serialiseD_STRUCT_FIELD(8, ledger::Block::miner_id),
+                             serialiseD_STRUCT_FIELD(9, ledger::Block::log2_num_lanes),
+                             serialiseD_STRUCT_FIELD(10, ledger::Block::slices),
+                             serialiseD_STRUCT_FIELD(11, ledger::Block::dag_epoch),
+                             serialiseD_STRUCT_FIELD(12, ledger::Block::timestamp),
+                             serialiseD_STRUCT_FIELD(13, ledger::Block::block_entropy)>
 {
 };
 
-}  // namespace serializers
+}  // namespace serialisers
 }  // namespace fetch

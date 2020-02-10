@@ -38,10 +38,10 @@ ConstByteArray EncodePayload(T const &msg)
   ConstByteArray payload{};
   try
   {
-    serializers::MsgPackSerializer serializer;
-    serializer << msg;
+    serialisers::MsgPackSerialiser serialiser;
+    serialiser << msg;
 
-    payload = serializer.data();
+    payload = serialiser.data();
   }
   catch (std::exception const &ex)
   {
@@ -58,8 +58,8 @@ bool ExtractPayload(ConstByteArray const &payload, T &msg)
 
   try
   {
-    serializers::MsgPackSerializer serializer{payload};
-    serializer >> msg;
+    serialisers::MsgPackSerialiser serialiser{payload};
+    serialiser >> msg;
 
     success = true;
   }

@@ -18,9 +18,9 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/const_byte_array.hpp"
-#include "core/serializers/group_definitions.hpp"
-#include "core/serializers/main_serializer.hpp"
-#include "core/serializers/map_serializer_boilerplate.hpp"
+#include "core/serialisers/group_definitions.hpp"
+#include "core/serialisers/main_serialiser.hpp"
+#include "core/serialisers/map_serialiser_boilerplate.hpp"
 
 #include <vector>
 
@@ -60,25 +60,33 @@ public:
 
   Digest &operator[](std::size_t n);
 
+  template <typename D>
+  struct MapSerialiser;
+
 private:
   Container      leaf_nodes_;
   mutable Digest root_;
 
   template <uint8_t KEY, class MemberVariable, MemberVariable MEMBER_VARIABLE>
-  friend struct ExpectedKeyMember;
+  friend struct SerialisedStructField;
+};
+
+template <typename D>
+struct MerkleTree::MapSerialiser
+  : serialisers::MapSerialiserBoilerplate<MerkleTree, D,
+                                          serialiseD_STRUCT_FIELD(1, MerkleTree::leaf_nodes_),
+                                          serialiseD_STRUCT_FIELD(2, MerkleTree::root_)>
+{
 };
 
 }  // namespace crypto
 
-namespace serializers {
+namespace serialisers {
 
 template <typename D>
-struct MapSerializer<crypto::MerkleTree, D>
-  : MapSerializerBoilerplate<crypto::MerkleTree, D,
-                             EXPECTED_KEY_MEMBER(1, crypto::MerkleTree::leaf_nodes_),
-                             EXPECTED_KEY_MEMBER(2, crypto::MerkleTree::root_)>
+struct MapSerialiser<crypto::MerkleTree, D> : crypto::MerkleTree::MapSerialiser<D>
 {
 };
 
-}  // namespace serializers
+}  // namespace serialisers
 }  // namespace fetch

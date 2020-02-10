@@ -205,13 +205,13 @@ private:
   internal::HashSourceFactory hash_source_factory_;
 
   template <typename, typename>
-  friend struct fetch::serializers::MapSerializer;
+  friend struct fetch::serialisers::MapSerialiser;
 };
 
-namespace serializers {
+namespace serialisers {
 
 template <typename D>
-struct MapSerializer<BasicBloomFilter, D>
+struct MapSerialiser<BasicBloomFilter, D>
 {
 public:
   using Type       = BasicBloomFilter;
@@ -220,18 +220,18 @@ public:
   static const uint8_t BITS = 1;
 
   template <typename T>
-  static void Serialize(T &map_constructor, Type const &filter)
+  static void Serialise(T &map_constructor, Type const &filter)
   {
     auto map = map_constructor(1);
     map.Append(BITS, filter.bits_);
   }
 
   template <typename T>
-  static void Deserialize(T &map, Type &filter)
+  static void Deserialise(T &map, Type &filter)
   {
     map.ExpectKeyGetValue(BITS, filter.bits_);
   }
 };
 
-}  // namespace serializers
+}  // namespace serialisers
 }  // namespace fetch

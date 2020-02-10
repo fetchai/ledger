@@ -58,13 +58,13 @@ private:
   std::unique_ptr<BasicBloomFilter> filter2_{std::make_unique<BasicBloomFilter>()};
 
   template <typename, typename>
-  friend struct fetch::serializers::MapSerializer;
+  friend struct fetch::serialisers::MapSerialiser;
 };
 
-namespace serializers {
+namespace serialisers {
 
 template <typename D>
-struct MapSerializer<ProgressiveBloomFilter, D>
+struct MapSerialiser<ProgressiveBloomFilter, D>
 {
 public:
   using Type       = ProgressiveBloomFilter;
@@ -76,7 +76,7 @@ public:
   static const uint8_t FILTER2   = 4;
 
   template <typename T>
-  static void Serialize(T &map_constructor, Type const &filter)
+  static void Serialise(T &map_constructor, Type const &filter)
   {
     auto map = map_constructor(4);
     map.Append(MIN_INDEX, filter.current_min_index_);
@@ -86,7 +86,7 @@ public:
   }
 
   template <typename T>
-  static void Deserialize(T &map, Type &filter)
+  static void Deserialise(T &map, Type &filter)
   {
     map.ExpectKeyGetValue(MIN_INDEX, filter.current_min_index_);
     map.ExpectKeyGetValue(OVERLAP, filter.overlap_);
@@ -95,5 +95,5 @@ public:
   }
 };
 
-}  // namespace serializers
+}  // namespace serialisers
 }  // namespace fetch

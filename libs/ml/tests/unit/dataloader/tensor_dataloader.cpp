@@ -18,7 +18,7 @@
 
 #include "ml/dataloaders/tensor_dataloader.hpp"
 
-#include "core/serializers/main_serializer.hpp"
+#include "core/serialisers/main_serialiser.hpp"
 #include "math/base_types.hpp"
 #include "test_types.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
@@ -36,7 +36,7 @@ class TensorDataloaderTest : public ::testing::Test
 
 TYPED_TEST_SUITE(TensorDataloaderTest, math::test::TensorFloatingTypes, );
 
-TYPED_TEST(TensorDataloaderTest, serialize_tensor_dataloader)
+TYPED_TEST(TensorDataloaderTest, serialise_tensor_dataloader)
 {
   TypeParam label_tensor = TypeParam::UniformRandomIntegers(4, 0, 100);
   TypeParam data1_tensor = TypeParam::UniformRandomIntegers(24, 0, 100);
@@ -54,7 +54,7 @@ TYPED_TEST(TensorDataloaderTest, serialize_tensor_dataloader)
   // calling GetNext ensures that internal parameters are not default
   auto next0 = tdl.GetNext();
 
-  fetch::serializers::MsgPackSerializer b;
+  fetch::serialisers::MsgPackSerialiser b;
   b << tdl;
 
   b.seek(0);

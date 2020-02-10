@@ -17,10 +17,10 @@
 //------------------------------------------------------------------------------
 
 #include "chain/transaction_builder.hpp"
-#include "chain/transaction_serializer.hpp"
+#include "chain/transaction_serialiser.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/digest.hpp"
-#include "core/serializers/main_serializer.hpp"
+#include "core/serialisers/main_serialiser.hpp"
 #include "crypto/ecdsa.hpp"
 #include "vectorise/threading/pool.hpp"
 
@@ -33,10 +33,10 @@
 using fetch::byte_array::ConstByteArray;
 using fetch::crypto::ECDSASigner;
 using fetch::chain::TransactionBuilder;
-using fetch::chain::TransactionSerializer;
+using fetch::chain::TransactionSerialiser;
 using fetch::chain::Address;
 using fetch::threading::Pool;
-using fetch::serializers::LargeObjectSerializeHelper;
+using fetch::serialisers::LargeObjectSerialiseHelper;
 
 using SignerPtr  = std::unique_ptr<ECDSASigner>;
 using AddressPtr = std::unique_ptr<Address>;
@@ -157,11 +157,11 @@ static std::vector<ConstByteArray> GenerateTransactionsInParallel(
                             .Build();
 
         // serialise the transaction
-        TransactionSerializer serializer{};
-        serializer << *tx;
+        TransactionSerialiser serialiser{};
+        serialiser << *tx;
 
         // store the transaction into the array
-        encoded_tx.at(i) = serializer.data();
+        encoded_tx.at(i) = serialiser.data();
       }
     });
   }
@@ -214,10 +214,10 @@ static std::vector<ConstByteArray> GenerateTransactions(std::size_t             
                         .Build();
 
     // serialise the transaction
-    TransactionSerializer serializer{};
-    serializer << *tx;
+    TransactionSerialiser serialiser{};
+    serialiser << *tx;
 
-    encoded_tx.emplace_back(serializer.data());
+    encoded_tx.emplace_back(serialiser.data());
   }
 
   std::cout << "Generating transactions...complete" << std::endl;
@@ -246,13 +246,13 @@ int main(int argc, char **argv)
   std::cout << "Reference Address: " << addresses.at(0)->display() << std::endl;
 
   std::cout << "Generating bitstream..." << std::endl;
-  LargeObjectSerializeHelper helper{};
+  LargeObjectSerialiseHelper helper{};
   helper << encoded_tx;
   std::cout << "Generating bitstream...complete" << std::endl;
 
   // verify
   std::vector<ConstByteArray> verified{};
-  LargeObjectSerializeHelper  helper2{helper.data()};
+  LargeObjectSerialiseHelper  helper2{helper.data()};
   helper2 >> verified;
 
   std::cout << "Count: " << verified.size() << std::endl;

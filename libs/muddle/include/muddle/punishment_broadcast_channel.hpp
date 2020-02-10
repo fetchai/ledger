@@ -169,10 +169,10 @@ private:
 };
 }  // namespace muddle
 
-namespace serializers {
+namespace serialisers {
 
 template <typename D>
-struct MapSerializer<muddle::QuestionStruct, D>
+struct MapSerialiser<muddle::QuestionStruct, D>
 {
 public:
   using Type       = muddle::QuestionStruct;
@@ -183,7 +183,7 @@ public:
   static uint8_t const CABINET  = 3;
 
   template <typename Constructor>
-  static void Serialize(Constructor &map_constructor, Type const &table)
+  static void Serialise(Constructor &map_constructor, Type const &table)
   {
     auto map = map_constructor(3);
     map.Append(TABLE, table.table_);
@@ -191,8 +191,8 @@ public:
     map.Append(CABINET, table.cabinet_);
   }
 
-  template <typename MapDeserializer>
-  static void Deserialize(MapDeserializer &map, Type &table)
+  template <typename MapDeserialiser>
+  static void Deserialise(MapDeserialiser &map, Type &table)
   {
     map.ExpectKeyGetValue(TABLE, table.table_);
     map.ExpectKeyGetValue(QUESTION, table.question_);
@@ -201,7 +201,7 @@ public:
 };
 
 template <typename D>
-struct MapSerializer<muddle::QuestionStruct::AnswerAndSeen, D>
+struct MapSerialiser<muddle::QuestionStruct::AnswerAndSeen, D>
 {
 public:
   using Type       = muddle::QuestionStruct::AnswerAndSeen;
@@ -212,7 +212,7 @@ public:
   static uint8_t const SEEN      = 3;
 
   template <typename Constructor>
-  static void Serialize(Constructor &map_constructor, Type const &tuple)
+  static void Serialise(Constructor &map_constructor, Type const &tuple)
   {
     auto map = map_constructor(3);
     map.Append(ANSWER, std::get<0>(tuple));
@@ -220,8 +220,8 @@ public:
     map.Append(SEEN, std::get<2>(tuple));
   }
 
-  template <typename MapDeserializer>
-  static void Deserialize(MapDeserializer &map, Type &tuple)
+  template <typename MapDeserialiser>
+  static void Deserialise(MapDeserialiser &map, Type &tuple)
   {
     map.ExpectKeyGetValue(ANSWER, std::get<0>(tuple));
     map.ExpectKeyGetValue(SIGNATURE, std::get<1>(tuple));
@@ -229,6 +229,6 @@ public:
   }
 };
 
-}  // namespace serializers
+}  // namespace serialisers
 
 }  // namespace fetch

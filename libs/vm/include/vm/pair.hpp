@@ -81,7 +81,7 @@ struct Pair : public IPair
     pair.second = second;
   }
 
-  bool SerializeTo(MsgPackSerializer &buffer) override
+  bool SerialiseTo(MsgPackSerialiser &buffer) override
   {
     auto constructor = buffer.NewPairConstructor();
 
@@ -112,12 +112,12 @@ struct Pair : public IPair
 
     auto const &v = pair;
 
-    auto f1 = [&v, this](MsgPackSerializer &serializer) {
-      return SerializeElement<FirstType>(serializer, v.first);
+    auto f1 = [&v, this](MsgPackSerialiser &serialiser) {
+      return SerialiseElement<FirstType>(serialiser, v.first);
     };
 
-    auto f2 = [&v, this](MsgPackSerializer &serializer) {
-      return SerializeElement<SecondType>(serializer, v.second);
+    auto f2 = [&v, this](MsgPackSerialiser &serialiser) {
+      return SerialiseElement<SecondType>(serialiser, v.second);
     };
 
     // Append first if first or both are available
@@ -141,22 +141,22 @@ struct Pair : public IPair
     return true;
   }
 
-  bool DeserializeFrom(MsgPackSerializer &buffer) override
+  bool DeserialiseFrom(MsgPackSerialiser &buffer) override
   {
     TypeInfo const &type_info      = vm_->GetTypeInfo(GetTypeId());
     TypeId const    first_type_id  = type_info.template_parameter_type_ids[0];
     TypeId const    second_type_id = type_info.template_parameter_type_ids[1];
 
-    auto               pair_ser = buffer.NewPairDeserializer();
+    auto               pair_ser = buffer.NewPairDeserialiser();
     TemplateParameter1 first;
     TemplateParameter2 second;
 
-    auto f1 = [first_type_id, &first, this](MsgPackSerializer &serializer) {
-      return DeserializeElement<FirstType>(first_type_id, serializer, first);
+    auto f1 = [first_type_id, &first, this](MsgPackSerialiser &serialiser) {
+      return DeserialiseElement<FirstType>(first_type_id, serialiser, first);
     };
 
-    auto f2 = [second_type_id, &second, this](MsgPackSerializer &serializer) {
-      return DeserializeElement<SecondType>(second_type_id, serializer, second);
+    auto f2 = [second_type_id, &second, this](MsgPackSerialiser &serialiser) {
+      return DeserialiseElement<SecondType>(second_type_id, serialiser, second);
     };
 
     if (pair_ser.size() > 3)
@@ -189,7 +189,7 @@ struct Pair : public IPair
 
 private:
   template <typename U, typename TemplateParameterType>
-  IfIsPtr<U, bool> SerializeElement(MsgPackSerializer &buffer, TemplateParameterType const &v)
+  IfIsPtr<U, bool> SerialiseElement(MsgPackSerialiser &buffer, TemplateParameterType const &v)
   {
     if (v.object == nullptr)
     {
@@ -197,33 +197,33 @@ private:
       return false;
     }
 
-    return v.object->SerializeTo(buffer);
+    return v.object->SerialiseTo(buffer);
   }
 
   template <typename U, typename TemplateParameterType>
-  IfIsPrimitive<U, bool> SerializeElement(MsgPackSerializer &buffer, TemplateParameterType const &v)
+  IfIsPrimitive<U, bool> SerialiseElement(MsgPackSerialiser &buffer, TemplateParameterType const &v)
   {
     buffer << v.template Get<U>();
     return true;
   }
 
   template <typename U, typename TemplateParameterType>
-  IfIsPtr<U, bool> DeserializeElement(TypeId type_id, MsgPackSerializer &buffer,
+  IfIsPtr<U, bool> DeserialiseElement(TypeId type_id, MsgPackSerialiser &buffer,
                                       TemplateParameterType &v)
   {
-    if (!vm_->IsDefaultSerializeConstructable(type_id))
+    if (!vm_->IsDefaultSerialiseConstructable(type_id))
     {
-      vm_->RuntimeError("Cannot deserialize type " + vm_->GetTypeName(type_id) +
+      vm_->RuntimeError("Cannot deserialise type " + vm_->GetTypeName(type_id) +
                         " as no serialisation constructor exists.");
       return false;
     }
 
-    v.Construct(vm_->DefaultSerializeConstruct(type_id), type_id);
-    return v.object->DeserializeFrom(buffer);
+    v.Construct(vm_->DefaultSerialiseConstruct(type_id), type_id);
+    return v.object->DeserialiseFrom(buffer);
   }
 
   template <typename U, typename TemplateParameterType>
-  IfIsPrimitive<U, bool> DeserializeElement(TypeId type_id, MsgPackSerializer &buffer,
+  IfIsPrimitive<U, bool> DeserialiseElement(TypeId type_id, MsgPackSerialiser &buffer,
                                             TemplateParameterType &v)
   {
     U data;

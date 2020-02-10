@@ -18,7 +18,7 @@
 
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/encoders.hpp"
-#include "core/serializers/main_serializer.hpp"
+#include "core/serialisers/main_serialiser.hpp"
 #include "crypto/hash.hpp"
 #include "crypto/merkle_tree.hpp"
 #include "crypto/sha256.hpp"
@@ -139,12 +139,12 @@ TEST(crypto_merkle_tree, complete_tree_and_deterministic)
   EXPECT_EQ(tree.root(), tree2.root());
 }
 
-TEST(crypto_merkle_tree, serializes_deserializes)
+TEST(crypto_merkle_tree, serialises_deserialises)
 {
   constexpr uint64_t S = 256;
   MerkleTree         tree{S};   // Reference
-  MerkleTree         tree2{S};  // Calculate root then serialize
-  MerkleTree         tree3{S};  // Don't calculate root until after serialize
+  MerkleTree         tree2{S};  // Calculate root then serialise
+  MerkleTree         tree3{S};  // Don't calculate root until after serialise
   MerkleTree         tree2_deser{S};
   MerkleTree         tree3_deser{S};
 
@@ -159,14 +159,14 @@ TEST(crypto_merkle_tree, serializes_deserializes)
   tree2.CalculateRoot();
 
   {
-    fetch::serializers::MsgPackSerializer arr;
+    fetch::serialisers::MsgPackSerialiser arr;
     arr << tree2;
     arr.seek(0);
     arr >> tree2_deser;
   }
 
   {
-    fetch::serializers::MsgPackSerializer arr;
+    fetch::serialisers::MsgPackSerialiser arr;
     arr << tree3;
     arr.seek(0);
     arr >> tree3_deser;

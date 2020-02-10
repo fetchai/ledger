@@ -30,8 +30,8 @@ public:
   UserDefinedObject()           = delete;
   ~UserDefinedObject() override = default;
   UserDefinedObject(VM *vm, TypeId type_id);
-  bool SerializeTo(MsgPackSerializer &buffer) override;
-  bool DeserializeFrom(MsgPackSerializer &buffer) override;
+  bool SerialiseTo(MsgPackSerialiser &buffer) override;
+  bool DeserialiseFrom(MsgPackSerialiser &buffer) override;
 
 private:
   Variant &GetVariable(uint16_t index);

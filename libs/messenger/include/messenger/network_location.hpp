@@ -18,9 +18,9 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/byte_array.hpp"
-#include "core/serializers/base_types.hpp"
-#include "core/serializers/group_definitions.hpp"
-#include "core/serializers/main_serializer.hpp"
+#include "core/serialisers/base_types.hpp"
+#include "core/serialisers/group_definitions.hpp"
+#include "core/serialisers/main_serialiser.hpp"
 #include "muddle/address.hpp"
 
 namespace fetch {
@@ -46,10 +46,10 @@ struct NetworkLocation
 
 }  // namespace messenger
 
-namespace serializers {
+namespace serialisers {
 
 template <typename D>
-struct MapSerializer<messenger::NetworkLocation, D>
+struct MapSerialiser<messenger::NetworkLocation, D>
 {
 public:
   using Type       = messenger::NetworkLocation;
@@ -59,20 +59,20 @@ public:
   static uint8_t const MESSENGER = 2;
 
   template <typename Constructor>
-  static void Serialize(Constructor &map_constructor, Type const &location)
+  static void Serialise(Constructor &map_constructor, Type const &location)
   {
     auto map = map_constructor(2);
     map.Append(NODE, location.node);
     map.Append(MESSENGER, location.messenger);
   }
 
-  template <typename MapDeserializer>
-  static void Deserialize(MapDeserializer &map, Type &location)
+  template <typename MapDeserialiser>
+  static void Deserialise(MapDeserialiser &map, Type &location)
   {
     map.ExpectKeyGetValue(NODE, location.node);
     map.ExpectKeyGetValue(MESSENGER, location.messenger);
   }
 };
 
-}  // namespace serializers
+}  // namespace serialisers
 }  // namespace fetch

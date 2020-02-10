@@ -19,7 +19,7 @@
 
 #include "core/byte_array/byte_array.hpp"
 #include "core/mutex.hpp"
-#include "core/serializers/exception.hpp"
+#include "core/serialisers/exception.hpp"
 #include "logging/logging.hpp"
 #include "network/service/types.hpp"
 
@@ -37,7 +37,7 @@
 
 namespace fetch {
 
-namespace serializers {
+namespace serialisers {
 class SerializableException;
 }
 
@@ -56,7 +56,7 @@ class PromiseImplementation
 public:
   using Counter        = uint64_t;
   using ConstByteArray = byte_array::ConstByteArray;
-  using ExceptionPtr   = std::unique_ptr<serializers::SerializableException>;
+  using ExceptionPtr   = std::unique_ptr<serialisers::SerializableException>;
   using Callback       = std::function<void()>;
   using Clock          = std::chrono::steady_clock;
   using Timepoint      = Clock::time_point;
@@ -106,7 +106,7 @@ public:
   /// @name Promise Results
   /// @{
   void Fulfill(ConstByteArray const &value);
-  void Fail(serializers::SerializableException const &exception);
+  void Fail(serialisers::SerializableException const &exception);
   void Timeout();
   void Fail();
   /// @}
@@ -220,7 +220,7 @@ bool details::PromiseImplementation::GetResult(T &ret, uint64_t extend_wait_by) 
   {
     if (Wait(true, extend_wait_by))
     {
-      SerializerType ser(value_);
+      SerialiserType ser(value_);
       ser >> ret;
 
       success = true;

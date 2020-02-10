@@ -18,7 +18,7 @@
 
 #include "chain/json_transaction.hpp"
 #include "chain/transaction.hpp"
-#include "chain/transaction_serializer.hpp"
+#include "chain/transaction_serialiser.hpp"
 #include "core/byte_array/decoders.hpp"
 #include "logging/logging.hpp"
 #include "variant/variant.hpp"
@@ -69,9 +69,9 @@ bool FromJsonTransaction(Variant const &src, Transaction &dst)
   // convert the data field to binary
   data = FromBase64(data);
 
-  // create the serializer and try and deserialize the transaction
-  TransactionSerializer serializer{data};
-  if (!serializer.Deserialize(dst))
+  // create the serialiser and try and deserialise the transaction
+  TransactionSerialiser serialiser{data};
+  if (!serialiser.Deserialise(dst))
   {
     FETCH_LOG_INFO(LOGGING_NAME, "No data field present in payload");
     return false;
@@ -90,15 +90,15 @@ bool ToJsonTransaction(Transaction const &src, Variant &dst, bool include_metada
 {
   bool success{false};
 
-  TransactionSerializer serializer{};
-  if (serializer.Serialize(src))
+  TransactionSerialiser serialiser{};
+  if (serialiser.Serialise(src))
   {
     // create the destination object
     dst = Variant::Object();
 
     // populate the mandatory field
     dst["ver"]  = JSON_FORMAT_VERSION;
-    dst["data"] = serializer.data().ToBase64();
+    dst["data"] = serialiser.data().ToBase64();
 
     if (include_metadata)
     {

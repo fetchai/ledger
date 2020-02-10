@@ -16,10 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/serializers/main_serializer_definition.hpp"
+#include "core/serialisers/main_serialiser_definition.hpp"
 #include "gtest/gtest.h"
 #include "ml/ops/loss_functions/softmax_cross_entropy_loss.hpp"
-#include "ml/serializers/ml_types.hpp"
+#include "ml/serialisers/ml_types.hpp"
 #include "test_types.hpp"
 #include <memory>
 
@@ -243,14 +243,14 @@ TYPED_TEST(SoftmaxCrossEntropyTest, saveparams_test)
   // downcast to correct type
   auto dsp = std::static_pointer_cast<SPType>(sp);
 
-  // serialize
-  fetch::serializers::MsgPackSerializer b;
+  // serialise
+  fetch::serialisers::MsgPackSerialiser b;
   b << *dsp;
 
   // make another prediction with the original graph
   op.Forward({std::make_shared<TypeParam>(data1), std::make_shared<TypeParam>(data2)}, result);
 
-  // deserialize
+  // deserialise
   b.seek(0);
   auto dsp2 = std::make_shared<SPType>();
   b >> *dsp2;
@@ -333,15 +333,15 @@ TYPED_TEST(SoftmaxCrossEntropyTest, saveparams_backward_test)
   // downcast to correct type
   auto dsp = std::dynamic_pointer_cast<SPType>(sp);
 
-  // serialize
-  fetch::serializers::MsgPackSerializer b;
+  // serialise
+  fetch::serialisers::MsgPackSerialiser b;
   b << *dsp;
 
   // make another prediction with the original op
   gradients = op.Backward({std::make_shared<TypeParam>(data1), std::make_shared<TypeParam>(data2)},
                           error_signal);
 
-  // deserialize
+  // deserialise
   b.seek(0);
   auto dsp2 = std::make_shared<SPType>();
   b >> *dsp2;

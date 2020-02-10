@@ -48,9 +48,9 @@ RBC::RBC(Endpoint &endpoint, MuddleAddress address, CallbackFunction call_back,
   rbc_subscription_->SetMessageHandler([this](MuddleAddress const &from, uint16_t, uint16_t,
                                               uint16_t, muddle::Packet::Payload const &payload,
                                               MuddleAddress) {
-    RBCSerializer serialiser(payload);
+    RBCSerialiser serialiser(payload);
 
-    // Deserialize the RBCEnvelope
+    // Deserialise the RBCEnvelope
     RBCMessage msg;
     try
     {
@@ -174,14 +174,14 @@ void RBC::Broadcast(SerialisedMessage const &msg)
 void RBC::Send(RBCMessage const &msg, MuddleAddress const &address)
 {
   // Serialise the RBCEnvelope
-  RBCSerializerCounter msg_counter;
+  RBCSerialiserCounter msg_counter;
   msg_counter << msg;
 
-  RBCSerializer msg_serializer;
-  msg_serializer.Reserve(msg_counter.size());
-  msg_serializer << msg;
+  RBCSerialiser msg_serialiser;
+  msg_serialiser.Reserve(msg_counter.size());
+  msg_serialiser << msg;
 
-  endpoint_.Send(address, SERVICE_RBC, channel_, msg_serializer.data());
+  endpoint_.Send(address, SERVICE_RBC, channel_, msg_serialiser.data());
 }
 
 /**
@@ -192,19 +192,19 @@ void RBC::Send(RBCMessage const &msg, MuddleAddress const &address)
 void RBC::InternalBroadcast(RBCMessage const &msg)
 {
   // Serialise the RBCEnvelope
-  RBCSerializerCounter msg_counter;
+  RBCSerialiserCounter msg_counter;
   msg_counter << msg;
 
-  RBCSerializer msg_serializer;
-  msg_serializer.Reserve(msg_counter.size());
-  msg_serializer << msg;
+  RBCSerialiser msg_serialiser;
+  msg_serialiser.Reserve(msg_counter.size());
+  msg_serialiser << msg;
 
   // Broadcast without echo
   for (auto const &address : current_cabinet_)
   {
     if (address != address_)
     {
-      endpoint_.Send(address, SERVICE_RBC, channel_, msg_serializer.data());
+      endpoint_.Send(address, SERVICE_RBC, channel_, msg_serialiser.data());
     }
   }
 }

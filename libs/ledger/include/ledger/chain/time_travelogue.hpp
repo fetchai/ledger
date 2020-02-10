@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "chain/constants.hpp"
-#include "core/serializers/base_types.hpp"
+#include "core/serialisers/base_types.hpp"
 #include "ledger/chain/block.hpp"
 
 namespace fetch {
@@ -51,10 +51,10 @@ struct TimeTravelogue
 
 }  // namespace ledger
 
-namespace serializers {
+namespace serialisers {
 
 template <class D>
-struct MapSerializer<ledger::TimeTravelogue, D>
+struct MapSerialiser<ledger::TimeTravelogue, D>
 {
   using Type       = ledger::TimeTravelogue;
   using DriverType = D;
@@ -65,7 +65,7 @@ struct MapSerializer<ledger::TimeTravelogue, D>
   static constexpr uint8_t STATUS        = 4;
 
   template <class Constructor>
-  static void Serialize(Constructor &map_constructor, Type const &travelogue)
+  static void Serialise(Constructor &map_constructor, Type const &travelogue)
   {
     auto map = map_constructor(4);
 
@@ -77,8 +77,8 @@ struct MapSerializer<ledger::TimeTravelogue, D>
     map.Append(STATUS, status_code);
   }
 
-  template <class MapDeserializer>
-  static void Deserialize(MapDeserializer &map, Type &travelogue)
+  template <class MapDeserialiser>
+  static void Deserialise(MapDeserialiser &map, Type &travelogue)
   {
     uint8_t status_code{0};
 
@@ -91,5 +91,5 @@ struct MapSerializer<ledger::TimeTravelogue, D>
   }
 };
 
-}  // namespace serializers
+}  // namespace serialisers
 }  // namespace fetch

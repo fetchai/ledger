@@ -24,13 +24,13 @@
 namespace {
 
 using fetch::byte_array::FromHex;
-using fetch::serializers::MsgPackSerializer;
+using fetch::serialisers::MsgPackSerialiser;
 using fetch::chain::detail::EncodeInteger;
 using fetch::chain::detail::DecodeInteger;
 
-MsgPackSerializer CreateEncodedBuffer(char const *hex)
+MsgPackSerialiser CreateEncodedBuffer(char const *hex)
 {
-  return MsgPackSerializer{FromHex(hex)};
+  return MsgPackSerialiser{FromHex(hex)};
 }
 
 TEST(IntegerEncodingTests, CheckSmallUnsignedEncode)

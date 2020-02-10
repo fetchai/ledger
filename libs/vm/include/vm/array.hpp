@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/serializers/base_types.hpp"
+#include "core/serialisers/base_types.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 #include "vm/fixed.hpp"
 #include "vm/vm.hpp"
@@ -260,14 +260,14 @@ struct Array : public IArray
     return &element;
   }
 
-  bool SerializeTo(MsgPackSerializer &buffer) override
+  bool SerialiseTo(MsgPackSerialiser &buffer) override
   {
-    return ApplySerialize(buffer, elements);
+    return ApplySerialise(buffer, elements);
   }
 
-  bool DeserializeFrom(MsgPackSerializer &buffer) override
+  bool DeserialiseFrom(MsgPackSerialiser &buffer) override
   {
-    return ApplyDeserialize(buffer, elements);
+    return ApplyDeserialise(buffer, elements);
   }
 
   TypeId element_type_id;
@@ -275,11 +275,11 @@ struct Array : public IArray
   std::vector<ElementType> elements;
 
 private:
-  bool ApplySerialize(MsgPackSerializer &buffer, std::vector<Ptr<Object>> const &data)
+  bool ApplySerialise(MsgPackSerialiser &buffer, std::vector<Ptr<Object>> const &data)
   {
-    if (!vm_->IsDefaultSerializeConstructable(element_type_id))
+    if (!vm_->IsDefaultSerialiseConstructable(element_type_id))
     {
-      vm_->RuntimeError("Cannot serialize type " + vm_->GetTypeName(element_type_id) +
+      vm_->RuntimeError("Cannot serialise type " + vm_->GetTypeName(element_type_id) +
                         " as no serialisation constructor exists.");
       return false;
     }
@@ -298,7 +298,7 @@ private:
       }
 
       auto success = array_buffer.AppendUsingFunction(
-          [&v](MsgPackSerializer &serializer) { return v->SerializeTo(serializer); });
+          [&v](MsgPackSerialiser &serialiser) { return v->SerialiseTo(serialiser); });
 
       if (!success)
       {
@@ -310,7 +310,7 @@ private:
   }
 
   template <typename G>
-  std::enable_if_t<IsPrimitive<G>, bool> ApplySerialize(MsgPackSerializer &   buffer,
+  std::enable_if_t<IsPrimitive<G>, bool> ApplySerialise(MsgPackSerialiser &   buffer,
                                                         std::vector<G> const &data)
   {
     // Creating new array
@@ -326,21 +326,21 @@ private:
     return true;
   }
 
-  bool ApplyDeserialize(MsgPackSerializer &buffer, std::vector<Ptr<Object>> &data)
+  bool ApplyDeserialise(MsgPackSerialiser &buffer, std::vector<Ptr<Object>> &data)
   {
-    if (!vm_->IsDefaultSerializeConstructable(element_type_id))
+    if (!vm_->IsDefaultSerialiseConstructable(element_type_id))
     {
-      vm_->RuntimeError("Cannot deserialize type " + vm_->GetTypeName(element_type_id) +
+      vm_->RuntimeError("Cannot deserialise type " + vm_->GetTypeName(element_type_id) +
                         " as no serialisation constructor exists.");
       return false;
     }
 
-    auto array = buffer.NewArrayDeserializer();
+    auto array = buffer.NewArrayDeserialiser();
     data.resize(array.size());
 
     for (Ptr<Object> &v : data)
     {
-      v = vm_->DefaultSerializeConstruct(element_type_id);
+      v = vm_->DefaultSerialiseConstruct(element_type_id);
       if (!v)
       {
         return false;
@@ -348,7 +348,7 @@ private:
 
       // Deserializing next elemtn
       auto success = array.GetNextValueUsingFunction(
-          [&v](MsgPackSerializer &serializer) { return v->DeserializeFrom(serializer); });
+          [&v](MsgPackSerialiser &serialiser) { return v->DeserialiseFrom(serialiser); });
 
       if (!success)
       {
@@ -359,10 +359,10 @@ private:
   }
 
   template <typename G>
-  std::enable_if_t<IsPrimitive<G>, bool> ApplyDeserialize(MsgPackSerializer &buffer,
+  std::enable_if_t<IsPrimitive<G>, bool> ApplyDeserialise(MsgPackSerialiser &buffer,
                                                           std::vector<G> &   data)
   {
-    auto array = buffer.NewArrayDeserializer();
+    auto array = buffer.NewArrayDeserialiser();
 
     data.resize(array.size());
     for (G &v : data)

@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/const_byte_array.hpp"
-#include "core/serializers/main_serializer.hpp"
+#include "core/serialisers/main_serialiser.hpp"
 
 #include <array>
 #include <cstddef>
@@ -111,10 +111,10 @@ private:
 
 }  // namespace chain
 
-namespace serializers {
+namespace serialisers {
 
 template <typename D>
-struct MapSerializer<chain::Address, D>  // TODO(issue 1422): Use forward to bytearray
+struct MapSerialiser<chain::Address, D>  // TODO(issue 1422): Use forward to bytearray
 {
 public:
   using Type       = chain::Address;
@@ -123,14 +123,14 @@ public:
   static uint8_t const ADDRESS = 1;
 
   template <typename Constructor>
-  static void Serialize(Constructor &map_constructor, Type const &data)
+  static void Serialise(Constructor &map_constructor, Type const &data)
   {
     auto map = map_constructor(1);
     map.Append(ADDRESS, data.address());
   }
 
-  template <typename MapDeserializer>
-  static void Deserialize(MapDeserializer &map, Type &address)
+  template <typename MapDeserialiser>
+  static void Deserialise(MapDeserialiser &map, Type &address)
   {
     uint8_t                    key;
     byte_array::ConstByteArray data;
@@ -138,7 +138,7 @@ public:
     address = data.empty() ? Type{} : Type{data};
   }
 };
-}  // namespace serializers
+}  // namespace serialisers
 
 }  // namespace fetch
 

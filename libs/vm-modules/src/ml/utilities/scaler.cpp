@@ -101,13 +101,13 @@ void VMScaler::Bind(Module &module, bool const enable_experimental)
   }
 }
 
-bool VMScaler::SerializeTo(serializers::MsgPackSerializer &buffer)
+bool VMScaler::SerialiseTo(serialisers::MsgPackSerialiser &buffer)
 {
   buffer << *this;
   return true;
 }
 
-bool VMScaler::DeserializeFrom(serializers::MsgPackSerializer &buffer)
+bool VMScaler::DeserialiseFrom(serialisers::MsgPackSerialiser &buffer)
 {
   auto scaler = std::make_shared<VMScaler>(this->vm_, this->type_id_);
   buffer >> *scaler;

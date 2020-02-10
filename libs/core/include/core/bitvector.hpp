@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/serializers/group_definitions.hpp"
+#include "core/serialisers/group_definitions.hpp"
 #include "vectorise/memory/shared_array.hpp"
 #include "vectorise/platform.hpp"
 
@@ -122,17 +122,17 @@ private:
 
 std::ostream &operator<<(std::ostream &s, BitVector const &b);
 
-namespace serializers {
+namespace serialisers {
 
 template <typename D>
-struct ArraySerializer<BitVector, D>
+struct ArraySerialiser<BitVector, D>
 {
 public:
   using Type       = BitVector;
   using DriverType = D;
 
   template <typename Constructor>
-  static void Serialize(Constructor &array_constructor, Type const &mask)
+  static void Serialise(Constructor &array_constructor, Type const &mask)
   {
     uint64_t const bit_size   = mask.size();
     uint64_t const block_size = mask.blocks();
@@ -147,8 +147,8 @@ public:
     }
   }
 
-  template <typename ArrayDeserializer>
-  static void Deserialize(ArrayDeserializer &array, Type &mask)
+  template <typename ArrayDeserialiser>
+  static void Deserialise(ArrayDeserialiser &array, Type &mask)
   {
     uint64_t bit_size   = 0;
     uint64_t block_size = array.size() - 1;
@@ -166,5 +166,5 @@ public:
   }
 };
 
-}  // namespace serializers
+}  // namespace serialisers
 }  // namespace fetch

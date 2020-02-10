@@ -16,12 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/serializers/main_serializer.hpp"
+#include "core/serialisers/main_serialiser.hpp"
 #include "gtest/gtest.h"
 #include "math/base_types.hpp"
 #include "math/standard_functions/abs.hpp"
 #include "ml/ops/activations/randomised_relu.hpp"
-#include "ml/serializers/ml_types.hpp"
+#include "ml/serialisers/ml_types.hpp"
 #include "test_types.hpp"
 
 namespace fetch {
@@ -253,14 +253,14 @@ TYPED_TEST(RandomisedReluTest, saveparams_test)
   // downcast to correct type
   auto dsp = std::static_pointer_cast<SPType>(sp);
 
-  // serialize
-  fetch::serializers::MsgPackSerializer b;
+  // serialise
+  fetch::serialisers::MsgPackSerialiser b;
   b << *dsp;
 
   // make another prediction with the original graph
   op.Forward(vec_data, prediction);
 
-  // deserialize
+  // deserialise
   b.seek(0);
   auto dsp2 = std::make_shared<SPType>();
   b >> *dsp2;
@@ -303,14 +303,14 @@ TYPED_TEST(RandomisedReluTest, saveparams_backward_3d_tensor_test)
   // downcast to correct type
   auto dsp = std::dynamic_pointer_cast<SPType>(sp);
 
-  // serialize
-  fetch::serializers::MsgPackSerializer b;
+  // serialise
+  fetch::serialisers::MsgPackSerialiser b;
   b << *dsp;
 
   // make another prediction with the original op
   prediction = op.Backward({std::make_shared<const TensorType>(data)}, error);
 
-  // deserialize
+  // deserialise
   b.seek(0);
   auto dsp2 = std::make_shared<SPType>();
   b >> *dsp2;

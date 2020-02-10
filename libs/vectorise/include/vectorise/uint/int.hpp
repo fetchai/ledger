@@ -243,10 +243,10 @@ public:
   constexpr uint8_t const *pointer() const;
 
   template <typename T, uint16_t G>
-  constexpr friend void Serialize(T &s, Int<G> const &u);
+  constexpr friend void Serialise(T &s, Int<G> const &u);
 
   template <typename T, uint16_t G>
-  constexpr friend void Deserialize(T &s, Int<G> &u);
+  constexpr friend void Deserialise(T &s, Int<G> &u);
 
   /////////////////
   /// constants ///

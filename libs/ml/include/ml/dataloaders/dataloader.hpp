@@ -18,8 +18,8 @@
 //------------------------------------------------------------------------------
 
 #include "core/random.hpp"
-#include "core/serializers/group_definitions.hpp"
-#include "core/serializers/map_serializer_boilerplate.hpp"
+#include "core/serialisers/group_definitions.hpp"
+#include "core/serialisers/map_serialiser_boilerplate.hpp"
 #include "math/base_types.hpp"
 #include "ml/meta/ml_type_traits.hpp"
 
@@ -64,7 +64,7 @@ public:
   void             SetSeed(SizeType seed = 123);
 
   template <typename X, typename D>
-  friend struct fetch::serializers::MapSerializer;
+  friend struct fetch::serialisers::MapSerialiser;
 
   virtual LoaderType LoaderCode() = 0;
 
@@ -90,24 +90,24 @@ private:
 }  // namespace dataloaders
 }  // namespace ml
 
-namespace serializers {
+namespace serialisers {
 
 /**
- * serializer for DataLoaderMode
+ * serialiser for DataLoaderMode
  * @tparam TensorType
  */
 template <typename D>
-struct MapSerializer<ml::dataloaders::DataLoaderMode, D>
-  : MapSerializerBoilerplate<ml::dataloaders::DataLoaderMode, D, SimplySerializedAs<1, uint16_t>>
+struct MapSerialiser<ml::dataloaders::DataLoaderMode, D>
+  : MapSerialiserBoilerplate<ml::dataloaders::DataLoaderMode, D, SimplySerialisedAs<1, uint16_t>>
 {
 };
 
 /**
- * serializer for Dataloader
+ * serialiser for Dataloader
  * @tparam TensorType
  */
 template <typename TensorType, typename D>
-struct MapSerializer<fetch::ml::dataloaders::DataLoader<TensorType>, D>
+struct MapSerialiser<fetch::ml::dataloaders::DataLoader<TensorType>, D>
 {
   using Type       = fetch::ml::dataloaders::DataLoader<TensorType>;
   using DriverType = D;
@@ -124,7 +124,7 @@ struct MapSerializer<fetch::ml::dataloaders::DataLoader<TensorType>, D>
   static uint8_t const RET_PAIR_SECOND          = 10;
 
   template <typename Constructor>
-  static void Serialize(Constructor &map_constructor, Type const &sp)
+  static void Serialise(Constructor &map_constructor, Type const &sp)
   {
     auto map = map_constructor(10);
 
@@ -141,8 +141,8 @@ struct MapSerializer<fetch::ml::dataloaders::DataLoader<TensorType>, D>
     map.Append(RET_PAIR_SECOND, sp.ret_pair_.second);
   }
 
-  template <typename MapDeserializer>
-  static void Deserialize(MapDeserializer &map, Type &sp)
+  template <typename MapDeserialiser>
+  static void Deserialise(MapDeserialiser &map, Type &sp)
   {
     map.ExpectKeyGetValue(RANDOM_MODE, sp.random_mode_);
     map.ExpectKeyGetValue(MODE, sp.mode_);
@@ -165,6 +165,6 @@ struct MapSerializer<fetch::ml::dataloaders::DataLoader<TensorType>, D>
   }
 };
 
-}  // namespace serializers
+}  // namespace serialisers
 
 }  // namespace fetch

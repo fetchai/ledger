@@ -34,7 +34,7 @@ struct ExecutionTask
   std::string    function;
   ConstByteArray parameters;
 
-  bool DeserializeParameters(vm::VM *vm, ParameterPack &params, Executable *exe,
+  bool DeserialiseParameters(vm::VM *vm, ParameterPack &params, Executable *exe,
                              Executable::Function const *f) const
   {
     vm->LoadExecutable(exe);
@@ -45,8 +45,8 @@ struct ExecutionTask
       return false;
     }
 
-    // Preparing serializer and return value.
-    MsgPackSerializer serializer{parameters};
+    // Preparing serialiser and return value.
+    MsgPackSerialiser serialiser{parameters};
 
     // Extracting parameters
     auto const num_parameters = static_cast<std::size_t>(f->num_parameters);
@@ -59,7 +59,7 @@ struct ExecutionTask
       {
         Variant param;
 
-        serializer >> param.primitive.i64;
+        serialiser >> param.primitive.i64;
         param.type_id = type_id;
 
         params.AddSingle(param);
@@ -67,15 +67,15 @@ struct ExecutionTask
       else
       {
         // Checking if we can construct the object
-        if (!vm->IsDefaultSerializeConstructable(type_id))
+        if (!vm->IsDefaultSerialiseConstructable(type_id))
         {
           vm->UnloadExecutable();
           return false;
         }
 
         // Creating the object
-        vm::Ptr<vm::Object> object  = vm->DefaultSerializeConstruct(type_id);
-        auto                success = object->DeserializeFrom(serializer);
+        vm::Ptr<vm::Object> object  = vm->DefaultSerialiseConstruct(type_id);
+        auto                success = object->DeserialiseFrom(serialiser);
 
         // If deserialization failed we return
         if (!success)

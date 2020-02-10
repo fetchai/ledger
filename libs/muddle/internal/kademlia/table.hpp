@@ -19,8 +19,8 @@
 
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/mutex.hpp"
-#include "core/serializers/clock_serializers.hpp"
-#include "core/serializers/main_serializer.hpp"
+#include "core/serialisers/clock_serialisers.hpp"
+#include "core/serialisers/main_serialiser.hpp"
 #include "crypto/sha1.hpp"
 #include "kademlia/bucket.hpp"
 #include "kademlia/primitives.hpp"
@@ -193,15 +193,15 @@ private:
   /// @}
 
   template <typename T, typename D>
-  friend struct serializers::MapSerializer;
+  friend struct serialisers::MapSerialiser;
 };
 
 }  // namespace muddle
 
-namespace serializers {
+namespace serialisers {
 
 template <typename D>
-struct MapSerializer<muddle::KademliaTable, D>
+struct MapSerialiser<muddle::KademliaTable, D>
 {
 public:
   using Type       = muddle::KademliaTable;
@@ -214,7 +214,7 @@ public:
   static uint8_t const DESIRED_URIS      = 5;
 
   template <typename Constructor>
-  static void Serialize(Constructor &map_constructor, Type const &item)
+  static void Serialise(Constructor &map_constructor, Type const &item)
   {
     auto map = map_constructor(5);
 
@@ -241,8 +241,8 @@ public:
     map.Append(DESIRED_URIS, item.desired_uris_);
   }
 
-  template <typename MapDeserializer>
-  static void Deserialize(MapDeserializer &map, Type &item)
+  template <typename MapDeserialiser>
+  static void Deserialise(MapDeserialiser &map, Type &item)
   {
     std::vector<muddle::PeerInfo> peers;
     // We reconstruct the table from the peer list.
@@ -264,5 +264,5 @@ public:
     map.ExpectKeyGetValue(DESIRED_URIS, item.desired_uris_);
   }
 };
-}  // namespace serializers
+}  // namespace serialisers
 }  // namespace fetch

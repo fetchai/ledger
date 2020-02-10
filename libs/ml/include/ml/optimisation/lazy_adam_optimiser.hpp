@@ -72,7 +72,7 @@ public:
   void ApplyGradients(SizeType batch_size) override;
 
   template <typename X, typename D>
-  friend struct serializers::MapSerializer;
+  friend struct serialisers::MapSerialiser;
 
   inline OptimiserType OptimiserCode() override
   {

@@ -190,9 +190,9 @@ public:
 
   TensorType const &GetConstTensor();
 
-  bool SerializeTo(serializers::MsgPackSerializer &buffer) override;
+  bool SerialiseTo(serialisers::MsgPackSerialiser &buffer) override;
 
-  bool DeserializeFrom(serializers::MsgPackSerializer &buffer) override;
+  bool DeserialiseFrom(serialisers::MsgPackSerialiser &buffer) override;
 
   TensorEstimator &Estimator();
 

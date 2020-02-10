@@ -26,19 +26,19 @@
 #include <string>
 
 using namespace fetch;
-using serializers::MsgPackSerializer;
+using serialisers::MsgPackSerialiser;
 using variant::Variant;
 
 TEST(VariantSerialization, ArraySerialisation1)
 {
   std::vector<int32_t> x = {3, 6, 9, 12};
 
-  MsgPackSerializer serializer;
-  serializer << x;
-  serializer.seek(0);
+  MsgPackSerialiser serialiser;
+  serialiser << x;
+  serialiser.seek(0);
 
   Variant y;
-  serializer >> y;
+  serialiser >> y;
   EXPECT_EQ(y.size(), 4);
   EXPECT_EQ(y[0].As<int32_t>(), 3);
   EXPECT_EQ(y[1].As<int32_t>(), 6);
@@ -54,12 +54,12 @@ TEST(VariantSerialization, ArraySerialisation2)
   x[2]      = 9;
   x[3]      = 12;
 
-  MsgPackSerializer serializer;
-  serializer << x;
-  serializer.seek(0);
+  MsgPackSerialiser serialiser;
+  serialiser << x;
+  serialiser.seek(0);
 
   std::vector<int32_t> y;
-  serializer >> y;
+  serialiser >> y;
   EXPECT_EQ(y.size(), 4);
   EXPECT_EQ(y[0], 3);
   EXPECT_EQ(y[1], 6);
@@ -85,12 +85,12 @@ TEST(VariantSerialization, ArrayArraySerialisation)
   x[3][2]   = 9;
   x[3][3]   = 10;
 
-  MsgPackSerializer serializer;
-  serializer << x;
-  serializer.seek(0);
+  MsgPackSerialiser serialiser;
+  serialiser << x;
+  serialiser.seek(0);
 
   std::vector<std::vector<uint64_t>> y;
-  serializer >> y;
+  serialiser >> y;
   EXPECT_EQ(y.size(), 4);
   EXPECT_EQ(y[0].size(), 1);
   EXPECT_EQ(y[1].size(), 2);
@@ -111,7 +111,7 @@ TEST(VariantSerialization, ArrayArraySerialisation)
 
 TEST(VariantSerialization, VariantInt)
 {
-  MsgPackSerializer stream;
+  MsgPackSerialiser stream;
   Variant           i1, i2;
 
   i1 = 123456;
@@ -123,7 +123,7 @@ TEST(VariantSerialization, VariantInt)
 
 TEST(VariantSerialization, VariantFloat)
 {
-  MsgPackSerializer stream;
+  MsgPackSerialiser stream;
   Variant           fp1, fp2;
 
   fp1 = 1.25;  // should be repn exactly.
@@ -135,7 +135,7 @@ TEST(VariantSerialization, VariantFloat)
 
 TEST(VariantSerialization, VariantString)
 {
-  MsgPackSerializer stream;
+  MsgPackSerialiser stream;
   Variant           s1, s2;
 
   s1 = "123456";
@@ -147,7 +147,7 @@ TEST(VariantSerialization, VariantString)
 
 TEST(VariantSerialization, VariantNull)
 {
-  MsgPackSerializer stream;
+  MsgPackSerialiser stream;
   Variant           null1, null2;
 
   null1 = Variant::Null();
@@ -159,7 +159,7 @@ TEST(VariantSerialization, VariantNull)
 
 TEST(VariantSerialization, DISABLED_VariantArray)
 {
-  MsgPackSerializer stream;
+  MsgPackSerialiser stream;
   Variant           arr1, arr2;
 
   arr1    = Variant::Array(4);
@@ -179,7 +179,7 @@ TEST(VariantSerialization, DISABLED_VariantArray)
 
 TEST(VariantSerialization, DISABLED_VariantArrayOfArray)
 {
-  MsgPackSerializer stream;
+  MsgPackSerialiser stream;
   Variant           arr1, arr2;
 
   arr1    = Variant::Array(4);
@@ -213,7 +213,7 @@ TEST(VariantSerialization, DISABLED_VariantArrayOfArray)
 
 TEST(VariantSerialization, DISABLED_VariantObject)
 {
-  MsgPackSerializer stream;
+  MsgPackSerialiser stream;
   Variant           obj1, obj2;
 
   obj1 = Variant::Object();

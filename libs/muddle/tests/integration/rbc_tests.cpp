@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/serializers/counter.hpp"
-#include "core/serializers/main_serializer.hpp"
+#include "core/serialisers/counter.hpp"
+#include "core/serialisers/main_serialiser.hpp"
 #include "core/service_ids.hpp"
 #include "crypto/ecdsa.hpp"
 #include "crypto/prover.hpp"
@@ -117,47 +117,47 @@ private:
   void SendBadAnswer(RBCMessage const &msg, MuddleAddress const &address)
   {
     std::string                           new_msg = "Goodbye";
-    fetch::serializers::MsgPackSerializer serialiser;
+    fetch::serialisers::MsgPackSerialiser serialiser;
     serialiser << new_msg;
     RAnswer new_rmsg{CHANNEL_RBC_BROADCAST, msg.id(), msg.counter(), serialiser.data()};
 
-    RBCSerializerCounter new_rmsg_counter;
+    RBCSerialiserCounter new_rmsg_counter;
     new_rmsg_counter << static_cast<RBCMessage>(new_rmsg);
 
-    RBCSerializer new_rmsg_serializer;
-    new_rmsg_serializer.Reserve(new_rmsg_counter.size());
-    new_rmsg_serializer << static_cast<RBCMessage>(new_rmsg);
+    RBCSerialiser new_rmsg_serialiser;
+    new_rmsg_serialiser.Reserve(new_rmsg_counter.size());
+    new_rmsg_serialiser << static_cast<RBCMessage>(new_rmsg);
 
-    endpoint().Send(address, SERVICE_RBC, CHANNEL_RBC_BROADCAST, new_rmsg_serializer.data());
+    endpoint().Send(address, SERVICE_RBC, CHANNEL_RBC_BROADCAST, new_rmsg_serialiser.data());
   }
 
   void SendUnrequestedAnswer(RBCMessage const &msg)
   {
     assert(msg.type() == RBCMessageType::R_ECHO);
     std::string                           new_msg = "Hello";
-    fetch::serializers::MsgPackSerializer serialiser;
+    fetch::serialisers::MsgPackSerialiser serialiser;
     serialiser << new_msg;
     RAnswer new_rmsg{CHANNEL_RBC_BROADCAST, msg.id(), msg.counter(), serialiser.data()};
 
-    RBCSerializerCounter new_rmsg_counter;
+    RBCSerialiserCounter new_rmsg_counter;
     new_rmsg_counter << static_cast<RBCMessage>(new_rmsg);
 
-    RBCSerializer new_rmsg_serializer;
-    new_rmsg_serializer.Reserve(new_rmsg_counter.size());
-    new_rmsg_serializer << static_cast<RBCMessage>(new_rmsg);
+    RBCSerialiser new_rmsg_serialiser;
+    new_rmsg_serialiser.Reserve(new_rmsg_counter.size());
+    new_rmsg_serialiser << static_cast<RBCMessage>(new_rmsg);
 
-    endpoint().Broadcast(SERVICE_RBC, CHANNEL_RBC_BROADCAST, new_rmsg_serializer.data());
+    endpoint().Broadcast(SERVICE_RBC, CHANNEL_RBC_BROADCAST, new_rmsg_serialiser.data());
   }
 
   void Send(RBCMessage const &msg, MuddleAddress const &address) override
   {
     // Serialise the RBCEnvelope
-    RBCSerializerCounter msg_counter;
+    RBCSerialiserCounter msg_counter;
     msg_counter << msg;
 
-    RBCSerializer msg_serializer;
-    msg_serializer.Reserve(msg_counter.size());
-    msg_serializer << msg;
+    RBCSerialiser msg_serialiser;
+    msg_serialiser.Reserve(msg_counter.size());
+    msg_serialiser << msg;
 
     if (Failure(Failures::BAD_ANSWER) && msg.type() == RBCMessageType::R_ANSWER)
     {
@@ -169,18 +169,18 @@ private:
       return;
     }
 
-    endpoint().Send(address, SERVICE_RBC, CHANNEL_RBC_BROADCAST, msg_serializer.data());
+    endpoint().Send(address, SERVICE_RBC, CHANNEL_RBC_BROADCAST, msg_serialiser.data());
   }
 
   void InternalBroadcast(RBCMessage const &msg) override
   {
     // Serialise the RBCEnvelope
-    RBCSerializerCounter msg_counter;
+    RBCSerialiserCounter msg_counter;
     msg_counter << msg;
 
-    RBCSerializer msg_serializer;
-    msg_serializer.Reserve(msg_counter.size());
-    msg_serializer << msg;
+    RBCSerialiser msg_serialiser;
+    msg_serialiser.Reserve(msg_counter.size());
+    msg_serialiser << msg;
 
     if ((Failure(Failures::NO_ECHO) && msg.type() == RBCMessageType::R_ECHO) ||
         (Failure(Failures::NO_READY) && msg.type() == RBCMessageType::R_READY))
@@ -189,13 +189,13 @@ private:
     }
     if (Failure(Failures::DOUBLE_SEND))
     {
-      endpoint().Broadcast(SERVICE_RBC, CHANNEL_RBC_BROADCAST, msg_serializer.data());
+      endpoint().Broadcast(SERVICE_RBC, CHANNEL_RBC_BROADCAST, msg_serialiser.data());
     }
     else if (Failure(Failures::UNREQUESTED_ANSWER) && msg.type() == RBCMessageType::R_ECHO)
     {
       SendUnrequestedAnswer(msg);
     }
-    endpoint().Broadcast(SERVICE_RBC, CHANNEL_RBC_BROADCAST, msg_serializer.data());
+    endpoint().Broadcast(SERVICE_RBC, CHANNEL_RBC_BROADCAST, msg_serialiser.data());
   }
 
   void OnRBC(MuddleAddress const &from, RBCMessage const &msg) override
@@ -217,7 +217,7 @@ private:
       if (Failure(Failures::BAD_MESSAGE))
       {
         std::string                           new_msg = "Goodbye";
-        fetch::serializers::MsgPackSerializer serialiser;
+        fetch::serialisers::MsgPackSerialiser serialiser;
         serialiser << new_msg;
         payload = serialiser.data();
       }
@@ -277,9 +277,9 @@ public:
 
   void OnRbcMessage(ConstByteArray const &payload)
   {
-    fetch::serializers::MsgPackSerializer serializer{payload};
+    fetch::serialisers::MsgPackSerialiser serialiser{payload};
     std::string                           msg;
-    serializer >> msg;
+    serialiser >> msg;
     assert(msg == "Hello");
     ++delivered_msgs;
   }
@@ -420,7 +420,7 @@ void GenerateRbcTest(uint32_t cabinet_size, uint32_t expected_completion_size,
   // First node sends a broadcast
   {
     std::string                           msg = "Hello";
-    fetch::serializers::MsgPackSerializer serialiser;
+    fetch::serialisers::MsgPackSerialiser serialiser;
     serialiser << msg;
     uint32_t sender_index = cabinet_size - 1;
     for (auto ii = 0; ii < num_messages; ++ii)

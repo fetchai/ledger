@@ -24,8 +24,8 @@
 
 #include "core/byte_array/encoders.hpp"
 #include "core/containers/set_intersection.hpp"
-#include "core/serializers/base_types.hpp"
-#include "core/serializers/main_serializer.hpp"
+#include "core/serialisers/base_types.hpp"
+#include "core/serialisers/main_serialiser.hpp"
 #include "core/service_ids.hpp"
 #include "crypto/fnv.hpp"
 #include "crypto/secure_channel.hpp"
@@ -120,10 +120,10 @@ ConstByteArray EncodePayload(T const &msg)
   ConstByteArray payload{};
   try
   {
-    serializers::MsgPackSerializer serializer;
-    serializer << msg;
+    serialisers::MsgPackSerialiser serialiser;
+    serialiser << msg;
 
-    payload = serializer.data();
+    payload = serialiser.data();
   }
   catch (std::exception const &ex)
   {
@@ -140,8 +140,8 @@ bool ExtractPayload(ConstByteArray const &payload, T &msg)
 
   try
   {
-    serializers::MsgPackSerializer serializer{payload};
-    serializer >> msg;
+    serialisers::MsgPackSerialiser serialiser{payload};
+    serialiser >> msg;
 
     success = true;
   }
@@ -619,7 +619,7 @@ void Router::SendToConnection(Handle handle, PacketPtr const &packet, bool exter
   auto conn = register_.LookupConnection(handle).lock();
   if (conn)
   {
-    // serialize the packet to the buffer
+    // serialise the packet to the buffer
     ByteArray buffer;
     buffer.Resize(packet->GetPacketSize());
     if (Packet::ToBuffer(*packet, buffer.pointer(), buffer.size()))
@@ -699,7 +699,7 @@ void Router::RoutePacket(PacketPtr const &packet, bool external)
       DispatchPacket(packet, address_);
     }
 
-    // serialize the packet to the buffer
+    // serialise the packet to the buffer
     ByteArray buffer{};
     buffer.Resize(packet->GetPacketSize());
     if (Packet::ToBuffer(*packet, buffer.pointer(), buffer.size()))

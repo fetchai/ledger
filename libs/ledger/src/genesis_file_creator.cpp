@@ -270,8 +270,8 @@ bool GenesisFileCreator::LoadState(Variant const &object, ConsensusParameters co
       ResourceAddress const wallet_key{"fetch.token.state." + address.display()};
 
       {
-        // serialize the record to the buffer
-        serializers::LargeObjectSerializeHelper buffer;
+        // serialise the record to the buffer
+        serialisers::LargeObjectSerialiseHelper buffer;
         buffer << record;
 
         // store the buffer

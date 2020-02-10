@@ -83,8 +83,8 @@ struct Fixed128 : public Object
                                             Ptr<Object> const &rhso) override;
   ChargeAmount NegateChargeEstimator(Ptr<Object> const &object) override;
 
-  bool SerializeTo(MsgPackSerializer &buffer) override;
-  bool DeserializeFrom(MsgPackSerializer &buffer) override;
+  bool SerialiseTo(MsgPackSerialiser &buffer) override;
+  bool DeserialiseFrom(MsgPackSerialiser &buffer) override;
 
   fixed_point::fp128_t data_;
 };

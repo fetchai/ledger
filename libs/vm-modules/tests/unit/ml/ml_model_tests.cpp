@@ -290,10 +290,10 @@ TEST_F(VMModelTests, model_string_serialisation_test)
         var prediction4 = model4.predict(data);
 
        // serialise to string
-        var model_string_1 = model1.serializeToString();
-        var model_string_2 = model2.serializeToString();
-        var model_string_3 = model3.serializeToString();
-        var model_string_4 = model4.serializeToString();
+        var model_string_1 = model1.serialiseToString();
+        var model_string_2 = model2.serialiseToString();
+        var model_string_3 = model3.serialiseToString();
+        var model_string_4 = model4.serialiseToString();
 
         var state1 = State<String>("model_state1");
         var state2 = State<String>("model_state2");
@@ -335,10 +335,10 @@ TEST_F(VMModelTests, model_string_serialisation_test)
       var model2 = Model("none");
       var model3 = Model("none");
       var model4 = Model("none");
-      model1 = model1.deserializeFromString(model_string1);
-      model2 = model2.deserializeFromString(model_string2);
-      model3 = model3.deserializeFromString(model_string3);
-      model4 = model4.deserializeFromString(model_string4);
+      model1 = model1.deserialiseFromString(model_string1);
+      model2 = model2.deserialiseFromString(model_string2);
+      model3 = model3.deserialiseFromString(model_string3);
+      model4 = model4.deserialiseFromString(model_string4);
 
     endfunction
   )";

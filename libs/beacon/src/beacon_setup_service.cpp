@@ -47,8 +47,8 @@ BeaconSetupService::ReliableChannelPtr BeaconSetupService::ReliableBroadcastFact
 
   auto call_on_msg = [this](MuddleAddress const &from, ConstByteArray const &payload) -> void {
     DKGEnvelope   env;
-    DKGSerializer serializer{payload};
-    serializer >> env;
+    DKGSerialiser serialiser{payload};
+    serialiser >> env;
     OnDkgMessage(from, env.Message());
   };
 
@@ -891,7 +891,7 @@ BeaconSetupService::State BeaconSetupService::OnBeaconReady()
  */
 void BeaconSetupService::SendBroadcast(DKGEnvelope const &env)
 {
-  DKGSerializer serialiser;
+  DKGSerialiser serialiser;
   serialiser << env;
   std::string question = std::to_string(uint8_t(env.Message()->type())) +
                          ToString(state_machine_->state()) + std::to_string(failures_);
@@ -929,13 +929,13 @@ void BeaconSetupService::BroadcastShares()
     }
     std::pair<MessageShare, MessageShare> shares{beacon_->manager.GetOwnShares(cab_i)};
 
-    fetch::serializers::SizeCounter counter;
+    fetch::serialisers::SizeCounter counter;
     counter << shares;
 
-    fetch::serializers::MsgPackSerializer serializer;
-    serializer.Reserve(counter.size());
-    serializer << shares;
-    endpoint_.Send(cab_i, SERVICE_DKG, CHANNEL_SECRET_KEY, serializer.data(),
+    fetch::serialisers::MsgPackSerialiser serialiser;
+    serialiser.Reserve(counter.size());
+    serialiser << shares;
+    endpoint_.Send(cab_i, SERVICE_DKG, CHANNEL_SECRET_KEY, serialiser.data(),
                    MuddleEndpoint::OPTION_ENCRYPTED);
   }
   FETCH_LOG_DEBUG(LOGGING_NAME, NodeString(), " broadcasts coefficients ");
@@ -1141,7 +1141,7 @@ void BeaconSetupService::OnNewSharesPacket(muddle::Packet const &packet,
   }
 #endif
 
-  fetch::serializers::MsgPackSerializer serialiser(packet.GetPayload());
+  fetch::serialisers::MsgPackSerialiser serialiser(packet.GetPayload());
 
   std::pair<MessageShare, MessageShare> shares;
   serialiser >> shares;

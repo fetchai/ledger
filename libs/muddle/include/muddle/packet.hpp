@@ -20,7 +20,7 @@
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/mutex.hpp"
-#include "core/serializers/main_serializer.hpp"
+#include "core/serialisers/main_serialiser.hpp"
 #include "crypto/prover.hpp"
 #include "crypto/verifier.hpp"
 
@@ -174,7 +174,7 @@ private:
   BinaryHeader StaticHeader() const noexcept;
 
   template <typename V, typename D>
-  friend struct serializers::MapSerializer;
+  friend struct serialisers::MapSerialiser;
 };
 
 inline Packet::Packet(Address const &source_address, uint32_t network_id)
@@ -388,7 +388,7 @@ inline void Packet::Sign(crypto::Prover const &prover)
   SetStamped();
 
   auto const signature =
-      prover.Sign((serializers::MsgPackSerializer() << StaticHeader() << payload_).data());
+      prover.Sign((serialisers::MsgPackSerialiser() << StaticHeader() << payload_).data());
 
   if (!signature.empty())
   {
@@ -408,7 +408,7 @@ inline bool Packet::Verify() const
     return false;  // null signature is not genuine in non-trusted networks
   }
   auto retVal = crypto::Verify(
-      GetSender(), (serializers::MsgPackSerializer() << StaticHeader() << payload_).data(), stamp_);
+      GetSender(), (serialisers::MsgPackSerialiser() << StaticHeader() << payload_).data(), stamp_);
   return retVal;
 }
 

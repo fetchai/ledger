@@ -101,7 +101,7 @@ public:
            context.sender_address =
                byte_array::FromBase64(doc["sender"].As<byte_array::ConstByteArray>());
 
-           serializers::MsgPackSerializer buffer{
+           serialisers::MsgPackSerialiser buffer{
                byte_array::FromBase64(doc["message"].As<byte_array::ConstByteArray>())};
            Message msg;
            buffer >> msg;
@@ -132,7 +132,7 @@ public:
            auto messages = messenger_.GetMessages(context);
 
            // Creating stream with messages
-           serializers::MsgPackSerializer buffer;
+           serialisers::MsgPackSerialiser buffer;
            buffer << messages;
 
            variant::Variant response = variant::Variant::Object();
@@ -164,7 +164,7 @@ public:
            auto messages = messenger_.GetMessages(context);
 
            // Creating stream with messages
-           serializers::MsgPackSerializer buffer;
+           serialisers::MsgPackSerialiser buffer;
            buffer << messages;
 
            variant::Variant response = variant::Variant::Object();

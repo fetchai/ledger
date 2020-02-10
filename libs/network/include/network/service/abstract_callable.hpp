@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/byte_array.hpp"
-#include "core/serializers/type_register.hpp"
+#include "core/serialisers/type_register.hpp"
 #include "logging/logging.hpp"
 #include "network/service/types.hpp"
 
@@ -40,7 +40,7 @@ struct ArgsToString
 {
   static std::string Value()
   {
-    return serializers::TypeRegister<BaseType<F>>::name() + std::string(", ") +
+    return serialisers::TypeRegister<BaseType<F>>::name() + std::string(", ") +
            ArgsToString<R, Args...>::Value();
   }
 };
@@ -50,7 +50,7 @@ struct ArgsToString<R, F>
 {
   static std::string Value()
   {
-    return serializers::TypeRegister<BaseType<F>>::name();
+    return serialisers::TypeRegister<BaseType<F>>::name();
   }
 };
 
@@ -68,8 +68,8 @@ struct SignatureToString
 {
   static std::string Signature()
   {
-    return std::string(serializers::TypeRegister<BaseType<R>>::name()) + std::string(" ") +
-           std::string(serializers::TypeRegister<BaseType<C>>::name()) +
+    return std::string(serialisers::TypeRegister<BaseType<R>>::name()) + std::string(" ") +
+           std::string(serialisers::TypeRegister<BaseType<C>>::name()) +
            std::string("::function_pointer") + std::string("(") +
            ArgsToString<R, Args...>::Value() + std::string(")");
   }
@@ -80,7 +80,7 @@ struct SignatureToString
  * @arguments are the arguments that remains to be pack
  *
  * This struct contains packer structs that takes function arguments and
- * serializes them into a referenced byte array. The content of this
+ * serialises them into a referenced byte array. The content of this
  * struct belongs to the implementational details and are hence not
  * exposed directly to the developer.
  */
@@ -89,15 +89,15 @@ struct Packer
 {
   /* Implementation of the serialization.
    *
-   * @serializer is a reference to the serializer.
-   *  @next is the next argument that will be fed into the serializer.
+   * @serialiser is a reference to the serialiser.
+   *  @next is the next argument that will be fed into the serialiser.
    */
   template <typename S>
-  static void SerializeArguments(S &serializer, T &&next, arguments &&... args)
+  static void SerialiseArguments(S &serialiser, T &&next, arguments &&... args)
   {
 
-    serializer << next;
-    Packer<arguments...>::SerializeArguments(serializer, std::forward<arguments>(args)...);
+    serialiser << next;
+    Packer<arguments...>::SerialiseArguments(serialiser, std::forward<arguments>(args)...);
   }
 };
 
@@ -110,21 +110,21 @@ struct Packer<T>
 {
   /* Implementation of the serialization.
    *
-   * @serializer is a reference to the serializer.
-   * @last is the last argument that will be fed into the serializer.
+   * @serialiser is a reference to the serialiser.
+   * @last is the last argument that will be fed into the serialiser.
    */
   template <typename S>
-  static void SerializeArguments(S &serializer, T &&last)
+  static void SerialiseArguments(S &serialiser, T &&last)
   {
-    serializer << last;
-    serializer.seek(0);
+    serialiser << last;
+    serialiser.seek(0);
   }
 };
 }  // namespace details
 
 /* This function packs a function call into a byte array.
  * @arguments are the argument types of args.
- * @serializer is the serializer to which the arguments will be packed.
+ * @serialiser is the serialiser to which the arguments will be packed.
  * @protocol is the protocol the call belongs to.
  * @function is the function that is being called.
  * @args are the arguments to the function.
@@ -133,37 +133,37 @@ struct Packer<T>
  * serilization implementation for all argument types in the argument
  * list.
  *
- * The serializer is is always left at position 0.
+ * The serialiser is is always left at position 0.
  */
 template <typename S, typename... arguments>
-void PackCall(S &serializer, ProtocolHandlerType const &protocol,
+void PackCall(S &serialiser, ProtocolHandlerType const &protocol,
               FunctionHandlerType const &function, arguments &&... args)
 {
-  serializer << protocol;
-  serializer << function;
+  serialiser << protocol;
+  serialiser << function;
 
-  details::Packer<arguments...>::SerializeArguments(serializer, std::forward<arguments>(args)...);
+  details::Packer<arguments...>::SerialiseArguments(serialiser, std::forward<arguments>(args)...);
 }
 
 /* This function is the no-argument packer.
- * @serializer is the serializer to which the arguments will be packed.
+ * @serialiser is the serialiser to which the arguments will be packed.
  * @protocol is the protocol the call belongs to.
  * @function is the function that is being called.
  *
  * This function covers the case where no arguments are given. The
- * serializer is is always left at position 0.
+ * serialiser is is always left at position 0.
  */
 template <typename S>
-void PackCall(S &serializer, ProtocolHandlerType const &protocol,
+void PackCall(S &serialiser, ProtocolHandlerType const &protocol,
               FunctionHandlerType const &function)
 {
-  serializer << protocol;
-  serializer << function;
-  serializer.seek(0);
+  serialiser << protocol;
+  serialiser << function;
+  serialiser.seek(0);
 }
 
 /* This function packs a function call using packed arguments.
- * @serializer is the serializer to which the arguments will be packed.
+ * @serialiser is the serialiser to which the arguments will be packed.
  * @protocol is the protocol the call belongs to.
  * @function is the function that is being called.
  * @args is the packed arguments.
@@ -171,43 +171,43 @@ void PackCall(S &serializer, ProtocolHandlerType const &protocol,
  * This function can be used to pack aguments with out the need of
  * vadariac arguments.
  *
- * The serializer is left at position 0.
+ * The serialiser is left at position 0.
  */
 template <typename S>
-void PackCallWithPackedArguments(S &serializer, ProtocolHandlerType const &protocol,
+void PackCallWithPackedArguments(S &serialiser, ProtocolHandlerType const &protocol,
                                  FunctionHandlerType const &  function,
                                  byte_array::ByteArray const &args)
 {
-  serializer << protocol;
-  serializer << function;
+  serialiser << protocol;
+  serialiser << function;
 
-  serializer.Allocate(args.size());
-  serializer.WriteBytes(args.pointer(), args.size());
-  serializer.seek(0);
+  serialiser.Allocate(args.size());
+  serialiser.WriteBytes(args.pointer(), args.size());
+  serialiser.seek(0);
 }
 
-/* Function that packs arguments to serializer.
- * @serializer is the serializer to which the arguments will be packed.
+/* Function that packs arguments to serialiser.
+ * @serialiser is the serialiser to which the arguments will be packed.
  * @args are the arguments to the function.
  *
- * Serializers for all arguments in the argument list are requried.
+ * Serialisers for all arguments in the argument list are requried.
  */
 template <typename S, typename... arguments>
-void PackArgs(S &serializer, arguments &&... args)
+void PackArgs(S &serialiser, arguments &&... args)
 {
-  details::Packer<arguments...>::SerializeArguments(serializer, std::forward<arguments>(args)...);
+  details::Packer<arguments...>::SerialiseArguments(serialiser, std::forward<arguments>(args)...);
 }
 
 /* This is the no-argument packer.
- * @serializer is the serializer to which the arguments will be packed.
+ * @serialiser is the serialiser to which the arguments will be packed.
  *
  * This function covers the case where no arguments are given. The
- * serializer is is always left at position 0.
+ * serialiser is is always left at position 0.
  */
 template <typename S>
-void PackArgs(S &serializer)
+void PackArgs(S &serialiser)
 {
-  serializer.seek(0);
+  serialiser.seek(0);
 }
 
 enum Callable
@@ -255,12 +255,12 @@ public:
   virtual ~AbstractCallable() = default;
 
   /* Call operator that implements deserialization and invocation of function.
-   * @result is a serializer used to serialize the result.
-   * @params is a serializer that is used to deserialize the arguments.
+   * @result is a serialiser used to serialise the result.
+   * @params is a serialiser that is used to deserialise the arguments.
    */
-  virtual void operator()(SerializerType &result, SerializerType &params) = 0;
-  virtual void operator()(SerializerType &result, CallableArgumentList const &additional_args,
-                          SerializerType &params)                         = 0;
+  virtual void operator()(SerialiserType &result, SerialiserType &params) = 0;
+  virtual void operator()(SerialiserType &result, CallableArgumentList const &additional_args,
+                          SerialiserType &params)                         = 0;
 
   uint64_t meta_data() const
   {

@@ -82,9 +82,9 @@ T ChooseRandomlyFrom(T &container, std::size_t items)
 
 char const *ToString(BeaconService::State state);
 
-// Since it is annoying to serialize the state, an enum,
+// Since it is annoying to serialise the state, an enum,
 // we create a wrapper for serializing the beacon service
-struct BeaconServiceSerializeWrapper
+struct BeaconServiceSerialiseWrapper
 {
   BeaconService &beacon_service;
   uint16_t       current_state{0};
@@ -221,7 +221,7 @@ void BeaconService::SaveState()
   try
   {
     saved_state_.Set(
-        BeaconServiceSerializeWrapper{*this, static_cast<uint16_t>(state_machine_->state())});
+        BeaconServiceSerialiseWrapper{*this, static_cast<uint16_t>(state_machine_->state())});
   }
   catch (std::exception const &ex)
   {
@@ -253,7 +253,7 @@ void BeaconService::ReloadState(State &next_state)
 
     FETCH_LOG_INFO(LOGGING_NAME, "Loaded signatures. Attemping loading of the rest of the class.");
 
-    BeaconServiceSerializeWrapper wrapper{*this, 0};
+    BeaconServiceSerialiseWrapper wrapper{*this, 0};
 
     saved_state_.Get(wrapper);
 
@@ -261,7 +261,7 @@ void BeaconService::ReloadState(State &next_state)
 
     FETCH_LOG_INFO(LOGGING_NAME, "After re-load state is: ", wrapper.current_state);
 
-    // Note, since certificates are not serialized, we must set the beacon managers in the aeon
+    // Note, since certificates are not serialised, we must set the beacon managers in the aeon
     // to have the correct one
     if (active_exe_unit_)
     {
@@ -804,13 +804,13 @@ char const *ToString(BeaconService::State state)
 
 }  // namespace beacon
 
-// We put this serializer in the cpp since it is serializing itself
-namespace serializers {
+// We put this serialiser in the cpp since it is serializing itself
+namespace serialisers {
 
-// Note that this serializer saves the current state, and on deser will
+// Note that this serialiser saves the current state, and on deser will
 // populate state_after_reload_
 template <typename D>
-struct MapSerializer<beacon::BeaconService, D>
+struct MapSerialiser<beacon::BeaconService, D>
 {
 public:
   using Type       = beacon::BeaconService;
@@ -822,7 +822,7 @@ public:
   static uint8_t const BLOCK_ENTROPY_BEING_CREATED = 4;
 
   template <typename Constructor>
-  static void Serialize(Constructor &map_constructor, Type const &beacon_service)
+  static void Serialise(Constructor &map_constructor, Type const &beacon_service)
   {
     auto map = map_constructor(4);
     map.Append(ACTIVE_EXE_UNIT, beacon_service.active_exe_unit_);
@@ -831,8 +831,8 @@ public:
     map.Append(BLOCK_ENTROPY_BEING_CREATED, beacon_service.block_entropy_being_created_);
   }
 
-  template <typename MapDeserializer>
-  static void Deserialize(MapDeserializer &map, Type &beacon_service)
+  template <typename MapDeserialiser>
+  static void Deserialise(MapDeserialiser &map, Type &beacon_service)
   {
     map.ExpectKeyGetValue(ACTIVE_EXE_UNIT, beacon_service.active_exe_unit_);
     map.ExpectKeyGetValue(AEON_EXE_QUEUE, beacon_service.aeon_exe_queue_);
@@ -843,31 +843,31 @@ public:
 };
 
 template <typename D>
-struct MapSerializer<beacon::BeaconServiceSerializeWrapper, D>
+struct MapSerialiser<beacon::BeaconServiceSerialiseWrapper, D>
 {
 public:
-  using Type       = beacon::BeaconServiceSerializeWrapper;
+  using Type       = beacon::BeaconServiceSerialiseWrapper;
   using DriverType = D;
 
   static uint8_t const BEACON_SERVICE = 1;
   static uint8_t const CURRENT_STATE  = 2;
 
   template <typename Constructor>
-  static void Serialize(Constructor &map_constructor, Type const &wrapper)
+  static void Serialise(Constructor &map_constructor, Type const &wrapper)
   {
     auto map = map_constructor(2);
     map.Append(BEACON_SERVICE, wrapper.beacon_service);
     map.Append(CURRENT_STATE, wrapper.current_state);
   }
 
-  template <typename MapDeserializer>
-  static void Deserialize(MapDeserializer &map, Type &wrapper)
+  template <typename MapDeserialiser>
+  static void Deserialise(MapDeserialiser &map, Type &wrapper)
   {
     map.ExpectKeyGetValue(BEACON_SERVICE, wrapper.beacon_service);
     map.ExpectKeyGetValue(CURRENT_STATE, wrapper.current_state);
   }
 };
 
-}  // namespace serializers
+}  // namespace serialisers
 
 }  // namespace fetch

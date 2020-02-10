@@ -347,13 +347,13 @@ void AddStringToParameterPack(vm::VM *vm, vm::ParameterPack &pack, variant::Vari
 void AddStructuredDataObjectToParameterPack(vm::VM *vm, vm::TypeId expected_type_id,
                                             vm::ParameterPack &pack, variant::Variant const &obj)
 {
-  if (!vm->IsDefaultSerializeConstructable(expected_type_id))
+  if (!vm->IsDefaultSerialiseConstructable(expected_type_id))
   {
     throw std::runtime_error("Type is not constructable: " + vm->GetTypeName(expected_type_id));
   }
 
   // Creating a new object and deserialise
-  vm::Ptr<vm::Object> object = vm->DefaultSerializeConstruct(expected_type_id);
+  vm::Ptr<vm::Object> object = vm->DefaultSerialiseConstruct(expected_type_id);
   object->FromJSON(obj);
 
   if (!pack.Add(object))
@@ -373,7 +373,7 @@ void AddStructuredDataObjectToParameterPack(vm::VM *vm, vm::TypeId expected_type
                                             vm::ParameterPack & /*pack*/,
                                             msgpack::object const & /*obj*/)
 {
-  if (!vm->IsDefaultSerializeConstructable(expected_type_id))
+  if (!vm->IsDefaultSerialiseConstructable(expected_type_id))
   {
     throw std::runtime_error("Type is not constructable: " + vm->GetTypeName(expected_type_id));
   }

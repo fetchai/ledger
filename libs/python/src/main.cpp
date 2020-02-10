@@ -35,7 +35,7 @@ PYBIND11_MODULE(fetch, module)
   py::module ns_fetch_random     = module.def_submodule("random");
   py::module ns_fetch_basic      = module.def_submodule("basic");
   py::module ns_fetch_byte_array = module.def_submodule("byte_array");
-  py::module ns_fetch_serializer = module.def_submodule("serializers");
+  py::module ns_fetch_serialiser = module.def_submodule("serialisers");
 
   fetch::memory::BuildArray<int8_t>("ArrayInt8", ns_fetch_basic);
   fetch::memory::BuildArray<int16_t>("ArrayInt16", ns_fetch_basic);

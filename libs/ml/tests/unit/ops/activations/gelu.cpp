@@ -16,10 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/serializers/main_serializer_definition.hpp"
+#include "core/serialisers/main_serialiser_definition.hpp"
 #include "gtest/gtest.h"
 #include "ml/ops/activations/gelu.hpp"
-#include "ml/serializers/ml_types.hpp"
+#include "ml/serialisers/ml_types.hpp"
 #include "test_types.hpp"
 #include <vector>
 
@@ -108,11 +108,11 @@ TYPED_TEST(GeluTest, saveparams_test)
   // downcast to correct type
   auto dsp = std::static_pointer_cast<SPType>(sp);
 
-  // serialize
-  fetch::serializers::MsgPackSerializer b;
+  // serialise
+  fetch::serialisers::MsgPackSerialiser b;
   b << *dsp;
 
-  // deserialize
+  // deserialise
   b.seek(0);
   auto dsp2 = std::make_shared<SPType>();
   b >> *dsp2;
@@ -159,14 +159,14 @@ TYPED_TEST(GeluTest, saveparams_backward_3d_test)
   // downcast to correct type
   auto dsp = std::dynamic_pointer_cast<SPType>(sp);
 
-  // serialize
-  fetch::serializers::MsgPackSerializer b;
+  // serialise
+  fetch::serialisers::MsgPackSerialiser b;
   b << *dsp;
 
   // make another prediction with the original op
   prediction = op.Backward({std::make_shared<const TensorType>(data)}, error);
 
-  // deserialize
+  // deserialise
   b.seek(0);
   auto dsp2 = std::make_shared<SPType>();
   b >> *dsp2;

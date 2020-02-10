@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "ml/optimisation/types.hpp"
-#include "ml/serializers/model_config.hpp"
+#include "ml/serialisers/model_config.hpp"
 
 namespace fetch {
 namespace ml {

@@ -28,7 +28,7 @@
 namespace fetch {
 namespace testing {
 
-// Since the stacks do not serialize, use this class to make testing using strings easier
+// Since the stacks do not serialise, use this class to make testing using strings easier
 class StringProxy
 {
 public:

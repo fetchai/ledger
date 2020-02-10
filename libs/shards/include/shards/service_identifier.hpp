@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/serializers/group_definitions.hpp"
+#include "core/serialisers/group_definitions.hpp"
 
 #include <cstdint>
 #include <limits>
@@ -62,7 +62,7 @@ private:
   uint32_t instance_{SINGLETON_SERVICE};
 
   template <typename T, typename D>
-  friend struct serializers::MapSerializer;
+  friend struct serialisers::MapSerialiser;
 };
 
 inline ServiceIdentifier::Type ServiceIdentifier::type() const
@@ -79,10 +79,10 @@ char const *ToString(ServiceIdentifier::Type type);
 
 }  // namespace shards
 
-namespace serializers {
+namespace serialisers {
 
 template <typename D>
-struct MapSerializer<shards::ServiceIdentifier, D>
+struct MapSerialiser<shards::ServiceIdentifier, D>
 {
 public:
   using DriverType = D;
@@ -92,7 +92,7 @@ public:
   static const uint8_t INSTANCE = 2;
 
   template <typename T>
-  static inline void Serialize(T &map_constructor, Type const &x)
+  static inline void Serialise(T &map_constructor, Type const &x)
   {
     auto map = map_constructor(2);
     map.Append(TYPE, static_cast<uint8_t>(x.type_));
@@ -100,7 +100,7 @@ public:
   }
 
   template <typename T>
-  static inline void Deserialize(T &map, Type &x)
+  static inline void Deserialise(T &map, Type &x)
   {
     uint8_t raw_type{0};
 
@@ -111,7 +111,7 @@ public:
   }
 };
 
-}  // namespace serializers
+}  // namespace serialisers
 }  // namespace fetch
 
 namespace std {

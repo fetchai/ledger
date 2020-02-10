@@ -34,7 +34,7 @@ namespace fetch {
 namespace storage {
 
 /**
- * DocumentStore maps keys to serialized data (documents) which is stored on
+ * DocumentStore maps keys to serialised data (documents) which is stored on
  * your filesystem
  *
  * To do this it maintains two files, a file that stores a mapping of the keys
@@ -196,7 +196,7 @@ public:
   /**
    * STL-like functionality achieved with an iterator class. This has to wrap an
    * iterator to the
-   * key value store since we need to deserialize at this level to return the
+   * key value store since we need to deserialise at this level to return the
    * object
    */
   class Iterator

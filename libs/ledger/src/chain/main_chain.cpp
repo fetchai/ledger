@@ -16,7 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "chain/transaction_layout_rpc_serializers.hpp"
+#include "chain/transaction_layout_rpc_serialisers.hpp"
 #include "chain/transaction_validity_period.hpp"
 #include "core/assert.hpp"
 #include "core/byte_array/byte_array.hpp"
@@ -1017,7 +1017,7 @@ void MainChain::RecoverFromFile(Mode mode)
   assert(mode == Mode::LOAD_PERSISTENT_DB);
   if (Mode::LOAD_PERSISTENT_DB == mode)
   {
-    using namespace fetch::serializers;
+    using namespace fetch::serialisers;
 
     block_store_->Load("chain.db", "chain.index.db");
     head_store_.open("chain.head.db", std::ios::binary | std::ios::in | std::ios::out);
@@ -1030,7 +1030,7 @@ void MainChain::RecoverFromFile(Mode mode)
       {
         byte_array::ByteArray bloom_filter_data{in};
 
-        LargeObjectSerializeHelper buffer{bloom_filter_data};
+        LargeObjectSerialiseHelper buffer{bloom_filter_data};
 
         buffer >> bloom_filter_;
       }
@@ -2053,7 +2053,7 @@ DigestSet MainChain::DetectDuplicateTransactions(BlockHash const &           sta
 
 void MainChain::FlushToDisk(bool flush_bloom)
 {
-  using namespace fetch::serializers;
+  using namespace fetch::serialisers;
 
   if (block_store_)
   {
@@ -2065,7 +2065,7 @@ void MainChain::FlushToDisk(bool flush_bloom)
     try
     {
       std::ofstream out(BLOOM_FILTER_STORE, std::ios::binary | std::ios::out | std::ios::trunc);
-      LargeObjectSerializeHelper buffer{};
+      LargeObjectSerialiseHelper buffer{};
       buffer << bloom_filter_;
 
       out << buffer.data();

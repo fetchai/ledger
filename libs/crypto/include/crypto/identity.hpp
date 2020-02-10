@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/byte_array.hpp"
-#include "core/serializers/group_definitions.hpp"
+#include "core/serialisers/group_definitions.hpp"
 #include "crypto/fnv.hpp"
 #include "crypto/openssl_common.hpp"
 #include "crypto/signature_register.hpp"
@@ -115,9 +115,9 @@ private:
 
 }  // namespace crypto
 
-namespace serializers {
+namespace serialisers {
 template <typename D>
-struct MapSerializer<crypto::Identity, D>
+struct MapSerialiser<crypto::Identity, D>
 {
 public:
   using Type       = crypto::Identity;
@@ -127,15 +127,15 @@ public:
   static uint8_t const PARAMS = 2;
 
   template <typename Constructor>
-  static void Serialize(Constructor &map_constructor, Type const &data)
+  static void Serialise(Constructor &map_constructor, Type const &data)
   {
     auto map = map_constructor(2);
     map.Append(ID, data.identifier());
     map.Append(PARAMS, data.parameters());
   }
 
-  template <typename MapDeserializer>
-  static void Deserialize(MapDeserializer &map, Type &data)
+  template <typename MapDeserialiser>
+  static void Deserialise(MapDeserialiser &map, Type &data)
   {
     byte_array::ByteArray id;
     uint8_t               params;
@@ -151,7 +151,7 @@ public:
     }
   }
 };
-}  // namespace serializers
+}  // namespace serialisers
 
 }  // namespace fetch
 

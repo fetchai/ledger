@@ -20,7 +20,7 @@
 #include "ml/optimisation/optimiser.hpp"
 
 namespace fetch {
-namespace serializers {
+namespace serialisers {
 
 template <class TensorType>
 struct AdamOptimiserSerialiser;
@@ -63,7 +63,7 @@ public:
   void ApplyGradients(SizeType batch_size) override;
 
   template <typename X, typename D>
-  friend struct serializers::MapSerializer;
+  friend struct serialisers::MapSerialiser;
 
   inline OptimiserType OptimiserCode() override
   {
@@ -71,7 +71,7 @@ public:
   }
 
   template <class OtherTensorType>
-  friend struct serializers::AdamOptimiserSerialiser;
+  friend struct serialisers::AdamOptimiserSerialiser;
 
 protected:
   std::vector<TensorType> cache_;

@@ -17,7 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "chain/address.hpp"
-#include "core/serializers/main_serializer.hpp"
+#include "core/serialisers/main_serialiser.hpp"
 #include "crypto/ecdsa.hpp"
 #include "digest_matcher.hpp"
 #include "gtest/gtest.h"
@@ -47,7 +47,7 @@ using fetch::muddle::NetworkId;
 using fetch::ledger::testing::BlockGenerator;
 using fetch::ledger::MainChainProtocol;
 using fetch::chain::GetGenesisDigest;
-using fetch::serializers::LargeObjectSerializeHelper;
+using fetch::serialisers::LargeObjectSerialiseHelper;
 using fetch::ledger::ConsensusInterface;
 using fetch::ledger::TravelogueStatus;
 using fetch::ledger::testing::DigestMatcher;
@@ -70,12 +70,12 @@ std::shared_ptr<T> CreateNonOwning(T &value)
 template <typename T>
 fetch::network::PromiseOf<T> CreatePromise(T const &item)
 {
-  LargeObjectSerializeHelper serializer;
-  serializer << item;
+  LargeObjectSerialiseHelper serialiser;
+  serialiser << item;
 
   // populate a successful promise
   auto prom = fetch::service::MakePromise();
-  prom->Fulfill(serializer.data());
+  prom->Fulfill(serialiser.data());
 
   return fetch::network::PromiseOf<T>{prom};
 }

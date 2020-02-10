@@ -17,7 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "chain/transaction.hpp"
-#include "chain/transaction_serializer.hpp"
+#include "chain/transaction_serialiser.hpp"
 #include "chain/transaction_validity_period.hpp"
 #include "crypto/verifier.hpp"
 
@@ -57,7 +57,7 @@ bool Transaction::Verify()
     verified_ = false;
 
     // generate the payload for this transaction
-    ConstByteArray payload = TransactionSerializer::SerializePayload(*this);
+    ConstByteArray payload = TransactionSerialiser::SerialisePayload(*this);
 
     // ensure that there are some signatories (otherwise it is invalid)
     if (!signatories_.empty())

@@ -17,13 +17,13 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/serializers/exception.hpp"
+#include "core/serialisers/exception.hpp"
 
 namespace fetch {
 namespace service {
 namespace error {
 
-using ErrorType = serializers::error::ErrorType;
+using ErrorType = serialisers::error::ErrorType;
 
 ErrorType const ERROR_SERVICE_PROTOCOL = 1 << 16;  // TODO(issue 11): move to global place
 ErrorType const USER_ERROR             = 0 | ERROR_SERVICE_PROTOCOL;

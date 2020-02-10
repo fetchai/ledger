@@ -19,7 +19,7 @@
 
 #include "chain/common_types.hpp"
 #include "core/byte_array/const_byte_array.hpp"
-#include "core/serializers/main_serializer.hpp"
+#include "core/serialisers/main_serialiser.hpp"
 
 namespace fetch {
 
@@ -60,10 +60,10 @@ struct DAGHash
 };
 }  // namespace ledger
 
-namespace serializers {
+namespace serialisers {
 
 template <typename D>
-struct MapSerializer<ledger::DAGHash, D>
+struct MapSerialiser<ledger::DAGHash, D>
 {
 public:
   using Type       = ledger::DAGHash;
@@ -73,15 +73,15 @@ public:
   static uint8_t const TYPE = 2;
 
   template <typename Constructor>
-  static void Serialize(Constructor &map_constructor, Type const &node)
+  static void Serialise(Constructor &map_constructor, Type const &node)
   {
     auto map = map_constructor(2);
     map.Append(HASH, node.hash);
     map.Append(TYPE, static_cast<int8_t>(node.type));
   }
 
-  template <typename MapDeserializer>
-  static void Deserialize(MapDeserializer &map, Type &node)
+  template <typename MapDeserialiser>
+  static void Deserialise(MapDeserialiser &map, Type &node)
   {
     map.ExpectKeyGetValue(HASH, node.hash);
     int8_t type;
@@ -89,7 +89,7 @@ public:
     node.type = static_cast<Type::Type>(node.type);
   }
 };
-}  // namespace serializers
+}  // namespace serialisers
 
 }  // namespace fetch
 

@@ -19,7 +19,7 @@
 
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/byte_array/encoders.hpp"
-#include "core/serializers/group_definitions.hpp"
+#include "core/serialisers/group_definitions.hpp"
 #include "network/peer.hpp"
 
 #include <cassert>
@@ -88,7 +88,7 @@ public:
   std::string ToString() const;
 
   template <typename T, typename D>
-  friend struct serializers::MapSerializer;
+  friend struct serialisers::MapSerialiser;
 
   friend std::ostream &operator<<(std::ostream &stream, Uri const &uri);
   friend std::istream &operator>>(std::istream &stream, Uri &uri);
@@ -132,10 +132,10 @@ inline bool Uri::operator<(Uri const &other) const
 
 }  // namespace network
 
-namespace serializers {
+namespace serialisers {
 
 template <typename D>
-struct MapSerializer<network::Uri, D>  // TODO(issue 1423): Change to forward serializer
+struct MapSerialiser<network::Uri, D>  // TODO(issue 1423): Change to forward serialiser
 {
 public:
   using DriverType = D;
@@ -144,26 +144,26 @@ public:
   static const uint8_t URI = 1;
 
   template <typename T>
-  static void Serialize(T &map_constructor, Type const &x)
+  static void Serialise(T &map_constructor, Type const &x)
   {
     auto map = map_constructor(1);
     map.Append(URI, x.uri_);
   }
 
   template <typename T>
-  static void Deserialize(T &map, Type &x)
+  static void Deserialise(T &map, Type &x)
   {
     byte_array::ConstByteArray uri;
     map.ExpectKeyGetValue(URI, uri);
 
     if (!x.Parse(uri))
     {
-      throw std::runtime_error("Failed to deserialize uri");
+      throw std::runtime_error("Failed to deserialise uri");
     }
   }
 };
 
-}  // namespace serializers
+}  // namespace serialisers
 }  // namespace fetch
 
 template <>

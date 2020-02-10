@@ -34,7 +34,7 @@ namespace vm_modules {
 void ByteArrayWrapper::Bind(Module &module)
 {
   module.CreateClassType<ByteArrayWrapper>("Buffer")
-      .CreateSerializeDefaultConstructor(
+      .CreateSerialiseDefaultConstructor(
           [](VM *vm, TypeId type_id) { return ByteArrayWrapper::Constructor(vm, type_id, 0); })
       .CreateConstructor(static_cast<Ptr<ByteArrayWrapper> (*)(VM *, TypeId, int32_t)>(
           &ByteArrayWrapper::Constructor))
@@ -254,13 +254,13 @@ ConstByteArray const &ByteArrayWrapper::byte_array() const
   return byte_array_;
 }
 
-bool ByteArrayWrapper::SerializeTo(serializers::MsgPackSerializer &buffer)
+bool ByteArrayWrapper::SerialiseTo(serialisers::MsgPackSerialiser &buffer)
 {
   buffer << byte_array_;
   return true;
 }
 
-bool ByteArrayWrapper::DeserializeFrom(serializers::MsgPackSerializer &buffer)
+bool ByteArrayWrapper::DeserialiseFrom(serialisers::MsgPackSerialiser &buffer)
 {
   buffer >> byte_array_;
   return true;

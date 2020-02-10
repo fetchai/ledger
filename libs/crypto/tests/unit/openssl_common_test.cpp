@@ -62,14 +62,14 @@ protected:
     ASSERT_GT(ECDSAAffineCoordinatesConversion<>::y_size,
               static_cast<std::size_t>(BN_num_bytes(y.get())));
 
-    auto serialized_to_ba = ECDSAAffineCoordinatesConversion<>::Convert2Canonical(x.get(), y.get());
+    auto serialised_to_ba = ECDSAAffineCoordinatesConversion<>::Convert2Canonical(x.get(), y.get());
     EXPECT_EQ(ECDSAAffineCoordinatesConversion<>::EcdsaCurveType::publicKeySize,
-              serialized_to_ba.size());
+              serialised_to_ba.size());
 
     SharedPointerType<BIGNUM> x2{BN_new()};
     SharedPointerType<BIGNUM> y2{BN_new()};
 
-    ECDSAAffineCoordinatesConversion<>::ConvertFromCanonical(serialized_to_ba, x2.get(), y2.get());
+    ECDSAAffineCoordinatesConversion<>::ConvertFromCanonical(serialised_to_ba, x2.get(), y2.get());
 
     EXPECT_EQ(0, BN_cmp(x.get(), x2.get()));
     EXPECT_EQ(0, BN_cmp(y.get(), y2.get()));

@@ -543,8 +543,8 @@ void KademliaTable::Load()
   // Deserializing
   try
   {
-    serializers::LargeObjectSerializeHelper serializer(buffer);
-    serializer >> *this;
+    serialisers::LargeObjectSerialiseHelper serialiser(buffer);
+    serialiser >> *this;
   }
   catch (std::exception const &e)
   {
@@ -564,12 +564,12 @@ void KademliaTable::Dump()
   // Dumping table to file.
   if (stream)
   {
-    serializers::LargeObjectSerializeHelper serializer{};
+    serialisers::LargeObjectSerialiseHelper serialiser{};
 
     FETCH_LOG_DEBUG("KademliaTable", "Dumping table.");
-    serializer << *this;
+    serialiser << *this;
 
-    auto buffer = serializer.data();
+    auto buffer = serialiser.data();
     stream << buffer;
 
     stream.close();

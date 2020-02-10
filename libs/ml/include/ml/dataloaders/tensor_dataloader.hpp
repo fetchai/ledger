@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/serializers/group_definitions.hpp"
+#include "core/serialisers/group_definitions.hpp"
 #include "ml/dataloaders/dataloader.hpp"
 #include "ml/meta/ml_type_traits.hpp"
 
@@ -51,7 +51,7 @@ public:
   void SetValidationRatio(fixed_point::fp32_t new_validation_ratio) override;
 
   template <typename X, typename D>
-  friend struct fetch::serializers::MapSerializer;
+  friend struct fetch::serialisers::MapSerialiser;
 
   LoaderType LoaderCode() override
   {
@@ -94,14 +94,14 @@ protected:
 }  // namespace dataloaders
 }  // namespace ml
 
-namespace serializers {
+namespace serialisers {
 
 /**
- * serializer for tensor dataloader
+ * serialiser for tensor dataloader
  * @tparam TensorType
  */
 template <typename TensorType, typename D>
-struct MapSerializer<fetch::ml::dataloaders::TensorDataLoader<TensorType>, D>
+struct MapSerialiser<fetch::ml::dataloaders::TensorDataLoader<TensorType>, D>
 {
   using Type       = fetch::ml::dataloaders::TensorDataLoader<TensorType>;
   using DriverType = D;
@@ -131,11 +131,11 @@ struct MapSerializer<fetch::ml::dataloaders::TensorDataLoader<TensorType>, D>
   static uint8_t const VALIDATION_COUNT = 21;
 
   template <typename Constructor>
-  static void Serialize(Constructor &map_constructor, Type const &sp)
+  static void Serialise(Constructor &map_constructor, Type const &sp)
   {
     auto map = map_constructor(21);
 
-    // serialize parent class first
+    // serialise parent class first
     auto dl_pointer = static_cast<ml::dataloaders::DataLoader<TensorType> const *>(&sp);
     map.Append(BASE_DATA_LOADER, *(dl_pointer));
 
@@ -167,8 +167,8 @@ struct MapSerializer<fetch::ml::dataloaders::TensorDataLoader<TensorType>, D>
     map.Append(VALIDATION_COUNT, *sp.validation_count_);
   }
 
-  template <typename MapDeserializer>
-  static void Deserialize(MapDeserializer &map, Type &sp)
+  template <typename MapDeserialiser>
+  static void Deserialise(MapDeserialiser &map, Type &sp)
   {
     auto dl_pointer = static_cast<ml::dataloaders::DataLoader<TensorType> *>(&sp);
     map.ExpectKeyGetValue(BASE_DATA_LOADER, (*dl_pointer));
@@ -203,6 +203,6 @@ struct MapSerializer<fetch::ml::dataloaders::TensorDataLoader<TensorType>, D>
   }
 };
 
-}  // namespace serializers
+}  // namespace serialisers
 
 }  // namespace fetch

@@ -152,13 +152,13 @@ constexpr ExecutionStatusCategory Categorise(ContractExecutionStatus status)
 }
 
 template <typename T>
-void Serialize(T &stream, ContractExecutionStatus const &status)
+void Serialise(T &stream, ContractExecutionStatus const &status)
 {
   stream << static_cast<int>(status);
 }
 
 template <typename T>
-void Deserialize(T &stream, ContractExecutionStatus &status)
+void Deserialise(T &stream, ContractExecutionStatus &status)
 {
   int raw_status{0};
   stream >> raw_status;
@@ -166,13 +166,13 @@ void Deserialize(T &stream, ContractExecutionStatus &status)
 }
 
 template <typename T>
-void Serialize(T &stream, ContractExecutionResult const &result)
+void Serialise(T &stream, ContractExecutionResult const &result)
 {
   stream.Append(result.status, result.charge, result.charge_rate, result.fee, result.return_value);
 }
 
 template <typename T>
-void Deserialize(T &stream, ContractExecutionResult &result)
+void Deserialise(T &stream, ContractExecutionResult &result)
 {
   stream >> result.status >> result.charge >> result.charge_rate >> result.fee >>
       result.return_value;

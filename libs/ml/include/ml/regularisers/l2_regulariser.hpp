@@ -42,14 +42,14 @@ public:
 }  // namespace regularisers
 }  // namespace ml
 
-namespace serializers {
+namespace serialisers {
 
 /**
- * serializer for regularisers
+ * serialiser for regularisers
  * @tparam TensorType
  */
 template <typename TensorType, typename D>
-struct MapSerializer<ml::regularisers::L2Regulariser<TensorType>, D>
+struct MapSerialiser<ml::regularisers::L2Regulariser<TensorType>, D>
 {
   using Type       = ml::regularisers::L2Regulariser<TensorType>;
   using DriverType = D;
@@ -57,20 +57,20 @@ struct MapSerializer<ml::regularisers::L2Regulariser<TensorType>, D>
   static uint8_t const REG_TYPE = 1;
 
   template <typename Constructor>
-  static void Serialize(Constructor &map_constructor, Type const &sp)
+  static void Serialise(Constructor &map_constructor, Type const &sp)
   {
     auto map = map_constructor(1);
     map.Append(REG_TYPE, static_cast<uint8_t>(sp.GetRegType()));
   }
 
-  template <typename MapDeserializer>
-  static void Deserialize(MapDeserializer &map, Type &sp)
+  template <typename MapDeserialiser>
+  static void Deserialise(MapDeserialiser &map, Type &sp)
   {
     FETCH_UNUSED(map);
     FETCH_UNUSED(sp);
   }
 };
 
-}  // namespace serializers
+}  // namespace serialisers
 
 }  // namespace fetch

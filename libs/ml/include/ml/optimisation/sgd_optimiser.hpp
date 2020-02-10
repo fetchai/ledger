@@ -49,7 +49,7 @@ public:
   ~SGDOptimiser() override = default;
 
   template <typename X, typename D>
-  friend struct serializers::MapSerializer;
+  friend struct serialisers::MapSerialiser;
 
   inline OptimiserType OptimiserCode() override
   {
@@ -65,17 +65,17 @@ private:
 }  // namespace optimisers
 }  // namespace ml
 
-namespace serializers {
+namespace serialisers {
 /**
- * serializer for SGDOptimiser
+ * serialiser for SGDOptimiser
  * @tparam TensorType
  */
 template <typename TensorType, typename D>
-struct MapSerializer<ml::optimisers::SGDOptimiser<TensorType>, D>
-  : MapSerializerBoilerplate<ml::optimisers::SGDOptimiser<TensorType>, D,
-                             SimplySerializedAs<1, ml::optimisers::Optimiser<TensorType>>>
+struct MapSerialiser<ml::optimisers::SGDOptimiser<TensorType>, D>
+  : MapSerialiserBoilerplate<ml::optimisers::SGDOptimiser<TensorType>, D,
+                             SimplySerialisedAs<1, ml::optimisers::Optimiser<TensorType>>>
 {
 };
 
-}  // namespace serializers
+}  // namespace serialisers
 }  // namespace fetch

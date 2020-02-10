@@ -111,13 +111,13 @@ public:
 
   ChargeAmount Predict(vm::Ptr<vm_modules::math::VMTensor> const &data);
 
-  ChargeAmount SerializeToString();
+  ChargeAmount SerialiseToString();
 
-  ChargeAmount DeserializeFromString(fetch::vm::Ptr<fetch::vm::String> const &model_string);
+  ChargeAmount DeserialiseFromString(fetch::vm::Ptr<fetch::vm::String> const &model_string);
 
-  bool SerializeTo(serializers::MsgPackSerializer &buffer);
+  bool SerialiseTo(serialisers::MsgPackSerialiser &buffer);
 
-  bool DeserializeFrom(serializers::MsgPackSerializer &buffer);
+  bool DeserialiseFrom(serialisers::MsgPackSerialiser &buffer);
 
   SizeType GetPaddedSizesSum();
   SizeType GetSizesSum();
@@ -215,8 +215,8 @@ private:
     SizeType subset_size{0};
 
     // serialization
-    bool SerializeTo(serializers::MsgPackSerializer &buffer);
-    bool DeserializeFrom(serializers::MsgPackSerializer &buffer);
+    bool SerialiseTo(serialisers::MsgPackSerialiser &buffer);
+    bool DeserialiseFrom(serialisers::MsgPackSerialiser &buffer);
   };
 
   VMObjectType &model_;

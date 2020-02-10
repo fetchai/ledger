@@ -202,7 +202,7 @@ MessengerPrototype::MessageList MessengerPrototype::GetMessages(uint64_t wait)
 void MessengerPrototype::OnNewMessagePacket(muddle::Packet const &packet,
                                             Address const & /*last_hop*/)
 {
-  fetch::serializers::MsgPackSerializer serialiser(packet.GetPayload());
+  fetch::serialisers::MsgPackSerialiser serialiser(packet.GetPayload());
 
   try
   {

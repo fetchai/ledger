@@ -17,7 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "chain/address.hpp"
-#include "core/serializers/main_serializer.hpp"
+#include "core/serialisers/main_serialiser.hpp"
 
 #include "gtest/gtest.h"
 
@@ -26,14 +26,14 @@
 #include <cstdint>
 
 namespace fetch {
-namespace serializers {
+namespace serialisers {
 
 namespace {
 
 using namespace fetch::chain;
 using namespace fetch::byte_array;
 
-TEST(LedgerSerializers, address)
+TEST(LedgerSerialisers, address)
 {
   std::array<uint8_t, 32> raw_address{};
   for (std::size_t i = 0; i < raw_address.size(); ++i)
@@ -43,7 +43,7 @@ TEST(LedgerSerializers, address)
   Address a{raw_address};
   Address b;
 
-  MsgPackSerializer stream;
+  MsgPackSerialiser stream;
   stream << a;
   stream.seek(0);
   stream >> b;
@@ -52,5 +52,5 @@ TEST(LedgerSerializers, address)
 
 }  // namespace
 
-}  // namespace serializers
+}  // namespace serialisers
 }  // namespace fetch

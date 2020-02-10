@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/const_byte_array.hpp"
-#include "core/serializers/main_serializer_definition.hpp"
+#include "core/serialisers/main_serialiser_definition.hpp"
 #include "ledger/chaincode/smart_contract_manager.hpp"
 #include "ledger/chaincode/smart_contract_wrapper.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
@@ -39,7 +39,7 @@ auto CreateSmartContract(chain::Address const &contract_address, StorageInterfac
 
   if (!resource.failed)
   {
-    serializers::MsgPackSerializer buffer{resource.document};
+    serialisers::MsgPackSerialiser buffer{resource.document};
     SmartContractWrapper           document{};
     buffer >> document;
 

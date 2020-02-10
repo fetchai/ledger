@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "chain/address.hpp"
-#include "core/serializers/main_serializer.hpp"
+#include "core/serialisers/main_serialiser.hpp"
 #include "crypto/identity.hpp"
 #include "ledger/chaincode/contract_context.hpp"
 #include "ledger/fees/chargeable.hpp"
@@ -267,7 +267,7 @@ bool Contract::GetStateRecord(T &record, ConstByteArray const &key)
   case vm::IoObserverInterface::Status::OK:
   {
     // adapt the buffer for deserialization
-    serializers::MsgPackSerializer adapter{buffer};
+    serialisers::MsgPackSerialiser adapter{buffer};
     adapter >> record;
 
     success = true;
@@ -298,8 +298,8 @@ StateAdapter::Status Contract::SetStateRecord(T const &record, chain::Address co
 template <typename T>
 StateAdapter::Status Contract::SetStateRecord(T const &record, ConstByteArray const &key)
 {
-  // serialize the record to the buffer
-  serializers::MsgPackSerializer buffer;
+  // serialise the record to the buffer
+  serialisers::MsgPackSerialiser buffer;
   buffer << record;
 
   // look up reference to the underlying buffer

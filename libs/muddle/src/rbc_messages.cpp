@@ -17,8 +17,8 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/const_byte_array.hpp"
-#include "core/serializers/base_types.hpp"
-#include "core/serializers/main_serializer.hpp"
+#include "core/serialisers/base_types.hpp"
+#include "core/serialisers/main_serialiser.hpp"
 #include "muddle/rbc_messages.hpp"
 
 #include <cstdint>
@@ -59,9 +59,9 @@ uint32_t RBCMessage::id() const
 }
 /// @}
 
-RBCSerializer RBCMessage::Serialize() const
+RBCSerialiser RBCMessage::Serialise() const
 {
-  RBCSerializer serialiser;
+  RBCSerialiser serialiser;
   serialiser << *this;
   return serialiser;
 }

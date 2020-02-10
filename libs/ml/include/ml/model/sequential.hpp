@@ -20,7 +20,7 @@
 #include "ml/model/model.hpp"
 #include "ml/model/model_config.hpp"
 #include "ml/ops/placeholder.hpp"
-#include "ml/serializers/sequential.hpp"
+#include "ml/serialisers/sequential.hpp"
 
 #include <string>
 
@@ -48,7 +48,7 @@ public:
   void SetBatchInputShape(std::vector<math::SizeType> const &shape);
 
   template <typename X, typename D>
-  friend struct serializers::MapSerializer;
+  friend struct serialisers::MapSerialiser;
 
 private:
   SizeType    layer_count_ = 0;

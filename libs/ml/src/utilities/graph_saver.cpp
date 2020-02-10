@@ -18,7 +18,7 @@
 
 #include "core/byte_array/decoders.hpp"
 #include "core/filesystem/read_file_contents.hpp"
-#include "core/serializers/main_serializer.hpp"
+#include "core/serialisers/main_serialiser.hpp"
 #include "ml/exceptions/exceptions.hpp"
 #include "ml/utilities/graph_builder.hpp"
 #include "ml/utilities/graph_saver.hpp"
@@ -40,17 +40,17 @@ void SaveGraph(GraphType &g, std::string const &save_location)
 
   fetch::ml::GraphSaveableParams<TensorType> gsp = g.GetGraphSaveableParams();
 
-  fetch::serializers::LargeObjectSerializeHelper serializer;
+  fetch::serialisers::LargeObjectSerialiseHelper serialiser;
 
-  serializer << gsp;
+  serialiser << gsp;
 
   std::ofstream outFile(save_location, std::ios::out | std::ios::binary);
 
   if (outFile)
   {
-    outFile.write(serializer.data().char_pointer(), std::streamsize(serializer.size()));
+    outFile.write(serialiser.data().char_pointer(), std::streamsize(serialiser.size()));
     outFile.close();
-    std::cout << "Buffer size " << serializer.size() << std::endl;
+    std::cout << "Buffer size " << serialiser.size() << std::endl;
     std::cout << "Finish writing to file " << save_location << std::endl;
   }
   else
@@ -71,11 +71,11 @@ std::shared_ptr<GraphType> LoadGraph(std::string const &save_location)
     throw exceptions::InvalidFile("File does not exist");
   }
 
-  fetch::serializers::LargeObjectSerializeHelper serializer(buffer);
+  fetch::serialisers::LargeObjectSerialiseHelper serialiser(buffer);
 
   fetch::ml::GraphSaveableParams<TensorType> gsp;
 
-  serializer >> gsp;
+  serialiser >> gsp;
 
   auto graph_ptr = std::make_shared<fetch::ml::Graph<TensorType>>();
 

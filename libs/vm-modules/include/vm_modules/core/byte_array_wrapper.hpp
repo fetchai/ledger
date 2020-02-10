@@ -73,9 +73,9 @@ public:
 
   byte_array::ConstByteArray const &byte_array() const;
 
-  bool SerializeTo(serializers::MsgPackSerializer &buffer) override;
+  bool SerialiseTo(serialisers::MsgPackSerialiser &buffer) override;
 
-  bool DeserializeFrom(serializers::MsgPackSerializer &buffer) override;
+  bool DeserialiseFrom(serialisers::MsgPackSerialiser &buffer) override;
 
 private:
   byte_array::ByteArray byte_array_;

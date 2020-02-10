@@ -40,7 +40,7 @@ void Mailbox::SetDeliveryFunction(DeliveryFunction const &attempt_delivery)
 
 void Mailbox::OnNewMessagePacket(muddle::Packet const &packet, Address const & /*last_hop*/)
 {
-  fetch::serializers::MsgPackSerializer serialiser(packet.GetPayload());
+  fetch::serialisers::MsgPackSerialiser serialiser(packet.GetPayload());
   try
   {
     Message message;
@@ -79,11 +79,11 @@ void Mailbox::SendMessage(Message message)
   }
 
   // Else we pass it to the muddle for delivery
-  serializers::MsgPackSerializer serializer;
-  serializer << message;
+  serialisers::MsgPackSerialiser serialiser;
+  serialiser << message;
 
   message_endpoint_.Send(message.to.node, SERVICE_MSG_TRANSPORT, CHANNEL_MESSENGER_TRANSPORT,
-                         serializer.data());
+                         serialiser.data());
 }
 
 Mailbox::MessageList Mailbox::GetMessages(Address messenger)

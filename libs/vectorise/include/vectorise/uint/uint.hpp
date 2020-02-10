@@ -233,10 +233,10 @@ public:
   constexpr uint8_t const *pointer() const;
 
   template <typename T, uint16_t G>
-  constexpr friend void Serialize(T &s, UInt<G> const &u);
+  constexpr friend void Serialise(T &s, UInt<G> const &u);
 
   template <typename T, uint16_t G>
-  constexpr friend void Deserialize(T &s, UInt<G> &u);
+  constexpr friend void Deserialise(T &s, UInt<G> &u);
 
   explicit operator std::string() const;
 

@@ -47,12 +47,12 @@ uint64_t BlockEntropy::EntropyAsU64() const
 
 void BlockEntropy::HashSelf()
 {
-  fetch::serializers::MsgPackSerializer serializer;
-  serializer << qualified;
-  serializer << group_public_key;
-  serializer << block_number;
-  serializer << aeon_notarisation_keys;
-  digest = crypto::Hash<crypto::SHA256>(serializer.data());
+  fetch::serialisers::MsgPackSerialiser serialiser;
+  serialiser << qualified;
+  serialiser << group_public_key;
+  serialiser << block_number;
+  serialiser << aeon_notarisation_keys;
+  digest = crypto::Hash<crypto::SHA256>(serialiser.data());
 }
 
 bool BlockEntropy::IsAeonBeginning() const

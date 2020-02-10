@@ -171,7 +171,7 @@ private:
 
   // There are only two ways to generate a transaction, each from one of the two companion classes:
   friend class TransactionBuilder;
-  friend class TransactionSerializer;
+  friend class TransactionSerialiser;
 };
 
 }  // namespace chain

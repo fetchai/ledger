@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/const_byte_array.hpp"
-#include "core/serializers/group_definitions.hpp"
+#include "core/serialisers/group_definitions.hpp"
 #include "crypto/sha1.hpp"
 #include "muddle/packet.hpp"
 #include "vectorise/platform.hpp"
@@ -162,7 +162,7 @@ public:
 private:
   ContainerType value_;
   template <typename T, typename D>
-  friend struct serializers::ForwardSerializer;
+  friend struct serialisers::ForwardSerialiser;
 };
 
 inline KademliaDistance GetKademliaDistance(KademliaAddress const &a, KademliaAddress const &b)
@@ -191,50 +191,50 @@ inline KademliaDistance MaxKademliaDistance()
 
 }  // namespace muddle
 
-namespace serializers {
+namespace serialisers {
 
 template <typename D>
-struct ForwardSerializer<muddle::KademliaAddress, D>
+struct ForwardSerialiser<muddle::KademliaAddress, D>
 {
 public:
   using Type       = muddle::KademliaAddress;
   using DriverType = D;
 
-  template <typename Serializer>
-  static void Serialize(Serializer &serializer, Type const &adr)
+  template <typename Serialiser>
+  static void Serialise(Serialiser &serialiser, Type const &adr)
   {
-    serializer << adr.ToByteArray();
+    serialiser << adr.ToByteArray();
   }
 
-  template <typename Deserializer>
-  static void Deserialize(Deserializer &deserializer, Type &adr)
+  template <typename Deserialiser>
+  static void Deserialise(Deserialiser &deserialiser, Type &adr)
   {
     byte_array::ConstByteArray a;
-    deserializer >> a;
+    deserialiser >> a;
     adr = Type::FromByteArray(a);
   }
 };
 
 template <typename D>
-struct ForwardSerializer<muddle::KademliaDistance, D>
+struct ForwardSerialiser<muddle::KademliaDistance, D>
 {
 public:
   using Type       = muddle::KademliaDistance;
   using DriverType = D;
 
-  template <typename Serializer>
-  static void Serialize(Serializer &serializer, Type const &dist)
+  template <typename Serialiser>
+  static void Serialise(Serialiser &serialiser, Type const &dist)
   {
-    serializer << dist.value_;
+    serialiser << dist.value_;
   }
 
-  template <typename Deserializer>
-  static void Deserialize(Deserializer &deserializer, Type &dist)
+  template <typename Deserialiser>
+  static void Deserialise(Deserialiser &deserialiser, Type &dist)
   {
-    deserializer >> dist.value_;
+    deserialiser >> dist.value_;
   }
 };
 
-}  // namespace serializers
+}  // namespace serialisers
 
 }  // namespace fetch

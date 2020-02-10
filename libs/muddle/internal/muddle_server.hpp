@@ -19,7 +19,7 @@
 
 #include "router.hpp"
 
-#include "core/serializers/main_serializer.hpp"
+#include "core/serialisers/main_serialiser.hpp"
 #include "logging/logging.hpp"
 #include "network/tcp/abstract_server.hpp"
 
@@ -43,7 +43,7 @@ class MuddleServer final : public NETWORK_SERVER
 public:
   using ConnectionHandleType = network::AbstractNetworkServer::ConnectionHandleType;
   using MessageBuffer        = network::MessageBuffer;
-  using MsgPackSerializer    = serializers::MsgPackSerializer;
+  using MsgPackSerialiser    = serialisers::MsgPackSerialiser;
 
   // ensure the NETWORK_SERVER type that we are using is actually what we where expecting
   static_assert(std::is_base_of<network::AbstractNetworkServer, NETWORK_SERVER>::value,

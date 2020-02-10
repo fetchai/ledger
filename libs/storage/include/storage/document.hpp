@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/byte_array.hpp"
-#include "core/serializers/group_definitions.hpp"
+#include "core/serialisers/group_definitions.hpp"
 
 #include <cstdint>
 
@@ -39,10 +39,10 @@ struct Document
 
 }  // namespace storage
 
-namespace serializers {
+namespace serialisers {
 
 template <typename D>
-struct MapSerializer<storage::Document, D>
+struct MapSerialiser<storage::Document, D>
 {
 public:
   using Type       = storage::Document;
@@ -53,7 +53,7 @@ public:
   static uint8_t const FAILED      = 3;
 
   template <typename Constructor>
-  static void Serialize(Constructor &map_constructor, Type const &data)
+  static void Serialise(Constructor &map_constructor, Type const &data)
   {
     auto map = map_constructor(3);
     map.Append(DOCUMENT, data.document);
@@ -61,8 +61,8 @@ public:
     map.Append(FAILED, data.failed);
   }
 
-  template <typename MapDeserializer>
-  static void Deserialize(MapDeserializer &map, Type &data)
+  template <typename MapDeserialiser>
+  static void Deserialise(MapDeserialiser &map, Type &data)
   {
     map.ExpectKeyGetValue(DOCUMENT, data.document);
     map.ExpectKeyGetValue(WAS_CREATED, data.was_created);
@@ -70,5 +70,5 @@ public:
   }
 };
 
-}  // namespace serializers
+}  // namespace serialisers
 }  // namespace fetch

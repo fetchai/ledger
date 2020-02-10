@@ -38,10 +38,10 @@ struct PublicKeyMessage
 };
 }  // namespace beacon
 
-namespace serializers {
+namespace serialisers {
 
 template <typename D>
-struct MapSerializer<beacon::PublicKeyMessage, D>
+struct MapSerialiser<beacon::PublicKeyMessage, D>
 {
 public:
   using Type       = beacon::PublicKeyMessage;
@@ -51,7 +51,7 @@ public:
   static uint8_t const GROUP_PUBLIC_KEY = 1;
 
   template <typename Constructor>
-  static void Serialize(Constructor &map_constructor, Type const &vv)
+  static void Serialise(Constructor &map_constructor, Type const &vv)
   {
     auto map = map_constructor(2);
 
@@ -59,8 +59,8 @@ public:
     map.Append(GROUP_PUBLIC_KEY, vv.group_public_key.getStr());
   }
 
-  template <typename MapDeserializer>
-  static void Deserialize(MapDeserializer &map, Type &vv)
+  template <typename MapDeserialiser>
+  static void Deserialise(MapDeserialiser &map, Type &vv)
   {
     map.ExpectKeyGetValue(ROUND, vv.round);
     std::string key_str;
@@ -69,5 +69,5 @@ public:
   }
 };
 
-}  // namespace serializers
+}  // namespace serialisers
 }  // namespace fetch

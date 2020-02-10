@@ -40,7 +40,7 @@ public:
   using Address       = muddle::Address;
   using ProtocolId    = service::ProtocolHandlerType;
   using FunctionId    = service::FunctionHandlerType;
-  using Serializer    = service::SerializerType;
+  using Serialiser    = service::SerialiserType;
   using Promise       = service::Promise;
   using Handler       = std::function<void(Promise)>;
   using SharedHandler = std::shared_ptr<Handler>;
@@ -65,12 +65,12 @@ public:
     AddPromise(prom);
 
     // determine the required serial size
-    serializers::SizeCounter counter;
+    serialisers::SizeCounter counter;
     counter << service::SERVICE_FUNCTION_CALL << prom->id();
     service::PackCall(counter, protocol, function, args...);
 
     // pack the mesage into a buffer
-    service::SerializerType params;
+    service::SerialiserType params;
     params.Reserve(counter.size());
     params << service::SERVICE_FUNCTION_CALL << prom->id();
     service::PackCall(params, protocol, function, std::forward<Args>(args)...);
@@ -83,7 +83,7 @@ public:
       FETCH_LOG_WARN(LOGGING_NAME, "Call to ", protocol, ":", function, " prom=", prom->id(),
                      " failed!");
 
-      prom->Fail(serializers::SerializableException(
+      prom->Fail(serialisers::SerializableException(
           service::error::COULD_NOT_DELIVER,
           byte_array::ConstByteArray("Could not deliver request in " __FILE__)));
 

@@ -400,7 +400,7 @@ ChargeAmount ModelEstimator::Predict(Ptr<math::VMTensor> const &data)
   return ToChargeAmount(estimate) * COMPUTE_CHARGE_COST;
 }
 
-ChargeAmount ModelEstimator::SerializeToString()
+ChargeAmount ModelEstimator::SerialiseToString()
 {
   DataType estimate{"0"};
   estimate += SERIALISATION_PER_OP_COEF * state_.ops_count;
@@ -411,21 +411,21 @@ ChargeAmount ModelEstimator::SerializeToString()
   return ToChargeAmount(estimate) * COMPUTE_CHARGE_COST;
 }
 
-ChargeAmount ModelEstimator::DeserializeFromString(Ptr<String> const &model_string)
+ChargeAmount ModelEstimator::DeserialiseFromString(Ptr<String> const &model_string)
 {
   DataType estimate = DESERIALISATION_PER_CHAR_COEF * model_string->string().size();
 
   return ToChargeAmount(estimate + DESERIALISATION_CONST_COEF) * COMPUTE_CHARGE_COST;
 }
 
-bool ModelEstimator::SerializeTo(serializers::MsgPackSerializer &buffer)
+bool ModelEstimator::SerialiseTo(serialisers::MsgPackSerialiser &buffer)
 {
-  return state_.SerializeTo(buffer);
+  return state_.SerialiseTo(buffer);
 }
 
-bool ModelEstimator::DeserializeFrom(serializers::MsgPackSerializer &buffer)
+bool ModelEstimator::DeserialiseFrom(serialisers::MsgPackSerialiser &buffer)
 {
-  return state_.DeserializeFrom(buffer);
+  return state_.DeserialiseFrom(buffer);
 }
 
 void ModelEstimator::CopyStateFrom(ModelEstimator const &src)
@@ -439,7 +439,7 @@ ChargeAmount ModelEstimator::MaximumCharge(std::string const &log_msg)
   return vm::MAXIMUM_CHARGE;
 }
 
-bool ModelEstimator::State::SerializeTo(serializers::MsgPackSerializer &buffer)
+bool ModelEstimator::State::SerialiseTo(serialisers::MsgPackSerialiser &buffer)
 {
   buffer << forward_pass_cost;
   buffer << backward_pass_cost;
@@ -454,7 +454,7 @@ bool ModelEstimator::State::SerializeTo(serializers::MsgPackSerializer &buffer)
   return true;
 }
 
-bool ModelEstimator::State::DeserializeFrom(serializers::MsgPackSerializer &buffer)
+bool ModelEstimator::State::DeserialiseFrom(serialisers::MsgPackSerialiser &buffer)
 {
   buffer >> forward_pass_cost;
   buffer >> backward_pass_cost;

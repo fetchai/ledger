@@ -134,23 +134,23 @@ inline char const *ToString(ExecutionManagerInterface::State state)
 
 }  // namespace ledger
 
-namespace serializers {
+namespace serialisers {
 
 template <typename D>
-struct ForwardSerializer<ledger::ExecutionManagerInterface::ScheduleStatus, D>
+struct ForwardSerialiser<ledger::ExecutionManagerInterface::ScheduleStatus, D>
 {
 public:
   using Type       = ledger::ExecutionManagerInterface::ScheduleStatus;
   using DriverType = D;
 
-  template <typename Serializer>
-  static void Serialize(Serializer &s, Type const &status)
+  template <typename Serialiser>
+  static void Serialise(Serialiser &s, Type const &status)
   {
     s << static_cast<uint8_t>(status);
   }
 
-  template <typename Serializer>
-  static void Deserialize(Serializer &s, Type &status)
+  template <typename Serialiser>
+  static void Deserialise(Serialiser &s, Type &status)
   {
     uint8_t raw_status{0xFF};
     s >> raw_status;
@@ -159,20 +159,20 @@ public:
 };
 
 template <typename D>
-struct ForwardSerializer<ledger::ExecutionManagerInterface::State, D>
+struct ForwardSerialiser<ledger::ExecutionManagerInterface::State, D>
 {
 public:
   using Type       = ledger::ExecutionManagerInterface::State;
   using DriverType = D;
 
-  template <typename Serializer>
-  static void Serialize(Serializer &s, Type const &status)
+  template <typename Serialiser>
+  static void Serialise(Serialiser &s, Type const &status)
   {
     s << static_cast<uint8_t>(status);
   }
 
-  template <typename Serializer>
-  static void Deserialize(Serializer &s, Type &status)
+  template <typename Serialiser>
+  static void Deserialise(Serialiser &s, Type &status)
   {
     uint8_t raw_status{0xFF};
     s >> raw_status;
@@ -180,5 +180,5 @@ public:
   }
 };
 
-}  // namespace serializers
+}  // namespace serialisers
 }  // namespace fetch

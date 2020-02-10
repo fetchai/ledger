@@ -114,13 +114,13 @@ public:
     return address_ == other;
   }
 
-  bool SerializeTo(MsgPackSerializer &buffer) override
+  bool SerialiseTo(MsgPackSerialiser &buffer) override
   {
     buffer << address_.address();
     return true;
   }
 
-  bool DeserializeFrom(MsgPackSerializer &buffer) override
+  bool DeserialiseFrom(MsgPackSerialiser &buffer) override
   {
     fetch::byte_array::ConstByteArray raw_address{};
     buffer >> raw_address;

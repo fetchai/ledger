@@ -18,12 +18,12 @@
 //------------------------------------------------------------------------------
 
 #include "chain/address.hpp"
-#include "chain/transaction_serializer.hpp"
+#include "chain/transaction_serialiser.hpp"
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/mutex.hpp"
-#include "core/serializers/base_types.hpp"
-#include "core/serializers/main_serializer.hpp"
+#include "core/serialisers/base_types.hpp"
+#include "core/serialisers/main_serialiser.hpp"
 #include "crypto/ecdsa.hpp"
 #include "crypto/fnv.hpp"
 #include "crypto/identity.hpp"
@@ -83,8 +83,8 @@ struct DAGNode
 
   bool SetContents(chain::Transaction const &tx)
   {
-    chain::TransactionSerializer ser{};
-    ser.Serialize(tx);
+    chain::TransactionSerialiser ser{};
+    ser.Serialise(tx);
     contents = ser.data();
 
     return true;
@@ -92,8 +92,8 @@ struct DAGNode
 
   bool GetContents(chain::Transaction &tx)
   {
-    chain::TransactionSerializer ser{contents};
-    ser.Deserialize(tx);
+    chain::TransactionSerialiser ser{contents};
+    ser.Deserialise(tx);
 
     return true;
   }
@@ -103,7 +103,7 @@ struct DAGNode
    */
   void Finalise()
   {
-    serializers::MsgPackSerializer buf;
+    serialisers::MsgPackSerialiser buf;
 
     buf << type << previous << contents << contract_address << identity << hash << signature
         << oldest_epoch_referenced << weight;
@@ -161,10 +161,10 @@ constexpr char const *DAGNodeTypeToString(uint64_t type)
 
 }  // namespace ledger
 
-namespace serializers {
+namespace serialisers {
 
 template <typename D>
-struct MapSerializer<ledger::DAGNode, D>
+struct MapSerialiser<ledger::DAGNode, D>
 {
 public:
   using Type       = ledger::DAGNode;
@@ -181,7 +181,7 @@ public:
   static uint8_t const WEIGHT                  = 9;
 
   template <typename Constructor>
-  static void Serialize(Constructor &map_constructor, Type const &node)
+  static void Serialise(Constructor &map_constructor, Type const &node)
   {
     auto map = map_constructor(9);
     map.Append(TYPE, node.type);
@@ -195,8 +195,8 @@ public:
     map.Append(WEIGHT, node.weight);
   }
 
-  template <typename MapDeserializer>
-  static void Deserialize(MapDeserializer &map, Type &node)
+  template <typename MapDeserialiser>
+  static void Deserialise(MapDeserialiser &map, Type &node)
   {
     map.ExpectKeyGetValue(TYPE, node.type);
     map.ExpectKeyGetValue(PREVIOUS, node.previous);
@@ -209,6 +209,6 @@ public:
     map.ExpectKeyGetValue(WEIGHT, node.weight);
   }
 };
-}  // namespace serializers
+}  // namespace serialisers
 
 }  // namespace fetch

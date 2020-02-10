@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/serializers/base_types.hpp"
-#include "core/serializers/main_serializer.hpp"
+#include "core/serialisers/base_types.hpp"
+#include "core/serialisers/main_serialiser.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 #include "vm/object.hpp"
 
@@ -502,10 +502,10 @@ struct AnyInteger : Variant
 
 }  // namespace vm
 
-namespace serializers {
+namespace serialisers {
 
 template <typename D>
-struct MapSerializer<fetch::vm::Variant, D>
+struct MapSerialiser<fetch::vm::Variant, D>
 {
 public:
   using Type       = fetch::vm::Variant;
@@ -515,10 +515,10 @@ public:
   static uint8_t const PRIMITIVE = 2;
 
   template <typename Constructor>
-  static void Serialize(Constructor &map_constructor, Type const &variant)
+  static void Serialise(Constructor &map_constructor, Type const &variant)
   {
     auto map = map_constructor(2);
-    // TODO(tfr): This is dangerous: Type Id should never be serialized
+    // TODO(tfr): This is dangerous: Type Id should never be serialised
     map.Append(TYPEID, variant.type_id);
 
     // primitive type variant
@@ -536,8 +536,8 @@ public:
     }
   }
 
-  template <typename MapDeserializer>
-  static void Deserialize(MapDeserializer &map, Type &variant)
+  template <typename MapDeserialiser>
+  static void Deserialise(MapDeserialiser &map, Type &variant)
   {
     map.ExpectKeyGetValue(TYPEID, variant.type_id);
 
@@ -554,5 +554,5 @@ public:
   }
 };
 
-}  // namespace serializers
+}  // namespace serialisers
 }  // namespace fetch

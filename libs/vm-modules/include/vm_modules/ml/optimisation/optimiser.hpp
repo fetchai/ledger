@@ -118,12 +118,12 @@ public:
 
   void SetDataloader(vm::Ptr<VMDataLoader> const &loader);
 
-  bool SerializeTo(serializers::MsgPackSerializer &buffer) override;
+  bool SerialiseTo(serialisers::MsgPackSerialiser &buffer) override;
 
-  bool DeserializeFrom(serializers::MsgPackSerializer &buffer) override;
+  bool DeserialiseFrom(serialisers::MsgPackSerialiser &buffer) override;
 
   template <typename X, typename D>
-  friend struct serializers::MapSerializer;
+  friend struct serialisers::MapSerialiser;
 
 private:
   std::shared_ptr<fetch::ml::optimisers::Optimiser<fetch::math::Tensor<DataType>>> optimiser_;
@@ -134,14 +134,14 @@ private:
 }  // namespace ml
 }  // namespace vm_modules
 
-namespace serializers {
+namespace serialisers {
 
 /**
- * serializer for VMOptimiser
+ * serialiser for VMOptimiser
  * @tparam TensorType
  */
 template <typename D>
-struct MapSerializer<fetch::vm_modules::ml::VMOptimiser, D>
+struct MapSerialiser<fetch::vm_modules::ml::VMOptimiser, D>
 {
   using Type                  = fetch::vm_modules::ml::VMOptimiser;
   using OptimiserType         = fetch::vm_modules::ml::VMOptimiser::OptimiserType;
@@ -163,7 +163,7 @@ struct MapSerializer<fetch::vm_modules::ml::VMOptimiser, D>
   static uint8_t const OPTIMISER  = 4;
 
   template <typename Constructor>
-  static void Serialize(Constructor &map_constructor, Type const &sp)
+  static void Serialise(Constructor &map_constructor, Type const &sp)
   {
     auto map = map_constructor(4);
 
@@ -216,8 +216,8 @@ struct MapSerializer<fetch::vm_modules::ml::VMOptimiser, D>
     }
   }
 
-  template <typename MapDeserializer>
-  static void Deserialize(MapDeserializer &map, Type &sp)
+  template <typename MapDeserialiser>
+  static void Deserialise(MapDeserialiser &map, Type &sp)
   {
     uint8_t mode;
     map.ExpectKeyGetValue(MODE, mode);
@@ -268,6 +268,6 @@ struct MapSerializer<fetch::vm_modules::ml::VMOptimiser, D>
   }
 };
 
-}  // namespace serializers
+}  // namespace serialisers
 
 }  // namespace fetch

@@ -117,7 +117,7 @@ public:
   {
     if (!context.is_valid())
     {
-      throw serializers::SerializableException(  // TODO(issue 11): set exception number
+      throw serialisers::SerializableException(  // TODO(issue 11): set exception number
           0, ByteArrayType(std::string("No context for HasLock.")));
     }
 
@@ -137,7 +137,7 @@ public:
     if (!context.is_valid())
     {
       // TODO(issue 11): set exception number
-      throw serializers::SerializableException(0, ByteArrayType{"No context for HasLock."});
+      throw serialisers::SerializableException(0, ByteArrayType{"No context for HasLock."});
     }
 
     // attempt to lock this shard
@@ -171,7 +171,7 @@ public:
     telemetry::FunctionTimer const timer{*unlock_durations_};
     if (!context.is_valid())
     {
-      throw serializers::SerializableException(  // TODO(issue 11): set exception number
+      throw serialisers::SerializableException(  // TODO(issue 11): set exception number
           0, ByteArrayType(std::string("No context for HasLock.")));
     }
 

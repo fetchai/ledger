@@ -39,12 +39,12 @@ public:
 };
 }  // namespace
 
-// Need to define a serializer for the single object store to use
+// Need to define a serialiser for the single object store to use
 namespace fetch {
-namespace serializers {
+namespace serialisers {
 
 template <typename D>
-struct MapSerializer<TestClass, D>
+struct MapSerialiser<TestClass, D>
 {
 public:
   using Type       = TestClass;
@@ -55,7 +55,7 @@ public:
   static uint8_t const VALUE3 = 3;
 
   template <typename Constructor>
-  static void Serialize(Constructor &map_constructor, Type const &ref)
+  static void Serialise(Constructor &map_constructor, Type const &ref)
   {
     auto map = map_constructor(3);
     map.Append(VALUE1, ref.value1);
@@ -63,8 +63,8 @@ public:
     map.Append(VALUE3, ref.name);
   }
 
-  template <typename MapDeserializer>
-  static void Deserialize(MapDeserializer &map, Type &ref)
+  template <typename MapDeserialiser>
+  static void Deserialise(MapDeserialiser &map, Type &ref)
   {
     map.ExpectKeyGetValue(VALUE1, ref.value1);
     map.ExpectKeyGetValue(VALUE2, ref.value2);
@@ -72,7 +72,7 @@ public:
   }
 };
 
-}  // namespace serializers
+}  // namespace serialisers
 }  // namespace fetch
 
 TEST(single_object_store, load_and_expect_false)
@@ -144,7 +144,7 @@ TEST(single_object_store, load_and_write_to_variable_sizes)
       uint64_t random = lfg();
       ref.value1      = static_cast<uint64_t>(random);
       ref.value2      = static_cast<uint8_t>(random);
-      ref.name        = std::to_string(i);  // Variable serialized size due to this
+      ref.name        = std::to_string(i);  // Variable serialised size due to this
 
       store.Set(ref);
     }

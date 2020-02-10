@@ -17,9 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/serializers/base_types.hpp"
-#include "core/serializers/counter.hpp"
-#include "core/serializers/main_serializer.hpp"
+#include "core/serialisers/base_types.hpp"
+#include "core/serialisers/counter.hpp"
+#include "core/serialisers/main_serialiser.hpp"
 #include "logging/logging.hpp"
 #include "network/service/abstract_callable.hpp"
 
@@ -45,22 +45,22 @@ struct CountArguments
  * @UsedArgs are the types of the function arguments.
  *
  * This implementation invokes the member function with unpacked
- * arguments and packs the result using the supplied serializer.
+ * arguments and packs the result using the supplied serialiser.
  */
 template <typename ClassType, typename MemberFunctionPointer, typename U, typename... UsedArgs>
 struct Invoke
 {
   /* Calls a member function with unpacked arguments.
-   * @result is a serializer for storing the result.
+   * @result is a serialiser for storing the result.
    * @cls is the class instance.
    * @m is a pointer to the member function.
    * @UsedArgs are the unpacked arguments.
    */
-  static void MemberFunction(SerializerType &result, ClassType &cls, MemberFunctionPointer &m,
+  static void MemberFunction(SerialiserType &result, ClassType &cls, MemberFunctionPointer &m,
                              UsedArgs &... args)
   {
     auto                     ret = (cls.*m)(args...);
-    serializers::SizeCounter counter;
+    serialisers::SizeCounter counter;
     counter << ret;
 
     result.Reserve(counter.size());
@@ -77,7 +77,7 @@ struct Invoke
 template <typename ClassType, typename MemberFunctionPointer, typename... UsedArgs>
 struct Invoke<ClassType, MemberFunctionPointer, void, UsedArgs...>
 {
-  static void MemberFunction(SerializerType &result, ClassType &cls, MemberFunctionPointer &m,
+  static void MemberFunction(SerialiserType &result, ClassType &cls, MemberFunctionPointer &m,
                              UsedArgs &... args)
   {
     result << uint8_t(0);
@@ -102,8 +102,8 @@ struct UnrollArguments
   template <std::size_t R, typename T, typename... remaining_args>
   struct LoopOver<R, T, remaining_args...>
   {
-    static void Unroll(SerializerType &result, ClassType &cls, MemberFunctionPointer &m,
-                       SerializerType &s, UsedArgs &... used)
+    static void Unroll(SerialiserType &result, ClassType &cls, MemberFunctionPointer &m,
+                       SerialiserType &s, UsedArgs &... used)
     {
       std::decay_t<T> l;
 
@@ -120,8 +120,8 @@ struct UnrollArguments
   template <std::size_t R, typename T>
   struct LoopOver<R, T>
   {
-    static void Unroll(SerializerType &result, ClassType &cls, MemberFunctionPointer &m,
-                       SerializerType &s, UsedArgs &... used)
+    static void Unroll(SerialiserType &result, ClassType &cls, MemberFunctionPointer &m,
+                       SerialiserType &s, UsedArgs &... used)
     {
       std::decay_t<T> l;
 
@@ -134,8 +134,8 @@ struct UnrollArguments
   template <std::size_t R>
   struct LoopOver<R>
   {
-    static void Unroll(SerializerType &result, ClassType &cls, MemberFunctionPointer &m,
-                       SerializerType & /*s*/, UsedArgs &... used)
+    static void Unroll(SerialiserType &result, ClassType &cls, MemberFunctionPointer &m,
+                       SerialiserType & /*s*/, UsedArgs &... used)
     {
       assert(R == 0);
 
@@ -152,8 +152,8 @@ struct UnrollPointers
   template <typename T, typename... remaining_args>
   struct LoopOver
   {
-    static void Unroll(SerializerType &result, ClassType &cls, MemberFunctionPointer &m,
-                       CallableArgumentList const &additional_args, SerializerType &s,
+    static void Unroll(SerialiserType &result, ClassType &cls, MemberFunctionPointer &m,
+                       CallableArgumentList const &additional_args, SerialiserType &s,
                        UsedArgs &... used)
     {
       assert(COUNTER - 1 < additional_args.size());
@@ -183,8 +183,8 @@ struct UnrollPointers<0, ClassType, MemberFunctionPointer, ReturnType, UsedArgs.
   template <typename... remaining_args>
   struct LoopOver
   {
-    static void Unroll(SerializerType &result, ClassType &cls, MemberFunctionPointer &m,
-                       CallableArgumentList const & /*additional_args*/, SerializerType &s,
+    static void Unroll(SerialiserType &result, ClassType &cls, MemberFunctionPointer &m,
+                       CallableArgumentList const & /*additional_args*/, SerialiserType &s,
                        UsedArgs &... used)
     {
       UnrollArguments<ClassType, MemberFunctionPointer, ReturnType, UsedArgs...>::template LoopOver<
@@ -195,7 +195,7 @@ struct UnrollPointers<0, ClassType, MemberFunctionPointer, ReturnType, UsedArgs.
 };
 }  // namespace details
 
-/* A member function wrapper that takes a serialized input.
+/* A member function wrapper that takes a serialised input.
  * @C is the class type to which the member function belongs.
  * @F is the function signature.
  *
@@ -209,7 +209,7 @@ struct UnrollPointers<0, ClassType, MemberFunctionPointer, ReturnType, UsedArgs.
 template <typename C, typename F, std::size_t N = 0>
 class CallableClassMember;
 
-/* A member function wrapper that takes a serialized input.
+/* A member function wrapper that takes a serialised input.
  * @C is the class type.
  * @R is the type of the return value.
  * @Args are the arguments.
@@ -249,23 +249,23 @@ public:
   }
 
   /* Operator to invoke the function.
-   * @result is the serializer to which the result is written.
-   * @params is a serializer containing the function parameters.
+   * @result is the serialiser to which the result is written.
+   * @params is a serialiser containing the function parameters.
    *
-   * Note that the parameter serializer can contain more information
+   * Note that the parameter serialiser can contain more information
    * than just the function arguments. It is therefore a requirement
-   * that the serializer is positioned at the beginning of the argument
+   * that the serialiser is positioned at the beginning of the argument
    * list.
    */
-  void operator()(SerializerType &result, SerializerType &params) override
+  void operator()(SerialiserType &result, SerialiserType &params) override
   {
     details::UnrollArguments<ClassType, MemberFunctionPointer, ReturnType>::template LoopOver<
         details::CountArguments<Args...>::value, Args...>::Unroll(result, *class_, this->function_,
                                                                   params);
   }
 
-  void operator()(SerializerType &result, CallableArgumentList const &additional_args,
-                  SerializerType &params) override
+  void operator()(SerialiserType &result, CallableArgumentList const &additional_args,
+                  SerialiserType &params) override
   {
     detailed_assert(EXTRA_ARGS == additional_args.size());
 
@@ -301,21 +301,21 @@ public:
     function_ = value;
   }
 
-  void operator()(SerializerType &result, SerializerType & /*params*/) override
+  void operator()(SerialiserType &result, SerialiserType & /*params*/) override
   {
     auto ret = ((*class_).*function_)();
 
-    serializers::SizeCounter counter;
+    serialisers::SizeCounter counter;
     counter << ret;
     result.Reserve(counter.size());
     result << ret;
   }
 
-  void operator()(SerializerType &result, CallableArgumentList const & /*additional_args*/,
-                  SerializerType & /*params*/) override
+  void operator()(SerialiserType &result, CallableArgumentList const & /*additional_args*/,
+                  SerialiserType & /*params*/) override
   {
     auto                     ret = ((*class_).*function_)();
-    serializers::SizeCounter counter;
+    serialisers::SizeCounter counter;
     counter << ret;
     result.Reserve(counter.size());
     result << ret;
@@ -349,14 +349,14 @@ public:
     function_ = value;
   }
 
-  void operator()(SerializerType &result, SerializerType & /*params*/) override
+  void operator()(SerialiserType &result, SerialiserType & /*params*/) override
   {
     result << 0;
     ((*class_).*function_)();
   }
 
-  void operator()(SerializerType &result, CallableArgumentList const & /*additional_args*/,
-                  SerializerType & /*params*/) override
+  void operator()(SerialiserType &result, CallableArgumentList const & /*additional_args*/,
+                  SerialiserType & /*params*/) override
   {
     result << 0;
     ((*class_).*function_)();

@@ -60,10 +60,10 @@ struct WalletRecord
 
 }  // namespace ledger
 
-namespace serializers {
+namespace serialisers {
 
 template <typename D>
-struct MapSerializer<ledger::WalletRecord, D>
+struct MapSerialiser<ledger::WalletRecord, D>
 {
 public:
   using Type       = ledger::WalletRecord;
@@ -75,7 +75,7 @@ public:
   static uint8_t const DEED           = 4;
 
   template <typename Constructor>
-  static void Serialize(Constructor &map_constructor, Type const &b)
+  static void Serialise(Constructor &map_constructor, Type const &b)
   {
     auto map = map_constructor(b.deed ? 4 : 3);
     map.Append(BALANCE, b.balance);
@@ -88,8 +88,8 @@ public:
     }
   }
 
-  template <typename ArrayDeserializer>
-  static void Deserialize(ArrayDeserializer &map, Type &b)
+  template <typename ArrayDeserialiser>
+  static void Deserialise(ArrayDeserialiser &map, Type &b)
   {
     bool const has_deed = map.size() == 4;
 
@@ -106,6 +106,6 @@ public:
   }
 };
 
-}  // namespace serializers
+}  // namespace serialisers
 
 }  // namespace fetch

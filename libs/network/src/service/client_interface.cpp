@@ -24,7 +24,7 @@ namespace fetch {
 namespace service {
 
 void ServiceClientInterface::ProcessRPCResult(network::MessageBuffer const &msg,
-                                              service::SerializerType &     params)
+                                              service::SerialiserType &     params)
 {
   // extract the promise counter (or request number)
   PromiseCounter id;
@@ -46,7 +46,7 @@ bool ServiceClientInterface::ProcessServerMessage(network::MessageBuffer const &
 {
   bool ret = true;
 
-  SerializerType params(msg);
+  SerialiserType params(msg);
 
   ServiceClassificationType type;
   params >> type;
@@ -62,7 +62,7 @@ bool ServiceClientInterface::ProcessServerMessage(network::MessageBuffer const &
     PromiseCounter id;
     params >> id;
 
-    serializers::SerializableException e;
+    serialisers::SerializableException e;
     params >> e;
 
     // look up the promise and fail it

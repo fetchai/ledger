@@ -49,15 +49,15 @@ private:
 
 }  // namespace service
 
-namespace serializers {
+namespace serialisers {
 
 template <typename D>
-struct IgnoredSerializer<service::CallContext, D>
+struct IgnoredSerialiser<service::CallContext, D>
 {
 public:
   using Type       = service::CallContext;
   using DriverType = D;
 };
 
-}  // namespace serializers
+}  // namespace serialisers
 }  // namespace fetch

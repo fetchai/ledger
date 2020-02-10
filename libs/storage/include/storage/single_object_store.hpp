@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/serializers/main_serializer.hpp"
+#include "core/serialisers/main_serialiser.hpp"
 #include <fstream>
 
 namespace fetch {
@@ -72,9 +72,9 @@ public:
 
     GetRaw(data);
 
-    serializers::LargeObjectSerializeHelper serializer{data};
+    serialisers::LargeObjectSerialiseHelper serialiser{data};
 
-    serializer >> object;
+    serialiser >> object;
   }
 
   /**
@@ -83,10 +83,10 @@ public:
   template <typename T>
   void Set(T const &object)
   {
-    serializers::LargeObjectSerializeHelper serializer{};
-    serializer << object;
+    serialisers::LargeObjectSerialiseHelper serialiser{};
+    serialiser << object;
 
-    ByteArray array{serializer.data()};
+    ByteArray array{serialiser.data()};
 
     SetRaw(array);
   }

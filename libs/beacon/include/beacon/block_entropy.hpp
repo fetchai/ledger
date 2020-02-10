@@ -81,7 +81,7 @@ struct BlockEntropy : public BlockEntropyInterface
 
 }  // namespace beacon
 
-namespace serializers {
+namespace serialisers {
 
 struct BlockEntropyNotarisationAndHashSelf
 {
@@ -94,14 +94,14 @@ struct BlockEntropyNotarisationAndHashSelf
   static uint8_t const NOTARISATION_MEMBERS = 8;
 
   template <class Map>
-  static constexpr void Serialize(Map &map, beacon::BlockEntropy const &member) noexcept
+  static constexpr void Serialise(Map &map, beacon::BlockEntropy const &member) noexcept
   {
     map.Append(NOTARISATION, member.block_notarisation.first);
     map.Append(NOTARISATION_MEMBERS, member.block_notarisation.second);
   }
 
   template <class Map>
-  static constexpr void Deserialize(Map &map, beacon::BlockEntropy &member)
+  static constexpr void Deserialise(Map &map, beacon::BlockEntropy &member)
   {
     map.ExpectKeyGetValue(NOTARISATION, member.block_notarisation.first);
     map.ExpectKeyGetValue(NOTARISATION_MEMBERS, member.block_notarisation.second);
@@ -115,18 +115,18 @@ struct BlockEntropyNotarisationAndHashSelf
 
 // clang-format off
 template <typename D>
-struct MapSerializer<beacon::BlockEntropy, D>
-  : MapSerializerBoilerplate<beacon::BlockEntropy, D,
-        EXPECTED_KEY_MEMBER(1, beacon::BlockEntropy::qualified),
-        EXPECTED_KEY_MEMBER(2, beacon::BlockEntropy::group_public_key),
-        EXPECTED_KEY_MEMBER(3, beacon::BlockEntropy::block_number),
-        EXPECTED_KEY_MEMBER(4, beacon::BlockEntropy::confirmations),
-        EXPECTED_KEY_MEMBER(5, beacon::BlockEntropy::group_signature),
-        EXPECTED_KEY_MEMBER(6, beacon::BlockEntropy::aeon_notarisation_keys),
+struct MapSerialiser<beacon::BlockEntropy, D>
+  : MapSerialiserBoilerplate<beacon::BlockEntropy, D,
+        serialiseD_STRUCT_FIELD(1, beacon::BlockEntropy::qualified),
+        serialiseD_STRUCT_FIELD(2, beacon::BlockEntropy::group_public_key),
+        serialiseD_STRUCT_FIELD(3, beacon::BlockEntropy::block_number),
+        serialiseD_STRUCT_FIELD(4, beacon::BlockEntropy::confirmations),
+        serialiseD_STRUCT_FIELD(5, beacon::BlockEntropy::group_signature),
+        serialiseD_STRUCT_FIELD(6, beacon::BlockEntropy::aeon_notarisation_keys),
         BlockEntropyNotarisationAndHashSelf>
 {
 };
 // clang-format on
 
-}  // namespace serializers
+}  // namespace serialisers
 }  // namespace fetch

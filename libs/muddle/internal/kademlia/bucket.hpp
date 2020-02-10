@@ -97,10 +97,10 @@ struct Bucket
 
 }  // namespace muddle
 
-namespace serializers {
+namespace serialisers {
 
 template <typename D>
-struct MapSerializer<muddle::Bucket, D>
+struct MapSerialiser<muddle::Bucket, D>
 {
 public:
   using Type       = muddle::Bucket;
@@ -110,7 +110,7 @@ public:
   static uint8_t const PEERS     = 2;
 
   template <typename Constructor>
-  static void Serialize(Constructor &map_constructor, Type const &item)
+  static void Serialise(Constructor &map_constructor, Type const &item)
   {
     auto map = map_constructor(2);
 
@@ -118,12 +118,12 @@ public:
     map.Append(PEERS, item.peers);
   }
 
-  template <typename MapDeserializer>
-  static void Deserialize(MapDeserializer &map, Type &item)
+  template <typename MapDeserialiser>
+  static void Deserialise(MapDeserialiser &map, Type &item)
   {
     map.ExpectKeyGetValue(BUCKET_ID, item.bucket_id);
     map.ExpectKeyGetValue(PEERS, item.peers);
   }
 };
-}  // namespace serializers
+}  // namespace serialisers
 }  // namespace fetch

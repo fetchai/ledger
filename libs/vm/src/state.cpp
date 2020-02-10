@@ -58,7 +58,7 @@ bool ReadHelper(TypeId type_id, std::string const &name, Ptr<Object> &val, VM *v
     return true;
   }
 
-  if (!vm->IsDefaultSerializeConstructable(type_id))
+  if (!vm->IsDefaultSerialiseConstructable(type_id))
   {
     vm->RuntimeError("Cannot deserialise object of type " + vm->GetTypeName(type_id) +
                      " for which no serialisation constructor exists.");
@@ -66,7 +66,7 @@ bool ReadHelper(TypeId type_id, std::string const &name, Ptr<Object> &val, VM *v
     return false;
   }
 
-  val = vm->DefaultSerializeConstruct(type_id);
+  val = vm->DefaultSerialiseConstruct(type_id);
 
   // create an initial buffer size
   ByteArray buffer;
@@ -96,9 +96,9 @@ bool ReadHelper(TypeId type_id, std::string const &name, Ptr<Object> &val, VM *v
   // if we successfully extracted the data
   if (IoObserverInterface::Status::OK == result)
   {
-    MsgPackSerializer byte_buffer{buffer};
+    MsgPackSerialiser byte_buffer{buffer};
 
-    retval = val->DeserializeFrom(byte_buffer);
+    retval = val->DeserialiseFrom(byte_buffer);
     if (!retval)
     {
       if (!vm->HasError())
@@ -125,8 +125,8 @@ bool WriteHelper(std::string const &name, Ptr<Object> const &val, VM *vm)
   }
 
   // convert the type into a byte stream
-  MsgPackSerializer buffer;
-  if (!val->SerializeTo(buffer))
+  MsgPackSerialiser buffer;
+  if (!val->SerialiseTo(buffer))
   {
     if (!vm->HasError())
     {

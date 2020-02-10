@@ -50,12 +50,12 @@ Variant &UserDefinedObject::GetVariable(uint16_t index)
   return variables_[index];
 }
 
-bool UserDefinedObject::SerializeTo(MsgPackSerializer & /* buffer */)
+bool UserDefinedObject::SerialiseTo(MsgPackSerialiser & /* buffer */)
 {
   return true;
 }
 
-bool UserDefinedObject::DeserializeFrom(MsgPackSerializer & /* buffer */)
+bool UserDefinedObject::DeserialiseFrom(MsgPackSerialiser & /* buffer */)
 {
   return true;
 }

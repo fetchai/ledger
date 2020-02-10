@@ -109,7 +109,7 @@ public:
   using CoefficientsMessage     = dkg::CoefficientsMessage;
   using ConnectionsMessage      = dkg::ConnectionsMessage;
   using SharesMessage           = dkg::SharesMessage;
-  using DKGSerializer           = dkg::DKGSerializer;
+  using DKGSerialiser           = dkg::DKGSerialiser;
   using MessageCoefficient      = DKGMessage::Coefficient;
   using MessageShare            = DKGMessage::Share;
   using SharesExposedMap = std::unordered_map<MuddleAddress, std::pair<MessageShare, MessageShare>>;
@@ -285,28 +285,28 @@ private:
 };
 }  // namespace beacon
 
-namespace serializers {
+namespace serialisers {
 template <typename D>
-struct ArraySerializer<beacon::DryRunInfo, D>
+struct ArraySerialiser<beacon::DryRunInfo, D>
 {
 public:
   using Type       = beacon::DryRunInfo;
   using DriverType = D;
 
   template <typename Constructor>
-  static void Serialize(Constructor &array_constructor, Type const &b)
+  static void Serialise(Constructor &array_constructor, Type const &b)
   {
     auto array = array_constructor(2);
     array.Append(b.public_key);
     array.Append(b.sig_share);
   }
 
-  template <typename ArrayDeserializer>
-  static void Deserialize(ArrayDeserializer &array, Type &b)
+  template <typename ArrayDeserialiser>
+  static void Deserialise(ArrayDeserialiser &array, Type &b)
   {
     array.GetNextValue(b.public_key);
     array.GetNextValue(b.sig_share);
   }
 };
-}  // namespace serializers
+}  // namespace serialisers
 }  // namespace fetch

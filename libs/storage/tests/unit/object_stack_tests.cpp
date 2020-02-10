@@ -52,16 +52,16 @@ struct TestSerDeser
 };
 
 namespace fetch {
-namespace serializers {
+namespace serialisers {
 template <typename D>
-struct ArraySerializer<TestSerDeser, D>
+struct ArraySerialiser<TestSerDeser, D>
 {
 public:
   using Type       = TestSerDeser;
   using DriverType = D;
 
   template <typename Constructor>
-  static void Serialize(Constructor &array_constructor, Type const &b)
+  static void Serialise(Constructor &array_constructor, Type const &b)
   {
     auto array = array_constructor(3);
     array.Append(b.first);
@@ -69,8 +69,8 @@ public:
     array.Append(b.third);
   }
 
-  template <typename ArrayDeserializer>
-  static void Deserialize(ArrayDeserializer &array, Type &b)
+  template <typename ArrayDeserialiser>
+  static void Deserialise(ArrayDeserialiser &array, Type &b)
   {
     if (array.size() != 3)
     {
@@ -82,7 +82,7 @@ public:
     array.GetNextValue(b.third);
   }
 };
-}  // namespace serializers
+}  // namespace serialisers
 }  // namespace fetch
 
 void CheckIdentical(ObjectStack<TestSerDeser> &      test_stack,

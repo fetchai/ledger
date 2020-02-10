@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/serializers/group_definitions.hpp"
+#include "core/serialisers/group_definitions.hpp"
 #include "logging/logging.hpp"
 
 #include <cstdint>
@@ -71,7 +71,7 @@ public:
   bool operator<(Peer const &other) const;
 
   template <typename X, typename D>
-  friend struct serializers::MapSerializer;
+  friend struct serialisers::MapSerialiser;
 
 private:
   std::string address_{"localhost"};
@@ -119,9 +119,9 @@ inline std::ostream &operator<<(std::ostream &s, Peer const &peer)
 
 }  // namespace network
 
-namespace serializers {
+namespace serialisers {
 template <typename D>
-struct MapSerializer<network::Peer, D>
+struct MapSerialiser<network::Peer, D>
 {
 public:
   using Type       = network::Peer;
@@ -131,7 +131,7 @@ public:
   static const uint8_t PORT    = 2;
 
   template <typename T>
-  static void Serialize(T &map_constructor, Type const &peer)
+  static void Serialise(T &map_constructor, Type const &peer)
   {
     auto map = map_constructor(2);
     map.Append(ADDRESS, peer.address_);
@@ -139,13 +139,13 @@ public:
   }
 
   template <typename T>
-  static void Deserialize(T &map, Type &peer)
+  static void Deserialise(T &map, Type &peer)
   {
     map.ExpectKeyGetValue(ADDRESS, peer.address_);
     map.ExpectKeyGetValue(PORT, peer.port_);
   }
 };
-}  // namespace serializers
+}  // namespace serialisers
 
 }  // namespace fetch
 

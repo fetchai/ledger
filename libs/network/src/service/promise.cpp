@@ -16,7 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/serializers/exception.hpp"
+#include "core/serialisers/exception.hpp"
 #include "network/service/promise.hpp"
 
 #include <chrono>
@@ -27,7 +27,7 @@ namespace details {
 namespace {
 
 using byte_array::ConstByteArray;
-using serializers::SerializableException;
+using serialisers::SerializableException;
 
 using Counter = PromiseImplementation::Counter;
 using State   = PromiseImplementation::State;

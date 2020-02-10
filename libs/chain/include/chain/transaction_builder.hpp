@@ -62,7 +62,7 @@ public:
 
   private:
     TransactionPtr partial_transaction_;
-    ConstByteArray serialized_payload_;
+    ConstByteArray serialised_payload_;
   };
 
   // Construction / Destruction

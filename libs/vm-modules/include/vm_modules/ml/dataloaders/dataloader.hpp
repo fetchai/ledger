@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/serializers/main_serializer.hpp"
+#include "core/serialisers/main_serialiser.hpp"
 #include "math/tensor/tensor.hpp"
 #include "ml/dataloaders/dataloader.hpp"
 #include "ml/dataloaders/tensor_dataloader.hpp"
@@ -92,12 +92,12 @@ public:
 
   DataLoaderPtrType &GetDataLoader();
 
-  bool SerializeTo(serializers::MsgPackSerializer &buffer) override;
+  bool SerialiseTo(serialisers::MsgPackSerialiser &buffer) override;
 
-  bool DeserializeFrom(serializers::MsgPackSerializer &buffer) override;
+  bool DeserialiseFrom(serialisers::MsgPackSerialiser &buffer) override;
 
   template <typename X, typename D>
-  friend struct serializers::MapSerializer;
+  friend struct serialisers::MapSerialiser;
 
 private:
   DataLoaderPtrType loader_;
@@ -107,14 +107,14 @@ private:
 }  // namespace ml
 }  // namespace vm_modules
 
-namespace serializers {
+namespace serialisers {
 
 /**
- * serializer for tensor dataloader
+ * serialiser for tensor dataloader
  * @tparam TensorType
  */
 template <typename D>
-struct MapSerializer<fetch::vm_modules::ml::VMDataLoader, D>
+struct MapSerialiser<fetch::vm_modules::ml::VMDataLoader, D>
 {
   using Type       = fetch::vm_modules::ml::VMDataLoader;
   using DriverType = D;
@@ -124,7 +124,7 @@ struct MapSerializer<fetch::vm_modules::ml::VMDataLoader, D>
   static uint8_t const LOADER     = 3;
 
   template <typename Constructor>
-  static void Serialize(Constructor &map_constructor, Type const &sp)
+  static void Serialise(Constructor &map_constructor, Type const &sp)
   {
     auto map = map_constructor(3);
 
@@ -156,8 +156,8 @@ struct MapSerializer<fetch::vm_modules::ml::VMDataLoader, D>
     }
   }
 
-  template <typename MapDeserializer>
-  static void Deserialize(MapDeserializer &map, Type &sp)
+  template <typename MapDeserialiser>
+  static void Deserialise(MapDeserialiser &map, Type &sp)
   {
     uint8_t mode{};
     map.ExpectKeyGetValue(MODE, mode);
@@ -192,5 +192,5 @@ struct MapSerializer<fetch::vm_modules::ml::VMDataLoader, D>
   }
 };
 
-}  // namespace serializers
+}  // namespace serialisers
 }  // namespace fetch

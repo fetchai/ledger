@@ -16,7 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "chain/transaction_rpc_serializers.hpp"
+#include "chain/transaction_rpc_serialisers.hpp"
 #include "ledger/storage_unit/transaction_store.hpp"
 #include "logging/logging.hpp"
 

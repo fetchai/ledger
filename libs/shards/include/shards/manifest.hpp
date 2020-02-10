@@ -76,15 +76,15 @@ private:
   ServiceMap service_map_;
 
   template <typename T, typename D>
-  friend struct serializers::MapSerializer;
+  friend struct serialisers::MapSerialiser;
 };
 
 }  // namespace shards
 
-namespace serializers {
+namespace serialisers {
 
 template <typename D>
-struct MapSerializer<shards::Manifest, D>
+struct MapSerialiser<shards::Manifest, D>
 {
 public:
   using DriverType = D;
@@ -93,19 +93,19 @@ public:
   static const uint8_t SERVICE_MAP = 1;
 
   template <typename T>
-  static inline void Serialize(T &map_constructor, Type const &x)
+  static inline void Serialise(T &map_constructor, Type const &x)
   {
     auto map = map_constructor(1);
     map.Append(SERVICE_MAP, x.service_map_);
   }
 
   template <typename T>
-  static inline void Deserialize(T &map, Type &x)
+  static inline void Deserialise(T &map, Type &x)
   {
     map.ExpectKeyGetValue(SERVICE_MAP, x.service_map_);
   }
 };
 
-}  // namespace serializers
+}  // namespace serialisers
 
 }  // namespace fetch

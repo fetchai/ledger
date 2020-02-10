@@ -58,23 +58,23 @@ public:
 
 }  // namespace ledger
 
-namespace serializers {
+namespace serialisers {
 
 template <typename D>
-struct ForwardSerializer<ledger::ExecutorInterface::Status, D>
+struct ForwardSerialiser<ledger::ExecutorInterface::Status, D>
 {
 public:
   using Type       = ledger::ExecutorInterface::Status;
   using DriverType = D;
 
-  template <typename Serializer>
-  static void Serialize(Serializer &s, Type const &status)
+  template <typename Serialiser>
+  static void Serialise(Serialiser &s, Type const &status)
   {
     s << static_cast<int32_t>(status);
   }
 
-  template <typename Serializer>
-  static void Deserialize(Serializer &s, Type &status)
+  template <typename Serialiser>
+  static void Deserialise(Serialiser &s, Type &status)
   {
     int32_t raw_status{0};
     s >> raw_status;
@@ -83,7 +83,7 @@ public:
 };
 
 template <typename D>
-struct MapSerializer<ledger::ExecutorInterface::Result, D>
+struct MapSerialiser<ledger::ExecutorInterface::Result, D>
 {
 public:
   using Type       = ledger::ExecutorInterface::Result;
@@ -95,7 +95,7 @@ public:
   static uint8_t const FEE         = 4;
 
   template <typename Constructor>
-  static void Serialize(Constructor &map_constructor, Type const &result)
+  static void Serialise(Constructor &map_constructor, Type const &result)
   {
     auto map = map_constructor(4);
     map.Append(STATUS, result.status);
@@ -104,8 +104,8 @@ public:
     map.Append(FEE, result.fee);
   }
 
-  template <typename MapDeserializer>
-  static void Deserialize(MapDeserializer &map, Type &result)
+  template <typename MapDeserialiser>
+  static void Deserialise(MapDeserialiser &map, Type &result)
   {
     map.ExpectKeyGetValue(STATUS, result.status);
     map.ExpectKeyGetValue(CHARGE, result.charge);
@@ -113,5 +113,5 @@ public:
     map.ExpectKeyGetValue(FEE, result.fee);
   }
 };
-}  // namespace serializers
+}  // namespace serialisers
 }  // namespace fetch

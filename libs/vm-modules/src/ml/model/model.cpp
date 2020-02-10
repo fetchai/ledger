@@ -17,7 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/decoders.hpp"
-#include "core/serializers/counter.hpp"
+#include "core/serialisers/counter.hpp"
 #include "ml/dataloaders/tensor_dataloader.hpp"
 #include "ml/layers/fully_connected.hpp"
 
@@ -30,7 +30,7 @@
 #include "ml/ops/loss_functions/types.hpp"
 
 #include "ml/ops/metrics/types.hpp"
-#include "ml/serializers/ml_types.hpp"
+#include "ml/serialisers/ml_types.hpp"
 
 #include "ml/ops/activations/dropout.hpp"
 #include "ml/ops/activations/gelu.hpp"
@@ -295,7 +295,7 @@ void VMModel::Bind(Module &module, bool const experimental_enabled)
 
   module.CreateClassType<VMModel>("Model")
       .CreateConstructor(&VMModel::Constructor, FIXED_CONSTRUCTION_CHARGE)
-      .CreateSerializeDefaultConstructor([](VM *vm, TypeId type_id) -> Ptr<VMModel> {
+      .CreateSerialiseDefaultConstructor([](VM *vm, TypeId type_id) -> Ptr<VMModel> {
         return Ptr<VMModel>{new VMModel(vm, type_id)};
       })
       .CreateMemberFunction("add", &VMModel::LayerAddDense,
@@ -310,10 +310,10 @@ void VMModel::Bind(Module &module, bool const experimental_enabled)
       .CreateMemberFunction("evaluate", &VMModel::Evaluate, UseEstimator(&ModelEstimator::Evaluate))
       .CreateMemberFunction("predict", &VMModel::Predict,
                             UseMemberEstimator(&VMModel::EstimatePredict))
-      .CreateMemberFunction("serializeToString", &VMModel::SerializeToString,
-                            UseEstimator(&ModelEstimator::SerializeToString))
-      .CreateMemberFunction("deserializeFromString", &VMModel::DeserializeFromString,
-                            UseEstimator(&ModelEstimator::DeserializeFromString));
+      .CreateMemberFunction("serialiseToString", &VMModel::SerialiseToString,
+                            UseEstimator(&ModelEstimator::SerialiseToString))
+      .CreateMemberFunction("deserialiseFromString", &VMModel::DeserialiseFromString,
+                            UseEstimator(&ModelEstimator::DeserialiseFromString));
 
   // experimental features are bound only if the VMFactory given the flag to do so
   if (experimental_enabled)
@@ -349,7 +349,7 @@ void VMModel::SetModel(const VMModel::ModelPtrType &instance)
   model_ = instance;
 }
 
-bool VMModel::SerializeTo(serializers::MsgPackSerializer &buffer)
+bool VMModel::SerialiseTo(serialisers::MsgPackSerialiser &buffer)
 {
   bool success = false;
 
@@ -379,7 +379,7 @@ bool VMModel::SerializeTo(serializers::MsgPackSerializer &buffer)
   // should be fine to serialise
   else
   {
-    serializers::SizeCounter counter{};
+    serialisers::SizeCounter counter{};
 
     counter << static_cast<uint8_t>(model_category_);
     counter << *model_config_;
@@ -393,14 +393,14 @@ bool VMModel::SerializeTo(serializers::MsgPackSerializer &buffer)
     buffer << compiled_;
     buffer << *model_;
 
-    estimator_.SerializeTo(buffer);
+    estimator_.SerialiseTo(buffer);
     success = true;
   }
 
   return success;
 }
 
-bool VMModel::DeserializeFrom(serializers::MsgPackSerializer &buffer)
+bool VMModel::DeserialiseFrom(serialisers::MsgPackSerialiser &buffer)
 {
   // deserialise the model category
   uint8_t model_category_int;
@@ -438,7 +438,7 @@ bool VMModel::DeserializeFrom(serializers::MsgPackSerializer &buffer)
   buffer >> (*model_ptr);
 
   // deserialise the estimator
-  estimator_.DeserializeFrom(buffer);
+  estimator_.DeserialiseFrom(buffer);
 
   // assign deserialised model category
   VMModel vm_model(this->vm_, this->type_id_, model_category_name);
@@ -462,21 +462,21 @@ bool VMModel::DeserializeFrom(serializers::MsgPackSerializer &buffer)
   return true;
 }
 
-fetch::vm::Ptr<fetch::vm::String> VMModel::SerializeToString()
+fetch::vm::Ptr<fetch::vm::String> VMModel::SerialiseToString()
 {
-  serializers::MsgPackSerializer b;
-  SerializeTo(b);
+  serialisers::MsgPackSerialiser b;
+  SerialiseTo(b);
   auto byte_array_data = b.data().ToBase64();
   return Ptr<String>{new fetch::vm::String(vm_, static_cast<std::string>(byte_array_data))};
 }
 
-fetch::vm::Ptr<VMModel> VMModel::DeserializeFromString(
+fetch::vm::Ptr<VMModel> VMModel::DeserialiseFromString(
     fetch::vm::Ptr<fetch::vm::String> const &model_string)
 {
   byte_array::ConstByteArray b(model_string->string());
   b = byte_array::FromBase64(b);
-  MsgPackSerializer buffer(b);
-  DeserializeFrom(buffer);
+  MsgPackSerialiser buffer(b);
+  DeserialiseFrom(buffer);
 
   auto vm_model = fetch::vm::Ptr<VMModel>(new VMModel(vm_, type_id_));
   vm_model->SetModel(model_);

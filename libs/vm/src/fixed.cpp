@@ -286,13 +286,13 @@ ChargeAmount Fixed128::NegateChargeEstimator(Ptr<Object> const & /*object*/)
   return OpcodeCharges::DEFAULT_OBJECT_CHARGE;
 }
 
-bool Fixed128::SerializeTo(MsgPackSerializer &buffer)
+bool Fixed128::SerialiseTo(MsgPackSerialiser &buffer)
 {
   buffer << data_;
   return true;
 }
 
-bool Fixed128::DeserializeFrom(MsgPackSerializer &buffer)
+bool Fixed128::DeserialiseFrom(MsgPackSerialiser &buffer)
 {
   buffer >> data_;
   return true;

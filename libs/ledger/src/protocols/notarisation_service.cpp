@@ -212,7 +212,7 @@ NotarisationService::State NotarisationService::OnVerifyNotarisations()
           // Verify ecdsa signature
           if (crypto::Verify(
                   address_sig_pairs.first,
-                  (serializers::MsgPackSerializer() << block_hash << signed_not.notarisation_share)
+                  (serialisers::MsgPackSerialiser() << block_hash << signed_not.notarisation_share)
                       .data(),
                   signed_not.ecdsa_signature))
           {
@@ -352,7 +352,7 @@ void NotarisationService::NotariseBlock(Block const &block)
 
   // Sign notarisation with ecdsa private key
   auto ecdsa_sig =
-      certificate_->Sign((serializers::MsgPackSerializer() << block.hash << notarisation).data());
+      certificate_->Sign((serialisers::MsgPackSerialiser() << block.hash << notarisation).data());
   notarisations_being_built_[block.block_number][block.hash].insert(
       {endpoint_.GetAddress(), SignedNotarisation(ecdsa_sig, notarisation)});
 

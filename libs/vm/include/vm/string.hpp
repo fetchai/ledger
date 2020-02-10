@@ -92,8 +92,8 @@ struct String : public Object
                                                    Ptr<Object> const &rhso) override;
   ChargeAmount AddChargeEstimator(Ptr<Object> const &lhso, Ptr<Object> const &rhso) override;
 
-  bool SerializeTo(MsgPackSerializer &buffer) override;
-  bool DeserializeFrom(MsgPackSerializer &buffer) override;
+  bool SerialiseTo(MsgPackSerialiser &buffer) override;
+  bool DeserialiseFrom(MsgPackSerialiser &buffer) override;
 
   std::string const &string() const;
   void               UpdateString(std::string str);

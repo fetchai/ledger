@@ -19,7 +19,7 @@
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/decoders.hpp"
 #include "core/commandline/parameter_parser.hpp"
-#include "core/serializers/main_serializer.hpp"
+#include "core/serialisers/main_serialiser.hpp"
 #include "core/service_ids.hpp"
 #include "crypto/ecdsa.hpp"
 #include "muddle/network_id.hpp"
@@ -35,10 +35,10 @@ struct PingMessage
 };
 
 namespace fetch {
-namespace serializers {
+namespace serialisers {
 
 template <typename D>
-struct MapSerializer<PingMessage, D>
+struct MapSerialiser<PingMessage, D>
 {
 public:
   using Type       = PingMessage;
@@ -48,7 +48,7 @@ public:
   static const uint8_t TYPE = 1;
 
   template <typename T>
-  static void Serialize(T &map_constructor, Type const &msg)
+  static void Serialise(T &map_constructor, Type const &msg)
   {
     FETCH_UNUSED(msg);
 
@@ -57,7 +57,7 @@ public:
   }
 
   template <typename T>
-  static void Deserialize(T &map, Type &msg)
+  static void Deserialise(T &map, Type &msg)
   {
     FETCH_UNUSED(map);
     FETCH_UNUSED(msg);
@@ -66,7 +66,7 @@ public:
   }
 };
 
-}  // namespace serializers
+}  // namespace serialisers
 }  // namespace fetch
 
 namespace {
@@ -77,7 +77,7 @@ using fetch::muddle::NetworkId;
 using fetch::byte_array::ByteArray;
 using fetch::byte_array::ConstByteArray;
 using fetch::network::TCPClientImplementation;
-using fetch::serializers::MsgPackSerializer;
+using fetch::serialisers::MsgPackSerialiser;
 using fetch::byte_array::FromHex;
 
 using Socket    = asio::ip::tcp::socket;
@@ -91,7 +91,7 @@ ByteArray FormatPacket(Packet const &packet)
   // work out the
   std::size_t const packet_output_length = packet.GetPacketSize();
 
-  // serialize the packet header to the buffer
+  // serialise the packet header to the buffer
   TCPClientImplementation::SetHeader(buffer, packet_output_length);
 
   std::size_t const header_length = buffer.size();
@@ -199,7 +199,7 @@ std::error_code SendPingTo(std::string const &host, std::string const &port, uin
   packet.SetChannel(fetch::CHANNEL_ROUTING);
   packet.SetDirect(true);
 
-  MsgPackSerializer msg{};
+  MsgPackSerialiser msg{};
   msg << PingMessage{};
   packet.SetPayload(msg.data());
 

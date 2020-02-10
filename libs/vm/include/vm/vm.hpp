@@ -500,7 +500,7 @@ public:
     return type_info_array_[type_id];
   }
 
-  bool IsDefaultSerializeConstructable(TypeId type_id)
+  bool IsDefaultSerialiseConstructable(TypeId type_id)
   {
     TypeIndex idx = registered_types_.GetTypeIndex(type_id);
     auto      it  = deserialization_constructors_.find(idx);
@@ -523,7 +523,7 @@ public:
     return true;
   }
 
-  Ptr<Object> DefaultSerializeConstruct(TypeId type_id)
+  Ptr<Object> DefaultSerialiseConstruct(TypeId type_id)
   {
     // Resolving constructor
     TypeIndex idx = registered_types_.GetTypeIndex(type_id);
@@ -671,7 +671,7 @@ private:
   IoObserverInterface *          io_observer_{};
   OutputDeviceMap                output_devices_;
   InputDeviceMap                 input_devices_;
-  DeserializeConstructorMap      deserialization_constructors_;
+  DeserialiseConstructorMap      deserialization_constructors_;
   CPPCopyConstructorMap          cpp_copy_constructors_;
   OpcodeInfo *                   current_op_{};
 

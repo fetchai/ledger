@@ -172,10 +172,10 @@ private:
 };
 }  // namespace ledger
 
-namespace serializers {
+namespace serialisers {
 
 template <typename D>
-struct MapSerializer<ledger::NotarisationService::SignedNotarisation, D>
+struct MapSerialiser<ledger::NotarisationService::SignedNotarisation, D>
 {
 public:
   using Type       = ledger::NotarisationService::SignedNotarisation;
@@ -185,7 +185,7 @@ public:
   static uint8_t const NOTARISATION = 1;
 
   template <typename Constructor>
-  static void Serialize(Constructor &map_constructor, Type const &member)
+  static void Serialise(Constructor &map_constructor, Type const &member)
   {
     auto map = map_constructor(2);
 
@@ -193,12 +193,12 @@ public:
     map.Append(NOTARISATION, member.notarisation_share);
   }
 
-  template <typename MapDeserializer>
-  static void Deserialize(MapDeserializer &map, Type &member)
+  template <typename MapDeserialiser>
+  static void Deserialise(MapDeserialiser &map, Type &member)
   {
     map.ExpectKeyGetValue(SIGNATURE, member.ecdsa_signature);
     map.ExpectKeyGetValue(NOTARISATION, member.notarisation_share);
   }
 };
-}  // namespace serializers
+}  // namespace serialisers
 }  // namespace fetch

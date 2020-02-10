@@ -19,7 +19,7 @@
 
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/const_byte_array.hpp"
-#include "core/serializers/main_serializer.hpp"
+#include "core/serialisers/main_serialiser.hpp"
 #include "crypto/hash.hpp"
 #include "crypto/sha256.hpp"
 #include "ledger/dag/dag_hash.hpp"
@@ -57,10 +57,10 @@ struct DAGEpoch
 
 }  // namespace ledger
 
-namespace serializers {
+namespace serialisers {
 
 template <typename D>
-struct MapSerializer<ledger::DAGEpoch, D>
+struct MapSerialiser<ledger::DAGEpoch, D>
 {
 public:
   using Type       = ledger::DAGEpoch;
@@ -74,7 +74,7 @@ public:
   static uint8_t const ALL_NODES      = 5;
 
   template <typename Constructor>
-  static void Serialize(Constructor &map_constructor, Type const &node)
+  static void Serialise(Constructor &map_constructor, Type const &node)
   {
     auto map = map_constructor(6);
 
@@ -86,8 +86,8 @@ public:
     map.Append(ALL_NODES, node.all_nodes);
   }
 
-  template <typename MapDeserializer>
-  static void Deserialize(MapDeserializer &map, Type &node)
+  template <typename MapDeserialiser>
+  static void Deserialise(MapDeserialiser &map, Type &node)
   {
     map.ExpectKeyGetValue(BLOCK_NUMBER, node.block_number);
     map.ExpectKeyGetValue(TIPS, node.tips);
@@ -98,5 +98,5 @@ public:
   }
 };
 
-}  // namespace serializers
+}  // namespace serialisers
 }  // namespace fetch

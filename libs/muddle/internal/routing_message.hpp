@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/serializers/map_interface.hpp"
+#include "core/serialisers/map_interface.hpp"
 
 #include <cstdint>
 
@@ -42,10 +42,10 @@ struct RoutingMessage
 
 }  // namespace muddle
 
-namespace serializers {
+namespace serialisers {
 
 template <typename D>
-struct MapSerializer<muddle::RoutingMessage, D>
+struct MapSerialiser<muddle::RoutingMessage, D>
 {
 public:
   using Type       = muddle::RoutingMessage;
@@ -55,14 +55,14 @@ public:
   static const uint8_t TYPE = 1;
 
   template <typename T>
-  static void Serialize(T &map_constructor, Type const &msg)
+  static void Serialise(T &map_constructor, Type const &msg)
   {
     auto map = map_constructor(1);
     map.Append(TYPE, static_cast<EnumType>(msg.type));
   }
 
   template <typename T>
-  static void Deserialize(T &map, Type &msg)
+  static void Deserialise(T &map, Type &msg)
   {
     static constexpr auto MAX_TYPE_VALUE = static_cast<EnumType>(Type::Type::MAX_NUM_TYPES);
 
@@ -79,5 +79,5 @@ public:
   }
 };
 
-}  // namespace serializers
+}  // namespace serialisers
 }  // namespace fetch

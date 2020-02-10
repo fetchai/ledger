@@ -346,13 +346,13 @@ ChargeAmount String::AddChargeEstimator(Ptr<Object> const & /*lhso*/, Ptr<Object
   return OpcodeCharges::DEFAULT_OBJECT_CHARGE;
 }
 
-bool String::SerializeTo(MsgPackSerializer &buffer)
+bool String::SerialiseTo(MsgPackSerialiser &buffer)
 {
   buffer << utf8_str_.string();
   return true;
 }
 
-bool String::DeserializeFrom(MsgPackSerializer &buffer)
+bool String::DeserialiseFrom(MsgPackSerialiser &buffer)
 {
   std::string str;
   buffer >> str;

@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/const_byte_array.hpp"
-#include "core/serializers/main_serializer.hpp"
+#include "core/serialisers/main_serialiser.hpp"
 #include "crypto/fetch_mcl.hpp"
 
 #include <array>
@@ -193,9 +193,9 @@ PublicKey ComputeAggregatePublicKey(SignerRecord const &                   signe
 }  // namespace mcl
 }  // namespace crypto
 
-namespace serializers {
+namespace serialisers {
 template <typename D>
-struct ArraySerializer<crypto::mcl::Signature, D>
+struct ArraySerialiser<crypto::mcl::Signature, D>
 {
 
 public:
@@ -203,14 +203,14 @@ public:
   using DriverType = D;
 
   template <typename Constructor>
-  static void Serialize(Constructor &array_constructor, Type const &b)
+  static void Serialise(Constructor &array_constructor, Type const &b)
   {
     auto array = array_constructor(1);
     array.Append(b.getStr());
   }
 
-  template <typename ArrayDeserializer>
-  static void Deserialize(ArrayDeserializer &array, Type &b)
+  template <typename ArrayDeserialiser>
+  static void Deserialise(ArrayDeserialiser &array, Type &b)
   {
     std::string sig_str;
     array.GetNextValue(sig_str);
@@ -225,7 +225,7 @@ public:
 };
 
 template <typename D>
-struct ArraySerializer<crypto::mcl::PrivateKey, D>
+struct ArraySerialiser<crypto::mcl::PrivateKey, D>
 {
 
 public:
@@ -233,14 +233,14 @@ public:
   using DriverType = D;
 
   template <typename Constructor>
-  static void Serialize(Constructor &array_constructor, Type const &b)
+  static void Serialise(Constructor &array_constructor, Type const &b)
   {
     auto array = array_constructor(1);
     array.Append(b.getStr());
   }
 
-  template <typename ArrayDeserializer>
-  static void Deserialize(ArrayDeserializer &array, Type &b)
+  template <typename ArrayDeserialiser>
+  static void Deserialise(ArrayDeserialiser &array, Type &b)
   {
     std::string sig_str;
     array.GetNextValue(sig_str);
@@ -255,7 +255,7 @@ public:
 };
 
 template <typename D>
-struct ArraySerializer<crypto::mcl::PublicKey, D>
+struct ArraySerialiser<crypto::mcl::PublicKey, D>
 {
 
 public:
@@ -263,14 +263,14 @@ public:
   using DriverType = D;
 
   template <typename Constructor>
-  static void Serialize(Constructor &array_constructor, Type const &b)
+  static void Serialise(Constructor &array_constructor, Type const &b)
   {
     auto array = array_constructor(1);
     array.Append(b.getStr());
   }
 
-  template <typename ArrayDeserializer>
-  static void Deserialize(ArrayDeserializer &array, Type &b)
+  template <typename ArrayDeserialiser>
+  static void Deserialise(ArrayDeserialiser &array, Type &b)
   {
     std::string sig_str;
     array.GetNextValue(sig_str);
@@ -285,22 +285,22 @@ public:
 };
 
 template <typename V, typename D>
-struct ArraySerializer<std::pair<crypto::mcl::PublicKey, V>, D>
+struct ArraySerialiser<std::pair<crypto::mcl::PublicKey, V>, D>
 {
 public:
   using Type       = std::pair<crypto::mcl::PublicKey, V>;
   using DriverType = D;
 
   template <typename Constructor>
-  static void Serialize(Constructor &array_constructor, Type const &input)
+  static void Serialise(Constructor &array_constructor, Type const &input)
   {
     auto array = array_constructor(2);
     array.Append(input.first.getStr());
     array.Append(input.second);
   }
 
-  template <typename ArrayDeserializer>
-  static void Deserialize(ArrayDeserializer &array, Type &output)
+  template <typename ArrayDeserialiser>
+  static void Deserialise(ArrayDeserialiser &array, Type &output)
   {
     if (array.size() != 2)
     {
@@ -320,5 +320,5 @@ public:
     array.GetNextValue(output.second);
   }
 };
-}  // namespace serializers
+}  // namespace serialisers
 }  // namespace fetch

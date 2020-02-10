@@ -20,7 +20,7 @@
 #include "wait_for_connections.hpp"
 
 #include "chain/transaction.hpp"
-#include "chain/transaction_serializer.hpp"
+#include "chain/transaction_serialiser.hpp"
 #include "core/filesystem/read_file_contents.hpp"
 
 #include <chrono>
@@ -34,7 +34,7 @@ constexpr char const *LOGGING_NAME = "TxStorageTool";
 using fetch::muddle::MuddleInterface;
 using fetch::muddle::CreateMuddle;
 using fetch::chain::Transaction;
-using fetch::chain::TransactionSerializer;
+using fetch::chain::TransactionSerialiser;
 
 using InitialPeers = MuddleInterface::Peers;
 
@@ -139,7 +139,7 @@ bool TxStorageTool::Download(fetch::Digest const &digest)
     if (client_->GetTransaction(digest, tx))
     {
       // serialise the transaction into bytes
-      TransactionSerializer serialiser{};
+      TransactionSerialiser serialiser{};
       serialiser << tx;
 
       // flush the transaction to disk
@@ -168,8 +168,8 @@ bool TxStorageTool::Upload(std::string const &filename)
   Transaction tx{};
   try
   {
-    TransactionSerializer serializer{contents};
-    serializer >> tx;
+    TransactionSerialiser serialiser{contents};
+    serialiser >> tx;
   }
   catch (std::exception const &)
   {

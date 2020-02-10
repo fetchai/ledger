@@ -19,10 +19,10 @@
 #include "ledger/protocols/main_chain_rpc_service.hpp"
 
 #include "chain/constants.hpp"
-#include "chain/transaction_layout_rpc_serializers.hpp"
+#include "chain/transaction_layout_rpc_serialisers.hpp"
 #include "core/byte_array/encoders.hpp"
-#include "core/serializers/counter.hpp"
-#include "core/serializers/main_serializer.hpp"
+#include "core/serialisers/counter.hpp"
+#include "core/serialisers/main_serialiser.hpp"
 #include "core/service_ids.hpp"
 #include "crypto/fetch_identity.hpp"
 #include "ledger/chain/block_coordinator.hpp"
@@ -49,8 +49,8 @@ namespace {
 using fetch::byte_array::ToBase64;
 using fetch::muddle::Packet;
 
-using BlockSerializer        = fetch::serializers::MsgPackSerializer;
-using BlockSerializerCounter = fetch::serializers::SizeCounter;
+using BlockSerialiser        = fetch::serialisers::MsgPackSerialiser;
+using BlockSerialiserCounter = fetch::serialisers::SizeCounter;
 using PromiseState           = fetch::service::PromiseState;
 using State                  = MainChainRpcService::State;
 using Mode                   = MainChainRpcService::Mode;
@@ -145,9 +145,9 @@ MainChainRpcService::MainChainRpcService(MuddleEndpoint &             endpoint,
                                                 Address                transmitter) {
     telemetry::FunctionTimer timer{*new_block_duration_};
 
-    BlockSerializer serialiser(payload);
+    BlockSerialiser serialiser(payload);
 
-    // deserialize the block
+    // deserialise the block
     Block block;
     serialiser >> block;
 
@@ -162,16 +162,16 @@ MainChainRpcService::MainChainRpcService(MuddleEndpoint &             endpoint,
 void MainChainRpcService::BroadcastBlock(MainChainRpcService::Block const &block)
 {
   // determine the serialised size of the block
-  BlockSerializerCounter counter;
+  BlockSerialiserCounter counter;
   counter << block;
 
   // allocate the buffer and serialise the block
-  BlockSerializer serializer;
-  serializer.Reserve(counter.size());
-  serializer << block;
+  BlockSerialiser serialiser;
+  serialiser.Reserve(counter.size());
+  serialiser << block;
 
   // broadcast the block to the nodes on the network
-  endpoint_.Broadcast(SERVICE_MAIN_CHAIN, CHANNEL_BLOCKS, serializer.data());
+  endpoint_.Broadcast(SERVICE_MAIN_CHAIN, CHANNEL_BLOCKS, serialiser.data());
 }
 
 void MainChainRpcService::OnNewBlock(Address const &from, Block &block, Address const &transmitter)

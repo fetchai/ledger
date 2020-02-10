@@ -46,7 +46,7 @@ public:
   {
     if (name < 1 || name > 255)
     {
-      throw serializers::SerializableException(
+      throw serialisers::SerializableException(
           error::PROTOCOL_RANGE,
           ConstByteArray(std::to_string(name) + " is out of protocol range."));
     }
@@ -54,7 +54,7 @@ public:
     // TODO(issue 19): better reporting of errors
     if (members_[name] != nullptr)
     {
-      throw serializers::SerializableException(error::PROTOCOL_EXISTS, "Protocol already exists. ");
+      throw serialisers::SerializableException(error::PROTOCOL_EXISTS, "Protocol already exists. ");
     }
 
     members_[name] = protocol;
@@ -66,7 +66,7 @@ protected:
   bool PushProtocolRequest(ConstByteArray const &address, network::MessageBuffer const &msg,
                            CallContext const &context = CallContext())
   {
-    SerializerType            params(msg);
+    SerialiserType            params(msg);
     ServiceClassificationType type;
     params >> type;
 
@@ -87,11 +87,11 @@ protected:
     return success;
   }
 
-  bool HandleRPCCallRequest(ConstByteArray const &address, SerializerType params,
+  bool HandleRPCCallRequest(ConstByteArray const &address, SerialiserType params,
                             CallContext const &context = CallContext())
   {
     bool           ret = true;
-    SerializerType result;
+    SerialiserType result;
     PromiseCounter id;
 
     try
@@ -102,10 +102,10 @@ protected:
 
       ExecuteCall(result, params, context);
     }
-    catch (serializers::SerializableException const &e)
+    catch (serialisers::SerializableException const &e)
     {
       FETCH_LOG_ERROR(LOGGING_NAME, "Serialization error (Function Call): ", e.what());
-      result = SerializerType();
+      result = SerialiserType();
       result << SERVICE_ERROR << id << e;
     }
 
@@ -119,7 +119,7 @@ protected:
   }
 
 private:
-  void ExecuteCall(SerializerType &result, SerializerType params,
+  void ExecuteCall(SerialiserType &result, SerialiserType params,
                    CallContext const &context = CallContext())
   {
     ProtocolHandlerType protocol_number;
@@ -131,7 +131,7 @@ private:
     {
       FETCH_LOG_WARN(LOGGING_NAME, "ServerInterface::ExecuteCall: Could not find protocol ",
                      protocol_number, ":", function_number);
-      throw serializers::SerializableException(error::PROTOCOL_NOT_FOUND,
+      throw serialisers::SerializableException(error::PROTOCOL_NOT_FOUND,
                                                "Could not find protocol");
     }
 
@@ -160,19 +160,19 @@ private:
         (*function)(result, params);
       }
     }
-    catch (serializers::SerializableException const &e)
+    catch (serialisers::SerializableException const &e)
     {
       std::string new_explanation =
           e.explanation() + std::string(" (Function signature: ") + function->signature() + ")";
 
       FETCH_LOG_INFO(LOGGING_NAME, "EXCEPTION:", e.error_code(), new_explanation);
 
-      throw serializers::SerializableException(e.error_code(), new_explanation);
+      throw serialisers::SerializableException(e.error_code(), new_explanation);
     }
     catch (std::exception const &ex)
     {
       FETCH_LOG_ERROR(LOGGING_NAME, "ServerInterface::ExecuteCall - ", ex.what());
-      throw serializers::SerializableException(0, ex.what());
+      throw serialisers::SerializableException(0, ex.what());
     }
   }
 

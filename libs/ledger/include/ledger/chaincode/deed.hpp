@@ -74,16 +74,16 @@ private:
   Weight full_weight_{0};
 
   template <typename T, typename D>
-  friend struct serializers::MapSerializer;
+  friend struct serialisers::MapSerialiser;
 };
 
 using DeedPtr = std::shared_ptr<Deed>;
 
 }  // namespace ledger
 
-namespace serializers {
+namespace serialisers {
 template <typename D>
-struct MapSerializer<ledger::Deed, D>
+struct MapSerialiser<ledger::Deed, D>
 {
 public:
   using Type       = ledger::Deed;
@@ -93,20 +93,20 @@ public:
   static uint8_t const OPERATION_THRESHOLD = 2;
 
   template <typename Constructor>
-  static void Serialize(Constructor &map_constructor, Type const &deed)
+  static void Serialise(Constructor &map_constructor, Type const &deed)
   {
     auto map = map_constructor(2);
     map.Append(SIGNEES, deed.signees_);
     map.Append(OPERATION_THRESHOLD, deed.operation_thresholds_);
   }
 
-  template <typename MapDeserializer>
-  static void Deserialize(MapDeserializer &map, Type &deed)
+  template <typename MapDeserialiser>
+  static void Deserialise(MapDeserialiser &map, Type &deed)
   {
     map.ExpectKeyGetValue(SIGNEES, deed.signees_);
     map.ExpectKeyGetValue(OPERATION_THRESHOLD, deed.operation_thresholds_);
   }
 };
-}  // namespace serializers
+}  // namespace serialisers
 
 }  // namespace fetch

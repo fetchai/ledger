@@ -17,7 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/byte_array.hpp"
-#include "core/serializers/main_serializer.hpp"
+#include "core/serialisers/main_serialiser.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 #include "vm/object.hpp"
 #include "vm/string.hpp"
@@ -29,7 +29,7 @@
 
 namespace {
 
-using fetch::serializers::MsgPackSerializer;
+using fetch::serialisers::MsgPackSerialiser;
 using fetch::vm::Variant;
 using fetch::vm::Object;
 using fetch::vm::String;
@@ -44,8 +44,8 @@ using namespace fetch::vm::TypeIds;
 class VariantSerialization : public ::testing::Test
 {
 public:
-  MsgPackSerializer serializer;
-  MsgPackSerializer deserializer;
+  MsgPackSerialiser serialiser;
+  MsgPackSerialiser deserialiser;
   Variant           variant_in, variant_out;
   Primitive         primitive;
   Ptr<Object>       object;
@@ -65,21 +65,21 @@ public:
 
   std::string str{"I am a string"};
 
-  void SerializeAs(TypeId type)
+  void SerialiseAs(TypeId type)
   {
     variant_in = Variant(primitive, type);
-    serializer << variant_in;
-    deserializer = MsgPackSerializer{serializer.data()};
-    deserializer >> variant_out;
+    serialiser << variant_in;
+    deserialiser = MsgPackSerialiser{serialiser.data()};
+    deserialiser >> variant_out;
   }
 
-  bool SerializeAsString()
+  bool SerialiseAsString()
   {
     object     = Ptr<Object>{new String(nullptr, std::string{"I am a string"})};
     variant_in = Variant(object, object->GetTypeId());
-    serializer << variant_in;
-    deserializer = MsgPackSerializer(serializer.data());
-    deserializer >> variant_out;
+    serialiser << variant_in;
+    deserialiser = MsgPackSerialiser(serialiser.data());
+    deserialiser >> variant_out;
     return variant_out.Get<Ptr<String>>()->string() == str;
   }
 };
@@ -87,83 +87,83 @@ public:
 TEST_F(VariantSerialization, bool_variant)
 {
   primitive.Set(bl);
-  SerializeAs(Bool);
+  SerialiseAs(Bool);
   ASSERT_EQ(variant_out.Get<bool>(), bl);
 }
 
 TEST_F(VariantSerialization, i8_variant)
 {
   primitive.Set(i8);
-  SerializeAs(Int8);
+  SerialiseAs(Int8);
   ASSERT_EQ(variant_out.Get<int8_t>(), i8);
 }
 
 TEST_F(VariantSerialization, ui8_variant)
 {
   primitive.Set(ui8);
-  SerializeAs(UInt8);
+  SerialiseAs(UInt8);
   ASSERT_EQ(variant_out.Get<uint8_t>(), ui8);
 }
 
 TEST_F(VariantSerialization, i16_variant)
 {
   primitive.Set(i16);
-  SerializeAs(Int16);
+  SerialiseAs(Int16);
   ASSERT_EQ(variant_out.Get<int16_t>(), i16);
 }
 
 TEST_F(VariantSerialization, ui16_variant)
 {
   primitive.Set(ui16);
-  SerializeAs(UInt16);
+  SerialiseAs(UInt16);
   ASSERT_EQ(variant_out.Get<uint16_t>(), ui16);
 }
 
 TEST_F(VariantSerialization, i32_variant)
 {
   primitive.Set(i32);
-  SerializeAs(Int32);
+  SerialiseAs(Int32);
   ASSERT_EQ(variant_out.Get<int32_t>(), i32);
 }
 
 TEST_F(VariantSerialization, ui32_variant)
 {
   primitive.Set(ui32);
-  SerializeAs(UInt32);
+  SerialiseAs(UInt32);
   ASSERT_EQ(variant_out.Get<uint32_t>(), ui32);
 }
 
 TEST_F(VariantSerialization, i64_variant)
 {
   primitive.Set(i64);
-  SerializeAs(Int64);
+  SerialiseAs(Int64);
   ASSERT_EQ(variant_out.Get<int64_t>(), i64);
 }
 
 TEST_F(VariantSerialization, ui64_variant)
 {
   primitive.Set(ui64);
-  SerializeAs(UInt64);
+  SerialiseAs(UInt64);
   ASSERT_EQ(variant_out.Get<uint64_t>(), ui64);
 }
 
 TEST_F(VariantSerialization, fp32_variant)
 {
   primitive.Set(fp32);
-  SerializeAs(Fixed32);
+  SerialiseAs(Fixed32);
   ASSERT_EQ(variant_out.Get<fp32_t>(), fp32);
 }
 
 TEST_F(VariantSerialization, fp64_variant)
 {
   primitive.Set(fp64);
-  SerializeAs(Fixed64);
+  SerialiseAs(Fixed64);
   ASSERT_EQ(variant_out.Get<fp64_t>(), fp64);
 }
 
 TEST_F(VariantSerialization, object_variant)
 {
-  ASSERT_THROW(SerializeAsString(), std::runtime_error);
+  ASSERT_THROW(SerialiseAsString(), std::runtime_error);
 }
 
 }  // namespace

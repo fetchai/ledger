@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/byte_array.hpp"
-#include "core/serializers/main_serializer.hpp"
+#include "core/serialisers/main_serialiser.hpp"
 #include "meta/type_traits.hpp"
 #include "vectorise/platform.hpp"
 
@@ -122,7 +122,7 @@ meta::IfIsSignedInteger<T, T> Negate(T value)
 }
 
 template <typename T>
-meta::IfIsInteger<T, T> DecodeInteger(fetch::serializers::MsgPackSerializer &buffer)
+meta::IfIsInteger<T, T> DecodeInteger(fetch::serialisers::MsgPackSerialiser &buffer)
 {
   // determine the traits of the output type
   constexpr bool        output_is_signed   = meta::IsSignedInteger<T>;

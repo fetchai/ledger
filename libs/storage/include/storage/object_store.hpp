@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/serializers/base_types.hpp"
-#include "core/serializers/main_serializer.hpp"
+#include "core/serialisers/base_types.hpp"
+#include "core/serialisers/main_serialiser.hpp"
 #include "storage/key_byte_array_store.hpp"
 
 #include <cstddef>
@@ -37,8 +37,8 @@ namespace storage {
  * otherwise you will
  * get key collisions. See the test object_store.cpp for usage
  *
- * Since the objects are stored to disk, you must have defined a serializer and
- * deserializer for
+ * Since the objects are stored to disk, you must have defined a serialiser and
+ * deserialiser for
  * the type T you want to store. See object_store.cpp for an example
  *
  * S is the document store's underlying block size
@@ -50,7 +50,7 @@ class ObjectStore
 public:
   using type           = T;
   using SelfType       = ObjectStore<T, S>;
-  using SerializerType = serializers::MsgPackSerializer;
+  using SerialiserType = serialisers::MsgPackSerialiser;
 
   class Iterator;
 
@@ -162,7 +162,7 @@ public:
       return false;
     }
 
-    SerializerType ser(doc.document);
+    SerialiserType ser(doc.document);
 
     ser >> object;
 
@@ -199,7 +199,7 @@ public:
    */
   void LocklessSet(ResourceID const &rid, type const &object)
   {
-    SerializerType ser;
+    SerialiserType ser;
     ser << object;
 
     store_.Set(rid, ser.data());  // temporarily disable disk writes
@@ -220,7 +220,7 @@ public:
   /**
    * STL-like functionality achieved with an iterator class. This has to wrap an
    * iterator to the
-   * KeyByteArrayStore since we need to deserialize at this level to return the
+   * KeyByteArrayStore since we need to deserialise at this level to return the
    * object
    */
   class Iterator
@@ -258,14 +258,14 @@ public:
     /**
      * Dereference operator
      *
-     * @return: a deserialized object
+     * @return: a deserialised object
      */
     type operator*() const
     {
       Document doc = *wrapped_iterator_;
 
       type           ret;
-      SerializerType ser(doc.document);
+      SerialiserType ser(doc.document);
       ser >> ret;
 
       return ret;

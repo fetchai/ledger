@@ -18,8 +18,8 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/const_byte_array.hpp"
-#include "core/serializers/base_types.hpp"
-#include "core/serializers/main_serializer.hpp"
+#include "core/serialisers/base_types.hpp"
+#include "core/serialisers/main_serialiser.hpp"
 #include "meta/type_traits.hpp"
 #include "variant/detail/element_pool.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
@@ -580,18 +580,18 @@ void Variant::IterateObject(Function const &function) const
 }
 }  // namespace variant
 
-namespace serializers {
+namespace serialisers {
 
 template <typename D>
-struct ForwardSerializer<fetch::variant::Variant, D>
+struct ForwardSerialiser<fetch::variant::Variant, D>
 {
 public:
   using Type       = variant::Variant;
   using DriverType = D;
   using Variant    = fetch::variant::Variant;
 
-  template <typename Serializer>
-  static void Serialize(Serializer &serializer, Type const &var)
+  template <typename Serialiser>
+  static void Serialise(Serialiser &serialiser, Type const &var)
   {
     switch (var.type())
     {
@@ -601,37 +601,37 @@ public:
     }
     case Type::Type::NULL_VALUE:
     {
-      serializer.WriteNil();
+      serialiser.WriteNil();
       return;
     }
     case Type::Type::INTEGER:
     {
-      serializer << var.As<int64_t>();
+      serialiser << var.As<int64_t>();
       return;
     }
     case Type::Type::FLOATING_POINT:
     {
-      serializer << var.As<double>();
+      serialiser << var.As<double>();
       return;
     }
     case Type::Type::FIXED_POINT:
     {
-      serializer << var.As<fixed_point::fp64_t>();
+      serialiser << var.As<fixed_point::fp64_t>();
       return;
     }
     case Type::Type::BOOLEAN:
     {
-      serializer << var.As<bool>();
+      serialiser << var.As<bool>();
       return;
     }
     case Type::Type::STRING:
     {
-      serializer << var.As<byte_array::ConstByteArray>();
+      serialiser << var.As<byte_array::ConstByteArray>();
       return;
     }
     case Type::Type::ARRAY:
     {
-      auto constructor  = serializer.NewArrayConstructor();
+      auto constructor  = serialiser.NewArrayConstructor();
       auto array_buffer = constructor(var.size());
 
       for (std::size_t i = 0; i < var.size(); i++)
@@ -642,7 +642,7 @@ public:
     }
     case Type::Type::OBJECT:
     {
-      auto constructor = serializer.NewMapConstructor();
+      auto constructor = serialiser.NewMapConstructor();
       auto map_buffer  = constructor(var.size());
 
       var.IterateObject([&](auto const &k, auto const &v) {
@@ -655,76 +655,76 @@ public:
     throw std::runtime_error{"Variant has unknown type."};
   }
 
-  template <typename Deserializer>
-  static void Deserialize(Deserializer &deserializer, Type &var)
+  template <typename Deserialiser>
+  static void Deserialise(Deserialiser &deserialiser, Type &var)
   {
-    using SerializerTypes = serializers::SerializerTypes;
+    using SerialiserTypes = serialisers::SerialiserTypes;
 
-    switch (deserializer.GetNextType())
+    switch (deserialiser.GetNextType())
     {
 
     // TODO(tfr): Add MsgPack support
-    case SerializerTypes::BINARY:
-    case SerializerTypes::EXTENSION:
-    case SerializerTypes::UNKNOWN:
+    case SerialiserTypes::BINARY:
+    case SerialiserTypes::EXTENSION:
+    case SerialiserTypes::UNKNOWN:
     {
       var = Variant::Undefined();
       return;
     }
 
-    case SerializerTypes::NULL_VALUE:
+    case SerialiserTypes::NULL_VALUE:
     {
       var = Variant::Null();
       return;
     }
-    case SerializerTypes::UNSIGNED_INTEGER:
+    case SerialiserTypes::UNSIGNED_INTEGER:
     {
       uint64_t tmp;
-      deserializer >> tmp;
+      deserialiser >> tmp;
       var = tmp;
       return;
     }
-    case SerializerTypes::INTEGER:
+    case SerialiserTypes::INTEGER:
     {
       int64_t tmp;
-      deserializer >> tmp;
+      deserialiser >> tmp;
       var = tmp;
       return;
     }
-    case SerializerTypes::FLOATING_POINT:
+    case SerialiserTypes::FLOATING_POINT:
     {
       double tmp;
-      deserializer >> tmp;
+      deserialiser >> tmp;
       var = tmp;
       return;
     }
     /*
     // TODO(tfr): ADD SUPPORT
-    case SerializerTypes::FIXED_POINT:
+    case SerialiserTypes::FIXED_POINT:
     {
       fixed_point::fp64_t tmp;
-      deserializer >> tmp;
+      deserialiser >> tmp;
       var = tmp;
       return;
     }
     */
-    case SerializerTypes::BOOLEAN:
+    case SerialiserTypes::BOOLEAN:
     {
       bool tmp;
-      deserializer >> tmp;
+      deserialiser >> tmp;
       var = tmp;
       return;
     }
-    case SerializerTypes::STRING:
+    case SerialiserTypes::STRING:
     {
       byte_array::ConstByteArray tmp;
-      deserializer >> tmp;
+      deserialiser >> tmp;
       var = tmp;
       return;
     }
-    case SerializerTypes::ARRAY:
+    case SerialiserTypes::ARRAY:
     {
-      auto array = deserializer.NewArrayDeserializer();
+      auto array = deserialiser.NewArrayDeserialiser();
 
       var = variant::Variant::Array(array.size());
       for (std::size_t i = 0; i < array.size(); i++)
@@ -733,9 +733,9 @@ public:
       }
       return;
     }
-    case SerializerTypes::MAP:
+    case SerialiserTypes::MAP:
     {
-      auto map = deserializer.NewMapDeserializer();
+      auto map = deserialiser.NewMapDeserialiser();
 
       var = variant::Variant::Array(map.size());
       for (std::size_t i = 0; i < map.size(); i++)
@@ -753,5 +753,5 @@ public:
   }
 };
 
-}  // namespace serializers
+}  // namespace serialisers
 }  // namespace fetch

@@ -17,7 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/byte_array.hpp"
-#include "core/serializers/main_serializer.hpp"
+#include "core/serialisers/main_serialiser.hpp"
 #include "vm/common.hpp"
 
 #include "gtest/gtest.h"
@@ -26,7 +26,7 @@
 
 namespace {
 
-using fetch::serializers::MsgPackSerializer;
+using fetch::serialisers::MsgPackSerialiser;
 using fetch::vm::SourceFile;
 using fetch::vm::SourceFiles;
 
@@ -49,32 +49,32 @@ endfunction
 class SourceFileSerialization : public ::testing::Test
 {
 public:
-  MsgPackSerializer serializer;
-  MsgPackSerializer deserializer;
+  MsgPackSerialiser serialiser;
+  MsgPackSerialiser deserialiser;
   SourceFile        source_file_in, source_file_out;
   SourceFiles       source_file_s_in, source_file_s_out;
 
-  void SerializeFrom(std::string const &filename, std::string const &source)
+  void SerialiseFrom(std::string const &filename, std::string const &source)
   {
     source_file_in = SourceFile(filename, source);
-    serializer << source_file_in;
-    deserializer = MsgPackSerializer(serializer.data());
-    deserializer >> source_file_out;
+    serialiser << source_file_in;
+    deserialiser = MsgPackSerialiser(serialiser.data());
+    deserialiser >> source_file_out;
   }
 
-  void SerializeFrom(std::vector<SourceFile> const &source_files)
+  void SerialiseFrom(std::vector<SourceFile> const &source_files)
   {
     source_file_s_in = source_files;
-    serializer << source_file_s_in;
-    deserializer = MsgPackSerializer(serializer.data());
-    deserializer >> source_file_s_out;
+    serialiser << source_file_s_in;
+    deserialiser = MsgPackSerialiser(serialiser.data());
+    deserialiser >> source_file_s_out;
   }
 };
 
 TEST_F(SourceFileSerialization, source_file_single)
 {
   std::string filename = "hello_world.etch";
-  SerializeFrom(filename, HELLO_WORLD_ETCH);
+  SerialiseFrom(filename, HELLO_WORLD_ETCH);
   ASSERT_EQ(source_file_out.filename, filename);
   ASSERT_EQ(source_file_out.source, HELLO_WORLD_ETCH);
   ASSERT_NE(source_file_out.source, GBYE_WORLD_ETCH);
@@ -84,7 +84,7 @@ TEST_F(SourceFileSerialization, source_file_vector)
 {
   std::vector<SourceFile> source_files{SourceFile{"hw.etch", HELLO_WORLD_ETCH},
                                        SourceFile{"bw.etch", GBYE_WORLD_ETCH}};
-  SerializeFrom(source_files);
+  SerialiseFrom(source_files);
   std::size_t i = 0;
   for (auto &source_file : source_files)
   {

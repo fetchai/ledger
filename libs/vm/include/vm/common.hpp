@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/serializers/base_types.hpp"
-#include "core/serializers/main_serializer.hpp"
+#include "core/serialisers/base_types.hpp"
+#include "core/serialisers/main_serialiser.hpp"
 #include "meta/type_util.hpp"
 
 #include <cmath>
@@ -260,7 +260,7 @@ struct FunctionInfo
 };
 using FunctionInfoArray = std::vector<FunctionInfo>;
 
-using DeserializeConstructorMap = std::unordered_map<TypeIndex, DefaultConstructorHandler>;
+using DeserialiseConstructorMap = std::unordered_map<TypeIndex, DefaultConstructorHandler>;
 using CPPCopyConstructorMap     = std::unordered_map<TypeIndex, CPPCopyConstructorHandler>;
 
 class RegisteredTypes
@@ -316,10 +316,10 @@ using SourceFiles = std::vector<SourceFile>;
 
 }  // namespace vm
 
-namespace serializers {
+namespace serialisers {
 
 template <typename D>
-struct MapSerializer<fetch::vm::SourceFile, D>
+struct MapSerialiser<fetch::vm::SourceFile, D>
 {
 public:
   using Type       = fetch::vm::SourceFile;
@@ -329,20 +329,20 @@ public:
   static uint8_t const SOURCE   = 2;
 
   template <typename Constructor>
-  static void Serialize(Constructor &map_constructor, Type const &source_file)
+  static void Serialise(Constructor &map_constructor, Type const &source_file)
   {
     auto map = map_constructor(2);
     map.Append(FILENAME, source_file.filename);
     map.Append(SOURCE, source_file.source);
   }
 
-  template <typename MapDeserializer>
-  static void Deserialize(MapDeserializer &map, Type &source_file)
+  template <typename MapDeserialiser>
+  static void Deserialise(MapDeserialiser &map, Type &source_file)
   {
     map.ExpectKeyGetValue(FILENAME, source_file.filename);
     map.ExpectKeyGetValue(SOURCE, source_file.source);
   }
 };
 
-}  // namespace serializers
+}  // namespace serialisers
 }  // namespace fetch

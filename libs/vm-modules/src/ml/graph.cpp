@@ -159,7 +159,7 @@ void VMGraph::Bind(Module &module, bool const enable_experimental)
   {
     module.CreateClassType<VMGraph>("Graph")
         .CreateConstructor(&VMGraph::Constructor, vm::MAXIMUM_CHARGE)
-        .CreateSerializeDefaultConstructor([](VM *vm, TypeId type_id) -> Ptr<VMGraph> {
+        .CreateSerialiseDefaultConstructor([](VM *vm, TypeId type_id) -> Ptr<VMGraph> {
           return Ptr<VMGraph>{new VMGraph(vm, type_id)};
         })
         .CreateMemberFunction("setInput", &VMGraph::SetInput, vm::MAXIMUM_CHARGE)
@@ -178,8 +178,8 @@ void VMGraph::Bind(Module &module, bool const enable_experimental)
                               vm::MAXIMUM_CHARGE)
         .CreateMemberFunction("addTranspose", &VMGraph::AddTranspose, vm::MAXIMUM_CHARGE)
         .CreateMemberFunction("addExp", &VMGraph::AddExp, vm::MAXIMUM_CHARGE)
-        .CreateMemberFunction("serializeToString", &VMGraph::SerializeToString, vm::MAXIMUM_CHARGE)
-        .CreateMemberFunction("deserializeFromString", &VMGraph::DeserializeFromString,
+        .CreateMemberFunction("serialiseToString", &VMGraph::SerialiseToString, vm::MAXIMUM_CHARGE)
+        .CreateMemberFunction("deserialiseFromString", &VMGraph::DeserialiseFromString,
                               vm::MAXIMUM_CHARGE)
         .CreateMemberFunction("setWeight", &VMGraph::SetWeight, vm::MAXIMUM_CHARGE);
   }
@@ -190,13 +190,13 @@ VMGraph::GraphType &VMGraph::GetGraph()
   return graph_;
 }
 
-bool VMGraph::SerializeTo(serializers::MsgPackSerializer &buffer)
+bool VMGraph::SerialiseTo(serialisers::MsgPackSerialiser &buffer)
 {
   buffer << graph_.GetGraphSaveableParams();
   return true;
 }
 
-bool VMGraph::DeserializeFrom(serializers::MsgPackSerializer &buffer)
+bool VMGraph::DeserialiseFrom(serialisers::MsgPackSerialiser &buffer)
 {
   fetch::ml::GraphSaveableParams<fetch::math::Tensor<fetch::vm_modules::math::DataType>> gsp;
   buffer >> gsp;
@@ -211,21 +211,21 @@ bool VMGraph::DeserializeFrom(serializers::MsgPackSerializer &buffer)
   return true;
 }
 
-fetch::vm::Ptr<fetch::vm::String> VMGraph::SerializeToString()
+fetch::vm::Ptr<fetch::vm::String> VMGraph::SerialiseToString()
 {
-  serializers::MsgPackSerializer b;
-  SerializeTo(b);
+  serialisers::MsgPackSerialiser b;
+  SerialiseTo(b);
   auto byte_array_data = b.data().ToBase64();
   return Ptr<String>{new fetch::vm::String(vm_, static_cast<std::string>(byte_array_data))};
 }
 
-fetch::vm::Ptr<VMGraph> VMGraph::DeserializeFromString(
+fetch::vm::Ptr<VMGraph> VMGraph::DeserialiseFromString(
     fetch::vm::Ptr<fetch::vm::String> const &graph_string)
 {
   byte_array::ConstByteArray b(graph_string->string());
   b = byte_array::FromBase64(b);
-  MsgPackSerializer buffer(b);
-  DeserializeFrom(buffer);
+  MsgPackSerialiser buffer(b);
+  DeserialiseFrom(buffer);
 
   auto vm_graph        = fetch::vm::Ptr<VMGraph>(new VMGraph(vm_, type_id_));
   vm_graph->GetGraph() = graph_;

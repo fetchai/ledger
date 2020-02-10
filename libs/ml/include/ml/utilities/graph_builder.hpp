@@ -47,7 +47,7 @@ void BuildGraph(GraphSaveableParams<T> const &sp, std::shared_ptr<Graph<T>> ret)
     if (node_name.size() >= suffix.size() &&
         node_name.compare(node_name.size() - suffix.size(), suffix.size(), suffix) == 0)
     {
-      throw ml::exceptions::NotImplemented("Cannot currently deserialize shared-weights graph");
+      throw ml::exceptions::NotImplemented("Cannot currently deserialise shared-weights graph");
     }
 
     BuildNodeAndInsertTrainables(*(std::dynamic_pointer_cast<NodeSaveableParams<T>>(node.second)),

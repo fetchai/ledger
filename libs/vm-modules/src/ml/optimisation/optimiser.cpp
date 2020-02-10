@@ -23,7 +23,7 @@
 #include "ml/optimisation/momentum_optimiser.hpp"
 #include "ml/optimisation/rmsprop_optimiser.hpp"
 #include "ml/optimisation/sgd_optimiser.hpp"
-#include "ml/serializers/ml_types.hpp"
+#include "ml/serialisers/ml_types.hpp"
 #include "vm/module.hpp"
 #include "vm_modules/math/tensor/tensor.hpp"
 #include "vm_modules/ml/dataloaders/dataloader.hpp"
@@ -102,7 +102,7 @@ void VMOptimiser::Bind(Module &module, bool const enable_experimental)
   {
     module.CreateClassType<VMOptimiser>("Optimiser")
         .CreateConstructor(&VMOptimiser::Constructor, vm::MAXIMUM_CHARGE)
-        .CreateSerializeDefaultConstructor([](VM *vm, TypeId type_id) -> Ptr<VMOptimiser> {
+        .CreateSerialiseDefaultConstructor([](VM *vm, TypeId type_id) -> Ptr<VMOptimiser> {
           return Ptr<VMOptimiser>{new VMOptimiser(vm, type_id)};
         })
         .CreateMemberFunction("run", &VMOptimiser::RunData, vm::MAXIMUM_CHARGE)
@@ -160,13 +160,13 @@ void VMOptimiser::SetDataloader(Ptr<VMDataLoader> const &loader)
   *loader_ = *(loader->GetDataLoader());
 }
 
-bool VMOptimiser::SerializeTo(serializers::MsgPackSerializer &buffer)
+bool VMOptimiser::SerialiseTo(serialisers::MsgPackSerialiser &buffer)
 {
   buffer << *this;
   return true;
 }
 
-bool VMOptimiser::DeserializeFrom(serializers::MsgPackSerializer &buffer)
+bool VMOptimiser::DeserialiseFrom(serialisers::MsgPackSerialiser &buffer)
 {
   buffer.seek(0);
   auto opt = std::make_shared<VMOptimiser>(this->vm_, this->type_id_);

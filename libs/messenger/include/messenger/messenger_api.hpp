@@ -95,10 +95,10 @@ public:
 private:
   void AttemptDirectDelivery(Message const &message)
   {
-    serializers::MsgPackSerializer serializer;
-    serializer << message;
+    serialisers::MsgPackSerialiser serialiser;
+    serialiser << message;
     messenger_endpoint_.Send(message.to.messenger, SERVICE_MESSENGER, CHANNEL_MESSENGER_MESSAGE,
-                             serializer.data());
+                             serialiser.data());
   }
 
   /// Networking

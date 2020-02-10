@@ -18,8 +18,8 @@
 //------------------------------------------------------------------------------
 
 #include "chain/address.hpp"
-#include "core/serializers/base_types.hpp"
-#include "core/serializers/main_serializer.hpp"
+#include "core/serialisers/base_types.hpp"
+#include "core/serialisers/main_serialiser.hpp"
 #include "ledger/consensus/consensus_interface.hpp"
 #include "ledger/consensus/stake_manager_interface.hpp"
 #include "ledger/consensus/stake_snapshot.hpp"
@@ -113,7 +113,7 @@ private:
   BlockIndex       current_block_index_{0};  ///< Block index of most recent snapshot
 
   template <typename T, typename D>
-  friend struct serializers::MapSerializer;
+  friend struct serialisers::MapSerialiser;
 };
 
 inline StakeUpdateQueue &StakeManager::update_queue()
@@ -147,10 +147,10 @@ void TrimToSize(T &container, uint64_t max_allowed)
 
 }  // namespace ledger
 
-namespace serializers {
+namespace serialisers {
 
 template <typename D>
-struct MapSerializer<ledger::StakeManager, D>
+struct MapSerialiser<ledger::StakeManager, D>
 {
 public:
   using Type       = ledger::StakeManager;
@@ -162,7 +162,7 @@ public:
   static uint8_t const CURRENT_BLOCK_INDEX = 4;
 
   template <typename Constructor>
-  static void Serialize(Constructor &map_constructor, Type const &stake_manager)
+  static void Serialise(Constructor &map_constructor, Type const &stake_manager)
   {
     auto map = map_constructor(4);
     map.Append(UPDATE_QUEUE, stake_manager.update_queue_);
@@ -171,8 +171,8 @@ public:
     map.Append(CURRENT_BLOCK_INDEX, stake_manager.current_block_index_);
   }
 
-  template <typename MapDeserializer>
-  static void Deserialize(MapDeserializer &map, Type &stake_manager)
+  template <typename MapDeserialiser>
+  static void Deserialise(MapDeserialiser &map, Type &stake_manager)
   {
     map.ExpectKeyGetValue(UPDATE_QUEUE, stake_manager.update_queue_);
     map.ExpectKeyGetValue(STAKE_HISTORY, stake_manager.stake_history_);
@@ -181,5 +181,5 @@ public:
   }
 };
 
-}  // namespace serializers
+}  // namespace serialisers
 }  // namespace fetch

@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/serializers/base_types.hpp"
-#include "core/serializers/map_serializer_boilerplate.hpp"
+#include "core/serialisers/base_types.hpp"
+#include "core/serialisers/map_serialiser_boilerplate.hpp"
 
 namespace fetch {
 namespace ml {
@@ -31,17 +31,17 @@ enum class RegularisationType : uint8_t
 };
 }
 
-namespace serializers {
+namespace serialisers {
 
 /**
- * serializer for OpType
+ * serialiser for OpType
  * @tparam TensorType
  */
 template <typename D>
-struct MapSerializer<ml::RegularisationType, D>
-  : MapSerializerBoilerplate<ml::RegularisationType, D, SimplySerializedAs<1, uint8_t>>
+struct MapSerialiser<ml::RegularisationType, D>
+  : MapSerialiserBoilerplate<ml::RegularisationType, D, SimplySerialisedAs<1, uint8_t>>
 {
 };
 
-}  // namespace serializers
+}  // namespace serialisers
 }  // namespace fetch

@@ -128,7 +128,7 @@ void VMTensor::Bind(Module &module, bool const enable_experimental)
   auto interface =
       module.CreateClassType<VMTensor>("Tensor")
           .CreateConstructor(&VMTensor::Constructor, tensor_constructor_charge_estimate)
-          .CreateSerializeDefaultConstructor([](VM *vm, TypeId type_id) -> Ptr<VMTensor> {
+          .CreateSerialiseDefaultConstructor([](VM *vm, TypeId type_id) -> Ptr<VMTensor> {
             return Ptr<VMTensor>{new VMTensor(vm, type_id)};
           })
           .CreateMemberFunction("copy", &VMTensor::Copy, UseEstimator(&TensorEstimator::Copy))
@@ -564,13 +564,13 @@ ArrayType const &VMTensor::GetConstTensor()
   return tensor_;
 }
 
-bool VMTensor::SerializeTo(serializers::MsgPackSerializer &buffer)
+bool VMTensor::SerialiseTo(serialisers::MsgPackSerialiser &buffer)
 {
   buffer << tensor_;
   return true;
 }
 
-bool VMTensor::DeserializeFrom(serializers::MsgPackSerializer &buffer)
+bool VMTensor::DeserialiseFrom(serialisers::MsgPackSerialiser &buffer)
 {
   buffer >> tensor_;
   return true;

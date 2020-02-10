@@ -249,7 +249,7 @@ Module::Module()
 
   GetClassInterface<IArray>()
       .CreateConstructor(&IArray::Constructor)
-      .CreateSerializeDefaultConstructor(
+      .CreateSerialiseDefaultConstructor(
           [](VM *vm, TypeId type_id) { return IArray::Constructor(vm, type_id, 0u); })
       .CreateMemberFunction("append", &IArray::Append)
       .CreateMemberFunction("count", &IArray::Count)
@@ -307,7 +307,7 @@ Module::Module()
       .CreateInstantiationType<Array<Ptr<Address>>>();
 
   GetClassInterface<String>()
-      .CreateSerializeDefaultConstructor(
+      .CreateSerialiseDefaultConstructor(
           [](VM *vm, TypeId) -> Ptr<String> { return Ptr<String>{new String(vm, "")}; })
       .CreateCPPCopyConstructor<std::string>(
           [](VM *vm, TypeId, std::string const &s) -> Ptr<String> {
@@ -334,7 +334,7 @@ Module::Module()
       .CreateMemberFunction("second", &IPair::SetSecond);
 
   GetClassInterface<Address>()
-      .CreateSerializeDefaultConstructor(&Address::Constructor)
+      .CreateSerialiseDefaultConstructor(&Address::Constructor)
       .CreateConstructor(&Address::ConstructorFromString)
       .CreateMemberFunction("signedTx", &Address::HasSignedTx);
 
@@ -362,7 +362,7 @@ Module::Module()
       .CreateMemberFunction("set", &IShardedState::SetFromAddress);
 
   GetClassInterface<Fixed128>()
-      .CreateSerializeDefaultConstructor([](VM *vm, TypeId) -> Ptr<Fixed128> {
+      .CreateSerialiseDefaultConstructor([](VM *vm, TypeId) -> Ptr<Fixed128> {
         return Ptr<Fixed128>{new Fixed128(vm, fixed_point::fp128_t::_0)};
       })
       .CreateMemberFunction("copy", &Fixed128::Copy);

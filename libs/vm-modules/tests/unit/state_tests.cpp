@@ -82,7 +82,7 @@ TEST_F(StateTests, AddressSerialisationTest)
   EXPECT_EQ("MnrRHdvCkdZodEwM855vemS5V3p2hiWmcSQ8JEzD4ZjPdsYtB", addr->AsString()->string());
 }
 
-TEST_F(StateTests, MapDeserializeTest)
+TEST_F(StateTests, MapDeserialiseTest)
 {
   static char const *ser_src = R"(
     function main()
@@ -114,7 +114,7 @@ TEST_F(StateTests, MapDeserializeTest)
   EXPECT_TRUE(static_cast<bool>(map));
 }
 
-TEST_F(StateTests, PairDeserializeBothTest)
+TEST_F(StateTests, PairDeserialiseBothTest)
 {
   static char const *ser_src = R"(
     function main()
@@ -148,7 +148,7 @@ TEST_F(StateTests, PairDeserializeBothTest)
   EXPECT_TRUE(static_cast<bool>(pair));
 }
 
-TEST_F(StateTests, PairDeserializeFirstOnlyTest)
+TEST_F(StateTests, PairDeserialiseFirstOnlyTest)
 {
   static char const *ser_src = R"(
     function main()
@@ -181,7 +181,7 @@ TEST_F(StateTests, PairDeserializeFirstOnlyTest)
   EXPECT_TRUE(static_cast<bool>(pair));
 }
 
-TEST_F(StateTests, PairDeserializeSecondOnlyTest)
+TEST_F(StateTests, PairDeserialiseSecondOnlyTest)
 {
   static char const *ser_src = R"(
     function main()
@@ -214,7 +214,7 @@ TEST_F(StateTests, PairDeserializeSecondOnlyTest)
   EXPECT_TRUE(static_cast<bool>(pair));
 }
 
-TEST_F(StateTests, PairDeserializeNoneTest)
+TEST_F(StateTests, PairDeserialiseNoneTest)
 {
   static char const *ser_src = R"(
     function main()
@@ -246,7 +246,7 @@ TEST_F(StateTests, PairDeserializeNoneTest)
   EXPECT_TRUE(static_cast<bool>(pair));
 }
 
-TEST_F(StateTests, ArrayDeserializeTest)
+TEST_F(StateTests, ArrayDeserialiseTest)
 {
   static char const *ser_src = R"(
     function main()

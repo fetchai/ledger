@@ -18,9 +18,9 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/byte_array.hpp"
-#include "core/serializers/base_types.hpp"
-#include "core/serializers/group_definitions.hpp"
-#include "core/serializers/main_serializer.hpp"
+#include "core/serialisers/base_types.hpp"
+#include "core/serialisers/group_definitions.hpp"
+#include "core/serialisers/main_serialiser.hpp"
 #include "messenger/network_location.hpp"
 #include "muddle/address.hpp"
 
@@ -52,10 +52,10 @@ struct Message
 
 }  // namespace messenger
 
-namespace serializers {
+namespace serialisers {
 
 template <typename D>
-struct MapSerializer<messenger::Message, D>
+struct MapSerialiser<messenger::Message, D>
 {
 public:
   using Type       = messenger::Message;
@@ -68,7 +68,7 @@ public:
   static uint8_t const PAYLOAD  = 5;
 
   template <typename Constructor>
-  static void Serialize(Constructor &map_constructor, Type const &message)
+  static void Serialise(Constructor &map_constructor, Type const &message)
   {
     auto map = map_constructor(5);
     map.Append(FROM, message.from);
@@ -78,8 +78,8 @@ public:
     map.Append(PAYLOAD, message.payload);
   }
 
-  template <typename MapDeserializer>
-  static void Deserialize(MapDeserializer &map, Type &message)
+  template <typename MapDeserialiser>
+  static void Deserialise(MapDeserialiser &map, Type &message)
   {
     map.ExpectKeyGetValue(FROM, message.from);
     map.ExpectKeyGetValue(TO, message.to);
@@ -89,6 +89,6 @@ public:
   }
 };
 
-}  // namespace serializers
+}  // namespace serialisers
 
 }  // namespace fetch

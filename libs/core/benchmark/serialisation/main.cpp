@@ -17,9 +17,9 @@
 //------------------------------------------------------------------------------
 
 #include "core/random/lfg.hpp"
-#include "core/serializers/base_types.hpp"
-#include "core/serializers/counter.hpp"
-#include "core/serializers/main_serializer.hpp"
+#include "core/serialisers/base_types.hpp"
+#include "core/serialisers/counter.hpp"
+#include "core/serialisers/main_serialiser.hpp"
 
 #include <chrono>
 #include <cstdint>
@@ -29,7 +29,7 @@
 #include <string>
 #include <vector>
 
-using namespace fetch::serializers;
+using namespace fetch::serialisers;
 using namespace fetch::byte_array;
 using namespace std::chrono;
 
@@ -143,8 +143,8 @@ Result BenchmarkSingle(Args... args)
   return ret;
 }
 
-#define SINGLE_BENCHMARK(serializer, type)                      \
-  result = BenchmarkSingle<serializer, type>();                 \
+#define SINGLE_BENCHMARK(serialiser, type)                      \
+  result = BenchmarkSingle<serialiser, type>();                 \
   std::cout << std::setw(type_width) << #type;                  \
   std::cout << std::setw(width) << result.size;                 \
   std::cout << std::setw(width) << result.serialization_time;   \
@@ -166,11 +166,11 @@ int main()
 
   Result result{};
 
-  SINGLE_BENCHMARK(MsgPackSerializer, std::vector<uint32_t>);
-  SINGLE_BENCHMARK(MsgPackSerializer, std::vector<uint64_t>);
-  SINGLE_BENCHMARK(MsgPackSerializer, std::vector<ByteArray>);
-  SINGLE_BENCHMARK(MsgPackSerializer, std::vector<ConstByteArray>);
-  SINGLE_BENCHMARK(MsgPackSerializer, std::vector<std::string>);
+  SINGLE_BENCHMARK(MsgPackSerialiser, std::vector<uint32_t>);
+  SINGLE_BENCHMARK(MsgPackSerialiser, std::vector<uint64_t>);
+  SINGLE_BENCHMARK(MsgPackSerialiser, std::vector<ByteArray>);
+  SINGLE_BENCHMARK(MsgPackSerialiser, std::vector<ConstByteArray>);
+  SINGLE_BENCHMARK(MsgPackSerialiser, std::vector<std::string>);
 
   std::cout << std::endl;
 
@@ -181,11 +181,11 @@ int main()
   std::cout << std::setw(width) << "Ser. MBs";
   std::cout << std::setw(width) << "Des. MBs" << std::endl;
 
-  SINGLE_BENCHMARK(MsgPackSerializer, std::vector<uint32_t>);
-  SINGLE_BENCHMARK(MsgPackSerializer, std::vector<uint64_t>);
-  SINGLE_BENCHMARK(MsgPackSerializer, std::vector<ByteArray>);
-  SINGLE_BENCHMARK(MsgPackSerializer, std::vector<ConstByteArray>);
-  SINGLE_BENCHMARK(MsgPackSerializer, std::vector<std::string>);
+  SINGLE_BENCHMARK(MsgPackSerialiser, std::vector<uint32_t>);
+  SINGLE_BENCHMARK(MsgPackSerialiser, std::vector<uint64_t>);
+  SINGLE_BENCHMARK(MsgPackSerialiser, std::vector<ByteArray>);
+  SINGLE_BENCHMARK(MsgPackSerialiser, std::vector<ConstByteArray>);
+  SINGLE_BENCHMARK(MsgPackSerialiser, std::vector<std::string>);
 
   return 0;
 }

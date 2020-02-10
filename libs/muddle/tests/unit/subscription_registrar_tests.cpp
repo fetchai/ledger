@@ -20,7 +20,7 @@
 
 #include "core/byte_array/decoders.hpp"
 #include "core/byte_array/encoders.hpp"
-#include "core/serializers/main_serializer.hpp"
+#include "core/serialisers/main_serialiser.hpp"
 #include "muddle/network_id.hpp"
 #include "muddle/subscription.hpp"
 #include "network/uri.hpp"

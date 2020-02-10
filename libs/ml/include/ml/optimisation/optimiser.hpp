@@ -83,11 +83,8 @@ public:
   virtual void              ApplyGradients(SizeType batch_size) = 0;
 
   template <typename X, typename D>
-  friend struct serializers::MapSerializer;
+  friend struct serialisers::MapSerialiser;
   virtual OptimiserType OptimiserCode() = 0;
-
-  template <uint8_t KEY, class MemberVariable, MemberVariable MEMBER_VARIABLE, class Underlying>
-  friend struct serializers::ExpectedKeyMember;
 
 protected:
   std::shared_ptr<Graph<T>> graph_;

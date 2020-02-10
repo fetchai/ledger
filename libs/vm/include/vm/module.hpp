@@ -61,7 +61,7 @@ public:
                                       ChargeAmount default_ctor_static_charge = 1)
     {
       return InternalCreateConstructor(constructor, static_charge, ChargeEstimator<>{})
-          .CreateSerializeDefaultConstructor(constructor, default_ctor_static_charge);
+          .CreateSerialiseDefaultConstructor(constructor, default_ctor_static_charge);
     }
 
     template <typename Estimator, typename ReturnType>
@@ -69,7 +69,7 @@ public:
                                       ChargeAmount default_ctor_static_charge = 1)
     {
       return InternalCreateConstructor(constructor, 0, ChargeEstimator<>{estimator})
-          .CreateSerializeDefaultConstructor(constructor, default_ctor_static_charge);
+          .CreateSerialiseDefaultConstructor(constructor, default_ctor_static_charge);
     }
 
     // non-default ctors
@@ -89,7 +89,7 @@ public:
     }
 
     template <typename Constructor>
-    ClassInterface &CreateSerializeDefaultConstructor(Constructor  constructor,
+    ClassInterface &CreateSerialiseDefaultConstructor(Constructor  constructor,
                                                       ChargeAmount static_charge = 1)
     {
       using ReturnType = typename meta::CallableTraits<Constructor>::ReturnType;
@@ -470,7 +470,7 @@ public:
   {
     return type_info_array_;
   }
-  const DeserializeConstructorMap &GetDeserializationConstructors() const
+  const DeserialiseConstructorMap &GetDeserializationConstructors() const
   {
     return deserialization_constructors_;
   }
@@ -526,7 +526,7 @@ private:
 
   void GetDetails(TypeInfoArray &type_info_array, TypeInfoMap &type_info_map,
                   RegisteredTypes &registered_types, FunctionInfoArray &function_info_array,
-                  DeserializeConstructorMap &deserialization_constructors,
+                  DeserialiseConstructorMap &deserialization_constructors,
                   CPPCopyConstructorMap &    cpp_copy_constructors) const
   {
     type_info_array              = type_info_array_;
@@ -549,7 +549,7 @@ private:
   TypeInfoMap                        type_info_map_;
   RegisteredTypes                    registered_types_;
   FunctionInfoArray                  function_info_array_;
-  DeserializeConstructorMap          deserialization_constructors_;
+  DeserialiseConstructorMap          deserialization_constructors_;
 
   // C++ copy constructors are only used for easy contruction
   // of C++ objects as Etch objects

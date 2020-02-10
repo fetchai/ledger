@@ -93,7 +93,7 @@ public:
 
   VMModel(VMModel const &other) = delete;
   VMModel(VMModel &&other)      = delete;
-  VMModel &operator=(VMModel const &other) = default;  // TODO(): Needed for DeserializeFrom
+  VMModel &operator=(VMModel const &other) = default;  // TODO(): Needed for DeserialiseFrom
   VMModel &operator=(VMModel &&other) = delete;
 
   VMModel(fetch::vm::VM *vm, fetch::vm::TypeId type_id);
@@ -132,13 +132,13 @@ public:
 
   void SetModel(ModelPtrType const &instance);
 
-  bool SerializeTo(serializers::MsgPackSerializer &buffer) override;
+  bool SerialiseTo(serialisers::MsgPackSerialiser &buffer) override;
 
-  bool DeserializeFrom(serializers::MsgPackSerializer &buffer) override;
+  bool DeserialiseFrom(serialisers::MsgPackSerialiser &buffer) override;
 
-  fetch::vm::Ptr<fetch::vm::String> SerializeToString();
+  fetch::vm::Ptr<fetch::vm::String> SerialiseToString();
 
-  fetch::vm::Ptr<VMModel> DeserializeFromString(
+  fetch::vm::Ptr<VMModel> DeserialiseFromString(
       fetch::vm::Ptr<fetch::vm::String> const &model_string);
 
   ModelEstimator &Estimator();

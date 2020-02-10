@@ -21,8 +21,8 @@
 #include "beacon/block_entropy.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/digest.hpp"
-#include "core/serializers/main_serializer_definition.hpp"
-#include "core/serializers/map_serializer_boilerplate.hpp"
+#include "core/serialisers/main_serialiser_definition.hpp"
+#include "core/serialisers/map_serialiser_boilerplate.hpp"
 #include "crypto/prover.hpp"
 
 #include <atomic>
@@ -72,28 +72,28 @@ struct AeonExecutionUnit
 };
 }  // namespace beacon
 
-namespace serializers {
+namespace serialisers {
 
 template <typename D>
-struct MapSerializer<beacon::Aeon, D>
-  : MapSerializerBoilerplate<beacon::Aeon, D, EXPECTED_KEY_MEMBER(1, beacon::Aeon::members),
-                             EXPECTED_KEY_MEMBER(2, beacon::Aeon::round_start),
-                             EXPECTED_KEY_MEMBER(3, beacon::Aeon::round_end),
-                             EXPECTED_KEY_MEMBER(4, beacon::Aeon::block_entropy_previous),
-                             EXPECTED_KEY_MEMBER(5, beacon::Aeon::start_reference_timepoint)>
+struct MapSerialiser<beacon::Aeon, D>
+  : MapSerialiserBoilerplate<beacon::Aeon, D, serialiseD_STRUCT_FIELD(1, beacon::Aeon::members),
+                             serialiseD_STRUCT_FIELD(2, beacon::Aeon::round_start),
+                             serialiseD_STRUCT_FIELD(3, beacon::Aeon::round_end),
+                             serialiseD_STRUCT_FIELD(4, beacon::Aeon::block_entropy_previous),
+                             serialiseD_STRUCT_FIELD(5, beacon::Aeon::start_reference_timepoint)>
 {
 };
 
 template <typename D>
-struct MapSerializer<beacon::AeonExecutionUnit, D>
-  : MapSerializerBoilerplate<beacon::AeonExecutionUnit, D,
-                             EXPECTED_KEY_MEMBER(1, beacon::AeonExecutionUnit::block_entropy),
-                             EXPECTED_KEY_MEMBER(2, beacon::AeonExecutionUnit::manager),
-                             EXPECTED_KEY_MEMBER(3, beacon::AeonExecutionUnit::member_share),
-                             EXPECTED_KEY_MEMBER(4, beacon::AeonExecutionUnit::aeon)>
+struct MapSerialiser<beacon::AeonExecutionUnit, D>
+  : MapSerialiserBoilerplate<beacon::AeonExecutionUnit, D,
+                             serialiseD_STRUCT_FIELD(1, beacon::AeonExecutionUnit::block_entropy),
+                             serialiseD_STRUCT_FIELD(2, beacon::AeonExecutionUnit::manager),
+                             serialiseD_STRUCT_FIELD(3, beacon::AeonExecutionUnit::member_share),
+                             serialiseD_STRUCT_FIELD(4, beacon::AeonExecutionUnit::aeon)>
 {
 };
 
-}  // namespace serializers
+}  // namespace serialisers
 
 }  // namespace fetch

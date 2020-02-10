@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/serializers/counter.hpp"
-#include "core/serializers/serializable_exception.hpp"
+#include "core/serialisers/counter.hpp"
+#include "core/serialisers/serializable_exception.hpp"
 #include "network/message.hpp"
 #include "network/service/callable_class_member.hpp"
 #include "network/service/error_codes.hpp"
@@ -54,7 +54,7 @@ protected:
   using PromiseMap       = std::unordered_map<PromiseCounter, Promise>;
 
   bool ProcessServerMessage(network::MessageBuffer const &msg);
-  void ProcessRPCResult(network::MessageBuffer const &msg, service::SerializerType &params);
+  void ProcessRPCResult(network::MessageBuffer const &msg, service::SerialiserType &params);
 
   // Pending promise issues
   void    AddPromise(Promise const &promise);

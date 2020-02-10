@@ -16,7 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/serializers/main_serializer.hpp"
+#include "core/serialisers/main_serialiser.hpp"
 #include "network/service/callable_class_member.hpp"
 
 #include "gtest/gtest.h"
@@ -46,7 +46,7 @@ TEST(callable_gtest, basic_test)
   CallableClassMember<Foo, void(int, int, int), 1> &f =
       *(reinterpret_cast<CallableClassMember<Foo, void(int, int, int), 1> *>(ac));
 
-  SerializerType args, ret;
+  SerialiserType args, ret;
 
   args << int(2) << int(4) << int(3);
   args.seek(0);

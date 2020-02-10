@@ -19,7 +19,7 @@
 
 #include "core/bitvector.hpp"
 #include "core/byte_array/const_byte_array.hpp"
-#include "core/serializers/group_definitions.hpp"
+#include "core/serialisers/group_definitions.hpp"
 
 namespace fetch {
 namespace chain {
@@ -70,9 +70,9 @@ private:
   BlockIndex     valid_from_{0};
   BlockIndex     valid_until_{0};
 
-  // Native serializers
+  // Native serialisers
   template <typename T, typename D>
-  friend struct serializers::MapSerializer;
+  friend struct serialisers::MapSerialiser;
 };
 
 }  // namespace chain

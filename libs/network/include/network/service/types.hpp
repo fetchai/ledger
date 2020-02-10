@@ -17,15 +17,15 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/serializers/base_types.hpp"
-#include "core/serializers/main_serializer.hpp"
+#include "core/serialisers/base_types.hpp"
+#include "core/serialisers/main_serialiser.hpp"
 
 #include <cstdint>
 
 namespace fetch {
 namespace service {
 
-using SerializerType = serializers::MsgPackSerializer;
+using SerialiserType = serialisers::MsgPackSerialiser;
 
 using ProtocolHandlerType       = uint64_t;
 using FunctionHandlerType       = uint64_t;

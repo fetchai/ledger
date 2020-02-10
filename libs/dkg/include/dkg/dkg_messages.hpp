@@ -18,9 +18,9 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/const_byte_array.hpp"
-#include "core/serializers/base_types.hpp"
-#include "core/serializers/group_definitions.hpp"
-#include "core/serializers/main_serializer.hpp"
+#include "core/serialisers/base_types.hpp"
+#include "core/serialisers/group_definitions.hpp"
+#include "core/serialisers/main_serialiser.hpp"
 #include "crypto/mcl_dkg.hpp"
 #include "muddle/rpc/client.hpp"
 
@@ -29,7 +29,7 @@
 namespace fetch {
 namespace dkg {
 
-using DKGSerializer = fetch::serializers::MsgPackSerializer;
+using DKGSerialiser = fetch::serialisers::MsgPackSerialiser;
 
 /**
  * Different messages using in distributed key generation (DKG) protocol.
@@ -67,7 +67,7 @@ public:
   }
   /// @}
 
-  virtual DKGSerializer Serialize() const = 0;
+  virtual DKGSerialiser Serialise() const = 0;
 
 protected:
   const MessageType type_;  ///< Type of message of the three listed above
@@ -84,7 +84,7 @@ public:
 
   Payload payload_;
 
-  explicit FinalStateMessage(DKGSerializer &serialiser)
+  explicit FinalStateMessage(DKGSerialiser &serialiser)
     : DKGMessage{MessageType::FINAL_STATE}
   {
     serialiser >> payload_;
@@ -95,11 +95,11 @@ public:
   {}
   ~FinalStateMessage() override = default;
 
-  DKGSerializer Serialize() const override
+  DKGSerialiser Serialise() const override
   {
-    DKGSerializer serializer;
-    serializer << payload_;
-    return serializer;
+    DKGSerialiser serialiser;
+    serialiser << payload_;
+    return serialiser;
   }
 };
 
@@ -108,7 +108,7 @@ class ConnectionsMessage : public DKGMessage
 public:
   std::set<MuddleAddress> connections_;
 
-  explicit ConnectionsMessage(DKGSerializer &serialiser)
+  explicit ConnectionsMessage(DKGSerialiser &serialiser)
     : DKGMessage{MessageType::CONNECTIONS}
   {
     serialiser >> connections_;
@@ -119,11 +119,11 @@ public:
   {}
   ~ConnectionsMessage() override = default;
 
-  DKGSerializer Serialize() const override
+  DKGSerialiser Serialise() const override
   {
-    DKGSerializer serializer;
-    serializer << connections_;
-    return serializer;
+    DKGSerialiser serialiser;
+    serialiser << connections_;
+    return serialiser;
   }
 };
 
@@ -133,7 +133,7 @@ class CoefficientsMessage : public DKGMessage
   std::vector<Coefficient> coefficients_;  ///< Coefficients as strings
 
 public:
-  explicit CoefficientsMessage(DKGSerializer &serialiser)
+  explicit CoefficientsMessage(DKGSerialiser &serialiser)
     : DKGMessage{MessageType::COEFFICIENT}
   {
     serialiser >> phase_ >> coefficients_;
@@ -145,11 +145,11 @@ public:
   {}
   ~CoefficientsMessage() override = default;
 
-  DKGSerializer Serialize() const override
+  DKGSerialiser Serialise() const override
   {
-    DKGSerializer serializer;
-    serializer << phase_ << coefficients_;
-    return serializer;
+    DKGSerialiser serialiser;
+    serialiser << phase_ << coefficients_;
+    return serialiser;
   }
 
   /// @name Getter functions
@@ -171,7 +171,7 @@ class SharesMessage : public DKGMessage
   std::unordered_map<CabinetId, std::pair<Share, Share>>
       shares_;  ///< Exposed secret shares for a particular cabinet member
 public:
-  explicit SharesMessage(DKGSerializer &serialiser)
+  explicit SharesMessage(DKGSerialiser &serialiser)
     : DKGMessage{MessageType::SHARE}
   {
     serialiser >> phase_ >> shares_;
@@ -183,11 +183,11 @@ public:
   {}
   ~SharesMessage() override = default;
 
-  DKGSerializer Serialize() const override
+  DKGSerialiser Serialise() const override
   {
-    DKGSerializer serializer;
-    serializer << phase_ << shares_;
-    return serializer;
+    DKGSerialiser serialiser;
+    serialiser << phase_ << shares_;
+    return serialiser;
   }
 
   /// @name Getter functions
@@ -209,7 +209,7 @@ class ComplaintsMessage : public DKGMessage
   ComplaintsList complaints_;  ///< Cabinet members that you are complaining against
 public:
   // Construction/Destruction
-  explicit ComplaintsMessage(DKGSerializer &serialiser)
+  explicit ComplaintsMessage(DKGSerialiser &serialiser)
     : DKGMessage{MessageType::COMPLAINT}
   {
     serialiser >> complaints_;
@@ -220,11 +220,11 @@ public:
   {}
   ~ComplaintsMessage() override = default;
 
-  DKGSerializer Serialize() const override
+  DKGSerialiser Serialise() const override
   {
-    DKGSerializer serializer;
-    serializer << complaints_;
-    return serializer;
+    DKGSerialiser serialiser;
+    serialiser << complaints_;
+    return serialiser;
   }
 
   /// @name Getter functions
@@ -245,7 +245,7 @@ class NotarisationKeyMessage : public DKGMessage
   SignedNotarisationKey payload_;
 
 public:
-  explicit NotarisationKeyMessage(DKGSerializer &serialiser)
+  explicit NotarisationKeyMessage(DKGSerialiser &serialiser)
     : DKGMessage{MessageType::NOTARISATION_KEY}
   {
     serialiser >> payload_;
@@ -256,11 +256,11 @@ public:
   {}
   ~NotarisationKeyMessage() override = default;
 
-  DKGSerializer Serialize() const override
+  DKGSerialiser Serialise() const override
   {
-    DKGSerializer serializer;
-    serializer << payload_;
-    return serializer;
+    DKGSerialiser serialiser;
+    serialiser << payload_;
+    return serialiser;
   }
 
   NotarisationKey PublicKey() const
@@ -282,13 +282,13 @@ public:
   DKGEnvelope() = default;
   explicit DKGEnvelope(DKGMessage const &msg)
     : type_{msg.type()}
-    , serialisedMessage_{msg.Serialize().data()}
+    , serialisedMessage_{msg.Serialise().data()}
   {}
 
   std::shared_ptr<DKGMessage> Message() const;
 
   template <typename T, typename D>
-  friend struct serializers::MapSerializer;
+  friend struct serialisers::MapSerialiser;
 
 private:
   MessageType type_;               ///< Type of message contained in the envelope
@@ -297,9 +297,9 @@ private:
 
 }  // namespace dkg
 
-namespace serializers {
+namespace serialisers {
 template <typename D>
-struct MapSerializer<dkg::DKGEnvelope, D>
+struct MapSerialiser<dkg::DKGEnvelope, D>
 {
 public:
   using Type       = dkg::DKGEnvelope;
@@ -309,15 +309,15 @@ public:
   static uint8_t const MESSAGE = 2;
 
   template <typename Constructor>
-  static void Serialize(Constructor &map_constructor, Type const &env)
+  static void Serialise(Constructor &map_constructor, Type const &env)
   {
     auto map = map_constructor(2);
     map.Append(TYPE, static_cast<uint8_t>(env.type_));
     map.Append(MESSAGE, env.serialisedMessage_);
   }
 
-  template <typename MapDeserializer>
-  static void Deserialize(MapDeserializer &map, Type &env)
+  template <typename MapDeserialiser>
+  static void Deserialise(MapDeserialiser &map, Type &env)
   {
     uint8_t type;
     map.ExpectKeyGetValue(TYPE, type);
@@ -326,6 +326,6 @@ public:
   }
 };
 
-}  // namespace serializers
+}  // namespace serialisers
 
 }  // namespace fetch

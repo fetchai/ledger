@@ -20,7 +20,7 @@
 #include "vm_modules/ml/model/model_estimator.hpp"
 #include "vm_modules/vm_factory.hpp"
 
-#include "core/serializers/main_serializer.hpp"
+#include "core/serialisers/main_serialiser.hpp"
 
 #include "gmock/gmock.h"
 
@@ -156,14 +156,14 @@ public:
     return model->Estimator().Predict(data);
   }
 
-  ChargeAmount SerializeToStringCharge(VmModelPtr &model)
+  ChargeAmount SerialiseToStringCharge(VmModelPtr &model)
   {
-    return model->Estimator().SerializeToString();
+    return model->Estimator().SerialiseToString();
   }
 
-  ChargeAmount DeserializeFromStringCharge(VmModelPtr &model, VmStringPtr const &model_serialized)
+  ChargeAmount DeserialiseFromStringCharge(VmModelPtr &model, VmStringPtr const &model_serialised)
   {
-    return model->Estimator().DeserializeFromString(model_serialized);
+    return model->Estimator().DeserialiseFromString(model_serialised);
   }
 };
 
@@ -979,7 +979,7 @@ TEST_F(VMModelEstimatorTests, predict_charge_correlate_with_number_of_datapoints
   EXPECT_LT(charge_small, charge_big);
 }
 
-TEST_F(VMModelEstimatorTests, serializetostring_charge_correlate_with_number_of_layers)
+TEST_F(VMModelEstimatorTests, serialisetostring_charge_correlate_with_number_of_layers)
 {
   auto loss      = std::string("mse");
   auto optimiser = std::string("adam");
@@ -987,17 +987,17 @@ TEST_F(VMModelEstimatorTests, serializetostring_charge_correlate_with_number_of_
   std::vector<SizeType> sizes_small       = {10, 10};
   std::vector<bool>     activations_small = {true};
   auto model_small  = VmSequentialModel(vm, sizes_small, activations_small, loss, optimiser);
-  auto charge_small = SerializeToStringCharge(model_small);
+  auto charge_small = SerialiseToStringCharge(model_small);
 
   std::vector<SizeType> sizes_big       = {10, 10, 10};
   std::vector<bool>     activations_big = {true, true};
   auto model_big  = VmSequentialModel(vm, sizes_big, activations_big, loss, optimiser);
-  auto charge_big = SerializeToStringCharge(model_big);
+  auto charge_big = SerialiseToStringCharge(model_big);
 
   EXPECT_LT(charge_small, charge_big);
 }
 
-TEST_F(VMModelEstimatorTests, serializetostring_charge_correlate_with_size_of_layers)
+TEST_F(VMModelEstimatorTests, serialisetostring_charge_correlate_with_size_of_layers)
 {
   auto              loss        = std::string("mse");
   auto              optimiser   = std::string("adam");
@@ -1005,16 +1005,16 @@ TEST_F(VMModelEstimatorTests, serializetostring_charge_correlate_with_size_of_la
 
   std::vector<SizeType> sizes_small = {10, 10, 10};
   auto model_small  = VmSequentialModel(vm, sizes_small, activations, loss, optimiser);
-  auto charge_small = SerializeToStringCharge(model_small);
+  auto charge_small = SerialiseToStringCharge(model_small);
 
   std::vector<SizeType> sizes_big  = {10, 100, 10};
   auto                  model_big  = VmSequentialModel(vm, sizes_big, activations, loss, optimiser);
-  auto                  charge_big = SerializeToStringCharge(model_big);
+  auto                  charge_big = SerialiseToStringCharge(model_big);
 
   EXPECT_LT(charge_small, charge_big);
 }
 
-TEST_F(VMModelEstimatorTests, deserializefromstring_charge_correlate_with_number_of_layers)
+TEST_F(VMModelEstimatorTests, deserialisefromstring_charge_correlate_with_number_of_layers)
 {
   auto loss      = std::string("mse");
   auto optimiser = std::string("adam");
@@ -1022,21 +1022,21 @@ TEST_F(VMModelEstimatorTests, deserializefromstring_charge_correlate_with_number
   std::vector<SizeType> sizes_small       = {10, 10};
   std::vector<bool>     activations_small = {true};
   auto model_small = VmSequentialModel(vm, sizes_small, activations_small, loss, optimiser);
-  auto model_small_serialized = model_small->SerializeToString();
+  auto model_small_serialised = model_small->SerialiseToString();
   auto model_small_new        = VmSequentialModel(vm);
-  auto charge_small = DeserializeFromStringCharge(model_small_new, model_small_serialized);
+  auto charge_small = DeserialiseFromStringCharge(model_small_new, model_small_serialised);
 
   std::vector<SizeType> sizes_big       = {10, 10, 10};
   std::vector<bool>     activations_big = {true, true};
   auto model_big            = VmSequentialModel(vm, sizes_big, activations_big, loss, optimiser);
-  auto model_big_serialized = model_big->SerializeToString();
+  auto model_big_serialised = model_big->SerialiseToString();
   auto model_big_new        = VmSequentialModel(vm);
-  auto charge_big           = DeserializeFromStringCharge(model_big_new, model_big_serialized);
+  auto charge_big           = DeserialiseFromStringCharge(model_big_new, model_big_serialised);
 
   EXPECT_LT(charge_small, charge_big);
 }
 
-TEST_F(VMModelEstimatorTests, deserializefromstring_charge_correlate_with_size_of_layers)
+TEST_F(VMModelEstimatorTests, deserialisefromstring_charge_correlate_with_size_of_layers)
 {
   auto              loss        = std::string("mse");
   auto              optimiser   = std::string("adam");
@@ -1044,15 +1044,15 @@ TEST_F(VMModelEstimatorTests, deserializefromstring_charge_correlate_with_size_o
 
   std::vector<SizeType> sizes_small = {10, 10, 10};
   auto model_small            = VmSequentialModel(vm, sizes_small, activations, loss, optimiser);
-  auto model_small_serialized = model_small->SerializeToString();
+  auto model_small_serialised = model_small->SerialiseToString();
   auto model_small_new        = VmSequentialModel(vm);
-  auto charge_small = DeserializeFromStringCharge(model_small_new, model_small_serialized);
+  auto charge_small = DeserialiseFromStringCharge(model_small_new, model_small_serialised);
 
   std::vector<SizeType> sizes_big = {10, 100, 10};
   auto                  model_big = VmSequentialModel(vm, sizes_big, activations, loss, optimiser);
-  auto                  model_big_serialized = model_big->SerializeToString();
+  auto                  model_big_serialised = model_big->SerialiseToString();
   auto                  model_big_new        = VmSequentialModel(vm);
-  auto charge_big = DeserializeFromStringCharge(model_big_new, model_big_serialized);
+  auto charge_big = DeserialiseFromStringCharge(model_big_new, model_big_serialised);
 
   EXPECT_LT(charge_small, charge_big);
 }
@@ -1063,43 +1063,43 @@ TEST_F(VMModelEstimatorTests, deserializefromstring_charge_correlate_with_size_o
 
 TEST_F(VMModelEstimatorTests, estimator_state_consistency_after_serialization_deserialization)
 {
-  fetch::serializers::MsgPackSerializer serializer;
+  fetch::serialisers::MsgPackSerialiser serialiser;
 
   std::vector<SizeType> sizes          = {10, 10, 10};
   std::vector<bool>     activations    = {true, true};
   auto                  model_original = VmSequentialModel(vm, sizes, activations, "mse", "adam");
-  auto                  model_from_serializer = VmSequentialModel(vm);
+  auto                  model_from_serialiser = VmSequentialModel(vm);
 
-  model_original->SerializeTo(serializer);
-  serializer.seek(0);
-  model_from_serializer->DeserializeFrom(serializer);
+  model_original->SerialiseTo(serialiser);
+  serialiser.seek(0);
+  model_from_serialiser->DeserialiseFrom(serialiser);
 
   ChargeAmount charge_original        = 0;
-  ChargeAmount charge_from_serializer = 0;
+  ChargeAmount charge_from_serialiser = 0;
 
   //
   SizeType input_size  = 10;
   SizeType output_size = 100;
   auto     layer_type  = VmString(vm, "dense");
   charge_original      = LayerAddDenseCharge(model_original, layer_type, input_size, output_size);
-  charge_from_serializer =
-      LayerAddDenseCharge(model_from_serializer, layer_type, input_size, output_size);
-  EXPECT_EQ(charge_original, charge_from_serializer);
+  charge_from_serialiser =
+      LayerAddDenseCharge(model_from_serialiser, layer_type, input_size, output_size);
+  EXPECT_EQ(charge_original, charge_from_serialiser);
 
   //
   auto activation_type   = VmString(vm, "relu");
   charge_original        = LayerAddDenseActivationCharge(model_original, layer_type, input_size,
                                                   output_size, activation_type);
-  charge_from_serializer = LayerAddDenseActivationCharge(model_from_serializer, layer_type,
+  charge_from_serialiser = LayerAddDenseActivationCharge(model_from_serialiser, layer_type,
                                                          input_size, output_size, activation_type);
-  EXPECT_EQ(charge_original, charge_from_serializer);
+  EXPECT_EQ(charge_original, charge_from_serialiser);
 
   //
   auto loss              = VmString(vm, "mse");
   auto optimiser         = VmString(vm, "adam");
   charge_original        = CompileSequentialCharge(model_original, loss, optimiser);
-  charge_from_serializer = CompileSequentialCharge(model_from_serializer, loss, optimiser);
-  EXPECT_EQ(charge_original, charge_from_serializer);
+  charge_from_serialiser = CompileSequentialCharge(model_from_serialiser, loss, optimiser);
+  EXPECT_EQ(charge_original, charge_from_serialiser);
 
   //
   SizeType              batch_size = 64;
@@ -1109,26 +1109,26 @@ TEST_F(VMModelEstimatorTests, estimator_state_consistency_after_serialization_de
   auto                  data  = VmTensor(vm, data_shape);
   auto                  label = VmTensor(vm, label_shape);
   charge_original             = FitCharge(model_original, data, label, batch_size);
-  charge_from_serializer      = FitCharge(model_from_serializer, data, label, batch_size);
-  EXPECT_EQ(charge_original, charge_from_serializer);
+  charge_from_serialiser      = FitCharge(model_from_serialiser, data, label, batch_size);
+  EXPECT_EQ(charge_original, charge_from_serialiser);
 
   //
   charge_original        = PredictCharge(model_original, data);
-  charge_from_serializer = PredictCharge(model_from_serializer, data);
-  EXPECT_EQ(charge_original, charge_from_serializer);
+  charge_from_serialiser = PredictCharge(model_from_serialiser, data);
+  EXPECT_EQ(charge_original, charge_from_serialiser);
 
   //
-  charge_original        = SerializeToStringCharge(model_original);
-  charge_from_serializer = SerializeToStringCharge(model_from_serializer);
-  EXPECT_EQ(charge_original, charge_from_serializer);
+  charge_original        = SerialiseToStringCharge(model_original);
+  charge_from_serialiser = SerialiseToStringCharge(model_from_serialiser);
+  EXPECT_EQ(charge_original, charge_from_serialiser);
 
   //
-  auto original_serialized        = model_original->SerializeToString();
-  auto from_serializer_serialized = model_from_serializer->SerializeToString();
-  charge_original = DeserializeFromStringCharge(model_original, original_serialized);
-  charge_from_serializer =
-      DeserializeFromStringCharge(model_from_serializer, from_serializer_serialized);
-  EXPECT_EQ(charge_original, charge_from_serializer);
+  auto original_serialised        = model_original->SerialiseToString();
+  auto from_serialiser_serialised = model_from_serialiser->SerialiseToString();
+  charge_original = DeserialiseFromStringCharge(model_original, original_serialised);
+  charge_from_serialiser =
+      DeserialiseFromStringCharge(model_from_serialiser, from_serialiser_serialised);
+  EXPECT_EQ(charge_original, charge_from_serialiser);
 }
 
 TEST_F(VMModelEstimatorTests,
@@ -1137,36 +1137,36 @@ TEST_F(VMModelEstimatorTests,
   std::vector<SizeType> sizes          = {10, 10, 10};
   std::vector<bool>     activations    = {true, true};
   auto                  model_original = VmSequentialModel(vm, sizes, activations, "mse", "adam");
-  auto                  model_from_serializer = VmSequentialModel(vm);
+  auto                  model_from_serialiser = VmSequentialModel(vm);
 
-  auto serialized_model = model_original->SerializeToString();
-  model_from_serializer->DeserializeFromString(serialized_model);
+  auto serialised_model = model_original->SerialiseToString();
+  model_from_serialiser->DeserialiseFromString(serialised_model);
   ChargeAmount charge_original        = 0;
-  ChargeAmount charge_from_serializer = 0;
+  ChargeAmount charge_from_serialiser = 0;
 
   //
   SizeType input_size  = 10;
   SizeType output_size = 100;
   auto     layer_type  = VmString(vm, "dense");
   charge_original      = LayerAddDenseCharge(model_original, layer_type, input_size, output_size);
-  charge_from_serializer =
-      LayerAddDenseCharge(model_from_serializer, layer_type, input_size, output_size);
-  EXPECT_EQ(charge_original, charge_from_serializer);
+  charge_from_serialiser =
+      LayerAddDenseCharge(model_from_serialiser, layer_type, input_size, output_size);
+  EXPECT_EQ(charge_original, charge_from_serialiser);
 
   //
   auto activation_type   = VmString(vm, "relu");
   charge_original        = LayerAddDenseActivationCharge(model_original, layer_type, input_size,
                                                   output_size, activation_type);
-  charge_from_serializer = LayerAddDenseActivationCharge(model_from_serializer, layer_type,
+  charge_from_serialiser = LayerAddDenseActivationCharge(model_from_serialiser, layer_type,
                                                          input_size, output_size, activation_type);
-  EXPECT_EQ(charge_original, charge_from_serializer);
+  EXPECT_EQ(charge_original, charge_from_serialiser);
 
   //
   auto loss              = VmString(vm, "mse");
   auto optimiser         = VmString(vm, "adam");
   charge_original        = CompileSequentialCharge(model_original, loss, optimiser);
-  charge_from_serializer = CompileSequentialCharge(model_from_serializer, loss, optimiser);
-  EXPECT_EQ(charge_original, charge_from_serializer);
+  charge_from_serialiser = CompileSequentialCharge(model_from_serialiser, loss, optimiser);
+  EXPECT_EQ(charge_original, charge_from_serialiser);
 
   //
   SizeType              batch_size = 64;
@@ -1176,26 +1176,26 @@ TEST_F(VMModelEstimatorTests,
   auto                  data  = VmTensor(vm, data_shape);
   auto                  label = VmTensor(vm, label_shape);
   charge_original             = FitCharge(model_original, data, label, batch_size);
-  charge_from_serializer      = FitCharge(model_from_serializer, data, label, batch_size);
-  EXPECT_EQ(charge_original, charge_from_serializer);
+  charge_from_serialiser      = FitCharge(model_from_serialiser, data, label, batch_size);
+  EXPECT_EQ(charge_original, charge_from_serialiser);
 
   //
   charge_original        = PredictCharge(model_original, data);
-  charge_from_serializer = PredictCharge(model_from_serializer, data);
-  EXPECT_EQ(charge_original, charge_from_serializer);
+  charge_from_serialiser = PredictCharge(model_from_serialiser, data);
+  EXPECT_EQ(charge_original, charge_from_serialiser);
 
   //
-  charge_original        = SerializeToStringCharge(model_original);
-  charge_from_serializer = SerializeToStringCharge(model_from_serializer);
-  EXPECT_EQ(charge_original, charge_from_serializer);
+  charge_original        = SerialiseToStringCharge(model_original);
+  charge_from_serialiser = SerialiseToStringCharge(model_from_serialiser);
+  EXPECT_EQ(charge_original, charge_from_serialiser);
 
   //
-  auto original_serialized        = model_original->SerializeToString();
-  auto from_serializer_serialized = model_from_serializer->SerializeToString();
-  charge_original = DeserializeFromStringCharge(model_original, original_serialized);
-  charge_from_serializer =
-      DeserializeFromStringCharge(model_from_serializer, from_serializer_serialized);
-  EXPECT_EQ(charge_original, charge_from_serializer);
+  auto original_serialised        = model_original->SerialiseToString();
+  auto from_serialiser_serialised = model_from_serialiser->SerialiseToString();
+  charge_original = DeserialiseFromStringCharge(model_original, original_serialised);
+  charge_from_serialiser =
+      DeserialiseFromStringCharge(model_from_serialiser, from_serialiser_serialised);
+  EXPECT_EQ(charge_original, charge_from_serialiser);
 }
 
 TEST_F(VMModelEstimatorTests, charge_forward_one_dense)

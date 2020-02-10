@@ -19,8 +19,8 @@
 
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/mutex.hpp"
-#include "core/serializers/base_types.hpp"
-#include "core/serializers/main_serializer.hpp"
+#include "core/serialisers/base_types.hpp"
+#include "core/serialisers/main_serialiser.hpp"
 
 #include <cstdint>
 #include <memory>
@@ -31,8 +31,8 @@ namespace muddle {
 using HashDigest           = byte_array::ByteArray;
 using TagType              = uint64_t;
 using SerialisedMessage    = byte_array::ConstByteArray;
-using RBCSerializer        = fetch::serializers::MsgPackSerializer;
-using RBCSerializerCounter = fetch::serializers::SizeCounter;
+using RBCSerialiser        = fetch::serialisers::MsgPackSerialiser;
+using RBCSerialiserCounter = fetch::serialisers::SizeCounter;
 
 /**
  * Different messages using in reliable broadcast channel(RBC).
@@ -139,10 +139,10 @@ public:
   virtual bool is_valid() const;
   /// @}
 
-  RBCSerializer Serialize() const;
+  RBCSerialiser Serialise() const;
 
   template <typename T, typename D>
-  friend struct serializers::MapSerializer;
+  friend struct serialisers::MapSerialiser;
 
   RBCMessage(RBCMessage const &) = default;  // TODO (troels): make protected
 
@@ -203,9 +203,9 @@ public:
 
 }  // namespace muddle
 
-namespace serializers {
+namespace serialisers {
 template <typename D>
-struct MapSerializer<muddle::RBCMessage, D>
+struct MapSerialiser<muddle::RBCMessage, D>
 {
 public:
   using Type       = muddle::RBCMessage;
@@ -218,7 +218,7 @@ public:
   static uint8_t const PAYLOAD = 5;
 
   template <typename Constructor>
-  static void Serialize(Constructor &map_constructor, Type const &msg)
+  static void Serialise(Constructor &map_constructor, Type const &msg)
   {
     auto map = map_constructor(5);
     map.Append(TYPE, static_cast<uint8_t>(msg.type_));
@@ -228,8 +228,8 @@ public:
     map.Append(PAYLOAD, msg.payload_);
   }
 
-  template <typename MapDeserializer>
-  static void Deserialize(MapDeserializer &map, Type &msg)
+  template <typename MapDeserialiser>
+  static void Deserialise(MapDeserialiser &map, Type &msg)
   {
     uint8_t type;
     map.ExpectKeyGetValue(TYPE, type);
@@ -242,6 +242,6 @@ public:
     msg.type_ = static_cast<muddle::RBCMessageType>(type);
   }
 };
-}  // namespace serializers
+}  // namespace serialisers
 
 }  // namespace fetch

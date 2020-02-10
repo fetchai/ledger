@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/serializers/counter.hpp"
-#include "core/serializers/main_serializer.hpp"
+#include "core/serialisers/counter.hpp"
+#include "core/serialisers/main_serialiser.hpp"
 #include "muddle/rbc_messages.hpp"
 
 #include "gtest/gtest.h"
@@ -29,9 +29,9 @@ TEST(rbc_messages, broadcast)
 {
   RBroadcast broadcast{1, 1, 1, "hello"};
 
-  fetch::serializers::MsgPackSerializer serialiser{broadcast.Serialize()};
+  fetch::serialisers::MsgPackSerialiser serialiser{broadcast.Serialise()};
 
-  fetch::serializers::MsgPackSerializer serialiser1(serialiser.data());
+  fetch::serialisers::MsgPackSerialiser serialiser1(serialiser.data());
   RBCMessage                            broadcast1;
   serialiser1 >> broadcast1;
 
@@ -43,9 +43,9 @@ TEST(rbc_messages, echo)
 {
   REcho echo{1, 1, 1, "hello"};
 
-  fetch::serializers::MsgPackSerializer serialiser{echo.Serialize()};
+  fetch::serialisers::MsgPackSerialiser serialiser{echo.Serialise()};
 
-  fetch::serializers::MsgPackSerializer serialiser1(serialiser.data());
+  fetch::serialisers::MsgPackSerialiser serialiser1(serialiser.data());
   RBCMessage                            echo1;
   serialiser1 >> echo1;
 
@@ -57,9 +57,9 @@ TEST(rbc_messages, ready)
 {
   RReady ready{1, 1, 1, "hello"};
 
-  fetch::serializers::MsgPackSerializer serialiser{ready.Serialize()};
+  fetch::serialisers::MsgPackSerialiser serialiser{ready.Serialise()};
 
-  fetch::serializers::MsgPackSerializer serialiser1(serialiser.data());
+  fetch::serialisers::MsgPackSerialiser serialiser1(serialiser.data());
   RBCMessage                            ready1;
   serialiser1 >> ready1;
 
@@ -71,9 +71,9 @@ TEST(rbc_messages, request)
 {
   RRequest request{1, 1, 1};
 
-  fetch::serializers::MsgPackSerializer serialiser{request.Serialize()};
+  fetch::serialisers::MsgPackSerialiser serialiser{request.Serialise()};
 
-  fetch::serializers::MsgPackSerializer serialiser1(serialiser.data());
+  fetch::serialisers::MsgPackSerialiser serialiser1(serialiser.data());
   RBCMessage                            request1;
   serialiser1 >> request1;
 
@@ -84,9 +84,9 @@ TEST(rbc_messages, answer)
 {
   RAnswer answer{1, 1, 1, "hello"};
 
-  fetch::serializers::MsgPackSerializer serialiser{answer.Serialize()};
+  fetch::serialisers::MsgPackSerialiser serialiser{answer.Serialise()};
 
-  fetch::serializers::MsgPackSerializer serialiser1(serialiser.data());
+  fetch::serialisers::MsgPackSerialiser serialiser1(serialiser.data());
   RBCMessage                            answer1;
   serialiser1 >> answer1;
 

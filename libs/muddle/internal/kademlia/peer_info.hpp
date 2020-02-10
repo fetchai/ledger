@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/serializers/group_definitions.hpp"
+#include "core/serialisers/group_definitions.hpp"
 #include "kademlia/primitives.hpp"
 #include "moment/clock_interfaces.hpp"
 #include "network/uri.hpp"
@@ -92,10 +92,10 @@ struct PeerInfo
 
 }  // namespace muddle
 
-namespace serializers {
+namespace serialisers {
 
 template <typename D>
-struct MapSerializer<muddle::PeerInfo, D>
+struct MapSerialiser<muddle::PeerInfo, D>
 {
 public:
   using Type       = muddle::PeerInfo;
@@ -107,7 +107,7 @@ public:
   static uint8_t const URI               = 3;
 
   template <typename Constructor>
-  static void Serialize(Constructor &map_constructor, Type const &info)
+  static void Serialise(Constructor &map_constructor, Type const &info)
   {
     auto map = map_constructor(4);
 
@@ -117,8 +117,8 @@ public:
     map.Append(URI, info.uri);
   }
 
-  template <typename MapDeserializer>
-  static void Deserialize(MapDeserializer &map, Type &info)
+  template <typename MapDeserialiser>
+  static void Deserialise(MapDeserialiser &map, Type &info)
   {
     map.ExpectKeyGetValue(ADDRESS, info.address);
     map.ExpectKeyGetValue(KADEMLIA_ADDRESS, info.kademlia_address);
@@ -127,6 +127,6 @@ public:
   }
 };
 
-}  // namespace serializers
+}  // namespace serialisers
 
 }  // namespace fetch

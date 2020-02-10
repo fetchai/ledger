@@ -21,7 +21,7 @@
 #include "core/byte_array/decoders.hpp"
 #include "core/byte_array/encoders.hpp"
 #include "core/commandline/parameter_parser.hpp"
-#include "core/serializers/main_serializer.hpp"
+#include "core/serialisers/main_serialiser.hpp"
 #include "vm/common.hpp"
 #include "vm/execution_task.hpp"
 #include "vm/module.hpp"
@@ -71,7 +71,7 @@ void CreateVMAndRunScript(std::string script, ExecutionTask const &task)
 
   // Unpacking arguments
   ParameterPack params{vm->registered_types()};
-  bool const    success_extract = task.DeserializeParameters(vm.get(), params, executable.get(),
+  bool const    success_extract = task.DeserialiseParameters(vm.get(), params, executable.get(),
                                                           executable->FindFunction(task.function));
 
   EXPECT_TRUE(success_extract);
@@ -144,19 +144,19 @@ TEST(ParameterSerialization, NativeCPPTypes)
   task.function = "myFunction";
 
   // Creating function arguments
-  MsgPackSerializer serializer;
+  MsgPackSerialiser serialiser;
 
   // Arg1 Array< Array< UInt64 > >
   std::vector<std::vector<uint64_t>> arr{{9, 2, 3, 4}, {2, 3}, {2, 3, 4}};
-  serializer << arr << static_cast<std::string>("Hello world") << static_cast<int64_t>(9183);
+  serialiser << arr << static_cast<std::string>("Hello world") << static_cast<int64_t>(9183);
 
   std::map<std::string, std::map<int64_t, int64_t>> mymap{{"hello", {{2, 3}, {4, 6}}},
                                                           {"world", {{9, 99}, {6, 66}, {3, 33}}}};
 
-  serializer << mymap;
+  serialiser << mymap;
 
   // Storing args
-  task.parameters = serializer.data();
+  task.parameters = serialiser.data();
 
   // Testing
   CreateVMAndRunScript(script, task);
@@ -164,7 +164,7 @@ TEST(ParameterSerialization, NativeCPPTypes)
 
 TEST(ParameterSerialization, PairSerialization)
 {
-  MsgPackSerializer serializer;
+  MsgPackSerialiser serialiser;
 
   std::pair<int, std::string> pair_in_1;
   pair_in_1.first  = 1;
@@ -174,15 +174,15 @@ TEST(ParameterSerialization, PairSerialization)
   pair_in_2.first  = "ELSE";
   pair_in_2.second = -2;
 
-  serializer << pair_in_1;
-  serializer << pair_in_2;
+  serialiser << pair_in_1;
+  serialiser << pair_in_2;
 
   std::pair<int, std::string> pair_out_1;
   std::pair<std::string, int> pair_out_2;
 
-  auto deserializer = MsgPackSerializer{serializer.data()};
-  deserializer >> pair_out_1;
-  deserializer >> pair_out_2;
+  auto deserialiser = MsgPackSerialiser{serialiser.data()};
+  deserialiser >> pair_out_1;
+  deserialiser >> pair_out_2;
 
   EXPECT_EQ(pair_in_1, pair_out_1);
   EXPECT_EQ(pair_in_2, pair_out_2);
@@ -230,7 +230,7 @@ TEST(ParameterSerialization, VariantTypes)
   task.function = "myFunction";
 
   // Creating function arguments
-  MsgPackSerializer serializer;
+  MsgPackSerialiser serialiser;
 
   // Arg1 Array< Array< UInt64 > >
   variant::Variant arr = variant::Variant::Array(3);
@@ -247,16 +247,16 @@ TEST(ParameterSerialization, VariantTypes)
   arr[2][1]            = static_cast<uint64_t>(3);
   arr[2][2]            = static_cast<uint64_t>(4);
 
-  serializer << arr << static_cast<std::string>("Hello world") << static_cast<int64_t>(9183);
+  serialiser << arr << static_cast<std::string>("Hello world") << static_cast<int64_t>(9183);
 
   variant::Variant mymap = variant::Variant::Object();
   mymap["hello"]         = 2;
   mymap["world"]         = 29;
 
-  serializer << mymap;
+  serialiser << mymap;
 
   // Storing args
-  task.parameters = serializer.data();
+  task.parameters = serialiser.data();
 
   // Testing
   CreateVMAndRunScript(script, task);

@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/serializers/base_types.hpp"
-#include "core/serializers/main_serializer.hpp"
+#include "core/serialisers/base_types.hpp"
+#include "core/serialisers/main_serialiser.hpp"
 #include "variant/variant.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 #include "vm/common.hpp"
@@ -31,7 +31,7 @@ namespace vm {
 // TODO(issue 648): We should rename variants to VMVariant and JSONVariant, respectively
 // to avoid name clash.
 using JSONVariant       = fetch::variant::Variant;
-using MsgPackSerializer = fetch::serializers::MsgPackSerializer;
+using MsgPackSerialiser = fetch::serialisers::MsgPackSerialiser;
 
 // Forward declarations
 class Object;
@@ -215,8 +215,8 @@ public:
   virtual ChargeAmount InplaceRightDivideChargeEstimator(Ptr<Object> const &lhso,
                                                          Variant const &    rhsv);
 
-  virtual bool SerializeTo(MsgPackSerializer &buffer);
-  virtual bool DeserializeFrom(MsgPackSerializer &buffer);
+  virtual bool SerialiseTo(MsgPackSerialiser &buffer);
+  virtual bool DeserialiseFrom(MsgPackSerialiser &buffer);
 
   virtual bool ToJSON(JSONVariant &variant);
   virtual bool FromJSON(JSONVariant const &variant);

@@ -84,7 +84,7 @@ public:
 
       FETCH_LOG_ERROR(LOGGING_NAME, "Failed to look up function handler: ", n);
 
-      throw serializers::SerializableException(
+      throw serialisers::SerializableException(
           error::MEMBER_NOT_FOUND, ByteArrayType("Could not find protocol member function"));
     }
     return iter->second.get();
@@ -112,7 +112,7 @@ public:
     auto iter = members_.find(n);
     if (iter != members_.end())
     {
-      throw serializers::SerializableException(
+      throw serialisers::SerializableException(
           error::MEMBER_EXISTS, ByteArrayType("Protocol member function already exists: "));
     }
 
@@ -128,7 +128,7 @@ public:
     auto iter = members_.find(n);
     if (iter != members_.end())
     {
-      throw serializers::SerializableException(
+      throw serialisers::SerializableException(
           error::MEMBER_EXISTS, ByteArrayType("Protocol member function already exists: "));
     }
 

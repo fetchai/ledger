@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/serializers/group_definitions.hpp"
-#include "core/serializers/map_serializer_boilerplate.hpp"
+#include "core/serialisers/group_definitions.hpp"
+#include "core/serialisers/map_serialiser_boilerplate.hpp"
 #include "muddle/address.hpp"
 #include "network/uri.hpp"
 #include "shards/service_identifier.hpp"
@@ -48,13 +48,16 @@ public:
   ManifestEntry &operator=(ManifestEntry const &) = default;
   ManifestEntry &operator=(ManifestEntry &&) = default;
 
+  template <typename D>
+  struct MapSerialiser;
+
 private:
   muddle::Address address_{};
   network::Uri    uri_{};
   uint16_t        local_port_{0};
 
   template <uint8_t KEY, class MemberVariable, MemberVariable MEMBER_VARIABLE, class Underlying>
-  friend struct ExpectedKeyMember;
+  friend struct SerialisedStructField;
 };
 
 inline muddle::Address const &ManifestEntry::address() const
@@ -72,18 +75,23 @@ inline uint16_t ManifestEntry::local_port() const
   return local_port_;
 }
 
-}  // namespace shards
-
-namespace serializers {
-
 template <typename D>
-struct MapSerializer<shards::ManifestEntry, D>
-  : MapSerializerBoilerplate<shards::ManifestEntry, D,
-                             EXPECTED_KEY_MEMBER(1, shards::ManifestEntry::uri_),
-                             EXPECTED_KEY_MEMBER(2, shards::ManifestEntry::local_port_),
-                             EXPECTED_KEY_MEMBER(3, shards::ManifestEntry::address_)>
+struct ManifestEntry::MapSerialiser
+  : serialisers::MapSerialiserBoilerplate<ManifestEntry, D,
+                                          serialiseD_STRUCT_FIELD(1, ManifestEntry::uri_),
+                                          serialiseD_STRUCT_FIELD(2, ManifestEntry::local_port_),
+                                          serialiseD_STRUCT_FIELD(3, ManifestEntry::address_)>
 {
 };
 
-}  // namespace serializers
+}  // namespace shards
+
+namespace serialisers {
+
+template <typename D>
+struct MapSerialiser<shards::ManifestEntry, D> : shards::ManifestEntry::MapSerialiser<D>
+{
+};
+
+}  // namespace serialisers
 }  // namespace fetch

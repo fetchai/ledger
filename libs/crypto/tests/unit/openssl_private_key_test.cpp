@@ -159,11 +159,11 @@ TEST_F(ECDCSAPrivateKeyTest, public_key_conversion_cycle)
     ECDSAPrivateKey<> const priv_key;
 
     //* Production code:
-    auto const                        serialized_pub_key = priv_key.PublicKey().KeyAsBin();
-    decltype(priv_key)::PublicKeyType pub_key{serialized_pub_key};
+    auto const                        serialised_pub_key = priv_key.PublicKey().KeyAsBin();
+    decltype(priv_key)::PublicKeyType pub_key{serialised_pub_key};
 
     //* Expectations:
-    EXPECT_EQ(ECDSAPrivateKey<>::EcdsaCurveType::publicKeySize, serialized_pub_key.size());
+    EXPECT_EQ(ECDSAPrivateKey<>::EcdsaCurveType::publicKeySize, serialised_pub_key.size());
     EXPECT_EQ(priv_key.PublicKey().KeyAsBin(), pub_key.KeyAsBin());
   }
 }

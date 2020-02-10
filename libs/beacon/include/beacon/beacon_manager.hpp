@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "beacon/dkg_output.hpp"
-#include "core/serializers/map_serializer_boilerplate.hpp"
+#include "core/serialisers/map_serialiser_boilerplate.hpp"
 #include "crypto/mcl_dkg.hpp"
 #include "dkg/dkg_messages.hpp"
 
@@ -111,9 +111,12 @@ public:
   ///}
   //
 
+  template <typename D>
+  struct MapSerialiser;
+
 private:
   template <uint8_t KEY, class MemberVariable, MemberVariable MEMBER_VARIABLE>
-  friend struct ExpectedKeyMember;
+  friend struct SerialisedStructField;
 
   // What the DKG should return
   PrivateKey              secret_share_;       ///< Share of group private key (x_i)
@@ -160,31 +163,38 @@ private:
   void AddReconstructionShare(MuddleAddress const &                  from,
                               std::pair<MuddleAddress, Share> const &share);
 };
+
+template <typename D>
+struct BeaconManager::MapSerialiser
+  : serialisers::MapSerialiserBoilerplate<
+        BeaconManager, D, serialiseD_STRUCT_FIELD(1, BeaconManager::secret_share_),
+        serialiseD_STRUCT_FIELD(2, BeaconManager::public_key_),
+        serialiseD_STRUCT_FIELD(3, BeaconManager::public_key_shares_),
+        serialiseD_STRUCT_FIELD(4, BeaconManager::qual_),
+        serialiseD_STRUCT_FIELD(5, BeaconManager::identity_to_index_),
+        serialiseD_STRUCT_FIELD(6, BeaconManager::polynomial_degree_),
+        serialiseD_STRUCT_FIELD(7, BeaconManager::cabinet_size_),
+        serialiseD_STRUCT_FIELD(8, BeaconManager::cabinet_index_)>
+{
+};
+
 }  // namespace dkg
 
-namespace serializers {
+namespace serialisers {
 
 template <typename D>
-struct MapSerializer<dkg::BeaconManager, D>
-  : MapSerializerBoilerplate<dkg::BeaconManager, D,
-                             EXPECTED_KEY_MEMBER(1, dkg::BeaconManager::secret_share_),
-                             EXPECTED_KEY_MEMBER(2, dkg::BeaconManager::public_key_),
-                             EXPECTED_KEY_MEMBER(3, dkg::BeaconManager::public_key_shares_),
-                             EXPECTED_KEY_MEMBER(4, dkg::BeaconManager::qual_),
-                             EXPECTED_KEY_MEMBER(5, dkg::BeaconManager::identity_to_index_),
-                             EXPECTED_KEY_MEMBER(6, dkg::BeaconManager::polynomial_degree_),
-                             EXPECTED_KEY_MEMBER(7, dkg::BeaconManager::cabinet_size_),
-                             EXPECTED_KEY_MEMBER(8, dkg::BeaconManager::cabinet_index_)>
+struct MapSerialiser<dkg::BeaconManager, D> : dkg::BeaconManager::MapSerialiser<D>
 {
 };
 
 template <typename D>
-struct MapSerializer<dkg::BeaconManager::SignedMessage, D>
-  : MapSerializerBoilerplate<dkg::BeaconManager::SignedMessage, D,
-                             EXPECTED_KEY_MEMBER(0, dkg::BeaconManager::SignedMessage::signature),
-                             EXPECTED_KEY_MEMBER(1, dkg::BeaconManager::SignedMessage::identity)>
+struct MapSerialiser<dkg::BeaconManager::SignedMessage, D>
+  : MapSerialiserBoilerplate<
+        dkg::BeaconManager::SignedMessage, D,
+        serialiseD_STRUCT_FIELD(0, dkg::BeaconManager::SignedMessage::signature),
+        serialiseD_STRUCT_FIELD(1, dkg::BeaconManager::SignedMessage::identity)>
 {
 };
 
-}  // namespace serializers
+}  // namespace serialisers
 }  // namespace fetch

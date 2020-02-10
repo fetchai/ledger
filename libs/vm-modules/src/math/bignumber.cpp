@@ -67,7 +67,7 @@ Ptr<UInt256Wrapper> ConstructorFromBytesBigEndian(VM *vm, TypeId type_id,
 void UInt256Wrapper::Bind(Module &module)
 {
   module.CreateClassType<UInt256Wrapper>("UInt256")
-      .CreateSerializeDefaultConstructor(
+      .CreateSerialiseDefaultConstructor(
           [](VM *vm, TypeId type_id) { return UInt256Wrapper::Constructor(vm, type_id, 0u); })
       .CreateConstructor(&UInt256Wrapper::Constructor)
       .CreateConstructor(&ConstructorFromBytesBigEndian)
@@ -147,13 +147,13 @@ vectorise::UInt<256> const &UInt256Wrapper::number() const
   return number_;
 }
 
-bool UInt256Wrapper::SerializeTo(serializers::MsgPackSerializer &buffer)
+bool UInt256Wrapper::SerialiseTo(serialisers::MsgPackSerialiser &buffer)
 {
   buffer << number_;
   return true;
 }
 
-bool UInt256Wrapper::DeserializeFrom(serializers::MsgPackSerializer &buffer)
+bool UInt256Wrapper::DeserialiseFrom(serialisers::MsgPackSerialiser &buffer)
 {
   buffer >> number_;
   return true;

@@ -18,7 +18,7 @@
 
 #include "ml/dataloaders/dataloader.hpp"
 
-#include "core/serializers/main_serializer.hpp"
+#include "core/serialisers/main_serialiser.hpp"
 #include "math/tensor/tensor.hpp"
 #include "ml/dataloaders/tensor_dataloader.hpp"
 #include "vm/array.hpp"
@@ -84,7 +84,7 @@ void VMDataLoader::Bind(Module &module, bool const enable_experimental)
   {
     module.CreateClassType<VMDataLoader>("DataLoader")
         .CreateConstructor(&VMDataLoader::Constructor, vm::MAXIMUM_CHARGE)
-        .CreateSerializeDefaultConstructor([](VM *vm, TypeId type_id) -> Ptr<VMDataLoader> {
+        .CreateSerialiseDefaultConstructor([](VM *vm, TypeId type_id) -> Ptr<VMDataLoader> {
           return Ptr<VMDataLoader>{new VMDataLoader(vm, type_id)};
         })
         .CreateMemberFunction("addData", &VMDataLoader::AddDataByData, vm::MAXIMUM_CHARGE)
@@ -182,13 +182,13 @@ VMDataLoader::DataLoaderPtrType &VMDataLoader::GetDataLoader()
   return loader_;
 }
 
-bool VMDataLoader::SerializeTo(serializers::MsgPackSerializer &buffer)
+bool VMDataLoader::SerialiseTo(serialisers::MsgPackSerialiser &buffer)
 {
   buffer << *this;
   return true;
 }
 
-bool VMDataLoader::DeserializeFrom(serializers::MsgPackSerializer &buffer)
+bool VMDataLoader::DeserialiseFrom(serialisers::MsgPackSerialiser &buffer)
 {
   buffer.seek(0);
   auto dl = std::make_shared<fetch::vm_modules::ml::VMDataLoader>(this->vm_, this->type_id_);

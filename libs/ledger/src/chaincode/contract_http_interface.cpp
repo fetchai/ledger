@@ -19,7 +19,7 @@
 #include "chain/json_transaction.hpp"
 #include "chain/transaction.hpp"
 #include "core/byte_array/decoders.hpp"
-#include "core/serializers/main_serializer.hpp"
+#include "core/serialisers/main_serialiser.hpp"
 #include "http/json_response.hpp"
 #include "json/document.hpp"
 #include "ledger/chaincode/chain_code_factory.hpp"
@@ -110,8 +110,8 @@ bool CreateTxFromBuffer(ConstByteArray const &encoded_tx, std::vector<ConstByteA
 {
   auto tx = std::make_shared<chain::Transaction>();
 
-  chain::TransactionSerializer tx_serializer{encoded_tx};
-  if (tx_serializer.Deserialize(*tx))
+  chain::TransactionSerialiser tx_serialiser{encoded_tx};
+  if (tx_serialiser.Deserialise(*tx))
   {
     if (tx->charge_limit() > chain::Transaction::MAXIMUM_TX_CHARGE_LIMIT)
     {
@@ -426,7 +426,7 @@ ContractHttpInterface::SubmitTxStatus ContractHttpInterface::SubmitBulkTx(
   try
   {
     // extract out all the transaction payloads
-    serializers::MsgPackSerializer buffer{request.body()};
+    serialisers::MsgPackSerialiser buffer{request.body()};
     buffer >> encoded_txs;
 
     for (auto const &encoded_tx : encoded_txs)

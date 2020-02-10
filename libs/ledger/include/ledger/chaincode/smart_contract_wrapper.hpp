@@ -19,7 +19,7 @@
 
 #include "chain/common_types.hpp"
 #include "core/byte_array/const_byte_array.hpp"
-#include "core/serializers/main_serializer.hpp"
+#include "core/serialisers/main_serialiser.hpp"
 
 namespace fetch {
 
@@ -40,10 +40,10 @@ struct SmartContractWrapper
 
 }  // namespace ledger
 
-namespace serializers {
+namespace serialisers {
 
 template <typename D>
-struct MapSerializer<ledger::SmartContractWrapper, D>
+struct MapSerialiser<ledger::SmartContractWrapper, D>
 {
 public:
   using Type       = ledger::SmartContractWrapper;
@@ -54,20 +54,20 @@ public:
   static uint8_t const CREATION_TIMESTAMP = 2;
 
   template <typename Constructor>
-  static void Serialize(Constructor &map_constructor, Type const &o)
+  static void Serialise(Constructor &map_constructor, Type const &o)
   {
     auto map = map_constructor(2);
     map.Append(SOURCE, o.source);
     map.Append(CREATION_TIMESTAMP, o.creation_timestamp);
   }
 
-  template <typename MapDeserializer>
-  static void Deserialize(MapDeserializer &map, Type &o)
+  template <typename MapDeserialiser>
+  static void Deserialise(MapDeserialiser &map, Type &o)
   {
     map.ExpectKeyGetValue(SOURCE, o.source);
     map.ExpectKeyGetValue(CREATION_TIMESTAMP, o.creation_timestamp);
   }
 };
-}  // namespace serializers
+}  // namespace serialisers
 
 }  // namespace fetch

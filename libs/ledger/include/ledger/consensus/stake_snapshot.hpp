@@ -87,7 +87,7 @@ private:
   uint64_t      total_stake_{0};    ///< Total stake cache
 
   template <typename T, typename D>
-  friend struct serializers::MapSerializer;
+  friend struct serialisers::MapSerialiser;
 };
 
 /**
@@ -127,10 +127,10 @@ void StakeSnapshot::IterateOver(Functor &&functor) const
 
 }  // namespace ledger
 
-namespace serializers {
+namespace serialisers {
 
 template <typename D>
-struct MapSerializer<ledger::StakeSnapshot::Record, D>
+struct MapSerialiser<ledger::StakeSnapshot::Record, D>
 {
 public:
   using Type       = ledger::StakeSnapshot::Record;
@@ -140,15 +140,15 @@ public:
   static uint8_t const STAKE    = 2;
 
   template <typename Constructor>
-  static void Serialize(Constructor &map_constructor, Type const &record)
+  static void Serialise(Constructor &map_constructor, Type const &record)
   {
     auto map = map_constructor(2);
     map.Append(IDENTITY, record.identity);
     map.Append(STAKE, record.stake);
   }
 
-  template <typename MapDeserializer>
-  static void Deserialize(MapDeserializer &map, Type &record)
+  template <typename MapDeserialiser>
+  static void Deserialise(MapDeserialiser &map, Type &record)
   {
     map.ExpectKeyGetValue(IDENTITY, record.identity);
     map.ExpectKeyGetValue(STAKE, record.stake);
@@ -156,7 +156,7 @@ public:
 };
 
 template <typename D>
-struct MapSerializer<ledger::StakeSnapshot, D>
+struct MapSerialiser<ledger::StakeSnapshot, D>
 {
 public:
   using Type       = ledger::StakeSnapshot;
@@ -167,7 +167,7 @@ public:
   static uint8_t const TOTAL_STAKE    = 3;
 
   template <typename Constructor>
-  static void Serialize(Constructor &map_constructor, Type const &snapshot)
+  static void Serialise(Constructor &map_constructor, Type const &snapshot)
   {
     auto map = map_constructor(3);
     map.Append(IDENTITY_INDEX, snapshot.identity_index_);
@@ -175,8 +175,8 @@ public:
     map.Append(TOTAL_STAKE, snapshot.total_stake_);
   }
 
-  template <typename MapDeserializer>
-  static void Deserialize(MapDeserializer &map, Type &record)
+  template <typename MapDeserialiser>
+  static void Deserialise(MapDeserialiser &map, Type &record)
   {
     map.ExpectKeyGetValue(IDENTITY_INDEX, record.identity_index_);
     map.ExpectKeyGetValue(STAKE_INDEX, record.stake_index_);
@@ -184,6 +184,6 @@ public:
   }
 };
 
-}  // namespace serializers
+}  // namespace serialisers
 
 }  // namespace fetch
