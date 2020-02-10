@@ -20,6 +20,7 @@
 #include "network/fetch_asio.hpp"
 #include "oef-base/comms/ISocketOwner.hpp"
 
+#include <functional>
 #include <memory>
 
 using asio::ip::tcp;
