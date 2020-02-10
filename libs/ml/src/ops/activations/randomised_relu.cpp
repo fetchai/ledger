@@ -137,10 +137,19 @@ std::vector<math::SizeType> RandomisedRelu<TensorType>::ComputeOutputShape(
 }
 
 template <typename TensorType>
-OperationsCount RandomisedRelu<TensorType>::ChargeForward()
+OperationsCount RandomisedRelu<TensorType>::ChargeForward() const
 {
-  assert(!this->batch_output_shape_.empty());
+  assert(!this->batch_input_shapes_.empty());
   OperationsCount cost = fetch::ml::charge_estimation::ops::RANDOMISED_RELU_PER_ELEMENT *
+                         this->TotalElementsIn({this->batch_input_shapes_});
+  return cost;
+}
+
+template <typename TensorType>
+OperationsCount RandomisedRelu<TensorType>::ChargeBackward() const
+{
+  assert(!this->batch_input_shapes_.empty());
+  OperationsCount cost = fetch::ml::charge_estimation::ops::RANDOMISED_RELU_BACKWARD_PER_ELEMENT *
                          this->TotalElementsIn({this->batch_input_shapes_});
   return cost;
 }

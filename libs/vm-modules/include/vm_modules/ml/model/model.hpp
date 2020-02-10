@@ -70,6 +70,7 @@ enum class SupportedLayerType : uint8_t
   MAXPOOL2D,
   AVGPOOL1D,
   AVGPOOL2D,
+  EMBEDDINGS,
 };
 
 class VMModel : public fetch::vm::Object
@@ -125,6 +126,8 @@ public:
 
   vm::Ptr<VMTensor> Predict(vm::Ptr<VMTensor> const &data);
 
+  fetch::vm::ChargeAmount EstimatePredict(vm::Ptr<vm_modules::math::VMTensor> const &data);
+
   static void Bind(fetch::vm::Module &module, bool experimental_enabled);
 
   void SetModel(ModelPtrType const &instance);
@@ -175,6 +178,9 @@ public:
                      fetch::vm::Ptr<vm::Array<math::SizeType>> const &shape);
   void LayerAddPool(fetch::vm::Ptr<fetch::vm::String> const &layer,
                     math::SizeType const &kernel_size, math::SizeType const &stride_size);
+  void LayerAddEmbeddings(fetch::vm::Ptr<fetch::vm::String> const &layer,
+                          math::SizeType const &dimensions, math::SizeType const &data_points,
+                          bool stub);
 
 private:
   ModelPtrType       model_;

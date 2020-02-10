@@ -133,12 +133,24 @@ std::vector<math::SizeType> Embeddings<TensorType>::ComputeOutputShape(
 }
 
 template <typename TensorType>
-OperationsCount Embeddings<TensorType>::ChargeForward()
+OperationsCount Embeddings<TensorType>::ChargeForward() const
 {
   assert(!this->batch_input_shapes_.empty());
   assert(!this->batch_output_shape_.empty());
 
   OperationsCount cost = fetch::ml::charge_estimation::ops::EMBEDDING_PER_ELEMENT;
+
+  return cost;
+}
+
+template <typename TensorType>
+OperationsCount Embeddings<TensorType>::ChargeBackward() const
+{
+  assert(!this->batch_input_shapes_.empty());
+
+  OperationsCount cost = fetch::ml::charge_estimation::ops::ADDITION_PER_ELEMENT *
+                         this->TotalElementsIn({this->batch_input_shapes_});
+  ;
 
   return cost;
 }
