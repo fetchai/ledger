@@ -89,10 +89,18 @@ std::vector<math::SizeType> DataHolder<TensorType>::ComputeOutputShape(
 }
 
 template <typename TensorType>
-OperationsCount DataHolder<TensorType>::ChargeForward()
+OperationsCount DataHolder<TensorType>::ChargeForward() const
 {
   assert(!this->batch_input_shapes_.empty());
   OperationsCount cost = fetch::ml::charge_estimation::ops::ASSIGN_PER_ELEMENT;
+
+  return cost;
+}
+
+template <typename TensorType>
+OperationsCount DataHolder<TensorType>::ChargeBackward() const
+{
+  OperationsCount cost = 0;
 
   return cost;
 }

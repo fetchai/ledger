@@ -34,7 +34,7 @@ class MaxPoolTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(MaxPoolTest, fetch::math::test::TensorFloatingTypes);
+TYPED_TEST_SUITE(MaxPoolTest, fetch::math::test::TensorFloatingTypes, );
 
 TYPED_TEST(MaxPoolTest, forward_test_1d_3_2_2)
 {

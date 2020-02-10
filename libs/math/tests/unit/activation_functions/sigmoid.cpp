@@ -29,7 +29,7 @@ class SigmoidTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(SigmoidTest, TensorFloatingTypes);
+TYPED_TEST_SUITE(SigmoidTest, TensorFloatingTypes, );
 
 template <typename ArrayType>
 ArrayType RandomArrayNegative(std::size_t n)

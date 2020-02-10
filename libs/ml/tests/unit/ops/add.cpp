@@ -31,7 +31,7 @@ class AddTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(AddTest, fetch::math::test::TensorFloatingTypes);
+TYPED_TEST_SUITE(AddTest, fetch::math::test::TensorFloatingTypes, );
 
 TYPED_TEST(AddTest, forward_test_NB_N1)
 {

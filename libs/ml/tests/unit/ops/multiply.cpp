@@ -34,7 +34,7 @@ class MultiplyTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(MultiplyTest, fetch::math::test::TensorFloatingTypes);
+TYPED_TEST_SUITE(MultiplyTest, fetch::math::test::TensorFloatingTypes, );
 
 TYPED_TEST(MultiplyTest, forward_test)
 {

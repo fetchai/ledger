@@ -34,7 +34,7 @@ class TensorDataloaderTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(TensorDataloaderTest, math::test::TensorFloatingTypes);
+TYPED_TEST_SUITE(TensorDataloaderTest, math::test::TensorFloatingTypes, );
 
 TYPED_TEST(TensorDataloaderTest, serialize_tensor_dataloader)
 {
