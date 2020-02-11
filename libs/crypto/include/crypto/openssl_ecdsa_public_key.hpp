@@ -17,10 +17,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include <utility>
-
 #include "crypto/openssl_common.hpp"
 #include "crypto/openssl_context_session.hpp"
+
+#include <utility>
 
 namespace fetch {
 namespace crypto {

@@ -21,7 +21,6 @@
 #include "ledger/shard_config.hpp"
 #include "ledger/storage_unit/transaction_storage_engine.hpp"
 #include "ledger/storage_unit/transaction_storage_protocol.hpp"
-
 #include "muddle/muddle_interface.hpp"
 #include "network/generics/backgrounded_work.hpp"
 #include "network/generics/has_worker_thread.hpp"

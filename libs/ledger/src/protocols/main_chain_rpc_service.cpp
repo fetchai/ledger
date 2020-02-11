@@ -16,8 +16,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/protocols/main_chain_rpc_service.hpp"
-
 #include "chain/constants.hpp"
 #include "chain/transaction_layout_rpc_serializers.hpp"
 #include "core/byte_array/encoders.hpp"
@@ -29,6 +27,7 @@
 #include "ledger/chaincode/contract_context.hpp"
 #include "ledger/consensus/consensus_interface.hpp"
 #include "ledger/protocols/main_chain_rpc_client_interface.hpp"
+#include "ledger/protocols/main_chain_rpc_service.hpp"
 #include "logging/logging.hpp"
 #include "muddle/packet.hpp"
 #include "network/generics/milli_timer.hpp"

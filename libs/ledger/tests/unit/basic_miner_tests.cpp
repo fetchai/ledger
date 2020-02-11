@@ -16,6 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include "tx_generator.hpp"
+
 #include "bloom_filter/bloom_filter.hpp"
 #include "chain/constants.hpp"
 #include "chain/transaction.hpp"
@@ -23,7 +25,6 @@
 #include "ledger/chain/main_chain.hpp"
 #include "ledger/miner/basic_miner.hpp"
 #include "meta/log2.hpp"
-#include "tx_generator.hpp"
 #include "vectorise/platform.hpp"
 
 #include "gtest/gtest.h"

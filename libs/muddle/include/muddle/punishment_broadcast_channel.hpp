@@ -22,19 +22,16 @@
 #include "core/state_machine.hpp"
 #include "crypto/ecdsa.hpp"
 #include "crypto/sha256.hpp"
+#include "moment/clocks.hpp"
+#include "moment/deadline_timer.hpp"
 #include "muddle/muddle_endpoint.hpp"
 #include "muddle/rpc/client.hpp"
 #include "muddle/rpc/server.hpp"
-
 #include "network/service/protocol.hpp"
 
-#include "moment/clocks.hpp"
-#include "moment/deadline_timer.hpp"
-
 // TODO(HUT): not needed with reworking
-#include "muddle/rbc.hpp"
-
 #include "muddle/question_struct.hpp"
+#include "muddle/rbc.hpp"
 
 #include <map>
 #include <random>

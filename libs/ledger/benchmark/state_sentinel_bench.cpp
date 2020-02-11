@@ -16,8 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/byte_array/const_byte_array.hpp"
 #include "in_memory_storage.hpp"
+
+#include "core/byte_array/const_byte_array.hpp"
 #include "ledger/state_sentinel_adapter.hpp"
 
 #include "benchmark/benchmark.h"

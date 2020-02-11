@@ -16,10 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include <iostream>
-
 #include "core/byte_array/encoders.hpp"
 #include "crypto/ecdsa.hpp"
+
+#include <iostream>
 
 using fetch::crypto::ECDSASigner;
 using fetch::byte_array::ToBase64;

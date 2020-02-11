@@ -16,9 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "network/service/promise.hpp"
 #include "peer_list.hpp"
 #include "router.hpp"
+
+#include "network/service/promise.hpp"
 
 #include "gmock/gmock.h"
 
