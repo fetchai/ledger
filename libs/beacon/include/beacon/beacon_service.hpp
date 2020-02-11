@@ -33,6 +33,7 @@
 #include "beacon/public_key_message.hpp"
 #include "core/digest.hpp"
 #include "storage/object_store.hpp"
+#include "storage/single_object_store.hpp"
 
 #include "telemetry/counter.hpp"
 #include "telemetry/gauge.hpp"
@@ -50,6 +51,27 @@
 namespace fetch {
 namespace beacon {
 
+/**
+ * The beacon service is responsible for generating entropy that the blocks can use. It is given the
+ * output of DKG (if it was a successful miner) from the beacon setup service, and will continue to
+ * generate entropy until that aeon is complete.
+ *
+ * It does not generate entropy more than N blocks ahead of the most recently seen block to prevent
+ * certain attacks.
+ *
+ * Entropy gen normally happens in the following steps:
+ *
+ * 1. Get the 'aeon execution unit' for block N containing your threshold keys, the entropy of block
+ * N - 1, and the aeon length M
+ * 2. Prepare to generate entropy: populate SignatureInformation with your partial signature of N -
+ * 1
+ * 3. Request from a peer all the partial signatures they have for block N - 1
+ * 4. Verify the response (this could contain all necessary sigs), if insufficient, return to 3.
+ * 5. Prepare to generate entropy for block N + 1 if it's not greater than N + M
+ *
+ * There can be exceptions to this when recovering from a crash or synchronising to the chain.
+ *
+ */
 class BeaconService : public ledger::EntropyGeneratorInterface
 {
 public:
@@ -57,15 +79,24 @@ public:
 
   enum class State
   {
+    RELOAD_ON_STARTUP,
     WAIT_FOR_SETUP_COMPLETION,
     PREPARE_ENTROPY_GENERATION,
     COLLECT_SIGNATURES,
     VERIFY_SIGNATURES,
     COMPLETE,
     CABINET_ROTATION,
-
     WAIT_FOR_PUBLIC_KEYS,
     OBSERVE_ENTROPY_GENERATION
+  };
+
+  using SignatureShare = AeonExecutionUnit::SignatureShare;
+  using BeaconManager  = dkg::BeaconManager;
+
+  struct SignatureInformation
+  {
+    uint64_t                                               round{uint64_t(-1)};
+    std::map<BeaconManager::MuddleAddress, SignatureShare> threshold_signatures;
   };
 
   using Identity                = crypto::Identity;
@@ -74,7 +105,6 @@ public:
   using Certificate             = crypto::Prover;
   using CertificatePtr          = std::shared_ptr<Certificate>;
   using Address                 = muddle::Packet::Address;
-  using BeaconManager           = dkg::BeaconManager;
   using SharedAeonExecutionUnit = std::shared_ptr<AeonExecutionUnit>;
   using Endpoint                = muddle::MuddleEndpoint;
   using MuddleInterface         = muddle::MuddleInterface;
@@ -87,12 +117,17 @@ public:
   using SubscriptionPtr         = muddle::MuddleEndpoint::SubscriptionPtr;
   using StateMachine            = core::StateMachine<State>;
   using StateMachinePtr         = std::shared_ptr<StateMachine>;
-  using SignatureShare          = AeonExecutionUnit::SignatureShare;
   using Serializer              = serializers::MsgPackSerializer;
   using SharedEventManager      = EventManager::SharedEventManager;
   using BlockEntropyPtr         = std::shared_ptr<beacon::BlockEntropy>;
   using DeadlineTimer           = fetch::moment::DeadlineTimer;
   using OldStateStore           = fetch::storage::ObjectStore<AeonExecutionUnit>;
+  using StateStore              = fetch::storage::SingleObjectStore;
+  using AllSigsStore            = fetch::storage::ObjectStore<SignatureInformation>;
+  using SignaturesBeingBuilt    = std::map<uint64_t, SignatureInformation>;
+  using CompletedBlockEntropy   = std::map<uint64_t, BlockEntropyPtr>;
+  using ActiveExeUnit           = std::shared_ptr<AeonExecutionUnit>;
+  using AeonExeQueue            = std::deque<SharedAeonExecutionUnit>;
 
   BeaconService()                      = delete;
   BeaconService(BeaconService const &) = delete;
@@ -112,17 +147,10 @@ public:
   void                          MostRecentSeen(uint64_t round);
   /// @}
 
-  friend class BeaconServiceProtocol;
-
-  struct SignatureInformation
-  {
-    uint64_t                                               round{uint64_t(-1)};
-    std::map<BeaconManager::MuddleAddress, SignatureShare> threshold_signatures;
-  };
-
 protected:
   /// State methods
   /// @{
+  State OnReloadOnStartup();
   State OnWaitForSetupCompletionState();
   State OnPrepareEntropyGeneration();
 
@@ -136,47 +164,53 @@ protected:
   SignatureInformation GetSignatureShares(uint64_t round);
   /// @}
 
-  mutable Mutex                       mutex_;
-  CertificatePtr                      certificate_;
-  bool                                load_and_reload_on_crash_{false};
-  std::deque<SharedAeonExecutionUnit> aeon_exe_queue_;
+  // Related to recovering state after a crash
+  /// @{
+  constexpr static uint16_t SAVE_PERIODICITY = 100;
+  OldStateStore             old_state_;
+  StateStore                saved_state_;
+  AllSigsStore              saved_state_all_sigs_;
+  void                      ReloadState(State &next_state);
+  void                      SaveState();
+  /// @}
+
+  /// The state and functions that the beacon needs for operation is here. Thus,
+  //  if it is recovered from file it needs these
+  /// @{
+  SignaturesBeingBuilt signatures_being_built_;
+
+  // Important this is ordered for trimming - populated for external use
+  // when creating blocks (not saved to disk)
+  CompletedBlockEntropy completed_block_entropy_;
+
+  ActiveExeUnit   active_exe_unit_;
+  AeonExeQueue    aeon_exe_queue_;
+  BlockEntropyPtr block_entropy_previous_;
+  BlockEntropyPtr block_entropy_being_created_;
+  /// @}
 
 private:
   bool AddSignature(SignatureShare share);
+  bool OutOfSync();
 
+  mutable Mutex    mutex_;
+  CertificatePtr   certificate_;
   Identity         identity_;
   MuddleInterface &muddle_;
   Endpoint &       endpoint_;
   StateMachinePtr  state_machine_;
   DeadlineTimer    timer_to_proceed_{"beacon:main"};
+  bool             load_and_reload_on_crash_{false};
 
   // Limit run away entropy generation
   uint64_t entropy_lead_blocks_    = 2;
   uint64_t most_recent_round_seen_ = 0;
 
-  /// General configuration
-  /// @{
-  bool broadcasting_ = false;
-  /// @}
-
-  /// Beacon and entropy control units
-  /// @{
-  std::shared_ptr<AeonExecutionUnit> active_exe_unit_;
-  /// @}
-
   /// Variables relating to getting threshold signatures of the seed
   /// @{
-  // Important this is ordered for trimming
-  std::map<uint64_t, SignatureInformation> signatures_being_built_;
-  std::size_t                              random_number_{0};
-  Identity                                 qual_promise_identity_;
-  service::Promise                         sig_share_promise_;
-
-  BlockEntropyPtr block_entropy_previous_;
-  BlockEntropyPtr block_entropy_being_created_;
-
-  // Important this is ordered for trimming
-  std::map<uint64_t, BlockEntropyPtr> completed_block_entropy_;
+  std::size_t      random_number_{0};
+  Identity         qual_promise_identity_;
+  service::Promise sig_share_promise_;
   /// @}
 
   ServerPtr           rpc_server_{nullptr};
@@ -192,15 +226,7 @@ private:
   BeaconServiceProtocol beacon_protocol_;
   /// @}
 
-  /// Save keys so that recovery is possible in a crash situation
-  /// @{
-  OldStateStore old_state_;
-  bool          OutOfSync();
-  void          ReloadState();
-  void          SaveState();
-  /// @}
-
-  //
+  // Telemetry and debug
   using Clock     = std::chrono::high_resolution_clock;
   using Timepoint = Clock::time_point;
 
@@ -216,11 +242,17 @@ private:
   telemetry::GaugePtr<uint64_t> beacon_most_recent_round_seen_;
   telemetry::HistogramPtr       beacon_collect_time_;
   telemetry::HistogramPtr       beacon_verify_time_;
+
+  friend class BeaconServiceProtocol;
+
+  template <typename T, typename D>
+  friend struct serializers::MapSerializer;
 };
 
 }  // namespace beacon
 
 namespace serializers {
+
 template <typename D>
 struct ArraySerializer<beacon::BeaconService::SignatureInformation, D>
 {
@@ -244,5 +276,6 @@ public:
     array.GetNextValue(b.threshold_signatures);
   }
 };
+
 }  // namespace serializers
 }  // namespace fetch

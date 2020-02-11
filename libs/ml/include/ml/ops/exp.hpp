@@ -66,6 +66,9 @@ public:
     return OpType::OP_EXP;
   }
   static constexpr char const *DESCRIPTOR = "Exp";
+
+  OperationsCount ChargeForward() const override;
+  OperationsCount ChargeBackward() const override;
 };
 
 }  // namespace ops

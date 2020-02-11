@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ml/ops/dataholder.hpp"
 #include <cassert>
 #include <memory>
 #include <vector>
@@ -56,12 +57,19 @@ public:
   std::shared_ptr<fetch::ml::ops::Ops<TensorType>> MakeSharedCopy(
       std::shared_ptr<fetch::ml::ops::Ops<TensorType>> me) override;
 
+  bool SetData(TensorType const &data) override;
+
   static constexpr OpType OpCode()
   {
     return OpType::OP_PLACEHOLDER;
   }
 
   static constexpr char const *DESCRIPTOR = "PlaceHolder";
+
+  OpType      OperationType() const override;
+  char const *Descriptor() const override;
+
+  OperationsCount ChargeForward() const override;
 };
 
 }  // namespace ops

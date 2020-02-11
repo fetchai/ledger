@@ -87,6 +87,24 @@ std::vector<math::SizeType> Sqrt<TensorType>::ComputeOutputShape(VecTensorType c
   return inputs.front()->shape();
 }
 
+template <typename TensorType>
+OperationsCount Sqrt<TensorType>::ChargeForward() const
+{
+  assert(!this->batch_input_shapes_.empty());
+  OperationsCount cost = fetch::ml::charge_estimation::ops::SQRT_PER_ELEMENT *
+                         this->TotalElementsIn({this->batch_input_shapes_});
+  return cost;
+}
+
+template <typename TensorType>
+OperationsCount Sqrt<TensorType>::ChargeBackward() const
+{
+  assert(!this->batch_output_shape_.empty());
+  OperationsCount cost = fetch::ml::charge_estimation::ops::SQRT_BACKWARD_PER_ELEMENT *
+                         this->TotalElementsIn({this->batch_output_shape_});
+  return cost;
+}
+
 ///////////////////////////////
 /// EXPLICIT INSTANTIATIONS ///
 ///////////////////////////////
@@ -95,10 +113,6 @@ template class Sqrt<math::Tensor<int8_t>>;
 template class Sqrt<math::Tensor<int16_t>>;
 template class Sqrt<math::Tensor<int32_t>>;
 template class Sqrt<math::Tensor<int64_t>>;
-template class Sqrt<math::Tensor<uint8_t>>;
-template class Sqrt<math::Tensor<uint16_t>>;
-template class Sqrt<math::Tensor<uint32_t>>;
-template class Sqrt<math::Tensor<uint64_t>>;
 template class Sqrt<math::Tensor<float>>;
 template class Sqrt<math::Tensor<double>>;
 template class Sqrt<math::Tensor<fixed_point::fp32_t>>;

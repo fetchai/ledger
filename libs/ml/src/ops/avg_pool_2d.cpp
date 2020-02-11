@@ -193,6 +193,34 @@ std::vector<math::SizeType> AvgPool2D<TensorType>::ComputeOutputShape(
   return output_shape;
 }
 
+template <typename TensorType>
+OperationsCount AvgPool2D<TensorType>::ChargeForward() const
+{
+  assert(!this->batch_output_shape_.empty());
+  OperationsCount num_output_shape_ops =
+      this->batch_output_shape_.at(0) * this->batch_output_shape_.at(1) *
+      this->batch_output_shape_.at(2) * this->batch_output_shape_.at(3);
+  auto cost = static_cast<OperationsCount>(
+      fetch::ml::charge_estimation::ops::DIVISION_PER_ELEMENT * num_output_shape_ops +
+      fetch::ml::charge_estimation::ops::ADDITION_PER_ELEMENT * num_output_shape_ops *
+          static_cast<OperationsCount>(this->kernel_size_ * this->kernel_size_));
+  return cost;
+}
+
+template <typename TensorType>
+OperationsCount AvgPool2D<TensorType>::ChargeBackward() const
+{
+  assert(!this->batch_output_shape_.empty());
+  OperationsCount num_output_shape_ops =
+      this->batch_output_shape_.at(0) * this->batch_output_shape_.at(1) *
+      this->batch_output_shape_.at(2) * this->batch_output_shape_.at(3) * this->kernel_size_ *
+      this->kernel_size_;
+  auto cost = static_cast<OperationsCount>(num_output_shape_ops *
+                                           fetch::ml::charge_estimation::ops::DIVISION_PER_ELEMENT *
+                                           fetch::ml::charge_estimation::ops::ADDITION_PER_ELEMENT);
+  return cost;
+}
+
 ///////////////////////////////
 /// EXPLICIT INSTANTIATIONS ///
 ///////////////////////////////
@@ -201,10 +229,6 @@ template class AvgPool2D<math::Tensor<int8_t>>;
 template class AvgPool2D<math::Tensor<int16_t>>;
 template class AvgPool2D<math::Tensor<int32_t>>;
 template class AvgPool2D<math::Tensor<int64_t>>;
-template class AvgPool2D<math::Tensor<uint8_t>>;
-template class AvgPool2D<math::Tensor<uint16_t>>;
-template class AvgPool2D<math::Tensor<uint32_t>>;
-template class AvgPool2D<math::Tensor<uint64_t>>;
 template class AvgPool2D<math::Tensor<float>>;
 template class AvgPool2D<math::Tensor<double>>;
 template class AvgPool2D<math::Tensor<fixed_point::fp32_t>>;

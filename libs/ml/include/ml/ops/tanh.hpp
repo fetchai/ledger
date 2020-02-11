@@ -62,6 +62,9 @@ public:
 
   static constexpr char const *DESCRIPTOR = "TanH";
 
+  OperationsCount ChargeForward() const override;
+  OperationsCount ChargeBackward() const override;
+
 private:
   // minimum possible output value of the tanh should not be -1, but actually (-1 + epsilon)
   // likewise maximum output should be (1 - epsilon)

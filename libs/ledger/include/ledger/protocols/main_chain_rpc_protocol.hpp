@@ -29,13 +29,11 @@ namespace ledger {
 class MainChainProtocol : public service::Protocol
 {
 public:
-  using Travelogue                          = TimeTravelogue<Block>;
-  using Blocks                              = Travelogue::Blocks;
+  using Travelogue                          = TimeTravelogue;
   static constexpr char const *LOGGING_NAME = "MainChainProtocol";
 
   enum
   {
-    HEAVIEST_CHAIN   = 1,
     TIME_TRAVEL      = 2,
     COMMON_SUB_CHAIN = 3
   };
@@ -43,19 +41,13 @@ public:
   explicit MainChainProtocol(MainChain &chain)
     : chain_(chain)
   {
-    Expose(HEAVIEST_CHAIN, this, &MainChainProtocol::GetHeaviestChain);
     Expose(COMMON_SUB_CHAIN, this, &MainChainProtocol::GetCommonSubChain);
     Expose(TIME_TRAVEL, this, &MainChainProtocol::TimeTravel);
   }
 
-  Blocks GetHeaviestChain(uint64_t maxsize)
-  {
-    return Copy(chain_.GetHeaviestChain(maxsize));
-  }
-
   Blocks GetCommonSubChain(Digest start, Digest last_seen, uint64_t limit)
   {
-    MainChain::Blocks blocks;
+    Blocks blocks;
 
     // TODO(issue 1725): this can cause issue if it doesn't exist (?)
     if (!chain_.GetPathToCommonAncestor(blocks, std::move(start), std::move(last_seen), limit))
@@ -63,31 +55,15 @@ public:
       return Blocks{};
     }
 
-    return Copy(blocks);
+    return blocks;
   }
 
   Travelogue TimeTravel(Digest start)
   {
-    auto const ret_val = chain_.TimeTravel(std::move(start));
-
-    // make a copy (because you need to convert from BlockPtr and Blocks)!
-    return {ret_val.heaviest_hash, ret_val.block_number, ret_val.status, Copy(ret_val.blocks)};
+    return chain_.TimeTravel(std::move(start));
   }
 
 private:
-  static Blocks Copy(MainChain::Blocks const &blocks)
-  {
-    Blocks output{};
-    output.reserve(blocks.size());
-
-    for (auto const &block : blocks)
-    {
-      output.push_back(*block);
-    }
-
-    return output;
-  }
-
   MainChain &chain_;
 };
 

@@ -19,6 +19,8 @@
 #include "gtest/gtest.h"
 #include "ml/layers/scaled_dot_product_attention.hpp"
 #include "ml/ops/loss_functions/mean_square_error_loss.hpp"
+#include "ml/ops/placeholder.hpp"
+#include "ml/ops/prelu_op.hpp"
 #include "ml/optimisation/sgd_optimiser.hpp"
 #include "ml/regularisers/regulariser.hpp"
 #include "ml/serializers/ml_types.hpp"
@@ -33,7 +35,7 @@ template <typename T>
 class ScaledDotProductAttention : public ::testing::Test
 {
 };
-TYPED_TEST_CASE(ScaledDotProductAttention, math::test::HighPrecisionTensorFloatingTypes);
+TYPED_TEST_SUITE(ScaledDotProductAttention, math::test::HighPrecisionTensorFloatingTypes, );
 
 TYPED_TEST(ScaledDotProductAttention, input_output_dimension_check)  // Use the class as a subgraph
 {
@@ -111,7 +113,7 @@ TYPED_TEST(ScaledDotProductAttention,
   using SizeType = fetch::math::SizeType;
 
   fetch::ml::layers::ScaledDotProductAttention<TypeParam> att(static_cast<SizeType>(3),
-                                                              DataType{1});
+                                                              DataType{0});
 
   TypeParam query_data = TypeParam::FromString("1, 2, 0.5, 0.1; 2, 1, 0.3, -0.2;2, 4, 0, 1");
   query_data.Reshape({3, 2, 2});
@@ -213,7 +215,7 @@ TYPED_TEST(ScaledDotProductAttention,
   using SizeType = fetch::math::SizeType;
 
   fetch::ml::layers::ScaledDotProductAttention<TypeParam> att(static_cast<SizeType>(3),
-                                                              DataType{1});
+                                                              DataType{0});
 
   TypeParam query_data =
       TypeParam::FromString("1, 2, 0.5, 0.1, 5, 3; 2, 1, 0.3, -0.2, -2, 0.5; 2, 4, 0, 1, 1.1, -3");
@@ -274,124 +276,6 @@ TYPED_TEST(ScaledDotProductAttention,
       backprop_error[2].AllClose(gt_value_grad, fetch::math::function_tolerance<DataType>(),
                                  DataType{10} * fetch::math::function_tolerance<DataType>()));
   EXPECT_TRUE(backprop_error[3].AllClose(gt_mask_grad));
-}
-
-TYPED_TEST(ScaledDotProductAttention, saveparams_test)
-{
-  using DataType  = typename TypeParam::Type;
-  using SizeType  = fetch::math::SizeType;
-  using LayerType = typename fetch::ml::layers::ScaledDotProductAttention<TypeParam>;
-  using SPType    = typename LayerType::SPType;
-
-  std::string output_name = "ScaledDotProductAttention_Value_Weight_MatMul";
-
-  SizeType key_dim = 4;
-
-  // create input
-  TypeParam query_data = TypeParam({12, 25, 4});
-  TypeParam key_data   = query_data;
-  TypeParam value_data = query_data;
-  TypeParam mask_data  = TypeParam({25, 25, 4});
-  query_data.Fill(fetch::math::Type<DataType>("0.1"));
-  key_data.Fill(fetch::math::Type<DataType>("0.1"));
-  value_data.Fill(fetch::math::Type<DataType>("0.1"));
-  mask_data.Fill(fetch::math::Type<DataType>("1"));
-
-  // create labels
-  TypeParam labels({12, 25, 4});
-  labels.FillUniformRandom();
-
-  // Create layer
-  LayerType layer(key_dim, DataType{1});
-
-  // add label node
-  std::string label_name =
-      layer.template AddNode<fetch::ml::ops::PlaceHolder<TypeParam>>("label", {});
-
-  // Add loss function
-  std::string error_output = layer.template AddNode<fetch::ml::ops::MeanSquareErrorLoss<TypeParam>>(
-      "num_error", {output_name, label_name});
-
-  // extract saveparams
-  auto sp = layer.GetOpSaveableParams();
-
-  // downcast to correct type
-  auto dsp = std::dynamic_pointer_cast<SPType>(sp);
-
-  // serialize
-  fetch::serializers::MsgPackSerializer b;
-  b << *dsp;
-
-  // deserialize
-  b.seek(0);
-  auto dsp2 = std::make_shared<SPType>();
-  b >> *dsp2;
-
-  // rebuild
-  auto layer2 = *(fetch::ml::utilities::BuildLayer<TypeParam, LayerType>(dsp2));
-
-  // test equality
-  layer.SetInput("ScaledDotProductAttention_Query", query_data);
-  layer.SetInput("ScaledDotProductAttention_Key", key_data);
-  layer.SetInput("ScaledDotProductAttention_Value", value_data);
-  layer.SetInput("ScaledDotProductAttention_Mask", mask_data);
-  TypeParam prediction = layer.Evaluate(output_name, true);
-
-  layer2.SetInput("ScaledDotProductAttention_Query", query_data);
-  layer2.SetInput("ScaledDotProductAttention_Key", key_data);
-  layer2.SetInput("ScaledDotProductAttention_Value", value_data);
-  layer2.SetInput("ScaledDotProductAttention_Mask", mask_data);
-
-  TypeParam prediction2 = layer2.Evaluate(output_name, true);
-
-  EXPECT_TRUE(prediction.AllClose(prediction2, fetch::math::function_tolerance<DataType>(),
-                                  fetch::math::function_tolerance<DataType>()));
-
-  // train g
-  layer.SetInput(label_name, labels);
-  TypeParam loss = layer.Evaluate(error_output);
-  layer.BackPropagate(error_output);
-  auto grads = layer.GetGradients();
-  for (auto &grad : grads)
-  {
-    grad *= fetch::math::Type<DataType>("-0.1");
-  }
-  layer.ApplyGradients(grads);
-
-  // train g2
-  layer2.SetInput(label_name, labels);
-  TypeParam loss2 = layer2.Evaluate(error_output);
-  layer2.BackPropagate(error_output);
-  auto grads2 = layer2.GetGradients();
-  for (auto &grad : grads2)
-  {
-    grad *= fetch::math::Type<DataType>("-0.1");
-  }
-  layer2.ApplyGradients(grads2);
-
-  EXPECT_TRUE(loss.AllClose(loss2, fetch::math::function_tolerance<DataType>(),
-                            fetch::math::function_tolerance<DataType>()));
-
-  // new random input
-  query_data.FillUniformRandom();
-
-  layer.SetInput("ScaledDotProductAttention_Query", query_data);
-  layer.SetInput("ScaledDotProductAttention_Key", key_data);
-  layer.SetInput("ScaledDotProductAttention_Value", value_data);
-  layer.SetInput("ScaledDotProductAttention_Mask", mask_data);
-  TypeParam prediction3 = layer.Evaluate(output_name);
-
-  layer2.SetInput("ScaledDotProductAttention_Query", query_data);
-  layer2.SetInput("ScaledDotProductAttention_Key", key_data);
-  layer2.SetInput("ScaledDotProductAttention_Value", value_data);
-  layer2.SetInput("ScaledDotProductAttention_Mask", mask_data);
-  TypeParam prediction4 = layer2.Evaluate(output_name);
-
-  EXPECT_FALSE(prediction.AllClose(prediction3, fetch::math::function_tolerance<DataType>(),
-                                   fetch::math::function_tolerance<DataType>()));
-
-  EXPECT_TRUE(prediction3.AllClose(prediction4, fetch::math::function_tolerance<DataType>(),
-                                   fetch::math::function_tolerance<DataType>()));
 }
 
 }  // namespace test

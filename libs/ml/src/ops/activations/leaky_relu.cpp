@@ -108,6 +108,24 @@ std::vector<math::SizeType> LeakyRelu<TensorType>::ComputeOutputShape(
   return inputs.front()->shape();
 }
 
+template <typename TensorType>
+OperationsCount LeakyRelu<TensorType>::ChargeForward() const
+{
+  assert(!this->batch_input_shapes_.empty());
+  OperationsCount cost = fetch::ml::charge_estimation::ops::LEAKY_RELU_PER_ELEMENT *
+                         this->TotalElementsIn({this->batch_input_shapes_});
+  return cost;
+}
+
+template <typename TensorType>
+OperationsCount LeakyRelu<TensorType>::ChargeBackward() const
+{
+  assert(!this->batch_input_shapes_.empty());
+  OperationsCount cost = fetch::ml::charge_estimation::ops::LEAKY_RELU_BACKWARD_PER_ELEMENT *
+                         this->TotalElementsIn({this->batch_input_shapes_});
+  return cost;
+}
+
 ///////////////////////////////
 /// EXPLICIT INSTANTIATIONS ///
 ///////////////////////////////
@@ -116,10 +134,6 @@ template class LeakyRelu<math::Tensor<int8_t>>;
 template class LeakyRelu<math::Tensor<int16_t>>;
 template class LeakyRelu<math::Tensor<int32_t>>;
 template class LeakyRelu<math::Tensor<int64_t>>;
-template class LeakyRelu<math::Tensor<uint8_t>>;
-template class LeakyRelu<math::Tensor<uint16_t>>;
-template class LeakyRelu<math::Tensor<uint32_t>>;
-template class LeakyRelu<math::Tensor<uint64_t>>;
 template class LeakyRelu<math::Tensor<float>>;
 template class LeakyRelu<math::Tensor<double>>;
 template class LeakyRelu<math::Tensor<fixed_point::fp32_t>>;

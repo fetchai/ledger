@@ -45,8 +45,7 @@ using VMTrainingPairType    = vm::Pair<VMTensorPtrType, VMTensorArrayPtrType>;
 using VMTrainingPairPtrType = vm::Ptr<VMTrainingPairType>;
 
 using TensorLoaderType =
-    fetch::ml::dataloaders::TensorDataLoader<fetch::math::Tensor<VMDataLoader::DataType>,
-                                             fetch::math::Tensor<VMDataLoader::DataType>>;
+    fetch::ml::dataloaders::TensorDataLoader<fetch::math::Tensor<VMDataLoader::DataType>>;
 
 VMDataLoader::VMDataLoader(VM *vm, TypeId type_id)
   : Object(vm, type_id)

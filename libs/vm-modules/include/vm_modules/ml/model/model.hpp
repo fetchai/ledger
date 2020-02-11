@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "ml/model/model.hpp"
+#include "ml/ops/activation.hpp"
 #include "vm/array.hpp"
 #include "vm/object.hpp"
 #include "vm_modules/math/tensor/tensor.hpp"
@@ -31,6 +32,12 @@ class Module;
 }
 
 namespace ml {
+
+namespace dataloaders {
+template <typename TensorType>
+class TensorDataLoader;
+}  // namespace dataloaders
+
 namespace model {
 
 template <typename TensorType>
@@ -47,8 +54,6 @@ enum class ModelCategory : uint8_t
 {
   NONE,
   SEQUENTIAL,
-  REGRESSOR,
-  CLASSIFIER
 };
 
 enum class SupportedLayerType : uint8_t
@@ -59,7 +64,13 @@ enum class SupportedLayerType : uint8_t
   FLATTEN,
   DROPOUT,
   ACTIVATION,
-  RESHAPE
+  RESHAPE,
+  INPUT,
+  MAXPOOL1D,
+  MAXPOOL2D,
+  AVGPOOL1D,
+  AVGPOOL2D,
+  EMBEDDINGS,
 };
 
 class VMModel : public fetch::vm::Object
@@ -74,7 +85,7 @@ public:
   using ModelConfigType     = fetch::ml::model::ModelConfig<DataType>;
   using ModelConfigPtrType  = std::shared_ptr<fetch::ml::model::ModelConfig<DataType>>;
   using GraphType           = fetch::ml::Graph<TensorType>;
-  using TensorDataloader    = fetch::ml::dataloaders::TensorDataLoader<TensorType, TensorType>;
+  using TensorDataloader    = fetch::ml::dataloaders::TensorDataLoader<TensorType>;
   using TensorDataloaderPtr = std::shared_ptr<TensorDataloader>;
   using VMTensor            = fetch::vm_modules::math::VMTensor;
   using ModelEstimator      = fetch::vm_modules::ml::model::ModelEstimator;
@@ -108,15 +119,14 @@ public:
                                        fetch::vm::Ptr<fetch::vm::String> const &      optimiser,
                                        std::vector<fetch::ml::ops::MetricType> const &metrics);
 
-  void CompileSimple(fetch::vm::Ptr<fetch::vm::String> const &        optimiser,
-                     fetch::vm::Ptr<vm::Array<math::SizeType>> const &layer_shapes);
-
   void Fit(vm::Ptr<VMTensor> const &data, vm::Ptr<VMTensor> const &labels,
            ::fetch::math::SizeType const &batch_size);
 
   vm::Ptr<vm::Array<math::DataType>> Evaluate();
 
   vm::Ptr<VMTensor> Predict(vm::Ptr<VMTensor> const &data);
+
+  fetch::vm::ChargeAmount EstimatePredict(vm::Ptr<vm_modules::math::VMTensor> const &data);
 
   static void Bind(fetch::vm::Module &module, bool experimental_enabled);
 
@@ -135,6 +145,8 @@ public:
 
   void LayerAddDense(fetch::vm::Ptr<fetch::vm::String> const &layer, math::SizeType const &inputs,
                      math::SizeType const &hidden_nodes);
+  void LayerAddDenseAutoInputs(fetch::vm::Ptr<fetch::vm::String> const &layer,
+                               math::SizeType const &                   hidden_nodes);
   void LayerAddDenseActivation(fetch::vm::Ptr<fetch::vm::String> const &layer,
                                math::SizeType const &inputs, math::SizeType const &hidden_nodes,
                                fetch::vm::Ptr<fetch::vm::String> const &activation);
@@ -161,6 +173,14 @@ public:
                           fetch::vm::Ptr<fetch::vm::String> const &activation_name);
   void LayerAddReshape(fetch::vm::Ptr<fetch::vm::String> const &                     layer,
                        fetch::vm::Ptr<fetch::vm::Array<TensorType::SizeType>> const &shape);
+
+  void LayerAddInput(fetch::vm::Ptr<fetch::vm::String> const &        layer,
+                     fetch::vm::Ptr<vm::Array<math::SizeType>> const &shape);
+  void LayerAddPool(fetch::vm::Ptr<fetch::vm::String> const &layer,
+                    math::SizeType const &kernel_size, math::SizeType const &stride_size);
+  void LayerAddEmbeddings(fetch::vm::Ptr<fetch::vm::String> const &layer,
+                          math::SizeType const &dimensions, math::SizeType const &data_points,
+                          bool stub);
 
 private:
   ModelPtrType       model_;
@@ -195,14 +215,14 @@ private:
                                             math::SizeType const &             stride_size,
                                             fetch::ml::details::ActivationType activation);
 
-  inline void AssertLayerTypeMatches(SupportedLayerType                layer,
-                                     std::vector<SupportedLayerType> &&valids) const;
+  void AssertLayerTypeMatches(SupportedLayerType                layer,
+                              std::vector<SupportedLayerType> &&valids) const;
 
   template <typename T>
-  inline T ParseName(std::string const &name, std::map<std::string, T> const &dict,
-                     std::string const &errmsg) const;
+  T ParseName(std::string const &name, std::map<std::string, T> const &dict,
+              std::string const &errmsg) const;
 
-  inline SequentialModelPtr GetMeAsSequentialIfPossible();
+  SequentialModelPtr GetMeAsSequentialIfPossible();
 };
 
 /**
@@ -213,8 +233,8 @@ private:
  * @param errmsg preferred display name of expected type, that was not parsed
  */
 template <typename T>
-inline T VMModel::ParseName(std::string const &name, std::map<std::string, T> const &dict,
-                            std::string const &errmsg) const
+T VMModel::ParseName(std::string const &name, std::map<std::string, T> const &dict,
+                     std::string const &errmsg) const
 {
   if (dict.find(name) == dict.end())
   {

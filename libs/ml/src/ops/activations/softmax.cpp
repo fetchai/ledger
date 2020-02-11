@@ -20,6 +20,8 @@
 #include "math/standard_functions/clamp.hpp"
 #include "ml/ops/activations/softmax.hpp"
 
+#include <cassert>
+
 namespace fetch {
 namespace ml {
 namespace ops {
@@ -128,6 +130,24 @@ std::vector<math::SizeType> Softmax<TensorType>::ComputeOutputShape(
   return inputs.front()->shape();
 }
 
+template <typename TensorType>
+OperationsCount Softmax<TensorType>::ChargeForward() const
+{
+  assert(!this->batch_output_shape_.empty());
+  OperationsCount cost = fetch::ml::charge_estimation::ops::SOFTMAX_PER_ELEMENT *
+                         this->TotalElementsIn({this->batch_input_shapes_});
+  return cost;
+}
+
+template <typename TensorType>
+OperationsCount Softmax<TensorType>::ChargeBackward() const
+{
+  assert(!this->batch_input_shapes_.empty());
+  OperationsCount cost = fetch::ml::charge_estimation::ops::SOFTMAX_BACKWARD_PER_ELEMENT *
+                         this->TotalElementsIn({this->batch_input_shapes_});
+  return cost;
+}
+
 ///////////////////////////////
 /// EXPLICIT INSTANTIATIONS ///
 ///////////////////////////////
@@ -136,10 +156,6 @@ template class Softmax<math::Tensor<int8_t>>;
 template class Softmax<math::Tensor<int16_t>>;
 template class Softmax<math::Tensor<int32_t>>;
 template class Softmax<math::Tensor<int64_t>>;
-template class Softmax<math::Tensor<uint8_t>>;
-template class Softmax<math::Tensor<uint16_t>>;
-template class Softmax<math::Tensor<uint32_t>>;
-template class Softmax<math::Tensor<uint64_t>>;
 template class Softmax<math::Tensor<float>>;
 template class Softmax<math::Tensor<double>>;
 template class Softmax<math::Tensor<fixed_point::fp32_t>>;

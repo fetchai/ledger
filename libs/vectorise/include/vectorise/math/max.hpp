@@ -29,28 +29,27 @@ namespace fetch {
 namespace vectorise {
 
 template <typename T>
-inline fetch::math::meta::IfIsNonFixedPointArithmetic<T, T> Max(T const &a, T const &b)
+fetch::math::meta::IfIsNonFixedPointArithmetic<T, T> Max(T const &a, T const &b)
 {
   return T(std::max(a, b));
 }
 
 template <typename T>
-inline fetch::math::meta::IfIsFixedPoint<T, T> Max(T const &a, T const &b)
+fetch::math::meta::IfIsFixedPoint<T, T> Max(T const &a, T const &b)
 {
   return T::FromBase(std::max(a.Data(), b.Data()));
 }
 
 template <typename T>
-inline VectorRegister<T, 8 * sizeof(T)> Max(VectorRegister<T, 8 * sizeof(T)> const &a,
-                                            VectorRegister<T, 8 * sizeof(T)> const &b)
+VectorRegister<T, 8 * sizeof(T)> Max(VectorRegister<T, 8 * sizeof(T)> const &a,
+                                     VectorRegister<T, 8 * sizeof(T)> const &b)
 {
   return VectorRegister<T, 8 * sizeof(T)>(fetch::vectorise::Max(a.data(), b.data()));
 }
 
 template <typename T, std::size_t N>
-inline T Max(VectorRegister<T, N> const &a)
+T Max(VectorRegister<T, N> const &a)
 {
-
   constexpr std::size_t                            size = N / (8 * sizeof(T));
   alignas(VectorRegister<T, N>::E_REGISTER_SIZE) T A[size];
   a.Store(A);

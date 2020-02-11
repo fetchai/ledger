@@ -32,9 +32,9 @@
 #include <unordered_set>
 #include <utility>
 
+using fetch::service::Promise;
 using fetch::storage::ResourceID;
 using fetch::storage::RevertibleDocumentStoreProtocol;
-using fetch::service::Promise;
 
 namespace fetch {
 namespace ledger {
@@ -311,18 +311,7 @@ byte_array::ConstByteArray StorageUnitClient::Commit(uint64_t const commit_index
 
 bool StorageUnitClient::HashExists(Hash const &hash, uint64_t index)
 {
-  bool success{false};
-
-  if (hash == chain::GetGenesisMerkleRoot())
-  {
-    success = true;
-  }
-  else
-  {
-    success = HashInStack(hash, index);
-  }
-
-  return success;
+  return HashInStack(hash, index);
 }
 
 // Search backwards through stack

@@ -101,6 +101,24 @@ std::vector<math::SizeType> Relu<TensorType>::ComputeOutputShape(VecTensorType c
   return inputs.front()->shape();
 }
 
+template <typename TensorType>
+OperationsCount Relu<TensorType>::ChargeForward() const
+{
+  assert(!this->batch_input_shapes_.empty());
+  OperationsCount cost = fetch::ml::charge_estimation::ops::RELU_PER_ELEMENT *
+                         this->TotalElementsIn({this->batch_input_shapes_});
+  return cost;
+}
+
+template <typename TensorType>
+OperationsCount Relu<TensorType>::ChargeBackward() const
+{
+  assert(!this->batch_input_shapes_.empty());
+  OperationsCount cost = fetch::ml::charge_estimation::ops::RELU_BACKWARD_PER_ELEMENT *
+                         this->TotalElementsIn({this->batch_input_shapes_});
+  return cost;
+}
+
 ///////////////////////////////
 /// EXPLICIT INSTANTIATIONS ///
 ///////////////////////////////
@@ -109,10 +127,6 @@ template class Relu<math::Tensor<int8_t>>;
 template class Relu<math::Tensor<int16_t>>;
 template class Relu<math::Tensor<int32_t>>;
 template class Relu<math::Tensor<int64_t>>;
-template class Relu<math::Tensor<uint8_t>>;
-template class Relu<math::Tensor<uint16_t>>;
-template class Relu<math::Tensor<uint32_t>>;
-template class Relu<math::Tensor<uint64_t>>;
 template class Relu<math::Tensor<float>>;
 template class Relu<math::Tensor<double>>;
 template class Relu<math::Tensor<fixed_point::fp32_t>>;

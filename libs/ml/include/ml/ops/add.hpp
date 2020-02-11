@@ -71,6 +71,12 @@ public:
 
   static constexpr char const *DESCRIPTOR = "Add";
 
+  OpType      OperationType() const override;
+  char const *Descriptor() const override;
+
+  OperationsCount ChargeForward() const override;
+  OperationsCount ChargeBackward() const override;
+
 private:
   std::vector<SizeType> axes_;
 

@@ -16,9 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ml/exceptions/exceptions.hpp"
 #include "ml/ops/variable.hpp"
-#include "ml/regularisers/regulariser.hpp"
-#include "ml/saveparams/saveable_params.hpp"
+#include "ml/regularisers/regularisation.hpp"
 #include "ml/utilities/sparse_tensor_utilities.hpp"
 
 namespace fetch {
@@ -289,10 +289,6 @@ template class Variable<math::Tensor<int8_t>>;
 template class Variable<math::Tensor<int16_t>>;
 template class Variable<math::Tensor<int32_t>>;
 template class Variable<math::Tensor<int64_t>>;
-template class Variable<math::Tensor<uint8_t>>;
-template class Variable<math::Tensor<uint16_t>>;
-template class Variable<math::Tensor<uint32_t>>;
-template class Variable<math::Tensor<uint64_t>>;
 template class Variable<math::Tensor<float>>;
 template class Variable<math::Tensor<double>>;
 template class Variable<math::Tensor<fixed_point::fp32_t>>;

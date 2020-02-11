@@ -132,8 +132,8 @@ protected:
   Contract::Result SendSmartAction(ConstByteArray const &action,
                                    ConstByteArray const &data = ConstByteArray{})
   {
-    using fetch::chain::TransactionBuilder;
     using fetch::chain::Address;
+    using fetch::chain::TransactionBuilder;
 
     // build the transaction
     tx_ = TransactionBuilder()

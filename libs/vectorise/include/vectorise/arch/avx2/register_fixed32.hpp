@@ -611,14 +611,15 @@ inline VectorRegister<fixed_point::fp32_t, 128> operator*(
   __m256i vb      = _mm256_cvtepi32_epi64(b.data());
   __m256i prod256 = _mm256_mul_epi32(va, vb);
 
+  // shift the products right by 16-bits, keep only the lower 32-bits
+  prod256 = _mm256_srli_epi64(prod256, 16);
+
   // compute mask of elements larger than FP_MAX and smaller than FP_MIN
   __m256i max      = _mm256_set1_epi64x(fixed_point::fp32_t::MAX);
   __m256i min      = _mm256_set1_epi64x(fixed_point::fp32_t::MIN);
   __m256i mask_max = _mm256_cmpgt_epi64(prod256, max);
   __m256i mask_min = _mm256_cmpgt_epi64(min, prod256);
 
-  // shift the products right by 16-bits, keep only the lower 32-bits
-  prod256 = _mm256_srli_epi64(prod256, 16);
   prod256 = _mm256_blendv_epi8(prod256, max, mask_max);
   prod256 = _mm256_blendv_epi8(prod256, min, mask_min);
 
@@ -767,6 +768,24 @@ inline VectorRegister<fixed_point::fp32_t, 128> vector_zero_above_element(
   return {fixed_point::fp32_t{}};
 }
 
+template <int32_t elements>
+VectorRegister<fixed_point::fp32_t, 128> rotate_elements_left(
+    VectorRegister<fixed_point::fp32_t, 128> const &x)
+{
+  VectorRegister<int32_t, 128> ret =
+      rotate_elements_left<elements>(VectorRegister<int32_t, 128>(x.data()));
+  return {ret.data()};
+}
+
+template <int32_t elements>
+VectorRegister<fixed_point::fp32_t, 256> rotate_elements_left(
+    VectorRegister<fixed_point::fp32_t, 256> const &x)
+{
+  VectorRegister<int32_t, 256> ret =
+      rotate_elements_left<elements>(VectorRegister<int32_t, 256>(x.data()));
+  return {ret.data()};
+}
+
 inline VectorRegister<fixed_point::fp32_t, 128> shift_elements_left(
     VectorRegister<fixed_point::fp32_t, 128> const & /*x*/)
 {
@@ -820,24 +839,22 @@ inline fixed_point::fp32_t reduce(VectorRegister<fixed_point::fp32_t, 128> const
 
   alignas(VectorRegister<fixed_point::fp32_t, 128>::E_REGISTER_SIZE) fixed_point::fp32_t x_[4];
   x.Store(x_);
-  fixed_point::fp32_t sum{x_[0]};
+  fixed_point::fp32_t       sum{x_[0]};
+  fixed_point::fp32_t::Type tmp;
   for (size_t i = 1; i < 4; i++)
   {
-    if (fixed_point::fp32_t::CheckOverflow(
-            static_cast<fixed_point::fp32_t::NextType>(sum.Data()) +
-            static_cast<fixed_point::fp32_t::NextType>(x_[i].Data())))
+    tmp = sum.Data() + x_[i].Data();
+    if (fixed_point::fp32_t::CheckSumOverflow(sum.Data(), x_[i].Data(), tmp))
     {
       fixed_point::fp32_t::fp_state |= fixed_point::fp32_t::STATE_OVERFLOW;
       return fixed_point::fp32_t::FP_MAX;
     }
-    if (fixed_point::fp32_t::CheckUnderflow(
-            static_cast<fixed_point::fp32_t::NextType>(sum.Data()) +
-            static_cast<fixed_point::fp32_t::NextType>(x_[i].Data())))
+    if (fixed_point::fp32_t::CheckSumUnderflow(sum.Data(), x_[i].Data(), tmp))
     {
       fixed_point::fp32_t::fp_state |= fixed_point::fp32_t::STATE_OVERFLOW;
       return fixed_point::fp32_t::FP_MIN;
     }
-    sum.Data() += x_[i].Data();
+    sum.SetData(tmp);
   }
   return sum;
 }

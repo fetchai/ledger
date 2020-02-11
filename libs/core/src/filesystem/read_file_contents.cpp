@@ -25,8 +25,8 @@
 namespace fetch {
 namespace core {
 
-using fetch::byte_array::ConstByteArray;
 using fetch::byte_array::ByteArray;
+using fetch::byte_array::ConstByteArray;
 
 ConstByteArray ReadContentsOfFile(char const *filename, std::streamsize const buffer_size_limit)
 {

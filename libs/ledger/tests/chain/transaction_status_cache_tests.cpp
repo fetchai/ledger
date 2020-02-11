@@ -35,8 +35,8 @@ using fetch::random::LinearCongruentialGenerator;
 using StatusCachePtr = TransactionStatusCache::ShrdPtr;
 using RngWord        = LinearCongruentialGenerator::RandomType;
 
-using testing::Return;
 using testing::HasSubstr;
+using testing::Return;
 
 struct ClockSystemClockMock;
 

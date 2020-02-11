@@ -24,10 +24,10 @@
 
 #include "gtest/gtest.h"
 
+using fetch::crypto::ECDSASigner;
+using fetch::ledger::Block;
 using fetch::ledger::MainChain;
 using fetch::moment::DeadlineTimer;
-using fetch::ledger::Block;
-using fetch::crypto::ECDSASigner;
 
 // Verify that the simulated POW is working by driving the main cycle, which is
 // to update with the most recently seen block, and then attempt to generate
@@ -58,7 +58,7 @@ TEST(ledger_simulated_pow_gtest, test_block_emission)
   {
     if (block)
     {
-      consensus->UpdateCurrentBlock(*block);
+      EXPECT_TRUE(consensus->UpdateCurrentBlock(*block));
       all_blocks.push_back(*block);
       block.reset();
     }

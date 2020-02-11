@@ -27,12 +27,12 @@
 
 #include <memory>
 
-using fetch::crypto::ECDSASigner;
-using fetch::chain::Transaction;
-using fetch::chain::TransactionBuilder;
 using fetch::chain::Address;
 using fetch::chain::FromJsonTransaction;
 using fetch::chain::ToJsonTransaction;
+using fetch::chain::Transaction;
+using fetch::chain::TransactionBuilder;
+using fetch::crypto::ECDSASigner;
 using fetch::variant::Variant;
 
 TEST(JsonTransactionTests, BasicTest)

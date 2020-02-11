@@ -59,6 +59,18 @@ public:
     return OpType::OP_SQUEEZE;
   }
   static constexpr char const *DESCRIPTOR = "Squeeze";
+
+  OpType OperationType() const override  // TODO(ML-466) : move implementation to .cpp
+  {
+    return this->OpCode();
+  }
+  char const *Descriptor() const override  // TODO(ML-466) : move implementation to .cpp
+  {
+    return DESCRIPTOR;
+  }
+
+  OperationsCount ChargeForward() const override;
+  OperationsCount ChargeBackward() const override;
 };
 
 }  // namespace ops

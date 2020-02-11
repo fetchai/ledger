@@ -19,7 +19,6 @@
 
 #include "ml/ops/ops.hpp"
 
-#include <cassert>
 #include <vector>
 
 namespace fetch {
@@ -60,6 +59,9 @@ public:
     return OpType::OP_ELU;
   }
   static constexpr char const *DESCRIPTOR = "Elu";
+
+  OperationsCount ChargeForward() const override;
+  OperationsCount ChargeBackward() const override;
 
 private:
   DataType a_;

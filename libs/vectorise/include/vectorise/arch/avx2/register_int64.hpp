@@ -17,6 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include "vectorise/arch/avx2/register_int8.hpp"
+
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
@@ -375,6 +377,33 @@ inline int64_t first_element(VectorRegister<int64_t, 256> const &x)
   return static_cast<int64_t>(_mm256_extract_epi64(x.data(), 0));
 }
 
+template <int32_t elements>
+VectorRegister<int64_t, 128> rotate_elements_left(VectorRegister<int64_t, 128> const &x)
+{
+  __m128i n = x.data();
+  n         = _mm_alignr_epi8(n, n, elements * 8);
+  return {n};
+}
+
+template <int64_t elements>
+VectorRegister<int64_t, 256> rotate_elements_left(VectorRegister<int64_t, 256> const &x);
+
+template <>
+inline VectorRegister<int64_t, 256> rotate_elements_left<0>(VectorRegister<int64_t, 256> const &x)
+{
+  return x;
+}
+
+FETCH_ROTATE_ELEMENTS_LEFT(int64_t, 1)
+FETCH_ROTATE_ELEMENTS_LEFT(int64_t, 2)
+FETCH_ROTATE_ELEMENTS_LEFT(int64_t, 3)
+
+template <>
+inline VectorRegister<int64_t, 256> rotate_elements_left<4>(VectorRegister<int64_t, 256> const &x)
+{
+  return rotate_elements_left<0>(x);
+}
+
 inline VectorRegister<int64_t, 128> shift_elements_left(VectorRegister<int64_t, 128> const &x)
 {
   __m128i n = _mm_bslli_si128(x.data(), 8);
@@ -401,16 +430,19 @@ inline VectorRegister<int64_t, 256> shift_elements_right(VectorRegister<int64_t,
 
 inline int64_t reduce(VectorRegister<int64_t, 128> const &x)
 {
-  __m128i r = _mm_add_epi64(x.data(), _mm_bsrli_si128(x.data(), 8));
-  return static_cast<int64_t>(_mm_extract_epi64(r, 0));  // NOLINT
+  VectorRegister<int64_t, 128> r{x};
+
+  r = r + rotate_elements_left<1>(r);
+  return static_cast<int64_t>(_mm_extract_epi64(r.data(), 0));  // NOLINT
 }
 
 inline int64_t reduce(VectorRegister<int64_t, 256> const &x)
 {
-  VectorRegister<int64_t, 128> hi{_mm256_extractf128_si256(x.data(), 1)};
-  VectorRegister<int64_t, 128> lo{_mm256_extractf128_si256(x.data(), 0)};
-  hi = hi + lo;
-  return reduce(hi);
+  VectorRegister<int64_t, 256> r{x};
+
+  r = r + rotate_elements_left<2>(r);
+  r = r + rotate_elements_left<1>(r);
+  return static_cast<int64_t>(_mm256_extract_epi64(r.data(), 0));  // NOLINT
 }
 
 inline bool all_less_than(VectorRegister<int64_t, 128> const &x,

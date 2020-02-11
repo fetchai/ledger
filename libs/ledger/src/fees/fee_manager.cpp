@@ -27,9 +27,9 @@
 #include "telemetry/registry.hpp"
 #include "telemetry/utils/timer.hpp"
 
+using fetch::storage::ResourceAddress;
 using fetch::telemetry::Histogram;
 using fetch::telemetry::Registry;
-using fetch::storage::ResourceAddress;
 
 namespace fetch {
 namespace ledger {
@@ -81,7 +81,8 @@ bool FeeManager::CalculateChargeAndValidate(TransactionDetails &             tx,
   uint64_t const scaled_charge = std::max<uint64_t>(tx.shard_mask.PopCount(), 1) * base_charge;
 
   FETCH_LOG_DEBUG(LOGGING_NAME, "Calculated charge for 0x", tx.digest.ToHex(), ": ", scaled_charge,
-                  " (base: ", base_charge, ", shards: ", tx.shard_mask.PopCount(), ")");
+                  " (base: ", base_charge, " scaled: ", scaled_charge,
+                  ", shards: ", tx.shard_mask.PopCount(), ")");
 
   result.charge += scaled_charge;
 

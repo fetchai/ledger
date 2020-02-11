@@ -162,6 +162,12 @@ void Blas<S, Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
   }
 }
 
+template class Blas<int32_t, Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
+                    Computes(_y <= _alpha * _A * _x + _beta * _y),
+                    platform::Parallelisation::VECTORISE>;
+template class Blas<int64_t, Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
+                    Computes(_y <= _alpha * _A * _x + _beta * _y),
+                    platform::Parallelisation::VECTORISE>;
 template class Blas<double, Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
                     Computes(_y <= _alpha * _A * _x + _beta * _y),
                     platform::Parallelisation::VECTORISE>;
@@ -174,6 +180,14 @@ template class Blas<
 template class Blas<
     fetch::fixed_point::FixedPoint<32, 32>, Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
     Computes(_y <= _alpha * _A * _x + _beta * _y), platform::Parallelisation::VECTORISE>;
+
+template class Blas<int32_t, Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
+                    Computes(_y <= _alpha * _A * _x + _beta * _y),
+                    platform::Parallelisation::VECTORISE | platform::Parallelisation::THREADING>;
+template class Blas<int64_t, Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
+                    Computes(_y <= _alpha * _A * _x + _beta * _y),
+                    platform::Parallelisation::VECTORISE | platform::Parallelisation::THREADING>;
+
 template class Blas<double, Signature(_y <= _alpha, _A, _x, _n, _beta, _y, _m),
                     Computes(_y <= _alpha * _A * _x + _beta * _y),
                     platform::Parallelisation::VECTORISE | platform::Parallelisation::THREADING>;

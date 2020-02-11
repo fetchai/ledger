@@ -176,11 +176,25 @@ std::vector<typename TensorType::SizeType> Convolution1D<TensorType>::ComputeOut
   output_shape.emplace_back(inputs.at(1)->shape().at(0));
   // output_shape_[1]=number of stride_size steps over input size
   output_shape.emplace_back(
-      (inputs.at(0)->shape().at(1) - inputs.at(1)->shape().at(2) + stride_size_) / stride_size_);
+      ComputeOutputHeight(inputs.at(0)->shape().at(1), inputs.at(1)->shape().at(2)));
   // output_shape_[2]=batch dimension
   output_shape.emplace_back(inputs.at(0)->shape().at(2));
 
   return output_shape;
+}
+
+template <class TensorType>
+math::SizeType Convolution1D<TensorType>::ComputeOutputHeight(SizeType const input_height,
+                                                              SizeType const kernel_height) const
+{
+  // output_height=number of stride_size steps over input size
+  SizeType output_height = ((input_height - kernel_height) / this->stride_size_) + 1;
+  if (output_height == 0 || output_height == std::numeric_limits<SizeType>::max())
+  {
+    throw fetch::math::exceptions::WrongShape(
+        "Convolution1D::ComputeOutputHeight: output shape has 0 or -1 values!");
+  }
+  return output_height;
 }
 
 // TODO(issue 943): Make im2col efficient using iterators
@@ -241,7 +255,8 @@ void Convolution1D<TensorType>::ReverseFillVerticalStride(TensorType &      inpu
     {
       for (SizeType i_oc{0}; i_oc < output_channels; ++i_oc)  // Iterate over output channels
       {
-        input(i_oc, i_ic, i_k, 0) += vertical_stride(i_oc, j_s);
+        input(i_oc, i_ic, i_k, 0) =
+            static_cast<DataType>(input(i_oc, i_ic, i_k, 0) + vertical_stride(i_oc, j_s));
       }
       ++j_s;
     }
@@ -389,19 +404,64 @@ void Convolution1D<TensorType>::ReverseFillOutput(TensorType &gemm_output, Tenso
   }
 }
 
+template <typename TensorType>
+OperationsCount Convolution1D<TensorType>::ChargeForward() const
+{
+  assert(!this->batch_output_shape_.empty());
+  assert(this->batch_input_shapes_.size() == 2);
+
+  SizeType input_channels  = this->batch_input_shapes_.front().at(0);
+  SizeType batch_size      = this->batch_input_shapes_.front().at(2);
+  SizeType output_channels = this->batch_input_shapes_.back().at(0);
+  SizeType kernel_height   = this->batch_input_shapes_.back().at(2);
+
+  SizeType output_height = ComputeOutputHeight(this->batch_input_shapes_.front().at(1),
+                                               this->batch_input_shapes_.back().at(2));
+
+  SizeType horizontal_stride_width  = kernel_height * input_channels;
+  SizeType horizontal_stride_height = output_height * batch_size;
+  SizeType vertical_stride_width    = output_channels;
+
+  OperationsCount cost = horizontal_stride_width * horizontal_stride_height *
+                         vertical_stride_width *
+                         fetch::ml::charge_estimation::ops::MULTIPLICATION_PER_ELEMENT;
+
+  return cost;
+}
+
+template <typename TensorType>
+OperationsCount Convolution1D<TensorType>::ChargeBackward() const
+{
+  assert(!this->batch_output_shape_.empty());
+  assert(this->batch_input_shapes_.size() == 2);
+
+  SizeType input_channels  = this->batch_input_shapes_.front().at(0);
+  SizeType batch_size      = this->batch_input_shapes_.front().at(2);
+  SizeType output_channels = this->batch_input_shapes_.back().at(0);
+  SizeType kernel_height   = this->batch_input_shapes_.back().at(2);
+
+  SizeType output_height = ComputeOutputHeight(this->batch_input_shapes_.front().at(1),
+                                               this->batch_input_shapes_.back().at(2));
+
+  SizeType horizontal_stride_width  = kernel_height * input_channels;
+  SizeType horizontal_stride_height = output_height * batch_size;
+  SizeType vertical_stride_width    = output_channels;
+
+  OperationsCount cost =
+      2 * (horizontal_stride_width * horizontal_stride_height * vertical_stride_width *
+           fetch::ml::charge_estimation::ops::MULTIPLICATION_PER_ELEMENT);
+
+  return cost;
+}
+
 ///////////////////////////////
 /// EXPLICIT INSTANTIATIONS ///
 ///////////////////////////////
 
-// TODO (ML-438)
-// template class Convolution1D<math::Tensor<int8_t>>;
-// template class Convolution1D<math::Tensor<int16_t>>;
+template class Convolution1D<math::Tensor<int8_t>>;
+template class Convolution1D<math::Tensor<int16_t>>;
 template class Convolution1D<math::Tensor<int32_t>>;
 template class Convolution1D<math::Tensor<int64_t>>;
-// template class Convolution1D<math::Tensor<uint8_t>>;
-// template class Convolution1D<math::Tensor<uint16_t>>;
-template class Convolution1D<math::Tensor<uint32_t>>;
-template class Convolution1D<math::Tensor<uint64_t>>;
 template class Convolution1D<math::Tensor<float>>;
 template class Convolution1D<math::Tensor<double>>;
 template class Convolution1D<math::Tensor<fixed_point::fp32_t>>;

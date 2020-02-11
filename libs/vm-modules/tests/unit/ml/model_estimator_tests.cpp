@@ -403,31 +403,6 @@ TEST_F(VMModelEstimatorTests, compile_sequential_test)
   }
 }
 
-TEST_F(VMModelEstimatorTests, compile_simple_test)
-{
-  std::string model_type = "regressor";
-  std::string opt_type   = "adam";
-
-  SizeType min_layer_size = 0;
-  SizeType max_layer_size = 5;
-  SizeType layer_step     = 1;
-
-  fetch::vm::TypeId type_id = 0;
-
-  VmStringPtr vm_ptr_opt_type{new fetch::vm::String(vm.get(), opt_type)};
-
-  for (SizeType layers = min_layer_size; layers < max_layer_size; layers += layer_step)
-  {
-
-    fetch::vm::Ptr<fetch::vm::Array<SizeType>> vm_ptr_layers{};
-    VmModel                                    model(vm.get(), type_id, model_type);
-    VmModelEstimator                           model_estimator(model);
-
-    EXPECT_TRUE(model_estimator.CompileSimple(vm_ptr_opt_type, vm_ptr_layers) ==
-                static_cast<ChargeAmount>(fetch::vm::MAXIMUM_CHARGE));
-  }
-}
-
 TEST_F(VMModelEstimatorTests, estimator_fit_and_predict_test)
 {
   std::string model_type      = "sequential";
@@ -562,8 +537,8 @@ TEST_F(VMModelEstimatorTests, estimator_fit_and_predict_test)
 
 TEST_F(VMModelEstimatorTests, estimator_evaluate_with_metrics)
 {
-  using fetch::vm::Ptr;
   using fetch::vm::Array;
+  using fetch::vm::Ptr;
   using fetch::vm::String;
 
   std::string model_type      = "sequential";
@@ -1221,6 +1196,46 @@ TEST_F(VMModelEstimatorTests,
   charge_from_serializer =
       DeserializeFromStringCharge(model_from_serializer, from_serializer_serialized);
   EXPECT_EQ(charge_original, charge_from_serializer);
+}
+
+TEST_F(VMModelEstimatorTests, charge_forward_one_dense)
+{
+  using namespace fetch::ml::charge_estimation::ops;
+  auto              loss        = VmString(vm, "mse");
+  auto              optimiser   = VmString(vm, "adam");
+  std::vector<bool> activations = {true, true};
+
+  SizeType const inputs     = 10;
+  SizeType const outputs    = 10;
+  SizeType const batch_size = 20;
+
+  VmModelPtr  model = VmSequentialModel(vm);
+  VmStringPtr dense{new fetch::vm::String(vm.get(), "dense")};
+
+  model->LayerAddDense(dense, inputs, outputs);
+  model->CompileSequential(loss, optimiser);
+
+  auto data = VmTensor(vm, {inputs, batch_size});
+  data->FillRandom();
+
+  const ChargeAmount cost = model->EstimatePredict(data);
+
+  ChargeAmount expected_cost = 0;
+  // For a Dense layer with n inputs and m outputs and empty activation there is expected
+  // n placeholder readings
+  expected_cost += inputs * PLACEHOLDER_READING_PER_ELEMENT;
+  // n flattening operations (because Dense is not time-distributed in this test)
+  expected_cost += inputs * FLATTEN_PER_ELEMENT;
+  // n*m Weights reading (100 weights total)
+  expected_cost += (inputs * outputs) * WEIGHTS_READING_PER_ELEMENT;
+  // n*m*1 matmul operations
+  expected_cost += (inputs * outputs) * MULTIPLICATION_PER_ELEMENT;
+  // m bias weights reading
+  expected_cost += outputs * WEIGHTS_READING_PER_ELEMENT;
+  // m adding (bias + matmul result)
+  expected_cost += outputs * ADDITION_PER_ELEMENT;
+
+  ASSERT_EQ(cost, expected_cost * batch_size);
 }
 
 }  // namespace

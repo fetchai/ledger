@@ -65,6 +65,9 @@ public:
     return OpType::OP_LOG;
   }
   static constexpr char const *DESCRIPTOR = "Log";
+
+  OperationsCount ChargeForward() const override;
+  OperationsCount ChargeBackward() const override;
 };
 
 }  // namespace ops

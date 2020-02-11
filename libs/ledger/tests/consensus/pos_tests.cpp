@@ -38,9 +38,9 @@
 
 using namespace fetch;
 
-using fetch::ledger::MainChain;
-using fetch::ledger::Block;
 using fetch::crypto::ECDSASigner;
+using fetch::ledger::Block;
+using fetch::ledger::MainChain;
 
 class ConsensusTests : public ::testing::Test
 {
@@ -90,6 +90,11 @@ protected:
     consensus_ = std::make_shared<Consensus>(stake_, beacon_setup_, beacon_, chain_, storage_,
                                              mining_identity_, aeon_period_, max_cabinet_size_,
                                              block_interval_ms_, notarisation_);
+
+    // A newly constructed chain is at genesis
+    auto const genesis = chain_.GetHeaviestBlock();
+
+    consensus_->UpdateCurrentBlock(*genesis);
 
     consensus_->Reset(*snapshot, storage_);
   }
@@ -141,7 +146,14 @@ protected:
       ret->block_entropy.qualified.insert(i.identifier());
     }
 
-    ret->weight = consensus_->GetBlockGenerationWeight(*ret, cabinet_[miner_index]);
+    try
+    {
+      ret->weight = consensus_->GetBlockGenerationWeight(*ret, cabinet_[miner_index]);
+    }
+    catch (...)
+    {
+      ret->weight = 0;
+    }
 
     ret->UpdateDigest();
     ret->miner_signature = cabinet_priv_keys_[miner_index]->Sign(ret->hash);

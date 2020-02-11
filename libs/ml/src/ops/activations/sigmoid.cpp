@@ -86,6 +86,24 @@ std::vector<math::SizeType> Sigmoid<TensorType>::ComputeOutputShape(
   return inputs.front()->shape();
 }
 
+template <typename TensorType>
+OperationsCount Sigmoid<TensorType>::ChargeForward() const
+{
+  assert(!this->batch_input_shapes_.empty());
+  OperationsCount cost = fetch::ml::charge_estimation::ops::SIGMOID_PER_ELEMENT *
+                         this->TotalElementsIn({this->batch_input_shapes_});
+  return cost;
+}
+
+template <typename TensorType>
+OperationsCount Sigmoid<TensorType>::ChargeBackward() const
+{
+  assert(!this->batch_input_shapes_.empty());
+  OperationsCount cost = fetch::ml::charge_estimation::ops::SIGMOID_BACKWARD_PER_ELEMENT *
+                         this->TotalElementsIn({this->batch_input_shapes_});
+  return cost;
+}
+
 ///////////////////////////////
 /// EXPLICIT INSTANTIATIONS ///
 ///////////////////////////////
@@ -94,10 +112,6 @@ template class Sigmoid<math::Tensor<int8_t>>;
 template class Sigmoid<math::Tensor<int16_t>>;
 template class Sigmoid<math::Tensor<int32_t>>;
 template class Sigmoid<math::Tensor<int64_t>>;
-template class Sigmoid<math::Tensor<uint8_t>>;
-template class Sigmoid<math::Tensor<uint16_t>>;
-template class Sigmoid<math::Tensor<uint32_t>>;
-template class Sigmoid<math::Tensor<uint64_t>>;
 template class Sigmoid<math::Tensor<float>>;
 template class Sigmoid<math::Tensor<double>>;
 template class Sigmoid<math::Tensor<fixed_point::fp32_t>>;

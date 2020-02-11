@@ -25,10 +25,10 @@
 
 #include <stdexcept>
 
+using fetch::byte_array::ByteArray;
+using fetch::byte_array::ConstByteArray;
 using fetch::crypto::ECDSASigner;
 using fetch::crypto::ECDSAVerifier;
-using fetch::byte_array::ConstByteArray;
-using fetch::byte_array::ByteArray;
 using fetch::random::LinearCongruentialGenerator;
 
 namespace {

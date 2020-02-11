@@ -138,10 +138,16 @@ void BasicMiner::GenerateBlock(Block &block, std::size_t num_lanes, std::size_t 
     mining_pool_.Splice(pending_);
   }
 
-  std::remove_if(mining_pool_.begin(), mining_pool_.end(), [&block](auto const &tx_layout) {
-    return fetch::chain::GetValidity(tx_layout, block.block_number) !=
-           chain::Transaction::Validity::VALID;
-  });
+  // generate an invalid transaction set and remove them from the mining pool
+  DigestSet invalid{};
+  for (auto const &layout : mining_pool_)
+  {
+    if (chain::Transaction::Validity::VALID != chain::GetValidity(layout, block.block_number))
+    {
+      invalid.emplace(layout.digest());
+    }
+  }
+  mining_pool_.Remove(invalid);
 
   // detect the transactions which have already been incorporated into previous blocks
   auto const duplicates =
@@ -184,6 +190,8 @@ void BasicMiner::GenerateBlock(Block &block, std::size_t num_lanes, std::size_t 
 
       auto start = mining_pool_.begin();
       auto end   = start;
+      // NB: Clang's libc++ incorrectly requires the second argument to be of difference_type
+      // (it is of deduced type in the Standard)
       std::advance(end, static_cast<int32_t>(std::min(num_tx_per_thread, mining_pool_.size())));
 
       // TODO(private issue XXX): While this efficiently breaks up the transaction queue into even

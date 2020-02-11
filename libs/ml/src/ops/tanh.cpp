@@ -98,6 +98,24 @@ std::vector<math::SizeType> TanH<TensorType>::ComputeOutputShape(VecTensorType c
   return inputs.front()->shape();
 }
 
+template <typename TensorType>
+OperationsCount TanH<TensorType>::ChargeForward() const
+{
+  assert(!this->batch_input_shapes_.empty());
+  OperationsCount cost = fetch::ml::charge_estimation::ops::TANH_PER_ELEMENT *
+                         this->TotalElementsIn({this->batch_input_shapes_});
+  return cost;
+}
+
+template <typename TensorType>
+OperationsCount TanH<TensorType>::ChargeBackward() const
+{
+  assert(!this->batch_output_shape_.empty());
+  OperationsCount cost = fetch::ml::charge_estimation::ops::TANH_BACKWARD_PER_ELEMENT *
+                         this->TotalElementsIn({this->batch_output_shape_});
+  return cost;
+}
+
 ///////////////////////////////
 /// EXPLICIT INSTANTIATIONS ///
 ///////////////////////////////
@@ -106,10 +124,6 @@ template class TanH<math::Tensor<int8_t>>;
 template class TanH<math::Tensor<int16_t>>;
 template class TanH<math::Tensor<int32_t>>;
 template class TanH<math::Tensor<int64_t>>;
-template class TanH<math::Tensor<uint8_t>>;
-template class TanH<math::Tensor<uint16_t>>;
-template class TanH<math::Tensor<uint32_t>>;
-template class TanH<math::Tensor<uint64_t>>;
 template class TanH<math::Tensor<float>>;
 template class TanH<math::Tensor<double>>;
 template class TanH<math::Tensor<fixed_point::fp32_t>>;

@@ -33,8 +33,8 @@ using namespace fetch;
 using namespace fetch::byte_array;
 using namespace fetch::storage;
 
-using ::testing::StrictMock;
 using fetch::random::LinearCongruentialGenerator;
+using ::testing::StrictMock;
 
 using FileObjectM   = StrictMock<MockFileObject>;
 using FileObjectPtr = std::unique_ptr<FileObjectM>;

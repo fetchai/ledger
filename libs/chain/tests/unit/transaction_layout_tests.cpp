@@ -28,12 +28,12 @@
 
 #include <memory>
 
-using fetch::byte_array::FromBase64;
-using fetch::chain::TransactionLayout;
-using fetch::chain::TransactionBuilder;
-using fetch::chain::Address;
-using fetch::crypto::ECDSASigner;
 using fetch::BitVector;
+using fetch::byte_array::FromBase64;
+using fetch::chain::Address;
+using fetch::chain::TransactionBuilder;
+using fetch::chain::TransactionLayout;
+using fetch::crypto::ECDSASigner;
 
 using SignerPtr  = std::unique_ptr<ECDSASigner>;
 using AddressPtr = std::unique_ptr<Address>;

@@ -65,9 +65,9 @@ struct HasVectorSupport<float>
 };
 
 template <typename T, typename R>
-using IfVectorSupportFor = typename std::enable_if<HasVectorSupport<T>::value, R>::type;
+using IfVectorSupportFor = std::enable_if_t<HasVectorSupport<T>::value, R>;
 template <typename T, typename R>
-using IfNoVectorSupportFor = typename std::enable_if<!HasVectorSupport<T>::value, R>::type;
+using IfNoVectorSupportFor = std::enable_if_t<!HasVectorSupport<T>::value, R>;
 
 template <typename T>
 static constexpr bool IsVectorRegister =

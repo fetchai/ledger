@@ -17,19 +17,33 @@
 //
 //------------------------------------------------------------------------------
 
+#include "vectorise/fixed_point/fixed_point.hpp"
 #include "vectorise/info.hpp"
 #include "vectorise/register.hpp"
-#ifdef __AVX2__
-#include "vectorise/arch/avx2.hpp"
-#else
-
-#include "vectorise/fixed_point/fixed_point.hpp"
 
 namespace fetch {
 namespace vectorise {
 
+ADD_REGISTER_SIZE(fetch::fixed_point::fp128_t, 8 * sizeof(fetch::fixed_point::fp128_t));
+
+}  // namespace vectorise
+}  // namespace fetch
+
+#ifdef __AVX2__
+#include "vectorise/arch/avx2.hpp"
+#else
+
+namespace fetch {
+namespace vectorise {
+
+ADD_REGISTER_SIZE(int8_t, 8 * sizeof(int8_t));
+ADD_REGISTER_SIZE(uint8_t, 8 * sizeof(uint8_t));
+ADD_REGISTER_SIZE(int16_t, 8 * sizeof(int16_t));
+ADD_REGISTER_SIZE(uint16_t, 8 * sizeof(uint16_t));
 ADD_REGISTER_SIZE(int32_t, 8 * sizeof(int32_t));
+ADD_REGISTER_SIZE(uint32_t, 8 * sizeof(uint32_t));
 ADD_REGISTER_SIZE(int64_t, 8 * sizeof(int64_t));
+ADD_REGISTER_SIZE(uint64_t, 8 * sizeof(uint64_t));
 ADD_REGISTER_SIZE(float, 8 * sizeof(float));
 ADD_REGISTER_SIZE(double, 8 * sizeof(double));
 ADD_REGISTER_SIZE(fixed_point::fp32_t, 8 * sizeof(fixed_point::fp32_t));
@@ -38,4 +52,5 @@ ADD_REGISTER_SIZE(fixed_point::fp64_t, 8 * sizeof(fixed_point::fp64_t));
 }  // namespace vectorise
 }  // namespace fetch
 #endif
+
 #include "vectorise/iterator.hpp"

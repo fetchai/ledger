@@ -100,8 +100,8 @@ public:
   {}
 
   template <class OP, class F1, class F2>
-  inline type GenericRangedOpReduce(Range const &range, type const initial_value, OP &&op,
-                                    F1 const &&kernel, F2 &&hkernel)
+  type GenericRangedOpReduce(Range const &range, type const initial_value, OP &&op,
+                             F1 const &&kernel, F2 &&hkernel)
   {
     std::size_t SF  = range.SIMDFromUpper<VectorRegisterType::E_BLOCK_COUNT>();
     std::size_t ST  = range.SIMDToLower<VectorRegisterType::E_BLOCK_COUNT>();
@@ -179,8 +179,8 @@ public:
   }
 
   template <class F1, class F2, class OP, typename... Args>
-  inline type GenericRangedReduceMultiple(Range const &range, type const c, OP const &&op,
-                                          F1 const &&kernel, F2 &&hkernel, Args &&... args)
+  type GenericRangedReduceMultiple(Range const &range, type const c, OP const &&op,
+                                   F1 const &&kernel, F2 &&hkernel, Args &&... args)
   {
     std::size_t SF  = range.SIMDFromUpper<VectorRegisterType::E_BLOCK_COUNT>();
     std::size_t ST  = range.SIMDToLower<VectorRegisterType::E_BLOCK_COUNT>();
@@ -212,7 +212,7 @@ public:
         scalar_tmp =
             details::MatrixReduceFreeFunction<ScalarRegisterType>::template Unroll<Args...>::Apply(
                 scalar_self, scalar_regs, kernel);
-        ret = op(ret, scalar_tmp.data());
+        ret = static_cast<type>(op(ret, scalar_tmp.data()));
       }
     }
 
@@ -228,7 +228,7 @@ public:
                 self, regs, kernel);
         vc = op(vc, tmp);
       }
-      ret += hkernel(vc);
+      ret = static_cast<type>(ret + hkernel(vc));
     }
 
     if (STU != ST)
@@ -249,7 +249,7 @@ public:
         scalar_tmp =
             details::MatrixReduceFreeFunction<ScalarRegisterType>::template Unroll<Args...>::Apply(
                 scalar_self, scalar_regs, kernel);
-        ret = op(ret, scalar_tmp.data());
+        ret = static_cast<type>(op(ret, scalar_tmp.data()));
       }
     }
 
@@ -283,8 +283,8 @@ public:
   }
 
   template <class F1, class F2>
-  inline type Reduce(Range const &range, F1 const &&kernel, F2 &&hkernel,
-                     type const initial_value = type(0))
+  type Reduce(Range const &range, F1 const &&kernel, F2 &&hkernel,
+              type const initial_value = type(0))
   {
     std::size_t SF  = range.SIMDFromUpper<VectorRegisterType::E_BLOCK_COUNT>();
     std::size_t ST  = range.SIMDToLower<VectorRegisterType::E_BLOCK_COUNT>();
@@ -307,7 +307,6 @@ public:
       }
       vc = VectorRegisterType(c.data());
     }
-
     if (ST >= VectorRegisterType::E_BLOCK_COUNT)
     {
       for (std::size_t i = SF; i < ST; i += VectorRegisterType::E_BLOCK_COUNT)

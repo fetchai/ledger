@@ -85,6 +85,36 @@ std::vector<math::SizeType> Add<TensorType>::ComputeOutputShape(VecTensorType co
   return inputs.at(0)->shape();
 }
 
+template <typename TensorType>
+OpType Add<TensorType>::OperationType() const
+{
+  return this->OpCode();
+}
+
+template <typename TensorType>
+const char *Add<TensorType>::Descriptor() const
+{
+  return DESCRIPTOR;
+}
+
+template <typename TensorType>
+OperationsCount Add<TensorType>::ChargeForward() const
+{
+  assert(!this->batch_output_shape_.empty());
+  OperationsCount cost = fetch::ml::charge_estimation::ops::ADDITION_PER_ELEMENT *
+                         this->TotalElementsIn({this->batch_output_shape_});
+  return cost;
+}
+
+template <typename TensorType>
+OperationsCount Add<TensorType>::ChargeBackward() const
+{
+  assert(!this->batch_output_shape_.empty());
+  OperationsCount cost = fetch::ml::charge_estimation::ops::ADDITION_PER_ELEMENT *
+                         this->TotalElementsIn({this->batch_output_shape_});
+  return cost;
+}
+
 /**
  * method for updating axes in case of broadcast Add
  * @tparam TensorType
@@ -138,10 +168,6 @@ template class Add<math::Tensor<int8_t>>;
 template class Add<math::Tensor<int16_t>>;
 template class Add<math::Tensor<int32_t>>;
 template class Add<math::Tensor<int64_t>>;
-template class Add<math::Tensor<uint8_t>>;
-template class Add<math::Tensor<uint16_t>>;
-template class Add<math::Tensor<uint32_t>>;
-template class Add<math::Tensor<uint64_t>>;
 template class Add<math::Tensor<float>>;
 template class Add<math::Tensor<double>>;
 template class Add<math::Tensor<fixed_point::fp32_t>>;

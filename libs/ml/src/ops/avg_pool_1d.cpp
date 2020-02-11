@@ -173,6 +173,33 @@ std::vector<math::SizeType> AvgPool1D<TensorType>::ComputeOutputShape(
   return output_shape;
 }
 
+template <typename TensorType>
+OperationsCount AvgPool1D<TensorType>::ChargeForward() const
+{
+  assert(!this->batch_output_shape_.empty());
+  OperationsCount num_output_shape_ops = this->batch_output_shape_.at(0) *
+                                         this->batch_output_shape_.at(1) *
+                                         this->batch_output_shape_.at(2);
+  OperationsCount cost =
+      fetch::ml::charge_estimation::ops::DIVISION_PER_ELEMENT * num_output_shape_ops +
+      fetch::ml::charge_estimation::ops::ADDITION_PER_ELEMENT * num_output_shape_ops *
+          this->kernel_size_;
+  return cost;
+}
+
+template <typename TensorType>
+OperationsCount AvgPool1D<TensorType>::ChargeBackward() const
+{
+  assert(!this->batch_output_shape_.empty());
+  OperationsCount num_output_shape_ops = this->batch_output_shape_.at(0) *
+                                         this->batch_output_shape_.at(1) *
+                                         this->batch_output_shape_.at(2) * this->kernel_size_;
+  OperationsCount cost = num_output_shape_ops *
+                         fetch::ml::charge_estimation::ops::DIVISION_PER_ELEMENT *
+                         fetch::ml::charge_estimation::ops::ADDITION_PER_ELEMENT;
+  return cost;
+}
+
 ///////////////////////////////
 /// EXPLICIT INSTANTIATIONS ///
 ///////////////////////////////
@@ -181,10 +208,6 @@ template class AvgPool1D<math::Tensor<int8_t>>;
 template class AvgPool1D<math::Tensor<int16_t>>;
 template class AvgPool1D<math::Tensor<int32_t>>;
 template class AvgPool1D<math::Tensor<int64_t>>;
-template class AvgPool1D<math::Tensor<uint8_t>>;
-template class AvgPool1D<math::Tensor<uint16_t>>;
-template class AvgPool1D<math::Tensor<uint32_t>>;
-template class AvgPool1D<math::Tensor<uint64_t>>;
 template class AvgPool1D<math::Tensor<float>>;
 template class AvgPool1D<math::Tensor<double>>;
 template class AvgPool1D<math::Tensor<fixed_point::fp32_t>>;
