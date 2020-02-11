@@ -542,19 +542,20 @@ TYPED_TEST(VectorExpTest, exp_tests)
 
   for (std::size_t i = 0; i < N; ++i)
   {
-    switch (i % 5) {
-      case 0:
-        A[i] = type::POSITIVE_INFINITY;
-        break;
-      case 1:
-        A[i] = type::NEGATIVE_INFINITY;
-        break;
-      case 2:
-        A[i] = type::NaN;
-        break;
-      default:
-        A[i] = fetch::random::Random::generator.AsType<type>() * type::MAX_EXP;
-        break;
+    switch (i % 5)
+    {
+    case 0:
+      A[i] = type::POSITIVE_INFINITY;
+      break;
+    case 1:
+      A[i] = type::NEGATIVE_INFINITY;
+      break;
+    case 2:
+      A[i] = type::NaN;
+      break;
+    default:
+      A[i] = fetch::random::Random::generator.AsType<type>() * type::MAX_EXP;
+      break;
     }
     E[i] = type::Exp(A[i]);
   }

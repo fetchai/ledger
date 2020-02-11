@@ -125,6 +125,7 @@ public:
   {
     return VectorRegister(fixed_point::fp32_t::FP_MIN);
   }
+
 private:
   MMRegisterType data_;
 };
@@ -220,6 +221,7 @@ public:
   {
     return VectorRegister(fixed_point::fp32_t::FP_MIN);
   }
+
 private:
   MMRegisterType data_;
 };
@@ -617,7 +619,7 @@ inline VectorRegister<fixed_point::fp32_t, 128> multiply_unsafe(
   prod256         = _mm256_permutevar8x32_epi32(prod256, posmask);
 
   // Extract the first 128bit lane
-  auto prod       = VectorRegister<int32_t, 128>(_mm256_extractf128_si256(prod256, 0));
+  auto prod = VectorRegister<int32_t, 128>(_mm256_extractf128_si256(prod256, 0));
   return {prod.data()};
 }
 

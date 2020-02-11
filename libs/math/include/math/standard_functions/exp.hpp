@@ -65,7 +65,8 @@ meta::IfIsMathArray<ArrayType, void> Exp(ArrayType const &array, ArrayType &ret)
   assert(ret.shape() == array.shape());
   if (array.size() >= array.data().padded_size())
   {
-    ret.data().in_parallel().Apply([](auto const &a, auto &c) { c = fetch::vectorise::Exp(a); }, array.data());
+    ret.data().in_parallel().Apply([](auto const &a, auto &c) { c = fetch::vectorise::Exp(a); },
+                                   array.data());
   }
   else
   {
