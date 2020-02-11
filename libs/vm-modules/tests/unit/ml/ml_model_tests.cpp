@@ -643,7 +643,15 @@ TEST_F(VMModelTests, model_dropout_comparison)
 {
   static char const *SOURCE = R"(
     function main()
+        var shape = Array<UInt64>(3);
+        shape[0] = 25u64;
+        shape[1] = 25u64;
+        shape[2] = 1u64;
+        var x = Tensor(shape);
+
         var dropouted_model = Model("sequential");
+        model.addExperimental("input", x.shape());
+
         dropouted_model.add("dropout", 0.1fp64);
         dropouted_model.compile("mse", "adam");
 
@@ -655,11 +663,6 @@ TEST_F(VMModelTests, model_dropout_comparison)
         reference_model.add("dropout", 0.0fp64);
         reference_model.compile("mse", "adam");
 
-        var shape = Array<UInt64>(3);
-        shape[0] = 25u64;
-        shape[1] = 25u64;
-        shape[2] = 1u64;
-        var x = Tensor(shape);
 
         x.fillRandom();
 

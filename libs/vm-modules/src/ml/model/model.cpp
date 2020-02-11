@@ -904,6 +904,15 @@ ChargeAmount VMModel::EstimatePredict(const vm::Ptr<math::VMTensor> &data)
  */
 ChargeAmount VMModel::EstimateEvaluate()
 {
+  if (!model_->compiled_)
+  {
+    throw std::runtime_error("must compile model before evaluating");
+  }
+  if (!model_->DataLoaderIsSet())
+  {
+    throw std::runtime_error("must set data before evaluating");
+  }
+
   ChargeAmount const cost = model_->ChargeForward();
   model_->dataloader_ptr_->SetMode(fetch::ml::dataloaders::DataLoaderMode::TRAIN);
   SizeType const     batch_size = model_->dataloader_ptr_->Size();

@@ -31,7 +31,8 @@ Abs<TensorType>::Abs(SPType const &sp)
 template <typename TensorType>
 std::shared_ptr<OpsSaveableParams> Abs<TensorType>::GetOpSaveableParams()
 {
-  return std::make_shared<SPType>();
+  auto sp = std::make_shared<SPType>();
+  return sp;
 }
 
 template <typename TensorType>

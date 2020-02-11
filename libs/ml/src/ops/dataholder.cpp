@@ -26,7 +26,8 @@ namespace ops {
 template <typename TensorType>
 std::shared_ptr<OpsSaveableParams> DataHolder<TensorType>::GetOpSaveableParams()
 {
-  return std::make_shared<SPType>();
+  auto sp = std::make_shared<SPType>();
+  return sp;
 }
 
 /**

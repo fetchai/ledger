@@ -33,7 +33,8 @@ Sigmoid<TensorType>::Sigmoid(SPType const &sp)
 template <typename TensorType>
 std::shared_ptr<OpsSaveableParams> Sigmoid<TensorType>::GetOpSaveableParams()
 {
-  return std::make_shared<SPType>();
+  auto sp = std::make_shared<SPType>();
+  return sp;
 }
 
 template <typename TensorType>
