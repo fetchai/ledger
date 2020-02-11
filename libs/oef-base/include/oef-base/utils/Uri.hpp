@@ -18,7 +18,6 @@
 //------------------------------------------------------------------------------
 
 #include "logging/logging.hpp"
-
 #include <iostream>
 #include <string>
 

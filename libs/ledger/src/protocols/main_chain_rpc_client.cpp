@@ -16,8 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/service_ids.hpp"
 #include "ledger/protocols/main_chain_rpc_client.hpp"
+
+#include "core/service_ids.hpp"
 #include "ledger/protocols/main_chain_rpc_protocol.hpp"
 
 namespace fetch {

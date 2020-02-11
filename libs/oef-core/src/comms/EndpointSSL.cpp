@@ -17,11 +17,12 @@
 //------------------------------------------------------------------------------
 
 #include "logging/logging.hpp"
+#include "oef-core/comms/EndpointSSL.hpp"
+
 #include "oef-base/monitoring/Gauge.hpp"
 #include "oef-base/utils/Uri.hpp"
-#include "oef-core/comms/EndpointSSL.hpp"
-#include "openssl/ssl.h"
 
+#include "openssl/ssl.h"
 #include <cerrno>  // for fopen
 #include <cstdio>  // for fopen
 #include <functional>

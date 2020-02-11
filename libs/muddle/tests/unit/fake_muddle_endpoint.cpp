@@ -16,9 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "fake_muddle_endpoint.hpp"
-
 #include "muddle/packet.hpp"
+
+#include "fake_muddle_endpoint.hpp"
 
 using fetch::muddle::Subscription;
 

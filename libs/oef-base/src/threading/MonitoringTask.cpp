@@ -16,16 +16,16 @@
 //
 //------------------------------------------------------------------------------
 
-#include "oef-base/monitoring/Counter.hpp"
-#include "oef-base/monitoring/Gauge.hpp"
 #include "oef-base/threading/MonitoringTask.hpp"
-
-#include <unistd.h>
 
 #include <fstream>
 #include <ios>
 #include <iostream>
 #include <string>
+#include <unistd.h>
+
+#include "oef-base/monitoring/Counter.hpp"
+#include "oef-base/monitoring/Gauge.hpp"
 
 namespace fetch {
 namespace oef {

@@ -16,11 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "test_types.hpp"
-
-#include "math/standard_functions/clamp.hpp"
-
 #include "gtest/gtest.h"
+#include "math/standard_functions/clamp.hpp"
+#include "test_types.hpp"
 
 namespace fetch {
 namespace math {

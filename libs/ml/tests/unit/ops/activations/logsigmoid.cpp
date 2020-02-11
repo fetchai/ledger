@@ -16,14 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "test_types.hpp"
-
 #include "core/serializers/main_serializer_definition.hpp"
+#include "gtest/gtest.h"
 #include "ml/ops/activations/logsigmoid.hpp"
 #include "ml/serializers/ml_types.hpp"
-
-#include "gtest/gtest.h"
-
+#include "test_types.hpp"
 #include <memory>
 
 namespace fetch {

@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "constellation/muddle_status_http_module.hpp"
+
 #include "http/json_response.hpp"
 #include "muddle/muddle_status.hpp"
 

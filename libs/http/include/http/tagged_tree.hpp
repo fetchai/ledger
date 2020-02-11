@@ -20,10 +20,11 @@
 #include "core/byte_array/byte_array.hpp"
 #include "core/macros.hpp"
 
-#include <iostream>
 #include <numeric>
 #include <utility>
 #include <vector>
+
+#include <iostream>
 
 namespace fetch {
 namespace http {

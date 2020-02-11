@@ -16,10 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "yaml_test_cases.hpp"
-
 #include "yaml/document.hpp"
 #include "yaml/exceptions.hpp"
+#include "yaml_test_cases.hpp"
 
 #include "gtest/gtest.h"
 

@@ -17,9 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "fetch_pybind.hpp"
-
 #include "crypto/ecdsa.hpp"
+
+#include "fetch_pybind.hpp"
 
 namespace fetch {
 namespace crypto {

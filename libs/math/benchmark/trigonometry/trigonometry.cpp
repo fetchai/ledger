@@ -16,9 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/random/lfg.hpp"
 #include "math/base_types.hpp"
 #include "math/trigonometry.hpp"
+
+#include "core/random/lfg.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 
 #include "benchmark/benchmark.h"

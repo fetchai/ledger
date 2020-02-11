@@ -18,7 +18,6 @@
 
 #include "oef-base/comms/Core.hpp"
 #include "oef-base/monitoring/Counter.hpp"
-
 #include <iostream>
 
 static Counter loopstart("mt-core.network.asio.run");

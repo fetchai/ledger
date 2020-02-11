@@ -17,10 +17,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include <chrono>
+
 #include "logging/logging.hpp"
 #include "oef-base/threading/Task.hpp"
-
-#include <chrono>
 
 class IKarmaPolicy;
 

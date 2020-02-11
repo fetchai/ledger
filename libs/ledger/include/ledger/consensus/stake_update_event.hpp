@@ -17,10 +17,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "crypto/identity.hpp"
-
 #include <cstdint>
 #include <vector>
+
+#include "crypto/identity.hpp"
 
 namespace fetch {
 namespace ledger {

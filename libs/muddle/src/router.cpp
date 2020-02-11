@@ -16,6 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "kademlia/peer_tracker.hpp"
 #include "muddle_logging_name.hpp"
 #include "muddle_register.hpp"
 #include "router.hpp"
@@ -28,7 +29,6 @@
 #include "core/service_ids.hpp"
 #include "crypto/fnv.hpp"
 #include "crypto/secure_channel.hpp"
-#include "kademlia/peer_tracker.hpp"
 #include "logging/logging.hpp"
 #include "muddle/packet.hpp"
 #include "telemetry/counter.hpp"

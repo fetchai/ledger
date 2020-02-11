@@ -17,8 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "mock_storage_unit.hpp"
-
 #include "chain/transaction.hpp"
 #include "chain/transaction_builder.hpp"
 #include "core/byte_array/const_byte_array.hpp"
@@ -30,6 +28,7 @@
 #include "ledger/fetch_msgpack.hpp"
 #include "ledger/state_sentinel_adapter.hpp"
 #include "ledger/storage_unit/cached_storage_adapter.hpp"
+#include "mock_storage_unit.hpp"
 
 #include "gtest/gtest.h"
 

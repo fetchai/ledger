@@ -17,13 +17,13 @@
 //
 //------------------------------------------------------------------------------
 
-#include "oef-base/conversation/IOutboundConversationCreator.hpp"
-#include "oef-base/conversation/OutboundConversations.hpp"
-#include "oef-base/utils/Uri.hpp"
-
 #include <map>
 #include <memory>
 #include <mutex>
+
+#include "oef-base/conversation/IOutboundConversationCreator.hpp"
+#include "oef-base/conversation/OutboundConversations.hpp"
+#include "oef-base/utils/Uri.hpp"
 
 class OutboundConversationWorkerTask;
 template <typename TXType, typename Reader, typename Sender>

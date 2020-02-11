@@ -16,15 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
-#include "test_types.hpp"
-
 #include "core/serializers/main_serializer_definition.hpp"
+#include "gtest/gtest.h"
 #include "ml/ops/loss_functions/cross_entropy_loss.hpp"
 #include "ml/serializers/ml_types.hpp"
+#include "test_types.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
-
-#include "gtest/gtest.h"
-
 #include <memory>
 
 namespace fetch {

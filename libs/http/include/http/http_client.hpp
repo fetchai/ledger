@@ -18,7 +18,6 @@
 //------------------------------------------------------------------------------
 
 #include "http_client_interface.hpp"
-
 #include "network/fetch_asio.hpp"
 
 #include <cstddef>

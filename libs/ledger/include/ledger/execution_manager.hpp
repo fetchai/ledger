@@ -17,8 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "transaction_status_cache.hpp"
-
 #include "chain/address.hpp"
 #include "chain/constants.hpp"
 #include "core/byte_array/encoders.hpp"
@@ -32,6 +30,7 @@
 #include "network/details/thread_pool.hpp"
 #include "storage/object_store.hpp"
 #include "telemetry/telemetry.hpp"
+#include "transaction_status_cache.hpp"
 
 #include <atomic>
 #include <condition_variable>

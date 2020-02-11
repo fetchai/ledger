@@ -16,11 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "random_address.hpp"
-
 #include "core/random/lcg.hpp"
 #include "crypto/identity.hpp"
 #include "ledger/consensus/stake_snapshot.hpp"
+#include "random_address.hpp"
 
 #include "gtest/gtest.h"
 

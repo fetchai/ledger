@@ -16,11 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "mock_file_object.hpp"
-
 #include "core/random/lcg.hpp"
 #include "crypto/hash.hpp"
 #include "crypto/sha256.hpp"
+#include "mock_file_object.hpp"
 #include "storage/storage_exception.hpp"
 
 #include "gtest/gtest.h"

@@ -17,9 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "oef-base/threading/ExitState.hpp"
-#include "oef-base/threading/Task.hpp"
-
 #include <condition_variable>
 #include <iostream>
 #include <list>
@@ -28,6 +25,9 @@
 #include <queue>
 #include <set>
 #include <vector>
+
+#include "oef-base/threading/ExitState.hpp"
+#include "oef-base/threading/Task.hpp"
 
 namespace fetch {
 namespace oef {

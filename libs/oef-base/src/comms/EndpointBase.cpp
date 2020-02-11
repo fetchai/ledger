@@ -20,7 +20,6 @@
 #include "oef-base/comms/EndpointBase.hpp"
 #include "oef-base/monitoring/Gauge.hpp"
 #include "oef-base/utils/Uri.hpp"
-
 #include <cstdlib>
 
 static Gauge                    count("mt-core.network.EndpointBase");

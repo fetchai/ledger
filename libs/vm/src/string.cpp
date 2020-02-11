@@ -16,11 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "utf8.h"
-
 #include "core/string/trim.hpp"
 #include "vm/array.hpp"
 #include "vm/string.hpp"
+
+#include "utf8.h"
 
 #include <algorithm>
 #include <cstddef>

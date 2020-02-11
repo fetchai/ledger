@@ -16,9 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "test_types.hpp"
-
 #include "math/standard_functions/abs.hpp"
+#include "test_types.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 
 #include "gtest/gtest.h"

@@ -16,6 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include "oef-search/comms/Oefv1Listener.hpp"
+
+#include <memory>
+
 #include "oef-base/comms/Core.hpp"
 #include "oef-base/comms/Endpoint.hpp"
 #include "oef-base/comms/IOefTaskFactory.hpp"
@@ -24,9 +28,6 @@
 #include "oef-base/proto_comms/ProtoPathMessageSender.hpp"
 #include "oef-base/utils/Uri.hpp"
 #include "oef-search/comms/OefSearchEndpoint.hpp"
-#include "oef-search/comms/Oefv1Listener.hpp"
-
-#include <memory>
 
 template <template <typename> class EndpointType>
 Oefv1Listener<EndpointType>::Oefv1Listener(std::shared_ptr<Core> const &core,

@@ -16,9 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ml/dataloaders/word2vec_loaders/sgns_w2v_dataloader.hpp"
+
 #include "math/standard_functions/sqrt.hpp"
 #include "math/tensor/tensor.hpp"
-#include "ml/dataloaders/word2vec_loaders/sgns_w2v_dataloader.hpp"
 #include "ml/exceptions/exceptions.hpp"
 
 namespace fetch {

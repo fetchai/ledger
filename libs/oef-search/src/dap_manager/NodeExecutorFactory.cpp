@@ -23,7 +23,6 @@
 #include "oef-search/dap_manager/MementoExecutorTask.hpp"
 #include "oef-search/dap_manager/NodeExecutorFactory.hpp"
 #include "oef-search/dap_manager/WithLateDapExecutorTask.hpp"
-
 #include <unordered_set>
 
 constexpr char const *LOGGING_NAME = "NodeExecutorFactory";

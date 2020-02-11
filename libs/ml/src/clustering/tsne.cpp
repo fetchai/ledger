@@ -16,6 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ml/clustering/tsne.hpp"
+
 #include "core/assert.hpp"
 #include "math/distance/euclidean.hpp"
 #include "math/fundamental_operators.hpp"
@@ -28,7 +30,6 @@
 #include "math/standard_functions/log.hpp"
 #include "math/tensor/tensor.hpp"
 #include "meta/type_traits.hpp"
-#include "ml/clustering/tsne.hpp"
 #include "ml/ops/flatten.hpp"
 
 #include <cmath>

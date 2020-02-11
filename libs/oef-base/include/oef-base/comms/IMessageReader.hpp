@@ -18,7 +18,6 @@
 //------------------------------------------------------------------------------
 
 #include "network/fetch_asio.hpp"
-
 #include <vector>
 
 class IMessageReader

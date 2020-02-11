@@ -17,6 +17,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include <set>
+#include <string>
+#include <vector>
+
 #include "logging/logging.hpp"
 #include "oef-base/comms/Core.hpp"
 #include "oef-base/comms/OefListenerSet.hpp"
@@ -26,11 +30,8 @@
 #include "oef-core/agents/Agents.hpp"
 #include "oef-core/comms/OefListenerStarterTask.hpp"
 #include "oef-core/comms/public_key_utils.hpp"
-#include "oef-messages/config.hpp"
 
-#include <set>
-#include <string>
-#include <vector>
+#include "oef-messages/config.hpp"
 
 class Core;
 class IKarmaPolicy;

@@ -18,9 +18,10 @@
 //------------------------------------------------------------------------------
 
 #include "logging/logging.hpp"
-#include "network/fetch_asio.hpp"
 #include "oef-base/comms/EndpointBase.hpp"
 #include "oef-base/comms/RingBuffer.hpp"
+
+#include "network/fetch_asio.hpp"
 
 #include <memory>
 

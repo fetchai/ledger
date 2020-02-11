@@ -17,9 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "transaction_finder_protocol.hpp"
-#include "transaction_store_sync_protocol.hpp"
-
 #include "core/future_timepoint.hpp"
 #include "core/service_ids.hpp"
 #include "core/state_machine.hpp"
@@ -32,6 +29,8 @@
 #include "network/generics/requesting_queue.hpp"
 #include "storage/resource_mapper.hpp"
 #include "telemetry/telemetry.hpp"
+#include "transaction_finder_protocol.hpp"
+#include "transaction_store_sync_protocol.hpp"
 
 #include <chrono>
 #include <cstddef>

@@ -16,12 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ml/ops/strided_slice.hpp"
 #include "test_types.hpp"
 
-#include "ml/ops/strided_slice.hpp"
-
 #include "gtest/gtest.h"
-
 #include <vector>
 
 namespace {

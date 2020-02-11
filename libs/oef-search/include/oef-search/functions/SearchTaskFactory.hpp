@@ -26,7 +26,6 @@
 #include "oef-messages/search_update.hpp"
 #include "oef-search/comms/OefSearchEndpoint.hpp"
 #include "oef-search/dap_manager/DapManager.hpp"
-
 #include <exception>
 
 class OutboundConversations;

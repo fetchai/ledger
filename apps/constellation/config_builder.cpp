@@ -16,13 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
-#include "config_builder.hpp"
-#include "manifest_builder.hpp"
-#include "settings.hpp"
-
 #include "chain/address.hpp"
+#include "config_builder.hpp"
 #include "core/filesystem/read_file_contents.hpp"
 #include "ledger/chaincode/contract_context.hpp"
+#include "manifest_builder.hpp"
+#include "settings.hpp"
 #include "vectorise/platform.hpp"
 
 using namespace fetch::constellation;

@@ -16,12 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "test_types.hpp"
-
+#include "gtest/gtest.h"
 #include "math/tensor/tensor.hpp"
 #include "math/trigonometry.hpp"
-
-#include "gtest/gtest.h"
+#include "test_types.hpp"
 
 namespace fetch {
 namespace math {

@@ -17,11 +17,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "Node.hpp"
-
-#include "oef-messages/dap_interface.hpp"
-
 #include <memory>
+
+#include "Node.hpp"
+#include "oef-messages/dap_interface.hpp"
 
 class Leaf : public Node
 {

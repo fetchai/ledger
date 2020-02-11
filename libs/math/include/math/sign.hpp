@@ -19,7 +19,6 @@
 
 #include "math/kernels/sign.hpp"
 #include "math/meta/math_type_traits.hpp"
-
 #include <cassert>
 
 namespace fetch {

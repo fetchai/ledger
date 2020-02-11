@@ -16,9 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "fake_block_packer.hpp"
-
 #include "core/macros.hpp"
+#include "fake_block_packer.hpp"
 #include "ledger/chain/block.hpp"
 #include "vectorise/platform.hpp"
 

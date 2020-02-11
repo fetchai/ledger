@@ -22,7 +22,6 @@
 #include "crypto/identity.hpp"
 #include "crypto/prover.hpp"
 #include "crypto/verifier.hpp"
-
 #include <atomic>
 
 namespace fetch {

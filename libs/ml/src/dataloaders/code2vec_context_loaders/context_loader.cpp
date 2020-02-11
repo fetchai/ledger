@@ -16,10 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ml/dataloaders/code2vec_context_loaders/context_loader.hpp"
+
 #include "core/macros.hpp"
 #include "math/base_types.hpp"
 #include "math/tensor/tensor.hpp"
-#include "ml/dataloaders/code2vec_context_loaders/context_loader.hpp"
+
 #include "ml/dataloaders/dataloader.hpp"
 #include "ml/exceptions/exceptions.hpp"
 

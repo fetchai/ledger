@@ -16,17 +16,13 @@
 //
 //------------------------------------------------------------------------------
 
-#include "fake_block_sink.hpp"
-#include "mock_block_packer.hpp"
-#include "mock_execution_manager.hpp"
-#include "mock_storage_unit.hpp"
-
 #include "beacon/beacon_service.hpp"
 #include "bloom_filter/bloom_filter.hpp"
 #include "chain/constants.hpp"
 #include "chain/transaction_layout.hpp"
 #include "core/byte_array/encoders.hpp"
 #include "crypto/ecdsa.hpp"
+#include "fake_block_sink.hpp"
 #include "ledger/chain/block.hpp"
 #include "ledger/chain/block_coordinator.hpp"
 #include "ledger/chain/main_chain.hpp"
@@ -34,6 +30,9 @@
 #include "ledger/consensus/simulated_pow_consensus.hpp"
 #include "ledger/consensus/stake_manager_interface.hpp"
 #include "ledger/testing/block_generator.hpp"
+#include "mock_block_packer.hpp"
+#include "mock_execution_manager.hpp"
+#include "mock_storage_unit.hpp"
 #include "testing/common_testing_functionality.hpp"
 
 #include "gmock/gmock.h"

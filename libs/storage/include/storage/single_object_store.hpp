@@ -18,7 +18,6 @@
 //------------------------------------------------------------------------------
 
 #include "core/serializers/main_serializer.hpp"
-
 #include <fstream>
 
 namespace fetch {

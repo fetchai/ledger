@@ -16,11 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "tx_generation.hpp"
-
 #include "crypto/ecdsa.hpp"
 #include "ledger/storage_unit/transaction_sinks.hpp"
 #include "ledger/transaction_verifier.hpp"
+#include "tx_generation.hpp"
 
 #include "benchmark/benchmark.h"
 

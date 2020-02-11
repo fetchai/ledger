@@ -16,12 +16,14 @@
 //
 //------------------------------------------------------------------------------
 
+#include "oef-core/oef-functions/InitialHandshakeTaskFactory.hpp"
+
+#include "oef-core/oef-functions/OefHeartbeatTask.hpp"
+
 #include "oef-base/monitoring/Counter.hpp"
 #include "oef-base/proto_comms/TSendProtoTask.hpp"
 #include "oef-core/comms/OefAgentEndpoint.hpp"
-#include "oef-core/oef-functions/InitialHandshakeTaskFactory.hpp"
 #include "oef-core/oef-functions/OefFunctionsTaskFactory.hpp"
-#include "oef-core/oef-functions/OefHeartbeatTask.hpp"
 #include "oef-messages/agent.hpp"
 
 void InitialHandshakeTaskFactory::ProcessMessage(ConstCharArrayBuffer &data)

@@ -16,15 +16,14 @@
 //
 //------------------------------------------------------------------------------
 
-#include "transaction_generator.hpp"
-
 #include "chain/transaction.hpp"
 #include "chain/transaction_builder.hpp"
 #include "ledger/storage_unit/transaction_memory_pool.hpp"
-
-#include "gtest/gtest.h"
+#include "transaction_generator.hpp"
 
 #include <vector>
+
+#include "gtest/gtest.h"
 
 namespace {
 

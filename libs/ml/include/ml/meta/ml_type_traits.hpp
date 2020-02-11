@@ -18,7 +18,6 @@
 //------------------------------------------------------------------------------
 
 #include "meta/type_traits.hpp"
-
 #include <type_traits>
 
 namespace fetch {

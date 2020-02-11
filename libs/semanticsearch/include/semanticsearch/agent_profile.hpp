@@ -21,7 +21,6 @@
 #include "semanticsearch/location.hpp"
 
 #include <crypto/identity.hpp>
-
 #include <memory>
 #include <string>
 

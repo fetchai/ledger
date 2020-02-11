@@ -17,15 +17,19 @@
 //
 //------------------------------------------------------------------------------
 
-#include "beacon/beacon_service.hpp"
-#include "beacon/beacon_setup_service.hpp"
-#include "beacon/event_manager.hpp"
+#include "ledger/consensus/consensus_interface.hpp"
+#include "ledger/protocols/notarisation_service.hpp"
+
 #include "chain/address.hpp"
 #include "crypto/identity.hpp"
 #include "ledger/chain/main_chain.hpp"
-#include "ledger/consensus/consensus_interface.hpp"
+
+#include "beacon/beacon_service.hpp"
+#include "beacon/beacon_setup_service.hpp"
+#include "beacon/event_manager.hpp"
+
 #include "ledger/consensus/stake_manager.hpp"
-#include "ledger/protocols/notarisation_service.hpp"
+
 #include "telemetry/telemetry.hpp"
 
 #include <cmath>

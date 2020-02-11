@@ -16,6 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include "oef-core/oef-functions/OefFunctionsTaskFactory.hpp"
+
 #include "logging/logging.hpp"
 #include "oef-base/conversation/OutboundConversations.hpp"
 #include "oef-base/monitoring/Counter.hpp"
@@ -29,8 +31,8 @@
 #include "oef-core/karma/XDisconnect.hpp"
 #include "oef-core/karma/XError.hpp"
 #include "oef-core/karma/XKarma.hpp"
-#include "oef-core/oef-functions/OefFunctionsTaskFactory.hpp"
 #include "oef-core/tasks/AgentToAgentMessageTask.hpp"
+
 #include "oef-messages/agent.hpp"
 #include "oef-messages/search_query.hpp"
 #include "oef-messages/search_remove.hpp"

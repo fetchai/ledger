@@ -16,11 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "test_types.hpp"
-
 #include "math/base_types.hpp"
 #include "math/standard_functions/log.hpp"
 #include "math/trigonometry.hpp"
+#include "test_types.hpp"
 #include "vectorise/math/standard_functions.hpp"
 #include "vectorise/vectorise.hpp"
 

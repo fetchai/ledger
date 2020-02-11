@@ -16,10 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "test_types.hpp"
-
 #include "math/base_types.hpp"
 #include "ml/ops/max_pool_2d.hpp"
+#include "test_types.hpp"
 
 #include "gtest/gtest.h"
 

@@ -17,7 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "beacon/aeon.hpp"
 #include "beacon/beacon_complaints_manager.hpp"
 #include "beacon/notarisation_manager.hpp"
 #include "core/service_ids.hpp"
@@ -26,12 +25,15 @@
 #include "moment/clocks.hpp"
 #include "moment/deadline_timer.hpp"
 #include "muddle/muddle_endpoint.hpp"
-#include "muddle/punishment_broadcast_channel.hpp"
-#include "muddle/rbc.hpp"
 #include "muddle/rpc/client.hpp"
 #include "muddle/subscription.hpp"
 #include "telemetry/gauge.hpp"
 #include "telemetry/telemetry.hpp"
+
+#include "muddle/punishment_broadcast_channel.hpp"
+#include "muddle/rbc.hpp"
+
+#include "beacon/aeon.hpp"
 
 namespace fetch {
 namespace muddle {

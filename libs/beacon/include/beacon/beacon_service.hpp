@@ -17,6 +17,14 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/state_machine.hpp"
+
+#include "entropy/entropy_generator_interface.hpp"
+#include "muddle/muddle_endpoint.hpp"
+#include "muddle/rpc/client.hpp"
+#include "muddle/rpc/server.hpp"
+#include "muddle/subscription.hpp"
+
 #include "beacon/aeon.hpp"
 #include "beacon/beacon_protocol.hpp"
 #include "beacon/beacon_setup_service.hpp"
@@ -24,14 +32,9 @@
 #include "beacon/events.hpp"
 #include "beacon/public_key_message.hpp"
 #include "core/digest.hpp"
-#include "core/state_machine.hpp"
-#include "entropy/entropy_generator_interface.hpp"
-#include "muddle/muddle_endpoint.hpp"
-#include "muddle/rpc/client.hpp"
-#include "muddle/rpc/server.hpp"
-#include "muddle/subscription.hpp"
 #include "storage/object_store.hpp"
 #include "storage/single_object_store.hpp"
+
 #include "telemetry/counter.hpp"
 #include "telemetry/gauge.hpp"
 #include "telemetry/registry.hpp"

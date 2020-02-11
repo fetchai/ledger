@@ -16,11 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "test_types.hpp"
-
 #include "ml/core/graph.hpp"
 #include "ml/layers/fully_connected.hpp"
 #include "ml/ops/placeholder.hpp"
+#include "test_types.hpp"
 
 #include "gtest/gtest.h"
 

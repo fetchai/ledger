@@ -16,6 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include <algorithm>
+#include <cmath>
+#include <fstream>
+
 #include "vm/common.hpp"
 #include "vm/compiler.hpp"
 #include "vm/ir.hpp"
@@ -23,13 +27,9 @@
 #include "vm/opcodes.hpp"
 #include "vm/vm.hpp"
 
-#include "benchmark/benchmark.h"
-
 #include <vm_modules/vm_factory.hpp>
 
-#include <algorithm>
-#include <cmath>
-#include <fstream>
+#include "benchmark/benchmark.h"
 
 using fetch::vm::VM;
 using fetch::vm_modules::VMFactory;

@@ -17,14 +17,14 @@
 //
 //------------------------------------------------------------------------------
 
+#include <atomic>
+#include <map>
+#include <vector>
+
 #include "oef-base/utils/BucketsOf.hpp"
 #include "oef-core/karma/IKarmaPolicy.hpp"
 #include "oef-core/karma/KarmaAccount.hpp"
 #include "oef-messages/fetch_protobuf.hpp"
-
-#include <atomic>
-#include <map>
-#include <vector>
 
 class KarmaPolicyBasic : public IKarmaPolicy
 {

@@ -18,12 +18,13 @@
 
 #include "ml/layers/fully_connected.hpp"
 #include "ml/meta/ml_type_traits.hpp"
-#include "ml/ops/add.hpp"
-#include "ml/ops/flatten.hpp"
-#include "ml/ops/matrix_multiply.hpp"
 #include "ml/ops/placeholder.hpp"
 #include "ml/regularisers/regularisation.hpp"
 #include "ml/regularisers/regulariser.hpp"
+
+#include "ml/ops/add.hpp"
+#include "ml/ops/flatten.hpp"
+#include "ml/ops/matrix_multiply.hpp"
 
 namespace fetch {
 namespace ml {

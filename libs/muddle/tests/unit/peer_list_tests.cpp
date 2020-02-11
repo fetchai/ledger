@@ -16,9 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "peer_list.hpp"
-
 #include "muddle/network_id.hpp"
+#include "peer_list.hpp"
 
 #include "gmock/gmock.h"
 

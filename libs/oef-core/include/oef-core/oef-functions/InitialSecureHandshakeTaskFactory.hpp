@@ -22,6 +22,7 @@
 #include "oef-base/comms/Endianness.hpp"
 #include "oef-base/comms/IOefTaskFactory.hpp"
 #include "oef-core/agents/Agents.hpp"
+
 #include "openssl/ssl.h"
 
 class InitialSecureHandshakeTaskFactory : public IOefTaskFactory<OefAgentEndpoint>

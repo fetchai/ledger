@@ -20,6 +20,7 @@
 #include "math/tensor/tensor.hpp"
 #include "ml/dataloaders/word2vec_loaders/unigram_table.hpp"
 #include "ml/dataloaders/word2vec_loaders/w2v_dataloader.hpp"
+
 #include "ml/exceptions/exceptions.hpp"
 
 namespace fetch {

@@ -23,6 +23,7 @@
 #include "oef-core/oef-functions/InitialSslHandshakeTaskFactory.hpp"
 #include "oef-core/oef-functions/OefFunctionsTaskFactory.hpp"
 #include "oef-core/oef-functions/OefHeartbeatTask.hpp"
+
 #include "oef-messages/agent.hpp"
 
 #include <fstream>

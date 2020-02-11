@@ -17,6 +17,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include <set>
+#include <string>
+#include <vector>
+
 #include "logging/logging.hpp"
 #include "oef-base/comms/Core.hpp"
 #include "oef-base/comms/IOefTaskFactory.hpp"
@@ -24,16 +28,13 @@
 #include "oef-base/conversation/OutboundConversations.hpp"
 #include "oef-base/threading/Taskpool.hpp"
 #include "oef-base/threading/Threadpool.hpp"
+
 #include "oef-messages/search_config.hpp"
 #include "oef-search/comms/IAddSearchPeer.hpp"
 #include "oef-search/dap_manager/DapManager.hpp"
 #include "oef-search/dap_manager/DapStore.hpp"
 #include "oef-search/functions/SearchTaskFactory.hpp"
 #include "oef-search/search_comms/SearchPeerStore.hpp"
-
-#include <set>
-#include <string>
-#include <vector>
 
 class Core;
 class OefSearchEndpoint;

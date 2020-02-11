@@ -16,11 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "test_types.hpp"
-
-#include "math/metrics/mean_square_error.hpp"
-
 #include "gtest/gtest.h"
+#include "math/metrics/mean_square_error.hpp"
+#include "test_types.hpp"
 
 namespace fetch {
 namespace math {

@@ -17,11 +17,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "oef-base/threading/ExitState.hpp"
-
 #include <atomic>
 #include <chrono>
 #include <memory>
+
+#include "oef-base/threading/ExitState.hpp"
 
 namespace fetch {
 namespace oef {

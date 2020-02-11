@@ -18,6 +18,9 @@
 
 #include "MtSearch.hpp"
 
+#include <fstream>
+#include <iostream>
+
 #include "oef-base/comms/Core.hpp"
 #include "oef-base/comms/Endpoint.hpp"
 #include "oef-base/comms/IOefListener.hpp"
@@ -26,18 +29,16 @@
 #include "oef-base/monitoring/Monitoring.hpp"
 #include "oef-base/threading/MonitoringTask.hpp"
 #include "oef-base/utils/Uri.hpp"
+
 #include "oef-search/comms/OefListenerStarterTask.hpp"
 #include "oef-search/comms/OefSearchEndpoint.hpp"
 #include "oef-search/dap_comms/OutboundDapConversationCreator.hpp"
 #include "oef-search/functions/DirectorTaskFactory.hpp"
 #include "oef-search/search_comms/OutboundSearchConversationCreator.hpp"
+#include <google/protobuf/util/json_util.h>
 
 #include <ctype.h>
-#include <google/protobuf/util/json_util.h>
 #include <stdio.h>
-
-#include <fstream>
-#include <iostream>
 
 using namespace std::placeholders;
 

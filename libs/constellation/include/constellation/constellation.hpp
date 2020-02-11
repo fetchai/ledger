@@ -17,8 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "open_api_http_module.hpp"
-
 #include "core/feature_flags.hpp"
 #include "core/reactor.hpp"
 #include "entropy/entropy_generator_interface.hpp"
@@ -45,6 +43,7 @@
 #include "messenger/messenger_http_interface.hpp"
 #include "muddle/muddle_interface.hpp"
 #include "network/p2pservice/p2ptrust_bayrank.hpp"
+#include "open_api_http_module.hpp"
 #include "shards/manifest.hpp"
 #include "shards/shard_management_service.hpp"
 #include "telemetry/telemetry.hpp"

@@ -17,11 +17,9 @@
 //------------------------------------------------------------------------------
 
 #include "bootstrap_monitor.hpp"
+#include "chain/address.hpp"
 #include "config_builder.hpp"
 #include "constants.hpp"
-#include "settings.hpp"
-
-#include "chain/address.hpp"
 #include "constellation/constellation.hpp"
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/const_byte_array.hpp"
@@ -40,6 +38,7 @@
 #include "network/adapters.hpp"
 #include "network/peer.hpp"
 #include "network/uri.hpp"
+#include "settings.hpp"
 #include "shards/manifest.hpp"
 #include "version/cli_header.hpp"
 #include "version/fetch_version.hpp"

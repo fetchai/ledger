@@ -17,7 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/clustering/knn.hpp"
 #include "math/matrix_operations.hpp"
 #include "ml/exceptions/exceptions.hpp"
 

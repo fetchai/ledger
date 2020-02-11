@@ -18,7 +18,6 @@
 
 #include "core/assert.hpp"
 #include "ml/ops/mask_fill.hpp"
-
 #include <cassert>
 
 namespace fetch {

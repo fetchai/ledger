@@ -16,9 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "test_types.hpp"
-
 #include "ml/ops/layer_norm.hpp"
+#include "test_types.hpp"
 
 #include "gtest/gtest.h"
 

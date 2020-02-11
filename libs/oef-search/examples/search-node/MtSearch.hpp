@@ -27,6 +27,7 @@
 #include "oef-base/conversation/OutboundConversations.hpp"
 #include "oef-base/threading/Taskpool.hpp"
 #include "oef-base/threading/Threadpool.hpp"
+
 #include "oef-messages/search_config.hpp"
 #include "oef-search/comms/SearchTaskFactory.hpp"
 

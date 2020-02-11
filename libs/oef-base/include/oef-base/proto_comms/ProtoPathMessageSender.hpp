@@ -17,18 +17,20 @@
 //
 //------------------------------------------------------------------------------
 
+#include <string>
+#include <utility>
+#include <vector>
+
 #include "logging/logging.hpp"
 #include "oef-base/comms/CharArrayBuffer.hpp"
 #include "oef-base/comms/Endianness.hpp"
-#include "oef-base/comms/EndpointBase.hpp"
 #include "oef-base/comms/IMessageWriter.hpp"
 #include "oef-base/threading/Notification.hpp"
 #include "oef-base/threading/Waitable.hpp"
 
+#include "oef-base/comms/EndpointBase.hpp"
+
 #include <list>
-#include <string>
-#include <utility>
-#include <vector>
 
 namespace google {
 namespace protobuf {

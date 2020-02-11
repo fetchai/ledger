@@ -19,16 +19,16 @@
 
 #include "vectorise/arch/avx2/register_int32.hpp"
 
-#include <emmintrin.h>
-#include <immintrin.h>
-#include <smmintrin.h>
-
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
 #include <iomanip>
 #include <limits>
 #include <ostream>
+
+#include <emmintrin.h>
+#include <immintrin.h>
+#include <smmintrin.h>
 
 namespace fetch {
 namespace vectorise {

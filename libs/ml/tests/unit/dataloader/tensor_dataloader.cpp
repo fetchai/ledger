@@ -16,11 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "test_types.hpp"
+#include "ml/dataloaders/tensor_dataloader.hpp"
 
 #include "core/serializers/main_serializer.hpp"
 #include "math/base_types.hpp"
-#include "ml/dataloaders/tensor_dataloader.hpp"
+#include "test_types.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 
 #include "gtest/gtest.h"

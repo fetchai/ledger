@@ -17,15 +17,18 @@
 //
 //------------------------------------------------------------------------------
 
-#include "logging/logging.hpp"
-#include "network/fetch_asio.hpp"
-#include "oef-base/comms/Core.hpp"
 #include "oef-base/comms/EndpointBase.hpp"
-#include "oef-base/comms/IMessageReader.hpp"
-#include "oef-base/comms/IMessageWriter.hpp"
 #include "oef-base/comms/ISocketOwner.hpp"
 #include "oef-base/comms/RingBuffer.hpp"
+
+#include "logging/logging.hpp"
+#include "oef-base/comms/Core.hpp"
+#include "oef-base/comms/IMessageReader.hpp"
+#include "oef-base/comms/IMessageWriter.hpp"
 #include "oef-core/comms/public_key_utils.hpp"
+
+#include "network/fetch_asio.hpp"
+
 #include "openssl/evp.h"
 
 template <typename TXType>

@@ -17,12 +17,12 @@
 //
 //------------------------------------------------------------------------------
 
+#include <utility>
+
 #include "logging/logging.hpp"
 #include "oef-base/comms/Endianness.hpp"
 #include "oef-base/comms/IOefTaskFactory.hpp"
 #include "oef-core/agents/Agents.hpp"
-
-#include <utility>
 
 class InitialHandshakeTaskFactory : public IOefTaskFactory<OefAgentEndpoint>
 {

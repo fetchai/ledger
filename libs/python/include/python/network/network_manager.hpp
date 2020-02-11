@@ -17,9 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "fetch_pybind.hpp"
-
 #include "network/network_manager.hpp"
+
+#include "fetch_pybind.hpp"
 
 namespace fetch {
 namespace network {

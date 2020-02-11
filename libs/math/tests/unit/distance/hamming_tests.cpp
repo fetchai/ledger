@@ -16,12 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "test_types.hpp"
-
 #include "core/random/lcg.hpp"
-#include "math/distance/hamming.hpp"
-
 #include "gtest/gtest.h"
+#include "math/distance/hamming.hpp"
+#include "test_types.hpp"
 
 namespace fetch {
 namespace math {

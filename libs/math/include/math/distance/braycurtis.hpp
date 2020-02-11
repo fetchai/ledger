@@ -20,7 +20,6 @@
 #include "core/assert.hpp"
 #include "math/fundamental_operators.hpp"
 #include "math/matrix_operations.hpp"
-
 #include <cmath>
 
 namespace fetch {

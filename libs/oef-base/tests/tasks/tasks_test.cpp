@@ -16,11 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
+#include "gtest/gtest.h"
+
 #include "oef-base/threading/Task.hpp"
 #include "oef-base/threading/Taskpool.hpp"
 #include "oef-base/threading/Threadpool.hpp"
-
-#include "gtest/gtest.h"
 
 class TasksTests : public testing::Test
 {

@@ -16,13 +16,16 @@
 //
 //------------------------------------------------------------------------------
 
+#include "oef-search/dap_comms/OutboundDapConversationCreator.hpp"
+
 #include "logging/logging.hpp"
-#include "oef-base/conversation/OutboundConversationWorkerTask.hpp"
 #include "oef-base/proto_comms/ProtoMessageEndpoint.hpp"
 #include "oef-base/threading/StateMachineTask.hpp"
 #include "oef-base/utils/Uri.hpp"
 #include "oef-messages/dap_interface.hpp"
-#include "oef-search/dap_comms/OutboundDapConversationCreator.hpp"
+
+#include "oef-base/conversation/OutboundConversationWorkerTask.hpp"
+#include "oef-base/utils/Uri.hpp"
 
 #include <google/protobuf/message.h>
 

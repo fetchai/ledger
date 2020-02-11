@@ -16,8 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/byte_array/const_byte_array.hpp"
 #include "crypto/fetch_identity.hpp"
+
+#include "core/byte_array/const_byte_array.hpp"
 #include "crypto/fnv.hpp"
 
 #include <unordered_set>

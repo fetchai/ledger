@@ -16,8 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "oef-base/conversation/IOutboundConversationCreator.hpp"
 #include "oef-base/conversation/OutboundConversations.hpp"
+
+#include "oef-base/conversation/IOutboundConversationCreator.hpp"
 #include "oef-base/proto_comms/ProtoMessageSender.hpp"
 #include "oef-base/utils/Uri.hpp"
 

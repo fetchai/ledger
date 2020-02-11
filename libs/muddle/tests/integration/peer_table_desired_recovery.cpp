@@ -16,13 +16,13 @@
 //
 //------------------------------------------------------------------------------
 
-#include "muddle.hpp"
-#include "network_helpers.hpp"
-#include "router.hpp"
-
 #include "kademlia/table.hpp"
+#include "muddle.hpp"
 #include "muddle/muddle_endpoint.hpp"
 #include "muddle/muddle_interface.hpp"
+
+#include "network_helpers.hpp"
+#include "router.hpp"
 
 #include "gtest/gtest.h"
 

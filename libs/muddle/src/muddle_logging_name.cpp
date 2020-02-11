@@ -16,9 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "muddle_logging_name.hpp"
-
 #include "muddle/network_id.hpp"
+#include "muddle_logging_name.hpp"
 
 #include <sstream>
 

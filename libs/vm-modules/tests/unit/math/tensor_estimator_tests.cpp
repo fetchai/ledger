@@ -16,13 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vm_test_toolkit.hpp"
-
+#include "gmock/gmock.h"
 #include "vm/array.hpp"
 #include "vm_modules/math/tensor/tensor.hpp"
 #include "vm_modules/math/tensor/tensor_estimator.hpp"
-
-#include "gmock/gmock.h"
+#include "vm_test_toolkit.hpp"
 
 namespace {
 

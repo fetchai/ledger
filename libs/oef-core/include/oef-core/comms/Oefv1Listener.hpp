@@ -17,12 +17,12 @@
 //
 //------------------------------------------------------------------------------
 
-#include "oef-base/comms/IOefListener.hpp"
-#include "oef-base/comms/Listener.hpp"
-
 #include <iostream>
 #include <memory>
 #include <unordered_map>
+
+#include "oef-base/comms/IOefListener.hpp"
+#include "oef-base/comms/Listener.hpp"
 
 class Core;
 class OefAgentEndpoint;

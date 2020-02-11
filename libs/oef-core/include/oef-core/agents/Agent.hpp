@@ -17,11 +17,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "oef-base/threading/Notification.hpp"
-
 #include <memory>
 #include <string>
 #include <utility>
+
+#include "oef-base/threading/Notification.hpp"
 
 namespace google {
 namespace protobuf {

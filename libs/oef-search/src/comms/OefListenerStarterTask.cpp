@@ -16,13 +16,13 @@
 //
 //------------------------------------------------------------------------------
 
+#include <iostream>
+
 #include "oef-base/comms/Endpoint.hpp"
 #include "oef-base/comms/OefListenerSet.hpp"
 #include "oef-base/threading/ExitState.hpp"
 #include "oef-search/comms/OefListenerStarterTask.hpp"
 #include "oef-search/comms/Oefv1Listener.hpp"
-
-#include <iostream>
 
 template <template <typename> class EndpointType>
 fetch::oef::base::ExitState OefListenerStarterTask<EndpointType>::run()

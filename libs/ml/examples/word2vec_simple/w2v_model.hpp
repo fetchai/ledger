@@ -17,7 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/approx_exp.hpp"
 #include "ml/dataloaders/word2vec_loaders/w2v_dataloader.hpp"
 
 #include <chrono>

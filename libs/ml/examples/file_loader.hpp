@@ -19,9 +19,8 @@
 
 #include "core/string/ends_with.hpp"
 
-#include <dirent.h>
-
 #include <cstring>
+#include <dirent.h>
 #include <fstream>
 #include <sstream>
 #include <vector>

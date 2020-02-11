@@ -16,11 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
-#include "oef-core/comms/OefAgentEndpoint.hpp"
 #include "oef-core/tasks/OefLoginTimeoutTask.hpp"
 
 #include <iostream>
 #include <string>
+
+#include "oef-core/comms/OefAgentEndpoint.hpp"
 
 fetch::oef::base::ExitState OefLoginTimeoutTask::run()
 {

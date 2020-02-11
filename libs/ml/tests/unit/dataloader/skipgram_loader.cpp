@@ -16,10 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "test_types.hpp"
-
 #include "math/matrix_operations.hpp"
 #include "ml/dataloaders/word2vec_loaders/sgns_w2v_dataloader.hpp"
+#include "test_types.hpp"
 
 #include "gtest/gtest.h"
 

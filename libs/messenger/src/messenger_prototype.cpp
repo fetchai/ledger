@@ -16,8 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "logging/logging.hpp"
 #include "messenger/messenger_prototype.hpp"
+
+#include "logging/logging.hpp"
 
 #include <cassert>
 
