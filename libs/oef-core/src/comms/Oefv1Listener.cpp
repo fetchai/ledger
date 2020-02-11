@@ -16,14 +16,13 @@
 //
 //------------------------------------------------------------------------------
 
-#include "oef-core/comms/Oefv1Listener.hpp"
-
-#include <memory>
-
 #include "oef-base/comms/Core.hpp"
 #include "oef-base/comms/EndpointWebSocket.hpp"
 #include "oef-core/comms/EndpointSSL.hpp"
 #include "oef-core/comms/OefAgentEndpoint.hpp"
+#include "oef-core/comms/Oefv1Listener.hpp"
+
+#include <memory>
 
 template <template <typename> class EndpointType>
 Oefv1Listener<EndpointType>::Oefv1Listener(std::shared_ptr<Core> const &core, unsigned short port,
