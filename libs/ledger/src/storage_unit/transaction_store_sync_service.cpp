@@ -96,15 +96,17 @@ TransactionStoreSyncService::TransactionStoreSyncService(Config const &cfg, Mudd
   , current_tss_peers_{telemetry::Registry::Instance().CreateGauge<uint64_t>(
         "current_tss_peers", "The number of peers the sync can use")}
 {
+  // clang-format off
   static const std::unordered_map<State, State(TransactionStoreSyncService::*)> state_handlers{
-      {State::INITIAL, &TransactionStoreSyncService::OnInitial},
-      {State::QUERY_OBJECT_COUNTS, &TransactionStoreSyncService::OnQueryObjectCounts},
+      {State::INITIAL,                 &TransactionStoreSyncService::OnInitial},
+      {State::QUERY_OBJECT_COUNTS,     &TransactionStoreSyncService::OnQueryObjectCounts},
       {State::RESOLVING_OBJECT_COUNTS, &TransactionStoreSyncService::OnResolvingObjectCounts},
-      {State::QUERY_SUBTREE, &TransactionStoreSyncService::OnQuerySubtree},
-      {State::RESOLVING_SUBTREE, &TransactionStoreSyncService::OnResolvingSubtree},
-      {State::QUERY_OBJECTS, &TransactionStoreSyncService::OnQueryObjects},
-      {State::RESOLVING_OBJECTS, &TransactionStoreSyncService::OnResolvingObjects},
-      {State::TRIM_CACHE, &TransactionStoreSyncService::OnTrimCache}};
+      {State::QUERY_SUBTREE,           &TransactionStoreSyncService::OnQuerySubtree},
+      {State::RESOLVING_SUBTREE,       &TransactionStoreSyncService::OnResolvingSubtree},
+      {State::QUERY_OBJECTS,           &TransactionStoreSyncService::OnQueryObjects},
+      {State::RESOLVING_OBJECTS,       &TransactionStoreSyncService::OnResolvingObjects},
+      {State::TRIM_CACHE,              &TransactionStoreSyncService::OnTrimCache}};
+  // clang-format on
 
   for (auto const &reaction : state_handlers)
   {
@@ -291,6 +293,8 @@ TransactionStoreSyncService::State TransactionStoreSyncService::OnResolvingSubtr
 
     for (auto &tx : result.promised)
     {
+      // this transaction is not recent
+      tx.SetFromSync();
       // add the transaction to the verifier
       verifier_.AddTransaction(std::make_shared<chain::Transaction>(tx));
 
@@ -474,7 +478,8 @@ void TransactionStoreSyncService::OnTransaction(TransactionPtr const &tx)
     FETCH_LOG_DEBUG(LOGGING_NAME, "Verified Sync TX: ", tx->digest().ToBase64(), " (",
                     tx->contract_address().display(), ')');
 
-    store_.Add(*tx, true);
+    // This transaction is recent unless it was received at subtree sync.
+    store_.Add(*tx, !tx->IsFromSync());
     stored_transactions_->increment();
   }
 }
