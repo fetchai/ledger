@@ -97,7 +97,7 @@ TransactionStoreSyncService::TransactionStoreSyncService(Config const &cfg, Mudd
         "current_tss_peers", "The number of peers the sync can use")}
 {
   // clang-format off
-  static const std::initializer_list<State, State(TransactionStoreSyncService::*)> state_handlers{{
+  static const std::unordered_map<State, State(TransactionStoreSyncService::*)> state_handlers{{
       {State::INITIAL,                 &TransactionStoreSyncService::OnInitial},
       {State::QUERY_OBJECT_COUNTS,     &TransactionStoreSyncService::OnQueryObjectCounts},
       {State::RESOLVING_OBJECT_COUNTS, &TransactionStoreSyncService::OnResolvingObjectCounts},
