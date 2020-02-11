@@ -78,8 +78,7 @@ def find_excluded_dirs():
                               for name in (
                                   ('vendor'),
                                   ('libs', 'oef-base'),
-                                  ('libs', 'oef-core'),
-                                  ('libs', 'oef-messages'))]
+                                  ('libs', 'oef-core'))]
 
     for root, dirs, files in os.walk(PROJECT_ROOT):
         if is_cmake_build_tree_root(root) or \
