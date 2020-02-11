@@ -77,8 +77,7 @@ def find_excluded_dirs():
     exclusions = (
         ('vendor'),
         ('libs', 'oef-base', 'include', 'oef-base', 'comms'),
-        ('libs', 'oef-base', 'include', 'oef-base', 'conversation'),
-        ('libs', 'oef-base', 'include', 'oef-base', 'monitoring'))
+        ('libs', 'oef-base', 'include', 'oef-base', 'conversation'))
     directories_to_exclude = [abspath(join(PROJECT_ROOT, *path))
                               for path in exclusions]
 
