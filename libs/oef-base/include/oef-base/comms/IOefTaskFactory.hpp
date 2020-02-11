@@ -17,13 +17,14 @@
 //
 //------------------------------------------------------------------------------
 
-#include "network/fetch_asio.hpp"
-#include "oef-base/comms/ConstCharArrayBuffer.hpp"
-#include "oef-base/utils/Uri.hpp"
-
 #include <memory>
 #include <utility>
 #include <vector>
+
+#include "network/fetch_asio.hpp"
+
+#include "oef-base/comms/ConstCharArrayBuffer.hpp"
+#include "oef-base/utils/Uri.hpp"
 
 class OutboundConversations;
 

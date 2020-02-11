@@ -17,16 +17,20 @@
 //
 //------------------------------------------------------------------------------
 
-#include "logging/logging.hpp"
+#include "oef-base/threading/TNonBlockingWorkerTask.hpp"
+
 #include "oef-base/comms/ConstCharArrayBuffer.hpp"
 #include "oef-base/comms/Endpoint.hpp"
-#include "oef-base/conversation/IOutboundConversationCreator.hpp"
-#include "oef-base/conversation/OutboundConversation.hpp"
-#include "oef-base/conversation/OutboundTypedConversation.hpp"
+
 #include "oef-base/proto_comms/ProtoMessageEndpoint.hpp"
 #include "oef-base/proto_comms/ProtoPathMessageReader.hpp"
 #include "oef-base/proto_comms/ProtoPathMessageSender.hpp"
-#include "oef-base/threading/TNonBlockingWorkerTask.hpp"
+
+#include "oef-base/conversation/IOutboundConversationCreator.hpp"
+#include "oef-base/conversation/OutboundConversation.hpp"
+#include "oef-base/conversation/OutboundTypedConversation.hpp"
+
+#include "logging/logging.hpp"
 #include "oef-base/utils/Uri.hpp"
 
 #define TNONBLOCKINGWORKERTASK_SIZE 5
