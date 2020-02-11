@@ -215,14 +215,14 @@ private:
                                             math::SizeType const &             stride_size,
                                             fetch::ml::details::ActivationType activation);
 
-  inline void AssertLayerTypeMatches(SupportedLayerType                layer,
-                                     std::vector<SupportedLayerType> &&valids) const;
+  void AssertLayerTypeMatches(SupportedLayerType                layer,
+                              std::vector<SupportedLayerType> &&valids) const;
 
   template <typename T>
-  inline T ParseName(std::string const &name, std::map<std::string, T> const &dict,
-                     std::string const &errmsg) const;
+  T ParseName(std::string const &name, std::map<std::string, T> const &dict,
+              std::string const &errmsg) const;
 
-  inline SequentialModelPtr GetMeAsSequentialIfPossible();
+  SequentialModelPtr GetMeAsSequentialIfPossible();
 };
 
 /**
@@ -233,8 +233,8 @@ private:
  * @param errmsg preferred display name of expected type, that was not parsed
  */
 template <typename T>
-inline T VMModel::ParseName(std::string const &name, std::map<std::string, T> const &dict,
-                            std::string const &errmsg) const
+T VMModel::ParseName(std::string const &name, std::map<std::string, T> const &dict,
+                     std::string const &errmsg) const
 {
   if (dict.find(name) == dict.end())
   {

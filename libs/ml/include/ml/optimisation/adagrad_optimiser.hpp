@@ -51,7 +51,7 @@ public:
 
   ~AdaGradOptimiser() override = default;
 
-  inline OptimiserType OptimiserCode() override
+  OptimiserType OptimiserCode() override
   {
     return OptimiserType::ADAGRAD;
   }

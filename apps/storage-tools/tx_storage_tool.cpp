@@ -31,10 +31,10 @@ using namespace std::chrono_literals;
 
 constexpr char const *LOGGING_NAME = "TxStorageTool";
 
-using fetch::muddle::MuddleInterface;
-using fetch::muddle::CreateMuddle;
 using fetch::chain::Transaction;
 using fetch::chain::TransactionSerializer;
+using fetch::muddle::CreateMuddle;
+using fetch::muddle::MuddleInterface;
 
 using InitialPeers = MuddleInterface::Peers;
 

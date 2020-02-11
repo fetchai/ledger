@@ -25,6 +25,7 @@
 using namespace fetch::storage;
 
 namespace {
+
 class TestClass
 {
 public:
@@ -37,6 +38,7 @@ public:
     return value1 == rhs.value1 && value2 == rhs.value2 && name == rhs.name;
   }
 };
+
 }  // namespace
 
 // Need to define a serializer for the single object store to use
@@ -74,6 +76,8 @@ public:
 
 }  // namespace serializers
 }  // namespace fetch
+
+namespace {
 
 TEST(single_object_store, load_and_expect_false)
 {
@@ -156,3 +160,5 @@ TEST(single_object_store, load_and_write_to_variable_sizes)
     EXPECT_EQ(ref, ref2);
   }
 }
+
+}  // namespace

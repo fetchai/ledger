@@ -99,6 +99,18 @@ void SkipGram<TensorType>::SetOpSaveableParams(SPType const &sp)
   vocab_size_ = sp.vocab_size;
 }
 
+template <class TensorType>
+OperationsCount SkipGram<TensorType>::ChargeForward() const
+{
+  return Graph<TensorType>::ChargeForward(this->output_node_name_);
+}
+
+template <class TensorType>
+OperationsCount SkipGram<TensorType>::ChargeBackward() const
+{
+  return Graph<TensorType>::ChargeBackward(this->output_node_name_);
+}
+
 template class SkipGram<math::Tensor<int8_t>>;
 template class SkipGram<math::Tensor<int16_t>>;
 template class SkipGram<math::Tensor<int32_t>>;

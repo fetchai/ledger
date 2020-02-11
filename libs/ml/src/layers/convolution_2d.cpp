@@ -136,6 +136,12 @@ OperationsCount Convolution2D<TensorType>::ChargeForward() const
   return Graph<TensorType>::ChargeForward(this->output_node_name_);
 }
 
+template <class TensorType>
+OperationsCount Convolution2D<TensorType>::ChargeBackward() const
+{
+  return Graph<TensorType>::ChargeBackward(this->output_node_name_);
+}
+
 ///////////////////////////////
 /// EXPLICIT INSTANTIATIONS ///
 ///////////////////////////////

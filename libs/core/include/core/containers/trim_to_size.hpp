@@ -17,16 +17,26 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/protocols/main_chain_rpc_client_interface.hpp"
-#include "muddle/create_muddle_fake.hpp"
+#include <cstddef>
+#include <cstdint>
+#include <iterator>
 
-#include "gmock/gmock.h"
+namespace fetch {
+namespace core {
 
-class MockMainChainRpcClient : public fetch::ledger::MainChainRpcClientInterface
+template <typename T>
+void TrimToSize(T &container, uint64_t max_allowed)
 {
-public:
-  using Digest = fetch::Digest;
+  if (container.size() > max_allowed)
+  {
+    auto const num_to_remove = container.size() - max_allowed;
 
-  MOCK_METHOD4(GetCommonSubChain, BlocksPromise(MuddleAddress, Digest, Digest, uint64_t));
-  MOCK_METHOD2(TimeTravel, TraveloguePromise(MuddleAddress, Digest));
-};
+    auto end = container.begin();
+    std::advance(end, static_cast<std::ptrdiff_t>(num_to_remove));
+
+    container.erase(container.begin(), end);
+  }
+}
+
+}  // namespace core
+}  // namespace fetch
