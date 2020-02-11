@@ -93,11 +93,15 @@ template <typename T, SizeType L, SizeType H, SizeType W>
 void BM_LeakyRelu(benchmark::State &state)
 {
   Tensor<T> input({L, H, W});
+  Tensor<T> alpha({L, H, 1});
   Tensor<T> output({L, H, W});
+
+  input.FillUniformRandom();
+  alpha.FillUniformRandom();
 
   for (auto _ : state)
   {
-    LeakyRelu<Tensor<T>>(input, output);
+    LeakyRelu<Tensor<T>>(input, T{1}, output);
   }
 }
 

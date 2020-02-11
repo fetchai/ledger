@@ -63,22 +63,25 @@ template <typename ArrayType>
 meta::IfIsMathArray<ArrayType, void> Exp(ArrayType const &array, ArrayType &ret)
 {
   assert(ret.shape() == array.shape());
-  if (array.size() >= array.data().padded_size())
+
+  // TODO(ML-523); re-enable vectorisation only after replacing exp implementation
+  // with one that does not require expensive divisions
+  //  if (array.size() >= array.data().padded_size())
+  //  {
+  //    ret.data().in_parallel().Apply([](auto const &a, auto &c) { c = fetch::vectorise::Exp(a); },
+  //                                   array.data());
+  //  }
+  //  else
+  //  {
+  auto it1 = array.cbegin();
+  auto rit = ret.begin();
+  while (it1.is_valid())
   {
-    ret.data().in_parallel().Apply([](auto const &a, auto &c) { c = fetch::vectorise::Exp(a); },
-                                   array.data());
+    Exp(*it1, *rit);
+    ++it1;
+    ++rit;
   }
-  else
-  {
-    auto it1 = array.cbegin();
-    auto rit = ret.begin();
-    while (it1.is_valid())
-    {
-      Exp(*it1, *rit);
-      ++it1;
-      ++rit;
-    }
-  }
+  //  }
 }
 
 template <typename ArrayType>
