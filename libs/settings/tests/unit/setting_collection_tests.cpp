@@ -30,10 +30,10 @@
 
 namespace {
 
-using testing::StrEq;
-using testing::Return;
 using fetch::settings::Setting;
 using fetch::settings::SettingCollection;
+using testing::Return;
+using testing::StrEq;
 
 class SystemArgAdapter
 {

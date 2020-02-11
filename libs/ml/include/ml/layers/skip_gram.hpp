@@ -72,11 +72,11 @@ public:
 
   static constexpr char const *DESCRIPTOR = "SkipGram";
 
-  inline OpType OperationType() const override
+  OpType OperationType() const override
   {
     return this->OpCode();
   }
-  inline char const *Descriptor() const override
+  char const *Descriptor() const override
   {
     return DESCRIPTOR;
   }
@@ -91,6 +91,9 @@ private:
   {
     fetch::ml::ops::Weights<TensorType>::Initialise(weights, dim_1_size, dim_2_size, init_mode);
   }
+
+  OperationsCount ChargeForward() const override;
+  OperationsCount ChargeBackward() const override;
 };
 
 }  // namespace layers

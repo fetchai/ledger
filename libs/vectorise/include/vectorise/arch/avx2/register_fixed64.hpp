@@ -779,7 +779,7 @@ inline VectorRegister<fixed_point::fp64_t, 128> vector_zero_above_element(
 }
 
 template <int32_t elements>
-inline VectorRegister<fixed_point::fp64_t, 128> rotate_elements_left(
+VectorRegister<fixed_point::fp64_t, 128> rotate_elements_left(
     VectorRegister<fixed_point::fp64_t, 128> const &x)
 {
   VectorRegister<int64_t, 128> ret =
@@ -788,7 +788,7 @@ inline VectorRegister<fixed_point::fp64_t, 128> rotate_elements_left(
 }
 
 template <int32_t elements>
-inline VectorRegister<fixed_point::fp64_t, 256> rotate_elements_left(
+VectorRegister<fixed_point::fp64_t, 256> rotate_elements_left(
     VectorRegister<fixed_point::fp64_t, 256> const &x)
 {
   VectorRegister<int64_t, 256> ret =

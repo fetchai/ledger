@@ -21,6 +21,8 @@
 
 #include "gtest/gtest.h"
 
+namespace {
+
 using namespace fetch::storage;
 
 class TestClass
@@ -307,3 +309,5 @@ TEST(variant_stack, file_writing_and_recovery)
     }
   }
 }
+
+}  // namespace

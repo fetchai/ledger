@@ -24,9 +24,9 @@
 namespace {
 
 using fetch::byte_array::FromHex;
-using fetch::serializers::MsgPackSerializer;
-using fetch::chain::detail::EncodeInteger;
 using fetch::chain::detail::DecodeInteger;
+using fetch::chain::detail::EncodeInteger;
+using fetch::serializers::MsgPackSerializer;
 
 MsgPackSerializer CreateEncodedBuffer(char const *hex)
 {

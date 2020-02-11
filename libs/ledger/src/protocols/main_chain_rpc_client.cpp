@@ -34,14 +34,6 @@ MainChainRpcClient::MainChainRpcClient(MuddleEndpoint &endpoint)
   : rpc_client_{"R:MChain", endpoint, SERVICE_MAIN_CHAIN, CHANNEL_RPC}
 {}
 
-BlocksPromise MainChainRpcClient::GetHeaviestChain(MuddleAddress peer, uint64_t max_size)
-{
-  auto promise = rpc_client_.CallSpecificAddress(peer, RPC_MAIN_CHAIN,
-                                                 MainChainProtocol::HEAVIEST_CHAIN, max_size);
-
-  return BlocksPromise{promise};
-}
-
 BlocksPromise MainChainRpcClient::GetCommonSubChain(MuddleAddress peer, Digest start,
                                                     Digest last_seen, uint64_t limit)
 {

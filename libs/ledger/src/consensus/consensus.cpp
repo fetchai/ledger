@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "beacon/block_entropy.hpp"
+#include "core/containers/trim_to_size.hpp"
 #include "core/mutex.hpp"
 #include "core/random/lcg.hpp"
 #include "ledger/chain/block.hpp"
@@ -27,6 +28,7 @@
 #include <random>
 #include <utility>
 
+using fetch::core::TrimToSize;
 using fetch::generics::MilliTimer;
 
 /**

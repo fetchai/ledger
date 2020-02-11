@@ -71,14 +71,14 @@ public:
 
 namespace {
 
-using fetch::muddle::Packet;
-using fetch::crypto::ECDSASigner;
-using fetch::muddle::NetworkId;
 using fetch::byte_array::ByteArray;
 using fetch::byte_array::ConstByteArray;
+using fetch::byte_array::FromHex;
+using fetch::crypto::ECDSASigner;
+using fetch::muddle::NetworkId;
+using fetch::muddle::Packet;
 using fetch::network::TCPClientImplementation;
 using fetch::serializers::MsgPackSerializer;
-using fetch::byte_array::FromHex;
 
 using Socket    = asio::ip::tcp::socket;
 using Resolver  = asio::ip::tcp::resolver;

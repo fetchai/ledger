@@ -28,8 +28,8 @@
 
 namespace {
 
-using fetch::ledger::StateSentinelAdapter;
 using fetch::BitVector;
+using fetch::ledger::StateSentinelAdapter;
 
 void StateSentinelAdapter_BasicBenchmark(benchmark::State &state)
 {

@@ -27,8 +27,8 @@ namespace memory {
 
 namespace {
 
-using ::testing::StrictMock;
 using ::testing::Return;
+using ::testing::StrictMock;
 
 struct TestType
 {
