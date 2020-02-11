@@ -34,9 +34,15 @@ Flatten<TensorType>::Flatten(SPType const &sp)
 template <typename TensorType>
 std::shared_ptr<OpsSaveableParams> Flatten<TensorType>::GetOpSaveableParams()
 {
-  auto ret         = std::make_shared<SPType>();
-  ret->input_shape = input_shape_;
-  return ret;
+  auto sp         = std::make_shared<SPType>();
+  sp->input_shape = input_shape_;
+
+  // Add base class savable params
+  auto ops_sp  = Ops<TensorType>::GetOpSaveableParams();
+  auto cast_sp = std::static_pointer_cast<OpsSaveableParams>(sp);
+  *cast_sp     = *(std::static_pointer_cast<OpsSaveableParams>(ops_sp));
+
+  return sp;
 }
 
 template <typename TensorType>
@@ -110,6 +116,17 @@ OperationsCount Flatten<TensorType>::ChargeForward() const
   assert(!this->batch_input_shapes_.empty());
   OperationsCount cost = fetch::ml::charge_estimation::ops::FLATTEN_PER_ELEMENT *
                          this->TotalElementsIn(this->batch_input_shapes_);
+  return cost;
+}
+
+template <class TensorType>
+OperationsCount Flatten<TensorType>::ChargeBackward() const
+{
+  assert(!this->batch_input_shapes_.empty());
+  OperationsCount cost = fetch::ml::charge_estimation::ops::RESHAPE_PER_ELEMENT *
+                             this->TotalElementsIn(this->batch_input_shapes_) +
+                         fetch::ml::charge_estimation::ops::ASSIGN_PER_ELEMENT *
+                             this->TotalElementsIn(this->batch_input_shapes_);
   return cost;
 }
 

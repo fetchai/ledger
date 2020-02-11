@@ -53,11 +53,11 @@ using fetch::crypto::ECDSASigner;
 using fetch::ledger::ContractContext;
 using fetch::ledger::ContractContextAttacher;
 using fetch::ledger::ContractExecutionStatus;
+using fetch::ledger::Deed;
 using fetch::ledger::FakeStorageUnit;
 using fetch::ledger::StateSentinelAdapter;
 using fetch::ledger::TokenContract;
 using fetch::ledger::TransactionValidator;
-using fetch::ledger::Deed;
 
 class DeedBuilder
 {

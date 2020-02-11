@@ -44,10 +44,16 @@ AvgPool2D<TensorType>::AvgPool2D(SPType const &sp)
 template <typename TensorType>
 std::shared_ptr<OpsSaveableParams> AvgPool2D<TensorType>::GetOpSaveableParams()
 {
-  SPType sp{};
-  sp.kernel_size = kernel_size_;
-  sp.stride_size = stride_size_;
-  return std::make_shared<SPType>(sp);
+  auto sp         = std::make_shared<SPType>();
+  sp->kernel_size = kernel_size_;
+  sp->stride_size = stride_size_;
+
+  // Add base class savable params
+  auto ops_sp  = Ops<TensorType>::GetOpSaveableParams();
+  auto cast_sp = std::static_pointer_cast<OpsSaveableParams>(sp);
+  *cast_sp     = *(std::static_pointer_cast<OpsSaveableParams>(ops_sp));
+
+  return sp;
 }
 
 template <typename TensorType>
@@ -204,6 +210,20 @@ OperationsCount AvgPool2D<TensorType>::ChargeForward() const
       fetch::ml::charge_estimation::ops::DIVISION_PER_ELEMENT * num_output_shape_ops +
       fetch::ml::charge_estimation::ops::ADDITION_PER_ELEMENT * num_output_shape_ops *
           static_cast<OperationsCount>(this->kernel_size_ * this->kernel_size_));
+  return cost;
+}
+
+template <typename TensorType>
+OperationsCount AvgPool2D<TensorType>::ChargeBackward() const
+{
+  assert(!this->batch_output_shape_.empty());
+  OperationsCount num_output_shape_ops =
+      this->batch_output_shape_.at(0) * this->batch_output_shape_.at(1) *
+      this->batch_output_shape_.at(2) * this->batch_output_shape_.at(3) * this->kernel_size_ *
+      this->kernel_size_;
+  auto cost = static_cast<OperationsCount>(num_output_shape_ops *
+                                           fetch::ml::charge_estimation::ops::DIVISION_PER_ELEMENT *
+                                           fetch::ml::charge_estimation::ops::ADDITION_PER_ELEMENT);
   return cost;
 }
 

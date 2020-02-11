@@ -47,10 +47,16 @@ Softmax<TensorType>::Softmax(SPType const &sp)
 template <typename TensorType>
 std::shared_ptr<OpsSaveableParams> Softmax<TensorType>::GetOpSaveableParams()
 {
-  auto sp_ptr  = std::make_shared<SPType>();
-  sp_ptr->axis = axis_;
-  sp_ptr->axes = axes_;
-  return sp_ptr;
+  auto sp  = std::make_shared<SPType>();
+  sp->axis = axis_;
+  sp->axes = axes_;
+
+  // Add base class savable params
+  auto ops_sp  = Ops<TensorType>::GetOpSaveableParams();
+  auto cast_sp = std::static_pointer_cast<OpsSaveableParams>(sp);
+  *cast_sp     = *(std::static_pointer_cast<OpsSaveableParams>(ops_sp));
+
+  return sp;
 }
 
 template <typename TensorType>
@@ -140,7 +146,7 @@ OperationsCount Softmax<TensorType>::ChargeForward() const
 }
 
 template <typename TensorType>
-OperationsCount Softmax<TensorType>::ChargeBackward()
+OperationsCount Softmax<TensorType>::ChargeBackward() const
 {
   assert(!this->batch_input_shapes_.empty());
   OperationsCount cost = fetch::ml::charge_estimation::ops::SOFTMAX_BACKWARD_PER_ELEMENT *

@@ -376,7 +376,7 @@ inline int8_t first_element(VectorRegister<int8_t, 256> const &x)
 }
 
 template <int8_t elements>
-inline VectorRegister<int8_t, 128> rotate_elements_left(VectorRegister<int8_t, 128> const &x)
+VectorRegister<int8_t, 128> rotate_elements_left(VectorRegister<int8_t, 128> const &x)
 {
   __m128i n = x.data();
   n         = _mm_alignr_epi8(n, n, elements);
@@ -384,7 +384,7 @@ inline VectorRegister<int8_t, 128> rotate_elements_left(VectorRegister<int8_t, 1
 }
 
 template <int8_t elements>
-inline VectorRegister<int8_t, 256> rotate_elements_left(VectorRegister<int8_t, 256> const &x);
+VectorRegister<int8_t, 256> rotate_elements_left(VectorRegister<int8_t, 256> const &x);
 
 template <>
 inline VectorRegister<int8_t, 256> rotate_elements_left<0>(VectorRegister<int8_t, 256> const &x)

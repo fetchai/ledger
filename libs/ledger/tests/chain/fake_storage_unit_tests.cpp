@@ -23,8 +23,8 @@
 
 #include <memory>
 
-using fetch::storage::ResourceAddress;
 using fetch::ledger::FakeStorageUnit;
+using fetch::storage::ResourceAddress;
 
 using FakeStorageUnitPtr = std::unique_ptr<FakeStorageUnit>;
 

@@ -81,6 +81,7 @@ public:
   }
 
   OperationsCount ChargeForward() const override;
+  OperationsCount ChargeBackward() const override;
 };
 
 }  // namespace ops

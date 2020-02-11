@@ -25,8 +25,8 @@
 #include <memory>
 #include <ostream>
 
-using fetch::http::HtmlTree;
 using fetch::http::HtmlNodes;
+using fetch::http::HtmlTree;
 using Content = HtmlTree::Content;
 using Params  = HtmlTree::Params;
 

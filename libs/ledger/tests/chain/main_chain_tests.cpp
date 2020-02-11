@@ -43,8 +43,8 @@ namespace {
 using namespace fetch;
 
 using fetch::ledger::Block;
-using fetch::ledger::MainChain;
 using fetch::ledger::BlockStatus;
+using fetch::ledger::MainChain;
 using fetch::ledger::testing::BlockGenerator;
 
 using Rng               = std::mt19937_64;

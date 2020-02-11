@@ -159,6 +159,17 @@ ChargeAmount ModelEstimator::LayerAddPool(Ptr<String> const &layer, SizeType con
   return MaximumCharge(layer->string() + NOT_IMPLEMENTED_MESSAGE);
 }
 
+ChargeAmount ModelEstimator::LayerAddEmbeddings(fetch::vm::Ptr<fetch::vm::String> const &layer,
+                                                math::SizeType const &                   dimensions,
+                                                math::SizeType const &data_points, bool stub)
+{
+  FETCH_UNUSED(layer);
+  FETCH_UNUSED(dimensions);
+  FETCH_UNUSED(data_points);
+  FETCH_UNUSED(stub);
+  return MaximumCharge(layer->string() + NOT_IMPLEMENTED_MESSAGE);
+}
+
 ChargeAmount ModelEstimator::LayerAddConvActivation(
     Ptr<String> const &layer, SizeType const &output_channels, SizeType const &input_channels,
     SizeType const &kernel_size, SizeType const &stride_size, Ptr<String> const &activation)
@@ -359,32 +370,6 @@ ChargeAmount ModelEstimator::Fit(Ptr<math::VMTensor> const &data, Ptr<math::VMTe
 
   // Call overhead
   estimate += FIT_CONST_COEF;
-
-  return ToChargeAmount(estimate) * COMPUTE_CHARGE_COST;
-}
-
-ChargeAmount ModelEstimator::Evaluate()
-{
-  DataType estimate{"0"};
-
-  // Forward pass
-  estimate += state_.forward_pass_cost * state_.subset_size;
-  estimate += PREDICT_BATCH_LAYER_COEF * state_.subset_size * state_.ops_count;
-  estimate += PREDICT_CONST_COEF;
-
-  // Metrics
-  estimate += state_.metrics_cost;
-  return ToChargeAmount(estimate) * COMPUTE_CHARGE_COST;
-}
-
-ChargeAmount ModelEstimator::Predict(Ptr<math::VMTensor> const &data)
-{
-  DataType estimate{"0"};
-  SizeType batch_size = data->GetTensor().shape().at(data->GetTensor().shape().size() - 1);
-
-  estimate += state_.forward_pass_cost * batch_size;
-  estimate += PREDICT_BATCH_LAYER_COEF * batch_size * state_.ops_count;
-  estimate += PREDICT_CONST_COEF;
 
   return ToChargeAmount(estimate) * COMPUTE_CHARGE_COST;
 }

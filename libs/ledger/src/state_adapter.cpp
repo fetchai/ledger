@@ -21,8 +21,8 @@
 #include "logging/logging.hpp"
 #include "storage/resource_mapper.hpp"
 
-using fetch::storage::ResourceAddress;
 using fetch::byte_array::ConstByteArray;
+using fetch::storage::ResourceAddress;
 
 namespace fetch {
 namespace ledger {

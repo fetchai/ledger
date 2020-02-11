@@ -50,6 +50,11 @@ std::shared_ptr<OpsSaveableParams> Embeddings<TensorType>::GetOpSaveableParams()
   auto cast_sp = std::static_pointer_cast<OpWeightsSaveableParams<TensorType>>(sp);
   *cast_sp     = *(std::static_pointer_cast<OpWeightsSaveableParams<TensorType>>(w_sp));
 
+  // Add base class savable params
+  auto ops_sp      = Ops<TensorType>::GetOpSaveableParams();
+  auto cast_ops_sp = std::static_pointer_cast<OpsSaveableParams>(sp);
+  *cast_ops_sp     = *(std::static_pointer_cast<OpsSaveableParams>(ops_sp));
+
   return sp;
 }
 
@@ -139,6 +144,18 @@ OperationsCount Embeddings<TensorType>::ChargeForward() const
   assert(!this->batch_output_shape_.empty());
 
   OperationsCount cost = fetch::ml::charge_estimation::ops::EMBEDDING_PER_ELEMENT;
+
+  return cost;
+}
+
+template <typename TensorType>
+OperationsCount Embeddings<TensorType>::ChargeBackward() const
+{
+  assert(!this->batch_input_shapes_.empty());
+
+  OperationsCount cost = fetch::ml::charge_estimation::ops::ADDITION_PER_ELEMENT *
+                         this->TotalElementsIn({this->batch_input_shapes_});
+  ;
 
   return cost;
 }

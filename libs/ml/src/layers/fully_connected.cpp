@@ -157,6 +157,12 @@ OperationsCount FullyConnected<TensorType>::ChargeForward() const
 }
 
 template <typename TensorType>
+OperationsCount FullyConnected<TensorType>::ChargeBackward() const
+{
+  return Graph<TensorType>::ChargeBackward(this->output_node_name_);
+}
+
+template <typename TensorType>
 std::shared_ptr<fetch::ml::ops::Ops<TensorType>> FullyConnected<TensorType>::MakeSharedCopy(
     OpPtrType me)
 {

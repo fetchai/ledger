@@ -442,6 +442,12 @@ TEST_F(VMModelTests, model_add_flatten)
   TestValidLayerAdding(R"(model.add("flatten");)", IGNORE_CHARGE_ESTIMATION);
 }
 
+TEST_F(VMModelTests, model_add_embeddings)
+{
+  TestValidLayerAdding(R"(model.addExperimental("embeddings", 2u64, 3u64, true);)",
+                       IGNORE_CHARGE_ESTIMATION);
+}
+
 TEST_F(VMModelTests, model_add_activation)
 {
   TestValidLayerAdding(R"(model.add("activation", "relu");)", IGNORE_CHARGE_ESTIMATION);
@@ -472,6 +478,11 @@ TEST_F(VMModelTests, model_add_invalid_layer_type)
 TEST_F(VMModelTests, model_add_dense_invalid_params_noact)
 {
   TestInvalidLayerAdding(R"(model.add("dense", 1u64, 1u64, 1u64, 1u64);)");
+}
+
+TEST_F(VMModelTests, model_add_embeddings_invalid_params)
+{
+  TestInvalidLayerAdding(R"(model.addExperimental("embeddings", 1u64);)");
 }
 
 TEST_F(VMModelTests, model_add_dense_invalid_params_relu)
@@ -630,13 +641,24 @@ TEST_F(VMModelTests, model_compilation_invalid_params)
 // Disableduntil AddDropout estimator implementation
 TEST_F(VMModelTests, model_dropout_comparison)
 {
+
   static char const *SOURCE = R"(
     function main()
+        var shape = Array<UInt64>(3);
+        shape[0] = 25u64;
+        shape[1] = 25u64;
+        shape[2] = 1u64;
+        var x = Tensor(shape);
+
         var dropouted_model = Model("sequential");
+        dropouted_model.addExperimental("input", x.shape());
+
         dropouted_model.add("dropout", 0.1fp64);
         dropouted_model.compile("mse", "adam");
 
         var reference_model = Model("sequential");
+        reference_model.addExperimental("input", x.shape());
+
         // Dropout with probability 0 acts as a simple connection
         // between input layers and output layer; this workaround is needed
         // because a sequential model with direct connection of inputs to
@@ -644,11 +666,6 @@ TEST_F(VMModelTests, model_dropout_comparison)
         reference_model.add("dropout", 0.0fp64);
         reference_model.compile("mse", "adam");
 
-        var shape = Array<UInt64>(3);
-        shape[0] = 25u64;
-        shape[1] = 25u64;
-        shape[2] = 1u64;
-        var x = Tensor(shape);
 
         x.fillRandom();
 
@@ -671,7 +688,6 @@ TEST_F(VMModelTests, model_dropout_comparison)
 
     endfunction
     )";
-
   ASSERT_TRUE(toolkit.Compile(SOURCE));
   EXPECT_TRUE(toolkit.Run(nullptr, ChargeAmount{0}));
 }
@@ -997,6 +1013,25 @@ TEST_F(VMModelTests, model_sequential_avgpool2d)
       )";
 
   ASSERT_TRUE(toolkit.Compile(SRC_METRIC));
+  ASSERT_TRUE(toolkit.Run(nullptr, ChargeAmount{0}));
+}
+
+TEST_F(VMModelTests, model_sequential_embeddings)
+{
+  static char const *sequential_model_src = R"(
+        function main()
+          var x = Tensor();
+          var str_vals = "1; 2; 3; 4; 5; 6; 7; 8; 9;";
+          x.fromString(str_vals);
+          var model = Model("sequential");
+          model.addExperimental("input", x.shape());
+          model.addExperimental("embeddings", 10u64, 4u64, true);
+          model.compile("scel", "adam");
+          var prediction = model.predict(x);
+        endfunction
+      )";
+
+  ASSERT_TRUE(toolkit.Compile(sequential_model_src));
   ASSERT_TRUE(toolkit.Run(nullptr, ChargeAmount{0}));
 }
 

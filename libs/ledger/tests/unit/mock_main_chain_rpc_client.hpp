@@ -27,7 +27,6 @@ class MockMainChainRpcClient : public fetch::ledger::MainChainRpcClientInterface
 public:
   using Digest = fetch::Digest;
 
-  MOCK_METHOD2(GetHeaviestChain, BlocksPromise(MuddleAddress, uint64_t));
   MOCK_METHOD4(GetCommonSubChain, BlocksPromise(MuddleAddress, Digest, Digest, uint64_t));
   MOCK_METHOD2(TimeTravel, TraveloguePromise(MuddleAddress, Digest));
 };

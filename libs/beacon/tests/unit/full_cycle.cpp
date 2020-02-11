@@ -40,8 +40,8 @@ using namespace fetch::beacon;
 using namespace fetch::ledger;
 using namespace std::chrono_literals;
 
-using std::this_thread::sleep_for;
 using std::chrono::milliseconds;
+using std::this_thread::sleep_for;
 
 using Prover         = fetch::crypto::Prover;
 using Certificate    = fetch::crypto::Prover;

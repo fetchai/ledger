@@ -35,10 +35,17 @@ MaxPool2D<T>::MaxPool2D(const SPType &sp)
 template <typename T>
 std::shared_ptr<OpsSaveableParams> MaxPool2D<T>::GetOpSaveableParams()
 {
-  SPType sp{};
-  sp.kernel_size = kernel_size_;
-  sp.stride_size = stride_size_;
-  return std::make_shared<SPType>(sp);
+  auto sp = std::make_shared<SPType>();
+
+  sp->kernel_size = kernel_size_;
+  sp->stride_size = stride_size_;
+
+  // Add base class savable params
+  auto ops_sp  = Ops<TensorType>::GetOpSaveableParams();
+  auto cast_sp = std::static_pointer_cast<OpsSaveableParams>(sp);
+  *cast_sp     = *(std::static_pointer_cast<OpsSaveableParams>(ops_sp));
+
+  return sp;
 }
 
 template <typename TensorType>
@@ -205,6 +212,18 @@ std::vector<fetch::math::SizeType> MaxPool2D<T>::ComputeOutputShape(
 
 template <typename TensorType>
 OperationsCount MaxPool2D<TensorType>::ChargeForward() const
+{
+  assert(!this->batch_output_shape_.empty());
+  auto cost = static_cast<OperationsCount>(
+      fetch::ml::charge_estimation::ops::MAX_PER_ELEMENT * this->batch_output_shape_.at(0) *
+      this->batch_output_shape_.at(1) * this->batch_output_shape_.at(2) *
+      this->batch_output_shape_.at(3) *
+      static_cast<OperationsCount>(this->kernel_size_ * this->kernel_size_));
+  return cost;
+}
+
+template <typename TensorType>
+OperationsCount MaxPool2D<TensorType>::ChargeBackward() const
 {
   assert(!this->batch_output_shape_.empty());
   auto cost = static_cast<OperationsCount>(

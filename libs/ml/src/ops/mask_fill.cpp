@@ -29,6 +29,12 @@ std::shared_ptr<OpsSaveableParams> MaskFill<TensorType>::GetOpSaveableParams()
 {
   auto sp        = std::make_shared<SPType>();
   sp->fill_value = fill_value_;
+
+  // Add base class savable params
+  auto ops_sp  = Ops<TensorType>::GetOpSaveableParams();
+  auto cast_sp = std::static_pointer_cast<OpsSaveableParams>(sp);
+  *cast_sp     = *(std::static_pointer_cast<OpsSaveableParams>(ops_sp));
+
   return sp;
 }
 
@@ -110,6 +116,16 @@ OperationsCount MaskFill<TensorType>::ChargeForward() const
 
   OperationsCount cost = fetch::ml::charge_estimation::ops::MASK_FILL_PER_ELEMENT *
                          this->TotalElementsIn({this->batch_input_shapes_});
+  return cost;
+}
+
+template <typename TensorType>
+OperationsCount MaskFill<TensorType>::ChargeBackward() const
+{
+  assert(!this->batch_output_shape_.empty());
+
+  OperationsCount cost = fetch::ml::charge_estimation::ops::MULTIPLICATION_PER_ELEMENT *
+                         this->TotalElementsIn({this->batch_output_shape_});
   return cost;
 }
 

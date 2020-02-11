@@ -16,6 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/containers/trim_to_size.hpp"
 #include "ledger/chain/block.hpp"
 #include "ledger/consensus/stake_manager.hpp"
 #include "ledger/consensus/stake_snapshot.hpp"
@@ -57,7 +58,7 @@ void StakeManager::UpdateCurrentBlock(BlockIndex block_index)
     current_block_index_ = block_index;
   }
 
-  TrimToSize(stake_history_, HISTORY_LENGTH);
+  core::TrimToSize(stake_history_, HISTORY_LENGTH);
 }
 
 StakeManager::CabinetPtr StakeManager::BuildCabinet(

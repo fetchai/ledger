@@ -45,9 +45,9 @@ constexpr char const *LOGGING_NAME = "SynergeticExecutor";
 constexpr TokenAmount const CHARGE_RATE  = 1;
 constexpr TokenAmount const CHARGE_LIMIT = 10000000000;
 
+using fetch::meta::Log2;
 using fetch::telemetry::Histogram;
 using fetch::telemetry::Registry;
-using fetch::meta::Log2;
 
 }  // namespace
 

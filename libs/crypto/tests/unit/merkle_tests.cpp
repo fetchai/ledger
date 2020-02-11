@@ -28,8 +28,8 @@
 using namespace fetch;
 using namespace fetch::crypto;
 
-using fetch::byte_array::ConstByteArray;
 using fetch::byte_array::ByteArray;
+using fetch::byte_array::ConstByteArray;
 
 static ConstByteArray CalculateHash(ConstByteArray const &a, ConstByteArray const &b)
 {

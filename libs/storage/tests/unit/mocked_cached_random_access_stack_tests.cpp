@@ -21,6 +21,8 @@
 
 #include "gmock/gmock.h"
 
+namespace {
+
 using namespace fetch::storage;
 using namespace testing;
 
@@ -207,3 +209,5 @@ TEST(mocked_cached_random_access_stack, file_loading_and_closing)
   cached_stack.Load(file_name, true);
   cached_stack.Close();
 }
+
+}  // namespace
