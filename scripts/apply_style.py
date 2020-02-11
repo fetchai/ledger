@@ -74,9 +74,7 @@ def find_excluded_dirs():
     def is_nested_git_repo(dir_path):
         return dir_path != PROJECT_ROOT and isdir(join(dir_path, '.git'))
 
-    exclusions = (
-        ('vendor'),
-        ('libs', 'oef-base', 'include', 'oef-base', 'conversation'))
+    exclusions = (('vendor'))
     directories_to_exclude = [abspath(join(PROJECT_ROOT, *path))
                               for path in exclusions]
 
