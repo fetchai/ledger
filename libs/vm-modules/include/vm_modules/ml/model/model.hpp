@@ -184,6 +184,16 @@ public:
                           math::SizeType const &dimensions, math::SizeType const &data_points,
                           bool stub);
 
+  fetch::ml::OperationsCount ChargeForward() const
+  {
+    return model_->ChargeForward();
+  }
+
+  fetch::ml::OperationsCount ChargeBackward() const
+  {
+    return model_->ChargeBackward();
+  }
+
 private:
   ModelPtrType       model_;
   ModelConfigPtrType model_config_;
