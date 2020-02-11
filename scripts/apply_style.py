@@ -74,10 +74,22 @@ def find_excluded_dirs():
     def is_nested_git_repo(dir_path):
         return dir_path != PROJECT_ROOT and isdir(join(dir_path, '.git'))
 
+    exclusions = (
+        ('vendor'),
+        ('libs', 'oef-base', 'include', 'oef-base', 'comms'),
+        ('libs', 'oef-base', 'include', 'oef-base', 'conversation'),
+        ('libs', 'oef-base', 'include', 'oef-base', 'monitoring'),
+        ('libs', 'oef-base', 'include', 'oef-base', 'proto_comms'),
+        ('libs', 'oef-base', 'include', 'oef-base', 'threading'),
+        ('libs', 'oef-base', 'include', 'oef-base', 'utils'),
+        ('libs', 'oef-base', 'src', 'comms'),
+        ('libs', 'oef-base', 'src', 'conversation'),
+        ('libs', 'oef-base', 'src', 'monitoring'),
+        ('libs', 'oef-base', 'src', 'proto_comms'),
+        ('libs', 'oef-base', 'src', 'threading'),
+        ('libs', 'oef-base', 'src', 'utils'))
     directories_to_exclude = [abspath(join(PROJECT_ROOT, *name))
-                              for name in (
-                                  ('vendor'),
-                                  ('libs', 'oef-base'))]
+                              for name in exclusions]
 
     for root, dirs, files in os.walk(PROJECT_ROOT):
         if is_cmake_build_tree_root(root) or \
