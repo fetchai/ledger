@@ -534,7 +534,7 @@ class VectorExpTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(VectorExpTest, MyFPTypes);
+TYPED_TEST_SUITE(VectorExpTest, MyFPTypes, );
 TYPED_TEST(VectorExpTest, exp_tests)
 {
   using type       = typename TypeParam::type;
