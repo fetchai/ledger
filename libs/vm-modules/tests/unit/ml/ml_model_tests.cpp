@@ -641,6 +641,7 @@ TEST_F(VMModelTests, model_compilation_invalid_params)
 // Disableduntil AddDropout estimator implementation
 TEST_F(VMModelTests, model_dropout_comparison)
 {
+
   static char const *SOURCE = R"(
     function main()
         var shape = Array<UInt64>(3);
@@ -650,12 +651,14 @@ TEST_F(VMModelTests, model_dropout_comparison)
         var x = Tensor(shape);
 
         var dropouted_model = Model("sequential");
-        model.addExperimental("input", x.shape());
+        dropouted_model.addExperimental("input", x.shape());
 
         dropouted_model.add("dropout", 0.1fp64);
         dropouted_model.compile("mse", "adam");
 
         var reference_model = Model("sequential");
+        reference_model.addExperimental("input", x.shape());
+
         // Dropout with probability 0 acts as a simple connection
         // between input layers and output layer; this workaround is needed
         // because a sequential model with direct connection of inputs to
@@ -685,7 +688,6 @@ TEST_F(VMModelTests, model_dropout_comparison)
 
     endfunction
     )";
-
   ASSERT_TRUE(toolkit.Compile(SOURCE));
   EXPECT_TRUE(toolkit.Run(nullptr, ChargeAmount{0}));
 }
