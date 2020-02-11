@@ -547,8 +547,8 @@ TEST_F(VMModelEstimatorTests, estimator_fit_and_predict_test)
 
 TEST_F(VMModelEstimatorTests, estimator_evaluate_with_metrics)
 {
-  using fetch::vm::Ptr;
   using fetch::vm::Array;
+  using fetch::vm::Ptr;
   using fetch::vm::String;
 
   std::string model_type      = "sequential";

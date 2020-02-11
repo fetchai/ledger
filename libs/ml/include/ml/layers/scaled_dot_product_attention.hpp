@@ -42,12 +42,12 @@ public:
 
   void SetOpSaveableParams(SPType const &sp);
 
-  inline std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
+  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
   {
     return {inputs.at(2)->shape(0), inputs.front()->shape(1), inputs.front()->shape(2)};
   }
 
-  inline static constexpr OpType OpCode()
+  static constexpr OpType OpCode()
   {
     return OpType::LAYER_SCALED_DOT_PRODUCT_ATTENTION;
   }

@@ -197,6 +197,7 @@ TYPED_TEST(VectorRegisterTest, minmax_tests)
       sum[TypeParam::E_BLOCK_COUNT], diff[TypeParam::E_BLOCK_COUNT], prod[TypeParam::E_BLOCK_COUNT],
       div[TypeParam::E_BLOCK_COUNT];
 
+  std::srand(6715202L);
   type real_max{0}, real_min{fetch::math::numeric_max<type>()};
   for (std::size_t i = 0; i < TypeParam::E_BLOCK_COUNT; i++)
   {
@@ -204,10 +205,10 @@ TYPED_TEST(VectorRegisterTest, minmax_tests)
     // type's limits
     a[i] = fetch::math::Type<type>(
         std::to_string((static_cast<double>(std::rand()) / static_cast<double>(RAND_MAX)) *
-                       static_cast<double>(fetch::math::numeric_max<type>()) / 2.0));
+                       static_cast<double>(100)));
     b[i] = fetch::math::Type<type>(
         std::to_string((static_cast<double>(std::rand()) / static_cast<double>(RAND_MAX)) *
-                       static_cast<double>(fetch::math::numeric_max<type>()) / 2.0));
+                       static_cast<double>(100)));
     b[i]     = b[i] == 0 ? a[i] : b[i];
     sum[i]   = static_cast<type>(a[i] + b[i]);
     diff[i]  = static_cast<type>(a[i] - b[i]);
@@ -245,7 +246,9 @@ TYPED_TEST(VectorRegisterTest, minmax_tests)
   {
     hsum = static_cast<type>(hsum + sum[i]);
   }
-  EXPECT_EQ(hsum, reduce1);
+  // Note: float produces greater inaccuracies than the other types
+  EXPECT_NEAR(static_cast<double>(hsum), static_cast<double>(reduce1),
+              static_cast<double>(function_tolerance<type>()));
 
   TypeParam vmax = Max(va, vb);
   type      max  = Max(vmax);

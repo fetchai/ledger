@@ -35,12 +35,12 @@
 #include <memory>
 #include <thread>
 
-using std::this_thread::sleep_for;
-using std::chrono::seconds;
 using fetch::byte_array::ByteArray;
 using fetch::byte_array::ConstByteArray;
 using fetch::byte_array::FromBase64;
 using fetch::muddle::NetworkId;
+using std::chrono::seconds;
+using std::this_thread::sleep_for;
 
 class TestProtocol : public fetch::service::Protocol
 {

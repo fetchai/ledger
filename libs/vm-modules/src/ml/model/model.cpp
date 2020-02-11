@@ -60,10 +60,10 @@ namespace ml {
 namespace model {
 
 using fetch::math::SizeType;
-using fetch::ml::ops::LossType;
-using fetch::ml::ops::MetricType;
 using fetch::ml::OptimiserType;
 using fetch::ml::details::ActivationType;
+using fetch::ml::ops::LossType;
+using fetch::ml::ops::MetricType;
 using VMPtrString = Ptr<String>;
 
 std::map<std::string, SupportedLayerType> const VMModel::layer_types_{

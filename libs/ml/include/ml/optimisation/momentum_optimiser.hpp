@@ -51,7 +51,7 @@ public:
 
   ~MomentumOptimiser() override = default;
 
-  inline OptimiserType OptimiserCode() override
+  OptimiserType OptimiserCode() override
   {
     return OptimiserType::MOMENTUM;
   }

@@ -92,7 +92,7 @@ public:
   static const uint8_t INSTANCE = 2;
 
   template <typename T>
-  static inline void Serialize(T &map_constructor, Type const &x)
+  static void Serialize(T &map_constructor, Type const &x)
   {
     auto map = map_constructor(2);
     map.Append(TYPE, static_cast<uint8_t>(x.type_));
@@ -100,7 +100,7 @@ public:
   }
 
   template <typename T>
-  static inline void Deserialize(T &map, Type &x)
+  static void Deserialize(T &map, Type &x)
   {
     uint8_t raw_type{0};
 

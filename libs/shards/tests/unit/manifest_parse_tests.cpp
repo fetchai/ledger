@@ -25,8 +25,8 @@
 namespace {
 
 using fetch::network::Uri;
-using fetch::shards::ServiceIdentifier;
 using fetch::shards::Manifest;
+using fetch::shards::ServiceIdentifier;
 
 TEST(ManifestParseTests, CheckFullManifestParse)
 {

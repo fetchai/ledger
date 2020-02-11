@@ -37,8 +37,8 @@ namespace {
 using fetch::chain::Transaction;
 using fetch::chain::TransactionBuilder;
 using fetch::crypto::ECDSASigner;
-using fetch::ledger::TransactionStore;
 using fetch::ledger::TransactionStorageEngine;
+using fetch::ledger::TransactionStore;
 
 using TransactionList = std::vector<TransactionBuilder::TransactionPtr>;
 
