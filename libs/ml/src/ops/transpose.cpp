@@ -37,9 +37,15 @@ Transpose<TensorType>::Transpose(SPType const &sp)
 template <typename TensorType>
 std::shared_ptr<OpsSaveableParams> Transpose<TensorType>::GetOpSaveableParams()
 {
-  SPType sp{};
-  sp.transpose_vector = transpose_vector_;
-  return std::make_shared<SPType>(sp);
+  auto sp              = std::make_shared<SPType>();
+  sp->transpose_vector = transpose_vector_;
+
+  // Add base class savable params
+  auto ops_sp  = Ops<TensorType>::GetOpSaveableParams();
+  auto cast_sp = std::static_pointer_cast<OpsSaveableParams>(sp);
+  *cast_sp     = *(std::static_pointer_cast<OpsSaveableParams>(ops_sp));
+
+  return sp;
 }
 
 template <typename TensorType>

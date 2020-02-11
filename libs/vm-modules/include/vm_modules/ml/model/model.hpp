@@ -124,6 +124,8 @@ public:
 
   vm::Ptr<vm::Array<math::DataType>> Evaluate();
 
+  fetch::vm::ChargeAmount EstimateEvaluate();
+
   vm::Ptr<VMTensor> Predict(vm::Ptr<VMTensor> const &data);
 
   fetch::vm::ChargeAmount EstimatePredict(vm::Ptr<vm_modules::math::VMTensor> const &data);
@@ -181,6 +183,16 @@ public:
   void LayerAddEmbeddings(fetch::vm::Ptr<fetch::vm::String> const &layer,
                           math::SizeType const &dimensions, math::SizeType const &data_points,
                           bool stub);
+
+  fetch::ml::OperationsCount ChargeForward() const
+  {
+    return model_->ChargeForward();
+  }
+
+  fetch::ml::OperationsCount ChargeBackward() const
+  {
+    return model_->ChargeBackward();
+  }
 
 private:
   ModelPtrType       model_;

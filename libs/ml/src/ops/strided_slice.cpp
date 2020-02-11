@@ -65,6 +65,11 @@ std::shared_ptr<OpsSaveableParams> StridedSlice<TensorType>::GetOpSaveableParams
   sp->ends    = ends_;
   sp->strides = strides_;
 
+  // Add base class savable params
+  auto ops_sp  = Ops<TensorType>::GetOpSaveableParams();
+  auto cast_sp = std::static_pointer_cast<OpsSaveableParams>(sp);
+  *cast_sp     = *(std::static_pointer_cast<OpsSaveableParams>(ops_sp));
+
   return sp;
 }
 

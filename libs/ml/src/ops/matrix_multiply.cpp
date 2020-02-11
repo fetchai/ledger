@@ -38,10 +38,16 @@ MatrixMultiply<T>::MatrixMultiply(const SPType &sp)
 template <typename T>
 std::shared_ptr<OpsSaveableParams> MatrixMultiply<T>::GetOpSaveableParams()
 {
-  auto ret         = std::make_shared<SPType>();
-  ret->transpose_a = transpose_a_;
-  ret->transpose_b = transpose_b_;
-  return ret;
+  auto sp         = std::make_shared<SPType>();
+  sp->transpose_a = transpose_a_;
+  sp->transpose_b = transpose_b_;
+
+  // Add base class savable params
+  auto ops_sp  = Ops<TensorType>::GetOpSaveableParams();
+  auto cast_sp = std::static_pointer_cast<OpsSaveableParams>(sp);
+  *cast_sp     = *(std::static_pointer_cast<OpsSaveableParams>(ops_sp));
+
+  return sp;
 }
 
 template <typename T>
