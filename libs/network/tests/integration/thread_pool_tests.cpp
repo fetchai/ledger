@@ -30,8 +30,8 @@
 namespace {
 
 using fetch::network::MakeThreadPool;
-using std::chrono::milliseconds;
 using std::chrono::duration_cast;
+using std::chrono::milliseconds;
 using std::this_thread::sleep_for;
 using ::testing::AtLeast;
 

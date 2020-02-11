@@ -21,8 +21,8 @@
 #include "core/byte_array/encoders.hpp"
 #include "crypto/ecdsa.hpp"
 
-using fetch::crypto::ECDSASigner;
 using fetch::byte_array::ToBase64;
+using fetch::crypto::ECDSASigner;
 
 int main()
 {
