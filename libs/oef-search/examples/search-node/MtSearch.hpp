@@ -17,19 +17,18 @@
 //
 //------------------------------------------------------------------------------
 
-#include <set>
-#include <string>
-#include <vector>
-
 #include "logging/logging.hpp"
 #include "oef-base/comms/Core.hpp"
 #include "oef-base/comms/OefListenerSet.hpp"
 #include "oef-base/conversation/OutboundConversations.hpp"
 #include "oef-base/threading/Taskpool.hpp"
 #include "oef-base/threading/Threadpool.hpp"
-
 #include "oef-messages/search_config.hpp"
 #include "oef-search/comms/SearchTaskFactory.hpp"
+
+#include <set>
+#include <string>
+#include <vector>
 
 class Core;
 class OefSearchEndpoint;
