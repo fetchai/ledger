@@ -87,7 +87,7 @@ public:
   static const uint8_t ADDRESS    = 3;
 
   template <typename T>
-  static inline void Serialize(T &map_constructor, Type const &x)
+  static void Serialize(T &map_constructor, Type const &x)
   {
     auto map = map_constructor(3);
     map.Append(URI, x.uri_);
@@ -96,7 +96,7 @@ public:
   }
 
   template <typename T>
-  static inline void Deserialize(T &map, Type &x)
+  static void Deserialize(T &map, Type &x)
   {
     map.ExpectKeyGetValue(URI, x.uri_);
     map.ExpectKeyGetValue(LOCAL_PORT, x.local_port_);

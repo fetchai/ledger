@@ -26,8 +26,8 @@ namespace {
 
 using fetch::ledger::CachedStorageAdapter;
 using fetch::ledger::StorageInterface;
-using fetch::storage::ResourceAddress;
 using fetch::storage::Document;
+using fetch::storage::ResourceAddress;
 
 using testing::Return;
 

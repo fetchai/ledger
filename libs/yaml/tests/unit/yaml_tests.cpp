@@ -59,4 +59,4 @@ TEST_P(YamlTests, CheckParsing)
   }
 }
 
-INSTANTIATE_TEST_CASE_P(ParamBased, YamlTests, testing::ValuesIn(TEST_CASES), );
+INSTANTIATE_TEST_SUITE_P(ParamBased, YamlTests, testing::ValuesIn(TEST_CASES));

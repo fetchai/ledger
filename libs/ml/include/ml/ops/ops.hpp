@@ -94,17 +94,17 @@ public:
     is_training_ = is_training;
   }
 
-  inline bool IsTraining() const
+  bool IsTraining() const
   {
     return is_training_;
   }
 
-  inline void SetBatchOutputShape(Shape const &new_shape)
+  void SetBatchOutputShape(Shape const &new_shape)
   {
     batch_output_shape_ = new_shape;
   }
 
-  inline void SetBatchInputShapes(ShapeVector const &new_shapes)
+  void SetBatchInputShapes(ShapeVector const &new_shapes)
   {
     batch_input_shapes_ = new_shapes;
   }
@@ -122,7 +122,7 @@ public:
    * @brief BatchInputShapes returns a vector of shapes, that describes expected input
    * slice shapes (e.g. when batch size of input data is 1)
    */
-  inline ShapeVector const &BatchInputShapes() const
+  ShapeVector const &BatchInputShapes() const
   {
     return batch_input_shapes_;
   }
@@ -157,7 +157,7 @@ public:
    * @return estimated charge amount, necessary for performing a forward pass on data of given
    * shapes.
    */
-  virtual OperationsCount ChargeForward()
+  virtual OperationsCount ChargeForward() const
   {
     // TODO(ML-483): make a pure virtual method after all Ops have their overrides;
     FETCH_LOG_ERROR(Descriptor(),
@@ -170,7 +170,7 @@ public:
    * @return estimated charge amount, necessary for performing a backward pass on data of given
    * shapes.
    */
-  virtual OperationsCount ChargeBackward()
+  virtual OperationsCount ChargeBackward() const
   {
     // TODO(ML-483): make a pure virtual method after all Ops have their overrides;
     FETCH_LOG_ERROR(Descriptor(),

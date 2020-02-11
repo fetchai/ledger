@@ -29,7 +29,7 @@ class AbsTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(AbsTest, fetch::math::test::TensorFloatingTypes);
+TYPED_TEST_SUITE(AbsTest, fetch::math::test::TensorFloatingTypes, );
 
 TYPED_TEST(AbsTest, forward_test)
 {

@@ -30,8 +30,8 @@
 
 using fetch::Digest;
 using fetch::DigestSet;
-using fetch::storage::ResourceID;
 using fetch::ledger::TransactionStorageProtocol;
+using fetch::storage::ResourceID;
 
 static constexpr char const *LOGGING_NAME = "TxStorageClient";
 

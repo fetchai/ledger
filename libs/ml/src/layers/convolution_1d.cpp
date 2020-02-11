@@ -54,15 +54,34 @@ Convolution1D<TensorType>::Convolution1D(SizeType const output_channels,
   output = fetch::ml::details::AddActivationNode<TensorType>(activation_type, this,
                                                              name + "_Activation", output);
 
-  // A temporary fix to prevent Conv1d shape computing crash. Dummy width (32).
-  // TODO(VH): Split initialisation as in FullyConnected to prevent dummies.
   this->GetNode(weights)->SetBatchOutputShape({output_channels_, input_channels_, kernel_size_, 1});
-  this->GetNode(input)->SetBatchOutputShape({output_channels_, 32, 1});
 
   this->AddInputNode(input);
   this->SetOutputNode(output);
+}
+
+template <typename TensorType>
+void Convolution1D<TensorType>::CompleteConstruction()
+{
+  if (is_initialised_)
+  {
+    return;
+  }
+  using NodePtrType = std::shared_ptr<fetch::ml::Node<TensorType>>;
+  FETCH_LOG_INFO(Descriptor(), "-- Finalising Convolution2D initialisation ... --");
+
+  assert(!this->batch_input_shapes_.empty());
+  assert(!this->batch_output_shape_.empty());
+  assert(this->input_node_names_.size() == 1);  // Only 1 input node is allowed
+  assert(output_channels_ == this->batch_output_shape_.front());
+
+  NodePtrType input_node = this->nodes_.at(this->input_node_names_.front());
+  input_node->SetBatchInputShapes(this->batch_input_shapes_);
+  input_node->SetBatchOutputShape(this->batch_input_shapes_.front());
 
   this->Compile();
+  FETCH_LOG_INFO(Descriptor(), "-- Convolution1D initialisation completed. --");
+  is_initialised_ = true;
 }
 
 template <typename TensorType>
@@ -108,10 +127,15 @@ std::vector<fetch::math::SizeType> Convolution1D<TensorType>::ComputeOutputShape
 }
 
 template <class TensorType>
-OperationsCount Convolution1D<TensorType>::ChargeForward()
+OperationsCount Convolution1D<TensorType>::ChargeForward() const
 {
-  auto ptr = dynamic_cast<Graph<TensorType> *>(this);
-  return ptr->ChargeForward(this->output_node_name_);
+  return Graph<TensorType>::ChargeForward(this->output_node_name_);
+}
+
+template <class TensorType>
+OperationsCount Convolution1D<TensorType>::ChargeBackward() const
+{
+  return Graph<TensorType>::ChargeBackward(this->output_node_name_);
 }
 
 ///////////////////////////////

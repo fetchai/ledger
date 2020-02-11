@@ -33,7 +33,7 @@ class SelfAttentionEncoder : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(SelfAttentionEncoder, math::test::HighPrecisionTensorFloatingTypes);
+TYPED_TEST_SUITE(SelfAttentionEncoder, math::test::HighPrecisionTensorFloatingTypes, );
 
 TYPED_TEST(SelfAttentionEncoder, input_output_dimension_test)  // Use the class as a part of a graph
 {

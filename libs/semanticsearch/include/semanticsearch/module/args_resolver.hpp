@@ -69,7 +69,7 @@ struct VectorToArguments
     static void Apply(std::size_t i, CallerSignature fnc, R &return_value,
                       std::vector<void const *> &data, UsedArgs &... args)
     {
-      using B = typename std::decay<A>::type;
+      using B = std::decay_t<A>;
       B val   = *reinterpret_cast<B const *>(data[i]);
       VectorToArguments<N - 1, UsedArgs..., B>::template Unroll<R, RemainingArguments...>::Apply(
           i + 1, std::move(fnc), return_value, data, args..., val);
@@ -84,7 +84,7 @@ struct VectorToArguments
     static void Apply(std::size_t i, CallerSignature fnc, R &return_value,
                       std::vector<void const *> &data, UsedArgs &... args)
     {
-      using B      = typename std::decay<A>::type;
+      using B      = std::decay_t<A>;
       B val        = *reinterpret_cast<B const *>(data[i]);
       return_value = fnc(args..., val);
     }

@@ -26,10 +26,10 @@
 namespace {
 
 using fetch::byte_array::ConstByteArray;
-using fetch::byte_array::ToHex;
-using fetch::byte_array::ToBase58;
-using fetch::byte_array::FromHex;
 using fetch::byte_array::FromBase58;
+using fetch::byte_array::FromHex;
+using fetch::byte_array::ToBase58;
+using fetch::byte_array::ToHex;
 
 struct TestCase
 {
@@ -407,4 +407,4 @@ TEST_F(Base58Tests, CheckDecodeContinuous1GoingBeyondBufferEndBoundary)
 
 }  // namespace
 
-INSTANTIATE_TEST_CASE_P(ParamBased, Base58Tests, ::testing::ValuesIn(TEST_CASES), );
+INSTANTIATE_TEST_SUITE_P(ParamBased, Base58Tests, ::testing::ValuesIn(TEST_CASES));

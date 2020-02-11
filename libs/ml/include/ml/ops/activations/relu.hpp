@@ -61,16 +61,17 @@ public:
   }
   static constexpr char const *DESCRIPTOR = "Relu";
 
-  inline OpType OperationType() const override
+  OpType OperationType() const override
   {
     return this->OpCode();
   }
-  inline char const *Descriptor() const override
+  char const *Descriptor() const override
   {
     return DESCRIPTOR;
   }
 
-  OperationsCount ChargeForward() override;
+  OperationsCount ChargeForward() const override;
+  OperationsCount ChargeBackward() const override;
 };
 
 }  // namespace ops

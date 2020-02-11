@@ -39,6 +39,19 @@ struct EstimatorFromMemberFunction
   }
 };
 
+template <typename... EtchArgs>
+struct EstimatorFromVMModuleMember
+{
+  template <typename Callable>
+  static auto MakeEstimator(Callable &&estimator)
+  {
+    using Type = typename meta::CallableTraits<Callable>::OwningType;
+    return [estimator](vm::Ptr<Type> context, EtchArgs... args) -> vm::ChargeAmount {
+      return meta::Invoke(estimator, *context, args...);
+    };
+  }
+};
+
 }  // namespace internal
 
 /*
@@ -54,6 +67,22 @@ auto UseEstimator(Callable &&estimator)
 {
   using EtchArgs = typename meta::CallableTraits<Callable>::ArgsTupleType;
   return meta::UnpackTuple<EtchArgs, internal::EstimatorFromMemberFunction>::MakeEstimator(
+      std::forward<Callable>(estimator));
+}
+
+/*
+  Converts a member function `estimator` of a given VM Module class instanse to a free function
+  intended to be used as a charge estimation for a VM object member function.
+
+  - `estimator`   : pointer of the estimator object member method to be used
+
+*/
+
+template <typename Callable>
+auto UseMemberEstimator(Callable &&estimator)
+{
+  using EtchArgs = typename meta::CallableTraits<Callable>::ArgsTupleType;
+  return meta::UnpackTuple<EtchArgs, internal::EstimatorFromVMModuleMember>::MakeEstimator(
       std::forward<Callable>(estimator));
 }
 
