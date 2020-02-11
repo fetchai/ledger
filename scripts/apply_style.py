@@ -76,9 +76,6 @@ def find_excluded_dirs():
 
     exclusions = (
         ('vendor'),
-        ('libs', 'oef-base', 'include', 'oef-base', 'comms'),
-        ('libs', 'oef-base', 'include', 'oef-base', 'conversation'),
-        ('libs', 'oef-base', 'include', 'oef-base', 'monitoring'),
         ('libs', 'oef-base', 'include', 'oef-base', 'proto_comms'),
         ('libs', 'oef-base', 'include', 'oef-base', 'threading'),
         ('libs', 'oef-base', 'include', 'oef-base', 'utils'))
