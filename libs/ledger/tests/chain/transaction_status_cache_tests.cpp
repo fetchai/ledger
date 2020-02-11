@@ -25,11 +25,11 @@
 
 namespace {
 
-using fetch::ledger::TimeBasedTransactionStatusCache;
-using fetch::ledger::TransactionStatus;
+using fetch::Digest;
 using fetch::ledger::ContractExecutionResult;
 using fetch::ledger::ContractExecutionStatus;
-using fetch::Digest;
+using fetch::ledger::TimeBasedTransactionStatusCache;
+using fetch::ledger::TransactionStatus;
 
 using AdjustableClockPtr = fetch::moment::AdjustableClockPtr;
 using Timestamp          = fetch::moment::ClockInterface::Timestamp;
