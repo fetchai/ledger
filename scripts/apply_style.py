@@ -81,15 +81,9 @@ def find_excluded_dirs():
         ('libs', 'oef-base', 'include', 'oef-base', 'monitoring'),
         ('libs', 'oef-base', 'include', 'oef-base', 'proto_comms'),
         ('libs', 'oef-base', 'include', 'oef-base', 'threading'),
-        ('libs', 'oef-base', 'include', 'oef-base', 'utils'),
-        ('libs', 'oef-base', 'src', 'comms'),
-        ('libs', 'oef-base', 'src', 'conversation'),
-        ('libs', 'oef-base', 'src', 'monitoring'),
-        ('libs', 'oef-base', 'src', 'proto_comms'),
-        ('libs', 'oef-base', 'src', 'threading'),
-        ('libs', 'oef-base', 'src', 'utils'))
-    directories_to_exclude = [abspath(join(PROJECT_ROOT, *name))
-                              for name in exclusions]
+        ('libs', 'oef-base', 'include', 'oef-base', 'utils'))
+    directories_to_exclude = [abspath(join(PROJECT_ROOT, *path))
+                              for path in exclusions]
 
     for root, dirs, files in os.walk(PROJECT_ROOT):
         if is_cmake_build_tree_root(root) or \
