@@ -38,13 +38,19 @@ OneHot<T>::OneHot(const OneHot::SPType &sp)
 template <typename T>
 std::shared_ptr<OpsSaveableParams> OneHot<T>::GetOpSaveableParams()
 {
-  SPType sp{};
-  sp.depth     = depth_;
-  sp.axis      = axis_;
-  sp.on_value  = on_value_;
-  sp.off_value = off_value_;
+  auto sp = std::make_shared<SPType>();
 
-  return std::make_shared<SPType>(sp);
+  sp->depth     = depth_;
+  sp->axis      = axis_;
+  sp->on_value  = on_value_;
+  sp->off_value = off_value_;
+
+  // Add base class savable params
+  auto ops_sp  = Ops<TensorType>::GetOpSaveableParams();
+  auto cast_sp = std::static_pointer_cast<OpsSaveableParams>(sp);
+  *cast_sp     = *(std::static_pointer_cast<OpsSaveableParams>(ops_sp));
+
+  return sp;
 }
 
 template <typename TensorType>

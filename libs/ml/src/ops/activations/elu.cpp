@@ -39,7 +39,7 @@ Elu<TensorType>::Elu(SPType const &sp)
 }
 
 template <typename TensorType>
-std::shared_ptr<OpsSaveableParams> Elu<TensorType>::GetOpit staSaveableParams()
+std::shared_ptr<OpsSaveableParams> Elu<TensorType>::GetOpSaveableParams()
 {
   auto sp = std::make_shared<SPType>();
   sp->a   = a_;
