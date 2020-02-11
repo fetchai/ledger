@@ -17,9 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "oef-base/comms/Endpoint.hpp"
-
 #include <memory>
+
+#include "oef-base/comms/Endpoint.hpp"
 
 class Core;
 

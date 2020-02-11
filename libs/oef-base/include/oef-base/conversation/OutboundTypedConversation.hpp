@@ -20,7 +20,6 @@
 #include "oef-base/conversation/OutboundConversation.hpp"
 
 #include <google/protobuf/message.h>
-
 #include <istream>
 #include <memory>
 

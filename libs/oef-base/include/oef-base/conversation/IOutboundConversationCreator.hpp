@@ -17,13 +17,13 @@
 //
 //------------------------------------------------------------------------------
 
-#include "oef-base/comms/ConstCharArrayBuffer.hpp"
-#include "oef-base/conversation/OutboundConversation.hpp"
-#include "oef-base/utils/Uri.hpp"
-
 #include <memory>
 #include <mutex>
 #include <unordered_map>
+
+#include "oef-base/comms/ConstCharArrayBuffer.hpp"
+#include "oef-base/conversation/OutboundConversation.hpp"
+#include "oef-base/utils/Uri.hpp"
 
 namespace google {
 namespace protobuf {
