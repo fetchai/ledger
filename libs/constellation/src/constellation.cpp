@@ -73,6 +73,7 @@ using ExecutorPtr = std::shared_ptr<Executor>;
 
 namespace fetch {
 namespace constellation {
+namespace {
 
 using BeaconSetupServicePtr = std::shared_ptr<beacon::BeaconSetupService>;
 using BeaconServicePtr      = std::shared_ptr<fetch::beacon::BeaconService>;
@@ -90,7 +91,6 @@ using TransactionStatusPtr  = ledger::TransactionStatusPtr;
 constexpr char const *LOGGING_NAME = "constellation";
 
 const std::size_t HTTP_THREADS{4};
-char const *      GENESIS_FILENAME = "genesis_file.json";
 
 class Defer
 {
@@ -369,6 +369,8 @@ TransactionStatusPtr CreateTransactionStatusCache(Config const &config)
 
   return ledger::TransactionStatusInterface::CreateTimeBasedCache();
 }
+
+}  // namespace
 
 /**
  * Construct a constellation instance

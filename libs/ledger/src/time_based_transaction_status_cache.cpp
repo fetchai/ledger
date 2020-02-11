@@ -38,14 +38,12 @@ using TxStatus = TimeBasedTransactionStatusCache::TxStatus;
  */
 TxStatus TimeBasedTransactionStatusCache::Query(Digest digest) const
 {
-  {
-    FETCH_LOCK(mtx_);
+  FETCH_LOCK(mtx_);
 
-    auto const it = cache_.find(digest);
-    if (cache_.end() != it)
-    {
-      return it->second.status;
-    }
+  auto const it = cache_.find(digest);
+  if (cache_.end() != it)
+  {
+    return it->second.status;
   }
 
   return {};
