@@ -31,6 +31,8 @@
 #include <utility>
 #include <vector>
 
+namespace {
+
 using namespace fetch::storage;
 
 class TestClass
@@ -350,3 +352,5 @@ TEST(mmap_random_access_stack, DISABLED_file_writing_and_recovery)
     stack.Close();
   }
 }
+
+}  // namespace

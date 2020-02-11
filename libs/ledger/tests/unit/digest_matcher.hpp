@@ -26,9 +26,9 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
-using ::testing::MatchResultListener;
 using ::testing::Matcher;
 using ::testing::MatcherInterface;
+using ::testing::MatchResultListener;
 
 namespace fetch {
 namespace ledger {

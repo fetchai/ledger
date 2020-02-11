@@ -22,8 +22,8 @@
 
 #include "benchmark/benchmark.h"
 
-using fetch::byte_array::ConstByteArray;
 using fetch::byte_array::ByteArray;
+using fetch::byte_array::ConstByteArray;
 using fetch::crypto::mcl::Generator;
 using RNG = fetch::random::LinearCongruentialGenerator;
 

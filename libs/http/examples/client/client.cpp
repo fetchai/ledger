@@ -25,8 +25,8 @@
 #include <iostream>
 #include <memory>
 
-using fetch::http::HttpClientInterface;
 using fetch::http::HttpClient;
+using fetch::http::HttpClientInterface;
 using fetch::http::HttpsClient;
 
 using ClientPtr = std::unique_ptr<HttpClientInterface>;
