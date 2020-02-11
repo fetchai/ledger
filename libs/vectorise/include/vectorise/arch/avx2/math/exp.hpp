@@ -31,7 +31,7 @@ static const fixed_point::fp64_t Exp_P03(0, 0x038E38E3);  //  1 / 72
 static const fixed_point::fp64_t Exp_P04(0, 0x00410410);  //  1 / 1008
 static const fixed_point::fp64_t Exp_P05(0, 0x00022ACD);  //  1 / 30240
 
-static const fixed_point::fp64_t integer_mask(0xffffffff, 0);  //  1 / 30240
+static const fixed_point::fp64_t integer_mask(0xffffffff, nullptr);  //  1 / 30240
 
 static const fixed_point::fp64_t one_over_LN2{fixed_point::fp64_t::_1 /
                                               fixed_point::fp64_t::CONST_LN2};  //  1 / CONST_LN2
@@ -228,9 +228,9 @@ inline VectorRegister<fixed_point::fp64_t, 128> Exp(
   constexpr std::size_t           size = VectorRegister<fixed_point::fp64_t, 128>::E_BLOCK_COUNT;
   alignas(16) fixed_point::fp64_t A[size];
   x.Store(A);
-  for (std::size_t i = 0; i < size; i++)
+  for (auto &val : A)
   {
-    A[i] = fixed_point::fp64_t::Exp(A[i]);
+    val = fixed_point::fp64_t::Exp(val);
   }
   return {A};
 }
@@ -241,9 +241,9 @@ inline VectorRegister<fixed_point::fp64_t, 256> Exp(
   constexpr std::size_t           size = VectorRegister<fixed_point::fp64_t, 256>::E_BLOCK_COUNT;
   alignas(32) fixed_point::fp64_t A[size];
   x.Store(A);
-  for (std::size_t i = 0; i < size; i++)
+  for (auto &val : A)
   {
-    A[i] = fixed_point::fp64_t::Exp(A[i]);
+    val = fixed_point::fp64_t::Exp(val);
   }
   return {A};
 }
@@ -253,9 +253,9 @@ inline VectorRegister<float, 256> Exp(VectorRegister<float, 256> const &x)
   constexpr std::size_t size = VectorRegister<float, 256>::E_BLOCK_COUNT;
   alignas(32) float     A[size];
   x.Store(A);
-  for (std::size_t i = 0; i < size; i++)
+  for (auto &val : A)
   {
-    A[i] = static_cast<float>(std::exp(static_cast<double>(A[i])));
+    val = static_cast<float>(std::exp(static_cast<double>(val)));
   }
   return {A};
 }
@@ -265,9 +265,9 @@ inline VectorRegister<double, 256> Exp(VectorRegister<double, 256> const &x)
   constexpr std::size_t size = VectorRegister<double, 256>::E_BLOCK_COUNT;
   alignas(32) double    A[size];
   x.Store(A);
-  for (std::size_t i = 0; i < size; i++)
+  for (auto &val : A)
   {
-    A[i] = std::exp(A[i]);
+    val = std::exp(val);
   }
   return {A};
 }
@@ -277,9 +277,9 @@ inline VectorRegister<int64_t, 256> Exp(VectorRegister<int64_t, 256> const &x)
   constexpr std::size_t size = VectorRegister<int64_t, 256>::E_BLOCK_COUNT;
   alignas(32) int64_t   A[size];
   x.Store(A);
-  for (std::size_t i = 0; i < size; i++)
+  for (auto &val : A)
   {
-    A[i] = static_cast<int64_t>(std::exp(static_cast<int64_t>(A[i])));
+    val = static_cast<int64_t>(std::exp(static_cast<int64_t>(val)));
   }
   return {A};
 }
@@ -289,9 +289,9 @@ inline VectorRegister<int32_t, 256> Exp(VectorRegister<int32_t, 256> const &x)
   constexpr std::size_t size = VectorRegister<int32_t, 256>::E_BLOCK_COUNT;
   alignas(32) int32_t   A[size];
   x.Store(A);
-  for (std::size_t i = 0; i < size; i++)
+  for (auto &val : A)
   {
-    A[i] = static_cast<int32_t>(std::exp(static_cast<int32_t>(A[i])));
+    val = static_cast<int32_t>(std::exp(static_cast<int32_t>(val)));
   }
   return {A};
 }
@@ -301,9 +301,9 @@ inline VectorRegister<int16_t, 256> Exp(VectorRegister<int16_t, 256> const &x)
   constexpr std::size_t size = VectorRegister<int16_t, 256>::E_BLOCK_COUNT;
   alignas(32) int16_t   A[size];
   x.Store(A);
-  for (std::size_t i = 0; i < size; i++)
+  for (auto &val : A)
   {
-    A[i] = static_cast<int16_t>(std::exp(static_cast<int16_t>(A[i])));
+    val = static_cast<int16_t>(std::exp(static_cast<int16_t>(val)));
   }
   return {A};
 }
@@ -313,9 +313,9 @@ inline VectorRegister<int8_t, 256> Exp(VectorRegister<int8_t, 256> const &x)
   constexpr std::size_t size = VectorRegister<int8_t, 256>::E_BLOCK_COUNT;
   alignas(32) int8_t    A[size];
   x.Store(A);
-  for (std::size_t i = 0; i < size; i++)
+  for (auto &val : A)
   {
-    A[i] = static_cast<int8_t>(std::exp(static_cast<int8_t>(A[i])));
+    val = static_cast<int8_t>(std::exp(static_cast<int8_t>(val)));
   }
   return {A};
 }
