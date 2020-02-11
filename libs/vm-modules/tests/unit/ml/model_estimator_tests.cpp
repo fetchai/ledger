@@ -641,11 +641,11 @@ TEST_F(VMModelEstimatorTests, estimator_evaluate_with_metrics)
 
           // Calling Fit is needed to set the data
           model_estimator.Fit(vm_ptr_tensor_data, vm_ptr_tensor_labels, batch_size);
+          model.Fit(vm_ptr_tensor_data, vm_ptr_tensor_labels, batch_size);
 
-          // TODO 9999: Fix evaluate after fit with no optimiser
-          // ChargeAmount const cost       = model.ChargeForward();
-          // ChargeAmount const val = n_data * cost;
-          // EXPECT_EQ(model.EstimateEvaluate(), static_cast<ChargeAmount>(val) + 1);
+          ChargeAmount const cost = model.ChargeForward();
+          ChargeAmount const val  = n_data * cost;
+          EXPECT_EQ(model.EstimateEvaluate(), static_cast<ChargeAmount>(val));
         }
       }
     }
