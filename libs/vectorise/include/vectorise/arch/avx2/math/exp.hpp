@@ -40,6 +40,7 @@ static const VectorRegister<fixed_point::fp32_t, 128> FP32_128_INTEGER_MASK(
     static_cast<fixed_point::fp32_t>(integer_mask));
 static const VectorRegister<fixed_point::fp32_t, 256> FP32_256_INTEGER_MASK(
     static_cast<fixed_point::fp32_t>(integer_mask));
+// TODO (ML-522) ; implement fp64 exp vectorisation
 // static const VectorRegister<fixed_point::fp64_t, 128> FP64_128_INTEGER_MASK{integer_mask};
 // static const VectorRegister<fixed_point::fp64_t, 256> FP64_256_INTEGER_MASK{integer_mask};
 
