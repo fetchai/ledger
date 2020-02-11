@@ -36,8 +36,6 @@
 #include <google/protobuf/message.h>
 #include <utility>
 
-// ------------------------------------------------------------------------------------------
-
 class OutboundSearchConversationWorkerTask : public OutboundConversationWorkerTask
 {
 public:

@@ -23,8 +23,8 @@
 #include "oef-base/utils/Uri.hpp"
 
 #include "openssl/ssl.h"
-#include <cerrno>  // for fopen
-#include <cstdio>  // for fopen
+#include <cerrno>
+#include <cstdio>
 #include <functional>
 #include <memory>
 #include <system_error>

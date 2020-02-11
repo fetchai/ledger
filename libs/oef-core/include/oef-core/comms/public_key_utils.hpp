@@ -20,8 +20,8 @@
 #include "logging/logging.hpp"
 #include "network/fetch_asio.hpp"
 
-#include <cerrno>  // for fopen
-#include <cstdio>  // for fopen
+#include <cerrno>
+#include <cstdio>
 #include <exception>
 
 #include "openssl/crypto.h"

@@ -21,7 +21,7 @@
 #include <string>
 #include <vector>
 
-#i #include "logging/logging.hpp"
+#include "logging/logging.hpp"
 #include "oef-base/comms/Core.hpp"
 #include "oef-base/comms/OefListenerSet.hpp"
 #include "oef-base/conversation/OutboundConversations.hpp"
