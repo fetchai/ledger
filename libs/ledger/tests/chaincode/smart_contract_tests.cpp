@@ -38,15 +38,15 @@ using ::testing::InSequence;
 using ::testing::Return;
 
 using fetch::byte_array::ConstByteArray;
-using fetch::core::IsIn;
-using fetch::string::Replace;
 using fetch::chain::Address;
+using fetch::core::IsIn;
 using fetch::ledger::SmartContract;
 using fetch::storage::ResourceAddress;
+using fetch::string::Replace;
 using fetch::variant::Variant;
 using ContractDigest = ConstByteArray;
-using fetch::chain::TransactionBuilder;
 using fetch::chain::Transaction;
+using fetch::chain::TransactionBuilder;
 
 template <typename T>
 ConstByteArray RawBytes(T value)

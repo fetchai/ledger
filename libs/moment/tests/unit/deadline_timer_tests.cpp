@@ -23,8 +23,8 @@
 #include <chrono>
 #include <memory>
 
-using fetch::moment::DeadlineTimer;
 using fetch::moment::CreateAdjustableClock;
+using fetch::moment::DeadlineTimer;
 
 TEST(DeadlineTimerTests, BasicChecks)
 {

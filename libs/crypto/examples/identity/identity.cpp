@@ -21,8 +21,8 @@
 
 #include <iostream>
 
-using fetch::crypto::ECDSASigner;
 using fetch::byte_array::ToBase64;
+using fetch::crypto::ECDSASigner;
 
 int main()
 {

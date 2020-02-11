@@ -29,12 +29,12 @@
 #include <memory>
 
 using fetch::byte_array::ConstByteArray;
-using fetch::crypto::Identity;
-using fetch::crypto::ECDSASigner;
-using fetch::crypto::SHA256;
-using fetch::crypto::Hash;
-using fetch::chain::Address;
 using fetch::byte_array::ToBase58;
+using fetch::chain::Address;
+using fetch::crypto::ECDSASigner;
+using fetch::crypto::Hash;
+using fetch::crypto::Identity;
+using fetch::crypto::SHA256;
 
 class AddressTests : public ::testing::Test
 {

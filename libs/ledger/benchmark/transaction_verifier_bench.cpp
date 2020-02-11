@@ -27,8 +27,8 @@
 #include <condition_variable>
 #include <thread>
 
-using fetch::ledger::TransactionVerifier;
 using fetch::crypto::ECDSASigner;
+using fetch::ledger::TransactionVerifier;
 
 namespace {
 

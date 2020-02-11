@@ -31,10 +31,10 @@
 
 namespace {
 
-using fetch::ledger::Block;
-using fetch::ledger::StakeSnapshot;
-using fetch::ledger::StakeManager;
 using fetch::crypto::Identity;
+using fetch::ledger::Block;
+using fetch::ledger::StakeManager;
+using fetch::ledger::StakeSnapshot;
 
 using RNG             = fetch::random::LinearCongruentialGenerator;
 using StakeManagerPtr = std::unique_ptr<StakeManager>;

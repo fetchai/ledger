@@ -26,9 +26,9 @@
 #include <string>
 #include <unordered_map>
 
-using ::testing::MatchResultListener;
 using ::testing::Matcher;
 using ::testing::MatcherInterface;
+using ::testing::MatchResultListener;
 
 namespace fetch {
 namespace ledger {

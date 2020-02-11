@@ -123,6 +123,22 @@ fetch::vm::Ptr<fetch::vm_modules::ml::model::VMModel> vmSequentialModel(
   return model;
 }
 
+fetch::vm::Ptr<fetch::vm::Array<uint64_t>> CreateArray(std::shared_ptr<fetch::vm::VM> &vm,
+                                                       std::vector<uint64_t> const &   values)
+{
+  std::size_t                                size = values.size();
+  fetch::vm::Ptr<fetch::vm::Array<uint64_t>> array =
+      vm->CreateNewObject<fetch::vm::Array<uint64_t>>(vm->GetTypeId<uint64_t>(),
+                                                      static_cast<int32_t>(size));
+
+  for (std::size_t i{0}; i < size; ++i)
+  {
+    array->elements[i] = values[i];
+  }
+
+  return array;
+}
+
 ////////////////
 // Benchmarks //
 ////////////////
@@ -209,6 +225,193 @@ BENCHMARK(BM_AddLayer)->Args({3000, 10, 0})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_AddLayer)->Args({10, 3000, 0})->Unit(::benchmark::kMicrosecond);
 //*/
 
+struct BM_AddConvLayer_config
+{
+  explicit BM_AddConvLayer_config(::benchmark::State const &state)
+  {
+    input_channels  = static_cast<SizeType>(state.range(0));
+    output_channels = static_cast<SizeType>(state.range(1));
+    kernel_size     = static_cast<SizeType>(state.range(2));
+    stride_size     = static_cast<SizeType>(state.range(3));
+    activation      = static_cast<bool>(state.range(4));
+  }
+
+  SizeType input_channels;
+  SizeType output_channels;
+  SizeType kernel_size;
+  SizeType stride_size;
+  bool     activation;
+};
+
+void BM_AddConvLayer(::benchmark::State &state)
+{
+  for (auto _ : state)
+  {
+    state.PauseTiming();
+
+    // Get config
+    BM_AddConvLayer_config config{state};
+
+    // model
+    auto vm    = NewVM();
+    auto model = vmSequentialModel(vm);
+    // arguments list
+    auto layer_type      = vmString(vm, "conv");
+    auto activation_type = vmString(vm, "relu");
+
+    if (config.activation)
+    {
+      state.counters["charge"] = static_cast<double>(
+          model->Estimator().LayerAddConv(layer_type, config.output_channels, config.input_channels,
+                                          config.kernel_size, config.stride_size));
+
+      state.counters["PaddedSizesSum"] =
+          static_cast<double>(model->Estimator().GetPaddedSizesSum());
+      state.counters["ForwardCost"] = static_cast<double>(model->Estimator().GetForwardCost());
+      state.counters["OpsCount"]    = static_cast<double>(model->Estimator().GetOpsCount());
+      state.counters["SizesSum"]    = static_cast<double>(model->Estimator().GetSizesSum());
+
+      state.ResumeTiming();
+
+      model->LayerAddConv(layer_type, config.output_channels, config.input_channels,
+                          config.kernel_size, config.stride_size);
+    }
+    else
+    {
+      state.counters["charge"] = static_cast<double>(model->Estimator().LayerAddConvActivation(
+          layer_type, config.output_channels, config.input_channels, config.kernel_size,
+          config.stride_size, activation_type));
+
+      state.counters["PaddedSizesSum"] =
+          static_cast<double>(model->Estimator().GetPaddedSizesSum());
+      state.counters["ForwardCost"] = static_cast<double>(model->Estimator().GetForwardCost());
+      state.counters["OpsCount"]    = static_cast<double>(model->Estimator().GetOpsCount());
+      state.counters["SizesSum"]    = static_cast<double>(model->Estimator().GetSizesSum());
+
+      state.ResumeTiming();
+      model->LayerAddConvActivation(layer_type, config.output_channels, config.input_channels,
+                                    config.kernel_size, config.stride_size, activation_type);
+    }
+  }
+}
+
+// (BM_AddConvLayer) output_channels, input_channels, kernel_size, stride_size, activation
+BENCHMARK(BM_AddConvLayer)->Args({1, 1, 1, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_AddConvLayer)->Args({10, 10, 1, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_AddConvLayer)->Args({10, 10, 5, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_AddConvLayer)->Args({10, 10, 10, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_AddConvLayer)->Args({10, 10, 10, 10, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_AddConvLayer)->Args({1000, 1000, 1, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_AddConvLayer)->Args({1000, 1000, 5, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_AddConvLayer)->Args({1000, 1000, 10, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_AddConvLayer)->Args({1000, 1000, 100, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_AddConvLayer)->Args({1000, 1000, 100, 10, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_AddConvLayer)->Args({100, 10, 1, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_AddConvLayer)->Args({100, 10, 10, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_AddConvLayer)->Args({1000, 10, 1, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_AddConvLayer)->Args({1000, 10, 10, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_AddConvLayer)->Args({1000, 10, 10, 10, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_AddConvLayer)->Args({10, 100, 1, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_AddConvLayer)->Args({10, 100, 10, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_AddConvLayer)->Args({10, 1000, 1, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_AddConvLayer)->Args({10, 1000, 10, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_AddConvLayer)->Args({100, 100, 1, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_AddConvLayer)->Args({100, 100, 1, 10, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_AddConvLayer)->Args({100, 1000, 1, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_AddConvLayer)->Args({1, 1000, 1, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_AddConvLayer)->Args({1000, 1, 1, 1, 0})->Unit(::benchmark::kMicrosecond);
+//*/
+
+struct BM_Conv_config
+{
+  explicit BM_Conv_config(::benchmark::State const &state)
+  {
+    input_channels  = static_cast<SizeType>(state.range(0));
+    output_channels = static_cast<SizeType>(state.range(1));
+    kernel_size     = static_cast<SizeType>(state.range(2));
+    stride_size     = static_cast<SizeType>(state.range(3));
+    batch_size      = static_cast<SizeType>(state.range(4));
+    activation      = static_cast<bool>(state.range(5));
+  }
+
+  SizeType input_channels;
+  SizeType output_channels;
+  SizeType kernel_size;
+  SizeType stride_size;
+  SizeType batch_size;
+  bool     activation;
+};
+
+void BM_ConvLayer(::benchmark::State &state)
+{
+  // Get config
+  BM_Conv_config config{state};
+
+  for (auto _ : state)
+  {
+
+    state.PauseTiming();
+
+    // model
+    auto vm    = NewVM();
+    auto model = vmSequentialModel(vm);
+
+    // arguments list
+    auto layer_type       = vmString(vm, "conv");
+    auto input_layer_type = vmString(vm, "input");
+    auto activation_type  = vmString(vm, "relu");
+    auto loss             = vmString(vm, "mse");
+    auto optimiser        = vmString(vm, "adam");
+
+    std::vector<SizeType> data_shape{config.input_channels, config.batch_size};
+    auto                  data        = vmTensor(vm, data_shape);
+    auto                  input_shape = CreateArray(vm, data_shape);
+
+    state.counters["charge"] = static_cast<double>(
+        model->Estimator().LayerAddConv(layer_type, config.output_channels, config.input_channels,
+                                        config.kernel_size, config.stride_size));
+    state.counters["ForwardCost"]    = static_cast<double>(model->Estimator().GetForwardCost());
+    state.counters["OpsCount"]       = static_cast<double>(model->Estimator().GetOpsCount());
+    state.counters["PaddedSizesSum"] = static_cast<double>(model->Estimator().GetPaddedSizesSum());
+    state.counters["SizesSum"]       = static_cast<double>(model->Estimator().GetSizesSum());
+
+    model->LayerAddInput(input_layer_type, input_shape);
+    model->LayerAddConv(layer_type, config.output_channels, config.input_channels,
+                        config.kernel_size, config.stride_size);
+    model->CompileSequential(loss, optimiser);
+
+    state.ResumeTiming();
+    auto res = model->Predict(data);
+  }
+}
+
+// (BM_ConvLayer) output_channels, input_channels, kernel_size, stride_size, batch_size, activation
+BENCHMARK(BM_ConvLayer)->Args({1, 1, 1, 1, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_ConvLayer)->Args({10, 10, 1, 1, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_ConvLayer)->Args({10, 10, 5, 1, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_ConvLayer)->Args({10, 10, 10, 1, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_ConvLayer)->Args({10, 10, 10, 10, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_ConvLayer)->Args({1000, 1000, 1, 1, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_ConvLayer)->Args({1000, 1000, 5, 1, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_ConvLayer)->Args({1000, 1000, 10, 1, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_ConvLayer)->Args({1000, 1000, 100, 1, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_ConvLayer)->Args({1000, 1000, 100, 10, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_ConvLayer)->Args({100, 10, 1, 1, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_ConvLayer)->Args({100, 10, 10, 1, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_ConvLayer)->Args({1000, 10, 1, 1, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_ConvLayer)->Args({1000, 10, 10, 1, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_ConvLayer)->Args({1000, 10, 10, 10, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_ConvLayer)->Args({10, 100, 1, 1, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_ConvLayer)->Args({10, 100, 10, 1, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_ConvLayer)->Args({10, 1000, 1, 1, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_ConvLayer)->Args({10, 1000, 10, 1, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_ConvLayer)->Args({100, 100, 1, 1, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_ConvLayer)->Args({100, 100, 1, 10, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_ConvLayer)->Args({100, 1000, 1, 1, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_ConvLayer)->Args({1, 1000, 1, 1, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_ConvLayer)->Args({1000, 1, 1, 1, 1, 0})->Unit(::benchmark::kMicrosecond);
+//*/
+
 ///*
 struct BM_Predict_config
 {
@@ -250,7 +453,7 @@ void BM_Predict(::benchmark::State &state)
     // predict
     std::vector<SizeType> data_shape{config.sizes[0], config.batch_size};
     auto                  data    = vmTensor(vm, data_shape);
-    state.counters["charge"]      = static_cast<double>(model->Estimator().Predict(data));
+    state.counters["charge"]      = static_cast<double>(model->EstimatePredict(data));
     state.counters["ForwardCost"] = static_cast<double>(model->Estimator().GetForwardCost());
     state.counters["OpsCount"]    = static_cast<double>(model->Estimator().GetOpsCount());
 
@@ -690,22 +893,6 @@ BENCHMARK(BM_Fit)
     ->Args({100, 100, 8, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0})
     ->Unit(::benchmark::kMicrosecond);
 //*/
-
-fetch::vm::Ptr<fetch::vm::Array<uint64_t>> CreateArray(std::shared_ptr<fetch::vm::VM> &vm,
-                                                       std::vector<uint64_t> const &   values)
-{
-  std::size_t                                size = values.size();
-  fetch::vm::Ptr<fetch::vm::Array<uint64_t>> array =
-      vm->CreateNewObject<fetch::vm::Array<uint64_t>>(vm->GetTypeId<uint64_t>(),
-                                                      static_cast<int32_t>(size));
-
-  for (std::size_t i{0}; i < size; ++i)
-  {
-    array->elements[i] = values[i];
-  }
-
-  return array;
-}
 
 int64_t getId(std::string const &str)
 {

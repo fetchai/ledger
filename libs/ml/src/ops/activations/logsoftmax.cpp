@@ -39,9 +39,15 @@ LogSoftmax<TensorType>::LogSoftmax(SPType const &sp)
 template <typename TensorType>
 std::shared_ptr<OpsSaveableParams> LogSoftmax<TensorType>::GetOpSaveableParams()
 {
-  auto sp_ptr  = std::make_shared<SPType>();
-  sp_ptr->axis = axis_;
-  return sp_ptr;
+  auto sp  = std::make_shared<SPType>();
+  sp->axis = axis_;
+
+  // Add base class savable params
+  auto ops_sp  = Ops<TensorType>::GetOpSaveableParams();
+  auto cast_sp = std::static_pointer_cast<OpsSaveableParams>(sp);
+  *cast_sp     = *(std::static_pointer_cast<OpsSaveableParams>(ops_sp));
+
+  return sp;
 }
 
 template <typename TensorType>

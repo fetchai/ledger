@@ -36,12 +36,12 @@
 #include <memory>
 #include <random>
 
-using fetch::meta::IsLog2;
-using fetch::meta::Log2;
 using fetch::BitVector;
 using fetch::Digest;
-using fetch::DigestSet;
 using fetch::DigestMap;
+using fetch::DigestSet;
+using fetch::meta::IsLog2;
+using fetch::meta::Log2;
 
 class BasicMinerTests : public ::testing::TestWithParam<std::size_t>
 {

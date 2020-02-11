@@ -34,8 +34,8 @@ class OutboundSearchConversationCreator : public IOutboundConversationCreator
 {
 public:
   using Lock = IOutboundConversationCreator::Lock;
-  using IOutboundConversationCreator::mutex_;
   using IOutboundConversationCreator::ident2conversation_;
+  using IOutboundConversationCreator::mutex_;
 
   OutboundSearchConversationCreator(const Uri &search_uri, Core &core);
   ~OutboundSearchConversationCreator() override;

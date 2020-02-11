@@ -30,8 +30,8 @@
 
 namespace {
 
-using fetch::ledger::StakeSnapshot;
 using fetch::crypto::Identity;
+using fetch::ledger::StakeSnapshot;
 
 using RNG              = fetch::random::LinearCongruentialGenerator;
 using StakeSnapshotPtr = std::unique_ptr<StakeSnapshot>;

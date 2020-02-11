@@ -26,11 +26,11 @@
 
 namespace {
 
+using fetch::ledger::TransactionArchiver;
 using testing::_;
 using testing::InSequence;
-using testing::Return;
 using testing::NiceMock;
-using fetch::ledger::TransactionArchiver;
+using testing::Return;
 
 class TransactionArchiverTests : public ::testing::Test
 {

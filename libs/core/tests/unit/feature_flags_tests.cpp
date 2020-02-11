@@ -24,8 +24,8 @@
 
 namespace {
 
-using fetch::core::FeatureFlags;
 using fetch::byte_array::ConstByteArray;
+using fetch::core::FeatureFlags;
 
 using FeatureFlagsPtr = std::unique_ptr<FeatureFlags>;
 

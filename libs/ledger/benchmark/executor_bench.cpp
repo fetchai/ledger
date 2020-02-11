@@ -34,14 +34,14 @@
 
 namespace {
 
-using fetch::ledger::Executor;
+using fetch::BitVector;
+using fetch::chain::Address;
 using fetch::chain::Transaction;
 using fetch::chain::TransactionBuilder;
-using fetch::chain::Address;
-using fetch::ledger::TokenContract;
-using fetch::ledger::StateSentinelAdapter;
 using fetch::crypto::ECDSASigner;
-using fetch::BitVector;
+using fetch::ledger::Executor;
+using fetch::ledger::StateSentinelAdapter;
+using fetch::ledger::TokenContract;
 
 std::shared_ptr<Transaction> CreateSampleTransaction()
 {

@@ -36,8 +36,8 @@
 
 using namespace std::chrono_literals;
 
-using fetch::generics::MilliTimer;
 using fetch::core::TrimToSize;
+using fetch::generics::MilliTimer;
 
 namespace fetch {
 namespace beacon {

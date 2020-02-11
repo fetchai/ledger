@@ -34,10 +34,10 @@ namespace {
 
 using fetch::byte_array::ConstByteArray;
 using fetch::byte_array::FromBase64;
+using fetch::network::Peer;
 using fetch::shards::Manifest;
 using fetch::shards::ManifestEntry;
 using fetch::shards::ServiceIdentifier;
-using fetch::network::Peer;
 
 /**
  * Generate a default simple manifest for all the services provided

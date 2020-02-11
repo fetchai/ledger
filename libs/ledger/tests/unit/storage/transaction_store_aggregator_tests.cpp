@@ -25,11 +25,11 @@
 
 namespace {
 
-using ::testing::StrictMock;
-using ::testing::_;
-using ::testing::Return;
 using fetch::chain::Transaction;
 using fetch::ledger::TransactionStoreAggregator;
+using ::testing::_;
+using ::testing::Return;
+using ::testing::StrictMock;
 
 class TransactionStoreAggregatorTests : public ::testing::Test
 {
