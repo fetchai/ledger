@@ -19,6 +19,7 @@
 #include "math/fundamental_operators.hpp"
 #include "math/standard_functions/pow.hpp"
 #include "math/standard_functions/sqrt.hpp"
+#include "ml/charge_estimation/types.hpp"
 #include "ml/core/graph.hpp"
 #include "ml/ops/trainable.hpp"
 #include "ml/optimisation/adagrad_optimiser.hpp"
@@ -111,6 +112,29 @@ void AdaGradOptimiser<T>::ResetCache()
   {
     val.Fill(DataType{0});
   }
+}
+
+template <class T>
+OperationsCount AdaGradOptimiser<T>::ChargeConstruct(std::shared_ptr<Graph<T>> graph)
+{
+  auto trainables = graph->GetTrainables();
+
+  OperationsCount op_cnt{1};
+  for (auto &train : trainables)
+  {
+    // Graph need to be compiled in order to deduce all weight sizes
+    // TODO 2423: Compile shouldn't be needed
+    if (!train->IsInit())
+    {
+      graph->Compile();
+    }
+
+    auto     weight    = train->GetWeights();
+    SizeType data_size = TensorType::PaddedSizeFromShape(weight.shape());
+    op_cnt += data_size * 2;
+  }
+
+  return op_cnt;
 }
 
 ///////////////////////////////

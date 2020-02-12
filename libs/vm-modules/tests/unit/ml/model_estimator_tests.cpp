@@ -157,7 +157,7 @@ public:
   ChargeAmount CompileSequentialCharge(VmModelPtr &model, VmStringPtr const &loss,
                                        VmStringPtr const &optimiser)
   {
-    return model->Estimator().CompileSequential(loss, optimiser);
+    return model->EstimateCompileSequential(loss, optimiser);
   }
 
   ChargeAmount FitCharge(VmModelPtr &model, VmTensorPtr const &data, VmTensorPtr const &label,

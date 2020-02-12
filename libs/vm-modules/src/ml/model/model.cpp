@@ -303,9 +303,9 @@ void VMModel::Bind(Module &module, bool const experimental_enabled)
       .CreateMemberFunction("add", &VMModel::LayerAddDenseActivation,
                             UseMemberEstimator(&VMModel::EstimateLayerAddDenseActivation))
       .CreateMemberFunction("compile", &VMModel::CompileSequential,
-                            UseEstimator(&ModelEstimator::CompileSequential))
+                            UseMemberEstimator(&VMModel::EstimateCompileSequential))
       .CreateMemberFunction("compile", &VMModel::CompileSequentialWithMetrics,
-                            UseEstimator(&ModelEstimator::CompileSequentialWithMetrics))
+                            UseMemberEstimator(&VMModel::EstimateCompileSequentialWithMetrics))
       .CreateMemberFunction("fit", &VMModel::Fit, UseEstimator(&ModelEstimator::Fit))
       .CreateMemberFunction("evaluate", &VMModel::Evaluate,
                             UseMemberEstimator(&VMModel::EstimateEvaluate))
@@ -1016,6 +1016,97 @@ ChargeAmount VMModel::EstimateLayerAddDenseAutoInputs(
   FETCH_UNUSED(layer);
   FETCH_UNUSED(hidden_nodes);
   return MaximumCharge(layer->string() + " is not yet implemented.");
+}
+
+/**
+ * @brief VMModel::EstimateCompileSequential
+ * @param loss a valid loss function ["mse", ...]
+ * @param optimiser a valid optimiser name ["adam", "sgd" ...]
+ */
+ChargeAmount VMModel::EstimateCompileSequential(Ptr<String> const &loss,
+                                                Ptr<String> const &optimiser)
+{
+  ChargeAmount ret{vm::MAXIMUM_CHARGE};
+
+  std::vector<MetricType> mets;
+  try
+  {
+    ret = EstimateCompileSequentialImplementation(loss, optimiser, mets);
+  }
+  catch (std::exception const &e)
+  {
+    vm_->RuntimeError("Compile sequential failed: " + std::string(e.what()));
+    return vm::MAXIMUM_CHARGE;
+  }
+  return ret;
+}
+
+fetch::vm::ChargeAmount VMModel::EstimateCompileSequentialImplementation(
+    fetch::vm::Ptr<fetch::vm::String> const &      loss,
+    fetch::vm::Ptr<fetch::vm::String> const &      optimiser,
+    std::vector<fetch::ml::ops::MetricType> const &metrics)
+{
+  ChargeAmount op_cnt{vm::MAXIMUM_CHARGE};
+
+  try
+  {
+    LossType const      loss_type      = ParseName(loss->string(), losses_, "loss function");
+    OptimiserType const optimiser_type = ParseName(optimiser->string(), optimisers_, "optimiser");
+    SequentialModelPtr  me             = GetMeAsSequentialIfPossible();
+    op_cnt += 3;
+
+    if (me->LayerCount() == 0)
+    {
+      vm_->RuntimeError("Can not compile an empty sequential model, please add layers first.");
+      return vm::MAXIMUM_CHARGE;
+    }
+
+    // PrepareDataloader();
+    op_cnt += 5;
+
+    op_cnt += me->ChargeCompile(optimiser_type, loss_type, metrics);
+  }
+  catch (std::exception const &e)
+  {
+    vm_->RuntimeError("Compilation of a sequential model failed : " + std::string(e.what()));
+    return MAXIMUM_CHARGE;
+  }
+  // set compiled flag
+  op_cnt += 1;
+
+  return op_cnt;
+}
+
+/**
+ * @brief VMModel::EstimateCompileSequentialWithMetrics
+ * @param loss a valid loss function ["mse", ...]
+ * @param optimiser a valid optimiser name ["adam", "sgd" ...]
+ * @param metrics an array of valid metric names ["categorical accuracy", "mse" ...]
+ */
+ChargeAmount VMModel::EstimateCompileSequentialWithMetrics(
+    Ptr<String> const &loss, Ptr<String> const &optimiser,
+    Ptr<vm::Array<Ptr<String>>> const &metrics)
+{
+  try
+  {
+    // Make vector<MetricType> from vm::Array
+    std::size_t const       n_metrics = metrics->elements.size();
+    std::vector<MetricType> mets;
+    mets.reserve(n_metrics);
+
+    for (std::size_t i = 0; i < n_metrics; ++i)
+    {
+      Ptr<String> ptr_string = metrics->elements.at(i);
+      MetricType  mt         = ParseName(ptr_string->string(), metrics_, "metric");
+      mets.emplace_back(mt);
+    }
+    return EstimateCompileSequentialImplementation(loss, optimiser, mets);
+  }
+  catch (std::exception const &e)
+  {
+    vm_->RuntimeError("Compile model failed: " + std::string(e.what()));
+    return MAXIMUM_CHARGE;
+  }
 }
 
 }  // namespace model

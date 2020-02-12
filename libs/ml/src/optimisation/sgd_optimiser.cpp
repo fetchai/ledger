@@ -114,6 +114,29 @@ void SGDOptimiser<T>::ApplyGradients(SizeType batch_size)
   this->graph_->ApplySparseGradients(this->gradients_, rows);
 }
 
+template <class T>
+OperationsCount SGDOptimiser<T>::ChargeConstruct(std::shared_ptr<Graph<T>> graph)
+{
+  auto trainables = graph->GetTrainables();
+
+  OperationsCount op_cnt{1};
+  for (auto &train : trainables)
+  {
+    // Graph need to be compiled in order to deduce all weight sizes
+    // TODO 2423: Compile shouldn't be needed
+    if (!train->IsInit())
+    {
+      graph->Compile();
+    }
+
+    auto     weight    = train->GetWeights();
+    SizeType data_size = TensorType::PaddedSizeFromShape(weight.shape());
+    op_cnt += data_size * 1;
+  }
+
+  return op_cnt;
+}
+
 ///////////////////////////////
 /// EXPLICIT INSTANTIATIONS ///
 ///////////////////////////////

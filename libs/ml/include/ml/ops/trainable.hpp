@@ -48,6 +48,7 @@ public:
   using RegPtrType   = std::shared_ptr<fetch::ml::regularisers::Regulariser<T>>;
 
   virtual TensorType const &                         GetWeights() const                      = 0;
+  virtual bool                                       IsInit() const                          = 0;
   virtual void                                       SetWeights(TensorType const &new_value) = 0;
   virtual TensorType const &                         GetGradientsReferences() const          = 0;
   virtual SizeSet const &                            GetUpdatedRowsReferences() const        = 0;

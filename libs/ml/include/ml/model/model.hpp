@@ -114,6 +114,9 @@ public:
 
   virtual fetch::ml::OperationsCount ChargeForward() const;
   virtual fetch::ml::OperationsCount ChargeBackward() const;
+  virtual fetch::ml::OperationsCount ChargeCompile(
+      OptimiserType optimiser_type, ops::LossType loss_type,
+      std::vector<ops::MetricType> const &metrics) const;
 
 protected:
   ModelConfig<DataType> model_config_;

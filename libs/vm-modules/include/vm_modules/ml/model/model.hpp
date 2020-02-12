@@ -210,6 +210,20 @@ public:
   fetch::vm::ChargeAmount EstimateLayerAddDenseAutoInputs(
       fetch::vm::Ptr<fetch::vm::String> const &layer, math::SizeType const &hidden_nodes);
 
+  fetch::vm::ChargeAmount EstimateCompileSequential(
+      fetch::vm::Ptr<fetch::vm::String> const &loss,
+      fetch::vm::Ptr<fetch::vm::String> const &optimisers);
+
+  fetch::vm::ChargeAmount EstimateCompileSequentialImplementation(
+      fetch::vm::Ptr<fetch::vm::String> const &      loss,
+      fetch::vm::Ptr<fetch::vm::String> const &      optimiser,
+      std::vector<fetch::ml::ops::MetricType> const &metrics);
+
+  fetch::vm::ChargeAmount EstimateCompileSequentialWithMetrics(
+      fetch::vm::Ptr<fetch::vm::String> const &                    loss,
+      fetch::vm::Ptr<fetch::vm::String> const &                    optimiser,
+      fetch::vm::Ptr<vm::Array<vm::Ptr<fetch::vm::String>>> const &metrics);
+
   fetch::vm::ChargeAmount EstimateEvaluate();
 
   fetch::vm::ChargeAmount EstimatePredict(vm::Ptr<vm_modules::math::VMTensor> const &data);

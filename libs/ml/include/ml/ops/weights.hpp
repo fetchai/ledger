@@ -87,6 +87,8 @@ public:
 
   TensorType const &GetWeights() const override;
 
+  bool IsInit() const override;
+
   void SetWeights(TensorType const &new_value) override;
 
   std::pair<TensorType const, SizeSet const> GetSparseGradientsReferences() const override;

@@ -188,6 +188,12 @@ TensorType const &Weights<TensorType>::GetWeights() const
 }
 
 template <typename TensorType>
+bool Weights<TensorType>::IsInit() const
+{
+  return this->data_ != NULL;
+}
+
+template <typename TensorType>
 void Weights<TensorType>::SetWeights(TensorType const &new_value)
 {
   this->data_->Assign(new_value);

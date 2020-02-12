@@ -417,6 +417,131 @@ OperationsCount Model<TensorType>::ChargeBackward() const
   return this->graph_ptr_->ChargeBackward(this->output_);
 }
 
+template <typename TensorType>
+OperationsCount Model<TensorType>::ChargeCompile(OptimiserType                       optimiser_type,
+                                                 ops::LossType                       loss_type,
+                                                 std::vector<ops::MetricType> const &metrics) const
+{
+  OperationsCount op_cnt{0};
+
+  // add loss to graph
+  if (!loss_set_)
+  {
+    switch (loss_type)
+    {
+    case (ops::LossType::CROSS_ENTROPY):
+    {
+      op_cnt += ops::CrossEntropyLoss<TensorType>::ChargeConstruct();
+      break;
+    }
+    case (ops::LossType::MEAN_SQUARE_ERROR):
+    {
+      op_cnt += ops::MeanSquareErrorLoss<TensorType>::ChargeConstruct();
+      break;
+    }
+    case (ops::LossType::SOFTMAX_CROSS_ENTROPY):
+    {
+      op_cnt += ops::SoftmaxCrossEntropyLoss<TensorType>::ChargeConstruct();
+      break;
+    }
+    case (ops::LossType::NONE):
+    {
+      throw ml::exceptions::InvalidMode(
+          "must set loss function on model compile for this model type");
+    }
+    default:
+    {
+      throw ml::exceptions::InvalidMode("unrecognised loss type in model compilation");
+    }
+    }
+  }
+  else
+  {
+    if (loss_type != ops::LossType::NONE)
+    {
+      throw ml::exceptions::InvalidMode(
+          "attempted to set loss function on compile but loss function already previously set! "
+          "maybe using wrong type of model?");
+    }
+  }
+
+  // Add all the metric nodes to the graph and store the names in metrics_ for future reference
+  for (auto const &met : metrics)
+  {
+    switch (met)
+    {
+    case (ops::MetricType::CATEGORICAL_ACCURACY):
+    {
+      op_cnt += ops::CategoricalAccuracy<TensorType>::ChargeConstruct();
+      break;
+    }
+    case ops::MetricType::CROSS_ENTROPY:
+    {
+      op_cnt += ops::CrossEntropyLoss<TensorType>::ChargeConstruct();
+      break;
+    }
+    case ops::MetricType::MEAN_SQUARE_ERROR:
+    {
+      op_cnt += ops::MeanSquareErrorLoss<TensorType>::ChargeConstruct();
+      break;
+    }
+    case ops::MetricType::SOFTMAX_CROSS_ENTROPY:
+    {
+      op_cnt += ops::SoftmaxCrossEntropyLoss<TensorType>::ChargeConstruct();
+      break;
+    }
+    default:
+    {
+      throw ml::exceptions::InvalidMode("unrecognised metric type in model compilation");
+    }
+    }
+  }
+
+  // set the optimiser
+  if (!optimiser_set_)
+  {
+    switch (optimiser_type)
+    {
+    case OptimiserType::ADAGRAD:
+    {
+      op_cnt += fetch::ml::optimisers::AdaGradOptimiser<TensorType>::ChargeConstruct(graph_ptr_);
+      break;
+    }
+    case OptimiserType::ADAM:
+    {
+      op_cnt += fetch::ml::optimisers::AdamOptimiser<TensorType>::ChargeConstruct(graph_ptr_);
+      break;
+    }
+    case OptimiserType::MOMENTUM:
+    {
+      op_cnt += fetch::ml::optimisers::MomentumOptimiser<TensorType>::ChargeConstruct(graph_ptr_);
+      break;
+    }
+    case OptimiserType::RMSPROP:
+    {
+      op_cnt += fetch::ml::optimisers::RMSPropOptimiser<TensorType>::ChargeConstruct(graph_ptr_);
+      break;
+    }
+    case OptimiserType::SGD:
+    {
+      op_cnt += fetch::ml::optimisers::SGDOptimiser<TensorType>::ChargeConstruct(graph_ptr_);
+      break;
+    }
+    default:
+    {
+      throw ml::exceptions::InvalidMode("DNNClassifier initialised with unrecognised optimiser");
+    }
+    }
+    // set optimiser flag
+    op_cnt += 1;
+  }
+
+  // set compiled flag
+  op_cnt += 1;
+
+  return op_cnt;
+}
+
 ///////////////////////////////
 /// EXPLICIT INSTANTIATIONS ///
 ///////////////////////////////

@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ml/charge_estimation/types.hpp"
 #include "ml/optimisation/optimiser.hpp"
 
 namespace fetch {
@@ -55,6 +56,8 @@ public:
   {
     return OptimiserType::SGD;
   }
+
+  static OperationsCount ChargeConstruct(std::shared_ptr<Graph<T>> graph);
 
 private:
   // ApplyGradientSparse if number_of_rows_to_update * sparsity_threshold_ <= total_rows
