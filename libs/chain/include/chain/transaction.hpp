@@ -178,7 +178,7 @@ private:
 
 using TransactionPtr = std::shared_ptr<Transaction>;
 
-using TransactionIndex = std::unordered_map<Digest, TransactionPtr, DigestHashAdapter>;
+using TransactionIndex = DigestMap<TransactionPtr>;
 
 }  // namespace chain
 }  // namespace fetch
