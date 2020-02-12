@@ -2029,8 +2029,7 @@ DigestSet MainChain::DetectDuplicateTransactions(BlockHash const &           sta
   // For safety if there is a global block lookup failure indicate all TXs are duplicates
   if (!LookupBlock(starting_hash, block) || block->is_loose)
   {
-    FETCH_LOG_ERROR(LOGGING_NAME,
-                    "TX uniqueness verify on bad block hash. Block loose: ", block->is_loose);
+    FETCH_LOG_ERROR(LOGGING_NAME, "TX uniqueness verify on bad block hash.");
     return all_digests;
   }
 
