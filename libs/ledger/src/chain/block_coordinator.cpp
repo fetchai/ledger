@@ -1285,7 +1285,7 @@ BlockCoordinator::State BlockCoordinator::OnReset()
   {
     current_block_weight_->set(block->weight);
 
-    if ((block->block_number % 100) == 0)
+    if ((block->block_number % 10) == 0)
     {
       block_hash_->set(*reinterpret_cast<uint64_t const *>(block->hash.pointer()));
     }

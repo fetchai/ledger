@@ -49,6 +49,7 @@ public:
   bool        IsReadyToExecute() const final;
   void        Execute() final;
   std::string GetId() const final;
+  std::string GetDebug() const final;
   /// @}
 
   /// @name Periodic Runnable Interface
@@ -64,6 +65,7 @@ private:
   Timepoint                     last_executed_;
   Duration                      interval_{};
   telemetry::GaugePtr<uint64_t> state_gauge_;
+  std::string const             name_;
 };
 
 template <typename R, typename P>
