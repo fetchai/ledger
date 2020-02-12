@@ -2092,6 +2092,11 @@ DigestSet MainChain::DetectDuplicateTransactions(BlockHash const &           sta
     bloom_filter_query_count_->increment();
   }
 
+  if (potential_duplicates.empty())
+  {
+    return duplicates;
+  }
+
   // filter the potential duplicates by traversing back down the chain (continue where left off)
   uint64_t blocks_walked      = 0;
   uint64_t duplicates_on_disk = 0;
