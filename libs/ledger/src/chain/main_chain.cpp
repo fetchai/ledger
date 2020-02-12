@@ -1993,6 +1993,19 @@ void MainChain::SetHeadHash(BlockHash const &hash)
                     static_cast<std::streamsize>(hash.size()));
 }
 
+// Convenience function
+DigestSet ToDigestSet(MainChain::TransactionLayoutSet const &transactions)
+{
+  DigestSet ret;
+
+  for (auto const &i : transactions)
+  {
+    ret.insert(i.digest());
+  }
+
+  return ret;
+}
+
 /**
  * Strip transactions in container that already exist in the blockchain. A bloom filter keeps
  * track of all the transactions that have gone to disk, while blocks in memory (block_chain_)
@@ -2012,23 +2025,25 @@ DigestSet MainChain::DetectDuplicateTransactions(BlockHash const &           sta
 
   FETCH_LOCK(lock_);
 
-  IntBlockPtr block;
+  IntBlockPtr     block;
+  DigestSet const all_digests = ToDigestSet(transactions);
 
   // For safety if there is a global block lookup failure indicate all TXs are duplicates
   if (!LookupBlock(starting_hash, block) || block->is_loose)
   {
-    FETCH_LOG_ERROR(LOGGING_NAME, "TX uniqueness verify on bad block hash. Block loose: ", block->is_loose);
-    return transactions;
+    FETCH_LOG_ERROR(LOGGING_NAME,
+                    "TX uniqueness verify on bad block hash. Block loose: ", block->is_loose);
+    return all_digests;
   }
 
   // Search for duplicates in the cache blocks since this is not held in the bloom
   DigestSet duplicates{};
 
-  for(;;)
+  for (;;)
   {
     // Genesis does not contain transactions since it is
     // constructed
-    if(block->IsGenesis())
+    if (block->IsGenesis())
     {
       break;
     }
@@ -2037,7 +2052,7 @@ DigestSet MainChain::DetectDuplicateTransactions(BlockHash const &           sta
     {
       for (auto const &tx : slice)
       {
-        if (transactions.find(tx.digest()) != transactions.end())
+        if (all_digests.find(tx.digest()) != all_digests.end())
         {
           duplicates.insert(tx.digest());
         }
@@ -2045,7 +2060,7 @@ DigestSet MainChain::DetectDuplicateTransactions(BlockHash const &           sta
     }
 
     // termination condition
-    if(!LookupBlockFromCache(block->previous_hash, block))
+    if (!LookupBlockFromCache(block->previous_hash, block))
     {
       // Sanity check - there should be the continuation of this on disk
       IntBlockPtr block_dummy;
@@ -2057,8 +2072,9 @@ DigestSet MainChain::DetectDuplicateTransactions(BlockHash const &           sta
   duplicate_txs_in_recent_->add(duplicates.size());
 
   // evaluate the bloom filter and determine the potential duplicates on disk
-  DigestSet potential_duplicates{};
-  transaction::BlockIndex earliest_possible_block_with_duplicate = std::numeric_limits<transaction::BlockIndex>::max();
+  DigestSet         potential_duplicates{};
+  chain::BlockIndex earliest_possible_block_with_duplicate =
+      std::numeric_limits<chain::BlockIndex>::max();
 
   for (auto const &tx_layout : transactions)
   {
@@ -2069,17 +2085,18 @@ DigestSet MainChain::DetectDuplicateTransactions(BlockHash const &           sta
     if (bloom_filter_.Match(tx_layout.digest(), from_calculated, tx_layout.valid_until()))
     {
       potential_duplicates.insert(tx_layout.digest());
-      earliest_possible_block_with_duplicate = std::min(from_calculated, earliest_possible_block_with_duplicate);
+      earliest_possible_block_with_duplicate =
+          std::min(from_calculated, earliest_possible_block_with_duplicate);
     }
 
     bloom_filter_query_count_->increment();
   }
 
   // filter the potential duplicates by traversing back down the chain (continue where left off)
-  uint64_t blocks_walked = 0;
+  uint64_t blocks_walked      = 0;
   uint64_t duplicates_on_disk = 0;
 
-  for (;;blocks_walked++)
+  for (;; blocks_walked++)
   {
     // Traversing the chain fully is costly: break out early if we know the transactions are all
     // duplicated (or both sets are empty)
@@ -2108,7 +2125,7 @@ DigestSet MainChain::DetectDuplicateTransactions(BlockHash const &           sta
     }
 
     // exit if we hit genesis
-    if(block->IsGenesis())
+    if (block->IsGenesis())
     {
       break;
     }
@@ -2116,8 +2133,9 @@ DigestSet MainChain::DetectDuplicateTransactions(BlockHash const &           sta
     // If we cannot find a block this is an error
     if (!LookupBlock(block->previous_hash, block))
     {
-      FETCH_LOG_ERROR(LOGGING_NAME, "When doing a chain walk for duplicates, prev block is missing!");
-      return transactions;
+      FETCH_LOG_ERROR(LOGGING_NAME,
+                      "When doing a chain walk for duplicates, prev block is missing!");
+      return all_digests;
     }
   }
 
