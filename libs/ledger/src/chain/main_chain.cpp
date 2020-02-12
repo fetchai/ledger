@@ -2103,7 +2103,7 @@ DigestSet MainChain::DetectDuplicateTransactions(BlockHash const &           sta
   uint64_t blocks_walked = 0;
 
   // Need to start walk on the disk
-  if (!LookupBlock(block->previous_hash, block))
+  if (!block->IsGenesis() && !LookupBlock(block->previous_hash, block))
   {
     FETCH_LOG_ERROR(LOGGING_NAME, "Failed to find block on disk when going from cache");
     return all_digests;
