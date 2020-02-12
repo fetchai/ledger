@@ -98,30 +98,27 @@ TransactionStoreSyncService::TransactionStoreSyncService(Config const &cfg, Mudd
   , current_tss_peers_{telemetry::Registry::Instance().CreateGauge<uint64_t>(
         "current_tss_peers", "The number of peers the sync can use")}
 {
-  // clang-format off
-  static const std::pair<State, State(TransactionStoreSyncService::*)()> state_handlers[] = {
-      {State::INITIAL,                 &TransactionStoreSyncService::OnInitial},
-      {State::QUERY_OBJECT_COUNTS,     &TransactionStoreSyncService::OnQueryObjectCounts},
-      {State::RESOLVING_OBJECT_COUNTS, &TransactionStoreSyncService::OnResolvingObjectCounts},
-      {State::QUERY_SUBTREE,           &TransactionStoreSyncService::OnQuerySubtree},
-      {State::RESOLVING_SUBTREE,       &TransactionStoreSyncService::OnResolvingSubtree},
-      {State::QUERY_OBJECTS,           &TransactionStoreSyncService::OnQueryObjects},
-      {State::RESOLVING_OBJECTS,       &TransactionStoreSyncService::OnResolvingObjects},
-      {State::TRIM_CACHE,              &TransactionStoreSyncService::OnTrimCache}};
-  // clang-format on
-
-  for (auto const &reaction : state_handlers)
-  {
-    state_machine_->RegisterHandler(reaction.first, this, reaction.second);
-  }
+  state_machine_->RegisterHandler(State::INITIAL, this, &TransactionStoreSyncService::OnInitial);
+  state_machine_->RegisterHandler(State::QUERY_OBJECT_COUNTS, this,
+                                  &TransactionStoreSyncService::OnQueryObjectCounts);
+  state_machine_->RegisterHandler(State::RESOLVING_OBJECT_COUNTS, this,
+                                  &TransactionStoreSyncService::OnResolvingObjectCounts);
+  state_machine_->RegisterHandler(State::QUERY_SUBTREE, this,
+                                  &TransactionStoreSyncService::OnQuerySubtree);
+  state_machine_->RegisterHandler(State::RESOLVING_SUBTREE, this,
+                                  &TransactionStoreSyncService::OnResolvingSubtree);
+  state_machine_->RegisterHandler(State::QUERY_OBJECTS, this,
+                                  &TransactionStoreSyncService::OnQueryObjects);
+  state_machine_->RegisterHandler(State::RESOLVING_OBJECTS, this,
+                                  &TransactionStoreSyncService::OnResolvingObjects);
+  state_machine_->RegisterHandler(State::TRIM_CACHE, this,
+                                  &TransactionStoreSyncService::OnTrimCache);
 
   state_machine_->OnStateChange([](State new_state, State /* old_state */) {
     FETCH_UNUSED(new_state);
     FETCH_LOG_DEBUG(LOGGING_NAME, "*** Updating state to: ", ToString(new_state));
   });
 }
-
-TransactionStoreSyncService::~TransactionStoreSyncService() = default;
 
 TransactionStoreSyncService::State TransactionStoreSyncService::OnInitial()
 {
