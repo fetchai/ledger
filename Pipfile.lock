@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "fd9dd3fa6d98a00ef82eb48cfe29bfcd547a1723cd22246d1e4ef414b6448316"
+            "sha256": "469c77f1c4586ba1d8573b0db5a4d5dcb9b06c8bb5f373f0bc3488c73ef001ca"
         },
         "pipfile-spec": 6,
         "requires": {},
@@ -60,11 +60,11 @@
         },
         "fetchai-ledger-api": {
             "hashes": [
-                "sha256:22c087779738d17f62192cfeb2c537539723a305cb497f8e491460b1294419db",
-                "sha256:6b298240b7bfbc998ef348b8bcc525a417c47327bec35113be891a747de20bd0"
+                "sha256:0ba26ff12316b86ed319e995ffb691ff6ac6d738e6dbdc8266f2a53cc108a835",
+                "sha256:e5b2eecebe444585ceee5dd9f89917418af686f376434de4e88a70f10a7c9d2f"
             ],
             "index": "pypi",
-            "version": "==1.0.1"
+            "version": "==1.0.2"
         },
         "fetchai-netutils": {
             "editable": true,
