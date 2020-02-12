@@ -29,6 +29,12 @@ std::shared_ptr<OpsSaveableParams> Convolution1D<TensorType>::GetOpSaveableParam
 {
   auto sp         = std::make_shared<SPType>();
   sp->stride_size = stride_size_;
+
+  // Add base class savable params
+  auto ops_sp  = Ops<TensorType>::GetOpSaveableParams();
+  auto cast_sp = std::static_pointer_cast<OpsSaveableParams>(sp);
+  *cast_sp     = *(std::static_pointer_cast<OpsSaveableParams>(ops_sp));
+
   return sp;
 }
 
@@ -425,6 +431,31 @@ OperationsCount Convolution1D<TensorType>::ChargeForward() const
   OperationsCount cost = horizontal_stride_width * horizontal_stride_height *
                          vertical_stride_width *
                          fetch::ml::charge_estimation::ops::MULTIPLICATION_PER_ELEMENT;
+
+  return cost;
+}
+
+template <typename TensorType>
+OperationsCount Convolution1D<TensorType>::ChargeBackward() const
+{
+  assert(!this->batch_output_shape_.empty());
+  assert(this->batch_input_shapes_.size() == 2);
+
+  SizeType input_channels  = this->batch_input_shapes_.front().at(0);
+  SizeType batch_size      = this->batch_input_shapes_.front().at(2);
+  SizeType output_channels = this->batch_input_shapes_.back().at(0);
+  SizeType kernel_height   = this->batch_input_shapes_.back().at(2);
+
+  SizeType output_height = ComputeOutputHeight(this->batch_input_shapes_.front().at(1),
+                                               this->batch_input_shapes_.back().at(2));
+
+  SizeType horizontal_stride_width  = kernel_height * input_channels;
+  SizeType horizontal_stride_height = output_height * batch_size;
+  SizeType vertical_stride_width    = output_channels;
+
+  OperationsCount cost =
+      2 * (horizontal_stride_width * horizontal_stride_height * vertical_stride_width *
+           fetch::ml::charge_estimation::ops::MULTIPLICATION_PER_ELEMENT);
 
   return cost;
 }

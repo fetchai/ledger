@@ -70,7 +70,7 @@ public:
   }
 
   OperationsCount ChargeForward() const override;
-  OperationsCount ChargeBackward() override;
+  OperationsCount ChargeBackward() const override;
 
 private:
   TensorType drop_values_;

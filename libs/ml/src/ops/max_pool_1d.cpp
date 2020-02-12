@@ -35,10 +35,16 @@ MaxPool1D<T>::MaxPool1D(const SPType &sp)
 template <typename T>
 std::shared_ptr<OpsSaveableParams> MaxPool1D<T>::GetOpSaveableParams()
 {
-  SPType sp{};
-  sp.kernel_size = kernel_size_;
-  sp.stride_size = stride_size_;
-  return std::make_shared<SPType>(sp);
+  auto sp         = std::make_shared<SPType>();
+  sp->kernel_size = kernel_size_;
+  sp->stride_size = stride_size_;
+
+  // Add base class savable params
+  auto ops_sp  = Ops<TensorType>::GetOpSaveableParams();
+  auto cast_sp = std::static_pointer_cast<OpsSaveableParams>(sp);
+  *cast_sp     = *(std::static_pointer_cast<OpsSaveableParams>(ops_sp));
+
+  return sp;
 }
 
 template <typename TensorType>
@@ -193,7 +199,7 @@ OperationsCount MaxPool1D<TensorType>::ChargeForward() const
 }
 
 template <typename TensorType>
-OperationsCount MaxPool1D<TensorType>::ChargeBackward()
+OperationsCount MaxPool1D<TensorType>::ChargeBackward() const
 {
   assert(!this->batch_output_shape_.empty());
   OperationsCount cost = fetch::ml::charge_estimation::ops::MAX_PER_ELEMENT *

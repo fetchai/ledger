@@ -32,9 +32,9 @@
 #include <unordered_set>
 #include <utility>
 
+using fetch::service::Promise;
 using fetch::storage::ResourceID;
 using fetch::storage::RevertibleDocumentStoreProtocol;
-using fetch::service::Promise;
 
 namespace fetch {
 namespace ledger {

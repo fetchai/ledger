@@ -30,10 +30,10 @@
 
 #include <vector>
 
-using fetch::storage::ResourceID;
 using fetch::chain::Transaction;
 using fetch::chain::TransactionBuilder;
 using fetch::crypto::ECDSASigner;
+using fetch::storage::ResourceID;
 
 using ObjectStore      = fetch::storage::ObjectStore<Transaction>;
 using TransactionStore = fetch::storage::TransientObjectStore<Transaction>;

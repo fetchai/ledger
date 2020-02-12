@@ -26,10 +26,10 @@
 namespace {
 
 using fetch::byte_array::ConstByteArray;
-using fetch::byte_array::ToHex;
-using fetch::byte_array::ToBase58;
-using fetch::byte_array::FromHex;
 using fetch::byte_array::FromBase58;
+using fetch::byte_array::FromHex;
+using fetch::byte_array::ToBase58;
+using fetch::byte_array::ToHex;
 
 struct TestCase
 {

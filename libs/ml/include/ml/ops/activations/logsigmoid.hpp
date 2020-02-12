@@ -66,7 +66,7 @@ private:
   DataType epsilon_ = fetch::math::numeric_min<DataType>();
 
   OperationsCount ChargeForward() const override;
-  OperationsCount ChargeBackward() override;
+  OperationsCount ChargeBackward() const override;
 };
 
 }  // namespace ops

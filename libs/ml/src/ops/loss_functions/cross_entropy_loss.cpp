@@ -35,6 +35,12 @@ template <typename TensorType>
 std::shared_ptr<OpsSaveableParams> CrossEntropyLoss<TensorType>::GetOpSaveableParams()
 {
   auto sp = std::make_shared<SPType>();
+
+  // Add base class savable params
+  auto ops_sp  = Ops<TensorType>::GetOpSaveableParams();
+  auto cast_sp = std::static_pointer_cast<OpsSaveableParams>(sp);
+  *cast_sp     = *(std::static_pointer_cast<OpsSaveableParams>(ops_sp));
+
   return sp;
 }
 
@@ -116,7 +122,7 @@ OperationsCount CrossEntropyLoss<TensorType>::ChargeForward() const
 }
 
 template <typename TensorType>
-OperationsCount CrossEntropyLoss<TensorType>::ChargeBackward()
+OperationsCount CrossEntropyLoss<TensorType>::ChargeBackward() const
 {
   assert(!this->batch_input_shapes_.empty());
   OperationsCount cost = fetch::ml::charge_estimation::ops::CROSS_ENTROPY_BACKWARD_PER_ELEMENT *

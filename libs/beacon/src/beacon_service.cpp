@@ -19,6 +19,7 @@
 #include "beacon/aeon.hpp"
 #include "beacon/beacon_service.hpp"
 #include "core/byte_array/byte_array.hpp"
+#include "core/containers/trim_to_size.hpp"
 #include "crypto/hash.hpp"
 #include "crypto/sha256.hpp"
 #include "muddle/muddle_interface.hpp"
@@ -35,22 +36,13 @@
 
 using namespace std::chrono_literals;
 
+using fetch::core::TrimToSize;
 using fetch::generics::MilliTimer;
 
 namespace fetch {
-
 namespace beacon {
-namespace {
 
-template <typename T>
-void TrimToSize(T &container, std::size_t max_size)
-{
-  auto it = container.begin();
-  while ((it != container.end()) && (container.size() > max_size))
-  {
-    it = container.erase(it);
-  }
-}
+namespace {
 
 template <typename T>
 T ChooseRandomlyFrom(T &container, std::size_t items)

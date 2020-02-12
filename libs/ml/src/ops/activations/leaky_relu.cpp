@@ -39,9 +39,15 @@ LeakyRelu<TensorType>::LeakyRelu(SPType const &sp)
 template <typename TensorType>
 std::shared_ptr<OpsSaveableParams> LeakyRelu<TensorType>::GetOpSaveableParams()
 {
-  SPType sp{};
-  sp.a = a_;
-  return std::make_shared<SPType>(sp);
+  auto sp = std::make_shared<SPType>();
+  sp->a   = a_;
+
+  // Add base class savable params
+  auto ops_sp  = Ops<TensorType>::GetOpSaveableParams();
+  auto cast_sp = std::static_pointer_cast<OpsSaveableParams>(sp);
+  *cast_sp     = *(std::static_pointer_cast<OpsSaveableParams>(ops_sp));
+
+  return sp;
 }
 
 template <typename TensorType>
@@ -118,7 +124,7 @@ OperationsCount LeakyRelu<TensorType>::ChargeForward() const
 }
 
 template <typename TensorType>
-OperationsCount LeakyRelu<TensorType>::ChargeBackward()
+OperationsCount LeakyRelu<TensorType>::ChargeBackward() const
 {
   assert(!this->batch_input_shapes_.empty());
   OperationsCount cost = fetch::ml::charge_estimation::ops::LEAKY_RELU_BACKWARD_PER_ELEMENT *

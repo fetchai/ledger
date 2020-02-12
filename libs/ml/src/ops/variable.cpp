@@ -71,6 +71,11 @@ std::shared_ptr<OpsSaveableParams> Variable<TensorType>::GetOpSaveableParams()
   sp->regularisation_rate = this->regularisation_rate_;
   sp->value_frozen        = this->value_frozen_;
 
+  // Add base class savable params
+  auto ops_sp  = Ops<TensorType>::GetOpSaveableParams();
+  auto cast_sp = std::static_pointer_cast<OpsSaveableParams>(sp);
+  *cast_sp     = *(std::static_pointer_cast<OpsSaveableParams>(ops_sp));
+
   return sp;
 }
 

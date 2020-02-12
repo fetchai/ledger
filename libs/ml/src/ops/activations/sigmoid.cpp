@@ -33,7 +33,14 @@ Sigmoid<TensorType>::Sigmoid(SPType const &sp)
 template <typename TensorType>
 std::shared_ptr<OpsSaveableParams> Sigmoid<TensorType>::GetOpSaveableParams()
 {
-  return std::make_shared<SPType>();
+  auto sp = std::make_shared<SPType>();
+
+  // Add base class savable params
+  auto ops_sp  = Ops<TensorType>::GetOpSaveableParams();
+  auto cast_sp = std::static_pointer_cast<OpsSaveableParams>(sp);
+  *cast_sp     = *(std::static_pointer_cast<OpsSaveableParams>(ops_sp));
+
+  return sp;
 }
 
 template <typename TensorType>
@@ -96,7 +103,7 @@ OperationsCount Sigmoid<TensorType>::ChargeForward() const
 }
 
 template <typename TensorType>
-OperationsCount Sigmoid<TensorType>::ChargeBackward()
+OperationsCount Sigmoid<TensorType>::ChargeBackward() const
 {
   assert(!this->batch_input_shapes_.empty());
   OperationsCount cost = fetch::ml::charge_estimation::ops::SIGMOID_BACKWARD_PER_ELEMENT *

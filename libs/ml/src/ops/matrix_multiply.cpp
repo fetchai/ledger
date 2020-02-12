@@ -38,10 +38,16 @@ MatrixMultiply<T>::MatrixMultiply(const SPType &sp)
 template <typename T>
 std::shared_ptr<OpsSaveableParams> MatrixMultiply<T>::GetOpSaveableParams()
 {
-  auto ret         = std::make_shared<SPType>();
-  ret->transpose_a = transpose_a_;
-  ret->transpose_b = transpose_b_;
-  return ret;
+  auto sp         = std::make_shared<SPType>();
+  sp->transpose_a = transpose_a_;
+  sp->transpose_b = transpose_b_;
+
+  // Add base class savable params
+  auto ops_sp  = Ops<TensorType>::GetOpSaveableParams();
+  auto cast_sp = std::static_pointer_cast<OpsSaveableParams>(sp);
+  *cast_sp     = *(std::static_pointer_cast<OpsSaveableParams>(ops_sp));
+
+  return sp;
 }
 
 template <typename T>
@@ -302,6 +308,25 @@ OperationsCount MatrixMultiply<T>::ChargeForward() const
 
   OperationsCount const cost =
       n * m * p * fetch::ml::charge_estimation::ops::MULTIPLICATION_PER_ELEMENT;
+  return cost;
+}
+
+template <typename T>
+OperationsCount MatrixMultiply<T>::ChargeBackward() const
+{
+  assert(!this->batch_input_shapes_.empty());
+
+  assert(this->batch_input_shapes_.size() == 2);
+
+  OperationsCount const n = this->batch_input_shapes_.front().at(0);
+  OperationsCount const m = this->batch_input_shapes_.back().at(0);
+  OperationsCount const p = 1;
+
+  OperationsCount const cost =
+      n * m * p * fetch::ml::charge_estimation::ops::MULTIPLICATION_PER_ELEMENT +
+      fetch::ml::charge_estimation::ops::ADDITION_PER_ELEMENT *
+          this->TotalElementsIn({this->batch_input_shapes_});
+  ;
   return cost;
 }
 

@@ -22,9 +22,9 @@
 
 #include "gtest/gtest.h"
 
-using fetch::http::JsonClient;
 using fetch::http::HttpClient;
 using fetch::http::HttpsClient;
+using fetch::http::JsonClient;
 
 TEST(JsonClientTests, CheckBuildHttp)
 {

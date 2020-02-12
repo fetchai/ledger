@@ -126,6 +126,22 @@ fetch::vm::Ptr<fetch::vm_modules::ml::model::VMModel> vmSequentialModel(
   return model;
 }
 
+fetch::vm::Ptr<fetch::vm::Array<uint64_t>> CreateArray(std::shared_ptr<fetch::vm::VM> &vm,
+                                                       std::vector<uint64_t> const &   values)
+{
+  std::size_t                                size = values.size();
+  fetch::vm::Ptr<fetch::vm::Array<uint64_t>> array =
+      vm->CreateNewObject<fetch::vm::Array<uint64_t>>(vm->GetTypeId<uint64_t>(),
+                                                      static_cast<int32_t>(size));
+
+  for (std::size_t i{0}; i < size; ++i)
+  {
+    array->elements[i] = values[i];
+  }
+
+  return array;
+}
+
 ////////////////
 // Benchmarks //
 ////////////////
@@ -212,6 +228,193 @@ BENCHMARK(BM_AddLayer)->Args({3000, 10, 0})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_AddLayer)->Args({10, 3000, 0})->Unit(::benchmark::kMicrosecond);
 //*/
 
+struct BM_AddConvLayer_config
+{
+  explicit BM_AddConvLayer_config(::benchmark::State const &state)
+  {
+    input_channels  = static_cast<SizeType>(state.range(0));
+    output_channels = static_cast<SizeType>(state.range(1));
+    kernel_size     = static_cast<SizeType>(state.range(2));
+    stride_size     = static_cast<SizeType>(state.range(3));
+    activation      = static_cast<bool>(state.range(4));
+  }
+
+  SizeType input_channels;
+  SizeType output_channels;
+  SizeType kernel_size;
+  SizeType stride_size;
+  bool     activation;
+};
+
+void BM_AddConvLayer(::benchmark::State &state)
+{
+  for (auto _ : state)
+  {
+    state.PauseTiming();
+
+    // Get config
+    BM_AddConvLayer_config config{state};
+
+    // model
+    auto vm    = NewVM();
+    auto model = vmSequentialModel(vm);
+    // arguments list
+    auto layer_type      = vmString(vm, "conv");
+    auto activation_type = vmString(vm, "relu");
+
+    if (config.activation)
+    {
+      state.counters["charge"] = static_cast<double>(
+          model->Estimator().LayerAddConv(layer_type, config.output_channels, config.input_channels,
+                                          config.kernel_size, config.stride_size));
+
+      state.counters["PaddedSizesSum"] =
+          static_cast<double>(model->Estimator().GetPaddedSizesSum());
+      state.counters["ForwardCost"] = static_cast<double>(model->Estimator().GetForwardCost());
+      state.counters["OpsCount"]    = static_cast<double>(model->Estimator().GetOpsCount());
+      state.counters["SizesSum"]    = static_cast<double>(model->Estimator().GetSizesSum());
+
+      state.ResumeTiming();
+
+      model->LayerAddConv(layer_type, config.output_channels, config.input_channels,
+                          config.kernel_size, config.stride_size);
+    }
+    else
+    {
+      state.counters["charge"] = static_cast<double>(model->Estimator().LayerAddConvActivation(
+          layer_type, config.output_channels, config.input_channels, config.kernel_size,
+          config.stride_size, activation_type));
+
+      state.counters["PaddedSizesSum"] =
+          static_cast<double>(model->Estimator().GetPaddedSizesSum());
+      state.counters["ForwardCost"] = static_cast<double>(model->Estimator().GetForwardCost());
+      state.counters["OpsCount"]    = static_cast<double>(model->Estimator().GetOpsCount());
+      state.counters["SizesSum"]    = static_cast<double>(model->Estimator().GetSizesSum());
+
+      state.ResumeTiming();
+      model->LayerAddConvActivation(layer_type, config.output_channels, config.input_channels,
+                                    config.kernel_size, config.stride_size, activation_type);
+    }
+  }
+}
+
+// (BM_AddConvLayer) output_channels, input_channels, kernel_size, stride_size, activation
+BENCHMARK(BM_AddConvLayer)->Args({1, 1, 1, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_AddConvLayer)->Args({10, 10, 1, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_AddConvLayer)->Args({10, 10, 5, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_AddConvLayer)->Args({10, 10, 10, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_AddConvLayer)->Args({10, 10, 10, 10, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_AddConvLayer)->Args({1000, 1000, 1, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_AddConvLayer)->Args({1000, 1000, 5, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_AddConvLayer)->Args({1000, 1000, 10, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_AddConvLayer)->Args({1000, 1000, 100, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_AddConvLayer)->Args({1000, 1000, 100, 10, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_AddConvLayer)->Args({100, 10, 1, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_AddConvLayer)->Args({100, 10, 10, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_AddConvLayer)->Args({1000, 10, 1, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_AddConvLayer)->Args({1000, 10, 10, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_AddConvLayer)->Args({1000, 10, 10, 10, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_AddConvLayer)->Args({10, 100, 1, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_AddConvLayer)->Args({10, 100, 10, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_AddConvLayer)->Args({10, 1000, 1, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_AddConvLayer)->Args({10, 1000, 10, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_AddConvLayer)->Args({100, 100, 1, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_AddConvLayer)->Args({100, 100, 1, 10, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_AddConvLayer)->Args({100, 1000, 1, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_AddConvLayer)->Args({1, 1000, 1, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_AddConvLayer)->Args({1000, 1, 1, 1, 0})->Unit(::benchmark::kMicrosecond);
+//*/
+
+struct BM_Conv_config
+{
+  explicit BM_Conv_config(::benchmark::State const &state)
+  {
+    input_channels  = static_cast<SizeType>(state.range(0));
+    output_channels = static_cast<SizeType>(state.range(1));
+    kernel_size     = static_cast<SizeType>(state.range(2));
+    stride_size     = static_cast<SizeType>(state.range(3));
+    batch_size      = static_cast<SizeType>(state.range(4));
+    activation      = static_cast<bool>(state.range(5));
+  }
+
+  SizeType input_channels;
+  SizeType output_channels;
+  SizeType kernel_size;
+  SizeType stride_size;
+  SizeType batch_size;
+  bool     activation;
+};
+
+void BM_ConvLayer(::benchmark::State &state)
+{
+  // Get config
+  BM_Conv_config config{state};
+
+  for (auto _ : state)
+  {
+
+    state.PauseTiming();
+
+    // model
+    auto vm    = NewVM();
+    auto model = vmSequentialModel(vm);
+
+    // arguments list
+    auto layer_type       = vmString(vm, "conv");
+    auto input_layer_type = vmString(vm, "input");
+    auto activation_type  = vmString(vm, "relu");
+    auto loss             = vmString(vm, "mse");
+    auto optimiser        = vmString(vm, "adam");
+
+    std::vector<SizeType> data_shape{config.input_channels, config.batch_size};
+    auto                  data        = vmTensor(vm, data_shape);
+    auto                  input_shape = CreateArray(vm, data_shape);
+
+    state.counters["charge"] = static_cast<double>(
+        model->Estimator().LayerAddConv(layer_type, config.output_channels, config.input_channels,
+                                        config.kernel_size, config.stride_size));
+    state.counters["ForwardCost"]    = static_cast<double>(model->Estimator().GetForwardCost());
+    state.counters["OpsCount"]       = static_cast<double>(model->Estimator().GetOpsCount());
+    state.counters["PaddedSizesSum"] = static_cast<double>(model->Estimator().GetPaddedSizesSum());
+    state.counters["SizesSum"]       = static_cast<double>(model->Estimator().GetSizesSum());
+
+    model->LayerAddInput(input_layer_type, input_shape);
+    model->LayerAddConv(layer_type, config.output_channels, config.input_channels,
+                        config.kernel_size, config.stride_size);
+    model->CompileSequential(loss, optimiser);
+
+    state.ResumeTiming();
+    auto res = model->Predict(data);
+  }
+}
+
+// (BM_ConvLayer) output_channels, input_channels, kernel_size, stride_size, batch_size, activation
+BENCHMARK(BM_ConvLayer)->Args({1, 1, 1, 1, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_ConvLayer)->Args({10, 10, 1, 1, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_ConvLayer)->Args({10, 10, 5, 1, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_ConvLayer)->Args({10, 10, 10, 1, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_ConvLayer)->Args({10, 10, 10, 10, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_ConvLayer)->Args({1000, 1000, 1, 1, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_ConvLayer)->Args({1000, 1000, 5, 1, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_ConvLayer)->Args({1000, 1000, 10, 1, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_ConvLayer)->Args({1000, 1000, 100, 1, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_ConvLayer)->Args({1000, 1000, 100, 10, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_ConvLayer)->Args({100, 10, 1, 1, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_ConvLayer)->Args({100, 10, 10, 1, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_ConvLayer)->Args({1000, 10, 1, 1, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_ConvLayer)->Args({1000, 10, 10, 1, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_ConvLayer)->Args({1000, 10, 10, 10, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_ConvLayer)->Args({10, 100, 1, 1, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_ConvLayer)->Args({10, 100, 10, 1, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_ConvLayer)->Args({10, 1000, 1, 1, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_ConvLayer)->Args({10, 1000, 10, 1, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_ConvLayer)->Args({100, 100, 1, 1, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_ConvLayer)->Args({100, 100, 1, 10, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_ConvLayer)->Args({100, 1000, 1, 1, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_ConvLayer)->Args({1, 1000, 1, 1, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_ConvLayer)->Args({1000, 1, 1, 1, 1, 0})->Unit(::benchmark::kMicrosecond);
+//*/
+
 ///*
 struct BM_Predict_config
 {
@@ -253,7 +456,7 @@ void BM_Predict(::benchmark::State &state)
     // predict
     std::vector<SizeType> data_shape{config.sizes[0], config.batch_size};
     auto                  data    = vmTensor(vm, data_shape);
-    state.counters["charge"]      = static_cast<double>(model->Estimator().Predict(data));
+    state.counters["charge"]      = static_cast<double>(model->EstimatePredict(data));
     state.counters["ForwardCost"] = static_cast<double>(model->Estimator().GetForwardCost());
     state.counters["OpsCount"]    = static_cast<double>(model->Estimator().GetOpsCount());
 
@@ -693,6 +896,170 @@ BENCHMARK(BM_Fit)
     ->Args({100, 100, 8, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0})
     ->Unit(::benchmark::kMicrosecond);
 //*/
+
+int64_t getId(std::string const &str)
+{
+  std::map<std::string, SizeType> const activations_{
+      {"leaky_relu", 0}, {"log_sigmoid", 1}, {"log_softmax", 2}, {"relu", 3},
+      {"sigmoid", 4},    {"softmax", 5},     {"gelu", 6},
+  };
+
+  return static_cast<int64_t>(activations_.find(str)->second);
+}
+
+struct BM_Activation_config
+{
+  explicit BM_Activation_config(::benchmark::State const &state)
+  {
+    input_size    = static_cast<SizeType>(state.range(0));
+    batch_size    = static_cast<SizeType>(state.range(1));
+    activation_id = static_cast<SizeType>(state.range(2));
+  }
+
+  SizeType input_size;
+  SizeType batch_size;
+  SizeType activation_id;
+};
+
+void BM_Activation(::benchmark::State &state)
+{
+  // Get config
+  BM_Activation_config config{state};
+
+  std::vector<std::string> const activations_{"leaky_relu", "log_sigmoid", "log_softmax", "relu",
+                                              "sigmoid",    "softmax",     "gelu"};
+
+  for (auto _ : state)
+  {
+
+    state.PauseTiming();
+
+    // model
+    auto vm    = NewVM();
+    auto model = vmSequentialModel(vm);
+
+    // arguments list
+    auto layer_type       = vmString(vm, "activation");
+    auto input_layer_type = vmString(vm, "input");
+    auto activation       = activations_[config.activation_id];
+    auto activation_type  = vmString(vm, activation);
+    auto loss             = vmString(vm, "mse");
+    auto optimiser        = vmString(vm, "adam");
+
+    std::vector<SizeType> data_shape{config.input_size, config.batch_size};
+    auto                  data        = vmTensor(vm, data_shape);
+    auto                  input_shape = CreateArray(vm, data_shape);
+
+    state.counters["charge"] =
+        static_cast<double>(model->Estimator().LayerAddActivation(layer_type, activation_type));
+    state.counters["ForwardCost"]    = static_cast<double>(model->Estimator().GetForwardCost());
+    state.counters["OpsCount"]       = static_cast<double>(model->Estimator().GetOpsCount());
+    state.counters["PaddedSizesSum"] = static_cast<double>(model->Estimator().GetPaddedSizesSum());
+    state.counters["SizesSum"]       = static_cast<double>(model->Estimator().GetSizesSum());
+
+    model->LayerAddInput(input_layer_type, input_shape);
+    model->LayerAddActivation(layer_type, activation_type);
+    model->CompileSequential(loss, optimiser);
+
+    state.ResumeTiming();
+    auto res = model->Predict(data);
+  }
+}
+
+BENCHMARK(BM_Activation)->Args({1, 1, getId("relu")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({10, 1, getId("relu")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({100, 1, getId("relu")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({1000, 1, getId("relu")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({10, 10, getId("relu")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({100, 10, getId("relu")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({1, 1, getId("leaky_relu")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({10, 1, getId("leaky_relu")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({100, 1, getId("leaky_relu")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({1000, 1, getId("leaky_relu")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({10, 10, getId("leaky_relu")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({100, 10, getId("leaky_relu")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({1, 1, getId("log_sigmoid")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({10, 1, getId("log_sigmoid")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({100, 1, getId("log_sigmoid")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({1000, 1, getId("log_sigmoid")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({10, 10, getId("log_sigmoid")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({100, 10, getId("log_sigmoid")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({1, 1, getId("softmax")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({10, 1, getId("softmax")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({100, 1, getId("softmax")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({1000, 1, getId("softmax")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({10, 10, getId("softmax")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({100, 10, getId("softmax")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({1, 1, getId("gelu")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({10, 1, getId("gelu")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({100, 1, getId("gelu")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({1000, 1, getId("gelu")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({10, 10, getId("gelu")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({100, 10, getId("gelu")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({1, 1, getId("sigmoid")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({10, 1, getId("sigmoid")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({100, 1, getId("sigmoid")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({1000, 1, getId("sigmoid")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({10, 10, getId("sigmoid")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({100, 10, getId("sigmoid")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({1, 1, getId("log_softmax")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({10, 1, getId("log_softmax")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({100, 1, getId("log_softmax")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({1000, 1, getId("log_softmax")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({10, 10, getId("log_softmax")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Activation)->Args({100, 10, getId("log_softmax")})->Unit(::benchmark::kMicrosecond);
+
+struct BM_AddActivation_config
+{
+  explicit BM_AddActivation_config(::benchmark::State const &state)
+  {
+    activation_id = static_cast<SizeType>(state.range(0));
+  }
+
+  SizeType activation_id;
+};
+
+void BM_AddActivation(::benchmark::State &state)
+{
+  // Get config
+  BM_AddActivation_config config{state};
+
+  std::vector<std::string> const activations_{"leaky_relu", "log_sigmoid", "log_softmax", "relu",
+                                              "sigmoid",    "softmax",     "gelu"};
+
+  for (auto _ : state)
+  {
+
+    state.PauseTiming();
+
+    // model
+    auto vm    = NewVM();
+    auto model = vmSequentialModel(vm);
+
+    // arguments list
+    auto layer_type      = vmString(vm, "activation");
+    auto activation      = activations_[config.activation_id];
+    auto activation_type = vmString(vm, activation);
+
+    state.counters["charge"] =
+        static_cast<double>(model->Estimator().LayerAddActivation(layer_type, activation_type));
+    state.counters["ForwardCost"]    = static_cast<double>(model->Estimator().GetForwardCost());
+    state.counters["OpsCount"]       = static_cast<double>(model->Estimator().GetOpsCount());
+    state.counters["PaddedSizesSum"] = static_cast<double>(model->Estimator().GetPaddedSizesSum());
+    state.counters["SizesSum"]       = static_cast<double>(model->Estimator().GetSizesSum());
+
+    state.ResumeTiming();
+    model->LayerAddActivation(layer_type, activation_type);
+  }
+}
+
+BENCHMARK(BM_AddActivation)->Args({getId("relu")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_AddActivation)->Args({getId("leaky_relu")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_AddActivation)->Args({getId("log_sigmoid")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_AddActivation)->Args({getId("log_softmax")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_AddActivation)->Args({getId("gelu")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_AddActivation)->Args({getId("softmax")})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_AddActivation)->Args({getId("sigmoid")})->Unit(::benchmark::kMicrosecond);
 
 ///*
 struct BM_SerializeToString_config

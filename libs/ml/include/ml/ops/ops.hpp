@@ -45,6 +45,7 @@ public:
   using VecTensorType = std::vector<std::shared_ptr<TensorType const>>;
   using Shape         = fetch::math::SizeVector;
   using ShapeVector   = std::vector<Shape>;
+  using SPType        = OpsSaveableParams;
 
   virtual ~Ops() = default;
 
@@ -77,7 +78,14 @@ public:
     return batch_output_shape_;
   }
 
-  virtual std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() = 0;
+  virtual std::shared_ptr<OpsSaveableParams> GetOpSaveableParams()
+  {
+    auto sp                = std::make_shared<SPType>();
+    sp->is_training        = is_training_;
+    sp->batch_input_shapes = batch_input_shapes_;
+    sp->batch_output_shape = batch_output_shape_;
+    return sp;
+  }
 
   Ops() = default;
 
@@ -94,17 +102,17 @@ public:
     is_training_ = is_training;
   }
 
-  inline bool IsTraining() const
+  bool IsTraining() const
   {
     return is_training_;
   }
 
-  inline void SetBatchOutputShape(Shape const &new_shape)
+  void SetBatchOutputShape(Shape const &new_shape)
   {
     batch_output_shape_ = new_shape;
   }
 
-  inline void SetBatchInputShapes(ShapeVector const &new_shapes)
+  void SetBatchInputShapes(ShapeVector const &new_shapes)
   {
     batch_input_shapes_ = new_shapes;
   }
@@ -122,7 +130,7 @@ public:
    * @brief BatchInputShapes returns a vector of shapes, that describes expected input
    * slice shapes (e.g. when batch size of input data is 1)
    */
-  inline ShapeVector const &BatchInputShapes() const
+  ShapeVector const &BatchInputShapes() const
   {
     return batch_input_shapes_;
   }
@@ -170,7 +178,7 @@ public:
    * @return estimated charge amount, necessary for performing a backward pass on data of given
    * shapes.
    */
-  virtual OperationsCount ChargeBackward()
+  virtual OperationsCount ChargeBackward() const
   {
     // TODO(ML-483): make a pure virtual method after all Ops have their overrides;
     FETCH_LOG_ERROR(Descriptor(),

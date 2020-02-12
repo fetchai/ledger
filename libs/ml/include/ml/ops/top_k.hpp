@@ -73,6 +73,7 @@ private:
   void UpdateIndices(VecTensorType const &inputs);
 
   OperationsCount ChargeForward() const override;
+  OperationsCount ChargeBackward() const override;
 };
 
 }  // namespace ops

@@ -80,6 +80,7 @@ public:
   }
 
   OperationsCount ChargeForward() const override;
+  OperationsCount ChargeBackward() const override;
 
 private:
   SizeType kernel_size_{};

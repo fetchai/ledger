@@ -34,9 +34,15 @@ Add<TensorType>::Add(SPType const &sp)
 template <typename TensorType>
 std::shared_ptr<OpsSaveableParams> Add<TensorType>::GetOpSaveableParams()
 {
-  auto ret  = std::make_shared<SPType>();
-  ret->axes = axes_;
-  return ret;
+  auto sp  = std::make_shared<SPType>();
+  sp->axes = axes_;
+
+  // Add base class savable params
+  auto ops_sp  = Ops<TensorType>::GetOpSaveableParams();
+  auto cast_sp = std::static_pointer_cast<OpsSaveableParams>(sp);
+  *cast_sp     = *(std::static_pointer_cast<OpsSaveableParams>(ops_sp));
+
+  return sp;
 }
 
 template <typename TensorType>
@@ -99,6 +105,15 @@ const char *Add<TensorType>::Descriptor() const
 
 template <typename TensorType>
 OperationsCount Add<TensorType>::ChargeForward() const
+{
+  assert(!this->batch_output_shape_.empty());
+  OperationsCount cost = fetch::ml::charge_estimation::ops::ADDITION_PER_ELEMENT *
+                         this->TotalElementsIn({this->batch_output_shape_});
+  return cost;
+}
+
+template <typename TensorType>
+OperationsCount Add<TensorType>::ChargeBackward() const
 {
   assert(!this->batch_output_shape_.empty());
   OperationsCount cost = fetch::ml::charge_estimation::ops::ADDITION_PER_ELEMENT *
