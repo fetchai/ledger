@@ -22,13 +22,13 @@
 
 #include "benchmark/benchmark.h"
 
-using fetch::byte_array::ConstByteArray;
 using fetch::byte_array::ByteArray;
-using fetch::crypto::mcl::PublicKey;
-using fetch::crypto::mcl::Generator;
-using fetch::crypto::mcl::Signature;
+using fetch::byte_array::ConstByteArray;
 using fetch::crypto::mcl::AggregatePrivateKey;
 using fetch::crypto::mcl::AggregatePublicKey;
+using fetch::crypto::mcl::Generator;
+using fetch::crypto::mcl::PublicKey;
+using fetch::crypto::mcl::Signature;
 using RNG = fetch::random::LinearCongruentialGenerator;
 
 namespace {

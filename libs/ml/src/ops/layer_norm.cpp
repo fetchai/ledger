@@ -46,6 +46,12 @@ std::shared_ptr<OpsSaveableParams> LayerNorm<TensorType>::GetOpSaveableParams()
   auto sp     = std::make_shared<SPType>();
   sp->epsilon = epsilon_;
   sp->axis    = axis_;
+
+  // Add base class savable params
+  auto ops_sp  = Ops<TensorType>::GetOpSaveableParams();
+  auto cast_sp = std::static_pointer_cast<OpsSaveableParams>(sp);
+  *cast_sp     = *(std::static_pointer_cast<OpsSaveableParams>(ops_sp));
+
   return sp;
 }
 
@@ -136,6 +142,16 @@ OperationsCount LayerNorm<TensorType>::ChargeForward() const
   assert(!this->batch_input_shapes_.empty());
 
   OperationsCount cost = fetch::ml::charge_estimation::ops::LAYER_NORM_PER_ELEMENT *
+                         this->TotalElementsIn({this->batch_input_shapes_});
+  return cost;
+}
+
+template <typename TensorType>
+OperationsCount LayerNorm<TensorType>::ChargeBackward() const
+{
+  assert(!this->batch_input_shapes_.empty());
+
+  OperationsCount cost = fetch::ml::charge_estimation::ops::LAYER_NORM_BACKWARD_PER_ELEMENT *
                          this->TotalElementsIn({this->batch_input_shapes_});
   return cost;
 }

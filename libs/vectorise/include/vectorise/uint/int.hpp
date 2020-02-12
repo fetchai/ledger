@@ -276,7 +276,7 @@ private:
 };
 
 template <uint16_t S>
-inline std::ostream &operator<<(std::ostream &s, Int<S> const &x)
+std::ostream &operator<<(std::ostream &s, Int<S> const &x)
 {
   s << std::string(x);
   return s;

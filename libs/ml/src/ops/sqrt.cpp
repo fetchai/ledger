@@ -31,8 +31,14 @@ Sqrt<TensorType>::Sqrt(SPType const &sp)
 template <typename TensorType>
 std::shared_ptr<OpsSaveableParams> Sqrt<TensorType>::GetOpSaveableParams()
 {
-  SPType sp{};
-  return std::make_shared<SPType>(sp);
+  auto sp = std::make_shared<SPType>();
+
+  // Add base class savable params
+  auto ops_sp  = Ops<TensorType>::GetOpSaveableParams();
+  auto cast_sp = std::static_pointer_cast<OpsSaveableParams>(sp);
+  *cast_sp     = *(std::static_pointer_cast<OpsSaveableParams>(ops_sp));
+
+  return sp;
 }
 
 template <typename TensorType>
@@ -90,9 +96,18 @@ std::vector<math::SizeType> Sqrt<TensorType>::ComputeOutputShape(VecTensorType c
 template <typename TensorType>
 OperationsCount Sqrt<TensorType>::ChargeForward() const
 {
-  assert(!this->batch_output_shape_.empty());
+  assert(!this->batch_input_shapes_.empty());
   OperationsCount cost = fetch::ml::charge_estimation::ops::SQRT_PER_ELEMENT *
                          this->TotalElementsIn({this->batch_input_shapes_});
+  return cost;
+}
+
+template <typename TensorType>
+OperationsCount Sqrt<TensorType>::ChargeBackward() const
+{
+  assert(!this->batch_output_shape_.empty());
+  OperationsCount cost = fetch::ml::charge_estimation::ops::SQRT_BACKWARD_PER_ELEMENT *
+                         this->TotalElementsIn({this->batch_output_shape_});
   return cost;
 }
 

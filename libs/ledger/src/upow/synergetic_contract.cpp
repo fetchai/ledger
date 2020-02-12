@@ -47,13 +47,13 @@ namespace fetch {
 namespace ledger {
 namespace {
 
-using vm::FunctionDecoratorKind;
-using vm_modules::math::UInt256Wrapper;
-using vm_modules::VMFactory;
-using vm_modules::StructuredData;
 using byte_array::ConstByteArray;
 using crypto::Hash;
 using crypto::SHA256;
+using vm::FunctionDecoratorKind;
+using vm_modules::StructuredData;
+using vm_modules::VMFactory;
+using vm_modules::math::UInt256Wrapper;
 
 using Status                = SynergeticContract::Status;
 using ProblemData           = SynergeticContract::ProblemData;
