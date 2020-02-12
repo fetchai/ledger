@@ -70,6 +70,11 @@ std::shared_ptr<OpsSaveableParams> Slice<TensorType>::GetOpSaveableParams()
   sp->start_end_slice = start_end_slice_;
   sp->slice_type      = static_cast<uint8_t>(slice_type_);
 
+  // Add base class savable params
+  auto ops_sp  = Ops<TensorType>::GetOpSaveableParams();
+  auto cast_sp = std::static_pointer_cast<OpsSaveableParams>(sp);
+  *cast_sp     = *(std::static_pointer_cast<OpsSaveableParams>(ops_sp));
+
   return sp;
 }
 
