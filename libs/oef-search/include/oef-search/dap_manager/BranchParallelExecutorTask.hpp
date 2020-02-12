@@ -21,6 +21,7 @@
 #include "DapManager.hpp"
 #include "MementoExecutorTask.hpp"
 #include "NodeExecutorFactory.hpp"
+
 #include "oef-base/threading/TaskChainParallel.hpp"
 
 class BranchParallelExecutorTask

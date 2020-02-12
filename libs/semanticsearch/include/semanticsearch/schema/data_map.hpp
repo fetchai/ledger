@@ -20,6 +20,7 @@
 #include "semanticsearch/index/base_types.hpp"
 #include "semanticsearch/schema/semantic_reducer.hpp"
 #include "semanticsearch/schema/subspace_map_interface.hpp"
+
 #include <functional>
 
 namespace fetch {

@@ -20,11 +20,11 @@
 #include "semanticsearch/query/query_executor.hpp"
 
 #include <core/random/lfg.hpp>
-#include <exception>
-#include <iostream>
 
 #include <chrono>
+#include <exception>
 #include <fstream>
+#include <iostream>
 #include <memory>
 #include <set>
 #include <typeindex>

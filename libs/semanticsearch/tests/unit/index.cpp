@@ -16,8 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "gtest/gtest.h"
 #include "semanticsearch/index/in_memory_db_index.hpp"
+
+#include "gtest/gtest.h"
 using namespace fetch::semanticsearch;
 
 TEST(SemanticSearchIndex, BasicOperations1D)
