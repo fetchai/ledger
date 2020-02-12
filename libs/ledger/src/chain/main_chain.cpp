@@ -2146,7 +2146,7 @@ DigestSet MainChain::DetectDuplicateTransactions(BlockHash const &           sta
     }
   }
 
-  if (duplicates_on_disk > potential_duplicates.size())
+  if (duplicates_disk.size() > potential_duplicates.size())
   {
     FETCH_LOG_ERROR(LOGGING_NAME, "More duplicates found on disk than expected!");
     return all_digests;
