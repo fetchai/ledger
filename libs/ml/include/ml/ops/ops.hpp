@@ -45,6 +45,7 @@ public:
   using VecTensorType = std::vector<std::shared_ptr<TensorType const>>;
   using Shape         = fetch::math::SizeVector;
   using ShapeVector   = std::vector<Shape>;
+  using SPType        = OpsSaveableParams;
 
   virtual ~Ops() = default;
 
@@ -77,7 +78,14 @@ public:
     return batch_output_shape_;
   }
 
-  virtual std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() = 0;
+  virtual std::shared_ptr<OpsSaveableParams> GetOpSaveableParams()
+  {
+    auto sp                = std::make_shared<SPType>();
+    sp->is_training        = is_training_;
+    sp->batch_input_shapes = batch_input_shapes_;
+    sp->batch_output_shape = batch_output_shape_;
+    return sp;
+  }
 
   Ops() = default;
 
