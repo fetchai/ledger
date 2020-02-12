@@ -131,6 +131,18 @@ void Weights<TensorType>::Initialise(TensorType &array, uint64_t in_size, uint64
 }
 
 /**
+ * interface to call standard weights initialisation routines. defaults to xavier
+ * @param mode  An enum indicating which type of initialisation to perform
+ */
+template <typename TensorType>
+OperationsCount Weights<TensorType>::ChargeInitialise(uint64_t in_size, uint64_t out_size,
+                                                      WeightsInitialisation mode)
+{
+  FETCH_UNUSED(mode);
+  return in_size * out_size;
+}
+
+/**
  * interface to call standard weights initialisation routines. defaults to xavier.
  * Fan in and fan out xavier not permitted with input and output sizes not known independently
  * @param mode  An enum indicating which type of initialisation to perform

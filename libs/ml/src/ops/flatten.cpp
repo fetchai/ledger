@@ -130,6 +130,12 @@ OperationsCount Flatten<TensorType>::ChargeBackward() const
   return cost;
 }
 
+template <class TensorType>
+OperationsCount Flatten<TensorType>::ChargeConstruct()
+{
+  return 1;
+}
+
 ///////////////////////////////
 /// EXPLICIT INSTANTIATIONS ///
 ///////////////////////////////

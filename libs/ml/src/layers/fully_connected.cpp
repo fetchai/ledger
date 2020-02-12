@@ -88,7 +88,9 @@ FullyConnected<TensorType>::FullyConnected(SizeType in, SizeType out,
       this->batch_input_shapes_ = {{total_inputs_, 1}};
     }
     this->ComputeBatchOutputShape(this->batch_input_shapes_);
-    CompleteConstruction();
+
+    // Initialisation
+    // CompleteConstruction();
   }
 }
 
@@ -160,6 +162,129 @@ template <typename TensorType>
 OperationsCount FullyConnected<TensorType>::ChargeBackward() const
 {
   return Graph<TensorType>::ChargeBackward(this->output_node_name_);
+}
+
+template <typename TensorType>
+OperationsCount FullyConnected<TensorType>::ChargeCompleteConstruction(bool        is_initialised,
+                                                                       WeightsInit init_mode,
+                                                                       bool        time_distributed,
+                                                                       SizeType    total_inputs,
+                                                                       SizeType    total_outputs)
+{
+  OperationsCount op_cnt{0};
+
+  if (is_initialised)
+  {
+    return 1;
+  }
+
+  // SetBatchInputShapes, SetBatchOutputShape
+  op_cnt += 2;
+
+  if (total_inputs == AUTODETECT_INPUTS_COUNT)
+  {
+    if (time_distributed)
+    {
+      // total_inputs_ = this->batch_input_shapes_.front().at(0);
+      op_cnt += 1;
+    }
+    else
+    {
+      // FindNodeByOpCode
+      op_cnt += 4;
+
+      // ops::Flatten<TensorType>::ComputeBatchOutputShape();
+      op_cnt += 1;
+    }
+  }
+
+  // Construction of weights_shape vector
+  op_cnt += 1;
+  SizeType weights_shape_size = total_outputs * total_inputs;
+  SizeType biases_shape_size  = total_outputs;
+
+  // 2 x SetBatchOutputShape
+  op_cnt += 2;
+
+  // Create weights Tensor
+  op_cnt += weights_shape_size;
+
+  op_cnt +=
+      fetch::ml::ops::Weights<TensorType>::ChargeInitialise(total_inputs, total_outputs, init_mode);
+
+  // Set input references for biase, weights
+  op_cnt += 2;
+
+  // Create biases Tensor
+  op_cnt += biases_shape_size;
+
+  // Compile
+  op_cnt += 3;
+
+  return op_cnt;
+}
+
+template <typename TensorType>
+OperationsCount FullyConnected<TensorType>::ChargeConstruct(
+    SizeType in, SizeType out, details::ActivationType activation_type,
+    fetch::ml::RegularisationType regulariser, DataType regularisation_rate, WeightsInit init_mode,
+    bool time_distributed)
+{
+  using namespace fetch::ml::ops;
+  using namespace fetch::ml::details;
+
+  OperationsCount op_cnt{0};
+
+  // get correct name for the layer
+  op_cnt++;
+
+  // start to set up the structure
+  op_cnt += PlaceHolder<TensorType>::ChargeConstruct();
+
+  // for non time distributed layer, flatten the input
+  if (!time_distributed)
+  {
+    op_cnt += Flatten<TensorType>::ChargeConstruct();
+  }
+
+  // weights
+  op_cnt += Weights<TensorType>::ChargeConstruct();
+
+  // matmul_out = input * weights
+  op_cnt += MatrixMultiply<TensorType>::ChargeConstruct();
+
+  // biases
+  op_cnt += Weights<TensorType>::ChargeConstruct();
+
+  // output = matmul_out + biases
+  op_cnt += Add<TensorType>::ChargeConstruct();
+
+  // AddActivation
+  op_cnt += GetActivationCharge<TensorType>(activation_type);
+
+  // SetRegularisation
+  op_cnt += 1;  // Should be number of nodes in a graph
+
+  // AddInputNode, SetOutputNode
+  op_cnt += 2;
+
+  // If inputs count is known, the initialisation can be completed immediately.
+  if (in != AUTODETECT_INPUTS_COUNT)
+  {
+    // Set batch_input_shapes_
+    op_cnt += 1;
+
+    // ComputeBatchOutputShape
+
+    // SetBatchInputShapes, SetBatchOutputShape
+    op_cnt += 2;
+
+    op_cnt += ChargeCompleteConstruction(false, init_mode, time_distributed, in, out);
+  }
+
+  FETCH_UNUSED(regulariser);
+  FETCH_UNUSED(regularisation_rate);
+  return op_cnt;
 }
 
 template <typename TensorType>

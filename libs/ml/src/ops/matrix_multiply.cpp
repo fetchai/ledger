@@ -330,6 +330,12 @@ OperationsCount MatrixMultiply<T>::ChargeBackward() const
   return cost;
 }
 
+template <typename T>
+OperationsCount MatrixMultiply<T>::ChargeConstruct()
+{
+  return 3;
+}
+
 /**
  * Updates temporary container objects used in some cases of batched forward pass
  * @tparam T tensor type

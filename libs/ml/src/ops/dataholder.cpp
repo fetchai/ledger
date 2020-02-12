@@ -112,6 +112,12 @@ OperationsCount DataHolder<TensorType>::ChargeBackward() const
   return cost;
 }
 
+template <typename TensorType>
+OperationsCount DataHolder<TensorType>::ChargeConstruct()
+{
+  return 1;
+}
+
 ///////////////////////////////
 /// EXPLICIT INSTANTIATIONS ///
 ///////////////////////////////

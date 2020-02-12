@@ -81,6 +81,10 @@ public:
                          WeightsInitialisation mode = WeightsInitialisation::XAVIER_GLOROT,
                          SizeType              seed = 123456789);
 
+  static OperationsCount ChargeInitialise(uint64_t in_size, uint64_t out_size,
+                                          WeightsInitialisation mode);
+  // static OperationsCount        ChargeInitialise(uint64_t data_size, WeightsInitialisation mode);
+
   TensorType const &GetWeights() const override;
 
   void SetWeights(TensorType const &new_value) override;

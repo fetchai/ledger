@@ -966,32 +966,48 @@ ChargeAmount VMModel::EstimateLayerAddDense(fetch::vm::Ptr<fetch::vm::String> co
 {
   FETCH_UNUSED(layer);
 
-  SizeType size{0};
-  SizeType padded_size{0};
+  ChargeAmount charge{vm::MAXIMUM_CHARGE};
 
-  // DataType of Tensor is not important for caluclating padded size
-  padded_size = fetch::math::Tensor<DataType>::PaddedSizeFromShape({hidden_nodes, inputs});
-  padded_size += fetch::math::Tensor<DataType>::PaddedSizeFromShape({hidden_nodes, 1});
+  charge = fetch::ml::layers::FullyConnected<TensorType>::ChargeConstruct(inputs, hidden_nodes);
 
-  return ToChargeAmount(ADD_DENSE_PADDED_WEIGHTS_SIZE_COEF * padded_size +
-                        ADD_DENSE_WEIGHTS_SIZE_COEF * size + ADD_DENSE_CONST_COEF) *
-         COMPUTE_CHARGE_COST;
+  return charge + 1;
 }
 
 ChargeAmount VMModel::EstimateLayerAddDenseActivation(
     fetch::vm::Ptr<fetch::vm::String> const &layer, math::SizeType const &inputs,
     math::SizeType const &hidden_nodes, fetch::vm::Ptr<fetch::vm::String> const &activation)
 {
-  FETCH_UNUSED(activation);
-  return EstimateLayerAddDense(layer, inputs, hidden_nodes);
+  FETCH_UNUSED(layer);
+
+  ChargeAmount charge{vm::MAXIMUM_CHARGE};
+  try
+  {
+    fetch::ml::details::ActivationType activation_type =
+        ParseName(activation->string(), activations_, "activation function");
+
+    if (activation_type == fetch::ml::details::ActivationType::RELU)
+    {
+      charge = fetch::ml::layers::FullyConnected<TensorType>::ChargeConstruct(inputs, hidden_nodes,
+                                                                              activation_type);
+    }
+    else
+    {
+      vm_->RuntimeError("cannot add activation type : " + activation->string());
+    }
+  }
+  catch (std::exception const &e)
+  {
+    vm_->RuntimeError(std::string(e.what()));
+  }
+
+  return charge;
 }
 
 ChargeAmount VMModel::EstimateLayerAddDenseActivationExperimental(
     fetch::vm::Ptr<fetch::vm::String> const &layer, math::SizeType const &inputs,
     math::SizeType const &hidden_nodes, fetch::vm::Ptr<fetch::vm::String> const &activation)
 {
-  FETCH_UNUSED(activation);
-  return EstimateLayerAddDense(layer, inputs, hidden_nodes);
+  return EstimateLayerAddDenseActivation(layer, inputs, hidden_nodes, activation);
 }
 
 ChargeAmount VMModel::EstimateLayerAddDenseAutoInputs(
@@ -1001,12 +1017,6 @@ ChargeAmount VMModel::EstimateLayerAddDenseAutoInputs(
   FETCH_UNUSED(hidden_nodes);
   return MaximumCharge(layer->string() + " is not yet implemented.");
 }
-
-// AddLayer
-fixed_point::fp64_t const VMModel::ADD_DENSE_PADDED_WEIGHTS_SIZE_COEF =
-    fixed_point::fp64_t("0.002");
-fixed_point::fp64_t const VMModel::ADD_DENSE_WEIGHTS_SIZE_COEF = fixed_point::fp64_t("0.057");
-fixed_point::fp64_t const VMModel::ADD_DENSE_CONST_COEF        = fixed_point::fp64_t("60");
 
 }  // namespace model
 }  // namespace ml

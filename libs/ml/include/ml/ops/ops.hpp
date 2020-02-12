@@ -205,6 +205,15 @@ public:
     return total_elements;
   }
 
+  /**
+   * Default Op construction charge
+   * @return
+   */
+  static OperationsCount ChargeConstruct()
+  {
+    return 1;
+  }
+
 protected:
   bool is_training_ = true;
 

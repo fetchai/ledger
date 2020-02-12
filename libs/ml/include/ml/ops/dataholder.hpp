@@ -85,8 +85,9 @@ public:
     return DESCRIPTOR;
   }
 
-  OperationsCount ChargeForward() const override;
-  OperationsCount ChargeBackward() const override;
+  OperationsCount        ChargeForward() const override;
+  OperationsCount        ChargeBackward() const override;
+  static OperationsCount ChargeConstruct();
 
 protected:
   TensorPtrType data_;

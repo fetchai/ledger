@@ -16,6 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ml/layers/fully_connected.hpp"
 #include "vm_modules/ml/model/model.hpp"
 #include "vm_modules/ml/model/model_estimator.hpp"
 #include "vm_modules/vm_factory.hpp"
@@ -206,15 +207,9 @@ TEST_F(VMModelEstimatorTests, add_dense_layer_test)
   {
     for (SizeType outputs = min_output_size; outputs < max_output_size; outputs += output_step)
     {
-      SizeType padded_size_sum =
-          fetch::math::Tensor<DataType>::PaddedSizeFromShape({outputs, inputs});
-      padded_size_sum += fetch::math::Tensor<DataType>::PaddedSizeFromShape({outputs, 1});
-      SizeType size_sum = inputs * outputs + outputs;
-
-      DataType val =
-          (VmModel::ADD_DENSE_PADDED_WEIGHTS_SIZE_COEF * static_cast<DataType>(padded_size_sum));
-      val += VmModel::ADD_DENSE_WEIGHTS_SIZE_COEF * static_cast<DataType>(size_sum);
-      val += VmModel::ADD_DENSE_CONST_COEF;
+      SizeType val =
+          fetch::ml::layers::FullyConnected<fetch::math::Tensor<DataType>>::ChargeConstruct(
+              inputs, outputs);
 
       EXPECT_TRUE(model.EstimateLayerAddDense(vm_ptr_layer_type, inputs, outputs) ==
                   static_cast<ChargeAmount>(val) + 1);
@@ -224,9 +219,10 @@ TEST_F(VMModelEstimatorTests, add_dense_layer_test)
 
 TEST_F(VMModelEstimatorTests, add_dense_layer_activation_test)
 {
-  std::string model_type      = "sequential";
-  std::string layer_type      = "dense";
-  std::string activation_type = "relu";
+  std::string                        model_type          = "sequential";
+  std::string                        layer_type          = "dense";
+  std::string                        activation_type_str = "relu";
+  fetch::ml::details::ActivationType activation_type     = fetch::ml::details::ActivationType::RELU;
 
   SizeType min_input_size  = 0;
   SizeType max_input_size  = 1000;
@@ -236,7 +232,7 @@ TEST_F(VMModelEstimatorTests, add_dense_layer_activation_test)
   SizeType output_step     = 10;
 
   VmStringPtr       vm_ptr_layer_type{new fetch::vm::String(vm.get(), layer_type)};
-  VmStringPtr       vm_ptr_activation_type{new fetch::vm::String(vm.get(), activation_type)};
+  VmStringPtr       vm_ptr_activation_type{new fetch::vm::String(vm.get(), activation_type_str)};
   fetch::vm::TypeId type_id = 0;
   VmModel           model(vm.get(), type_id, model_type);
   VmModelEstimator  model_estimator(model);
@@ -246,15 +242,9 @@ TEST_F(VMModelEstimatorTests, add_dense_layer_activation_test)
     for (SizeType outputs = min_output_size; outputs < max_output_size; outputs += output_step)
     {
 
-      SizeType padded_size_sum =
-          fetch::math::Tensor<DataType>::PaddedSizeFromShape({outputs, inputs});
-      padded_size_sum += fetch::math::Tensor<DataType>::PaddedSizeFromShape({outputs, 1});
-      SizeType size_sum = inputs * outputs + outputs;
-
-      DataType val =
-          (VmModel::ADD_DENSE_PADDED_WEIGHTS_SIZE_COEF * static_cast<DataType>(padded_size_sum));
-      val += VmModel::ADD_DENSE_WEIGHTS_SIZE_COEF * static_cast<DataType>(size_sum);
-      val += VmModel::ADD_DENSE_CONST_COEF;
+      SizeType val =
+          fetch::ml::layers::FullyConnected<fetch::math::Tensor<DataType>>::ChargeConstruct(
+              inputs, outputs, activation_type);
 
       EXPECT_TRUE(model.EstimateLayerAddDenseActivation(vm_ptr_layer_type, inputs, outputs,
                                                         vm_ptr_activation_type) ==
