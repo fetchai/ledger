@@ -2035,7 +2035,8 @@ DigestSet MainChain::DetectDuplicateTransactions(BlockHash const &           sta
   }
 
   // Search for duplicates in the cache blocks since this is not held in the bloom
-  DigestSet duplicates{};
+  DigestSet duplicates{};       // All
+  DigestSet duplicates_disk{};  // Disk only
 
   for (;;)
   {
@@ -2092,20 +2093,20 @@ DigestSet MainChain::DetectDuplicateTransactions(BlockHash const &           sta
     bloom_filter_query_count_->increment();
   }
 
-  if (potential_duplicates.empty())
-  {
-    return duplicates;
-  }
-
   // filter the potential duplicates by traversing back down the chain (continue where left off)
-  uint64_t blocks_walked      = 0;
-  uint64_t duplicates_on_disk = 0;
+  uint64_t blocks_walked = 0;
+
+  if (!LookupBlock(block->previous_hash, block))
+  {
+    FETCH_LOG_ERROR(LOGGING_NAME, "Failed to find block on disk when going from cache");
+    return all_digests;
+  }
 
   for (;; blocks_walked++)
   {
     // Traversing the chain fully is costly: break out early if we know the transactions are all
     // duplicated (or both sets are empty)
-    if (potential_duplicates.size() == duplicates.size())
+    if (potential_duplicates.size() == duplicates_disk.size())
     {
       break;
     }
@@ -2117,7 +2118,7 @@ DigestSet MainChain::DetectDuplicateTransactions(BlockHash const &           sta
       {
         if (potential_duplicates.find(tx.digest()) != potential_duplicates.end())
         {
-          duplicates_on_disk++;
+          duplicates_disk.insert(tx.digest());
           duplicates.insert(tx.digest());
         }
       }
@@ -2150,7 +2151,7 @@ DigestSet MainChain::DetectDuplicateTransactions(BlockHash const &           sta
     return all_digests;
   }
 
-  bloom_filter_false_positive_count_->add(potential_duplicates.size() - duplicates_on_disk);
+  bloom_filter_false_positive_count_->add(potential_duplicates.size() - duplicates_disk.size());
   bloom_filter_walk_count_->add(blocks_walked);
   bloom_filter_positive_count_->add(duplicates_on_disk);
 
