@@ -88,9 +88,7 @@ FullyConnected<TensorType>::FullyConnected(SizeType in, SizeType out,
       this->batch_input_shapes_ = {{total_inputs_, 1}};
     }
     this->ComputeBatchOutputShape(this->batch_input_shapes_);
-
-    // Initialisation
-    // CompleteConstruction();
+    CompleteConstruction();
   }
 }
 
