@@ -2154,7 +2154,7 @@ DigestSet MainChain::DetectDuplicateTransactions(BlockHash const &           sta
 
   bloom_filter_false_positive_count_->add(potential_duplicates.size() - duplicates_disk.size());
   bloom_filter_walk_count_->add(blocks_walked);
-  bloom_filter_positive_count_->add(duplicates_on_disk);
+  bloom_filter_positive_count_->add(duplicates_disk.size());
 
   return duplicates;
 }
