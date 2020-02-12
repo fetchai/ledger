@@ -14,3 +14,5 @@ pyyaml = "==5.3"
 
 [packages]
 fetchai-ledger-api = "==1.0.0rc1"
+pyyaml = "*"
+help = "*"
