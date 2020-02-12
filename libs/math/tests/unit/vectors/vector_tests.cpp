@@ -530,6 +530,50 @@ TYPED_TEST(VectorNaNInfTest, nan_inf_tests)
   }
 }
 
+template <typename T>
+class VectorExpTest : public ::testing::Test
+{
+};
+
+TYPED_TEST_SUITE(VectorExpTest, MyFPTypes, );
+TYPED_TEST(VectorExpTest, exp_tests)
+{
+  using type       = typename TypeParam::type;
+  using array_type = fetch::memory::SharedArray<type>;
+
+  std::size_t            N = 40;
+  alignas(32) array_type A(N), C(N), E(N);
+
+  for (std::size_t i = 0; i < N; ++i)
+  {
+    switch (i % 5)
+    {
+    case 0:
+      A[i] = type::POSITIVE_INFINITY;
+      break;
+    case 1:
+      A[i] = type::NEGATIVE_INFINITY;
+      break;
+    case 2:
+      A[i] = type::NaN;
+      break;
+    default:
+      A[i] = fetch::random::Random::generator.AsType<type>() * type::MAX_EXP;
+      break;
+    }
+    E[i] = type::Exp(A[i]);
+  }
+
+  C.in_parallel().Apply([](auto const &a, auto &c) { c = fetch::vectorise::Exp(a); }, A);
+  for (std::size_t i = 0; i < N; ++i)
+  {
+    if (!type::IsNaN(C[i]) && !type::IsNaN(E[i]))
+    {
+      EXPECT_EQ(E[i], C[i]);
+    }
+  }
+}
+
 }  // namespace test
 }  // namespace math
 }  // namespace fetch
