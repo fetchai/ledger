@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "4caae972a1a120f9c8573e1643cc08ebcca857b3013dd9dcec9d3bc66c783279"
+            "sha256": "425e6cd63b52431beaf9fbf55b8d2da5a3428b9135b6211f6741dbd659581f28"
         },
         "pipfile-spec": 6,
         "requires": {},
@@ -16,10 +16,10 @@
     "default": {
         "autopep8": {
             "hashes": [
-                "sha256:0f592a0447acea0c2b0a9602be1e4e3d86db52badd2e3c84f0193bfd89fd3a43"
+                "sha256:4d8eec30cc81bc5617dbf1218201d770dc35629363547f17577c61683ccfb3ee"
             ],
             "index": "pypi",
-            "version": "==1.5"
+            "version": "==1.4.4"
         },
         "base58": {
             "hashes": [
@@ -146,10 +146,10 @@
     "develop": {
         "autopep8": {
             "hashes": [
-                "sha256:0f592a0447acea0c2b0a9602be1e4e3d86db52badd2e3c84f0193bfd89fd3a43"
+                "sha256:4d8eec30cc81bc5617dbf1218201d770dc35629363547f17577c61683ccfb3ee"
             ],
             "index": "pypi",
-            "version": "==1.5"
+            "version": "==1.4.4"
         },
         "cmake-format": {
             "hashes": [
