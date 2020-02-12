@@ -1069,8 +1069,6 @@ void MainChain::RecoverFromFile(Mode mode)
         break;
       }
 
-      // repopulate the bloom filter
-      AddBlockToBloomFilter(*next);
       if ((block_index % bloom_filter_.window_size()) == 0)
       {
         bloom_filter_.TrimCache();
@@ -2062,9 +2060,11 @@ DigestSet MainChain::DetectDuplicateTransactions(BlockHash const &           sta
     // termination condition
     if (!LookupBlockFromCache(block->previous_hash, block))
     {
+#ifndef NDEBUG
       // Sanity check - there should be the continuation of this on disk
       IntBlockPtr block_dummy;
       assert(LookupBlock(block->previous_hash, block_dummy));
+#endif
       break;
     }
   }
@@ -2139,7 +2139,7 @@ DigestSet MainChain::DetectDuplicateTransactions(BlockHash const &           sta
     }
   }
 
-  bloom_filter_false_positive_count_->add(potential_duplicates.size() - duplicates.size());
+  bloom_filter_false_positive_count_->add(potential_duplicates.size() - duplicates_on_disk);
   bloom_filter_walk_count_->add(blocks_walked);
   bloom_filter_positive_count_->add(duplicates_on_disk);
 
