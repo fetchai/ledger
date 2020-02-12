@@ -95,13 +95,12 @@ fetch::vm::Ptr<fetch::vm_modules::ml::model::VMModel> VmSequentialModel(
 
     if (activations[i])
     {
-      model->Estimator().LayerAddDenseActivation(layer_type, input_size, output_size,
-                                                 activation_type);
+      model->EstimateLayerAddDenseActivation(layer_type, input_size, output_size, activation_type);
       model->LayerAddDenseActivation(layer_type, input_size, output_size, activation_type);
     }
     else
     {
-      model->Estimator().LayerAddDense(layer_type, input_size, output_size);
+      model->EstimateLayerAddDense(layer_type, input_size, output_size);
       model->LayerAddDense(layer_type, input_size, output_size);
     }
   }
@@ -144,15 +143,14 @@ public:
   ChargeAmount LayerAddDenseCharge(VmModelPtr &model, VmStringPtr const &layer_type,
                                    SizeType input_size, SizeType output_size)
   {
-    return model->Estimator().LayerAddDense(layer_type, input_size, output_size);
+    return model->EstimateLayerAddDense(layer_type, input_size, output_size);
   }
 
   ChargeAmount LayerAddDenseActivationCharge(VmModelPtr &model, VmStringPtr const &layer_type,
                                              SizeType input_size, SizeType output_size,
                                              VmStringPtr const &activation)
   {
-    return model->Estimator().LayerAddDenseActivation(layer_type, input_size, output_size,
-                                                      activation);
+    return model->EstimateLayerAddDenseActivation(layer_type, input_size, output_size, activation);
   }
 
   ChargeAmount CompileSequentialCharge(VmModelPtr &model, VmStringPtr const &loss,
@@ -213,12 +211,12 @@ TEST_F(VMModelEstimatorTests, add_dense_layer_test)
       padded_size_sum += fetch::math::Tensor<DataType>::PaddedSizeFromShape({outputs, 1});
       SizeType size_sum = inputs * outputs + outputs;
 
-      DataType val = (VmModelEstimator::ADD_DENSE_PADDED_WEIGHTS_SIZE_COEF *
-                      static_cast<DataType>(padded_size_sum));
-      val += VmModelEstimator::ADD_DENSE_WEIGHTS_SIZE_COEF * static_cast<DataType>(size_sum);
-      val += VmModelEstimator::ADD_DENSE_CONST_COEF;
+      DataType val =
+          (VmModel::ADD_DENSE_PADDED_WEIGHTS_SIZE_COEF * static_cast<DataType>(padded_size_sum));
+      val += VmModel::ADD_DENSE_WEIGHTS_SIZE_COEF * static_cast<DataType>(size_sum);
+      val += VmModel::ADD_DENSE_CONST_COEF;
 
-      EXPECT_TRUE(model_estimator.LayerAddDense(vm_ptr_layer_type, inputs, outputs) ==
+      EXPECT_TRUE(model.EstimateLayerAddDense(vm_ptr_layer_type, inputs, outputs) ==
                   static_cast<ChargeAmount>(val) + 1);
     }
   }
@@ -253,13 +251,13 @@ TEST_F(VMModelEstimatorTests, add_dense_layer_activation_test)
       padded_size_sum += fetch::math::Tensor<DataType>::PaddedSizeFromShape({outputs, 1});
       SizeType size_sum = inputs * outputs + outputs;
 
-      DataType val = (VmModelEstimator::ADD_DENSE_PADDED_WEIGHTS_SIZE_COEF *
-                      static_cast<DataType>(padded_size_sum));
-      val += VmModelEstimator::ADD_DENSE_WEIGHTS_SIZE_COEF * static_cast<DataType>(size_sum);
-      val += VmModelEstimator::ADD_DENSE_CONST_COEF;
+      DataType val =
+          (VmModel::ADD_DENSE_PADDED_WEIGHTS_SIZE_COEF * static_cast<DataType>(padded_size_sum));
+      val += VmModel::ADD_DENSE_WEIGHTS_SIZE_COEF * static_cast<DataType>(size_sum);
+      val += VmModel::ADD_DENSE_CONST_COEF;
 
-      EXPECT_TRUE(model_estimator.LayerAddDenseActivation(vm_ptr_layer_type, inputs, outputs,
-                                                          vm_ptr_activation_type) ==
+      EXPECT_TRUE(model.EstimateLayerAddDenseActivation(vm_ptr_layer_type, inputs, outputs,
+                                                        vm_ptr_activation_type) ==
                   static_cast<ChargeAmount>(val) + 1);
     }
   }
@@ -392,18 +390,18 @@ TEST_F(VMModelEstimatorTests, compile_sequential_test)
       VmModelEstimator model_estimator(model);
 
       // add some layers
-      model_estimator.LayerAddDense(vm_ptr_layer_type, inputs, outputs);
+      model.EstimateLayerAddDense(vm_ptr_layer_type, inputs, outputs);
       SizeType weights_padded_size =
           fetch::math::Tensor<DataType>::PaddedSizeFromShape({outputs, inputs});
       weights_padded_size += fetch::math::Tensor<DataType>::PaddedSizeFromShape({outputs, 1});
       SizeType weights_size_sum = inputs * outputs + outputs;
 
-      model_estimator.LayerAddDense(vm_ptr_layer_type, inputs, outputs);
+      model.EstimateLayerAddDense(vm_ptr_layer_type, inputs, outputs);
       weights_padded_size += fetch::math::Tensor<DataType>::PaddedSizeFromShape({outputs, inputs});
       weights_padded_size += fetch::math::Tensor<DataType>::PaddedSizeFromShape({outputs, 1});
       weights_size_sum += inputs * outputs + outputs;
 
-      model_estimator.LayerAddDense(vm_ptr_layer_type, inputs, outputs);
+      model.EstimateLayerAddDense(vm_ptr_layer_type, inputs, outputs);
       weights_padded_size += fetch::math::Tensor<DataType>::PaddedSizeFromShape({outputs, inputs});
       weights_padded_size += fetch::math::Tensor<DataType>::PaddedSizeFromShape({outputs, 1});
       weights_size_sum += inputs * outputs + outputs;
@@ -472,8 +470,8 @@ TEST_F(VMModelEstimatorTests, estimator_fit_and_predict_test)
           VmModel          model(vm.get(), type_id, model_type);
           VmModelEstimator model_estimator(model);
 
-          model_estimator.LayerAddDenseActivation(vm_ptr_layer_type, data_size_1, label_size_1,
-                                                  vm_ptr_activation_type);
+          model.EstimateLayerAddDenseActivation(vm_ptr_layer_type, data_size_1, label_size_1,
+                                                vm_ptr_activation_type);
           model.LayerAddDenseActivation(vm_ptr_layer_type, data_size_1, label_size_1,
                                         vm_ptr_activation_type);
 
@@ -616,8 +614,8 @@ TEST_F(VMModelEstimatorTests, estimator_evaluate_with_metrics)
 
           model.LayerAddInput(input_name, input_array);
 
-          model_estimator.LayerAddDenseActivation(vm_ptr_layer_type, data_size_1, label_size_1,
-                                                  vm_ptr_activation_type);
+          model.EstimateLayerAddDenseActivation(vm_ptr_layer_type, data_size_1, label_size_1,
+                                                vm_ptr_activation_type);
           model.LayerAddDenseActivation(vm_ptr_layer_type, data_size_1, label_size_1,
                                         vm_ptr_activation_type);
 

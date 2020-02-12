@@ -124,11 +124,7 @@ public:
 
   vm::Ptr<vm::Array<math::DataType>> Evaluate();
 
-  fetch::vm::ChargeAmount EstimateEvaluate();
-
   vm::Ptr<VMTensor> Predict(vm::Ptr<VMTensor> const &data);
-
-  fetch::vm::ChargeAmount EstimatePredict(vm::Ptr<vm_modules::math::VMTensor> const &data);
 
   static void Bind(fetch::vm::Module &module, bool experimental_enabled);
 
@@ -147,6 +143,7 @@ public:
 
   void LayerAddDense(fetch::vm::Ptr<fetch::vm::String> const &layer, math::SizeType const &inputs,
                      math::SizeType const &hidden_nodes);
+
   void LayerAddDenseAutoInputs(fetch::vm::Ptr<fetch::vm::String> const &layer,
                                math::SizeType const &                   hidden_nodes);
   void LayerAddDenseActivation(fetch::vm::Ptr<fetch::vm::String> const &layer,
@@ -193,6 +190,34 @@ public:
   {
     return model_->ChargeBackward();
   }
+
+  static fetch::vm::ChargeAmount ToChargeAmount(fixed_point::fp64_t const &val);
+
+  static fetch::vm::ChargeAmount MaximumCharge(std::string const &log_msg);
+
+  fetch::vm::ChargeAmount EstimateLayerAddDense(fetch::vm::Ptr<fetch::vm::String> const &layer,
+                                                math::SizeType const &                   inputs,
+                                                math::SizeType const &hidden_nodes);
+
+  fetch::vm::ChargeAmount EstimateLayerAddDenseActivation(
+      fetch::vm::Ptr<fetch::vm::String> const &layer, math::SizeType const &inputs,
+      math::SizeType const &hidden_nodes, fetch::vm::Ptr<fetch::vm::String> const &activation);
+
+  fetch::vm::ChargeAmount EstimateLayerAddDenseActivationExperimental(
+      fetch::vm::Ptr<fetch::vm::String> const &layer, math::SizeType const &inputs,
+      math::SizeType const &hidden_nodes, fetch::vm::Ptr<fetch::vm::String> const &activation);
+
+  fetch::vm::ChargeAmount EstimateLayerAddDenseAutoInputs(
+      fetch::vm::Ptr<fetch::vm::String> const &layer, math::SizeType const &hidden_nodes);
+
+  fetch::vm::ChargeAmount EstimateEvaluate();
+
+  fetch::vm::ChargeAmount EstimatePredict(vm::Ptr<vm_modules::math::VMTensor> const &data);
+
+  // AddLayer
+  static const fixed_point::fp64_t ADD_DENSE_PADDED_WEIGHTS_SIZE_COEF;
+  static const fixed_point::fp64_t ADD_DENSE_WEIGHTS_SIZE_COEF;
+  static const fixed_point::fp64_t ADD_DENSE_CONST_COEF;
 
 private:
   ModelPtrType       model_;

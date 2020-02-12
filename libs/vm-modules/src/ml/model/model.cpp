@@ -299,9 +299,9 @@ void VMModel::Bind(Module &module, bool const experimental_enabled)
         return Ptr<VMModel>{new VMModel(vm, type_id)};
       })
       .CreateMemberFunction("add", &VMModel::LayerAddDense,
-                            UseEstimator(&ModelEstimator::LayerAddDense))
+                            UseMemberEstimator(&VMModel::EstimateLayerAddDense))
       .CreateMemberFunction("add", &VMModel::LayerAddDenseActivation,
-                            UseEstimator(&ModelEstimator::LayerAddDenseActivation))
+                            UseMemberEstimator(&VMModel::EstimateLayerAddDenseActivation))
       .CreateMemberFunction("compile", &VMModel::CompileSequential,
                             UseEstimator(&ModelEstimator::CompileSequential))
       .CreateMemberFunction("compile", &VMModel::CompileSequentialWithMetrics,
@@ -336,12 +336,13 @@ void VMModel::Bind(Module &module, bool const experimental_enabled)
                               UseEstimator(&ModelEstimator::LayerAddPool))
         .CreateMemberFunction("addExperimental", &VMModel::LayerAddEmbeddings,
                               UseEstimator(&ModelEstimator::LayerAddEmbeddings))
-        .CreateMemberFunction("addExperimental", &VMModel::LayerAddDenseActivationExperimental,
-                              UseEstimator(&ModelEstimator::LayerAddDenseActivationExperimental))
+        .CreateMemberFunction(
+            "addExperimental", &VMModel::LayerAddDenseActivationExperimental,
+            UseMemberEstimator(&VMModel::EstimateLayerAddDenseActivationExperimental))
         .CreateMemberFunction("addExperimental", &VMModel::LayerAddInput,
                               UseEstimator(&ModelEstimator::LayerAddInput))
         .CreateMemberFunction("addExperimental", &VMModel::LayerAddDenseAutoInputs,
-                              UseEstimator(&ModelEstimator::LayerAddDenseAutoInputs));
+                              UseMemberEstimator(&VMModel::EstimateLayerAddDenseAutoInputs));
   }
 }
 
@@ -883,6 +884,43 @@ void VMModel::LayerAddEmbeddings(const fetch::vm::Ptr<fetch::vm::String> &layer,
 }
 
 /**
+ * for regressor and classifier we can't prepare the dataloder until after compile has begun
+ * because model_ isn't ready until then.
+ */
+void VMModel::PrepareDataloader()
+{
+  try
+  {
+    // set up the dataloader
+    auto data_loader = std::make_unique<TensorDataloader>();
+    data_loader->SetRandomMode(true);
+    model_->SetDataloader(std::move(data_loader));
+  }
+  catch (std::exception const &e)
+  {
+    vm_->RuntimeError("Can't prepare DataLoader: " + std::string(e.what()));
+    return;
+  }
+}
+
+ChargeAmount VMModel::ToChargeAmount(fixed_point::fp64_t const &val)
+{
+  auto ret = static_cast<ChargeAmount>(val);
+  // Ensure that estimate will never be 0
+  if (ret < std::numeric_limits<uint64_t>::max())
+  {
+    ret += 1;
+  }
+  return ret;
+}
+
+ChargeAmount VMModel::MaximumCharge(std::string const &log_msg)
+{
+  FETCH_LOG_ERROR("Model", "operation charge is vm::MAXIMUM_CHARGE : " + log_msg);
+  return vm::MAXIMUM_CHARGE;
+}
+
+/**
  * @brief VMModel::EstimatePredict calculates a charge amount, required for a forward pass
  * @param data
  * @return charge estimation
@@ -922,25 +960,53 @@ ChargeAmount VMModel::EstimateEvaluate()
   return batch_cost;
 }
 
-/**
- * for regressor and classifier we can't prepare the dataloder until after compile has begun
- * because model_ isn't ready until then.
- */
-void VMModel::PrepareDataloader()
+ChargeAmount VMModel::EstimateLayerAddDense(fetch::vm::Ptr<fetch::vm::String> const &layer,
+                                            math::SizeType const &                   inputs,
+                                            math::SizeType const &                   hidden_nodes)
 {
-  try
-  {
-    // set up the dataloader
-    auto data_loader = std::make_unique<TensorDataloader>();
-    data_loader->SetRandomMode(true);
-    model_->SetDataloader(std::move(data_loader));
-  }
-  catch (std::exception const &e)
-  {
-    vm_->RuntimeError("Can't prepare DataLoader: " + std::string(e.what()));
-    return;
-  }
+  FETCH_UNUSED(layer);
+
+  SizeType size{0};
+  SizeType padded_size{0};
+
+  // DataType of Tensor is not important for caluclating padded size
+  padded_size = fetch::math::Tensor<DataType>::PaddedSizeFromShape({hidden_nodes, inputs});
+  padded_size += fetch::math::Tensor<DataType>::PaddedSizeFromShape({hidden_nodes, 1});
+
+  return ToChargeAmount(ADD_DENSE_PADDED_WEIGHTS_SIZE_COEF * padded_size +
+                        ADD_DENSE_WEIGHTS_SIZE_COEF * size + ADD_DENSE_CONST_COEF) *
+         COMPUTE_CHARGE_COST;
 }
+
+ChargeAmount VMModel::EstimateLayerAddDenseActivation(
+    fetch::vm::Ptr<fetch::vm::String> const &layer, math::SizeType const &inputs,
+    math::SizeType const &hidden_nodes, fetch::vm::Ptr<fetch::vm::String> const &activation)
+{
+  FETCH_UNUSED(activation);
+  return EstimateLayerAddDense(layer, inputs, hidden_nodes);
+}
+
+ChargeAmount VMModel::EstimateLayerAddDenseActivationExperimental(
+    fetch::vm::Ptr<fetch::vm::String> const &layer, math::SizeType const &inputs,
+    math::SizeType const &hidden_nodes, fetch::vm::Ptr<fetch::vm::String> const &activation)
+{
+  FETCH_UNUSED(activation);
+  return EstimateLayerAddDense(layer, inputs, hidden_nodes);
+}
+
+ChargeAmount VMModel::EstimateLayerAddDenseAutoInputs(
+    fetch::vm::Ptr<fetch::vm::String> const &layer, math::SizeType const &hidden_nodes)
+{
+  FETCH_UNUSED(layer);
+  FETCH_UNUSED(hidden_nodes);
+  return MaximumCharge(layer->string() + " is not yet implemented.");
+}
+
+// AddLayer
+fixed_point::fp64_t const VMModel::ADD_DENSE_PADDED_WEIGHTS_SIZE_COEF =
+    fixed_point::fp64_t("0.002");
+fixed_point::fp64_t const VMModel::ADD_DENSE_WEIGHTS_SIZE_COEF = fixed_point::fp64_t("0.057");
+fixed_point::fp64_t const VMModel::ADD_DENSE_CONST_COEF        = fixed_point::fp64_t("60");
 
 }  // namespace model
 }  // namespace ml

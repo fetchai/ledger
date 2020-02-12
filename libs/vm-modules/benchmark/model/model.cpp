@@ -97,13 +97,12 @@ fetch::vm::Ptr<fetch::vm_modules::ml::model::VMModel> vmSequentialModel(
 
     if (activations[i])
     {
-      model->Estimator().LayerAddDenseActivation(layer_type, input_size, output_size,
-                                                 activation_type);
+      model->EstimateLayerAddDenseActivation(layer_type, input_size, output_size, activation_type);
       model->LayerAddDenseActivation(layer_type, input_size, output_size, activation_type);
     }
     else
     {
-      model->Estimator().LayerAddDense(layer_type, input_size, output_size);
+      model->EstimateLayerAddDense(layer_type, input_size, output_size);
       model->LayerAddDense(layer_type, input_size, output_size);
     }
   }
@@ -181,7 +180,7 @@ void BM_AddLayer(::benchmark::State &state)
     if (config.activation)
     {
       state.counters["charge"] = static_cast<double>(
-          model->Estimator().LayerAddDense(layer_type, config.input_size, config.output_size));
+          model->EstimateLayerAddDense(layer_type, config.input_size, config.output_size));
 
       state.counters["PaddedSizesSum"] =
           static_cast<double>(model->Estimator().GetPaddedSizesSum());
@@ -192,7 +191,7 @@ void BM_AddLayer(::benchmark::State &state)
     }
     else
     {
-      state.counters["charge"] = static_cast<double>(model->Estimator().LayerAddDenseActivation(
+      state.counters["charge"] = static_cast<double>(model->EstimateLayerAddDenseActivation(
           layer_type, config.input_size, config.output_size, activation_type));
 
       state.counters["PaddedSizesSum"] =

@@ -55,15 +55,6 @@ public:
   ModelEstimator(ModelEstimator &&other)      = delete;
   ModelEstimator &operator                    =(ModelEstimator &&other) noexcept;
 
-  ChargeAmount LayerAddDense(fetch::vm::Ptr<fetch::vm::String> const &layer,
-                             math::SizeType const &inputs, math::SizeType const &hidden_nodes);
-  ChargeAmount LayerAddDenseAutoInputs(fetch::vm::Ptr<fetch::vm::String> const &layer,
-                                       math::SizeType const &                   hidden_nodes);
-  ChargeAmount LayerAddDenseActivation(fetch::vm::Ptr<fetch::vm::String> const &layer,
-                                       math::SizeType const &                   inputs,
-                                       math::SizeType const &                   hidden_nodes,
-                                       fetch::vm::Ptr<fetch::vm::String> const &activation);
-
   ChargeAmount LayerAddConv(fetch::vm::Ptr<fetch::vm::String> const &layer,
                             math::SizeType const &                   output_channels,
                             math::SizeType const &input_channels, math::SizeType const &kernel_size,
@@ -79,9 +70,6 @@ public:
                                       math::SizeType const &                   kernel_size,
                                       math::SizeType const &                   stride_size,
                                       fetch::vm::Ptr<fetch::vm::String> const &activation);
-  ChargeAmount LayerAddDenseActivationExperimental(
-      fetch::vm::Ptr<fetch::vm::String> const &layer, math::SizeType const &inputs,
-      math::SizeType const &hidden_nodes, fetch::vm::Ptr<fetch::vm::String> const &activation);
 
   ChargeAmount LayerAddFlatten(fetch::vm::Ptr<fetch::vm::String> const &layer);
 
@@ -119,11 +107,6 @@ public:
   SizeType GetSizesSum();
   SizeType GetOpsCount();
   DataType GetForwardCost();
-
-  // AddLayer
-  static const fixed_point::fp64_t ADD_DENSE_PADDED_WEIGHTS_SIZE_COEF;
-  static const fixed_point::fp64_t ADD_DENSE_WEIGHTS_SIZE_COEF;
-  static const fixed_point::fp64_t ADD_DENSE_CONST_COEF;
 
   // Compile
   static const fixed_point::fp64_t ADAM_PADDED_WEIGHTS_SIZE_COEF;

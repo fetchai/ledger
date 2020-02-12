@@ -53,91 +53,6 @@ ModelEstimator &ModelEstimator::operator=(ModelEstimator &&other) noexcept
   return *this;
 }
 
-/**
- * Estimates and returns the cost of adding the relevant layer, but also updates internal state for
- * other calls (e.g. forward_pass_cost etc.).
- * Must be a sequential model
- * @param layer description of layer type
- * @param inputs number of inputs to layer
- * @param hidden_nodes number of outputs of layer
- * @return
- */
-ChargeAmount ModelEstimator::LayerAddDense(Ptr<String> const &layer, SizeType const &inputs,
-                                           SizeType const &hidden_nodes)
-{
-  SizeType size{0};
-  SizeType padded_size{0};
-
-  FETCH_UNUSED(layer);  // must be a dense layer
-
-  state_.forward_pass_cost += inputs * FORWARD_DENSE_INPUT_COEF;
-  state_.forward_pass_cost += hidden_nodes * FORWARD_DENSE_OUTPUT_COEF;
-  state_.forward_pass_cost += inputs * hidden_nodes * FORWARD_DENSE_QUAD_COEF;
-
-  state_.backward_pass_cost += inputs * BACKWARD_DENSE_INPUT_COEF;
-  state_.backward_pass_cost += hidden_nodes * BACKWARD_DENSE_OUTPUT_COEF;
-  state_.backward_pass_cost += inputs * hidden_nodes * BACKWARD_DENSE_QUAD_COEF;
-
-  size = inputs * hidden_nodes + hidden_nodes;
-  state_.weights_size_sum += size;
-
-  // DataType of Tensor is not important for caluclating padded size
-  padded_size = fetch::math::Tensor<DataType>::PaddedSizeFromShape({hidden_nodes, inputs});
-  padded_size += fetch::math::Tensor<DataType>::PaddedSizeFromShape({hidden_nodes, 1});
-
-  state_.weights_padded_size_sum += padded_size;
-  state_.last_layer_size = hidden_nodes;
-  state_.ops_count += 3;
-
-  return ToChargeAmount(ADD_DENSE_PADDED_WEIGHTS_SIZE_COEF * padded_size +
-                        ADD_DENSE_WEIGHTS_SIZE_COEF * size + ADD_DENSE_CONST_COEF) *
-         COMPUTE_CHARGE_COST;
-}
-
-ModelEstimator::ChargeAmount ModelEstimator::LayerAddDenseAutoInputs(
-    const fetch::vm::Ptr<String> &layer, const math::SizeType &hidden_nodes)
-{
-  FETCH_UNUSED(layer);
-  FETCH_UNUSED(hidden_nodes);
-  return MaximumCharge(layer->string() + NOT_IMPLEMENTED_MESSAGE);
-}
-
-ChargeAmount ModelEstimator::LayerAddDenseActivation(Ptr<fetch::vm::String> const &layer,
-                                                     SizeType const &              inputs,
-                                                     SizeType const &              hidden_nodes,
-                                                     Ptr<fetch::vm::String> const &activation)
-{
-  ChargeAmount estimate = LayerAddDense(layer, inputs, hidden_nodes);
-
-  FETCH_UNUSED(activation);  // only relu is valid
-  state_.forward_pass_cost += RELU_FORWARD_IMPACT * hidden_nodes;
-  state_.backward_pass_cost += RELU_BACKWARD_IMPACT * hidden_nodes;
-  state_.ops_count++;
-
-  return estimate;
-}
-
-/**
- * Method for giving charge estimate for experimental layers
- * @param layer
- * @param inputs
- * @param hidden_nodes
- * @param activation
- * @return
- */
-ChargeAmount ModelEstimator::LayerAddDenseActivationExperimental(
-    Ptr<fetch::vm::String> const &layer, SizeType const &inputs, SizeType const &hidden_nodes,
-    Ptr<fetch::vm::String> const &activation)
-{
-
-  FETCH_UNUSED(layer);
-  FETCH_UNUSED(inputs);
-  FETCH_UNUSED(hidden_nodes);
-  FETCH_UNUSED(activation);
-
-  return MaximumCharge("attempted to estimate unknown layer with unknown activation type");
-}
-
 ChargeAmount ModelEstimator::LayerAddConv(Ptr<String> const &layer, SizeType const &output_channels,
                                           SizeType const &input_channels,
                                           SizeType const &kernel_size, SizeType const &stride_size)
@@ -473,13 +388,6 @@ ChargeAmount ModelEstimator::ToChargeAmount(fixed_point::fp64_t const &val)
   }
   return ret;
 }
-
-// AddLayer
-fixed_point::fp64_t const ModelEstimator::ADD_DENSE_PADDED_WEIGHTS_SIZE_COEF =
-    fixed_point::fp64_t("0.002");
-fixed_point::fp64_t const ModelEstimator::ADD_DENSE_WEIGHTS_SIZE_COEF =
-    fixed_point::fp64_t("0.057");
-fixed_point::fp64_t const ModelEstimator::ADD_DENSE_CONST_COEF = fixed_point::fp64_t("60");
 
 // Compile
 fixed_point::fp64_t const ModelEstimator::ADAM_PADDED_WEIGHTS_SIZE_COEF =
