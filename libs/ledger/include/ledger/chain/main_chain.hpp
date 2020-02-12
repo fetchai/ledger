@@ -211,7 +211,8 @@ public:
   /// @name Transaction Duplication Filtering
   /// @{
   DigestSet DetectDuplicateTransactions(BlockHash const &           starting_hash,
-                                        TransactionLayoutSet const &transactions) const;
+                                        TransactionLayoutSet const &transactions,
+                                        bool suppress_telemetry = false) const;
   /// @}
 
   // Operators

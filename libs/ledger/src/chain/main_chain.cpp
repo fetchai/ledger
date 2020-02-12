@@ -2015,7 +2015,8 @@ DigestSet ToDigestSet(MainChain::TransactionLayoutSet const &transactions)
  * @return: bool whether the starting hash referred to a valid block on a valid chain
  */
 DigestSet MainChain::DetectDuplicateTransactions(BlockHash const &           starting_hash,
-                                                 TransactionLayoutSet const &transactions) const
+                                                 TransactionLayoutSet const &transactions,
+                                                 bool suppress_telemetry) const
 {
   MilliTimer const timer{"DuplicateTransactionsCheck", 100};
 
@@ -2069,7 +2070,10 @@ DigestSet MainChain::DetectDuplicateTransactions(BlockHash const &           sta
     }
   }
 
-  duplicate_txs_in_recent_->add(duplicates.size());
+  if (!suppress_telemetry)
+  {
+    duplicate_txs_in_recent_->add(duplicates.size());
+  }
 
   // evaluate the bloom filter and determine the potential duplicates on disk
   DigestSet         potential_duplicates{};
@@ -2089,7 +2093,10 @@ DigestSet MainChain::DetectDuplicateTransactions(BlockHash const &           sta
           std::min(from_calculated, earliest_possible_block_with_duplicate);
     }
 
-    bloom_filter_query_count_->increment();
+    if (!suppress_telemetry)
+    {
+      bloom_filter_query_count_->increment();
+    }
   }
 
   // filter the potential duplicates by traversing back down the chain (continue where left off)
@@ -2151,9 +2158,12 @@ DigestSet MainChain::DetectDuplicateTransactions(BlockHash const &           sta
     return all_digests;
   }
 
-  bloom_filter_false_positive_count_->add(potential_duplicates.size() - duplicates_disk.size());
-  bloom_filter_walk_count_->add(blocks_walked);
-  bloom_filter_positive_count_->add(duplicates_disk.size());
+  if (!suppress_telemetry)
+  {
+    bloom_filter_false_positive_count_->add(potential_duplicates.size() - duplicates_disk.size());
+    bloom_filter_walk_count_->add(blocks_walked);
+    bloom_filter_positive_count_->add(duplicates_disk.size());
+  }
 
   return duplicates;
 }
