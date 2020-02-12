@@ -411,6 +411,12 @@ OperationsCount Model<TensorType>::ChargeForward() const
   return this->graph_ptr_->ChargeForward(this->output_);
 }
 
+template <typename TensorType>
+OperationsCount Model<TensorType>::ChargeBackward() const
+{
+  return this->graph_ptr_->ChargeBackward(this->output_);
+}
+
 ///////////////////////////////
 /// EXPLICIT INSTANTIATIONS ///
 ///////////////////////////////
