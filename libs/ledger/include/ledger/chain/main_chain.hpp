@@ -346,6 +346,8 @@ private:
   telemetry::CounterPtr            bloom_filter_query_count_;
   telemetry::CounterPtr            bloom_filter_positive_count_;
   telemetry::CounterPtr            bloom_filter_false_positive_count_;
+  telemetry::CounterPtr            bloom_filter_walk_count_;
+  telemetry::CounterPtr            duplicate_txs_in_recent_;
   telemetry::CounterPtr            dirty_blocks_attempt_add_;
   telemetry::CounterPtr            children_on_storage_checks_total_;
 };

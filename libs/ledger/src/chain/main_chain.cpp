@@ -95,6 +95,12 @@ MainChain::MainChain(Mode mode, Config const &cfg)
   , bloom_filter_false_positive_count_(telemetry::Registry::Instance().CreateCounter(
         "ledger_main_chain_bloom_filter_false_positive_total",
         "Total number of false positive queries to the Ledger Main Chain Bloom filter"))
+  , bloom_filter_walk_count_(telemetry::Registry::Instance().CreateCounter(
+        "ledger_main_chain_bloom_filter_walk_total",
+        "Total number of blocks walked attempting to detect duplicates"))
+  , duplicate_txs_in_recent_(telemetry::Registry::Instance().CreateCounter(
+        "ledger_main_chain_duplicate_txs_in_recent_total",
+        "Total number of transactions found in recent blocks of the chain"))
   , dirty_blocks_attempt_add_(telemetry::Registry::Instance().CreateCounter(
         "ledger_main_chain_dirty_blocks_attempt_add_total", "Total attempts to add a dirty block"))
   , children_on_storage_checks_total_(telemetry::Registry::Instance().CreateCounter(
@@ -350,6 +356,10 @@ void MainChain::KeepBlock(IntBlockPtr const &block) const
   ASSERT(static_cast<bool>(block));
   ASSERT(static_cast<bool>(block_store_));
 
+  // All blocks in the store must be added to the bloom filter.
+  // for performance this is only done on confirmation.
+  AddBlockToBloomFilter(*block);
+
   auto const &hash{block->hash};
 
   DbRecord record;
@@ -372,8 +382,6 @@ void MainChain::KeepBlock(IntBlockPtr const &block) const
   record.block = *block;
 
   // detect if any of this block's children has made it to the store already
-  //
-  //
   {
     MilliTimer tmr("ChildrenOnStore", 2000);
     children_on_storage_checks_total_->increment();
@@ -1591,8 +1599,6 @@ BlockStatus MainChain::InsertBlock(IntBlockPtr const &block, bool evaluate_loose
     CompleteLooseBlocks(block);
   }
 
-  AddBlockToBloomFilter(*block);
-
   return BlockStatus::ADDED;
 }
 
@@ -1988,7 +1994,9 @@ void MainChain::SetHeadHash(BlockHash const &hash)
 }
 
 /**
- * Strip transactions in container that already exist in the blockchain
+ * Strip transactions in container that already exist in the blockchain. A bloom filter keeps
+ * track of all the transactions that have gone to disk, while blocks in memory (block_chain_)
+ * are simply walked to determine duplicates (this should be quick given a short validity period)
  *
  * @param: starting_hash Block to start looking downwards from
  * @tparam: transaction The set of transaction to be filtered
@@ -2005,34 +2013,73 @@ DigestSet MainChain::DetectDuplicateTransactions(BlockHash const &           sta
   FETCH_LOCK(lock_);
 
   IntBlockPtr block;
+
+  // For safety if there is a global block lookup failure indicate all TXs are duplicates
   if (!LookupBlock(starting_hash, block) || block->is_loose)
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "TX uniqueness verify on bad block hash");
-    return {};
+    FETCH_LOG_ERROR(LOGGING_NAME, "TX uniqueness verify on bad block hash. Block loose: ", block->is_loose);
+    return transactions;
   }
 
-  // evaluate the bloom filter and determine the potential duplicates
+  // Search for duplicates in the cache blocks since this is not held in the bloom
+  DigestSet duplicates{};
+
+  for(;;)
+  {
+    // Genesis does not contain transactions since it is
+    // constructed
+    if(block->IsGenesis())
+    {
+      break;
+    }
+
+    for (auto const &slice : block->slices)
+    {
+      for (auto const &tx : slice)
+      {
+        if (transactions.find(tx.digest()) != transactions.end())
+        {
+          duplicates.insert(tx.digest());
+        }
+      }
+    }
+
+    // termination condition
+    if(!LookupBlockFromCache(block->previous_hash, block))
+    {
+      // Sanity check - there should be the continuation of this on disk
+      IntBlockPtr block_dummy;
+      assert(LookupBlock(block->previous_hash, block_dummy));
+      break;
+    }
+  }
+
+  duplicate_txs_in_recent_->add(duplicates.size());
+
+  // evaluate the bloom filter and determine the potential duplicates on disk
   DigestSet potential_duplicates{};
+  transaction::BlockIndex earliest_possible_block_with_duplicate = std::numeric_limits<transaction::BlockIndex>::max();
+
   for (auto const &tx_layout : transactions)
   {
     auto const default_valid_from =
         tx_layout.valid_until() - std::min(MAXIMUM_TX_VALIDITY_PERIOD, tx_layout.valid_until());
     auto const from_calculated = std::max(tx_layout.valid_from(), default_valid_from);
+
     if (bloom_filter_.Match(tx_layout.digest(), from_calculated, tx_layout.valid_until()))
     {
       potential_duplicates.insert(tx_layout.digest());
+      earliest_possible_block_with_duplicate = std::min(from_calculated, earliest_possible_block_with_duplicate);
     }
 
     bloom_filter_query_count_->increment();
   }
 
-  // calculate the maximum search depth
-  uint64_t const last_block_num =
-      block->block_number - std::min(block->block_number, uint64_t{MAXIMUM_TX_VALIDITY_PERIOD});
+  // filter the potential duplicates by traversing back down the chain (continue where left off)
+  uint64_t blocks_walked = 0;
+  uint64_t duplicates_on_disk = 0;
 
-  // filter the potential duplicates by traversing back down the chain
-  DigestSet duplicates{};
-  for (;;)
+  for (;;blocks_walked++)
   {
     // Traversing the chain fully is costly: break out early if we know the transactions are all
     // duplicated (or both sets are empty)
@@ -2048,26 +2095,35 @@ DigestSet MainChain::DetectDuplicateTransactions(BlockHash const &           sta
       {
         if (potential_duplicates.find(tx.digest()) != potential_duplicates.end())
         {
+          duplicates_on_disk++;
           duplicates.insert(tx.digest());
         }
       }
     }
 
     // exit the search loop if we have reached the last possible point to search back in time
-    if (last_block_num == block->block_number)
+    if (earliest_possible_block_with_duplicate == block->block_number)
     {
       break;
     }
 
-    // exit the loop once we can no longer find the block
-    if (!LookupBlock(block->previous_hash, block))
+    // exit if we hit genesis
+    if(block->IsGenesis())
     {
       break;
+    }
+
+    // If we cannot find a block this is an error
+    if (!LookupBlock(block->previous_hash, block))
+    {
+      FETCH_LOG_ERROR(LOGGING_NAME, "When doing a chain walk for duplicates, prev block is missing!");
+      return transactions;
     }
   }
 
   bloom_filter_false_positive_count_->add(potential_duplicates.size() - duplicates.size());
-  bloom_filter_positive_count_->add(duplicates.size());
+  bloom_filter_walk_count_->add(blocks_walked);
+  bloom_filter_positive_count_->add(duplicates_on_disk);
 
   return duplicates;
 }
