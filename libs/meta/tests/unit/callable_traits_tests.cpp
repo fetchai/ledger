@@ -16,9 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include "same.hpp"
+
 #include "core/macros.hpp"
 #include "meta/callable/callable_traits.hpp"
-#include "same.hpp"
 
 #include "gmock/gmock.h"
 

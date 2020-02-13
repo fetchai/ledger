@@ -16,11 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
+#include "fake_execution_manager.hpp"
+
 #include "core/byte_array/encoders.hpp"
 #include "core/macros.hpp"
 #include "ledger/storage_unit/fake_storage_unit.hpp"
-
-#include "fake_execution_manager.hpp"
 
 using fetch::Digest;
 

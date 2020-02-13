@@ -18,14 +18,11 @@
 //------------------------------------------------------------------------------
 
 #include "core/assert.hpp"
-
 #include "core/byte_array/const_byte_array.hpp"
 #include "crypto/fnv.hpp"
-
 #include "ledger/chain/block.hpp"
 #include "ledger/chain/consensus/proof_of_work.hpp"
 #include "ledger/chain/transaction.hpp"
-
 #include "miner/optimisation/binary_annealer.hpp"
 #include "miner/resource_mapper.hpp"
 #include "miner/transaction_item.hpp"

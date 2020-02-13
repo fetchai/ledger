@@ -16,9 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "gtest/gtest.h"
-#include "math/normalize_array.hpp"
 #include "test_types.hpp"
+
+#include "math/normalize_array.hpp"
+
+#include "gtest/gtest.h"
 
 namespace fetch {
 namespace math {

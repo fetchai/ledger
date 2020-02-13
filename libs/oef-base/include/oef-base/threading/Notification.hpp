@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "logging/logging.hpp"
+
 #include <atomic>
 #include <condition_variable>
 #include <functional>

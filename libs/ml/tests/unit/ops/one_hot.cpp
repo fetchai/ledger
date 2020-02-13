@@ -16,8 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/ops/one_hot.hpp"
 #include "test_types.hpp"
+
+#include "ml/ops/one_hot.hpp"
 
 #include "gtest/gtest.h"
 
