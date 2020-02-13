@@ -1,3 +1,4 @@
+#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2020 Fetch.AI Limited
@@ -16,32 +17,26 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vm_test_toolkit.hpp"
+#include <cstddef>
+#include <cstdint>
+#include <iterator>
 
-#include "gtest/gtest.h"
+namespace fetch {
+namespace core {
 
-#include <sstream>
-
-namespace {
-
-class VMTests : public ::testing::Test
+template <typename T>
+void TrimToSize(T &container, uint64_t max_allowed)
 {
-public:
-  std::ostringstream output;
-  VmTestToolkit      toolkit{&output};
-};
+  if (container.size() > max_allowed)
+  {
+    auto const num_to_remove = container.size() - max_allowed;
 
-// Test we can compile and run a fairly inoffensive smart contract
-TEST_F(VMTests, CheckCompileAndExecute)
-{
-  static char const *TEXT = R"(
-    function main()
-      printLn("Hello, world");
-    endfunction
-  )";
+    auto end = container.begin();
+    std::advance(end, static_cast<std::ptrdiff_t>(num_to_remove));
 
-  ASSERT_TRUE(toolkit.Compile(TEXT));
-  ASSERT_TRUE(toolkit.Run());
+    container.erase(container.begin(), end);
+  }
 }
 
-}  // namespace
+}  // namespace core
+}  // namespace fetch

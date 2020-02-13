@@ -103,6 +103,24 @@ std::vector<math::SizeType> ReduceMean<TensorType>::ComputeOutputShape(
   return shape;
 }
 
+template <typename TensorType>
+OperationsCount ReduceMean<TensorType>::ChargeForward() const
+{
+  assert(!this->batch_output_shape_.empty());
+  OperationsCount cost = fetch::ml::charge_estimation::ops::MEAN_PER_ELEMENT *
+                         this->TotalElementsIn({this->batch_input_shapes_});
+  return cost;
+}
+
+template <typename TensorType>
+OperationsCount ReduceMean<TensorType>::ChargeBackward() const
+{
+  assert(!this->batch_output_shape_.empty());
+  OperationsCount cost = fetch::ml::charge_estimation::ops::BROADCAST_PER_ELEMENT *
+                         this->TotalElementsIn({this->batch_output_shape_});
+  return cost;
+}
+
 ///////////////////////////////
 /// EXPLICIT INSTANTIATIONS ///
 ///////////////////////////////

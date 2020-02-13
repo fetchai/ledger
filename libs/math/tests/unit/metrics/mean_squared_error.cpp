@@ -29,7 +29,7 @@ class MeanSquareErrorTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(MeanSquareErrorTest, TensorFloatingTypes);
+TYPED_TEST_SUITE(MeanSquareErrorTest, TensorFloatingTypes, );
 
 TYPED_TEST(MeanSquareErrorTest, perfect_match_test)
 {

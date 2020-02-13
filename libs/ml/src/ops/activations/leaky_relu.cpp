@@ -109,10 +109,19 @@ std::vector<math::SizeType> LeakyRelu<TensorType>::ComputeOutputShape(
 }
 
 template <typename TensorType>
-OperationsCount LeakyRelu<TensorType>::ChargeForward()
+OperationsCount LeakyRelu<TensorType>::ChargeForward() const
 {
-  assert(!this->batch_output_shape_.empty());
+  assert(!this->batch_input_shapes_.empty());
   OperationsCount cost = fetch::ml::charge_estimation::ops::LEAKY_RELU_PER_ELEMENT *
+                         this->TotalElementsIn({this->batch_input_shapes_});
+  return cost;
+}
+
+template <typename TensorType>
+OperationsCount LeakyRelu<TensorType>::ChargeBackward() const
+{
+  assert(!this->batch_input_shapes_.empty());
+  OperationsCount cost = fetch::ml::charge_estimation::ops::LEAKY_RELU_BACKWARD_PER_ELEMENT *
                          this->TotalElementsIn({this->batch_input_shapes_});
   return cost;
 }

@@ -130,6 +130,26 @@ std::vector<math::SizeType> LayerNorm<TensorType>::ComputeOutputShape(
   return inputs.at(0)->shape();
 }
 
+template <typename TensorType>
+OperationsCount LayerNorm<TensorType>::ChargeForward() const
+{
+  assert(!this->batch_input_shapes_.empty());
+
+  OperationsCount cost = fetch::ml::charge_estimation::ops::LAYER_NORM_PER_ELEMENT *
+                         this->TotalElementsIn({this->batch_input_shapes_});
+  return cost;
+}
+
+template <typename TensorType>
+OperationsCount LayerNorm<TensorType>::ChargeBackward() const
+{
+  assert(!this->batch_input_shapes_.empty());
+
+  OperationsCount cost = fetch::ml::charge_estimation::ops::LAYER_NORM_BACKWARD_PER_ELEMENT *
+                         this->TotalElementsIn({this->batch_input_shapes_});
+  return cost;
+}
+
 ///////////////////////////////
 /// EXPLICIT INSTANTIATIONS ///
 ///////////////////////////////

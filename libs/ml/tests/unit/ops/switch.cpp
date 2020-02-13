@@ -33,7 +33,7 @@ class SwitchTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(SwitchTest, fetch::math::test::TensorFloatingTypes);
+TYPED_TEST_SUITE(SwitchTest, fetch::math::test::TensorFloatingTypes, );
 
 TYPED_TEST(SwitchTest, forward_test)
 {

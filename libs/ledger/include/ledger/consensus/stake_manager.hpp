@@ -131,23 +131,6 @@ inline std::shared_ptr<StakeSnapshot const> StakeManager::GetCurrentStakeSnapsho
   return current_;
 }
 
-template <typename T>
-void TrimToSize(T &container, uint64_t max_allowed)
-{
-  if (container.size() >= max_allowed)
-  {
-    auto const num_to_remove = container.size() - max_allowed;
-
-    if (num_to_remove > 0)
-    {
-      auto end = container.begin();
-      std::advance(end, static_cast<std::ptrdiff_t>(num_to_remove));
-
-      container.erase(container.begin(), end);
-    }
-  }
-}
-
 }  // namespace ledger
 
 namespace serializers {
@@ -167,7 +150,7 @@ public:
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &stake_manager)
   {
-    auto map = map_constructor(5);
+    auto map = map_constructor(4);
     map.Append(UPDATE_QUEUE, stake_manager.update_queue_);
     map.Append(STAKE_HISTORY, stake_manager.stake_history_);
     map.Append(CURRENT_SNAPSHOT, stake_manager.current_);
@@ -185,5 +168,4 @@ public:
 };
 
 }  // namespace serializers
-
 }  // namespace fetch
