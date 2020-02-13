@@ -17,8 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "chain/transaction.hpp"
 #include "chain/transaction_layout.hpp"
+#include "chain/tx_proto.hpp"
 
 #include <cstddef>
 #include <cstdint>

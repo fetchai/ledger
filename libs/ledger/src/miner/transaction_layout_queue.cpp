@@ -88,7 +88,7 @@ bool TransactionLayoutQueue::Remove(Digest const &digest)
  */
 std::size_t TransactionLayoutQueue::Remove(DigestSet const &digests_to_remove)
 {
-  std::size_t current_population = digests_.size();
+  const std::size_t current_population = digests_.size();
 
   if (!digests_to_remove.empty())
   {
