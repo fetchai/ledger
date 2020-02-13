@@ -233,6 +233,8 @@ public:
   static const fixed_point::fp64_t ADD_DENSE_WEIGHTS_SIZE_COEF;
   static const fixed_point::fp64_t ADD_DENSE_CONST_COEF;
 
+  SequentialModelPtr GetMeAsSequentialIfPossible();
+
 private:
   ModelPtrType       model_;
   ModelConfigPtrType model_config_;
@@ -272,8 +274,6 @@ private:
   template <typename T>
   T ParseName(std::string const &name, std::map<std::string, T> const &dict,
               std::string const &errmsg) const;
-
-  SequentialModelPtr GetMeAsSequentialIfPossible();
 };
 
 /**

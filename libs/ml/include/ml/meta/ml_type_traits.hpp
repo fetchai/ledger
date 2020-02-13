@@ -33,6 +33,12 @@ enum class OptimiserType : uint8_t
   LAZY_ADAM
 };
 
+enum class ModelType : uint8_t
+{
+  NONE,
+  SEQUENTIAL
+};
+
 enum class LoaderType : uint8_t
 {
   TENSOR,

@@ -359,12 +359,12 @@ TEST_F(VMModelEstimatorTests, compile_sequential_test)
   std::string loss_type  = "mse";
   std::string opt_type   = "adam";
 
-  SizeType min_input_size  = 0;
-  SizeType max_input_size  = 1000;
-  SizeType input_step      = 10;
-  SizeType min_output_size = 0;
-  SizeType max_output_size = 1000;
-  SizeType output_step     = 10;
+  SizeType min_input_size  = 1;
+  SizeType max_input_size  = 1001;
+  SizeType input_step      = 100;
+  SizeType min_output_size = 1;
+  SizeType max_output_size = 1001;
+  SizeType output_step     = 100;
 
   fetch::vm::TypeId type_id = 0;
 
@@ -372,37 +372,28 @@ TEST_F(VMModelEstimatorTests, compile_sequential_test)
   VmStringPtr vm_ptr_loss_type{new fetch::vm::String(vm.get(), loss_type)};
   VmStringPtr vm_ptr_opt_type{new fetch::vm::String(vm.get(), opt_type)};
 
-  for (SizeType inputs = min_input_size; inputs < max_input_size; inputs += input_step)
+  for (SizeType inputs = min_input_size; inputs <= max_input_size; inputs += input_step)
   {
-    for (SizeType outputs = min_output_size; outputs < max_output_size; outputs += output_step)
+    for (SizeType outputs = min_output_size; outputs <= max_output_size; outputs += output_step)
     {
-      VmModel          model(vm.get(), type_id, model_type);
-      VmModelEstimator model_estimator(model);
+      VmModel model(vm.get(), type_id, model_type);
 
       // add some layers
-      model.EstimateLayerAddDense(vm_ptr_layer_type, inputs, outputs);
-      SizeType weights_padded_size =
-          fetch::math::Tensor<DataType>::PaddedSizeFromShape({outputs, inputs});
-      weights_padded_size += fetch::math::Tensor<DataType>::PaddedSizeFromShape({outputs, 1});
-      SizeType weights_size_sum = inputs * outputs + outputs;
+      model.LayerAddDense(vm_ptr_layer_type, inputs, 10);
+      model.LayerAddDense(vm_ptr_layer_type, 10, outputs);
 
-      model.EstimateLayerAddDense(vm_ptr_layer_type, inputs, outputs);
-      weights_padded_size += fetch::math::Tensor<DataType>::PaddedSizeFromShape({outputs, inputs});
-      weights_padded_size += fetch::math::Tensor<DataType>::PaddedSizeFromShape({outputs, 1});
-      weights_size_sum += inputs * outputs + outputs;
+      // FullyConnected1
+      SizeType padded_size = fetch::math::Tensor<DataType>::PaddedSizeFromShape({10, inputs});
+      padded_size += fetch::math::Tensor<DataType>::PaddedSizeFromShape({10, 1});
 
-      model.EstimateLayerAddDense(vm_ptr_layer_type, inputs, outputs);
-      weights_padded_size += fetch::math::Tensor<DataType>::PaddedSizeFromShape({outputs, inputs});
-      weights_padded_size += fetch::math::Tensor<DataType>::PaddedSizeFromShape({outputs, 1});
-      weights_size_sum += inputs * outputs + outputs;
+      // FullyConnected2
+      padded_size += fetch::math::Tensor<DataType>::PaddedSizeFromShape({outputs, 10});
+      padded_size += fetch::math::Tensor<DataType>::PaddedSizeFromShape({outputs, 1});
 
-      DataType val = VmModelEstimator::ADAM_PADDED_WEIGHTS_SIZE_COEF *
-                     static_cast<DataType>(weights_padded_size);
-      val += VmModelEstimator::ADAM_WEIGHTS_SIZE_COEF * static_cast<DataType>(weights_size_sum);
-      val += VmModelEstimator::COMPILE_CONST_COEF;
+      SizeType val = padded_size * 5 + 11;
 
-      EXPECT_TRUE(model_estimator.CompileSequential(vm_ptr_loss_type, vm_ptr_opt_type) ==
-                  static_cast<ChargeAmount>(val) + 1);
+      EXPECT_EQ(model.EstimateCompileSequential(vm_ptr_loss_type, vm_ptr_opt_type),
+                static_cast<ChargeAmount>(val) + 1);
     }
   }
 }

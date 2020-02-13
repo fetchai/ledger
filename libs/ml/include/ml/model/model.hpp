@@ -106,6 +106,11 @@ public:
 
   bool DataLoaderIsSet();
 
+  virtual ModelType ModelCode()
+  {
+    return ModelType::NONE;
+  }
+
   template <typename X, typename D>
   friend struct serializers::MapSerializer;
 

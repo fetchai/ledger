@@ -160,18 +160,20 @@ void AdamOptimiser<T>::ResetCache()
 template <class T>
 OperationsCount AdamOptimiser<T>::ChargeConstruct(std::shared_ptr<Graph<T>> graph)
 {
-  auto trainables = graph->GetTrainables();
-
-  OperationsCount op_cnt{1};
-  for (auto &train : trainables)
+  // Graph need to be compiled in order to deduce all weight sizes
+  // TODO 2423: Compile shouldn't be needed
+  for (auto &train : graph->GetTrainables())
   {
-    // Graph need to be compiled in order to deduce all weight sizes
-    // TODO 2423: Compile shouldn't be needed
     if (!train->IsInit())
     {
       graph->Compile();
+      break;
     }
+  }
 
+  OperationsCount op_cnt{1};
+  for (auto &train : graph->GetTrainables())
+  {
     auto     weight    = train->GetWeights();
     SizeType data_size = TensorType::PaddedSizeFromShape(weight.shape());
     op_cnt += data_size * 5;

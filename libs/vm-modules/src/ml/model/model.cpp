@@ -386,14 +386,34 @@ bool VMModel::SerializeTo(serializers::MsgPackSerializer &buffer)
     counter << static_cast<uint8_t>(model_category_);
     counter << *model_config_;
     counter << compiled_;
-    counter << *model_;
+    counter << static_cast<uint8_t>(model_->ModelCode());
+
+    if (model_->ModelCode() == fetch::ml::ModelType::SEQUENTIAL)
+    {
+      auto *model_ptr = static_cast<fetch::ml::model::Sequential<TensorType> *>(model_.get());
+      counter << *model_ptr;
+    }
+    else
+    {
+      counter << *model_;
+    }
 
     buffer.Reserve(counter.size());
 
     buffer << static_cast<uint8_t>(model_category_);
     buffer << *model_config_;
     buffer << compiled_;
-    buffer << *model_;
+    buffer << static_cast<uint8_t>(model_->ModelCode());
+
+    if (model_->ModelCode() == fetch::ml::ModelType::SEQUENTIAL)
+    {
+      auto *model_ptr = static_cast<fetch::ml::model::Sequential<TensorType> *>(model_.get());
+      buffer << *model_ptr;
+    }
+    else
+    {
+      buffer << *model_;
+    }
 
     estimator_.SerializeTo(buffer);
     success = true;
@@ -435,9 +455,30 @@ bool VMModel::DeserializeFrom(serializers::MsgPackSerializer &buffer)
   bool compiled = false;
   buffer >> compiled;
 
+  std::shared_ptr<fetch::ml::model::Model<TensorType>> model_ptr;
+
+  uint8_t model_type_int;
+  buffer >> model_type_int;
+  auto const model_type = static_cast<fetch::ml::ModelType>(model_type_int);
+
   // deserialise the model
-  auto model_ptr = std::make_shared<fetch::ml::model::Model<TensorType>>();
-  buffer >> (*model_ptr);
+  switch (model_type)
+  {
+  case fetch::ml::ModelType::SEQUENTIAL:
+  {
+    auto sequential_ptr = std::make_shared<fetch::ml::model::Sequential<TensorType>>();
+    sequential_ptr      = std::make_shared<fetch::ml::model::Sequential<TensorType>>();
+    buffer >> (*sequential_ptr);
+    model_ptr = sequential_ptr;
+    break;
+  }
+  default:
+  {
+    model_ptr = std::make_shared<fetch::ml::model::Model<TensorType>>();
+    buffer >> (*model_ptr);
+    break;
+  }
+  }
 
   // deserialise the estimator
   estimator_.DeserializeFrom(buffer);
@@ -966,7 +1007,7 @@ ChargeAmount VMModel::EstimateLayerAddDense(fetch::vm::Ptr<fetch::vm::String> co
 {
   FETCH_UNUSED(layer);
 
-  ChargeAmount charge{vm::MAXIMUM_CHARGE};
+  ChargeAmount charge{0};
 
   charge = fetch::ml::layers::FullyConnected<TensorType>::ChargeConstruct(inputs, hidden_nodes);
 
@@ -979,7 +1020,7 @@ ChargeAmount VMModel::EstimateLayerAddDenseActivation(
 {
   FETCH_UNUSED(layer);
 
-  ChargeAmount charge{vm::MAXIMUM_CHARGE};
+  ChargeAmount charge{0};
   try
   {
     fetch::ml::details::ActivationType activation_type =
@@ -1000,7 +1041,7 @@ ChargeAmount VMModel::EstimateLayerAddDenseActivation(
     vm_->RuntimeError(std::string(e.what()));
   }
 
-  return charge;
+  return charge + 1;
 }
 
 ChargeAmount VMModel::EstimateLayerAddDenseActivationExperimental(
@@ -1026,7 +1067,7 @@ ChargeAmount VMModel::EstimateLayerAddDenseAutoInputs(
 ChargeAmount VMModel::EstimateCompileSequential(Ptr<String> const &loss,
                                                 Ptr<String> const &optimiser)
 {
-  ChargeAmount ret{vm::MAXIMUM_CHARGE};
+  ChargeAmount ret{0};
 
   std::vector<MetricType> mets;
   try
