@@ -443,7 +443,8 @@ TransactionStoreSyncService::State TransactionStoreSyncService::OnResolvingObjec
     {
       if (AlreadySeen(tx))
       {
-        FETCH_LOG_INFO(LOGGING_NAME, "Dropping already seen transaction");
+        FETCH_LOG_DEBUG(LOGGING_NAME, "Dropping already seen transaction");
+        tss_duplicates_dropped_->add(1);
       }
       else
       {
