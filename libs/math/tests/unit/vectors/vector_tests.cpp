@@ -16,10 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
+#include "test_types.hpp"
+
 #include "math/base_types.hpp"
 #include "math/standard_functions/log.hpp"
 #include "math/trigonometry.hpp"
-#include "test_types.hpp"
 #include "vectorise/math/standard_functions.hpp"
 #include "vectorise/vectorise.hpp"
 
@@ -197,6 +198,7 @@ TYPED_TEST(VectorRegisterTest, minmax_tests)
       sum[TypeParam::E_BLOCK_COUNT], diff[TypeParam::E_BLOCK_COUNT], prod[TypeParam::E_BLOCK_COUNT],
       div[TypeParam::E_BLOCK_COUNT];
 
+  std::srand(6715202L);
   type real_max{0}, real_min{fetch::math::numeric_max<type>()};
   for (std::size_t i = 0; i < TypeParam::E_BLOCK_COUNT; i++)
   {
@@ -204,10 +206,10 @@ TYPED_TEST(VectorRegisterTest, minmax_tests)
     // type's limits
     a[i] = fetch::math::Type<type>(
         std::to_string((static_cast<double>(std::rand()) / static_cast<double>(RAND_MAX)) *
-                       static_cast<double>(fetch::math::numeric_max<type>()) / 2.0));
+                       static_cast<double>(100)));
     b[i] = fetch::math::Type<type>(
         std::to_string((static_cast<double>(std::rand()) / static_cast<double>(RAND_MAX)) *
-                       static_cast<double>(fetch::math::numeric_max<type>()) / 2.0));
+                       static_cast<double>(100)));
     b[i]     = b[i] == 0 ? a[i] : b[i];
     sum[i]   = static_cast<type>(a[i] + b[i]);
     diff[i]  = static_cast<type>(a[i] - b[i]);
@@ -245,7 +247,9 @@ TYPED_TEST(VectorRegisterTest, minmax_tests)
   {
     hsum = static_cast<type>(hsum + sum[i]);
   }
-  EXPECT_EQ(hsum, reduce1);
+  // Note: float produces greater inaccuracies than the other types
+  EXPECT_NEAR(static_cast<double>(hsum), static_cast<double>(reduce1),
+              static_cast<double>(function_tolerance<type>()));
 
   TypeParam vmax = Max(va, vb);
   type      max  = Max(vmax);
@@ -522,6 +526,50 @@ TYPED_TEST(VectorNaNInfTest, nan_inf_tests)
       {
         EXPECT_EQ(C[i], D[i]);
       }
+    }
+  }
+}
+
+template <typename T>
+class VectorExpTest : public ::testing::Test
+{
+};
+
+TYPED_TEST_SUITE(VectorExpTest, MyFPTypes, );
+TYPED_TEST(VectorExpTest, exp_tests)
+{
+  using type       = typename TypeParam::type;
+  using array_type = fetch::memory::SharedArray<type>;
+
+  std::size_t            N = 40;
+  alignas(32) array_type A(N), C(N), E(N);
+
+  for (std::size_t i = 0; i < N; ++i)
+  {
+    switch (i % 5)
+    {
+    case 0:
+      A[i] = type::POSITIVE_INFINITY;
+      break;
+    case 1:
+      A[i] = type::NEGATIVE_INFINITY;
+      break;
+    case 2:
+      A[i] = type::NaN;
+      break;
+    default:
+      A[i] = fetch::random::Random::generator.AsType<type>() * type::MAX_EXP;
+      break;
+    }
+    E[i] = type::Exp(A[i]);
+  }
+
+  C.in_parallel().Apply([](auto const &a, auto &c) { c = fetch::vectorise::Exp(a); }, A);
+  for (std::size_t i = 0; i < N; ++i)
+  {
+    if (!type::IsNaN(C[i]) && !type::IsNaN(E[i]))
+    {
+      EXPECT_EQ(E[i], C[i]);
     }
   }
 }

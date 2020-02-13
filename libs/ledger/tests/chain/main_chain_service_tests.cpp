@@ -16,21 +16,23 @@
 //
 //------------------------------------------------------------------------------
 
-#include "chain/address.hpp"
-#include "core/serializers/main_serializer.hpp"
-#include "crypto/ecdsa.hpp"
 #include "digest_matcher.hpp"
-#include "gtest/gtest.h"
-#include "ledger/chain/block.hpp"
-#include "ledger/chain/main_chain.hpp"
-#include "ledger/protocols/main_chain_rpc_service.hpp"
-#include "ledger/testing/block_generator.hpp"
 #include "mock_consensus.hpp"
 #include "mock_main_chain_rpc_client.hpp"
 #include "mock_muddle_endpoint.hpp"
 #include "mock_trust_system.hpp"
+
+#include "chain/address.hpp"
+#include "core/serializers/main_serializer.hpp"
+#include "crypto/ecdsa.hpp"
+#include "ledger/chain/block.hpp"
+#include "ledger/chain/main_chain.hpp"
+#include "ledger/protocols/main_chain_rpc_service.hpp"
+#include "ledger/testing/block_generator.hpp"
 #include "moment/clocks.hpp"
 #include "muddle/network_id.hpp"
+
+#include "gtest/gtest.h"
 
 #include <string>
 
@@ -38,18 +40,18 @@ using ::testing::_;
 using ::testing::NiceMock;
 using ::testing::Return;
 
-using fetch::ledger::MainChainRpcService;
-using fetch::ledger::MainChain;
-using fetch::crypto::ECDSASigner;
-using fetch::muddle::NetworkId;
-using fetch::ledger::testing::BlockGenerator;
-using fetch::ledger::BlockStatus;
-using fetch::ledger::MainChainProtocol;
 using fetch::chain::GetGenesisDigest;
-using fetch::serializers::LargeObjectSerializeHelper;
+using fetch::crypto::ECDSASigner;
+using fetch::ledger::BlockStatus;
 using fetch::ledger::ConsensusInterface;
+using fetch::ledger::MainChain;
+using fetch::ledger::MainChainProtocol;
+using fetch::ledger::MainChainRpcService;
 using fetch::ledger::TravelogueStatus;
+using fetch::ledger::testing::BlockGenerator;
 using fetch::ledger::testing::ExpectedHash;
+using fetch::muddle::NetworkId;
+using fetch::serializers::LargeObjectSerializeHelper;
 
 using AddressList        = fetch::muddle::MuddleEndpoint::AddressList;
 using State              = MainChainRpcService::State;
@@ -65,7 +67,7 @@ std::ostream &operator<<(std::ostream &s, MainChainRpcService::State state)
 namespace fetch {
 namespace byte_array {
 
-inline void PrintTo(ConstByteArray const &digest, std::ostream *s)
+void PrintTo(ConstByteArray const &digest, std::ostream *s)
 {
   *s << "" << std::string(digest.ToHex()).substr(0, 8);
 }

@@ -22,10 +22,10 @@
 
 #include "gtest/gtest.h"
 
-using fetch::shards::ManifestEntry;
-using fetch::network::Uri;
-using fetch::network::Peer;
 using fetch::muddle::Address;
+using fetch::network::Peer;
+using fetch::network::Uri;
+using fetch::shards::ManifestEntry;
 
 TEST(ManifestEntryTests, CheckDefaultConstruction)
 {

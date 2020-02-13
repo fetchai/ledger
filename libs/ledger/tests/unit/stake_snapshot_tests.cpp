@@ -16,10 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
+#include "random_address.hpp"
+
 #include "core/random/lcg.hpp"
 #include "crypto/identity.hpp"
 #include "ledger/consensus/stake_snapshot.hpp"
-#include "random_address.hpp"
 
 #include "gtest/gtest.h"
 
@@ -29,8 +30,8 @@
 
 namespace {
 
-using fetch::ledger::StakeSnapshot;
 using fetch::crypto::Identity;
+using fetch::ledger::StakeSnapshot;
 
 using RNG              = fetch::random::LinearCongruentialGenerator;
 using StakeSnapshotPtr = std::unique_ptr<StakeSnapshot>;

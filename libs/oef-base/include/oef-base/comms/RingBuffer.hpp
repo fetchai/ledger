@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "network/fetch_asio.hpp"
+
 #include <functional>
 #include <iostream>
 #include <mutex>

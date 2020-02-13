@@ -17,13 +17,13 @@
 //
 //------------------------------------------------------------------------------
 
-#include <map>
-#include <memory>
-#include <mutex>
-
 #include "oef-base/conversation/IOutboundConversationCreator.hpp"
 #include "oef-base/conversation/OutboundConversations.hpp"
 #include "oef-base/utils/Uri.hpp"
+
+#include <map>
+#include <memory>
+#include <mutex>
 
 class OutboundConversationWorkerTask;
 template <typename TXType, typename Reader, typename Sender>
@@ -34,8 +34,8 @@ class OutboundDapConversationCreator : public IOutboundConversationCreator
 {
 public:
   using Lock = IOutboundConversationCreator::Lock;
-  using IOutboundConversationCreator::mutex_;
   using IOutboundConversationCreator::ident2conversation_;
+  using IOutboundConversationCreator::mutex_;
 
   OutboundDapConversationCreator(const Uri &dap_uri, Core &core, const std::string &dap_name);
   ~OutboundDapConversationCreator() override;

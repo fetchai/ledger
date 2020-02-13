@@ -24,10 +24,10 @@
 
 #include "gtest/gtest.h"
 
+using fetch::crypto::ECDSASigner;
+using fetch::ledger::Block;
 using fetch::ledger::MainChain;
 using fetch::moment::DeadlineTimer;
-using fetch::ledger::Block;
-using fetch::crypto::ECDSASigner;
 
 // Verify that the simulated POW is working by driving the main cycle, which is
 // to update with the most recently seen block, and then attempt to generate

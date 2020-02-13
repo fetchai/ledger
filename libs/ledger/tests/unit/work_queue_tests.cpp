@@ -25,10 +25,10 @@
 
 namespace {
 
-using fetch::ledger::WorkQueue;
 using fetch::ledger::Work;
-using fetch::ledger::WorkScore;
 using fetch::ledger::WorkPtr;
+using fetch::ledger::WorkQueue;
+using fetch::ledger::WorkScore;
 
 using UInt256      = Work::UInt256;
 using WorkQueuePtr = std::unique_ptr<WorkQueue>;

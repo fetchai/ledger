@@ -16,20 +16,21 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/storage_unit/transaction_archiver.hpp"
 #include "mock_transaction_pool.hpp"
 #include "mock_transaction_store.hpp"
 #include "transaction_generator.hpp"
+
+#include "ledger/storage_unit/transaction_archiver.hpp"
 
 #include "gtest/gtest.h"
 
 namespace {
 
+using fetch::ledger::TransactionArchiver;
 using testing::_;
 using testing::InSequence;
-using testing::Return;
 using testing::NiceMock;
-using fetch::ledger::TransactionArchiver;
+using testing::Return;
 
 class TransactionArchiverTests : public ::testing::Test
 {

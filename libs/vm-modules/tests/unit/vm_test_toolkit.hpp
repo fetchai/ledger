@@ -17,9 +17,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include "mock_io_observer.hpp"
+
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/byte_array/decoders.hpp"
-#include "mock_io_observer.hpp"
 #include "vm/compiler.hpp"
 #include "vm/module.hpp"
 #include "vm/variant.hpp"
@@ -34,17 +35,17 @@
 #include <string>
 #include <vector>
 
-using testing::_;
 using fetch::byte_array::ConstByteArray;
 using fetch::byte_array::FromHex;
-using fetch::vm::VM;
-using fetch::vm::IR;
 using fetch::vm::ChargeAmount;
-using fetch::vm::Executable;
 using fetch::vm::Compiler;
+using fetch::vm::Executable;
+using fetch::vm::IR;
 using fetch::vm::Module;
 using fetch::vm::Variant;
+using fetch::vm::VM;
 using fetch::vm_modules::VMFactory;
+using testing::_;
 
 using ExecutablePtr = std::unique_ptr<Executable>;
 using CompilerPtr   = std::unique_ptr<Compiler>;

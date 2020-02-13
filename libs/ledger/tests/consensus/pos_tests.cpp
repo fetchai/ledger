@@ -38,9 +38,9 @@
 
 using namespace fetch;
 
-using fetch::ledger::MainChain;
-using fetch::ledger::Block;
 using fetch::crypto::ECDSASigner;
+using fetch::ledger::Block;
+using fetch::ledger::MainChain;
 
 class ConsensusTests : public ::testing::Test
 {

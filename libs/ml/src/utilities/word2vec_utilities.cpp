@@ -23,9 +23,10 @@
 #include "ml/layers/skip_gram.hpp"
 #include "ml/utilities/word2vec_utilities.hpp"
 
+#include <dirent.h>
+
 #include <chrono>
 #include <cstring>
-#include <dirent.h>
 #include <fstream>
 #include <sstream>
 #include <vector>

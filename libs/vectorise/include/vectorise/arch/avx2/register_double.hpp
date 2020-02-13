@@ -19,16 +19,16 @@
 
 #include "vectorise/arch/avx2/register_int64.hpp"
 
+#include <emmintrin.h>
+#include <immintrin.h>
+#include <smmintrin.h>
+
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
 #include <iomanip>
 #include <limits>
 #include <ostream>
-
-#include <emmintrin.h>
-#include <immintrin.h>
-#include <smmintrin.h>
 
 namespace fetch {
 namespace vectorise {
@@ -280,7 +280,7 @@ inline VectorRegister<double, 256> vector_zero_above_element(VectorRegister<doub
 }
 
 template <int32_t elements>
-inline VectorRegister<double, 128> rotate_elements_left(VectorRegister<double, 128> const &x)
+VectorRegister<double, 128> rotate_elements_left(VectorRegister<double, 128> const &x)
 {
   __m128i                      xi = _mm_castpd_si128(x.data());
   VectorRegister<int64_t, 128> ret =
@@ -289,7 +289,7 @@ inline VectorRegister<double, 128> rotate_elements_left(VectorRegister<double, 1
 }
 
 template <int32_t elements>
-inline VectorRegister<double, 256> rotate_elements_left(VectorRegister<double, 256> const &x)
+VectorRegister<double, 256> rotate_elements_left(VectorRegister<double, 256> const &x)
 {
   __m256i                      xi = _mm256_castpd_si256(x.data());
   VectorRegister<int64_t, 256> ret =

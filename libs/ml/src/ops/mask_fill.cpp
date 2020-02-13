@@ -18,6 +18,7 @@
 
 #include "core/assert.hpp"
 #include "ml/ops/mask_fill.hpp"
+
 #include <cassert>
 
 namespace fetch {
@@ -29,6 +30,12 @@ std::shared_ptr<OpsSaveableParams> MaskFill<TensorType>::GetOpSaveableParams()
 {
   auto sp        = std::make_shared<SPType>();
   sp->fill_value = fill_value_;
+
+  // Add base class savable params
+  auto ops_sp  = Ops<TensorType>::GetOpSaveableParams();
+  auto cast_sp = std::static_pointer_cast<OpsSaveableParams>(sp);
+  *cast_sp     = *(std::static_pointer_cast<OpsSaveableParams>(ops_sp));
+
   return sp;
 }
 

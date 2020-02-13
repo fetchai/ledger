@@ -18,6 +18,7 @@
 
 #include "oef-base/proto_comms/ProtoMessageEndpoint.hpp"
 #include "oef-base/proto_comms/ProtoMessageSender.hpp"
+
 #include <google/protobuf/message.h>
 
 ProtoMessageSender::consumed_needed_pair ProtoMessageSender::CheckForSpace(

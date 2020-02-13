@@ -112,8 +112,8 @@ public:
    */
   std::chrono::milliseconds DueIn()
   {
-    using std::chrono::milliseconds;
     using std::chrono::duration_cast;
+    using std::chrono::milliseconds;
 
     FETCH_LOCK(mutex_);
 

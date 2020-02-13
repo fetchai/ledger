@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "oef-base/threading/Waitable.hpp"
+
 #include <atomic>
 
 namespace fetch {

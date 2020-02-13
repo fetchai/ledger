@@ -24,8 +24,8 @@
 
 namespace {
 
-using fetch::crypto::ECDSASigner;
 using fetch::byte_array::ConstByteArray;
+using fetch::crypto::ECDSASigner;
 using fetch::crypto::SecureChannel;
 
 class SecureChannelTests : public ::testing::Test

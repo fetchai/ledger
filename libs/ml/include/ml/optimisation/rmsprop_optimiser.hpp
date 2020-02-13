@@ -53,7 +53,7 @@ public:
 
   ~RMSPropOptimiser() override = default;
 
-  inline OptimiserType OptimiserCode() override
+  OptimiserType OptimiserCode() override
   {
     return OptimiserType::RMSPROP;
   }

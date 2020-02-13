@@ -17,20 +17,20 @@
 //
 //------------------------------------------------------------------------------
 
+#include "oef-base/threading/Waitable.hpp"
+#include "oef-base/utils/Uri.hpp"
+
+#include <memory>
+#include <utility>
+
+class ConstCharArrayBuffer;
+class Task;
+
 namespace google {
 namespace protobuf {
 class Message;
 }
 }  // namespace google
-
-#include "oef-base/threading/Waitable.hpp"
-#include "oef-base/utils/Uri.hpp"
-#include <memory>
-#include <utility>
-
-class ConstCharArrayBuffer;
-
-class Task;
 
 class OutboundConversation : public fetch::oef::base::Waitable
 {

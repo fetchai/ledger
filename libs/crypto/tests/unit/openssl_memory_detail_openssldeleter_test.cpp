@@ -32,8 +32,8 @@ namespace detail {
 
 namespace {
 
-using ::testing::StrictMock;
 using ::testing::Return;
+using ::testing::StrictMock;
 
 class TestType
 {

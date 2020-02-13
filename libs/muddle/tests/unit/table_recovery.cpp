@@ -16,12 +16,13 @@
 //
 //------------------------------------------------------------------------------
 
+#include "muddle.hpp"
+#include "router.hpp"
+
 #include "kademlia/peer_info.hpp"
 #include "kademlia/table.hpp"
-#include "muddle.hpp"
 #include "muddle/muddle_endpoint.hpp"
 #include "muddle/muddle_interface.hpp"
-#include "router.hpp"
 
 #include "gtest/gtest.h"
 using namespace fetch::muddle;
