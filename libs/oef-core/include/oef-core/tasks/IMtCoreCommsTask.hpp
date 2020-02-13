@@ -17,11 +17,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include <utility>
-
 #include "oef-base/comms/EndpointBase.hpp"
 #include "oef-core/tasks-base/IMtCoreTask.hpp"
 #include "oef-messages/fetch_protobuf.hpp"
+
+#include <utility>
 
 class IMtCoreCommsTask : public IMtCoreTask
 {

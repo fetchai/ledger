@@ -19,6 +19,7 @@
 
 #include "logging/logging.hpp"
 #include "oef-base/proto_comms/ProtoMessageEndpoint.hpp"
+
 #include <map>
 #include <memory>
 

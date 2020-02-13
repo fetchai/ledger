@@ -17,14 +17,14 @@
 //
 //------------------------------------------------------------------------------
 
-#include <utility>
-
 #include "logging/logging.hpp"
 #include "oef-base/comms/ConstCharArrayBuffer.hpp"
 #include "oef-base/comms/Endianness.hpp"
 #include "oef-base/comms/EndpointBase.hpp"
 #include "oef-base/comms/IMessageReader.hpp"
 #include "oef-base/utils/Uri.hpp"
+
+#include <utility>
 
 namespace google {
 namespace protobuf {

@@ -16,13 +16,17 @@
 //
 //------------------------------------------------------------------------------
 
+#include "fake_block_sink.hpp"
+#include "mock_block_packer.hpp"
+#include "mock_execution_manager.hpp"
+#include "mock_storage_unit.hpp"
+
 #include "beacon/beacon_service.hpp"
 #include "bloom_filter/bloom_filter.hpp"
 #include "chain/constants.hpp"
 #include "chain/transaction_layout.hpp"
 #include "core/byte_array/encoders.hpp"
 #include "crypto/ecdsa.hpp"
-#include "fake_block_sink.hpp"
 #include "ledger/chain/block.hpp"
 #include "ledger/chain/block_coordinator.hpp"
 #include "ledger/chain/main_chain.hpp"
@@ -30,9 +34,6 @@
 #include "ledger/consensus/simulated_pow_consensus.hpp"
 #include "ledger/consensus/stake_manager_interface.hpp"
 #include "ledger/testing/block_generator.hpp"
-#include "mock_block_packer.hpp"
-#include "mock_execution_manager.hpp"
-#include "mock_storage_unit.hpp"
 #include "testing/common_testing_functionality.hpp"
 
 #include "gmock/gmock.h"
@@ -975,6 +976,217 @@ TEST_F(BlockCoordinatorTests, CheckBlockMining)
   {
     Tick(State::SYNCHRONISED, State::SYNCHRONISED);
   }
+}
+
+TEST_F(BlockCoordinatorTests, CheckPanicMode)
+{
+  auto genesis = block_generator_();
+  auto b1      = block_generator_(genesis);
+  auto b2_1    = block_generator_(b1);  // fork 1
+  auto b2_2    = block_generator_(b1);  // fork 2
+
+  // define the call expectations
+  {
+    InSequence s;
+
+    // syncing
+    EXPECT_CALL(*storage_unit_, LastCommitHash());
+    EXPECT_CALL(*storage_unit_, CurrentHash());
+    EXPECT_CALL(*execution_manager_, LastProcessedBlock());
+
+    // pre block validation
+    // none
+
+    // schedule of the genesis block
+    EXPECT_CALL(*execution_manager_, Execute(IsBlock(genesis)));
+
+    // wait for the execution to complete
+    EXPECT_CALL(*execution_manager_, GetState());
+    EXPECT_CALL(*execution_manager_, GetState());
+
+    // post block validation
+    EXPECT_CALL(*storage_unit_, CurrentHash());
+    EXPECT_CALL(*storage_unit_, Commit(0));
+
+    // syncing
+    EXPECT_CALL(*storage_unit_, LastCommitHash());
+    EXPECT_CALL(*storage_unit_, CurrentHash());
+    EXPECT_CALL(*execution_manager_, LastProcessedBlock());
+
+    // --- Event: B1 & B2_1 added ---
+
+    // syncing - B1
+    EXPECT_CALL(*storage_unit_, LastCommitHash());
+    EXPECT_CALL(*storage_unit_, CurrentHash());
+    EXPECT_CALL(*execution_manager_, LastProcessedBlock());
+    EXPECT_CALL(*storage_unit_, HashExists(_, 0));
+    EXPECT_CALL(*storage_unit_, RevertToHash(_, 0));
+    EXPECT_CALL(*execution_manager_, SetLastProcessedBlock(genesis->hash));
+
+    // schedule of the next block
+    EXPECT_CALL(*execution_manager_, Execute(IsBlock(b1)));
+
+    // wait for the execution to complete
+    EXPECT_CALL(*execution_manager_, GetState());
+    EXPECT_CALL(*execution_manager_, GetState());
+
+    // post block validation
+    EXPECT_CALL(*storage_unit_, CurrentHash());
+    EXPECT_CALL(*storage_unit_, Commit(1));
+
+    // syncing - B2_1
+    EXPECT_CALL(*storage_unit_, LastCommitHash());
+    EXPECT_CALL(*storage_unit_, CurrentHash());
+    EXPECT_CALL(*execution_manager_, LastProcessedBlock());
+    EXPECT_CALL(*storage_unit_, HashExists(_, 1));
+    EXPECT_CALL(*storage_unit_, RevertToHash(_, 1));
+    EXPECT_CALL(*execution_manager_, SetLastProcessedBlock(b1->hash));
+
+    // schedule of the next block
+    EXPECT_CALL(*execution_manager_, Execute(IsBlock(b2_1)));
+
+    // wait for the execution to complete
+    EXPECT_CALL(*execution_manager_, GetState());
+    EXPECT_CALL(*execution_manager_, GetState());
+
+    // post block validation
+    EXPECT_CALL(*storage_unit_, CurrentHash());
+    EXPECT_CALL(*storage_unit_, Commit(2));
+
+    // syncing - moving to sync'ed state
+    EXPECT_CALL(*storage_unit_, LastCommitHash());
+    EXPECT_CALL(*storage_unit_, CurrentHash());
+    EXPECT_CALL(*execution_manager_, LastProcessedBlock());
+
+    // --- Event: B2_1 removed & B2_2 added, causing a switch to another fork ---
+
+    // panic - the block we thought we were processing was not actually correct
+    EXPECT_CALL(*storage_unit_, LastCommitHash());
+    EXPECT_CALL(*storage_unit_, CurrentHash());
+    EXPECT_CALL(*execution_manager_, LastProcessedBlock());
+    EXPECT_CALL(*storage_unit_, HashExists(_, 2));  // check to see the fork that doesn't exist
+    EXPECT_CALL(*storage_unit_, HashExists(_, 1));  // common block
+    EXPECT_CALL(*storage_unit_, HashExists(_, 1));  // checked again as part of revert to block
+    EXPECT_CALL(*storage_unit_, RevertToHash(_, 1));
+    EXPECT_CALL(*execution_manager_, SetLastProcessedBlock(b1->hash));
+
+    // syncing - B2_2
+    EXPECT_CALL(*storage_unit_, LastCommitHash());
+    EXPECT_CALL(*storage_unit_, CurrentHash());
+    EXPECT_CALL(*execution_manager_, LastProcessedBlock());
+    EXPECT_CALL(*storage_unit_, HashExists(_, 1));
+    EXPECT_CALL(*storage_unit_, RevertToHash(_, 1));
+    EXPECT_CALL(*execution_manager_, SetLastProcessedBlock(b1->hash));
+
+    // schedule of the next block
+    EXPECT_CALL(*execution_manager_, Execute(IsBlock(b2_2)));
+
+    // wait for the execution to complete
+    EXPECT_CALL(*execution_manager_, GetState());
+    EXPECT_CALL(*execution_manager_, GetState());
+
+    // post block validation
+    EXPECT_CALL(*storage_unit_, CurrentHash());
+    EXPECT_CALL(*storage_unit_, Commit(2));
+
+    // syncing - moving to sync'ed state
+    EXPECT_CALL(*storage_unit_, LastCommitHash());
+    EXPECT_CALL(*storage_unit_, CurrentHash());
+    EXPECT_CALL(*execution_manager_, LastProcessedBlock());
+  }
+
+  // processing of genesis block
+  ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), fetch::chain::ZERO_HASH);
+
+  Tick(State::RELOAD_STATE, State::RESET);
+  Tick(State::RESET, State::SYNCHRONISING);
+  Tick(State::SYNCHRONISING, State::PRE_EXEC_BLOCK_VALIDATION);
+  Tick(State::PRE_EXEC_BLOCK_VALIDATION, State::WAIT_FOR_TRANSACTIONS);
+  Tick(State::WAIT_FOR_TRANSACTIONS, State::SYNERGETIC_EXECUTION);
+  Tick(State::SYNERGETIC_EXECUTION, State::SCHEDULE_BLOCK_EXECUTION);
+  Tick(State::SCHEDULE_BLOCK_EXECUTION, State::WAIT_FOR_EXECUTION);
+  Tick(State::WAIT_FOR_EXECUTION, State::WAIT_FOR_EXECUTION);
+  Tick(State::WAIT_FOR_EXECUTION, State::POST_EXEC_BLOCK_VALIDATION);
+
+  ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), genesis->hash);
+
+  Tick(State::POST_EXEC_BLOCK_VALIDATION, State::RESET);
+  Tick(State::RESET, State::SYNCHRONISING);
+  Tick(State::SYNCHRONISING, State::SYNCHRONISED);
+  Tick(State::SYNCHRONISED, State::SYNCHRONISED);
+  Tick(State::SYNCHRONISED, State::SYNCHRONISED);
+  Tick(State::SYNCHRONISED, State::SYNCHRONISED);
+
+  // add the first fork
+  ASSERT_EQ(BlockStatus::ADDED, main_chain_->AddBlock(*b1));
+  ASSERT_EQ(BlockStatus::ADDED, main_chain_->AddBlock(*b2_1));
+
+  // execute b1
+  Tick(State::SYNCHRONISED, State::RESET);
+  Tick(State::RESET, State::SYNCHRONISING);
+  Tick(State::SYNCHRONISING, State::PRE_EXEC_BLOCK_VALIDATION);
+  Tick(State::PRE_EXEC_BLOCK_VALIDATION, State::WAIT_FOR_TRANSACTIONS);
+  Tick(State::WAIT_FOR_TRANSACTIONS, State::SYNERGETIC_EXECUTION);
+  Tick(State::SYNERGETIC_EXECUTION, State::SCHEDULE_BLOCK_EXECUTION);
+  Tick(State::SCHEDULE_BLOCK_EXECUTION, State::WAIT_FOR_EXECUTION);
+  Tick(State::WAIT_FOR_EXECUTION, State::WAIT_FOR_EXECUTION);
+  Tick(State::WAIT_FOR_EXECUTION, State::POST_EXEC_BLOCK_VALIDATION);
+
+  ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), b1->hash);
+
+  Tick(State::POST_EXEC_BLOCK_VALIDATION, State::RESET);
+  Tick(State::RESET, State::SYNCHRONISING);
+
+  // execute b1
+  Tick(State::SYNCHRONISING, State::PRE_EXEC_BLOCK_VALIDATION);
+  Tick(State::PRE_EXEC_BLOCK_VALIDATION, State::WAIT_FOR_TRANSACTIONS);
+  Tick(State::WAIT_FOR_TRANSACTIONS, State::SYNERGETIC_EXECUTION);
+  Tick(State::SYNERGETIC_EXECUTION, State::SCHEDULE_BLOCK_EXECUTION);
+  Tick(State::SCHEDULE_BLOCK_EXECUTION, State::WAIT_FOR_EXECUTION);
+  Tick(State::WAIT_FOR_EXECUTION, State::WAIT_FOR_EXECUTION);
+  Tick(State::WAIT_FOR_EXECUTION, State::POST_EXEC_BLOCK_VALIDATION);
+
+  ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), b2_1->hash);
+
+  Tick(State::POST_EXEC_BLOCK_VALIDATION, State::RESET);
+
+  // finishing execution of the chain
+  Tick(State::RESET, State::SYNCHRONISING);
+  Tick(State::SYNCHRONISING, State::SYNCHRONISED);
+  Tick(State::SYNCHRONISED, State::SYNCHRONISED);
+  Tick(State::SYNCHRONISED, State::SYNCHRONISED);
+  Tick(State::SYNCHRONISED, State::SYNCHRONISED);
+
+  // emulate a fork operation
+  ASSERT_TRUE(main_chain_->RemoveBlock(b2_1->hash));
+  ASSERT_EQ(BlockStatus::ADDED, main_chain_->AddBlock(*b2_2));
+
+  Tick(State::SYNCHRONISED, State::RESET);
+  Tick(State::RESET, State::SYNCHRONISING);
+
+  // panic! the block has been removed from under our feet
+  Tick(State::SYNCHRONISING, State::RESET);
+  Tick(State::RESET, State::SYNCHRONISING);
+
+  // execute B2_2
+  Tick(State::SYNCHRONISING, State::PRE_EXEC_BLOCK_VALIDATION);
+  Tick(State::PRE_EXEC_BLOCK_VALIDATION, State::WAIT_FOR_TRANSACTIONS);
+  Tick(State::WAIT_FOR_TRANSACTIONS, State::SYNERGETIC_EXECUTION);
+  Tick(State::SYNERGETIC_EXECUTION, State::SCHEDULE_BLOCK_EXECUTION);
+  Tick(State::SCHEDULE_BLOCK_EXECUTION, State::WAIT_FOR_EXECUTION);
+  Tick(State::WAIT_FOR_EXECUTION, State::WAIT_FOR_EXECUTION);
+  Tick(State::WAIT_FOR_EXECUTION, State::POST_EXEC_BLOCK_VALIDATION);
+
+  ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), b2_2->hash);
+
+  Tick(State::POST_EXEC_BLOCK_VALIDATION, State::RESET);
+
+  // finish syncing
+  Tick(State::RESET, State::SYNCHRONISING);
+  Tick(State::SYNCHRONISING, State::SYNCHRONISED);
+  Tick(State::SYNCHRONISED, State::SYNCHRONISED);
+  Tick(State::SYNCHRONISED, State::SYNCHRONISED);
+  Tick(State::SYNCHRONISED, State::SYNCHRONISED);
 }
 
 class NiceMockBlockCoordinatorTests : public BlockCoordinatorTests

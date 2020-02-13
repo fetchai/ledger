@@ -16,8 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "meta/tuple.hpp"
 #include "same.hpp"
+
+#include "meta/tuple.hpp"
 
 #include "gmock/gmock.h"
 

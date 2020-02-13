@@ -16,9 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "gtest/gtest.h"
-#include "math/statistics/perplexity.hpp"
 #include "test_types.hpp"
+
+#include "math/statistics/perplexity.hpp"
+
+#include "gtest/gtest.h"
 
 namespace fetch {
 namespace math {
