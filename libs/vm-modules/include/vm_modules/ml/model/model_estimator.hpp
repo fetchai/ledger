@@ -90,6 +90,10 @@ public:
 
   ChargeAmount LayerAddActivation(fetch::vm::Ptr<fetch::vm::String> const &layer,
                                   fetch::vm::Ptr<fetch::vm::String> const &activation);
+
+  ChargeAmount LayerAddLoss(const fetch::vm::Ptr<fetch::vm::String> &layer,
+                            const fetch::vm::Ptr<fetch::vm::String> &loss_name);
+
   ChargeAmount LayerAddReshape(fetch::vm::Ptr<fetch::vm::String> const &               layer,
                                fetch::vm::Ptr<fetch::vm::Array<math::SizeType>> const &shape);
 

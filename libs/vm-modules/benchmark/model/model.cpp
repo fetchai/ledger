@@ -1061,6 +1061,130 @@ BENCHMARK(BM_AddActivation)->Args({getId("gelu")})->Unit(::benchmark::kMicroseco
 BENCHMARK(BM_AddActivation)->Args({getId("softmax")})->Unit(::benchmark::kMicrosecond);
 BENCHMARK(BM_AddActivation)->Args({getId("sigmoid")})->Unit(::benchmark::kMicrosecond);
 
+struct BM_Loss_config
+{
+  explicit BM_Loss_config(::benchmark::State const &state)
+  {
+    input_size = static_cast<SizeType>(state.range(0));
+    batch_size = static_cast<SizeType>(state.range(1));
+    loss_id    = static_cast<SizeType>(state.range(2));
+  }
+
+  SizeType input_size;
+  SizeType batch_size;
+  SizeType loss_id;
+};
+
+void BM_Loss(::benchmark::State &state)
+{
+  // Get config
+  BM_Loss_config config{state};
+
+  std::vector<std::string> const losses_{"cross_entropy_loss", "mean_square_error_loss",
+                                         "softmax_cross_entropy_loss"};
+
+  for (auto _ : state)
+  {
+
+    state.PauseTiming();
+
+    // model
+    auto vm    = NewVM();
+    auto model = vmSequentialModel(vm);
+
+    // arguments list
+    auto layer_type       = vmString(vm, "loss");
+    auto input_layer_type = vmString(vm, "input");
+    auto loss             = losses_[config.loss_id];
+    auto loss_type        = vmString(vm, loss);
+    auto optimiser        = vmString(vm, "adam");
+
+    std::vector<SizeType> data_shape{config.input_size, config.batch_size};
+    auto                  data        = vmTensor(vm, data_shape);
+    auto                  input_shape = CreateArray(vm, data_shape);
+
+    state.counters["charge"] =
+        static_cast<double>(model->Estimator().LayerAddLoss(layer_type, loss_type));
+    state.counters["ForwardCost"]    = static_cast<double>(model->Estimator().GetForwardCost());
+    state.counters["OpsCount"]       = static_cast<double>(model->Estimator().GetOpsCount());
+    state.counters["PaddedSizesSum"] = static_cast<double>(model->Estimator().GetPaddedSizesSum());
+    state.counters["SizesSum"]       = static_cast<double>(model->Estimator().GetSizesSum());
+
+    model->LayerAddInput(input_layer_type, input_shape);
+    model->CompileSequential(loss_type, optimiser);
+
+    state.ResumeTiming();
+    auto res = model->Predict(data);
+  }
+}
+
+BENCHMARK(BM_Loss)->Args({1, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Loss)->Args({10, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Loss)->Args({100, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Loss)->Args({1000, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Loss)->Args({10, 10, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Loss)->Args({100, 10, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Loss)->Args({1, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Loss)->Args({10, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Loss)->Args({100, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Loss)->Args({1000, 1, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Loss)->Args({10, 10, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Loss)->Args({100, 10, 1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Loss)->Args({1, 1, 2})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Loss)->Args({10, 1, 2})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Loss)->Args({100, 1, 2})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Loss)->Args({1000, 1, 2})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Loss)->Args({10, 10, 2})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Loss)->Args({100, 10, 2})->Unit(::benchmark::kMicrosecond);
+
+struct BM_AddLoss_config
+{
+  explicit BM_AddLoss_config(::benchmark::State const &state)
+  {
+    loss_id = static_cast<SizeType>(state.range(0));
+  }
+
+  SizeType loss_id;
+};
+
+void BM_AddLoss(::benchmark::State &state)
+{
+  // Get config
+  BM_AddLoss_config config{state};
+
+  std::vector<std::string> const losses_{"cross_entropy_loss", "mean_square_error_loss",
+                                         "softmax_cross_entropy_loss"};
+
+  for (auto _ : state)
+  {
+
+    state.PauseTiming();
+
+    // model
+    auto vm    = NewVM();
+    auto model = vmSequentialModel(vm);
+
+    // arguments list
+    auto layer_type = vmString(vm, "loss");
+    auto loss       = losses_[config.loss_id];
+    auto loss_type  = vmString(vm, loss);
+
+    state.counters["charge"] =
+        static_cast<double>(model->Estimator().LayerAddLoss(layer_type, loss_type));
+    state.counters["ForwardCost"]    = static_cast<double>(model->Estimator().GetForwardCost());
+    state.counters["OpsCount"]       = static_cast<double>(model->Estimator().GetOpsCount());
+    state.counters["PaddedSizesSum"] = static_cast<double>(model->Estimator().GetPaddedSizesSum());
+    state.counters["SizesSum"]       = static_cast<double>(model->Estimator().GetSizesSum());
+
+    state.ResumeTiming();
+    model->LayerAddLoss(layer_type, loss_type);
+  }
+}
+
+BENCHMARK(BM_AddLoss)->Args({0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_AddLoss)->Args({1})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_AddLoss)->Args({2})->Unit(::benchmark::kMicrosecond);
+
 ///*
 struct BM_SerializeToString_config
 {

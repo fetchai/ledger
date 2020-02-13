@@ -26,7 +26,9 @@
 #include "ml/layers/convolution_1d.hpp"
 #include "ml/layers/convolution_2d.hpp"
 
+#include "ml/ops/loss_functions/cross_entropy_loss.hpp"
 #include "ml/ops/loss_functions/mean_square_error_loss.hpp"
+#include "ml/ops/loss_functions/softmax_cross_entropy_loss.hpp"
 #include "ml/ops/loss_functions/types.hpp"
 
 #include "ml/ops/metrics/types.hpp"
@@ -770,6 +772,41 @@ void VMModel::LayerAddReshape(const fetch::vm::Ptr<String> &                    
     SequentialModelPtr me = GetMeAsSequentialIfPossible();
     me->Add<fetch::ml::ops::Reshape<TensorType>>(shape->elements);
     compiled_ = false;
+  }
+  catch (std::exception const &e)
+  {
+    vm_->RuntimeError(IMPOSSIBLE_ADD_MESSAGE + std::string(e.what()));
+    return;
+  }
+}
+
+void VMModel::LayerAddLoss(const fetch::vm::Ptr<String> &layer,
+                           const fetch::vm::Ptr<String> &loss_name)
+{
+  try
+  {
+    SupportedLayerType const layer_type =
+        ParseName(layer->string(), layer_types_, LAYER_TYPE_MESSAGE);
+    AssertLayerTypeMatches(layer_type, {SupportedLayerType::LOSS});
+    SequentialModelPtr me = GetMeAsSequentialIfPossible();
+
+    LossType loss = ParseName(loss_name->string(), losses_, "loss");
+
+    switch (loss)
+    {
+    case LossType::CROSS_ENTROPY:
+      me->Add<fetch::ml::ops::CrossEntropyLoss<TensorType>>();
+      break;
+    case LossType::MEAN_SQUARE_ERROR:
+      me->Add<fetch::ml::ops::MeanSquareErrorLoss<TensorType>>();
+      break;
+    case LossType::SOFTMAX_CROSS_ENTROPY:
+      me->Add<fetch::ml::ops::SoftmaxCrossEntropyLoss<TensorType>>();
+      break;
+    default:
+      vm_->RuntimeError("Can not add Loss layer with loss type " + loss_name->string());
+      return;
+    }
   }
   catch (std::exception const &e)
   {

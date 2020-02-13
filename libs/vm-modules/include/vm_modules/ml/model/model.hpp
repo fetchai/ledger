@@ -71,6 +71,7 @@ enum class SupportedLayerType : uint8_t
   AVGPOOL1D,
   AVGPOOL2D,
   EMBEDDINGS,
+  LOSS
 };
 
 class VMModel : public fetch::vm::Object
@@ -173,6 +174,8 @@ public:
 
   void LayerAddActivation(fetch::vm::Ptr<fetch::vm::String> const &layer,
                           fetch::vm::Ptr<fetch::vm::String> const &activation_name);
+  void LayerAddLoss(const fetch::vm::Ptr<fetch::vm::String> &layer,
+                    const fetch::vm::Ptr<fetch::vm::String> &loss_name);
   void LayerAddReshape(fetch::vm::Ptr<fetch::vm::String> const &                     layer,
                        fetch::vm::Ptr<fetch::vm::Array<TensorType::SizeType>> const &shape);
 
