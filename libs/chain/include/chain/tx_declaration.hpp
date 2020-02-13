@@ -34,5 +34,7 @@ using TransactionPtr = std::shared_ptr<Transaction>;
 
 using TransactionIndex = DigestMap<TransactionPtr>;
 
+class TransactionLayout;
+
 }  // namespace chain
 }  // namespace fetch
