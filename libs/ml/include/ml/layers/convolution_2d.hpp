@@ -59,7 +59,7 @@ public:
 
   void SetOpSaveableParams(SPType const &sp);
 
-  void CompleteConstruction() override;
+  void CompleteShapeDeduction() override;
 
   std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override;
 

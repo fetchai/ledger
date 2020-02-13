@@ -247,6 +247,10 @@ TYPED_TEST(LayersSaveParamsTest, fully_connected_saveparams_test)
 
   // set input and evaluate
   layer.SetInput(input_name, input);
+
+  // the layer is also a graph that needs compilation to initialise the internal tensors
+  layer.Compile();
+
   TypeParam prediction;
   prediction = layer.Evaluate(output_name, true);
 

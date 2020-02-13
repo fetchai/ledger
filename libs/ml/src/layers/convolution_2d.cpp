@@ -97,7 +97,7 @@ void Convolution2D<TensorType>::SetOpSaveableParams(SPType const &sp)
 }
 
 template <typename TensorType>
-void Convolution2D<TensorType>::CompleteConstruction()
+void Convolution2D<TensorType>::CompleteShapeDeduction()
 {
   if (is_initialised_)
   {

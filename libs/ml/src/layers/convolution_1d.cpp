@@ -61,7 +61,7 @@ Convolution1D<TensorType>::Convolution1D(SizeType const output_channels,
 }
 
 template <typename TensorType>
-void Convolution1D<TensorType>::CompleteConstruction()
+void Convolution1D<TensorType>::CompleteShapeDeduction()
 {
   if (is_initialised_)
   {
