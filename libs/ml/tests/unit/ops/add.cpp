@@ -16,9 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include "test_types.hpp"
+
 #include "math/base_types.hpp"
 #include "ml/ops/add.hpp"
-#include "test_types.hpp"
 
 #include "gtest/gtest.h"
 

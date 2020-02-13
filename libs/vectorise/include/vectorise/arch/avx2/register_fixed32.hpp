@@ -21,13 +21,14 @@
 #include "vectorise/arch/avx2/register_int64.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 
+#include <emmintrin.h>
+#include <immintrin.h>
+#include <smmintrin.h>
+
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
-#include <emmintrin.h>
-#include <immintrin.h>
 #include <ostream>
-#include <smmintrin.h>
 
 namespace fetch {
 namespace vectorise {
@@ -602,6 +603,27 @@ inline VectorRegister<fixed_point::fp32_t, 256> operator-(
   return a + (-b);
 }
 
+inline VectorRegister<fixed_point::fp32_t, 128> multiply_unsafe(
+    VectorRegister<fixed_point::fp32_t, 128> const &a,
+    VectorRegister<fixed_point::fp32_t, 128> const &b)
+{
+  // Extend the vectors to 64-bit, compute the products as 64-bit
+  __m256i va      = _mm256_cvtepi32_epi64(a.data());
+  __m256i vb      = _mm256_cvtepi32_epi64(b.data());
+  __m256i prod256 = _mm256_mul_epi32(va, vb);
+
+  // shift the products right by 16-bits, keep only the lower 32-bits
+  prod256 = _mm256_srli_epi64(prod256, 16);
+
+  // Rearrange the 128bit lanes to keep the lower 32-bits in the first
+  __m256i posmask = _mm256_setr_epi32(0, 2, 4, 6, 1, 3, 5, 7);
+  prod256         = _mm256_permutevar8x32_epi32(prod256, posmask);
+
+  // Extract the first 128bit lane
+  auto prod = VectorRegister<int32_t, 128>(_mm256_extractf128_si256(prod256, 0));
+  return {prod.data()};
+}
+
 inline VectorRegister<fixed_point::fp32_t, 128> operator*(
     VectorRegister<fixed_point::fp32_t, 128> const &a,
     VectorRegister<fixed_point::fp32_t, 128> const &b)
@@ -689,6 +711,23 @@ inline VectorRegister<fixed_point::fp32_t, 128> operator*(
       fixed_point::fp32_t::STATE_OVERFLOW * static_cast<uint32_t>(is_overflow);
 
   return {prod.data()};
+}
+
+inline VectorRegister<fixed_point::fp32_t, 256> multiply_unsafe(
+    VectorRegister<fixed_point::fp32_t, 256> const &a,
+    VectorRegister<fixed_point::fp32_t, 256> const &b)
+{
+  // Use the above multiplication in 2 steps, for each 128bit lane
+  VectorRegister<fixed_point::fp32_t, 128> a_lo(_mm256_extractf128_si256(a.data(), 0));
+  VectorRegister<fixed_point::fp32_t, 128> a_hi(_mm256_extractf128_si256(a.data(), 1));
+  VectorRegister<fixed_point::fp32_t, 128> b_lo(_mm256_extractf128_si256(b.data(), 0));
+  VectorRegister<fixed_point::fp32_t, 128> b_hi(_mm256_extractf128_si256(b.data(), 1));
+
+  VectorRegister<fixed_point::fp32_t, 128> prod_lo = multiply_unsafe(a_lo, b_lo);
+  VectorRegister<fixed_point::fp32_t, 128> prod_hi = multiply_unsafe(a_hi, b_hi);
+
+  VectorRegister<fixed_point::fp32_t, 256> prod(_mm256_set_m128i(prod_hi.data(), prod_lo.data()));
+  return prod;
 }
 
 inline VectorRegister<fixed_point::fp32_t, 256> operator*(

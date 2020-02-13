@@ -16,9 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include <utility>
-
 #include "beacon/dkg_output.hpp"
+
+#include <utility>
 
 using fetch::beacon::DkgOutput;
 

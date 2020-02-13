@@ -19,6 +19,7 @@
 
 #include "oef-base/comms/ISocketOwner.hpp"
 #include "oef-base/threading/Notification.hpp"
+
 #include <memory>
 
 template <typename EndpointType>

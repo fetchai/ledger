@@ -17,11 +17,10 @@
 //------------------------------------------------------------------------------
 
 #include "ml/layers/fully_connected.hpp"
+#include "core/serializers/main_serializer.hpp"
 #include "vm_modules/ml/model/model.hpp"
 #include "vm_modules/ml/model/model_estimator.hpp"
 #include "vm_modules/vm_factory.hpp"
-
-#include "core/serializers/main_serializer.hpp"
 
 #include "gmock/gmock.h"
 
