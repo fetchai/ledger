@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "WorkloadState.hpp"
+
 #include "logging/logging.hpp"
 #include "oef-base/threading/Notification.hpp"
 #include "oef-base/threading/Task.hpp"

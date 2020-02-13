@@ -31,12 +31,12 @@
 #include <string>
 
 using fetch::byte_array::ConstByteArray;
-using fetch::crypto::ECDSASigner;
+using fetch::chain::Address;
 using fetch::chain::TransactionBuilder;
 using fetch::chain::TransactionSerializer;
-using fetch::chain::Address;
-using fetch::threading::Pool;
+using fetch::crypto::ECDSASigner;
 using fetch::serializers::LargeObjectSerializeHelper;
+using fetch::threading::Pool;
 
 using SignerPtr  = std::unique_ptr<ECDSASigner>;
 using AddressPtr = std::unique_ptr<Address>;

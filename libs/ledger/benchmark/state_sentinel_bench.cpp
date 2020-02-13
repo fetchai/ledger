@@ -16,8 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/byte_array/const_byte_array.hpp"
 #include "in_memory_storage.hpp"
+
+#include "core/byte_array/const_byte_array.hpp"
 #include "ledger/state_sentinel_adapter.hpp"
 
 #include "benchmark/benchmark.h"
@@ -28,8 +29,8 @@
 
 namespace {
 
-using fetch::ledger::StateSentinelAdapter;
 using fetch::BitVector;
+using fetch::ledger::StateSentinelAdapter;
 
 void StateSentinelAdapter_BasicBenchmark(benchmark::State &state)
 {

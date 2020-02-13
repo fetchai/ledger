@@ -16,14 +16,14 @@
 //
 //------------------------------------------------------------------------------
 
+#include "random_address.hpp"
+
 #include "core/random/lcg.hpp"
 #include "crypto/identity.hpp"
 #include "ledger/chain/block.hpp"
-
 #include "ledger/consensus/stake_manager.hpp"
 #include "ledger/consensus/stake_snapshot.hpp"
 #include "logging/logging.hpp"
-#include "random_address.hpp"
 
 #include "gtest/gtest.h"
 
@@ -31,10 +31,10 @@
 
 namespace {
 
-using fetch::ledger::Block;
-using fetch::ledger::StakeSnapshot;
-using fetch::ledger::StakeManager;
 using fetch::crypto::Identity;
+using fetch::ledger::Block;
+using fetch::ledger::StakeManager;
+using fetch::ledger::StakeSnapshot;
 
 using RNG             = fetch::random::LinearCongruentialGenerator;
 using StakeManagerPtr = std::unique_ptr<StakeManager>;

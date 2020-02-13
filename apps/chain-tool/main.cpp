@@ -25,13 +25,12 @@
 #include "core/filesystem/write_to_file.hpp"
 #include "ledger/chain/block_db_record.hpp"
 #include "meta/log2.hpp"
-
 #include "storage/object_store.hpp"
+
+#include <dirent.h>
 
 #include <fstream>
 #include <regex>
-
-#include <dirent.h>
 
 namespace {
 using namespace fetch;

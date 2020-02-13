@@ -29,16 +29,16 @@
 
 namespace {
 
-using fetch::serializers::MsgPackSerializer;
-using fetch::vm::Variant;
-using fetch::vm::Object;
-using fetch::vm::String;
-using fetch::vm::Ptr;
-using fetch::vm::Primitive;
-using fetch::vm::TypeId;
+using fetch::fixed_point::fp128_t;
 using fetch::fixed_point::fp32_t;
 using fetch::fixed_point::fp64_t;
-using fetch::fixed_point::fp128_t;
+using fetch::serializers::MsgPackSerializer;
+using fetch::vm::Object;
+using fetch::vm::Primitive;
+using fetch::vm::Ptr;
+using fetch::vm::String;
+using fetch::vm::TypeId;
+using fetch::vm::Variant;
 using namespace fetch::vm::TypeIds;
 
 class VariantSerialization : public ::testing::Test

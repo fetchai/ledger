@@ -32,8 +32,8 @@ namespace fetch {
 namespace chain {
 namespace {
 
-using byte_array::ToBase58;
 using byte_array::FromBase58;
+using byte_array::ToBase58;
 
 /**
  * Helper function to calculation the address checksum

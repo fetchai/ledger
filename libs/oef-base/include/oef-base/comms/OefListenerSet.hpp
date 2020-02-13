@@ -17,11 +17,11 @@
 //
 //------------------------------------------------------------------------------
 
+#include "oef-base/comms/IOefListener.hpp"
+
 #include <iostream>
 #include <map>
 #include <mutex>
-
-#include "oef-base/comms/IOefListener.hpp"
 
 template <class IOefTaskFactory, class OefEndpoint>
 class OefListenerSet

@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "oef-base/threading/Notification.hpp"
+
 #include <atomic>
 #include <mutex>
 #include <vector>

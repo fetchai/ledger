@@ -27,9 +27,9 @@
 #include "telemetry/registry.hpp"
 #include "telemetry/utils/timer.hpp"
 
+using fetch::storage::ResourceAddress;
 using fetch::telemetry::Histogram;
 using fetch::telemetry::Registry;
-using fetch::storage::ResourceAddress;
 
 namespace fetch {
 namespace ledger {

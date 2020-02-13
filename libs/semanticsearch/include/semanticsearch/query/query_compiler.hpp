@@ -21,7 +21,6 @@
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/byte_array/consumers.hpp"
 #include "core/byte_array/tokenizer/tokenizer.hpp"
-
 #include "semanticsearch/query/error_tracker.hpp"
 #include "semanticsearch/query/query.hpp"
 

@@ -76,14 +76,14 @@ void StringifyLargeNumber(std::ostream &out, T const &el)
 }
 
 template <typename T>
-inline EnableIf<IsNotAny8BitInteger<T>> StringifyNumber(std::ostream &out, T const &el)
+EnableIf<IsNotAny8BitInteger<T>> StringifyNumber(std::ostream &out, T const &el)
 {
   out << el;
 }
 
 // int8_t and uint8_t need casting to int32_t, or they get mangled to ASCII characters
 template <typename T>
-inline EnableIf<IsAny8BitInteger<T>> StringifyNumber(std::ostream &out, T const &el)
+EnableIf<IsAny8BitInteger<T>> StringifyNumber(std::ostream &out, T const &el)
 {
   out << static_cast<int32_t>(el);
 }

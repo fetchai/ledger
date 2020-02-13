@@ -16,6 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include "tx_generation.hpp"
+
 #include "chain/transaction_builder.hpp"
 #include "chain/transaction_rpc_serializers.hpp"
 #include "core/byte_array/byte_array.hpp"
@@ -26,14 +28,12 @@
 
 #include "benchmark/benchmark.h"
 
-#include "tx_generation.hpp"
-
 #include <vector>
 
-using fetch::storage::ResourceID;
 using fetch::chain::Transaction;
 using fetch::chain::TransactionPtr;
 using fetch::crypto::ECDSASigner;
+using fetch::storage::ResourceID;
 
 using ObjectStore      = fetch::storage::ObjectStore<Transaction>;
 using TransactionStore = fetch::storage::TransientObjectStore<Transaction>;

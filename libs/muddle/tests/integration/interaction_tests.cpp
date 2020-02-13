@@ -29,13 +29,13 @@
 
 namespace {
 
-using fetch::network::NetworkManager;
 using fetch::muddle::CreateMuddle;
-using fetch::muddle::Packet;
-using fetch::muddle::MuddlePtr;
 using fetch::muddle::MuddleEndpoint;
-using fetch::network::Uri;
+using fetch::muddle::MuddlePtr;
+using fetch::muddle::Packet;
+using fetch::network::NetworkManager;
 using fetch::network::Peer;
+using fetch::network::Uri;
 using std::this_thread::sleep_for;
 
 using namespace std::chrono_literals;

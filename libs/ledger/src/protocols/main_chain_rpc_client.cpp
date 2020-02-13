@@ -16,9 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/protocols/main_chain_rpc_client.hpp"
-
 #include "core/service_ids.hpp"
+#include "ledger/protocols/main_chain_rpc_client.hpp"
 #include "ledger/protocols/main_chain_rpc_protocol.hpp"
 
 namespace fetch {
@@ -33,14 +32,6 @@ using TraveloguePromise = MainChainRpcClient::TraveloguePromise;
 MainChainRpcClient::MainChainRpcClient(MuddleEndpoint &endpoint)
   : rpc_client_{"R:MChain", endpoint, SERVICE_MAIN_CHAIN, CHANNEL_RPC}
 {}
-
-BlocksPromise MainChainRpcClient::GetHeaviestChain(MuddleAddress peer, uint64_t max_size)
-{
-  auto promise = rpc_client_.CallSpecificAddress(peer, RPC_MAIN_CHAIN,
-                                                 MainChainProtocol::HEAVIEST_CHAIN, max_size);
-
-  return BlocksPromise{promise};
-}
 
 BlocksPromise MainChainRpcClient::GetCommonSubChain(MuddleAddress peer, Digest start,
                                                     Digest last_seen, uint64_t limit)

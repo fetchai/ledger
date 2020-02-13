@@ -16,12 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
-#include <utility>
-
 #include "core/reactor.hpp"
 #include "core/state_machine.hpp"
 
 #include "gmock/gmock.h"
+
+#include <utility>
 
 using namespace fetch;
 using namespace testing;

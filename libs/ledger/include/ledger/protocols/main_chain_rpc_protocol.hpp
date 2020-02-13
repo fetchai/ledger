@@ -34,7 +34,6 @@ public:
 
   enum
   {
-    HEAVIEST_CHAIN   = 1,
     TIME_TRAVEL      = 2,
     COMMON_SUB_CHAIN = 3
   };
@@ -42,14 +41,8 @@ public:
   explicit MainChainProtocol(MainChain &chain)
     : chain_(chain)
   {
-    Expose(HEAVIEST_CHAIN, this, &MainChainProtocol::GetHeaviestChain);
     Expose(COMMON_SUB_CHAIN, this, &MainChainProtocol::GetCommonSubChain);
     Expose(TIME_TRAVEL, this, &MainChainProtocol::TimeTravel);
-  }
-
-  Blocks GetHeaviestChain(uint64_t maxsize)
-  {
-    return chain_.GetHeaviestChain(maxsize);
   }
 
   Blocks GetCommonSubChain(Digest start, Digest last_seen, uint64_t limit)

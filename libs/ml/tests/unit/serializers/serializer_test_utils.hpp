@@ -17,10 +17,12 @@
 //
 //------------------------------------------------------------------------------
 
+#include "test_types.hpp"
+
 #include "ml/serializers/ml_types.hpp"
 
 #include "gtest/gtest.h"
-#include "test_types.hpp"
+
 #include <memory>
 
 namespace serializer_test_utils {

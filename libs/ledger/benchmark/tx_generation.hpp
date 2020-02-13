@@ -25,11 +25,12 @@
 
 #include <cstdint>
 
-using fetch::crypto::ECDSASigner;
+using fetch::byte_array::ByteArray;
 using fetch::chain::Transaction;
 using fetch::chain::TransactionBuilder;
 using fetch::chain::TransactionPtr;
 using fetch::byte_array::ByteArray;
+using fetch::crypto::ECDSASigner;
 using TransactionList = std::vector<TransactionPtr>;
 
 template <typename Word = uint64_t>
@@ -49,8 +50,8 @@ fetch::meta::IfIsUnsignedInteger<Word, ByteArray> GenerateRandomArray(
 inline TransactionList GenerateTransactions(std::size_t count, ECDSASigner const &signer,
                                             bool large_packets = false)
 {
-  using fetch::chain::Address;
   using fetch::BitVector;
+  using fetch::chain::Address;
 
   using fetch::random::LinearCongruentialGenerator;
 

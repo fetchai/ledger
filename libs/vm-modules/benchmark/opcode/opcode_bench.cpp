@@ -16,10 +16,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include <algorithm>
-#include <cmath>
-#include <fstream>
-
 #include "vm/common.hpp"
 #include "vm/compiler.hpp"
 #include "vm/ir.hpp"
@@ -27,16 +23,20 @@
 #include "vm/opcodes.hpp"
 #include "vm/vm.hpp"
 
-#include <vm_modules/vm_factory.hpp>
-
 #include "benchmark/benchmark.h"
 
+#include <vm_modules/vm_factory.hpp>
+
+#include <algorithm>
+#include <cmath>
+#include <fstream>
+
+using fetch::vm::Compiler;
+using fetch::vm::Executable;
+using fetch::vm::IR;
+using fetch::vm::Variant;
 using fetch::vm::VM;
 using fetch::vm_modules::VMFactory;
-using fetch::vm::Executable;
-using fetch::vm::Variant;
-using fetch::vm::Compiler;
-using fetch::vm::IR;
 
 using BenchmarkPair = std::pair<std::string, std::string>;
 

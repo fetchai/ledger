@@ -41,8 +41,7 @@ public:
   template <typename FirstType, template <typename, typename> class Container>
   static Ptr<IPair> inner(TypeId second_type_id, VM *vm, TypeId type_id);
 
-  static inline Ptr<IPair> outer(TypeId first_type_id, TypeId second_type_id, VM *vm,
-                                 TypeId type_id);
+  static Ptr<IPair> outer(TypeId first_type_id, TypeId second_type_id, VM *vm, TypeId type_id);
 
 protected:
   IPair(VM *vm, TypeId type_id)

@@ -37,10 +37,9 @@ public:
 
   /// @name Main Chain Rpc Protocol
   /// @{
-  virtual BlocksPromise     GetHeaviestChain(MuddleAddress peer, uint64_t max_size) = 0;
   virtual BlocksPromise     GetCommonSubChain(MuddleAddress peer, Digest start, Digest last_seen,
-                                              uint64_t limit)                       = 0;
-  virtual TraveloguePromise TimeTravel(MuddleAddress peer, Digest start)            = 0;
+                                              uint64_t limit)            = 0;
+  virtual TraveloguePromise TimeTravel(MuddleAddress peer, Digest start) = 0;
   /// @}
 };
 
