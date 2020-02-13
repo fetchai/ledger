@@ -74,8 +74,9 @@ def find_excluded_dirs():
     def is_nested_git_repo(dir_path):
         return dir_path != PROJECT_ROOT and isdir(join(dir_path, '.git'))
 
-    directories_to_exclude = [abspath(join(PROJECT_ROOT, name))
-                              for name in ('vendor',)]
+    exclusions = (('vendor'))
+    directories_to_exclude = [abspath(join(PROJECT_ROOT, *path))
+                              for path in exclusions]
 
     for root, dirs, files in os.walk(PROJECT_ROOT):
         if is_cmake_build_tree_root(root) or \
@@ -214,7 +215,6 @@ def external_formatter(cmd_prefix, filename_patterns):
 
 @include_patterns('*.cpp', '*.hpp')
 def fix_license_header(text, path_to_file):
-
     # determine if an old license is already present
     existing_license_present = bool(re.search(RE_LICENSE, text, re.MULTILINE))
     if existing_license_present:
@@ -446,7 +446,8 @@ def check_tool_versions():
             clang_format_cmd).decode().strip()
     except:
         output(
-            'Could not run "{}". Make sure {} is installed.'.format(' '.join(clang_format_cmd), CLANG_TOOLCHAIN.clang_format_path))
+            'Could not run "{}". Make sure {} is installed.'.format(' '.join(clang_format_cmd),
+                                                                    CLANG_TOOLCHAIN.clang_format_path))
         sys.exit(1)
     assert clang_format_version.startswith('clang-format version {}'.format(
         CLANG_FORMAT_REQUIRED_VERSION)), \

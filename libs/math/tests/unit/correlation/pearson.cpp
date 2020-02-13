@@ -16,8 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/correlation/pearson.hpp"
 #include "test_types.hpp"
+
+#include "math/correlation/pearson.hpp"
 
 #include "gtest/gtest.h"
 

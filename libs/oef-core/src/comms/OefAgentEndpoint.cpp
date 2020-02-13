@@ -16,12 +16,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include <utility>
-
-#include <utility>
-
-#include "oef-core/comms/OefAgentEndpoint.hpp"
-
 #include "logging/logging.hpp"
 #include "oef-base/comms/Endianness.hpp"
 #include "oef-base/comms/IOefTaskFactory.hpp"
@@ -32,9 +26,12 @@
 #include "oef-base/proto_comms/TSendProtoTask.hpp"
 #include "oef-base/threading/Task.hpp"
 #include "oef-base/threading/Taskpool.hpp"
+#include "oef-core/comms/OefAgentEndpoint.hpp"
 #include "oef-core/karma/IKarmaPolicy.hpp"
 #include "oef-core/karma/XKarma.hpp"
 #include "oef-messages/agent.hpp"
+
+#include <utility>
 
 static Gauge   count("mt-core.network.OefAgentEndpoint.gauge");
 static Counter hb_sent("mt-core.network.OefAgentEndpoint.heartbeats.sent");

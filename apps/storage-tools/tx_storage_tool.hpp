@@ -17,9 +17,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include "tx_storage_client.hpp"
+
 #include "muddle/muddle_interface.hpp"
 #include "network/management/network_manager.hpp"
-#include "tx_storage_client.hpp"
 
 #include <cstdint>
 

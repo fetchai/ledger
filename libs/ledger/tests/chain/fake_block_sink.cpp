@@ -16,9 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/chain/block.hpp"
-
 #include "fake_block_sink.hpp"
+
+#include "ledger/chain/block.hpp"
 
 void FakeBlockSink::OnBlock(fetch::ledger::Block const &block)
 {

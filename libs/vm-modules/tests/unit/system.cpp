@@ -16,8 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vm_modules/core/system.hpp"
 #include "vm_test_toolkit.hpp"
+
+#include "vm_modules/core/system.hpp"
 
 #include "gmock/gmock.h"
 

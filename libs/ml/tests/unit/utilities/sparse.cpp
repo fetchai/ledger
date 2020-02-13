@@ -16,11 +16,14 @@
 //
 //------------------------------------------------------------------------------
 
-#include "gtest/gtest.h"
+#include "test_types.hpp"
+
 #include "math/base_types.hpp"
 #include "ml/utilities/sparse_tensor_utilities.hpp"
-#include "test_types.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
+
+#include "gtest/gtest.h"
+
 #include <vector>
 
 namespace fetch {

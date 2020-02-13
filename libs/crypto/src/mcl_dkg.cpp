@@ -17,7 +17,6 @@
 //------------------------------------------------------------------------------
 
 #include "crypto/mcl_dkg.hpp"
-
 #include "mcl/bn256.hpp"
 
 #include <cassert>
