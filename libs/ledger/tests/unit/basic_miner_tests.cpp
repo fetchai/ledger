@@ -16,6 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "mock_storage_interface.hpp"
 #include "tx_generator.hpp"
 
 #include "bloom_filter/bloom_filter.hpp"
@@ -36,8 +37,6 @@
 #include <cstdint>
 #include <memory>
 #include <random>
-
-#include "mock_storage_interface.hpp"
 
 using fetch::BitVector;
 using fetch::DigestMap;

@@ -29,7 +29,6 @@ using fetch::byte_array::ByteArray;
 using fetch::chain::Transaction;
 using fetch::chain::TransactionBuilder;
 using fetch::chain::TransactionPtr;
-using fetch::byte_array::ByteArray;
 using fetch::crypto::ECDSASigner;
 using TransactionList = std::vector<TransactionPtr>;
 

@@ -16,13 +16,13 @@
 //
 //------------------------------------------------------------------------------
 
+#include "mock_storage_interface.hpp"
+
 #include "ledger/storage_unit/cached_storage_adapter.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 #include "storage/resource_mapper.hpp"
 
 #include "gmock/gmock.h"
-
-#include "mock_storage_interface.hpp"
 
 namespace {
 
