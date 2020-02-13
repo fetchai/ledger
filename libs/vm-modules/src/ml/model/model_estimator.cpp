@@ -288,24 +288,6 @@ ChargeAmount ModelEstimator::Fit(Ptr<math::VMTensor> const &data, Ptr<math::VMTe
   return ToChargeAmount(estimate) * COMPUTE_CHARGE_COST;
 }
 
-ChargeAmount ModelEstimator::SerializeToString()
-{
-  DataType estimate{"0"};
-  estimate += SERIALISATION_PER_OP_COEF * state_.ops_count;
-  estimate += SERIALISATION_PADDED_WEIGHT_SUM_COEF * state_.weights_padded_size_sum;
-  estimate += SERIALISATION_WEIGHT_SUM_COEF * state_.weights_size_sum;
-  estimate += SERIALISATION_CONST_COEF;
-
-  return ToChargeAmount(estimate) * COMPUTE_CHARGE_COST;
-}
-
-ChargeAmount ModelEstimator::DeserializeFromString(Ptr<String> const &model_string)
-{
-  DataType estimate = DESERIALISATION_PER_CHAR_COEF * model_string->string().size();
-
-  return ToChargeAmount(estimate + DESERIALISATION_CONST_COEF) * COMPUTE_CHARGE_COST;
-}
-
 bool ModelEstimator::SerializeTo(serializers::MsgPackSerializer &buffer)
 {
   return state_.SerializeTo(buffer);

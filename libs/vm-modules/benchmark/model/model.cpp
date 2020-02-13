@@ -1094,7 +1094,7 @@ void BM_SerializeToString(::benchmark::State &state)
     auto model = vmSequentialModel(vm, config.sizes, config.activations, "mse", "adam");
 
     // serialise to string
-    state.counters["charge"] = static_cast<double>(model->Estimator().SerializeToString());
+    state.counters["charge"] = static_cast<double>(model->EstimateSerializeToString());
 
     state.counters["OpsCount"]       = static_cast<double>(model->Estimator().GetOpsCount());
     state.counters["PaddedSizesSum"] = static_cast<double>(model->Estimator().GetPaddedSizesSum());
@@ -1177,7 +1177,7 @@ void BM_DeserializeFromString(::benchmark::State &state)
 
   auto new_model = vmSequentialModel(vm);
   state.counters["charge"] =
-      static_cast<double>(new_model->Estimator().DeserializeFromString(serialized_model));
+      static_cast<double>(new_model->EstimateDeserializeFromString(serialized_model));
   state.counters["StrLen"] = static_cast<double>(serialized_model->string().size());
 
   for (auto _ : state)

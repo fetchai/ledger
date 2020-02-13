@@ -191,8 +191,6 @@ public:
     return model_->ChargeBackward();
   }
 
-  static fetch::vm::ChargeAmount ToChargeAmount(fixed_point::fp64_t const &val);
-
   static fetch::vm::ChargeAmount MaximumCharge(std::string const &log_msg);
 
   fetch::vm::ChargeAmount EstimateLayerAddDense(fetch::vm::Ptr<fetch::vm::String> const &layer,
@@ -227,6 +225,11 @@ public:
   fetch::vm::ChargeAmount EstimateEvaluate();
 
   fetch::vm::ChargeAmount EstimatePredict(vm::Ptr<vm_modules::math::VMTensor> const &data);
+
+  fetch::vm::ChargeAmount EstimateSerializeToString();
+
+  fetch::vm::ChargeAmount EstimateDeserializeFromString(
+      vm::Ptr<fetch::vm::String> const &model_string);
 
   // AddLayer
   static const fixed_point::fp64_t ADD_DENSE_PADDED_WEIGHTS_SIZE_COEF;

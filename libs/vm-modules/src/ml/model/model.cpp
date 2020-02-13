@@ -306,9 +306,9 @@ void VMModel::Bind(Module &module, bool const experimental_enabled)
       .CreateMemberFunction("predict", &VMModel::Predict,
                             UseMemberEstimator(&VMModel::EstimatePredict))
       .CreateMemberFunction("serializeToString", &VMModel::SerializeToString,
-                            UseEstimator(&ModelEstimator::SerializeToString))
+                            UseMemberEstimator(&VMModel::EstimateSerializeToString))
       .CreateMemberFunction("deserializeFromString", &VMModel::DeserializeFromString,
-                            UseEstimator(&ModelEstimator::DeserializeFromString));
+                            UseMemberEstimator(&VMModel::EstimateDeserializeFromString));
 
   // experimental features are bound only if the VMFactory given the flag to do so
   if (experimental_enabled)
@@ -938,17 +938,6 @@ void VMModel::PrepareDataloader()
   }
 }
 
-ChargeAmount VMModel::ToChargeAmount(fixed_point::fp64_t const &val)
-{
-  auto ret = static_cast<ChargeAmount>(val);
-  // Ensure that estimate will never be 0
-  if (ret < std::numeric_limits<uint64_t>::max())
-  {
-    ret += 1;
-  }
-  return ret;
-}
-
 ChargeAmount VMModel::MaximumCharge(std::string const &log_msg)
 {
   FETCH_LOG_ERROR("Model", "operation charge is vm::MAXIMUM_CHARGE : " + log_msg);
@@ -1142,6 +1131,26 @@ ChargeAmount VMModel::EstimateCompileSequentialWithMetrics(
     vm_->RuntimeError("Compile model failed: " + std::string(e.what()));
     return MAXIMUM_CHARGE;
   }
+}
+
+ChargeAmount VMModel::EstimateSerializeToString()
+{
+  auto trainables = model_->graph_ptr_->GetTrainables();
+
+  ChargeAmount estimate{0};
+
+  for (auto &w : trainables)
+  {
+    estimate += TensorType::PaddedSizeFromShape(w->GetWeights().shape());
+  }
+  return estimate + 1;
+}
+
+ChargeAmount VMModel::EstimateDeserializeFromString(Ptr<String> const &model_string)
+{
+  SizeType estimate = model_string->string().size();
+
+  return estimate + 1;
 }
 
 }  // namespace model

@@ -95,10 +95,6 @@ public:
                    vm::Ptr<vm_modules::math::VMTensor> const &labels,
                    ::fetch::math::SizeType const &            batch_size);
 
-  ChargeAmount SerializeToString();
-
-  ChargeAmount DeserializeFromString(fetch::vm::Ptr<fetch::vm::String> const &model_string);
-
   bool SerializeTo(serializers::MsgPackSerializer &buffer);
 
   bool DeserializeFrom(serializers::MsgPackSerializer &buffer);

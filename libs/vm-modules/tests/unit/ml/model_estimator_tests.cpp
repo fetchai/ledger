@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/layers/fully_connected.hpp"
 #include "core/serializers/main_serializer.hpp"
+#include "ml/layers/fully_connected.hpp"
 #include "vm_modules/ml/model/model.hpp"
 #include "vm_modules/ml/model/model_estimator.hpp"
 #include "vm_modules/vm_factory.hpp"
@@ -172,12 +172,12 @@ public:
 
   ChargeAmount SerializeToStringCharge(VmModelPtr &model)
   {
-    return model->Estimator().SerializeToString();
+    return model->EstimateSerializeToString();
   }
 
   ChargeAmount DeserializeFromStringCharge(VmModelPtr &model, VmStringPtr const &model_serialized)
   {
-    return model->Estimator().DeserializeFromString(model_serialized);
+    return model->EstimateDeserializeFromString(model_serialized);
   }
 };
 
