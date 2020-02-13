@@ -16,8 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "meta/param_pack.hpp"
 #include "same.hpp"
+
+#include "meta/param_pack.hpp"
 
 #include "gmock/gmock.h"
 

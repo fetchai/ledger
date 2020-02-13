@@ -16,6 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include "tx_generation.hpp"
+
 #include "chain/transaction_builder.hpp"
 #include "chain/transaction_rpc_serializers.hpp"
 #include "core/byte_array/byte_array.hpp"
@@ -27,8 +29,6 @@
 #include "ledger/storage_unit/transaction_store.hpp"
 
 #include "benchmark/benchmark.h"
-
-#include "tx_generation.hpp"
 
 #include <vector>
 

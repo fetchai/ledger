@@ -16,9 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/storage_unit/transaction_store_aggregator.hpp"
 #include "mock_transaction_store.hpp"
 #include "transaction_generator.hpp"
+
+#include "ledger/storage_unit/transaction_store_aggregator.hpp"
 
 #include "gtest/gtest.h"
 

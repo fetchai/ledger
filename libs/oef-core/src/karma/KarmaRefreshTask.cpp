@@ -16,12 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
+#include "oef-core/karma/IKarmaPolicy.hpp"
 #include "oef-core/karma/KarmaRefreshTask.hpp"
 
 #include <iostream>
 #include <string>
-
-#include "oef-core/karma/IKarmaPolicy.hpp"
 
 fetch::oef::base::ExitState KarmaRefreshTask::run()
 {

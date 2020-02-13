@@ -16,21 +16,23 @@
 //
 //------------------------------------------------------------------------------
 
-#include "chain/address.hpp"
-#include "core/serializers/main_serializer.hpp"
-#include "crypto/ecdsa.hpp"
 #include "digest_matcher.hpp"
-#include "gtest/gtest.h"
-#include "ledger/chain/block.hpp"
-#include "ledger/chain/main_chain.hpp"
-#include "ledger/protocols/main_chain_rpc_service.hpp"
-#include "ledger/testing/block_generator.hpp"
 #include "mock_consensus.hpp"
 #include "mock_main_chain_rpc_client.hpp"
 #include "mock_muddle_endpoint.hpp"
 #include "mock_trust_system.hpp"
+
+#include "chain/address.hpp"
+#include "core/serializers/main_serializer.hpp"
+#include "crypto/ecdsa.hpp"
+#include "ledger/chain/block.hpp"
+#include "ledger/chain/main_chain.hpp"
+#include "ledger/protocols/main_chain_rpc_service.hpp"
+#include "ledger/testing/block_generator.hpp"
 #include "moment/clocks.hpp"
 #include "muddle/network_id.hpp"
+
+#include "gtest/gtest.h"
 
 #include <string>
 

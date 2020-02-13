@@ -21,11 +21,11 @@
 #include "core/mutex.hpp"
 #include "core/serializers/main_serializer.hpp"
 #include "logging/logging.hpp"
+#include "network/fetch_asio.hpp"
 #include "network/management/client_manager.hpp"
 #include "network/management/network_manager.hpp"
 #include "network/message.hpp"
 
-#include "network/fetch_asio.hpp"
 #include <atomic>
 #include <utility>
 

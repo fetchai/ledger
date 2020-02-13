@@ -17,14 +17,15 @@
 //
 //------------------------------------------------------------------------------
 
+#include "Node.hpp"
+#include "NodeExecutorTask.hpp"
+
+#include "logging/logging.hpp"
+#include "oef-base/threading/StateMachineTask.hpp"
+
 #include <memory>
 #include <queue>
 #include <utility>
-
-#include "Node.hpp"
-#include "NodeExecutorTask.hpp"
-#include "logging/logging.hpp"
-#include "oef-base/threading/StateMachineTask.hpp"
 
 class DapManager;
 

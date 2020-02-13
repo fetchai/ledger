@@ -16,13 +16,15 @@
 //
 //------------------------------------------------------------------------------
 
-#include "gtest/gtest.h"
+#include "test_types.hpp"
+
 #include "ml/layers/PRelu.hpp"
 #include "ml/meta/ml_type_traits.hpp"
 #include "ml/ops/loss_functions/mean_square_error_loss.hpp"
 #include "ml/ops/placeholder.hpp"
 #include "ml/serializers/ml_types.hpp"
-#include "test_types.hpp"
+
+#include "gtest/gtest.h"
 
 #include <memory>
 #include <vector>
