@@ -16,8 +16,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include <iostream>
-
 #include "oef-base/comms/Endpoint.hpp"
 #include "oef-base/comms/EndpointWebSocket.hpp"
 #include "oef-base/comms/OefListenerSet.hpp"
@@ -25,6 +23,8 @@
 #include "oef-core/comms/EndpointSSL.hpp"
 #include "oef-core/comms/OefListenerStarterTask.hpp"
 #include "oef-core/comms/Oefv1Listener.hpp"
+
+#include <iostream>
 
 template <template <typename> class EndpointType>
 fetch::oef::base::ExitState OefListenerStarterTask<EndpointType>::run()

@@ -16,9 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include "test_types.hpp"
+
 #include "math/clustering/knn.hpp"
 #include "math/distance/euclidean.hpp"
-#include "test_types.hpp"
 
 #include "gtest/gtest.h"
 
