@@ -70,10 +70,10 @@ TYPED_TEST(LayersSaveParamsTest, conv1d_saveparams_test)
 
   // set input and evaluate
   layer.SetInput(input_name, input);
-  TensorType prediction;
+  layer.Compile();
 
   // make initial prediction to set internal buffers which must be correctly set in serialisation
-  prediction = layer.Evaluate(output_name, true);
+  TensorType prediction = layer.Evaluate(output_name, true);
 
   auto dsp    = serializer_test_utils::SerialiseDeserialiseBuild<SPType, TensorType>(layer);
   auto layer2 = *(::fetch::ml::utilities::BuildLayer<TensorType, LayerType>(dsp));
@@ -161,9 +161,10 @@ TYPED_TEST(LayersSaveParamsTest, conv2d_saveparams_test)
 
   // set input and evaluate
   layer.SetInput(input_name, input);
-  TensorType prediction;
+  layer.Compile();
+
   // make initial prediction to set internal buffers which must be correctly set in serialisation
-  prediction = layer.Evaluate(output_name, true);
+  TensorType prediction = layer.Evaluate(output_name, true);
 
   auto dsp    = serializer_test_utils::SerialiseDeserialiseBuild<SPType, TensorType>(layer);
   auto layer2 = *(::fetch::ml::utilities::BuildLayer<TensorType, LayerType>(dsp));
@@ -333,8 +334,9 @@ TYPED_TEST(LayersSaveParamsTest, layer_norm_saveparams_test)
 
   // set input and evaluate
   layer.SetInput(input_name, input);
-  TypeParam prediction;
-  prediction = layer.Evaluate(output_name, true);
+  layer.Compile();
+
+  TypeParam prediction = layer.Evaluate(output_name, true);
 
   auto dsp    = serializer_test_utils::SerialiseDeserialiseBuild<SPType, TypeParam>(layer);
   auto layer2 = *(::fetch::ml::utilities::BuildLayer<TypeParam, LayerType>(dsp));
@@ -424,6 +426,7 @@ TYPED_TEST(LayersSaveParamsTest, multi_head_attention_saveparams_test)
   layer.SetInput("MultiheadAttention_Key", key_data);
   layer.SetInput("MultiheadAttention_Value", value_data);
   layer.SetInput("MultiheadAttention_Mask", mask_data);
+  layer.Compile();
 
   TypeParam prediction0 = layer.Evaluate(output_name, true);
 
@@ -475,6 +478,7 @@ TYPED_TEST(LayersSaveParamsTest, prelu_saveparams_test)
 
   // set input and evaluate
   layer.SetInput(input_name, input);
+  layer.Compile();
 
   TypeParam prediction = layer.Evaluate(output_name, true);
 
@@ -569,12 +573,14 @@ TYPED_TEST(LayersSaveParamsTest, scaled_dot_product_attention_saveparams_test)
   layer.SetInput("ScaledDotProductAttention_Key", key_data);
   layer.SetInput("ScaledDotProductAttention_Value", value_data);
   layer.SetInput("ScaledDotProductAttention_Mask", mask_data);
+  layer.Compile();
   TypeParam prediction = layer.Evaluate(output_name, true);
 
   layer2.SetInput("ScaledDotProductAttention_Query", query_data);
   layer2.SetInput("ScaledDotProductAttention_Key", key_data);
   layer2.SetInput("ScaledDotProductAttention_Value", value_data);
   layer2.SetInput("ScaledDotProductAttention_Mask", mask_data);
+  layer2.Compile();
   TypeParam prediction2 = layer2.Evaluate(output_name, true);
 
   EXPECT_TRUE(prediction.AllClose(prediction2, ::fetch::math::function_tolerance<DataType>(),
@@ -667,6 +673,7 @@ TYPED_TEST(LayersSaveParamsTest, self_attention_saveparams_test)
   // set input and evaluate
   layer.SetInput(input_name, input);
   layer.SetInput(mask_name, mask_data);
+  layer.Compile();
   TypeParam prediction0 = layer.Evaluate(output_name, true);
 
   auto dsp    = serializer_test_utils::SerialiseDeserialiseBuild<SPType, TypeParam>(layer);
@@ -676,6 +683,7 @@ TYPED_TEST(LayersSaveParamsTest, self_attention_saveparams_test)
 
   layer2.SetInput(input_name, input);
   layer2.SetInput(mask_name, mask_data);
+  layer2.Compile();
   TypeParam prediction2 = layer2.Evaluate(output_name);
 
   EXPECT_FALSE(prediction1.AllClose(prediction2, ::fetch::math::function_tolerance<DataType>(),
@@ -722,6 +730,7 @@ TYPED_TEST(LayersSaveParamsTest, skipgram_saveparams_test)
   // set input and ForwardPropagate
   layer.SetInput("SkipGram_Input", input);
   layer.SetInput("SkipGram_Context", context);
+  layer.Compile();
 
   // make initial prediction to set internal buffers which must be correctly set in serialisation
   TypeParam prediction0 = layer.Evaluate(output_name, true);
@@ -740,6 +749,7 @@ TYPED_TEST(LayersSaveParamsTest, skipgram_saveparams_test)
 
   layer2.SetInput("SkipGram_Input", input);
   layer2.SetInput("SkipGram_Context", context);
+  layer2.Compile();
   TypeParam prediction2 = layer2.Evaluate(output_name, true);
 
   ASSERT_TRUE(prediction.AllClose(prediction2, ::fetch::math::function_tolerance<DataType>(),
