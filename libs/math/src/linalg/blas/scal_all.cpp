@@ -16,9 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/linalg/blas/scal_all.hpp"
-
 #include "math/linalg/blas/base.hpp"
+#include "math/linalg/blas/scal_all.hpp"
 #include "math/linalg/prototype.hpp"
 #include "math/tensor/tensor_view.hpp"
 

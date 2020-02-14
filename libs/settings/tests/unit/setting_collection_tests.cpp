@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "mock_environment.hpp"
+
 #include "settings/setting.hpp"
 #include "settings/setting_collection.hpp"
 

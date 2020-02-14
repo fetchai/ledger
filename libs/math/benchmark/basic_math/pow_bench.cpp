@@ -16,10 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "benchmark/benchmark.h"
 #include "math/base_types.hpp"
 #include "math/standard_functions/pow.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
+
+#include "benchmark/benchmark.h"
 
 namespace {
 

@@ -1,5 +1,5 @@
 #
-# F E T C H   C O N S T E L L A T I O N
+# F E T C H   O E F - S E A R C H
 #
 cmake_minimum_required(VERSION 3.10 FATAL_ERROR)
 project(fetch-oef-core)

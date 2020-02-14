@@ -16,9 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include "vm_test_toolkit.hpp"
+
 #include "vm/array.hpp"
 #include "vm/variant.hpp"
-#include "vm_test_toolkit.hpp"
 
 #include "gtest/gtest.h"
 

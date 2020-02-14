@@ -16,9 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "gtest/gtest.h"
-#include "math/metrics/mean_absolute_error.hpp"
 #include "test_types.hpp"
+
+#include "math/metrics/mean_absolute_error.hpp"
+
+#include "gtest/gtest.h"
 
 namespace fetch {
 namespace math {

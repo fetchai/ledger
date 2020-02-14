@@ -16,12 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
+#include "oef-base/threading/Task.hpp"
 #include "oef-core/karma/IKarmaPolicy.hpp"
+#include "oef-core/karma/KarmaAccount.hpp"
 
 #include <memory>
-
-#include "oef-base/threading/Task.hpp"
-#include "oef-core/karma/KarmaAccount.hpp"
 
 // because friendship is not heritable.
 void IKarmaPolicy::changeAccountNumber(KarmaAccount *acc, std::size_t number)

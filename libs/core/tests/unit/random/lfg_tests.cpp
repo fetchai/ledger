@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "bit_statistics.hpp"
+
 #include "core/random/lfg.hpp"
 
 #include "gtest/gtest.h"

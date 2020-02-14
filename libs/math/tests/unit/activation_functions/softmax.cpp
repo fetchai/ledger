@@ -16,9 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "gtest/gtest.h"
-#include "math/activation_functions/softmax.hpp"
 #include "test_types.hpp"
+
+#include "math/activation_functions/softmax.hpp"
+
+#include "gtest/gtest.h"
 
 namespace fetch {
 namespace math {

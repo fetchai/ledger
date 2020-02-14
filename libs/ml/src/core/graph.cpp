@@ -16,13 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/core/graph.hpp"
-
-#include <unordered_set>
-
 #include "math/tensor/tensor.hpp"
 #include "math/tensor/tensor_slice_iterator.hpp"
+#include "ml/core/graph.hpp"
 #include "ml/ops/weights.hpp"
+
+#include <unordered_set>
 
 namespace fetch {
 

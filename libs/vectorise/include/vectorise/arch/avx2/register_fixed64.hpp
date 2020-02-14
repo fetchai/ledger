@@ -20,13 +20,14 @@
 #include "vectorise/arch/avx2/register_int64.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 
+#include <emmintrin.h>
+#include <immintrin.h>
+#include <smmintrin.h>
+
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
-#include <emmintrin.h>
-#include <immintrin.h>
 #include <ostream>
-#include <smmintrin.h>
 
 namespace fetch {
 namespace vectorise {

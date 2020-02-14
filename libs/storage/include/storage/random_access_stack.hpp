@@ -24,14 +24,14 @@
 //  │      │           │           │           │           │
 //  └──────┴───────────┴───────────┴───────────┴───────────┘
 
+#include "core/assert.hpp"
+#include "storage/storage_exception.hpp"
+
 #include <algorithm>
 #include <cassert>
 #include <fstream>
 #include <functional>
 #include <string>
-
-#include "core/assert.hpp"
-#include "storage/storage_exception.hpp"
 
 namespace fetch {
 namespace platform {

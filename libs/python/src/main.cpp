@@ -16,14 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "python/fetch_pybind.hpp"
-
-#include "python/memory/array.hpp"
-#include "python/memory/shared_array.hpp"
-
 #include "python/byte_array/byte_array.hpp"
 #include "python/byte_array/const_byte_array.hpp"
-
+#include "python/fetch_pybind.hpp"
+#include "python/memory/array.hpp"
+#include "python/memory/shared_array.hpp"
 #include "python/random/lcg.hpp"
 #include "python/random/lfg.hpp"
 
