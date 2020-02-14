@@ -52,7 +52,7 @@ const uint32_t NUM_SYSTEM_THREADS = static_cast<uint32_t>(std::thread::hardware_
 Settings::Settings()
   : num_lanes             {*this, "lanes",                   DEFAULT_NUM_LANES,            "Number of lanes to be used"}
   , num_slices            {*this, "slices",                  DEFAULT_NUM_SLICES,           "Number of slices to be used"}
-  , block_interval        {*this, "block-interval",          DEFAULT_BLOCK_INTERVAL,       "Block interval is milliseconds"}
+  , block_interval        {*this, "block-interval",          DEFAULT_BLOCK_INTERVAL,       "Block interval in milliseconds"}
   , standalone            {*this, "standalone",              false,                        "Whether the network should run in standalone mode"}
   , private_network       {*this, "private-network",         false,                        "Whether the network should run as part of a private network"}
   , initial_address       {*this, "initial-address",         "",                           "The initial address where all funds can be found for a standalone node"}
@@ -62,7 +62,7 @@ Settings::Settings()
   , external              {*this, "external",                "127.0.0.1",                  "This node's global IP address or hostname"}
   , config                {*this, "config",                  "",                           "Path to the manifest configuration"}
   , max_peers             {*this, "max-peers",               DEFAULT_MAX_PEERS,            "Max number of peers to connect to"}
-  , transient_peers       {*this, "transient-peers",         DEFAULT_TRANSIENT_PEERS,      "Number of peers to randomly choose from for answers sent to peer requests"}
+  , transient_peers       {*this, "transient-peers",         DEFAULT_TRANSIENT_PEERS,      "Number of peers to randomly choose from for replies sent to peer requests"}
   , peer_update_interval  {*this, "peers-update-cycle-ms",   0,                            "Peering updates delay"}
   , disable_signing       {*this, "disable-signing",         false,                        "Disable signing all network messages"}
   , kademlia_routing      {*this, "kademlia-routing",        true,                         "Whether kademlia routing should be used in the main P2P network"}
@@ -83,7 +83,7 @@ Settings::Settings()
   , graceful_failure      {*this, "graceful-failure",        false,                        "Whether to shutdown on critical system failures"}
   , fault_tolerant        {*this, "fault-tolerant",          false,                        "Whether to crash on critical system failures"}
   , enable_agents         {*this, "enable-agents",           false,                        "Run the node with agent support"}
-  , messenger_port        {*this, "messenger-port",          DEFAULT_MESSENGER_PORT,       "Port agents connect to"}
+  , messenger_port        {*this, "messenger-port",          DEFAULT_MESSENGER_PORT,       "Port agents should connect to"}
 {}
 // clang-format on
 
