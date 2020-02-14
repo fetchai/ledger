@@ -141,8 +141,8 @@ class MutexRegister : public DeadlockHandler, DeadlockPolicy
   using typename Parent::OwnerId;
   using MutexPtr = typename Parent::Mutex *;
 
-  using Parent::Populate;
   using Parent::Depopulate;
+  using Parent::Populate;
 
 public:
   /**
