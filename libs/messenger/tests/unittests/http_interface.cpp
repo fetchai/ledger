@@ -16,8 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "gtest/gtest.h"
 #include "shared_functions.hpp"
+
+#include "gtest/gtest.h"
 
 using Address        = fetch::muddle::Packet::Address;
 using Message        = fetch::messenger::Message;

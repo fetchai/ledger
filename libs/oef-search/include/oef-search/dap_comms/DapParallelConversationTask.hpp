@@ -17,17 +17,16 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/mutex.hpp"
+#include "logging/logging.hpp"
+#include "oef-base/conversation/OutboundConversations.hpp"
+#include "oef-base/threading/TaskChainParallel.hpp"
+#include "oef-search/dap_comms/DapConversationTask.hpp"
+
 #include <memory>
 #include <mutex>
 #include <queue>
 #include <utility>
-
-#include "core/mutex.hpp"
-#include "logging/logging.hpp"
-#include "oef-base/threading/TaskChainParallel.hpp"
-
-#include "oef-base/conversation/OutboundConversations.hpp"
-#include "oef-search/dap_comms/DapConversationTask.hpp"
 
 template <typename IN_PROTO>
 struct DapInputDataType

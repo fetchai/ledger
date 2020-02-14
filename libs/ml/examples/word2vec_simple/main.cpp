@@ -16,14 +16,15 @@
 //
 //------------------------------------------------------------------------------
 
+#include "polyfill.hpp"
+#include "w2v_model.hpp"
+#include "word_analogy.hpp"
+
 #include "math/approx_exp.hpp"
 #include "math/clustering/knn.hpp"
 #include "math/exceptions/exceptions.hpp"
 #include "math/tensor/tensor.hpp"
 #include "ml/dataloaders/word2vec_loaders/w2v_dataloader.hpp"
-#include "polyfill.hpp"
-#include "w2v_model.hpp"
-#include "word_analogy.hpp"
 
 #include <fstream>
 #include <iostream>

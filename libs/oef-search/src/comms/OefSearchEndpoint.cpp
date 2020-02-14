@@ -16,8 +16,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "oef-search/comms/OefSearchEndpoint.hpp"
-
 #include "oef-base/comms/Endianness.hpp"
 #include "oef-base/comms/IOefTaskFactory.hpp"
 #include "oef-base/monitoring/Counter.hpp"
@@ -27,6 +25,7 @@
 #include "oef-base/threading/Task.hpp"
 #include "oef-base/threading/Taskpool.hpp"
 #include "oef-base/utils/Uri.hpp"
+#include "oef-search/comms/OefSearchEndpoint.hpp"
 
 #include <map>
 

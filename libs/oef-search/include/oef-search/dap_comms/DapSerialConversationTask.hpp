@@ -17,15 +17,14 @@
 //
 //------------------------------------------------------------------------------
 
+#include "oef-base/conversation/OutboundConversations.hpp"
+#include "oef-base/threading/TaskChainSerial.hpp"
+#include "oef-search/dap_comms/DapConversationTask.hpp"
+#include "oef-search/dap_comms/DapParallelConversationTask.hpp"
+
 #include <memory>
 #include <queue>
 #include <utility>
-
-#include "oef-base/threading/TaskChainSerial.hpp"
-
-#include "oef-base/conversation/OutboundConversations.hpp"
-#include "oef-search/dap_comms/DapConversationTask.hpp"
-#include "oef-search/dap_comms/DapParallelConversationTask.hpp"
 
 template <typename IN_PROTO, typename OUT_PROTO, typename MIDDLE_PROTO>
 class DapSerialConversationTask

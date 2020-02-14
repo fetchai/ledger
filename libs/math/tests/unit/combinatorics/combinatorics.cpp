@@ -16,9 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "gtest/gtest.h"
-#include "math/combinatorics.hpp"
 #include "test_types.hpp"
+
+#include "math/combinatorics.hpp"
+
+#include "gtest/gtest.h"
 
 #include <cstdint>
 
