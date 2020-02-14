@@ -91,10 +91,6 @@ public:
       vm::Ptr<vm::String> const &loss, vm::Ptr<vm::String> const &optimiser,
       vm::Ptr<vm::Array<vm::Ptr<fetch::vm::String>>> const &metrics);
 
-  ChargeAmount Fit(vm::Ptr<vm_modules::math::VMTensor> const &data,
-                   vm::Ptr<vm_modules::math::VMTensor> const &labels,
-                   ::fetch::math::SizeType const &            batch_size);
-
   bool SerializeTo(serializers::MsgPackSerializer &buffer);
 
   bool DeserializeFrom(serializers::MsgPackSerializer &buffer);

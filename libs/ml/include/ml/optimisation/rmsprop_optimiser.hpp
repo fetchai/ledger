@@ -61,6 +61,8 @@ public:
 
   static OperationsCount ChargeConstruct(std::shared_ptr<Graph<T>> graph);
 
+  fetch::ml::OperationsCount ChargeStep() const override;
+
 private:
   std::vector<TensorType> cache_;
   DataType                decay_rate_;

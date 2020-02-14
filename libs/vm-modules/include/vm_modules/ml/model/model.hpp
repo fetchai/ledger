@@ -231,10 +231,9 @@ public:
   fetch::vm::ChargeAmount EstimateDeserializeFromString(
       vm::Ptr<fetch::vm::String> const &model_string);
 
-  // AddLayer
-  static const fixed_point::fp64_t ADD_DENSE_PADDED_WEIGHTS_SIZE_COEF;
-  static const fixed_point::fp64_t ADD_DENSE_WEIGHTS_SIZE_COEF;
-  static const fixed_point::fp64_t ADD_DENSE_CONST_COEF;
+  fetch::vm::ChargeAmount EstimateFit(vm::Ptr<VMTensor> const &      data,
+                                      vm::Ptr<VMTensor> const &      labels,
+                                      ::fetch::math::SizeType const &batch_size);
 
   SequentialModelPtr GetMeAsSequentialIfPossible();
 

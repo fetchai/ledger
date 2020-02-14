@@ -67,6 +67,8 @@ public:
 
   static OperationsCount ChargeConstruct(std::shared_ptr<Graph<T>> graph);
 
+  fetch::ml::OperationsCount ChargeStep() const override;
+
 protected:
   std::vector<TensorType> cache_;
   std::vector<TensorType> momentum_;

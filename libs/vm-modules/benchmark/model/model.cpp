@@ -775,7 +775,7 @@ void BM_Fit(::benchmark::State &state)
 
     // fit
     state.counters["charge"] =
-        static_cast<double>(model->Estimator().Fit(data, label, config.batch_size));
+        static_cast<double>(model->EstimateFit(data, label, config.batch_size));
 
     state.counters["PaddedSizesSum"] = static_cast<double>(model->Estimator().GetPaddedSizesSum());
     state.counters["SizesSum"]       = static_cast<double>(model->Estimator().GetSizesSum());

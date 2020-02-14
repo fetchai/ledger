@@ -130,6 +130,30 @@ OperationsCount MomentumOptimiser<T>::ChargeConstruct(std::shared_ptr<Graph<T>> 
   return op_cnt;
 }
 
+template <class T>
+fetch::ml::OperationsCount MomentumOptimiser<T>::ChargeStep() const
+{
+  auto gradient_it  = this->gradients_.begin();
+  auto trainable_it = this->graph_trainables_.begin();
+
+  // Update betas, initialise
+  OperationsCount ops_count = 8;
+
+  OperationsCount loop_count{0};
+  while (gradient_it != this->gradients_.end())
+  {
+    // Skip frozen trainables
+    if (!(*trainable_it)->GetFrozenState())
+    {
+      loop_count += T::SizeFromShape((*trainable_it)->GetWeights().shape());
+    }
+    ++gradient_it;
+    ++trainable_it;
+  }
+
+  return ops_count + loop_count * 5;
+}
+
 ///////////////////////////////
 /// EXPLICIT INSTANTIATIONS ///
 ///////////////////////////////

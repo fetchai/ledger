@@ -260,34 +260,6 @@ ChargeAmount ModelEstimator::CompileSequentialWithMetrics(
   return CompileSequential(loss, optimiser);
 }
 
-ChargeAmount ModelEstimator::Fit(Ptr<math::VMTensor> const &data, Ptr<math::VMTensor> const &labels,
-                                 SizeType const &batch_size)
-{
-  FETCH_UNUSED(labels);
-
-  DataType estimate{"0"};
-  state_.subset_size         = data->GetTensor().shape().at(data->GetTensor().shape().size() - 1);
-  SizeType number_of_batches = state_.subset_size / batch_size;
-
-  // Forward pass
-  estimate += state_.forward_pass_cost * state_.subset_size;
-  estimate += PREDICT_BATCH_LAYER_COEF * state_.subset_size * state_.ops_count;
-  estimate += PREDICT_CONST_COEF;
-
-  // Backward pass
-  estimate += state_.backward_pass_cost * state_.subset_size;
-  estimate += BACKWARD_BATCH_LAYER_COEF * state_.subset_size * state_.ops_count;
-  estimate += BACKWARD_PER_BATCH_COEF * number_of_batches;
-
-  // Optimiser step
-  estimate += state_.optimiser_step_impact * number_of_batches * state_.weights_size_sum;
-
-  // Call overhead
-  estimate += FIT_CONST_COEF;
-
-  return ToChargeAmount(estimate) * COMPUTE_CHARGE_COST;
-}
-
 bool ModelEstimator::SerializeTo(serializers::MsgPackSerializer &buffer)
 {
   return state_.SerializeTo(buffer);

@@ -300,7 +300,7 @@ void VMModel::Bind(Module &module, bool const experimental_enabled)
                             UseMemberEstimator(&VMModel::EstimateCompileSequential))
       .CreateMemberFunction("compile", &VMModel::CompileSequentialWithMetrics,
                             UseMemberEstimator(&VMModel::EstimateCompileSequentialWithMetrics))
-      .CreateMemberFunction("fit", &VMModel::Fit, UseEstimator(&ModelEstimator::Fit))
+      .CreateMemberFunction("fit", &VMModel::Fit, UseMemberEstimator(&VMModel::EstimateFit))
       .CreateMemberFunction("evaluate", &VMModel::Evaluate,
                             UseMemberEstimator(&VMModel::EstimateEvaluate))
       .CreateMemberFunction("predict", &VMModel::Predict,
@@ -1137,20 +1137,45 @@ ChargeAmount VMModel::EstimateSerializeToString()
 {
   auto trainables = model_->graph_ptr_->GetTrainables();
 
-  ChargeAmount estimate{0};
+  ChargeAmount estimate{1};
 
   for (auto &w : trainables)
   {
     estimate += TensorType::PaddedSizeFromShape(w->GetWeights().shape());
   }
-  return estimate + 1;
+  return estimate;
 }
 
 ChargeAmount VMModel::EstimateDeserializeFromString(Ptr<String> const &model_string)
 {
-  SizeType estimate = model_string->string().size();
+  ChargeAmount estimate = model_string->string().size();
 
   return estimate + 1;
+}
+
+fetch::vm::ChargeAmount VMModel::EstimateFit(vm::Ptr<math::VMTensor> const &data,
+                                             vm::Ptr<math::VMTensor> const &labels,
+                                             ::fetch::math::SizeType const &batch_size)
+{
+  FETCH_UNUSED(labels);
+  FETCH_UNUSED(data);
+  FETCH_UNUSED(batch_size);
+
+  ChargeAmount estimate{1};
+
+  SizeType subset_size       = data->GetTensor().shape().at(data->GetTensor().shape().size() - 1);
+  SizeType number_of_batches = subset_size / batch_size;
+
+  // Forward pass
+  estimate += ChargeForward() * subset_size;
+
+  // Backward pass
+  estimate += ChargeBackward() * subset_size;
+
+  // Optimiser step
+  estimate += model_->optimiser_ptr_->ChargeStep() * number_of_batches;
+
+  return estimate;
 }
 
 }  // namespace model
