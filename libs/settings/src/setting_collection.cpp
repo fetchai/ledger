@@ -144,8 +144,8 @@ void SettingCollection::DisplayHelp() const
 
   for (auto const &setting : settings_)
   {
-    oss << "\n-" << setting->name() << std::setw(int(30 - setting->name().size())) << " \""
-        << setting->description() << "\"";
+    oss << "\n-" << setting->name() << std::setw(int(31 - setting->name().size())) << ' '
+        << setting->description();
   }
 
   FETCH_LOG_INFO(LOGGING_NAME, oss.str());
