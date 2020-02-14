@@ -50,9 +50,9 @@ public:
   void UpdateFromEnv(char const *                        prefix,
                      detail::EnvironmentInterface const &env = detail::Environment{});
 
-private:
   void DisplayHelp() const;
 
+private:
   Settings settings_;
   Help     help_{*this};
 };

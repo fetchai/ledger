@@ -111,7 +111,6 @@ bool SettingCollection::UpdateFromArgs(int argc, char **argv)
       iss >> *setting;
       if (setting->TerminateNow())
       {
-        DisplayHelp();
         return false;
       }
       settings_changed.insert(setting->name());

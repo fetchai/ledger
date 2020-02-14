@@ -21,10 +21,10 @@
 
 namespace {
 
-constexpr char const *NAME = "help";
+constexpr char const *NAME        = "help";
 constexpr char const *DESCRIPTION = "Print this help and exit";
 
-}
+}  // namespace
 
 namespace fetch {
 namespace settings {
@@ -32,19 +32,17 @@ namespace settings {
 Help::Help(SettingCollection &reg)
   : SettingBase(reg, NAME, DESCRIPTION)
   , reg_(reg)
-{
-}
+{}
 
-void Help::FromStream(std::istream &/*stream*/)
-{
-}
+void Help::FromStream(std::istream & /*stream*/)
+{}
 
-void Help::ToStream(std::ostream &/*stream*/) const
-{
-}
+void Help::ToStream(std::ostream & /*stream*/) const
+{}
 
 bool Help::TerminateNow() const noexcept
 {
+  reg_.DisplayHelp();
   return true;
 }
 
