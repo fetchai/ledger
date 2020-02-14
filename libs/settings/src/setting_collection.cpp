@@ -140,7 +140,7 @@ bool SettingCollection::UpdateFromArgs(int argc, char **argv)
 void SettingCollection::DisplayHelp() const
 {
   std::ostringstream oss;
-  oss << "\nKnown options:";
+  oss << "\nKnown options are:";
 
   for (auto const &setting : settings_)
   {
