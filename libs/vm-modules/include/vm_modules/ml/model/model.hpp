@@ -235,6 +235,38 @@ public:
                                       vm::Ptr<VMTensor> const &      labels,
                                       ::fetch::math::SizeType const &batch_size);
 
+  fetch::vm::ChargeAmount EstimateLayerAddConv(fetch::vm::Ptr<fetch::vm::String> const &layer,
+                                               math::SizeType const &output_channels,
+                                               math::SizeType const &input_channels,
+                                               math::SizeType const &kernel_size,
+                                               math::SizeType const &stride_size);
+  fetch::vm::ChargeAmount EstimateLayerAddConvActivation(
+      fetch::vm::Ptr<fetch::vm::String> const &layer, math::SizeType const &output_channels,
+      math::SizeType const &input_channels, math::SizeType const &kernel_size,
+      math::SizeType const &stride_size, fetch::vm::Ptr<fetch::vm::String> const &activation);
+
+  fetch::vm::ChargeAmount EstimateLayerAddFlatten(fetch::vm::Ptr<fetch::vm::String> const &layer);
+
+  fetch::vm::ChargeAmount EstimateLayerAddDropout(fetch::vm::Ptr<fetch::vm::String> const &layer,
+                                                  math::DataType const &probability);
+
+  fetch::vm::ChargeAmount EstimateLayerAddActivation(
+      fetch::vm::Ptr<fetch::vm::String> const &layer,
+      fetch::vm::Ptr<fetch::vm::String> const &activation_name);
+  fetch::vm::ChargeAmount EstimateLayerAddReshape(
+      fetch::vm::Ptr<fetch::vm::String> const &                     layer,
+      fetch::vm::Ptr<fetch::vm::Array<TensorType::SizeType>> const &shape);
+
+  fetch::vm::ChargeAmount EstimateLayerAddInput(
+      fetch::vm::Ptr<fetch::vm::String> const &        layer,
+      fetch::vm::Ptr<vm::Array<math::SizeType>> const &shape);
+  fetch::vm::ChargeAmount EstimateLayerAddPool(fetch::vm::Ptr<fetch::vm::String> const &layer,
+                                               math::SizeType const &                   kernel_size,
+                                               math::SizeType const &stride_size);
+  fetch::vm::ChargeAmount EstimateLayerAddEmbeddings(fetch::vm::Ptr<fetch::vm::String> const &layer,
+                                                     math::SizeType const &dimensions,
+                                                     math::SizeType const &data_points, bool stub);
+
   SequentialModelPtr GetMeAsSequentialIfPossible();
 
 private:

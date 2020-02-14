@@ -53,6 +53,9 @@ namespace vm_modules {
 namespace ml {
 namespace model {
 
+static constexpr char const *LOGGING_NAME            = "VMModel";
+static constexpr char const *NOT_IMPLEMENTED_MESSAGE = " is not yet implemented.";
+
 using fetch::math::SizeType;
 using fetch::ml::OptimiserType;
 using fetch::ml::details::ActivationType;
@@ -315,26 +318,26 @@ void VMModel::Bind(Module &module, bool const experimental_enabled)
   {
     module.GetClassInterface<VMModel>()
         .CreateMemberFunction("add", &VMModel::LayerAddConv,
-                              UseEstimator(&ModelEstimator::LayerAddConv))
+                              UseMemberEstimator(&VMModel::EstimateLayerAddConv))
         .CreateMemberFunction("add", &VMModel::LayerAddConvActivation,
-                              UseEstimator(&ModelEstimator::LayerAddConvActivation))
+                              UseMemberEstimator(&VMModel::EstimateLayerAddConvActivation))
         .CreateMemberFunction("add", &VMModel::LayerAddFlatten,
-                              UseEstimator(&ModelEstimator::LayerAddFlatten))
+                              UseMemberEstimator(&VMModel::EstimateLayerAddFlatten))
         .CreateMemberFunction("add", &VMModel::LayerAddDropout,
-                              UseEstimator(&ModelEstimator::LayerAddDropout))
+                              UseMemberEstimator(&VMModel::EstimateLayerAddDropout))
         .CreateMemberFunction("add", &VMModel::LayerAddActivation,
-                              UseEstimator(&ModelEstimator::LayerAddActivation))
+                              UseMemberEstimator(&VMModel::EstimateLayerAddActivation))
         .CreateMemberFunction("add", &VMModel::LayerAddReshape,
-                              UseEstimator(&ModelEstimator::LayerAddReshape))
+                              UseMemberEstimator(&VMModel::EstimateLayerAddReshape))
         .CreateMemberFunction("addExperimental", &VMModel::LayerAddPool,
-                              UseEstimator(&ModelEstimator::LayerAddPool))
+                              UseMemberEstimator(&VMModel::EstimateLayerAddPool))
         .CreateMemberFunction("addExperimental", &VMModel::LayerAddEmbeddings,
-                              UseEstimator(&ModelEstimator::LayerAddEmbeddings))
+                              UseMemberEstimator(&VMModel::EstimateLayerAddEmbeddings))
         .CreateMemberFunction(
             "addExperimental", &VMModel::LayerAddDenseActivationExperimental,
             UseMemberEstimator(&VMModel::EstimateLayerAddDenseActivationExperimental))
         .CreateMemberFunction("addExperimental", &VMModel::LayerAddInput,
-                              UseEstimator(&ModelEstimator::LayerAddInput))
+                              UseMemberEstimator(&VMModel::EstimateLayerAddInput))
         .CreateMemberFunction("addExperimental", &VMModel::LayerAddDenseAutoInputs,
                               UseMemberEstimator(&VMModel::EstimateLayerAddDenseAutoInputs));
   }
@@ -1039,7 +1042,7 @@ ChargeAmount VMModel::EstimateLayerAddDenseAutoInputs(
 {
   FETCH_UNUSED(layer);
   FETCH_UNUSED(hidden_nodes);
-  return MaximumCharge(layer->string() + " is not yet implemented.");
+  return MaximumCharge(layer->string() + NOT_IMPLEMENTED_MESSAGE);
 }
 
 /**
@@ -1176,6 +1179,105 @@ fetch::vm::ChargeAmount VMModel::EstimateFit(vm::Ptr<math::VMTensor> const &data
   estimate += model_->optimiser_ptr_->ChargeStep() * number_of_batches;
 
   return estimate;
+}
+
+fetch::vm::ChargeAmount VMModel::EstimateLayerAddConv(
+    fetch::vm::Ptr<fetch::vm::String> const &layer, math::SizeType const &output_channels,
+    math::SizeType const &input_channels, math::SizeType const &kernel_size,
+    math::SizeType const &stride_size)
+{
+  FETCH_UNUSED(layer);
+  FETCH_UNUSED(output_channels);
+  FETCH_UNUSED(input_channels);
+  FETCH_UNUSED(kernel_size);
+  FETCH_UNUSED(stride_size);
+
+  return MaximumCharge(layer->string() + NOT_IMPLEMENTED_MESSAGE);
+}
+
+fetch::vm::ChargeAmount VMModel::EstimateLayerAddConvActivation(
+    fetch::vm::Ptr<fetch::vm::String> const &layer, math::SizeType const &output_channels,
+    math::SizeType const &input_channels, math::SizeType const &kernel_size,
+    math::SizeType const &stride_size, fetch::vm::Ptr<fetch::vm::String> const &activation)
+{
+  FETCH_UNUSED(layer);
+  FETCH_UNUSED(output_channels);
+  FETCH_UNUSED(input_channels);
+  FETCH_UNUSED(kernel_size);
+  FETCH_UNUSED(stride_size);
+  FETCH_UNUSED(activation);
+
+  return MaximumCharge(layer->string() + NOT_IMPLEMENTED_MESSAGE);
+}
+
+fetch::vm::ChargeAmount VMModel::EstimateLayerAddFlatten(
+    fetch::vm::Ptr<fetch::vm::String> const &layer)
+{
+  FETCH_UNUSED(layer);
+
+  return MaximumCharge(layer->string() + NOT_IMPLEMENTED_MESSAGE);
+}
+
+fetch::vm::ChargeAmount VMModel::EstimateLayerAddDropout(
+    fetch::vm::Ptr<fetch::vm::String> const &layer, math::DataType const &probability)
+{
+  FETCH_UNUSED(layer);
+  FETCH_UNUSED(probability);
+
+  return MaximumCharge(layer->string() + NOT_IMPLEMENTED_MESSAGE);
+}
+
+fetch::vm::ChargeAmount VMModel::EstimateLayerAddActivation(
+    fetch::vm::Ptr<fetch::vm::String> const &layer,
+    fetch::vm::Ptr<fetch::vm::String> const &activation_name)
+{
+  FETCH_UNUSED(layer);
+  FETCH_UNUSED(activation_name);
+
+  return MaximumCharge(layer->string() + NOT_IMPLEMENTED_MESSAGE);
+}
+
+fetch::vm::ChargeAmount VMModel::EstimateLayerAddReshape(
+    fetch::vm::Ptr<fetch::vm::String> const &                     layer,
+    fetch::vm::Ptr<fetch::vm::Array<TensorType::SizeType>> const &shape)
+{
+  FETCH_UNUSED(layer);
+  FETCH_UNUSED(shape);
+
+  return MaximumCharge(layer->string() + NOT_IMPLEMENTED_MESSAGE);
+}
+
+fetch::vm::ChargeAmount VMModel::EstimateLayerAddInput(
+    fetch::vm::Ptr<fetch::vm::String> const &        layer,
+    fetch::vm::Ptr<vm::Array<math::SizeType>> const &shape)
+{
+  FETCH_UNUSED(layer);
+  FETCH_UNUSED(shape);
+
+  return MaximumCharge(layer->string() + NOT_IMPLEMENTED_MESSAGE);
+}
+
+fetch::vm::ChargeAmount VMModel::EstimateLayerAddPool(
+    fetch::vm::Ptr<fetch::vm::String> const &layer, math::SizeType const &kernel_size,
+    math::SizeType const &stride_size)
+{
+  FETCH_UNUSED(layer);
+  FETCH_UNUSED(kernel_size);
+  FETCH_UNUSED(stride_size);
+
+  return MaximumCharge(layer->string() + NOT_IMPLEMENTED_MESSAGE);
+}
+
+fetch::vm::ChargeAmount VMModel::EstimateLayerAddEmbeddings(
+    fetch::vm::Ptr<fetch::vm::String> const &layer, math::SizeType const &dimensions,
+    math::SizeType const &data_points, bool stub)
+{
+  FETCH_UNUSED(layer);
+  FETCH_UNUSED(dimensions);
+  FETCH_UNUSED(data_points);
+  FETCH_UNUSED(stub);
+
+  return MaximumCharge(layer->string() + NOT_IMPLEMENTED_MESSAGE);
 }
 
 }  // namespace model
