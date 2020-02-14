@@ -121,7 +121,7 @@ TYPED_TEST(GraphTest, no_such_node_test)  // Use the class as a Node
   g.template AddNode<fetch::ml::layers::Convolution1D<TensorType>>("Convolution1D", {"Input"}, 3u,
                                                                    3u, 3u, 3u);
 
-  TensorType data(std::vector<SizeType>({5, 10}));
+  TensorType data(std::vector<SizeType>({5, 10, 1}));
   g.SetInput("Input", data);
   g.Compile();
 
