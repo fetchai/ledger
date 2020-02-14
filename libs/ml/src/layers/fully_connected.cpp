@@ -168,6 +168,8 @@ OperationsCount FullyConnected<TensorType>::ChargeCompleteConstruction(bool     
                                                                        SizeType    total_inputs,
                                                                        SizeType    total_outputs)
 {
+  FETCH_UNUSED(init_mode);
+
   OperationsCount op_cnt{0};
 
   if (is_initialised)
@@ -206,8 +208,7 @@ OperationsCount FullyConnected<TensorType>::ChargeCompleteConstruction(bool     
   // Create weights Tensor
   op_cnt += weights_shape_size;
 
-  op_cnt +=
-      fetch::ml::ops::Weights<TensorType>::ChargeInitialise(total_inputs, total_outputs, init_mode);
+  op_cnt += fetch::ml::ops::Weights<TensorType>::ChargeInitialise({total_outputs, total_inputs});
 
   // Set input references for biase, weights
   op_cnt += 2;

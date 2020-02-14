@@ -81,9 +81,7 @@ public:
                          WeightsInitialisation mode = WeightsInitialisation::XAVIER_GLOROT,
                          SizeType              seed = 123456789);
 
-  static OperationsCount ChargeInitialise(uint64_t in_size, uint64_t out_size,
-                                          WeightsInitialisation mode);
-  // static OperationsCount        ChargeInitialise(uint64_t data_size, WeightsInitialisation mode);
+  static OperationsCount ChargeInitialise(std::vector<SizeType> const &shape);
 
   TensorType const &GetWeights() const override;
 

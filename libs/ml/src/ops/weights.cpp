@@ -130,16 +130,11 @@ void Weights<TensorType>::Initialise(TensorType &array, uint64_t in_size, uint64
   }
 }
 
-/**
- * interface to call standard weights initialisation routines. defaults to xavier
- * @param mode  An enum indicating which type of initialisation to perform
- */
 template <typename TensorType>
-OperationsCount Weights<TensorType>::ChargeInitialise(uint64_t in_size, uint64_t out_size,
-                                                      WeightsInitialisation mode)
+OperationsCount Weights<TensorType>::ChargeInitialise(std::vector<SizeType> const &shape)
 {
-  FETCH_UNUSED(mode);
-  return in_size * out_size;
+  // Cost of filling tensor data_ which doesn't exist yet.
+  return TensorType::SizeFromShape(shape);
 }
 
 /**
@@ -187,6 +182,10 @@ TensorType const &Weights<TensorType>::GetWeights() const
   return *this->data_;
 }
 
+/**
+ * @tparam TensorType
+ * @return bool TRUE if weights are initialised - data_ aren't NULL pointer
+ */
 template <typename TensorType>
 bool Weights<TensorType>::IsInit() const
 {
