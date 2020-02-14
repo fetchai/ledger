@@ -23,7 +23,6 @@
 #include "vm/object.hpp"
 #include "vm_modules/math/tensor/tensor.hpp"
 #include "vm_modules/math/type.hpp"
-#include "vm_modules/ml/model/model_estimator.hpp"
 
 namespace fetch {
 
@@ -75,8 +74,6 @@ enum class SupportedLayerType : uint8_t
 
 class VMModel : public fetch::vm::Object
 {
-  friend class fetch::vm_modules::ml::model::ModelEstimator;
-
 public:
   using DataType            = fetch::vm_modules::math::DataType;
   using TensorType          = fetch::math::Tensor<DataType>;
@@ -88,7 +85,6 @@ public:
   using TensorDataloader    = fetch::ml::dataloaders::TensorDataLoader<TensorType>;
   using TensorDataloaderPtr = std::shared_ptr<TensorDataloader>;
   using VMTensor            = fetch::vm_modules::math::VMTensor;
-  using ModelEstimator      = fetch::vm_modules::ml::model::ModelEstimator;
   using SequentialModelPtr  = std::shared_ptr<fetch::ml::model::Sequential<TensorType>>;
 
   VMModel(VMModel const &other) = delete;
@@ -138,8 +134,6 @@ public:
 
   fetch::vm::Ptr<VMModel> DeserializeFromString(
       fetch::vm::Ptr<fetch::vm::String> const &model_string);
-
-  ModelEstimator &Estimator();
 
   void LayerAddDense(fetch::vm::Ptr<fetch::vm::String> const &layer, math::SizeType const &inputs,
                      math::SizeType const &hidden_nodes);
@@ -273,8 +267,7 @@ private:
   ModelPtrType       model_;
   ModelConfigPtrType model_config_;
   ModelCategory      model_category_ = ModelCategory::NONE;
-  ModelEstimator     estimator_;
-  bool               compiled_ = false;
+  bool               compiled_       = false;
 
   // First for input layer shape, second for output layer shape.
   static constexpr std::size_t min_total_layer_shapes = 2;

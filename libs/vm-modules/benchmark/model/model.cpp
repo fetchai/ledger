@@ -20,7 +20,6 @@
 #include "vectorise/fixed_point/fixed_point.hpp"
 #include "vm_modules/math/tensor/tensor.hpp"
 #include "vm_modules/ml/model/model.hpp"
-#include "vm_modules/ml/model/model_estimator.hpp"
 #include "vm_modules/vm_factory.hpp"
 
 #include "benchmark/benchmark.h"
@@ -116,7 +115,7 @@ fetch::vm::Ptr<fetch::vm_modules::ml::model::VMModel> vmSequentialModel(
   // compile model
   auto vm_loss      = vmString(vm, loss);
   auto vm_optimiser = vmString(vm, optimiser);
-  model->Estimator().CompileSequential(vm_loss, vm_optimiser);
+  model->EstimateCompileSequential(vm_loss, vm_optimiser);
   model->CompileSequential(vm_loss, vm_optimiser);
 
   return model;
@@ -179,10 +178,6 @@ void BM_AddLayer(::benchmark::State &state)
       state.counters["charge"] = static_cast<double>(
           model->EstimateLayerAddDense(layer_type, config.input_size, config.output_size));
 
-      state.counters["PaddedSizesSum"] =
-          static_cast<double>(model->Estimator().GetPaddedSizesSum());
-      state.counters["SizesSum"] = static_cast<double>(model->Estimator().GetSizesSum());
-
       state.ResumeTiming();
       model->LayerAddDense(layer_type, config.input_size, config.output_size);
     }
@@ -190,10 +185,6 @@ void BM_AddLayer(::benchmark::State &state)
     {
       state.counters["charge"] = static_cast<double>(model->EstimateLayerAddDenseActivation(
           layer_type, config.input_size, config.output_size, activation_type));
-
-      state.counters["PaddedSizesSum"] =
-          static_cast<double>(model->Estimator().GetPaddedSizesSum());
-      state.counters["SizesSum"] = static_cast<double>(model->Estimator().GetSizesSum());
 
       state.ResumeTiming();
       model->LayerAddDenseActivation(layer_type, config.input_size, config.output_size,
@@ -261,14 +252,8 @@ void BM_AddConvLayer(::benchmark::State &state)
     if (config.activation)
     {
       state.counters["charge"] = static_cast<double>(
-          model->Estimator().LayerAddConv(layer_type, config.output_channels, config.input_channels,
-                                          config.kernel_size, config.stride_size));
-
-      state.counters["PaddedSizesSum"] =
-          static_cast<double>(model->Estimator().GetPaddedSizesSum());
-      state.counters["ForwardCost"] = static_cast<double>(model->Estimator().GetForwardCost());
-      state.counters["OpsCount"]    = static_cast<double>(model->Estimator().GetOpsCount());
-      state.counters["SizesSum"]    = static_cast<double>(model->Estimator().GetSizesSum());
+          model->EstimateLayerAddConv(layer_type, config.output_channels, config.input_channels,
+                                      config.kernel_size, config.stride_size));
 
       state.ResumeTiming();
 
@@ -277,15 +262,9 @@ void BM_AddConvLayer(::benchmark::State &state)
     }
     else
     {
-      state.counters["charge"] = static_cast<double>(model->Estimator().LayerAddConvActivation(
+      state.counters["charge"] = static_cast<double>(model->EstimateLayerAddConvActivation(
           layer_type, config.output_channels, config.input_channels, config.kernel_size,
           config.stride_size, activation_type));
-
-      state.counters["PaddedSizesSum"] =
-          static_cast<double>(model->Estimator().GetPaddedSizesSum());
-      state.counters["ForwardCost"] = static_cast<double>(model->Estimator().GetForwardCost());
-      state.counters["OpsCount"]    = static_cast<double>(model->Estimator().GetOpsCount());
-      state.counters["SizesSum"]    = static_cast<double>(model->Estimator().GetSizesSum());
 
       state.ResumeTiming();
       model->LayerAddConvActivation(layer_type, config.output_channels, config.input_channels,
@@ -367,12 +346,8 @@ void BM_ConvLayer(::benchmark::State &state)
     auto                  input_shape = CreateArray(vm, data_shape);
 
     state.counters["charge"] = static_cast<double>(
-        model->Estimator().LayerAddConv(layer_type, config.output_channels, config.input_channels,
-                                        config.kernel_size, config.stride_size));
-    state.counters["ForwardCost"]    = static_cast<double>(model->Estimator().GetForwardCost());
-    state.counters["OpsCount"]       = static_cast<double>(model->Estimator().GetOpsCount());
-    state.counters["PaddedSizesSum"] = static_cast<double>(model->Estimator().GetPaddedSizesSum());
-    state.counters["SizesSum"]       = static_cast<double>(model->Estimator().GetSizesSum());
+        model->EstimateLayerAddConv(layer_type, config.output_channels, config.input_channels,
+                                    config.kernel_size, config.stride_size));
 
     model->LayerAddInput(input_layer_type, input_shape);
     model->LayerAddConv(layer_type, config.output_channels, config.input_channels,
@@ -453,8 +428,7 @@ void BM_Predict(::benchmark::State &state)
     std::vector<SizeType> data_shape{config.sizes[0], config.batch_size};
     auto                  data    = vmTensor(vm, data_shape);
     state.counters["charge"]      = static_cast<double>(model->EstimatePredict(data));
-    state.counters["ForwardCost"] = static_cast<double>(model->Estimator().GetForwardCost());
-    state.counters["OpsCount"]    = static_cast<double>(model->Estimator().GetOpsCount());
+    state.counters["ForwardCost"] = static_cast<double>(model->ChargeForward());
 
     state.ResumeTiming();
     auto res = model->Predict(data);
@@ -662,10 +636,7 @@ void BM_Compile(::benchmark::State &state)
     auto loss      = vmString(vm, "mse");
     auto optimiser = vmString(vm, "adam");
     state.counters["charge"] =
-        static_cast<double>(model->Estimator().CompileSequential(loss, optimiser));
-
-    state.counters["PaddedSizesSum"] = static_cast<double>(model->Estimator().GetPaddedSizesSum());
-    state.counters["SizesSum"]       = static_cast<double>(model->Estimator().GetSizesSum());
+        static_cast<double>(model->EstimateCompileSequential(loss, optimiser));
 
     state.ResumeTiming();
     model->CompileSequential(loss, optimiser);
@@ -777,8 +748,8 @@ void BM_Fit(::benchmark::State &state)
     state.counters["charge"] =
         static_cast<double>(model->EstimateFit(data, label, config.batch_size));
 
-    state.counters["PaddedSizesSum"] = static_cast<double>(model->Estimator().GetPaddedSizesSum());
-    state.counters["SizesSum"]       = static_cast<double>(model->Estimator().GetSizesSum());
+    state.counters["ChargeForward"]   = static_cast<double>(model->ChargeForward());
+    state.counters["ChargeBackwards"] = static_cast<double>(model->ChargeBackward());
 
     state.ResumeTiming();
     model->Fit(data, label, config.batch_size);
@@ -947,11 +918,7 @@ void BM_Activation(::benchmark::State &state)
     auto                  input_shape = CreateArray(vm, data_shape);
 
     state.counters["charge"] =
-        static_cast<double>(model->Estimator().LayerAddActivation(layer_type, activation_type));
-    state.counters["ForwardCost"]    = static_cast<double>(model->Estimator().GetForwardCost());
-    state.counters["OpsCount"]       = static_cast<double>(model->Estimator().GetOpsCount());
-    state.counters["PaddedSizesSum"] = static_cast<double>(model->Estimator().GetPaddedSizesSum());
-    state.counters["SizesSum"]       = static_cast<double>(model->Estimator().GetSizesSum());
+        static_cast<double>(model->EstimateLayerAddActivation(layer_type, activation_type));
 
     model->LayerAddInput(input_layer_type, input_shape);
     model->LayerAddActivation(layer_type, activation_type);
@@ -1038,11 +1005,7 @@ void BM_AddActivation(::benchmark::State &state)
     auto activation_type = vmString(vm, activation);
 
     state.counters["charge"] =
-        static_cast<double>(model->Estimator().LayerAddActivation(layer_type, activation_type));
-    state.counters["ForwardCost"]    = static_cast<double>(model->Estimator().GetForwardCost());
-    state.counters["OpsCount"]       = static_cast<double>(model->Estimator().GetOpsCount());
-    state.counters["PaddedSizesSum"] = static_cast<double>(model->Estimator().GetPaddedSizesSum());
-    state.counters["SizesSum"]       = static_cast<double>(model->Estimator().GetSizesSum());
+        static_cast<double>(model->EstimateLayerAddActivation(layer_type, activation_type));
 
     state.ResumeTiming();
     model->LayerAddActivation(layer_type, activation_type);
@@ -1095,10 +1058,6 @@ void BM_SerializeToString(::benchmark::State &state)
 
     // serialise to string
     state.counters["charge"] = static_cast<double>(model->EstimateSerializeToString());
-
-    state.counters["OpsCount"]       = static_cast<double>(model->Estimator().GetOpsCount());
-    state.counters["PaddedSizesSum"] = static_cast<double>(model->Estimator().GetPaddedSizesSum());
-    state.counters["SizesSum"]       = static_cast<double>(model->Estimator().GetSizesSum());
 
     state.ResumeTiming();
 

@@ -113,21 +113,18 @@ static constexpr char const *LAYER_TYPE_MESSAGE     = "layer type";
 
 VMModel::VMModel(VM *vm, TypeId type_id)
   : Object(vm, type_id)
-  , estimator_{*this}
 {
   Init("none");
 }
 
 VMModel::VMModel(VM *vm, TypeId type_id, fetch::vm::Ptr<fetch::vm::String> const &model_category)
   : Object(vm, type_id)
-  , estimator_{*this}
 {
   Init(model_category->string());
 }
 
 VMModel::VMModel(VM *vm, TypeId type_id, std::string const &model_category)
   : Object(vm, type_id)
-  , estimator_{*this}
 {
   Init(model_category);
 }
@@ -412,7 +409,6 @@ bool VMModel::SerializeTo(serializers::MsgPackSerializer &buffer)
       buffer << *model_;
     }
 
-    estimator_.SerializeTo(buffer);
     success = true;
   }
 
@@ -477,9 +473,6 @@ bool VMModel::DeserializeFrom(serializers::MsgPackSerializer &buffer)
   }
   }
 
-  // deserialise the estimator
-  estimator_.DeserializeFrom(buffer);
-
   // assign deserialised model category
   VMModel vm_model(this->vm_, this->type_id_, model_category_name);
   vm_model.model_category_ = model_category;
@@ -492,9 +485,6 @@ bool VMModel::DeserializeFrom(serializers::MsgPackSerializer &buffer)
 
   // assign compiled status
   vm_model.compiled_ = compiled;
-
-  // assign estimator
-  vm_model.estimator_ = estimator_;
 
   // point this object pointer at the deserialised model
   *this = vm_model;
@@ -522,11 +512,6 @@ fetch::vm::Ptr<VMModel> VMModel::DeserializeFromString(
   vm_model->SetModel(model_);
 
   return vm_model;
-}
-
-VMModel::ModelEstimator &VMModel::Estimator()
-{
-  return estimator_;
 }
 
 void VMModel::AssertLayerTypeMatches(SupportedLayerType                layer,
