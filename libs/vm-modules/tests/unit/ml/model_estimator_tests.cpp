@@ -548,36 +548,17 @@ TEST_F(VMModelEstimatorTests, estimator_evaluate_with_metrics)
 
           model.LayerAddInput(input_name, input_array);
 
-          model.EstimateLayerAddDenseActivation(vm_ptr_layer_type, data_size_1, label_size_1,
-                                                vm_ptr_activation_type);
           model.LayerAddDenseActivation(vm_ptr_layer_type, data_size_1, label_size_1,
                                         vm_ptr_activation_type);
 
-          // TODO FIX THIS TEST
-          SizeType ops_count = 0;
-          ops_count += 3;  // for dense layer
-          ops_count += 1;  // for relu
-          /*
-          DataType forward_pass_cost =
-              DataType(data_size_1) * VmModelEstimator::FORWARD_DENSE_INPUT_COEF;
-          forward_pass_cost += DataType(label_size_1) * VmModelEstimator::FORWARD_DENSE_OUTPUT_COEF;
-          forward_pass_cost +=
-              DataType(data_size_1 * label_size_1) * VmModelEstimator::FORWARD_DENSE_QUAD_COEF;
-          forward_pass_cost += DataType(label_size_1) * VmModelEstimator::RELU_FORWARD_IMPACT;
-
-          model_estimator.CompileSequentialWithMetrics(vm_ptr_loss_type, vm_ptr_opt_type, metrics);
           model.CompileSequentialWithMetrics(vm_ptr_loss_type, vm_ptr_opt_type, metrics);
 
-          ops_count += 1;  // for loss
-
-          forward_pass_cost += DataType(label_size_1) * VmModelEstimator::MSE_FORWARD_IMPACT;
-*/
           // Calling Fit is needed to set the data
-          model.EstimateFit(vm_ptr_tensor_data, vm_ptr_tensor_labels, batch_size);
           model.Fit(vm_ptr_tensor_data, vm_ptr_tensor_labels, batch_size);
 
           ChargeAmount const cost = model.ChargeForward();
           ChargeAmount const val  = n_data * cost;
+
           EXPECT_EQ(model.EstimateEvaluate(), static_cast<ChargeAmount>(val));
         }
       }
