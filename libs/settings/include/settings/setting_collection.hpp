@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "settings/detail/environment_wrapper.hpp"
+#include "settings/help.hpp"
 
 #include <vector>
 
@@ -53,6 +54,7 @@ private:
   void DisplayHelp() const;
 
   Settings settings_;
+  Help     help_{*this};
 };
 
 }  // namespace settings
