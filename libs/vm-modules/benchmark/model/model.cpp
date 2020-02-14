@@ -1149,8 +1149,7 @@ void BM_AddLoss(::benchmark::State &state)
   // Get config
   BM_AddLoss_config config{state};
 
-  std::vector<std::string> const losses_{"cross_entropy_loss", "mean_square_error_loss",
-                                         "softmax_cross_entropy_loss"};
+  std::vector<std::string> const losses_{"mse", "cel", "scel"};
 
   for (auto _ : state)
   {

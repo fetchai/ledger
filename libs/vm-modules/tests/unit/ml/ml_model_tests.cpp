@@ -461,6 +461,13 @@ TEST_F(VMModelTests, model_add_activation)
   TestValidLayerAdding(R"(model.add("activation", "log_softmax");)", IGNORE_CHARGE_ESTIMATION);
 }
 
+TEST_F(VMModelTests, model_add_loss)
+{
+  TestValidLayerAdding(R"(model.add("loss", "mse");)", IGNORE_CHARGE_ESTIMATION);
+  TestValidLayerAdding(R"(model.add("loss", "cel");)", IGNORE_CHARGE_ESTIMATION);
+  TestValidLayerAdding(R"(model.add("loss", "scel");)", IGNORE_CHARGE_ESTIMATION);
+}
+
 TEST_F(VMModelTests, model_add_input)
 {
   TestValidLayerAdding(R"(
