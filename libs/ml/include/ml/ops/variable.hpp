@@ -81,6 +81,8 @@ public:
 
   void ResetGradients() override;
 
+  void Compile() override;
+
   static constexpr OpType OpCode()
   {
     return OpType::OP_VARIABLE;

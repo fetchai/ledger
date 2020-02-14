@@ -190,6 +190,12 @@ std::vector<math::SizeType> Slice<TensorType>::ComputeOutputShape(VecTensorType 
 }
 
 template <typename TensorType>
+void Slice<TensorType>::Compile()
+{
+  ret_error_signal_ = TensorType();
+}
+
+template <typename TensorType>
 OperationsCount Slice<TensorType>::ChargeForward() const
 {
   assert(!this->batch_input_shapes_.empty());

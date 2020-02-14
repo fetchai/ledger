@@ -156,14 +156,14 @@ public:
   /// Should be called after shape linking in Graph to complete all initialisations, that depends
   /// on layer shapes (like trainable parameter tensors init. and so on)
   virtual void CompleteShapeDeduction()
-  {
-    // Empty defualt implementation for Ops without shape
-  }
+  {}
 
+  /*
+   * Compile is called to initialise tensors. Many ops have no tensors to initialise, this is the
+   * default behaviour
+   */
   virtual void Compile()
-  {
-    // empty default implementation for ops with no tensors to initialise
-  }
+  {}
 
   /**
    * @brief ChargeForward

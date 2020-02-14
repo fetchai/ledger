@@ -169,10 +169,10 @@ void FullyConnected<TensorType>::Compile()
                                                   init_mode_);
   TensorType bias_data = TensorType(this->batch_output_shape_);
 
+  Graph<TensorType>::Compile();
+
   this->SetInput(weights_name_, weights_data);
   this->SetInput(bias_name_, bias_data);
-
-  Graph<TensorType>::Compile();
 }
 
 template <typename TensorType>

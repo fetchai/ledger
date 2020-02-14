@@ -79,8 +79,8 @@ TYPED_TEST(GraphTest, node_placeholder)
   TensorType data = TensorType::FromString(R"(1, 2, 3, 4, 5, 6, 7, 8)");
   TensorType gt   = TensorType::FromString(R"(1, 2, 3, 4, 5, 6, 7, 8)");
 
-  g.SetInput("Input", data);
   g.Compile();
+  g.SetInput("Input", data);
 
   TensorType prediction = g.Evaluate("Input");
 
@@ -101,8 +101,8 @@ TYPED_TEST(GraphTest, node_relu)
   TensorType gt =
       TensorType::FromString(R"(0, 0, 2, 0, 4, 0, 6, 0, 8, 0, 10, 0, 12, 0, 14, 0, 16)");
 
-  g.SetInput("Input", data);
   g.Compile();
+  g.SetInput("Input", data);
 
   TensorType prediction = g.Evaluate("Relu");
 
@@ -122,8 +122,8 @@ TYPED_TEST(GraphTest, no_such_node_test)  // Use the class as a Node
                                                                    3u, 3u, 3u);
 
   TensorType data(std::vector<SizeType>({5, 10, 1}));
-  g.SetInput("Input", data);
   g.Compile();
+  g.SetInput("Input", data);
 
   ASSERT_ANY_THROW(g.Evaluate("FullyConnected"));
 }
@@ -141,8 +141,8 @@ TYPED_TEST(GraphTest, node_add_wrong_order_test)
   g.template AddNode<fetch::ml::layers::FullyConnected<TensorType>>("FC3", {"FC2"}, 3u, 3u);
 
   TensorType data(std::vector<SizeType>({3, 10}));
-  g.SetInput("Input", data);
   g.Compile();
+  g.SetInput("Input", data);
 
   auto result = g.Evaluate("FC3");
 
@@ -154,8 +154,8 @@ TYPED_TEST(GraphTest, node_add_wrong_order_test)
   g2.template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Input", {});
 
   TensorType data2(std::vector<SizeType>({3, 10}));
-  g2.SetInput("Input", data);
   g2.Compile();
+  g2.SetInput("Input", data);
 
   auto result2 = g2.Evaluate("FC3");
 
@@ -540,10 +540,9 @@ TYPED_TEST(GraphTest,
       g.template AddNode<fetch::ml::ops::Subtract<TensorType>>(name + "_Op3", {op2_name, op1_name});
 
   // Evaluate
-
+  g.Compile();
   g.SetInput(input_name1, data1);
   g.SetInput(input_name2, data2);
-  g.Compile();
 
   TypeParam output = g.Evaluate("Diamond_Op3");
 
@@ -597,9 +596,9 @@ TYPED_TEST(GraphTest, diamond_graph_backward)  // output=(input1*input2)-(input1
       g.template AddNode<fetch::ml::ops::Subtract<TensorType>>(name + "_Op3", {op2_name, op1_name});
 
   // Forward
+  g.Compile();
   g.SetInput(input_name1, data1);
   g.SetInput(input_name2, data2);
-  g.Compile();
 
   TypeParam output = g.Evaluate(output_name);
 
@@ -675,8 +674,8 @@ TYPED_TEST(GraphTest, compute_shapes_single_placeholder)
 
   std::string input = g.template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("Input", {});
 
-  g.SetInput(input, data);
   g.Compile();
+  g.SetInput(input, data);
 
   math::SizeVector const out_shape = g.GetNode(input)->BatchOutputShape();
 
@@ -706,8 +705,8 @@ TYPED_TEST(GraphTest, compute_shapes_dense_layers)
   std::string output  = g.template AddNode<Dense>("FC3", {"FC2"}, Dense::AUTODETECT_INPUTS_COUNT,
                                                  THIRD_LAYER_OUTPUTS);
 
-  g.SetInput(input, data);
   g.Compile();
+  g.SetInput(input, data);
 
   math::SizeVector const out_shape1 = g.GetNode(layer_1)->BatchOutputShape();
   EXPECT_EQ(out_shape1.size(), batch_shape.size());
@@ -765,8 +764,8 @@ TYPED_TEST(GraphTest, compute_shapes_two_outputs)
   std::string right_output = g.template AddNode<Dense>(
       "RightOutput", {"Center"}, Dense::AUTODETECT_INPUTS_COUNT, RIGHT_OUTPUTS);
 
-  g.SetInput(left_input, data);
   g.Compile();
+  g.SetInput(left_input, data);
 
   math::SizeVector const center_out_batch_shape = g.GetNode(center)->BatchOutputShape();
   EXPECT_EQ(center_out_batch_shape.at(0), CENTER_OUTPUTS);
@@ -837,9 +836,9 @@ TYPED_TEST(GraphTest, compute_shapes_two_inputs_two_outputs)
   std::string right_output = g.template AddNode<Dense>(
       "RightOutput", {"Center"}, Dense::AUTODETECT_INPUTS_COUNT, RIGHT_OUTPUTS);
 
+  g.Compile();
   g.SetInput(left_input, left_data);
   g.SetInput(right_input, left_data);
-  g.Compile();
 
   math::SizeVector const center_out_batch_shape = g.GetNode(center)->BatchOutputShape();
   EXPECT_EQ(center_out_batch_shape.at(0), CENTER_OUTPUTS);
@@ -894,8 +893,8 @@ TYPED_TEST(GraphTest, compute_shapes_sequential_denses_with_shared_ops)
   std::string const dense_2 = g.template AddNode<Dense>("SharedDense", {dense_1});
   std::string const output  = g.template AddNode<Dense>("SharedDense", {dense_2});
 
-  g.SetInput(input, data);
   g.Compile();
+  g.SetInput(input, data);
 
   TensorType const result = g.Evaluate(output);
 
@@ -947,8 +946,8 @@ TYPED_TEST(GraphTest, compute_shapes_two_diamonds_with_shared_ops)
   std::string output = g.template AddNode<fetch::ml::ops::Multiply<TensorType>>(
       "Multiply2", {dense_bottom_left, dense_bottom_right});
 
-  g.SetInput(input, data);
   g.Compile();
+  g.SetInput(input, data);
 
   TensorType const result = g.Evaluate(output);
 
@@ -1245,8 +1244,8 @@ TYPED_TEST(GraphTest, graph_charge_forward_input_only)
 
   std::string input = g.template AddNode<PlaceHolder<TensorType>>("Input", {});
 
-  g.SetInput(input, data);
   g.Compile();
+  g.SetInput(input, data);
 
   OperationsCount const charge          = g.ChargeForward(input);
   OperationsCount const expected_charge = 0;  // Placeholder reading is "free" in charge amount.
@@ -1268,9 +1267,10 @@ TYPED_TEST(GraphTest, graph_charge_forward_subtraction)
   std::string right_input = g.template AddNode<PlaceHolder<TensorType>>("RightInput", {});
   std::string subtract =
       g.template AddNode<Subtract<TensorType>>("Subtract", {left_input, right_input});
+  g.Compile();
+
   g.SetInput(left_input, data);
   g.SetInput(right_input, data);
-  g.Compile();
 
   OperationsCount const charge       = g.ChargeForward(subtract);
   OperationsCount const batch_charge = charge * data.shape().back();
@@ -1308,10 +1308,10 @@ TYPED_TEST(GraphTest, graph_charge_forward_matmul)
   std::string input   = g.template AddNode<PlaceHolder<TensorType>>("Input", {});
   std::string matmul =
       g.template AddNode<MatrixMultiply<TensorType>>("MatMul", {"Weights", "Input"});
+  g.Compile();
 
   g.SetInput(weights, weights_data);
   g.SetInput(input, input_data);
-  g.Compile();
 
   math::SizeVector const out_shape = g.GetNode(matmul)->BatchOutputShape();
   ASSERT_EQ(out_shape.size(), 2);
@@ -1352,9 +1352,9 @@ TYPED_TEST(GraphTest, graph_charge_forward_conv2d)
   std::string input  = g.template AddNode<PlaceHolder<TensorType>>("Input", {});
   std::string conv2d = g.template AddNode<Convolution2D<TensorType>>(
       "Conv2d", {"Input"}, outputs, num_channels, kernel_size, stride_size);
+  g.Compile();
 
   g.SetInput(input, input_data);
-  g.Compile();
 
   math::SizeVector const out_shape = g.GetNode(conv2d)->BatchOutputShape();
   ASSERT_EQ(out_shape.size(), shape.size());
@@ -1401,9 +1401,9 @@ TYPED_TEST(GraphTest, graph_charge_forward_diamond)
         g.template AddNode<Add<TensorType>>("Add" + std::to_string(i), {prev_node, prev_node});
   }
   std::string const output = prev_node;
+  g.Compile();
 
   g.SetInput(input, data);
-  g.Compile();
 
   static const std::size_t expected_calls_to_add = (2 * (N - 1) + 1);
   OperationsCount const    charge                = g.ChargeForward(output);
@@ -1429,9 +1429,9 @@ TYPED_TEST(GraphTest, graph_charge_backward_dropout)
   std::string const input = g.template AddNode<PlaceHolder<TensorType>>("Input", {});
   std::string const output =
       g.template AddNode<Dropout<TensorType>>("Dropout", {input}, DataType{1});
+  g.Compile();
 
   g.SetInput(input, data);
-  g.Compile();
 
   OperationsCount const charge = g.ChargeBackward(output);
   // Dropout backward operation is multiplication.
@@ -1475,9 +1475,9 @@ TYPED_TEST(GraphTest, graph_charge_backward_diamond)
                                                         {prev_node, prev_node}, DataType{1});
   }
   std::string const output = prev_node;
+  g.Compile();
 
   g.SetInput(input, data);
-  g.Compile();
 
   static const std::size_t expected_calls_to_dropout = (2 * (N - 1) + 1);
   OperationsCount const    charge                    = g.ChargeBackward(output);
@@ -1518,9 +1518,9 @@ TYPED_TEST(GraphTest, DISABLED_graph_charge_backward_conv_dense)
       "Conv2d", {"Input"}, outputs, num_channels, kernel_size, stride_size);
   std::string dense =
       g.template AddNode<Dense>("FC1", {"Input"}, Dense::AUTODETECT_INPUTS_COUNT, 1);
+  g.Compile();
 
   g.SetInput(input, data);
-  g.Compile();
 
   OperationsCount const charge          = g.ChargeBackward(dense);
   OperationsCount const expected_charge = 98305;  // Pre-calculated backward charge for give shape.
