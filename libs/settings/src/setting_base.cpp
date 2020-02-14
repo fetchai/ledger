@@ -56,5 +56,10 @@ std::ostream &operator<<(std::ostream &stream, SettingBase const &setting)
   return stream;
 }
 
+bool SettingBase::TerminateNow() const noexcept
+{
+  return false;
+}
+
 }  // namespace settings
 }  // namespace fetch

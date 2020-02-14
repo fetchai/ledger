@@ -49,6 +49,8 @@ public:
   SettingBase &operator=(SettingBase const &) = delete;
   SettingBase &operator=(SettingBase &&) = delete;
 
+  virtual bool TerminateNow() const noexcept;
+
 protected:
   SettingBase(SettingCollection &reg, std::string &&name, std::string &&description);
 

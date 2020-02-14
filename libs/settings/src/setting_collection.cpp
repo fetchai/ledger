@@ -93,7 +93,7 @@ void SettingCollection::Add(SettingBase &setting)
  * @param argc
  * @param argv
  */
-void SettingCollection::UpdateFromArgs(int argc, char **argv)
+bool SettingCollection::UpdateFromArgs(int argc, char **argv)
 {
   ParamsParser parser;
   parser.Parse(argc, argv);
@@ -109,6 +109,11 @@ void SettingCollection::UpdateFromArgs(int argc, char **argv)
       // update the setting
       std::istringstream iss{cmd_value};
       iss >> *setting;
+      if (setting->TerminateNow())
+      {
+        DisplayHelp();
+        return false;
+      }
       settings_changed.insert(setting->name());
     }
   }
@@ -125,18 +130,25 @@ void SettingCollection::UpdateFromArgs(int argc, char **argv)
         FETCH_LOG_ERROR(LOGGING_NAME, "Unrecognised parameter: -", parameter_name);
       }
     }
-
-    std::ostringstream oss;
-    oss << "\nValid parameters:";
-
-    for (auto const &setting : settings_)
-    {
-      oss << "\n-" << setting->name() << std::setw(int(30 - setting->name().size())) << " \""
-          << setting->description() << "\"";
-    }
-
-    FETCH_LOG_INFO(LOGGING_NAME, oss.str());
+    DisplayHelp();
+    return false;
   }
+
+  return true;
+}
+
+void SettingCollection::DisplayHelp() const
+{
+  std::ostringstream oss;
+  oss << "\nKnown options:";
+
+  for (auto const &setting : settings_)
+  {
+    oss << "\n-" << setting->name() << std::setw(int(30 - setting->name().size())) << " \""
+        << setting->description() << "\"";
+  }
+
+  FETCH_LOG_INFO(LOGGING_NAME, oss.str());
 }
 
 void SettingCollection::UpdateFromEnv(char const *prefix, detail::EnvironmentInterface const &env)

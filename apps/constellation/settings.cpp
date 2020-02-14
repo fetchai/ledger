@@ -50,40 +50,40 @@ const uint32_t NUM_SYSTEM_THREADS = static_cast<uint32_t>(std::thread::hardware_
  * Construct the settings object
  */
 Settings::Settings()
-  : num_lanes             {*this, "lanes",                   DEFAULT_NUM_LANES,            "The number of lanes to be used"}
-  , num_slices            {*this, "slices",                  DEFAULT_NUM_SLICES,           "The number of slices to be used"}
-  , block_interval        {*this, "block-interval",          DEFAULT_BLOCK_INTERVAL,       "The block interval is milliseconds"}
-  , standalone            {*this, "standalone",              false,                        "Signal the network should run in standalone mode"}
-  , private_network       {*this, "private-network",         false,                        "Signal the network should run as part of a private network"}
+  : num_lanes             {*this, "lanes",                   DEFAULT_NUM_LANES,            "Number of lanes to be used"}
+  , num_slices            {*this, "slices",                  DEFAULT_NUM_SLICES,           "Number of slices to be used"}
+  , block_interval        {*this, "block-interval",          DEFAULT_BLOCK_INTERVAL,       "Block interval is milliseconds"}
+  , standalone            {*this, "standalone",              false,                        "Whether the network should run in standalone mode"}
+  , private_network       {*this, "private-network",         false,                        "Whether the network should run as part of a private network"}
   , initial_address       {*this, "initial-address",         "",                           "The initial address where all funds can be found for a standalone node"}
-  , db_prefix             {*this, "db-prefix",               "node_storage",               "The prefix for filenames related to constellation databases"}
-  , port                  {*this, "port",                    DEFAULT_PORT,                 "The starting port for ledger services"}
-  , peers                 {*this, "peers",                   {},                           "The comma separated list of addresses to initially connect to"}
+  , db_prefix             {*this, "db-prefix",               "node_storage",               "Filename prefix for constellation databases"}
+  , port                  {*this, "port",                    DEFAULT_PORT,                 "Starting port for ledger services"}
+  , peers                 {*this, "peers",                   {},                           "Comma-separated list of addresses to initially connect to"}
   , external              {*this, "external",                "127.0.0.1",                  "This node's global IP address or hostname"}
-  , config                {*this, "config",                  "",                           "The path to the manifest configuration"}
-  , max_peers             {*this, "max-peers",               DEFAULT_MAX_PEERS,            "The max number of peers to connect to"}
-  , transient_peers       {*this, "transient-peers",         DEFAULT_TRANSIENT_PEERS,      "The number of the peers which will be random in answer sent to peer requests"}
-  , peer_update_interval  {*this, "peers-update-cycle-ms",   0,                            "How fast to do peering updates"}
-  , disable_signing       {*this, "disable-signing",         false,                        "Disable the signing of all network messages"}
-  , kademlia_routing      {*this, "kademlia-routing",        true,                         "Controls if kademalia routing is used in the main P2P network"}
-  , bootstrap             {*this, "bootstrap",               false,                        "Signal that we should connect to the bootstrap server"}
-  , discoverable          {*this, "discoverable",            false,                        "Signal that this node can be advertised on the bootstrap server"}
-  , hostname              {*this, "host-name",               "",                           "The hostname or identifier for this node"}
-  , network_name          {*this, "network",                 "",                           "The name of the bootstrap network to connect to"}
-  , token                 {*this, "token",                   "",                           "The authentication token when talking to bootstrap"}
-  , num_processor_threads {*this, "processor-threads",       NUM_SYSTEM_THREADS,           "The number of processor threads"}
-  , num_verifier_threads  {*this, "verifier-threads",        NUM_SYSTEM_THREADS,           "The number of verifier threads"}
-  , num_executors         {*this, "executors",               DEFAULT_NUM_EXECUTORS,        "The number of transaction executors"}
+  , config                {*this, "config",                  "",                           "Path to the manifest configuration"}
+  , max_peers             {*this, "max-peers",               DEFAULT_MAX_PEERS,            "Max number of peers to connect to"}
+  , transient_peers       {*this, "transient-peers",         DEFAULT_TRANSIENT_PEERS,      "Number of peers to randomly choose from for answers sent to peer requests"}
+  , peer_update_interval  {*this, "peers-update-cycle-ms",   0,                            "Peering updates delay"}
+  , disable_signing       {*this, "disable-signing",         false,                        "Disable signing all network messages"}
+  , kademlia_routing      {*this, "kademlia-routing",        true,                         "Whether kademlia routing should be used in the main P2P network"}
+  , bootstrap             {*this, "bootstrap",               false,                        "Whether we should connect to the bootstrap server"}
+  , discoverable          {*this, "discoverable",            false,                        "Whether this node can be advertised on the bootstrap server"}
+  , hostname              {*this, "host-name",               "",                           "Hostname or identifier for this node"}
+  , network_name          {*this, "network",                 "",                           "Name of the bootstrap network to connect to"}
+  , token                 {*this, "token",                   "",                           "Authentication token when talking to bootstrap"}
+  , num_processor_threads {*this, "processor-threads",       NUM_SYSTEM_THREADS,           "Number of processor threads"}
+  , num_verifier_threads  {*this, "verifier-threads",        NUM_SYSTEM_THREADS,           "Number of verifier threads"}
+  , num_executors         {*this, "executors",               DEFAULT_NUM_EXECUTORS,        "Number of transaction executors"}
   , genesis_file_location {*this, "genesis-file-location",   "",                           "Path to the genesis file (usually genesis_file.json)"}
-  , experimental_features {*this, "experimental",            {},                           "The comma separated set of experimental features to enable"}
-  , proof_of_stake        {*this, "pos",                     false,                        "Enable Proof of Stake consensus"}
-  , max_cabinet_size      {*this, "max-cabinet-size",        DEFAULT_CABINET_SIZE,         "The maximum cabinet size"}
-  , stake_delay_period    {*this, "stake-delay-period",      DEFAULT_STAKE_DELAY_PERIOD,   ""}
-  , aeon_period           {*this, "aeon-period",             DEFAULT_AEON_PERIOD,          "The number of blocks one cabinet is governing"}
-  , graceful_failure      {*this, "graceful-failure",        false,                        "Whether or not to shutdown on critical system failures"}
-  , fault_tolerant        {*this, "fault-tolerant",          false,                        "Whether or not to allow critical system failures to cause a crash"}
+  , experimental_features {*this, "experimental",            {},                           "Comma-separated list of experimental features to enable"}
+  , proof_of_stake        {*this, "pos",                     false,                        "Enable Proof-of-Stake consensus"}
+  , max_cabinet_size      {*this, "max-cabinet-size",        DEFAULT_CABINET_SIZE,         "Maximum cabinet size"}
+  , stake_delay_period    {*this, "stake-delay-period",      DEFAULT_STAKE_DELAY_PERIOD,   "<deprecated>"}
+  , aeon_period           {*this, "aeon-period",             DEFAULT_AEON_PERIOD,          "Number of blocks each cabinet is governing"}
+  , graceful_failure      {*this, "graceful-failure",        false,                        "Whether to shutdown on critical system failures"}
+  , fault_tolerant        {*this, "fault-tolerant",          false,                        "Whether to crash on critical system failures"}
   , enable_agents         {*this, "enable-agents",           false,                        "Run the node with agent support"}
-  , messenger_port        {*this, "messenger-port",          DEFAULT_MESSENGER_PORT,       "Port that agents connect to"}
+  , messenger_port        {*this, "messenger-port",          DEFAULT_MESSENGER_PORT,       "Port agents connect to"}
 {}
 // clang-format on
 
@@ -97,8 +97,7 @@ Settings::Settings()
 bool Settings::Update(int argc, char **argv)
 {
   UpdateFromEnv("CONSTELLATION_");
-  UpdateFromArgs(argc, argv);
-  return Validate();
+  return UpdateFromArgs(argc, argv) && Validate();
 }
 
 /**
