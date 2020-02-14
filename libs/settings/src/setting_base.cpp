@@ -56,7 +56,7 @@ std::ostream &operator<<(std::ostream &stream, SettingBase const &setting)
   return stream;
 }
 
-bool SettingBase::TerminateNow() const noexcept
+bool SettingBase::TerminateNow() const
 {
   return false;
 }

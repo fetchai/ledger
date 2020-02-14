@@ -40,7 +40,7 @@ void Help::FromStream(std::istream & /*stream*/)
 void Help::ToStream(std::ostream & /*stream*/) const
 {}
 
-bool Help::TerminateNow() const noexcept
+bool Help::TerminateNow() const
 {
   reg_.DisplayHelp();
   return true;
