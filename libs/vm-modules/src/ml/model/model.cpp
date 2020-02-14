@@ -928,7 +928,7 @@ void VMModel::PrepareDataloader()
 
 ChargeAmount VMModel::MaximumCharge(std::string const &log_msg)
 {
-  FETCH_LOG_ERROR("Model", "operation charge is vm::MAXIMUM_CHARGE : " + log_msg);
+  FETCH_LOG_ERROR(LOGGING_NAME, "operation charge is vm::MAXIMUM_CHARGE : " + log_msg);
   return vm::MAXIMUM_CHARGE;
 }
 
@@ -942,8 +942,9 @@ ChargeAmount VMModel::EstimatePredict(const vm::Ptr<math::VMTensor> &data)
   ChargeAmount const cost       = model_->ChargeForward();
   SizeType const     batch_size = data->shape().back();
   ChargeAmount const batch_cost = batch_size * cost;
-  FETCH_LOG_INFO("Model", " forward pass estimated batch cost is " + std::to_string(batch_size) +
-                              " * " + std::to_string(cost) + " = " + std::to_string(batch_cost));
+  FETCH_LOG_INFO(LOGGING_NAME, " forward pass estimated batch cost is " +
+                                   std::to_string(batch_size) + " * " + std::to_string(cost) +
+                                   " = " + std::to_string(batch_cost));
   return batch_cost;
 }
 
@@ -967,8 +968,9 @@ ChargeAmount VMModel::EstimateEvaluate()
   model_->dataloader_ptr_->SetMode(fetch::ml::dataloaders::DataLoaderMode::TRAIN);
   SizeType const     batch_size = model_->dataloader_ptr_->Size();
   ChargeAmount const batch_cost = batch_size * cost;
-  FETCH_LOG_INFO("Model", " forward pass estimated batch cost is " + std::to_string(batch_size) +
-                              " * " + std::to_string(cost) + " = " + std::to_string(batch_cost));
+  FETCH_LOG_INFO(LOGGING_NAME, " forward pass estimated batch cost is " +
+                                   std::to_string(batch_size) + " * " + std::to_string(cost) +
+                                   " = " + std::to_string(batch_cost));
   return batch_cost;
 }
 
