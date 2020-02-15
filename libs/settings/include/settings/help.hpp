@@ -33,7 +33,7 @@ class Help : public SettingBase
 {
 public:
   // Construction / Destruction
-  Help(SettingCollection &reg);
+  explicit Help(SettingCollection &reg);
 
   Help(Help const &) = delete;
   Help(Help &&)      = delete;
