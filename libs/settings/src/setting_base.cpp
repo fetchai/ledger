@@ -61,5 +61,10 @@ bool SettingBase::TerminateNow() const
   return false;
 }
 
+std::string SettingBase::envname() const
+{
+  return name();
+}
+
 }  // namespace settings
 }  // namespace fetch

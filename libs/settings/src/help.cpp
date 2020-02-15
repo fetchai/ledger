@@ -46,5 +46,10 @@ bool Help::TerminateNow() const
   return true;
 }
 
+std::string Help::envname() const
+{
+  return {};
+}
+
 }  // namespace settings
 }  // namespace fetch

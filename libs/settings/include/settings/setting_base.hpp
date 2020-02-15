@@ -35,8 +35,9 @@ public:
 
   /// @name Accessors
   /// @{
-  std::string const &name() const;
-  std::string const &description() const;
+  std::string const & name() const;
+  std::string const & description() const;
+  virtual std::string envname() const;
   /// @}
 
   /// @name Stream operations

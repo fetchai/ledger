@@ -45,7 +45,8 @@ public:
   void FromStream(std::istream &stream) override;
   void ToStream(std::ostream &stream) const override;
 
-  bool TerminateNow() const override;
+  bool        TerminateNow() const override;
+  std::string envname() const override;
 
 private:
   SettingCollection &reg_;

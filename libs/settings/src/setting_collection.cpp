@@ -40,10 +40,8 @@ namespace {
  * @param name The command line argument name
  * @return The environment variable name
  */
-std::string GetEnvironmentVariableName(char const *prefix, std::string const &name)
+std::string GetEnvironmentVariableName(char const *prefix, std::string env_name)
 {
-  std::string env_name{name};
-
   std::transform(env_name.begin(), env_name.end(), env_name.begin(), [](char c) {
     if (std::isalnum(c) != 0)
     {
@@ -56,7 +54,7 @@ std::string GetEnvironmentVariableName(char const *prefix, std::string const &na
     return c;
   });
 
-  return prefix + env_name;
+  return prefix + std::move(env_name);
 }
 
 /**
@@ -64,11 +62,11 @@ std::string GetEnvironmentVariableName(char const *prefix, std::string const &na
  * @param name
  * @return
  */
-char const *GetEnvironmentVariable(char const *prefix, std::string const &name,
+char const *GetEnvironmentVariable(char const *prefix, std::string name,
                                    detail::EnvironmentInterface const &env)
 {
   // determine the environment variable name
-  std::string env_name = GetEnvironmentVariableName(prefix, name);
+  std::string env_name = GetEnvironmentVariableName(prefix, std::move(name));
 
   return env.GetEnvironmentVariable(env_name.c_str());
 }
@@ -156,7 +154,13 @@ void SettingCollection::UpdateFromEnv(char const *prefix, detail::EnvironmentInt
   {
     assert(setting);
 
-    auto const *env_value = GetEnvironmentVariable(prefix, setting->name(), env);
+    std::string envname{setting->envname()};
+    if (envname.empty())
+    {
+      continue;
+    }
+
+    auto const *env_value = GetEnvironmentVariable(prefix, std::move(envname), env);
     if (env_value != nullptr)
     {
       std::istringstream iss{env_value};
