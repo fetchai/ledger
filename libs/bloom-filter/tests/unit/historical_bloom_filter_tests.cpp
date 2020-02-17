@@ -77,20 +77,20 @@ TEST_F(HistoricalBloomFilterTests, CheckFalseMatch)
 
 TEST_F(HistoricalBloomFilterTests, CheckBasicCacheTrimming)
 {
-  bloom_.Add("A", 1);
-  bloom_.Add("B", 20);
+  ASSERT_TRUE(bloom_.Add("A", 1));
+  ASSERT_TRUE(bloom_.Add("B", 20));
 
   ASSERT_EQ(1, bloom_.TrimCache());
 }
 
 TEST_F(HistoricalBloomFilterTests, CheckUpdatesToFlushedPage)
 {
-  bloom_.Add("A", 1);
-  bloom_.Add("B", 20);
+  ASSERT_TRUE(bloom_.Add("A", 1));
+  ASSERT_TRUE(bloom_.Add("B", 20));
 
   ASSERT_EQ(1, bloom_.TrimCache());
 
-  bloom_.Add("C", 2);  // <- update to flushed page
+  ASSERT_TRUE(bloom_.Add("C", 2));  // <- update to flushed page
 
   ASSERT_TRUE(bloom_.Match("A", 1, 20));
   ASSERT_TRUE(bloom_.Match("B", 1, 20));
@@ -99,12 +99,12 @@ TEST_F(HistoricalBloomFilterTests, CheckUpdatesToFlushedPage)
 
 TEST_F(HistoricalBloomFilterTests, CheckUpdatesToFlushedPageCanBeStoredAgain)
 {
-  bloom_.Add("A", 1);
-  bloom_.Add("B", 20);
+  ASSERT_TRUE(bloom_.Add("A", 1));
+  ASSERT_TRUE(bloom_.Add("B", 20));
 
   ASSERT_EQ(1, bloom_.TrimCache());
 
-  bloom_.Add("C", 2);
+  ASSERT_TRUE(bloom_.Add("C", 2));
 
   ASSERT_EQ(1, bloom_.TrimCache());  // <- dropped from memory here
 

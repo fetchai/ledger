@@ -99,24 +99,8 @@ static_assert(meta::IsPOD<BloomFilterMetadata>, "Metadata must be POD");
 
 constexpr char const *LOGGING_NAME = "HBloomFilter";
 
-/**
- * Convert a bucket into a resource ID for the storage engine
- *
- * @param bucket The input bucket to convert
- * @return The generated storage I
- * @return The generated storage ID
- */
-storage::ResourceID ToStorageKey(uint64_t bucket)
-{
-  byte_array::ByteArray key{};
-  key.Resize(32);
-  assert(key.size() == 32);
-
-  // write the bucket as the value into the key
-  *reinterpret_cast<uint64_t *>(key.pointer()) = bucket;
-
-  return storage::ResourceID{key};
-}
+constexpr std::size_t BLOOM_FILTER_SIZE = 160 * 8 * 1024 * 1024;
+constexpr uint64_t STORAGE_SECTOR_SIZE  = BLOOM_FILTER_SIZE + (BLOOM_FILTER_SIZE >> 3);  // 112.5 %
 
 /**
  * Generate a order array of the keys of the input map
@@ -150,19 +134,17 @@ std::vector<uint64_t> GetOrderedKeys(std::unordered_map<uint64_t, T> const &valu
  *
  * @param mode The configured database mode for the bloom filter
  * @param store_path The path to the main database file
- * @param index_path The path to the index database file
  * @param metadata_path The path to the metadata file
  * @param window_size The size of the window
  * @param max_num_cached_buckets The maximum number of cached buckets
  */
 HistoricalBloomFilter::HistoricalBloomFilter(Mode mode, char const *store_path,
-                                             char const *index_path, char const *metadata_path,
-                                             uint64_t    window_size,
+                                             char const *metadata_path, uint64_t window_size,
                                              std::size_t max_num_cached_buckets)
   : store_filename_{store_path}
-  , index_filename_{index_path}
   , window_size_{window_size}
   , max_num_cached_buckets_{max_num_cached_buckets}
+  , store_{STORAGE_SECTOR_SIZE}
 {
   metadata_.Load(metadata_path);
 
@@ -174,7 +156,10 @@ HistoricalBloomFilter::HistoricalBloomFilter(Mode mode, char const *store_path,
   switch (mode)
   {
   case Mode::NEW_DATABASE:
-    store_.New(store_filename_, index_filename_, true);
+    if (!store_.New(store_filename_))
+    {
+      throw std::runtime_error("Unable to create database file");
+    }
 
     // Overwrite metadata in the file
     try
@@ -188,7 +173,10 @@ HistoricalBloomFilter::HistoricalBloomFilter(Mode mode, char const *store_path,
 
     break;
   case Mode::LOAD_DATABASE:
-    store_.Load(store_filename_, index_filename_, true);
+    if (!store_.Load(store_filename_))
+    {
+      throw std::runtime_error("Unable to load or create existing database file");
+    }
 
     // Check metadata can be retrieved and is correct
     try
@@ -303,7 +291,13 @@ std::size_t HistoricalBloomFilter::TrimCache()
       // flush the page if dirty
       if (it->second.dirty)
       {
-        SaveBucketToStore(it->first, it->second);
+        if (!SaveBucketToStore(it->first, it->second))
+        {
+          // can't flush the page to disk, for saftey keep the page in memory
+          FETCH_LOG_ERROR(LOGGING_NAME, "Unable to flush bucket: ", it->first, " to disk");
+          continue;
+        }
+
         ++pages_updated;
       }
 
@@ -318,7 +312,7 @@ std::size_t HistoricalBloomFilter::TrimCache()
   if (pages_updated > 0)
   {
     UpdateMetadata();
-    store_.Flush(false);
+    store_.Flush();
   }
 
   return pages_flushed;
@@ -346,7 +340,7 @@ void HistoricalBloomFilter::Flush()
 void HistoricalBloomFilter::Reset()
 {
   cache_.clear();
-  store_.New(store_filename_, index_filename_, true);
+  store_.New(store_filename_);
   heaviest_persisted_bucket_ = 0;
 }
 
@@ -441,11 +435,28 @@ bool HistoricalBloomFilter::LookupBucketFromStore(uint64_t bucket, CacheEntry &e
 {
   FETCH_LOG_DEBUG(LOGGING_NAME, "Restoring cache entry to bucket: ", bucket);
 
-  // compute the storage key
-  auto const key = ToStorageKey(bucket);
+  // load up the contents of the bloom filter
+  ConstByteArray bloom_filter_buffer;
+  if (!store_.Get(bucket, bloom_filter_buffer))
+  {
+    return false;
+  }
 
-  // read the entry from the store
-  return store_.Get(key, entry);
+  // deserialise the bloom filter entry
+  bool success{false};
+  try
+  {
+    serializers::MsgPackSerializer serialiser{bloom_filter_buffer};
+    serialiser >> entry;
+
+    success = true;
+  }
+  catch (std::exception const &ex)
+  {
+    FETCH_LOG_ERROR(LOGGING_NAME, "Error recovering bloom filter entry: ", ex.what());
+  }
+
+  return success;
 }
 
 /**
@@ -453,23 +464,34 @@ bool HistoricalBloomFilter::LookupBucketFromStore(uint64_t bucket, CacheEntry &e
  *
  * @param bucket The bucket to be stored
  * @param entry The cache entry to be written
- * @return true if succesful, otherwise false
+ * @return true if successful, otherwise false
  */
 bool HistoricalBloomFilter::SaveBucketToStore(uint64_t bucket, CacheEntry const &entry)
 {
   FETCH_LOG_DEBUG(LOGGING_NAME, "Saving cache entry to bucket: ", bucket);
 
-  // compute the storage key
-  auto const key = ToStorageKey(bucket);
+  // serialise the bloom filter buffer
+  ConstByteArray bloom_filter_buffer{};
+  try
+  {
+    serializers::LargeObjectSerializeHelper serialiser{};
+    serialiser << entry;
 
-  // store the cache on disk
-  store_.Set(key, entry);
+    bloom_filter_buffer = serialiser.data();
+  }
+  catch (std::exception const &ex)
+  {
+    FETCH_LOG_ERROR(LOGGING_NAME, "Error serialising bloom filter entry: ", ex.what());
+  }
+
+  // store the bloom filter into the bucket
+  if (!store_.Set(bucket, bloom_filter_buffer))
+  {
+    return false;
+  }
 
   // track the heaviest written bucket
-  if (bucket > heaviest_persisted_bucket_)
-  {
-    heaviest_persisted_bucket_ = bucket;
-  }
+  heaviest_persisted_bucket_ = std::max(heaviest_persisted_bucket_, bucket);
 
   return true;
 }
@@ -479,11 +501,14 @@ bool HistoricalBloomFilter::SaveBucketToStore(uint64_t bucket, CacheEntry const 
  */
 void HistoricalBloomFilter::UpdateMetadata()
 {
-  BloomFilterMetadata metadata;
+  BloomFilterMetadata metadata{};
   bool                bad_version = false;
 
   try
   {
+    // ensure that the store is also
+    store_.Flush();
+
     // before loading the database check that the meta data for the database is correct
     metadata_.Get(metadata);
 

@@ -30,7 +30,6 @@ void Historical_Bloom_AddHot(benchmark::State &state)
 
   HistoricalBloomFilter bloom{HistoricalBloomFilter::Mode::NEW_DATABASE,
                               "h-bloom-bench.db",
-                              "h-bloom-bench.index.db",
                               "h-bloom-bench.meta.db",
                               10000,
                               1};
@@ -55,7 +54,6 @@ void Historical_Bloom_WorstCase(benchmark::State &state)
 
   HistoricalBloomFilter bloom{HistoricalBloomFilter::Mode::NEW_DATABASE,
                               "h-bloom-bench.db",
-                              "h-bloom-bench.index.db",
                               "h-bloom-bench.meta.db",
                               1,
                               1};
@@ -88,7 +86,6 @@ void Historical_Bloom_NormalCase(benchmark::State &state)
 
   HistoricalBloomFilter bloom{HistoricalBloomFilter::Mode::NEW_DATABASE,
                               "h-bloom-bench.db",
-                              "h-bloom-bench.index.db",
                               "h-bloom-bench.meta.db",
                               128,
                               1};
