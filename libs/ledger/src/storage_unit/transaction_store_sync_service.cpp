@@ -518,11 +518,11 @@ bool TransactionStoreSyncService::AlreadySeen(chain::Transaction const &tx)
 
   if (recently_seen_txs_.Seen(digest))
   {
-    recently_seen_txs_.Add(digest);
+    result = true;
   }
   else
   {
-    result = true;
+    recently_seen_txs_.Add(digest);
   }
 
   return result;
