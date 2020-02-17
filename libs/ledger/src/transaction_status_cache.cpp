@@ -16,10 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/transaction_status_cache.hpp"
-
 #include "persistent_transaction_status_cache.hpp"
 #include "time_based_transaction_status_cache.hpp"
+
+#include "ledger/transaction_status_cache.hpp"
 
 #include <memory>
 

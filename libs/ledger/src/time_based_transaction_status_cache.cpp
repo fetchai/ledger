@@ -16,8 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "network/generics/milli_timer.hpp"
 #include "time_based_transaction_status_cache.hpp"
+
+#include "network/generics/milli_timer.hpp"
 
 namespace fetch {
 namespace ledger {
