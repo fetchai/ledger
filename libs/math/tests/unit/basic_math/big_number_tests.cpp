@@ -17,8 +17,9 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/encoders.hpp"
-#include "gmock/gmock.h"
 #include "vectorise/uint/uint.hpp"
+
+#include "gmock/gmock.h"
 
 #include <cstddef>
 #include <cstdint>

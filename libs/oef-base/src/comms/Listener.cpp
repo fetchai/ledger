@@ -16,12 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
-#include <functional>
-#include <iostream>
-
 #include "oef-base/comms/Core.hpp"
 #include "oef-base/comms/Listener.hpp"
 #include "oef-base/monitoring/Counter.hpp"
+
+#include <functional>
+#include <iostream>
 
 static Counter accepting("mt-core.network.accept");
 static Counter errored("mt-core.network.accepterror");

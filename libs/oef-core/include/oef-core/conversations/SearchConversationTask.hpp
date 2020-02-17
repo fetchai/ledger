@@ -17,9 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include <memory>
-#include <utility>
-
 #include "logging/logging.hpp"
 #include "oef-base/conversation/OutboundConversation.hpp"
 #include "oef-base/conversation/OutboundConversations.hpp"
@@ -29,6 +26,9 @@
 #include "oef-core/comms/OefAgentEndpoint.hpp"
 #include "oef-core/conversations/SearchConversationTypes.hpp"
 #include "oef-messages/agent.hpp"
+
+#include <memory>
+#include <utility>
 
 template <typename IN_PROTO, typename OUT_PROTO, typename REQUEST_PROTO, typename IMPL_CLASS>
 class SearchConversationTask : public fetch::oef::base::StateMachineTask<IMPL_CLASS>

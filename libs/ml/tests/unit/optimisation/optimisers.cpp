@@ -16,7 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "gtest/gtest.h"
+#include "test_types.hpp"
+
 #include "ml/core/graph.hpp"
 #include "ml/layers/fully_connected.hpp"
 #include "ml/ops/activations/relu.hpp"
@@ -29,7 +30,8 @@
 #include "ml/optimisation/sgd_optimiser.hpp"
 #include "ml/saveparams/saveable_params.hpp"
 #include "ml/serializers/ml_types.hpp"
-#include "test_types.hpp"
+
+#include "gtest/gtest.h"
 
 namespace fetch {
 namespace ml {

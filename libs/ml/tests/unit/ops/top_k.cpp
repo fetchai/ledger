@@ -16,11 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
+#include "test_types.hpp"
+
 #include "math/base_types.hpp"
 #include "ml/ops/top_k.hpp"
 
 #include "gtest/gtest.h"
-#include "test_types.hpp"
 
 #include <memory>
 #include <vector>

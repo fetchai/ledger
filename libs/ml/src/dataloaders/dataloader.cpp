@@ -16,9 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/dataloaders/dataloader.hpp"
-
 #include "math/tensor/tensor.hpp"
+#include "ml/dataloaders/dataloader.hpp"
 #include "ml/exceptions/exceptions.hpp"
 
 namespace fetch {

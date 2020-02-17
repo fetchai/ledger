@@ -17,10 +17,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include <emmintrin.h>
-#include <limits>
-
 #include "vectorise/fixed_point/fixed_point.hpp"
+
+#include <emmintrin.h>
+
+#include <limits>
 
 namespace fetch {
 namespace vectorise {

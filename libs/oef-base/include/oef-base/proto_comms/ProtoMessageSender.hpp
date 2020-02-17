@@ -17,15 +17,14 @@
 //
 //------------------------------------------------------------------------------
 
-#include <memory>
-#include <string>
-#include <vector>
-
+#include "logging/logging.hpp"
 #include "oef-base/comms/CharArrayBuffer.hpp"
 #include "oef-base/comms/Endianness.hpp"
 #include "oef-base/comms/IMessageWriter.hpp"
 
-#include "logging/logging.hpp"
+#include <memory>
+#include <string>
+#include <vector>
 
 template <typename TXType, typename Reader, typename Sender>
 class ProtoMessageEndpoint;

@@ -16,13 +16,14 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/service_ids.hpp"
 #include "direct_message_service.hpp"
 #include "muddle_logging_name.hpp"
 #include "muddle_register.hpp"
 #include "peer_list.hpp"
 #include "router.hpp"
 #include "routing_message.hpp"
+
+#include "core/service_ids.hpp"
 
 namespace fetch {
 namespace muddle {
