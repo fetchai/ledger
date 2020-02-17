@@ -76,6 +76,9 @@ MainChain::MainChain(Mode mode, bool dirty_block_functionality)
         "Total number of false positive queries to the Ledger Main Chain Bloom filter"))
   , dirty_blocks_attempt_add_(telemetry::Registry::Instance().CreateCounter(
         "ledger_main_chain_dirty_blocks_attempt_add_total", "Total attempts to add a dirty block"))
+  , children_on_storage_checks_total_(telemetry::Registry::Instance().CreateCounter(
+        "ledger_main_chain_children_on_storage_checks_total",
+        "Total checks for block's children on storage"))
 {
   if (Mode::IN_MEMORY_DB != mode)
   {
@@ -363,15 +366,19 @@ void MainChain::KeepBlock(BlockPtr const &block) const
   record.block = *block;
 
   // detect if any of this block's children has made it to the store already
-  auto forward_refs{forward_references_.equal_range(hash)};
-  for (auto ref_it{forward_refs.first}; ref_it != forward_refs.second; ++ref_it)
   {
-    auto const &child{ref_it->second};
-    if (block_store_->Has(storage::ResourceID(child)))
+    MilliTimer tmr("ChildrenOnStore", 2000);
+    children_on_storage_checks_total_->increment();
+    auto forward_refs{forward_references_.equal_range(hash)};
+    for (auto ref_it{forward_refs.first}; ref_it != forward_refs.second; ++ref_it)
     {
-      record.next_hash = child;
-      CacheReference(hash, child, true);
-      break;
+      auto const &child{ref_it->second};
+      if (block_store_->Has(storage::ResourceID(child)))
+      {
+        record.next_hash = child;
+        CacheReference(hash, child, true);
+        break;
+      }
     }
   }
 
