@@ -92,12 +92,6 @@ std::vector<math::SizeType> DataHolder<TensorType>::ComputeOutputShape(
 }
 
 template <typename TensorType>
-void DataHolder<TensorType>::Compile()
-{
-  data_ = std::make_shared<TensorType>();
-}
-
-template <typename TensorType>
 OperationsCount DataHolder<TensorType>::ChargeForward() const
 {
   assert(!this->batch_input_shapes_.empty());

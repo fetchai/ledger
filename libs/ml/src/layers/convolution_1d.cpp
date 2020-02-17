@@ -124,12 +124,14 @@ std::vector<fetch::math::SizeType> Convolution1D<TensorType>::ComputeOutputShape
 template <typename TensorType>
 void Convolution1D<TensorType>::Compile()
 {
+  SubGraph<TensorType>::Compile();
+
   TensorType weights_data(
       std::vector<SizeType>{{output_channels_, input_channels_, kernel_size_, 1}});
   fetch::ml::ops::Weights<TensorType>::Initialise(weights_data, 1, 1, init_mode_, seed_);
   this->SetInput(weights_, weights_data);
 
-  SubGraph<TensorType>::Compile();
+  // TODO: Add to serialisation weights_, init_mode_, seed_
 }
 
 template <class TensorType>

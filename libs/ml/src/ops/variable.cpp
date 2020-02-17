@@ -286,13 +286,6 @@ void Variable<TensorType>::ApplyRegularisation()
   }
 }
 
-template <typename TensorType>
-void Variable<TensorType>::Compile()
-{
-  DataHolder<TensorType>::Compile();
-  gradient_accumulation_ = std::make_shared<TensorType>();
-}
-
 ///////////////////////////////
 /// EXPLICIT INSTANTIATIONS ///
 ///////////////////////////////

@@ -36,7 +36,7 @@ TYPED_TEST(ConstantTest, set_data)
   TypeParam data = TypeParam::FromString("1, 2, 3, 4, 5, 6, 7, 8");
   TypeParam gt   = TypeParam::FromString("1, 2, 3, 4, 5, 6, 7, 8");
 
-  fetch::ml::ops::Constant<TypeParam> op;
+  fetch::ml::ops::Constant<TypeParam> op{};
   op.SetData(data);
 
   TypeParam prediction(op.ComputeOutputShape({}));
@@ -51,7 +51,7 @@ TYPED_TEST(ConstantTest, mutable_test)
   TypeParam data = TypeParam::FromString("1, 2, 3, 4, 5, 6, 7, 8");
   TypeParam gt   = TypeParam::FromString("1, 2, 3, 4, 5, 6, 7, 8");
 
-  fetch::ml::ops::Constant<TypeParam> op;
+  fetch::ml::ops::Constant<TypeParam> op{};
   op.SetData(data);
 
   TypeParam prediction(op.ComputeOutputShape({}));

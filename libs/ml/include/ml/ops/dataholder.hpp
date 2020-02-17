@@ -85,13 +85,11 @@ public:
     return DESCRIPTOR;
   }
 
-  void Compile() override;
-
   OperationsCount ChargeForward() const override;
   OperationsCount ChargeBackward() const override;
 
 protected:
-  TensorPtrType data_;
+  TensorPtrType data_ = std::make_shared<TensorType>();
 };
 
 }  // namespace ops

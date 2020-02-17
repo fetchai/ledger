@@ -81,8 +81,6 @@ public:
 
   void ResetGradients() override;
 
-  void Compile() override;
-
   static constexpr OpType OpCode()
   {
     return OpType::OP_VARIABLE;
@@ -91,9 +89,9 @@ public:
   static constexpr char const *DESCRIPTOR = "Variable";
 
 protected:
-  bool               reset_gradients_ = false;
-  TensorPtrType      gradient_accumulation_;
-  SizeSet            updated_rows_;
+  bool               reset_gradients_       = false;
+  TensorPtrType      gradient_accumulation_ = std::make_shared<TensorType>();
+  SizeSet            updated_rows_{};
   RegularisationType regularisation_type = RegularisationType::NONE;
   DataType           regularisation_rate = fetch::math::numeric_max<DataType>();
 
