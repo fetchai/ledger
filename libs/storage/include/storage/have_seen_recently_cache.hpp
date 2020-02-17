@@ -17,7 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-
 #include <deque>
 #include <unordered_set>
 
@@ -39,7 +38,9 @@ template <typename T>
 class HaveSeenRecentlyCache
 {
 public:
-  explicit HaveSeenRecentlyCache(uint64_t size) : size_{size} {}
+  explicit HaveSeenRecentlyCache(uint64_t size)
+    : size_{size}
+  {}
 
   bool Seen(T const &item)
   {
@@ -64,11 +65,10 @@ private:
   using SeenSet   = std::unordered_set<T>;
   using SeenDeque = std::deque<T>;
 
-  uint64_t size_ = 0;
-  SeenSet seen_set_;
+  uint64_t  size_ = 0;
+  SeenSet   seen_set_;
   SeenDeque seen_deque_;
 };
 
-}  // namespace ledger
+}  // namespace storage
 }  // namespace fetch
-

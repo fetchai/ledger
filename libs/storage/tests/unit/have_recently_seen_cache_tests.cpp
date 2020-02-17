@@ -16,15 +16,15 @@
 //
 //------------------------------------------------------------------------------
 
-#include "storage/have_seen_recently_cache.hpp"
 #include "gtest/gtest.h"
+#include "storage/have_seen_recently_cache.hpp"
 
 using namespace fetch::storage;
 
 // Test the normal functionality of the cache
 TEST(HaveSeenRecentlyCache, basic_functionality)
 {
-  uint64_t cache_size = 3;
+  uint64_t                           cache_size = 3;
   HaveSeenRecentlyCache<std::string> cache{cache_size};
 
   cache.Add("A");
@@ -42,7 +42,7 @@ TEST(HaveSeenRecentlyCache, basic_functionality)
 // Test the cache still works with a size of 0
 TEST(HaveSeenRecentlyCache, zero_cache)
 {
-  uint64_t cache_size = 0;
+  uint64_t                           cache_size = 0;
   HaveSeenRecentlyCache<std::string> cache{cache_size};
 
   cache.Add("A");
@@ -58,7 +58,7 @@ TEST(HaveSeenRecentlyCache, zero_cache)
 // indicate it has not seen
 TEST(HaveSeenRecentlyCache, cache_size_limit)
 {
-  uint64_t cache_size = 3;
+  uint64_t                           cache_size = 3;
   HaveSeenRecentlyCache<std::string> cache{cache_size};
 
   cache.Add("A");
