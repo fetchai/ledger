@@ -78,7 +78,8 @@ bool DataHolder<TensorType>::SetData(TensorType const &data)
   {
     shape_changed = (data_->shape() != data.shape());
   }
-  data_ = std::make_shared<TensorType>(data);
+  data_                    = std::make_shared<TensorType>(data);
+  this->future_data_shape_ = data.shape();
   return shape_changed;
 }
 
