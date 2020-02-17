@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "http/server.hpp"
+#include "http/http_server.hpp"
 
 #include <string>
 
