@@ -164,7 +164,7 @@ OperationsCount AdamOptimiser<T>::ChargeConstruct(std::shared_ptr<Graph<T>> grap
   for (auto &train : graph->GetTrainables())
   {
     auto weight_shape = train->GetFutureDataShape();
-    if (weight_shape.size() == 0)
+    if (weight_shape.empty())
     {
       throw std::runtime_error("Shape deduction failed");
     }

@@ -123,7 +123,7 @@ OperationsCount AdaGradOptimiser<T>::ChargeConstruct(std::shared_ptr<Graph<T>> g
   for (auto &train : trainables)
   {
     auto weight_shape = train->GetFutureDataShape();
-    if (weight_shape.size() == 0)
+    if (weight_shape.empty())
     {
       throw std::runtime_error("Shape deduction failed");
     }
