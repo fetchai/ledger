@@ -27,8 +27,8 @@
 #include "muddle/rpc/client.hpp"
 #include "network/generics/promise_of.hpp"
 #include "network/generics/requesting_queue.hpp"
-#include "storage/have_seen_recently_cache.hpp"
 #include "storage/resource_mapper.hpp"
+#include "storage/seen_recently_cache.hpp"
 #include "telemetry/telemetry.hpp"
 #include "transaction_finder_protocol.hpp"
 #include "transaction_store_sync_protocol.hpp"
@@ -84,7 +84,7 @@ public:
   using LaneControllerPtr     = std::shared_ptr<LaneController>;
   using TxFinderProtocolPtr   = std::shared_ptr<TxFinderProtocol>;
   using MuddleEndpoint        = muddle::MuddleEndpoint;
-  using HaveSeenRecentlyCache = storage::HaveSeenRecentlyCache<byte_array::ConstByteArray>;
+  using SeenRecentlyCache     = storage::SeenRecentlyCache<byte_array::ConstByteArray>;
 
   static constexpr char const *LOGGING_NAME = "TransactionStoreSyncService";
   static constexpr std::size_t MAX_OBJECT_COUNT_RESOLUTION_PER_CYCLE = 128;
@@ -151,8 +151,8 @@ private:
 
   // Avoid processing transactions that have been recently
   // seen or are already in storage
-  bool                  AlreadySeen(chain::Transaction const &tx);
-  HaveSeenRecentlyCache recently_seen_txs_;
+  bool              AlreadySeen(chain::Transaction const &tx);
+  SeenRecentlyCache recently_seen_txs_;
 
   TrimCacheCallback                  trim_cache_callback_;
   std::shared_ptr<StateMachine>      state_machine_;

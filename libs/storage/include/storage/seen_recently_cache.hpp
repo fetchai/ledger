@@ -17,6 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/containers/is_in.hpp"
+
 #include <deque>
 #include <unordered_set>
 
@@ -35,16 +37,16 @@ namespace storage {
  *
  */
 template <typename T>
-class HaveSeenRecentlyCache
+class SeenRecentlyCache
 {
 public:
-  explicit HaveSeenRecentlyCache(uint64_t size)
+  explicit SeenRecentlyCache(uint64_t size)
     : size_{size}
   {}
 
   bool Seen(T const &item)
   {
-    return seen_set_.find(item) != seen_set_.end();
+    return core::IsIn(seen_set_, item);
   }
 
   void Add(T const &item)
@@ -60,8 +62,8 @@ public:
   }
 
 private:
-  // To achieve the functionality the class maintains both a set and a deque
-  // of the elements added
+  // To achieve the functionality of both time ordering and fast lookup the class maintains both a
+  // set and a deque of the elements added
   using SeenSet   = std::unordered_set<T>;
   using SeenDeque = std::deque<T>;
 

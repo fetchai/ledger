@@ -17,15 +17,15 @@
 //------------------------------------------------------------------------------
 
 #include "gtest/gtest.h"
-#include "storage/have_seen_recently_cache.hpp"
+#include "storage/seen_recently_cache.hpp"
 
 using namespace fetch::storage;
 
 // Test the normal functionality of the cache
-TEST(HaveSeenRecentlyCache, basic_functionality)
+TEST(SeenRecentlyCache, basic_functionality)
 {
-  uint64_t                           cache_size = 3;
-  HaveSeenRecentlyCache<std::string> cache{cache_size};
+  uint64_t                       cache_size = 3;
+  SeenRecentlyCache<std::string> cache{cache_size};
 
   cache.Add("A");
   cache.Add("B");
@@ -40,10 +40,10 @@ TEST(HaveSeenRecentlyCache, basic_functionality)
 }
 
 // Test the cache still works with a size of 0
-TEST(HaveSeenRecentlyCache, zero_cache)
+TEST(SeenRecentlyCache, zero_cache)
 {
-  uint64_t                           cache_size = 0;
-  HaveSeenRecentlyCache<std::string> cache{cache_size};
+  uint64_t                       cache_size = 0;
+  SeenRecentlyCache<std::string> cache{cache_size};
 
   cache.Add("A");
   cache.Add("B");
@@ -56,10 +56,10 @@ TEST(HaveSeenRecentlyCache, zero_cache)
 
 // Test that when more elements are put in than the cache limit it will
 // indicate it has not seen
-TEST(HaveSeenRecentlyCache, cache_size_limit)
+TEST(SeenRecentlyCache, cache_size_limit)
 {
-  uint64_t                           cache_size = 3;
-  HaveSeenRecentlyCache<std::string> cache{cache_size};
+  uint64_t                       cache_size = 3;
+  SeenRecentlyCache<std::string> cache{cache_size};
 
   cache.Add("A");
   cache.Add("B");
