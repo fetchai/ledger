@@ -175,6 +175,8 @@ public:
    * Construct a Bloom filter with the given set of hash functions
    */
   explicit BasicBloomFilter(Functions const &functions);
+  explicit BasicBloomFilter(std::size_t bit_size);
+  BasicBloomFilter(Functions const &functions, std::size_t filter_size);
   BasicBloomFilter(BasicBloomFilter const &) = delete;
   BasicBloomFilter(BasicBloomFilter &&)      = delete;
   ~BasicBloomFilter()                        = default;
