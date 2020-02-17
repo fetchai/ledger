@@ -22,7 +22,10 @@
 #include "core/mutex.hpp"
 #include "ledger/block_packer_interface.hpp"
 #include "ledger/chain/block.hpp"
+#include "ledger/chaincode/token_contract.hpp"
 #include "ledger/miner/transaction_layout_queue.hpp"
+#include "ledger/storage_unit/storage_unit_interface.hpp"
+#include "ledger/transaction_validator.hpp"
 #include "meta/log2.hpp"
 #include "telemetry/telemetry.hpp"
 #include "vectorise/threading/pool.hpp"
@@ -52,7 +55,7 @@ public:
   using TransactionLayout = chain::TransactionLayout;
 
   // Construction / Destruction
-  explicit BasicMiner(uint32_t log2_num_lanes);
+  BasicMiner(uint32_t log2_num_lanes, StorageInterface &storage);
   BasicMiner(BasicMiner const &) = delete;
   BasicMiner(BasicMiner &&)      = delete;
   ~BasicMiner() override         = default;

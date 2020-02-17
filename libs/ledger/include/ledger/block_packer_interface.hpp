@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "chain/tx_proto.hpp"
+#include "chain/tx_declaration.hpp"
 
 #include <cstddef>
 #include <cstdint>

@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "chain/address.hpp"
+#include "chain/tx_declaration.hpp"
 #include "core/bitvector.hpp"
 #include "core/digest.hpp"
 #include "crypto/identity.hpp"
