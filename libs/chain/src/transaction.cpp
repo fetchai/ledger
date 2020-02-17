@@ -274,7 +274,7 @@ bool Transaction::IsVerified() const
  * Signal that this transaction is obtained via a subtree sync response,
  * and should not be added to the recent queue.
  */
-void Transaction::SetFromSync()
+void Transaction::SetFromSubtreeSync()
 {
   old_ = true;
 }
@@ -285,7 +285,7 @@ void Transaction::SetFromSync()
  *
  * @return
  */
-bool Transaction::IsFromSync() const
+bool Transaction::IsFromSubtreeSync() const
 {
   return old_;
 }

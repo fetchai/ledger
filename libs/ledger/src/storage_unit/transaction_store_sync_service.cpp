@@ -291,7 +291,7 @@ TransactionStoreSyncService::State TransactionStoreSyncService::OnResolvingSubtr
     for (auto &tx : result.promised)
     {
       // this transaction is not recent
-      tx.SetFromSync();
+      tx.SetFromSubtreeSync();
       // add the transaction to the verifier
       verifier_.AddTransaction(std::make_shared<chain::Transaction>(tx));
 
@@ -476,7 +476,7 @@ void TransactionStoreSyncService::OnTransaction(TransactionPtr const &tx)
                     tx->contract_address().display(), ')');
 
     // This transaction is recent unless it was received at subtree sync.
-    store_.Add(*tx, !tx->IsFromSync());
+    store_.Add(*tx, !tx->IsFromSubtreeSync());
     stored_transactions_->increment();
   }
 }

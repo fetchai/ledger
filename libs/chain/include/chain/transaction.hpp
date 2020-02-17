@@ -137,8 +137,8 @@ public:
   bool Verify();
   bool IsVerified() const;
   bool IsSignedByFromAddress() const;
-  void SetFromSync();
-  bool IsFromSync() const;
+  void SetFromSubtreeSync();
+  bool IsFromSubtreeSync() const;
   /// @}
 
   // Operators
