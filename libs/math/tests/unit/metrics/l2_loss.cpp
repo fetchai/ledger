@@ -16,9 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "gtest/gtest.h"
-#include "math/metrics/l2_loss.hpp"
 #include "test_types.hpp"
+
+#include "math/metrics/l2_loss.hpp"
+
+#include "gtest/gtest.h"
 
 namespace fetch {
 namespace math {

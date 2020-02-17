@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "crypto/openssl_memory_detail.hpp"
+
 #include <memory>
 
 namespace fetch {

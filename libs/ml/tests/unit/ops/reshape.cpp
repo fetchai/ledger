@@ -16,11 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
+#include "test_types.hpp"
+
 #include "math/base_types.hpp"
 #include "ml/ops/reshape.hpp"
 
 #include "gtest/gtest.h"
-#include "test_types.hpp"
 
 #include <vector>
 

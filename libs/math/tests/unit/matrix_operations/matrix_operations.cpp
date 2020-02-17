@@ -16,10 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/random/lcg.hpp"
-#include "gtest/gtest.h"
-#include "math/matrix_operations.hpp"
 #include "test_types.hpp"
+
+#include "core/random/lcg.hpp"
+#include "math/matrix_operations.hpp"
+
+#include "gtest/gtest.h"
 
 #include <vector>
 

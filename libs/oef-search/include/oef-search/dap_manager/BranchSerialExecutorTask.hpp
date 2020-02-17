@@ -22,6 +22,7 @@
 #include "DapManager.hpp"
 #include "MementoExecutorTask.hpp"
 #include "NodeExecutorFactory.hpp"
+
 #include "oef-base/threading/TaskChainSerial.hpp"
 
 class BranchSerialExecutorTask

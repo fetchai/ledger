@@ -32,7 +32,6 @@
 #include "muddle/network_id.hpp"
 #include "muddle/rpc/server.hpp"
 #include "network/details/thread_pool.hpp"
-
 #include "network/service/promise.hpp"
 #include "network/tcp/abstract_server.hpp"
 #include "network/uri.hpp"

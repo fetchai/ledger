@@ -16,8 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/storage_unit/transaction_storage_engine.hpp"
 #include "transaction_generator.hpp"
+
+#include "ledger/storage_unit/transaction_storage_engine.hpp"
 
 #include "gtest/gtest.h"
 

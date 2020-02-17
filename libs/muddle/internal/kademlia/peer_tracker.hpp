@@ -18,6 +18,10 @@
 //------------------------------------------------------------------------------
 
 #include "blacklist.hpp"
+#include "muddle_register.hpp"
+#include "peer_list.hpp"
+#include "promise_runnable.hpp"
+
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/periodic_runnable.hpp"
 #include "core/reactor.hpp"
@@ -30,9 +34,6 @@
 #include "muddle/rpc/client.hpp"
 #include "muddle/rpc/server.hpp"
 #include "muddle/tracker_configuration.hpp"
-#include "muddle_register.hpp"
-#include "peer_list.hpp"
-#include "promise_runnable.hpp"
 
 #include <atomic>
 #include <chrono>

@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+// clang-format off
 #include "oef-base/threading/TNonBlockingWorkerTask.hpp"
 
 #include "oef-base/comms/ConstCharArrayBuffer.hpp"
@@ -32,6 +33,7 @@
 
 #include "logging/logging.hpp"
 #include "oef-base/utils/Uri.hpp"
+// clang-format on
 
 #define TNONBLOCKINGWORKERTASK_SIZE 5
 #ifndef CONNECT_FAILURE_LIMIT

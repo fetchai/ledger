@@ -16,9 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/utilities/scaler.hpp"
-
 #include "ml/utilities/min_max_scaler.hpp"
+#include "ml/utilities/scaler.hpp"
 #include "vm/module.hpp"
 #include "vm/object.hpp"
 #include "vm_modules/math/tensor/tensor.hpp"
