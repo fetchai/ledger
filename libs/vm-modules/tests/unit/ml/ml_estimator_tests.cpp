@@ -51,7 +51,7 @@ TEST_F(VMMLEstimatorTests, vmgraph_constructor_have_infinite_charge)
   EXPECT_FALSE(toolkit.Run());
 }
 
-TEST_F(VMMLEstimatorTests, vmdataloader_constructor_have_infinite_charge)
+TEST_F(VMMLEstimatorTests, vmdataloader_constructor_not_infinite_charge)
 {
   static constexpr char const *TEXT = R"(
     function main()
@@ -60,7 +60,7 @@ TEST_F(VMMLEstimatorTests, vmdataloader_constructor_have_infinite_charge)
   )";
 
   EXPECT_TRUE(toolkit.Compile(TEXT)) << stdout.str();
-  EXPECT_FALSE(toolkit.Run());
+  EXPECT_TRUE(toolkit.Run());
 }
 
 TEST_F(VMMLEstimatorTests, vmscaler_constructor_have_infinite_charge)

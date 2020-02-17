@@ -102,6 +102,18 @@ public:
 private:
   DataLoaderPtrType loader_;
   DataLoaderMode    mode_ = DataLoaderMode::NONE;
+
+  vm::ChargeAmount EstimateAddDataByData(
+      const vm::Ptr<fetch::vm::Array<fetch::vm::Ptr<fetch::vm_modules::math::VMTensor>>> &data,
+      const vm::Ptr<fetch::vm_modules::math::VMTensor> &                                  labels);
+
+  vm::ChargeAmount EstimateGetNext();
+
+  vm::ChargeAmount EstimateIsDone();
+
+  vm::ChargeAmount EstimateAddTensorData(
+      const vm::Ptr<fetch::vm::Array<fetch::vm::Ptr<fetch::vm_modules::math::VMTensor>>> &data,
+      const vm::Ptr<fetch::vm_modules::math::VMTensor> &                                  labels);
 };
 
 }  // namespace ml

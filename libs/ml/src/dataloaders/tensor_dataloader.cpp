@@ -50,6 +50,27 @@ typename TensorDataLoader<TensorType>::ReturnType TensorDataLoader<TensorType>::
 }
 
 template <typename TensorType>
+OperationsCount TensorDataLoader<TensorType>::ChargeGetNext()
+{
+  OperationsCount cost = 1;
+  for (auto it : one_sample_label_shape_)
+  {
+    cost *= it;
+  }
+  OperationsCount data_cost = 1;
+  for (auto it : one_sample_data_shapes_)
+  {
+    for (auto it2 : it)
+    {
+      data_cost *= it2;
+    }
+  }
+  cost += data_cost;
+  cost += 5;
+  return cost;
+}
+
+template <typename TensorType>
 bool TensorDataLoader<TensorType>::AddData(std::vector<TensorType> const &data,
                                            TensorType const &             labels)
 {
@@ -80,6 +101,21 @@ bool TensorDataLoader<TensorType>::AddData(std::vector<TensorType> const &data,
 }
 
 template <typename TensorType>
+OperationsCount TensorDataLoader<TensorType>::ChargeAddData(const std::vector<TensorType> &data,
+                                                            const TensorType &             labels)
+{
+  OperationsCount cost = data.size();
+  cost += TensorType::PaddedSizeFromShape(labels.shape());
+  for (SizeType i{0}; i < data.size(); i++)
+  {
+    cost += TensorType::PaddedSizeFromShape(data.at(i).shape());
+    cost += data.at(i).shape().size();
+  }
+  cost += 50;
+  return cost;
+}
+
+template <typename TensorType>
 typename TensorDataLoader<TensorType>::SizeType TensorDataLoader<TensorType>::Size() const
 {
   return this->current_size_;
@@ -94,6 +130,12 @@ bool TensorDataLoader<TensorType>::IsDone() const
   }
 
   return *(this->current_cursor_) >= this->current_max_;
+}
+
+template <typename TensorType>
+OperationsCount TensorDataLoader<TensorType>::ChargeIsDone() const
+{
+  return 3;
 }
 
 template <typename TensorType>
