@@ -87,6 +87,9 @@ void Convolution1D<TensorType>::SetOpSaveableParams(SPType const &sp)
   input_channels_  = sp.input_channels;
   output_channels_ = sp.output_channels;
   stride_size_     = sp.stride_size;
+  weights_         = sp.weights_name;
+  seed_            = sp.seed;
+  init_mode_       = static_cast<WeightsInit>(sp.init_mode);
 }
 
 template <class TensorType>
@@ -107,6 +110,9 @@ std::shared_ptr<OpsSaveableParams> Convolution1D<TensorType>::GetOpSaveableParam
   ret->input_channels  = input_channels_;
   ret->output_channels = output_channels_;
   ret->stride_size     = stride_size_;
+  ret->weights_name    = weights_;
+  ret->seed            = seed_;
+  ret->init_mode       = static_cast<std::uint8_t>(init_mode_);
 
   return ret;
 }
@@ -130,8 +136,6 @@ void Convolution1D<TensorType>::Compile()
       std::vector<SizeType>{{output_channels_, input_channels_, kernel_size_, 1}});
   fetch::ml::ops::Weights<TensorType>::Initialise(weights_data, 1, 1, init_mode_, seed_);
   this->SetInput(weights_, weights_data);
-
-  // TODO: Add to serialisation weights_, init_mode_, seed_
 }
 
 template <class TensorType>
