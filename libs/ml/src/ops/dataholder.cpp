@@ -66,20 +66,17 @@ std::vector<TensorType> DataHolder<TensorType>::Backward(VecTensorType const &in
 }
 
 /**
- * sets the internally stored data
+ * sets the internally stored data, and returns a bool indicating whether the shape has changed
  * @param data
  * @return
  */
 template <class TensorType>
 bool DataHolder<TensorType>::SetData(TensorType const &data)
 {
-  bool shape_changed = true;
-  if (data_)
-  {
-    shape_changed = (data_->shape() != data.shape());
-  }
-  data_                    = std::make_shared<TensorType>(data);
+  bool shape_changed = (data_->shape() != data.shape());
+  data_->Copy(data);
   this->future_data_shape_ = data.shape();
+
   return shape_changed;
 }
 

@@ -122,6 +122,7 @@ TYPED_TEST(GraphTest, no_such_node_test)  // Use the class as a Node
                                                                    3u, 3u, 3u);
 
   TensorType data(std::vector<SizeType>({5, 10, 1}));
+
   g.SetInput("Input", data);
   g.Compile();
 
@@ -375,11 +376,10 @@ TYPED_TEST(GraphTest, variable_freezing_subgraph)
   std::string error_output = g.template AddNode<fetch::ml::ops::MeanSquareErrorLoss<TypeParam>>(
       "num_error", {layer_3, label});
 
-  g.Compile();
-
   // Calculate Gradient
   g.SetInput(input, data);
   g.SetInput(label, gt);
+  g.Compile();
   TypeParam output = g.Evaluate(error_output);
   g.BackPropagate(error_output);
 
@@ -455,11 +455,10 @@ TYPED_TEST(GraphTest, variable_freezing_shared_layer)
   std::string error_output = g.template AddNode<fetch::ml::ops::MeanSquareErrorLoss<TypeParam>>(
       "num_error", {layer_3, label});
 
-  g.Compile();
-
   // Calculate Gradient
   g.SetInput(input, data);
   g.SetInput(label, gt);
+  g.Compile();
   TypeParam output = g.Evaluate(error_output);
   g.BackPropagate(error_output);
 
@@ -540,7 +539,6 @@ TYPED_TEST(GraphTest,
       g.template AddNode<fetch::ml::ops::Subtract<TensorType>>(name + "_Op3", {op2_name, op1_name});
 
   // Evaluate
-
   g.SetInput(input_name1, data1);
   g.SetInput(input_name2, data2);
   g.Compile();
@@ -860,7 +858,6 @@ TYPED_TEST(GraphTest, compute_shapes_two_inputs_two_outputs)
   EXPECT_EQ(right_result.shape(), expected_right_out_shape);
 }
 
-// (VH): Disabled because shared Dense layers do not work if created with auto-detected inputs.
 TYPED_TEST(GraphTest, compute_shapes_sequential_denses_with_shared_ops)
 {
   using TensorType = TypeParam;
@@ -903,7 +900,6 @@ TYPED_TEST(GraphTest, compute_shapes_sequential_denses_with_shared_ops)
   EXPECT_EQ(result.shape(), expected_out_shape);
 }
 
-// (VH): Disabled because shared Dense layers do not work if created with auto-detected inputs.
 TYPED_TEST(GraphTest, compute_shapes_two_diamonds_with_shared_ops)
 {
   using TensorType = TypeParam;
@@ -1270,6 +1266,7 @@ TYPED_TEST(GraphTest, graph_charge_forward_subtraction)
       g.template AddNode<Subtract<TensorType>>("Subtract", {left_input, right_input});
   g.SetInput(left_input, data);
   g.SetInput(right_input, data);
+
   g.Compile();
 
   OperationsCount const charge       = g.ChargeForward(subtract);
@@ -1401,7 +1398,6 @@ TYPED_TEST(GraphTest, graph_charge_forward_diamond)
         g.template AddNode<Add<TensorType>>("Add" + std::to_string(i), {prev_node, prev_node});
   }
   std::string const output = prev_node;
-
   g.SetInput(input, data);
   g.Compile();
 
@@ -1429,7 +1425,6 @@ TYPED_TEST(GraphTest, graph_charge_backward_dropout)
   std::string const input = g.template AddNode<PlaceHolder<TensorType>>("Input", {});
   std::string const output =
       g.template AddNode<Dropout<TensorType>>("Dropout", {input}, DataType{1});
-
   g.SetInput(input, data);
   g.Compile();
 
@@ -1475,7 +1470,6 @@ TYPED_TEST(GraphTest, graph_charge_backward_diamond)
                                                         {prev_node, prev_node}, DataType{1});
   }
   std::string const output = prev_node;
-
   g.SetInput(input, data);
   g.Compile();
 
@@ -1518,7 +1512,6 @@ TYPED_TEST(GraphTest, DISABLED_graph_charge_backward_conv_dense)
       "Conv2d", {"Input"}, outputs, num_channels, kernel_size, stride_size);
   std::string dense =
       g.template AddNode<Dense>("FC1", {"Input"}, Dense::AUTODETECT_INPUTS_COUNT, 1);
-
   g.SetInput(input, data);
   g.Compile();
 

@@ -92,7 +92,7 @@ public:
   OperationsCount ChargeSetData(std::vector<SizeType> const &data);
 
 protected:
-  TensorPtrType         data_;
+  TensorPtrType data_ = std::make_shared<TensorType>();
   std::vector<SizeType> future_data_shape_;
 };
 
