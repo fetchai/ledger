@@ -18,12 +18,69 @@
 //------------------------------------------------------------------------------
 
 #include "math/base_types.hpp"
+#include "ml/dataloaders/tensor_dataloader.hpp"
+#include "ml/layers/fully_connected.hpp"
+#include "ml/model/model_config.hpp"
+#include "ml/model/sequential.hpp"
+#include "ml/ops/activation.hpp"
 
 namespace fetch {
 namespace ml {
 namespace utilities {
 
 using SizeType = fetch::math::SizeType;
+
+template <typename TensorType>
+std::pair<TensorType, TensorType> generate_dummy_data(SizeType n_data)
+{
+  using DataType = typename TensorType::Type;
+
+  // generate some random data for training and testing
+  TensorType data{{28, 28, n_data}};
+  data.FillUniformRandom();
+
+  TensorType labels{{10, n_data}};
+  labels.SetAllZero();
+  for (std::size_t i = 0; i < n_data; ++i)
+  {
+    labels.Set(i % 10, i, DataType{1});
+  }
+
+  return std::make_pair(data, labels);
+}
+
+template <typename TensorType>
+fetch::ml::model::Sequential<TensorType> setup_mnist_model(
+    model::ModelConfig<typename TensorType::Type> &model_config, TensorType &data,
+    TensorType &labels, fetch::fixed_point::fp32_t test_ratio = fetch::fixed_point::fp32_t{"0.2"})
+{
+  using ModelType      = typename fetch::ml::model::Sequential<TensorType>;
+  using DataLoaderType = typename fetch::ml::dataloaders::TensorDataLoader<TensorType>;
+  using OptimiserType  = fetch::ml::OptimiserType;
+  using LossType       = fetch::ml::ops::LossType;
+
+  // package data into data vector
+  auto const data_vector = std::vector<TensorType>({data});
+
+  // set up dataloader
+  auto data_loader_ptr = std::make_unique<DataLoaderType>();
+  data_loader_ptr->AddData(data_vector, labels);
+  data_loader_ptr->SetTestRatio(test_ratio);
+
+  // setup model and pass dataloader
+  ModelType model(model_config);
+  model.template Add<fetch::ml::layers::FullyConnected<TensorType>>(
+      784, 100, fetch::ml::details::ActivationType::RELU);
+  model.template Add<fetch::ml::layers::FullyConnected<TensorType>>(
+      100, 20, fetch::ml::details::ActivationType::RELU);
+  model.template Add<fetch::ml::layers::FullyConnected<TensorType>>(
+      20, 10, fetch::ml::details::ActivationType::RELU);
+
+  model.SetDataloader(std::move(data_loader_ptr));
+  model.Compile(OptimiserType::ADAM, LossType::MEAN_SQUARE_ERROR);
+
+  return model;
+}
 
 /**
  * Reads the mnist image file into a Tensor

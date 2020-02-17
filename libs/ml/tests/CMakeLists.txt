@@ -24,3 +24,6 @@ fetch_add_slow_test(ml_dataloader_gtest fetch-ml unit/dataloader)
 fetch_add_slow_test(ml_model_gtest fetch-ml unit/model)
 fetch_add_slow_test(ml_layers_gtest fetch-ml unit/layers)
 fetch_add_slow_test(ml_training_gtest fetch-ml unit/training)
+
+# integration tests
+fetch_add_slow_test(ml_mnist_gtest fetch-ml integration/mnist)
