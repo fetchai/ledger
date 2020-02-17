@@ -262,6 +262,7 @@ OperationsCount FullyConnected<TensorType>::ChargeConstruct(
     op_cnt += 1;
 
     // ComputeBatchOutputShape
+    op_cnt += 4;
 
     op_cnt += ChargeCompleteShapeDeduction(false, init_mode, time_distributed, in);
   }
