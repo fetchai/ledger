@@ -161,7 +161,6 @@ template <class T>
 OperationsCount AdamOptimiser<T>::ChargeConstruct(std::shared_ptr<Graph<T>> graph)
 {
   // Graph need to be compiled in order to deduce all weight sizes
-  // TODO 2423: Compile shouldn't be needed
   for (auto &train : graph->GetTrainables())
   {
     if (!train->IsInit())

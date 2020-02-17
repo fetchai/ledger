@@ -123,7 +123,6 @@ OperationsCount SGDOptimiser<T>::ChargeConstruct(std::shared_ptr<Graph<T>> graph
   for (auto &train : trainables)
   {
     // Graph need to be compiled in order to deduce all weight sizes
-    // TODO 2423: Compile shouldn't be needed
     if (!train->IsInit())
     {
       graph->Compile();

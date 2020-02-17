@@ -204,7 +204,7 @@ public:
 
   fetch::vm::ChargeAmount EstimateCompileSequential(
       fetch::vm::Ptr<fetch::vm::String> const &loss,
-      fetch::vm::Ptr<fetch::vm::String> const &optimisers);
+      fetch::vm::Ptr<fetch::vm::String> const &optimiser);
 
   fetch::vm::ChargeAmount EstimateCompileSequentialImplementation(
       fetch::vm::Ptr<fetch::vm::String> const &      loss,

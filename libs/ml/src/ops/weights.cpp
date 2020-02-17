@@ -189,7 +189,7 @@ TensorType const &Weights<TensorType>::GetWeights() const
 template <typename TensorType>
 bool Weights<TensorType>::IsInit() const
 {
-  return this->data_ != NULL;
+  return this->data_ != nullptr;
 }
 
 template <typename TensorType>
