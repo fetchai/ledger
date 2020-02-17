@@ -55,7 +55,7 @@ public:
                 std::string const &     name            = "Conv1D",
                 WeightsInit init_mode = WeightsInit::XAVIER_GLOROT, SizeType seed = 123456789);
 
-  void CompleteConstruction() override;
+  void CompleteShapeDeduction() override;
 
   std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override;
 

@@ -134,6 +134,7 @@ void Model<TensorType>::Compile(OptimiserType optimiser_type, ops::LossType loss
     optimiser_set_ = true;
   }
 
+  graph_ptr_->Compile();
   compiled_ = true;
 }
 

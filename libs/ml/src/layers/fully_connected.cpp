@@ -87,28 +87,36 @@ FullyConnected<TensorType>::FullyConnected(SizeType in, SizeType out,
       this->batch_input_shapes_ = {{total_inputs_, 1}};
     }
     this->ComputeBatchOutputShape(this->batch_input_shapes_);
-    CompleteConstruction();
+    CompleteShapeDeduction();
   }
 }
 
+/**
+ *
+ * @tparam TensorType
+ */
 template <typename TensorType>
-void FullyConnected<TensorType>::CompleteConstruction()
+void FullyConnected<TensorType>::CompleteShapeDeduction()
 {
+  // avoid double completion
   if (is_initialised_)
   {
     return;
   }
 
+  // sanity check batch shapes
   assert(!this->batch_input_shapes_.empty());
   assert(!this->batch_output_shape_.empty());
   assert(this->input_node_names_.size() == 1);  // Only 1 input node is allowed
   assert(total_outputs_ == this->batch_output_shape_.front());
   FETCH_LOG_INFO(Descriptor(), "-- Completing FullyConnected initialisation ... --");
 
+  // compute batch shapes based on input
   NodePtrType input_node = this->nodes_.at(this->input_node_names_.front());
   input_node->SetBatchInputShapes(this->batch_input_shapes_);
   input_node->SetBatchOutputShape(this->batch_input_shapes_.front());
 
+  // get number of inputs if using shape input auto-detection
   if (total_inputs_ == AUTODETECT_INPUTS_COUNT)
   {
     if (time_distributed_)
@@ -132,21 +140,39 @@ void FullyConnected<TensorType>::CompleteConstruction()
   // leaf nodes such as Weights and Bias.
   this->nodes_.at(weights_name_)->SetBatchOutputShape(weights_shape);
   this->nodes_.at(bias_name_)->SetBatchOutputShape(this->batch_output_shape_);
-
-  // initialize weight with specified method.
-  TensorType weights_data(weights_shape);
-  fetch::ml::ops::Weights<TensorType>::Initialise(weights_data, total_inputs_, total_outputs_,
-                                                  init_mode_);
-  this->SetInput(weights_name_, weights_data);
-
-  TensorType bias_data = TensorType(this->batch_output_shape_);
-
-  this->SetInput(bias_name_, bias_data);
-
-  this->Compile();
+  //
+  //
+  //  // Construct weights and bias tensors
+  //  TensorType weights_data(weights_shape);
+  //  fetch::ml::ops::Weights<TensorType>::Initialise(weights_data, total_inputs_, total_outputs_,
+  //  init_mode_); TensorType bias_data = TensorType(this->batch_output_shape_);
+  //
+  //  this->SetInput(weights_name_, weights_data);
+  //  this->SetInput(bias_name_, bias_data);
+  //
+  //  this->Compile();
 
   FETCH_LOG_INFO(Descriptor(), "-- FullyConnected initialisation completed. --");
   is_initialised_ = true;
+}
+
+/**
+ * Completes memory allocation by initialising tensors
+ * @tparam TensorType
+ */
+template <typename TensorType>
+void FullyConnected<TensorType>::Compile()
+{
+  // Construct weights and bias tensors
+  TensorType weights_data({total_outputs_, total_inputs_});
+  fetch::ml::ops::Weights<TensorType>::Initialise(weights_data, total_inputs_, total_outputs_,
+                                                  init_mode_);
+  TensorType bias_data = TensorType(this->batch_output_shape_);
+
+  this->SetInput(weights_name_, weights_data);
+  this->SetInput(bias_name_, bias_data);
+
+  Graph<TensorType>::Compile();
 }
 
 template <typename TensorType>

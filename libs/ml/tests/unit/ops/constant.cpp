@@ -71,6 +71,7 @@ TYPED_TEST(ConstantTest, trainable_test)
   auto g = std::make_shared<fetch::ml::Graph<TypeParam>>();
   g->template AddNode<fetch::ml::ops::Constant<TypeParam>>("Constant", {});
   g->SetInput("Constant", data);
+  g->Compile();
 
   auto prediction1 = g->Evaluate("Constant");
   g->BackPropagate("Constant");
@@ -90,6 +91,7 @@ TYPED_TEST(ConstantTest, shareable_test)
   auto name_1 = g->template AddNode<fetch::ml::ops::Constant<TypeParam>>("Constant", {});
   auto name_2 = g->template AddNode<fetch::ml::ops::Constant<TypeParam>>("Constant", {});
   g->SetInput(name_1, data);
+  g->Compile();
 
   auto prediction1_node1 = g->Evaluate(name_1);
   auto prediction1_node2 = g->Evaluate(name_2);
