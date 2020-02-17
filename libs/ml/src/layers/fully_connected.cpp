@@ -188,11 +188,10 @@ OperationsCount FullyConnected<TensorType>::ChargeBackward() const
 }
 
 template <typename TensorType>
-OperationsCount FullyConnected<TensorType>::ChargeCompleteConstruction(bool        is_initialised,
-                                                                       WeightsInit init_mode,
-                                                                       bool        time_distributed,
-                                                                       SizeType    total_inputs,
-                                                                       SizeType    total_outputs)
+OperationsCount FullyConnected<TensorType>::ChargeCompleteShapeDeduction(bool        is_initialised,
+                                                                         WeightsInit init_mode,
+                                                                         bool     time_distributed,
+                                                                         SizeType total_inputs)
 {
   FETCH_UNUSED(init_mode);
 
@@ -223,26 +222,7 @@ OperationsCount FullyConnected<TensorType>::ChargeCompleteConstruction(bool     
     }
   }
 
-  // Construction of weights_shape vector
-  op_cnt += 1;
-  SizeType weights_shape_size = total_outputs * total_inputs;
-  SizeType biases_shape_size  = total_outputs;
-
-  // 2 x SetBatchOutputShape
-  op_cnt += 2;
-
-  // Create weights Tensor
-  op_cnt += weights_shape_size;
-
-  op_cnt += fetch::ml::ops::Weights<TensorType>::ChargeInitialise({total_outputs, total_inputs});
-
-  // Set input references for biase, weights
-  op_cnt += 2;
-
-  // Create biases Tensor
-  op_cnt += biases_shape_size;
-
-  // Compile
+  // 2 x SetBatchOutputShape, is_initialised=true
   op_cnt += 3;
 
   return op_cnt;
@@ -254,6 +234,8 @@ OperationsCount FullyConnected<TensorType>::ChargeConstruct(
     fetch::ml::RegularisationType regulariser, DataType regularisation_rate, WeightsInit init_mode,
     bool time_distributed)
 {
+  FETCH_UNUSED(out);
+
   using namespace fetch::ml::ops;
   using namespace fetch::ml::details;
 
@@ -300,10 +282,7 @@ OperationsCount FullyConnected<TensorType>::ChargeConstruct(
 
     // ComputeBatchOutputShape
 
-    // SetBatchInputShapes, SetBatchOutputShape
-    op_cnt += 2;
-
-    op_cnt += ChargeCompleteConstruction(false, init_mode, time_distributed, in, out);
+    op_cnt += ChargeCompleteShapeDeduction(false, init_mode, time_distributed, in);
   }
 
   FETCH_UNUSED(regulariser);

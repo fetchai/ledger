@@ -81,9 +81,8 @@ public:
   OperationsCount ChargeForward() const override;
   OperationsCount ChargeBackward() const override;
 
-  static OperationsCount ChargeCompleteConstruction(bool is_initialised, WeightsInit init_mode,
-                                                    bool time_distributed, SizeType total_inputs,
-                                                    SizeType total_outputs);
+  static OperationsCount ChargeCompleteShapeDeduction(bool is_initialised, WeightsInit init_mode,
+                                                      bool time_distributed, SizeType total_inputs);
 
   static OperationsCount ChargeConstruct(
       SizeType in, SizeType out,
