@@ -71,9 +71,8 @@ void HTTPServer::Start(uint16_t port)
       // Important to keep this alive during cb scope
       FETCH_UNUSED(ref_counter);
 
-      auto soc = threadMan.CreateIO<Socket>();
-      auto accep =
-          threadMan.CreateIO<Acceptor>(asio::ip::tcp::endpoint(asio::ip::tcp::v4(), port));
+      auto soc   = threadMan.CreateIO<Socket>();
+      auto accep = threadMan.CreateIO<Acceptor>(asio::ip::tcp::endpoint(asio::ip::tcp::v4(), port));
       auto strong_manager = std::make_shared<ConnectionManager>(server_ref);
 
       FETCH_LOG_INFO(LOGGING_NAME,
@@ -200,7 +199,7 @@ void HTTPServer::PushRequest(HandleType client, HTTPRequest req)
 
 // Accept static void to avoid having to create shared ptr to this class
 void HTTPServer::Accept(std::shared_ptr<Socket> const &soc, std::shared_ptr<Acceptor> const &accep,
-                   std::shared_ptr<ConnectionManager> const &manager)
+                        std::shared_ptr<ConnectionManager> const &manager)
 {
   auto cb = [soc, accep, manager](std::error_code ec) {
     if (!ec)
@@ -239,8 +238,9 @@ void HTTPServer::AddMiddleware(ResponseMiddleware const &middleware)
 }
 
 void HTTPServer::AddView(byte_array::ConstByteArray description, Method method,
-             byte_array::ByteArray const &path, std::vector<HTTPParameter> const &parameters,
-             ViewType const &view, Authenticator authenticator)
+                         byte_array::ByteArray const &     path,
+                         std::vector<HTTPParameter> const &parameters, ViewType const &view,
+                         Authenticator authenticator)
 {
   auto route = Route::FromString(path);
 
