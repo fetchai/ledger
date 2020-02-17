@@ -1153,6 +1153,59 @@ OperationsCount Graph<TensorType>::ChargeBackward(const std::string &node_name) 
   return node->ChargeBackward(visited_nodes);
 }
 
+template <typename TensorType>
+OperationsCount Graph<TensorType>::ChargeCompile()
+{
+  OperationsCount op_cnt{1};
+
+  switch (graph_state_)
+  {
+  case GraphState::COMPILED:
+  case GraphState::EVALUATED:
+  case GraphState::BACKWARD:
+  case GraphState::UPDATED:
+  {
+    // graph already compiled. do nothing
+    return op_cnt;
+  }
+  case GraphState::INVALID:
+  case GraphState::NOT_COMPILED:
+  {
+    // ResetCompile();, LinkNodesInGraph(node_name, node_inputs);
+    op_cnt += 2 * connections_.size();
+
+    // These calls are necessary for optimiser charge estimation
+    for (auto &connection : connections_)
+    {
+      auto node_name   = connection.first;
+      auto node_inputs = connection.second;
+      LinkNodesInGraph(node_name, node_inputs);
+    }
+    ComputeAllNodeShapes();
+
+    // ComputeAllNodeShapes();
+    op_cnt += nodes_.size();
+
+    // RecursivelyCompleteWeightsInitialisation
+    for (auto const &node_name_and_ptr : nodes_)
+    {
+      NodePtrType node = node_name_and_ptr.second;
+      op_cnt           = node->GetOp()->ChargeCompile();
+    }
+
+    // graph_state_ = GraphState::COMPILED;
+    op_cnt += 1;
+    break;
+  }
+  default:
+  {
+    throw ml::exceptions::InvalidMode("cannot evaluate graph - unrecognised graph state");
+  }
+  }
+
+  return op_cnt;
+}
+
 /**
  * Return list of all node names in format GRAPH1/...SUBGRAPHS../LEAF
  * @return std::vector<std::string> list of names of all nodes in all subgraphs

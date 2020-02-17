@@ -122,14 +122,13 @@ OperationsCount AdaGradOptimiser<T>::ChargeConstruct(std::shared_ptr<Graph<T>> g
   OperationsCount op_cnt{1};
   for (auto &train : trainables)
   {
-    // Graph need to be compiled in order to deduce all weight sizes
-    if (!train->IsInit())
+    auto weight_shape = train->GetFutureDataShape();
+    if (weight_shape.size() == 0)
     {
-      graph->Compile();
+      throw std::runtime_error("Shape deduction failed");
     }
 
-    auto     weight    = train->GetWeights();
-    SizeType data_size = TensorType::PaddedSizeFromShape(weight.shape());
+    SizeType data_size = TensorType::PaddedSizeFromShape(weight_shape);
     op_cnt += data_size * 2;
   }
 

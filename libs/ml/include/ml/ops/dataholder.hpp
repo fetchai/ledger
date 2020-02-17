@@ -89,8 +89,11 @@ public:
   OperationsCount        ChargeBackward() const override;
   static OperationsCount ChargeConstruct();
 
+  OperationsCount ChargeSetData(std::vector<SizeType> const &data);
+
 protected:
-  TensorPtrType data_;
+  TensorPtrType         data_;
+  std::vector<SizeType> future_data_shape_;
 };
 
 }  // namespace ops

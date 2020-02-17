@@ -107,6 +107,8 @@ public:
   OpType      OperationType() const override;
   char const *Descriptor() const override;
 
+  std::vector<SizeType> GetFutureDataShape() const;
+
   OperationsCount ChargeForward() const override;
 
 private:

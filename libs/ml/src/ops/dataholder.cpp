@@ -118,6 +118,13 @@ OperationsCount DataHolder<TensorType>::ChargeConstruct()
   return 1;
 }
 
+template <typename TensorType>
+OperationsCount DataHolder<TensorType>::ChargeSetData(std::vector<SizeType> const &data)
+{
+  future_data_shape_ = data;
+  return TensorType::PaddedSizeFromShape(data);
+}
+
 ///////////////////////////////
 /// EXPLICIT INSTANTIATIONS ///
 ///////////////////////////////

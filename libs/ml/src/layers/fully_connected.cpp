@@ -291,6 +291,34 @@ OperationsCount FullyConnected<TensorType>::ChargeConstruct(
 }
 
 template <typename TensorType>
+OperationsCount FullyConnected<TensorType>::ChargeCompile()
+{
+  OperationsCount op_cnt{0};
+
+  // Construct weights and bias tensors
+  std::vector<SizeType> weights_data_shape({total_outputs_, total_inputs_});
+  op_cnt += fetch::ml::ops::Weights<TensorType>::ChargeInitialise(weights_data_shape);
+  std::vector<SizeType> bias_data_shape = this->batch_output_shape_;
+
+  // this->SetInput(weights_name_, weights_data);
+  // this->SetInput(bias_name_, bias_data);
+
+  auto weights_dataholder = std::dynamic_pointer_cast<ops::DataHolder<TensorType>>(
+      this->nodes_.at(weights_name_)->GetOp());
+  op_cnt += weights_dataholder->ChargeSetData(weights_data_shape);
+
+  auto bias_dataholder =
+      std::dynamic_pointer_cast<ops::DataHolder<TensorType>>(this->nodes_.at(bias_name_)->GetOp());
+  op_cnt += bias_dataholder->ChargeSetData(bias_data_shape);
+
+  // ResetGraphCache for weights and biases
+  op_cnt += 2 * this->nodes_.size();
+
+  op_cnt += Graph<TensorType>::ChargeCompile();
+  return op_cnt;
+}
+
+template <typename TensorType>
 std::shared_ptr<fetch::ml::ops::Ops<TensorType>> FullyConnected<TensorType>::MakeSharedCopy(
     OpPtrType me)
 {

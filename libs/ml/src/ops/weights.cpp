@@ -305,6 +305,12 @@ const char *ops::Weights<TensorType>::Descriptor() const
   return DESCRIPTOR;
 }
 
+template <class TensorType>
+std::vector<math::SizeType> Weights<TensorType>::GetFutureDataShape() const
+{
+  return this->future_data_shape_;
+}
+
 template <typename TensorType>
 OperationsCount Weights<TensorType>::ChargeForward() const
 {

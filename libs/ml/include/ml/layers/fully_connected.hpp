@@ -92,6 +92,8 @@ public:
       WeightsInit                   init_mode           = WeightsInit::XAVIER_GLOROT,
       bool                          time_distributed    = !TIME_DISTRIBUTED);
 
+  OperationsCount ChargeCompile() override;
+
   std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override;
 
   math::SizeVector ComputeBatchOutputShape(

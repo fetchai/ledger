@@ -498,6 +498,9 @@ OperationsCount Model<TensorType>::ChargeCompile(OptimiserType                  
     }
   }
 
+  // Graph compile
+  op_cnt += graph_ptr_->ChargeCompile();
+
   // set the optimiser
   if (!optimiser_set_)
   {

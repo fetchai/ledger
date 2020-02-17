@@ -219,6 +219,15 @@ public:
     return 1;
   }
 
+  /**
+   * Default Op compile charge
+   * @return
+   */
+  virtual OperationsCount ChargeCompile()
+  {
+    return 1;
+  }
+
 protected:
   bool is_training_ = true;
 
