@@ -56,6 +56,7 @@ TYPED_TEST(SelfAttentionEncoder, input_output_dimension_test)  // Use the class 
   mask_data.Fill(DataType{1});
   g.SetInput(input, input_data);
   g.SetInput(mask, mask_data);
+  g.Compile();
 
   TypeParam prediction = g.Evaluate(output, false);
   ASSERT_EQ(prediction.shape().size(), 3);
