@@ -16,6 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ml/charge_estimation/optimisation/constants.hpp"
 #include "ml/core/graph.hpp"
 #include "ml/ops/trainable.hpp"
 #include "ml/optimisation/momentum_optimiser.hpp"
@@ -122,7 +123,7 @@ OperationsCount MomentumOptimiser<T>::ChargeConstruct(std::shared_ptr<Graph<T>> 
     }
 
     SizeType data_size = TensorType::PaddedSizeFromShape(weight_shape);
-    op_cnt += data_size * 2;
+    op_cnt += data_size * charge_estimation::optimisers::MOMENTUM_N_CACHES;
   }
 
   return op_cnt;
@@ -135,7 +136,7 @@ fetch::ml::OperationsCount MomentumOptimiser<T>::ChargeStep() const
   auto trainable_it = this->graph_trainables_.begin();
 
   // Update betas, initialise
-  OperationsCount ops_count = 8;
+  OperationsCount ops_count = charge_estimation::optimisers::MOMENTUM_STEP_INIT;
 
   OperationsCount loop_count{0};
   while (gradient_it != this->gradients_.end())
@@ -149,7 +150,7 @@ fetch::ml::OperationsCount MomentumOptimiser<T>::ChargeStep() const
     ++trainable_it;
   }
 
-  return ops_count + loop_count * 5;
+  return ops_count + loop_count * charge_estimation::optimisers::MOMENTUM_PER_TRAINABLE;
 }
 
 ///////////////////////////////

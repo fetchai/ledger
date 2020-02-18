@@ -176,7 +176,7 @@ OperationsCount FullyConnected<TensorType>::ChargeCompleteShapeDeduction(bool   
 {
   FETCH_UNUSED(init_mode);
 
-  OperationsCount op_cnt{0};
+  OperationsCount op_cnt{1};
 
   if (is_initialised)
   {
@@ -220,7 +220,7 @@ OperationsCount FullyConnected<TensorType>::ChargeConstruct(
   using namespace fetch::ml::ops;
   using namespace fetch::ml::details;
 
-  OperationsCount op_cnt{0};
+  OperationsCount op_cnt{1};
 
   // get correct name for the layer
   op_cnt++;
@@ -275,7 +275,7 @@ OperationsCount FullyConnected<TensorType>::ChargeConstruct(
 template <typename TensorType>
 OperationsCount FullyConnected<TensorType>::ChargeCompile()
 {
-  OperationsCount op_cnt{0};
+  OperationsCount op_cnt{1};
 
   // Construct weights and bias tensors
   std::vector<SizeType> weights_data_shape({total_outputs_, total_inputs_});

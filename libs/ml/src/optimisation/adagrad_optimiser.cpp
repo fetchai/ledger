@@ -19,6 +19,7 @@
 #include "math/fundamental_operators.hpp"
 #include "math/standard_functions/pow.hpp"
 #include "math/standard_functions/sqrt.hpp"
+#include "ml/charge_estimation/optimisation/constants.hpp"
 #include "ml/charge_estimation/types.hpp"
 #include "ml/core/graph.hpp"
 #include "ml/ops/trainable.hpp"
@@ -129,7 +130,7 @@ OperationsCount AdaGradOptimiser<T>::ChargeConstruct(std::shared_ptr<Graph<T>> g
     }
 
     SizeType data_size = TensorType::PaddedSizeFromShape(weight_shape);
-    op_cnt += data_size * 2;
+    op_cnt += data_size * charge_estimation::optimisers::ADAGRAD_N_CACHES;
   }
 
   return op_cnt;
@@ -142,7 +143,7 @@ fetch::ml::OperationsCount AdaGradOptimiser<T>::ChargeStep() const
   auto trainable_it = this->graph_trainables_.begin();
 
   // Update betas, initialise
-  OperationsCount ops_count = 8;
+  OperationsCount ops_count = charge_estimation::optimisers::ADAGRAD_STEP_INIT;
 
   OperationsCount loop_count{0};
   while (gradient_it != this->gradients_.end())
@@ -156,7 +157,7 @@ fetch::ml::OperationsCount AdaGradOptimiser<T>::ChargeStep() const
     ++trainable_it;
   }
 
-  return ops_count + loop_count * 8;
+  return ops_count + loop_count * charge_estimation::optimisers::ADAGRAD_PER_TRAINABLE;
 }
 
 ///////////////////////////////

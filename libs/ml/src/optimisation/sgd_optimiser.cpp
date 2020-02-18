@@ -16,6 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ml/charge_estimation/optimisation/constants.hpp"
 #include "ml/core/graph.hpp"
 #include "ml/ops/trainable.hpp"
 #include "ml/optimisation/sgd_optimiser.hpp"
@@ -129,7 +130,7 @@ OperationsCount SGDOptimiser<T>::ChargeConstruct(std::shared_ptr<Graph<T>> graph
     }
 
     SizeType data_size = TensorType::PaddedSizeFromShape(weight_shape);
-    op_cnt += data_size * 1;
+    op_cnt += data_size * charge_estimation::optimisers::SGD_N_CACHES;
   }
 
   return op_cnt;
@@ -142,7 +143,7 @@ fetch::ml::OperationsCount SGDOptimiser<T>::ChargeStep() const
   auto trainable_it = this->graph_trainables_.begin();
 
   // Update betas, initialise
-  OperationsCount ops_count = 8;
+  OperationsCount ops_count = charge_estimation::optimisers::SGD_STEP_INIT;
 
   OperationsCount loop_count{0};
   while (gradient_it != this->gradients_.end())
@@ -158,7 +159,7 @@ fetch::ml::OperationsCount SGDOptimiser<T>::ChargeStep() const
     {
 
       auto gradient_pair = (*trainable_it)->GetSparseGradientsReferences();
-      loop_count += 2;
+      loop_count += charge_estimation::optimisers::SGD_PER_TRAINABLE;
 
       // Normal ApplyGradient
       if (gradient_pair.second.empty() ||
@@ -172,7 +173,8 @@ fetch::ml::OperationsCount SGDOptimiser<T>::ChargeStep() const
         std::vector<SizeType> slice_size = gradient_it->shape();
         slice_size.at(0)                 = 1;
 
-        loop_count += gradient_pair.second.size() * T::SizeFromShape(slice_size) * 6;
+        loop_count += gradient_pair.second.size() * T::SizeFromShape(slice_size) *
+                      charge_estimation::optimisers::SGD_SPARSE_APPLY;
       }
 
       // ResetGradients();

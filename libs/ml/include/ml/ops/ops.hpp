@@ -216,7 +216,7 @@ public:
    */
   static OperationsCount ChargeConstruct()
   {
-    return 1;
+    return charge_estimation::ops::OP_DEFAULT_CONSTRUCTION_COST;
   }
 
   /**

@@ -423,7 +423,7 @@ OperationsCount Model<TensorType>::ChargeCompile(OptimiserType                  
                                                  ops::LossType                       loss_type,
                                                  std::vector<ops::MetricType> const &metrics) const
 {
-  OperationsCount op_cnt{0};
+  OperationsCount op_cnt{1};
 
   // add loss to graph
   if (!loss_set_)
