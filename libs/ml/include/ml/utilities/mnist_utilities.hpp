@@ -77,7 +77,7 @@ fetch::ml::model::Sequential<TensorType> setup_mnist_model(
       20, 10, fetch::ml::details::ActivationType::RELU);
 
   model.SetDataloader(std::move(data_loader_ptr));
-  model.Compile(OptimiserType::ADAM, LossType::MEAN_SQUARE_ERROR);
+  model.Compile(OptimiserType::ADAM, LossType::CROSS_ENTROPY);
 
   return model;
 }

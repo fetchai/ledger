@@ -56,7 +56,7 @@ TYPED_TEST(MNistTest, one_pass_test)
   auto model = fetch::ml::utilities::setup_mnist_model<TypeParam>(
       model_config, data_label_pair.first, data_label_pair.second);
 
-  // training loop - early stopping will prevent long training time
+  // training loop
   DataType loss;
   model.Train(2, loss);
 
