@@ -2144,6 +2144,7 @@ TYPED_TEST(OpsSaveParamsTest, ReduceMean_graph_serialization_test)
       g.template AddNode<fetch::ml::ops::ReduceMean<TensorType>>("Output", {input_name}, 1);
 
   g.SetInput(input_name, data);
+  g.Compile();
   TypeParam output = g.Evaluate("Output");
 
   // extract saveparams
@@ -2192,6 +2193,7 @@ TYPED_TEST(OpsSaveParamsTest, Reshape_graph_serialisation_test)
       g.template AddNode<fetch::ml::ops::Reshape<TensorType>>("Output", {input_name}, final_shape);
 
   g.SetInput(input_name, data);
+  g.Compile();
   TypeParam output = g.Evaluate("Output");
 
   // extract saveparams
@@ -2606,6 +2608,7 @@ TYPED_TEST(OpsSaveParamsTest, squeeze_graph_serialization_test)
       g.template AddNode<fetch::ml::ops::Squeeze<TensorType>>("Output", {input_name});
 
   g.SetInput(input_name, data);
+  g.Compile();
   TypeParam output = g.Evaluate("Output");
 
   // extract saveparams

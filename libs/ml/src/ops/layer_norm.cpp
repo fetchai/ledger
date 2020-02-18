@@ -137,6 +137,14 @@ std::vector<math::SizeType> LayerNorm<TensorType>::ComputeOutputShape(
 }
 
 template <typename TensorType>
+void LayerNorm<TensorType>::Compile()
+{
+  prev_input_          = TensorType();
+  cached_inv_sqrt_var_ = TensorType();
+  cached_output_       = TensorType();
+}
+
+template <typename TensorType>
 OperationsCount LayerNorm<TensorType>::ChargeForward() const
 {
   assert(!this->batch_input_shapes_.empty());
