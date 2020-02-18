@@ -301,10 +301,8 @@ bool HistoricalBloomFilter::Match(ConstByteArray const &element, uint64_t minimu
       last_bloom_filter_level_->set(result.bits_checked);
       break;
     }
-    else
-    {
-      total_negative_matches_->increment();
-    }
+
+    total_negative_matches_->increment();
   }
 
   return is_match;

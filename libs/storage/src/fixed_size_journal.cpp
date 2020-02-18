@@ -296,7 +296,7 @@ bool FixedSizeJournalFile::Load(std::string const &filename)
   }
 
   // read the size of the file
-  uint64_t const file_size = static_cast<uint64_t>(stream_.tellp());
+  auto const file_size = static_cast<uint64_t>(stream_.tellp());
 
   // we are loading a empty file, in this way we act like making a new file
   if (file_size == 0)
