@@ -561,7 +561,12 @@ TYPED_TEST(FullyConnectedTest, training_should_change_output)
   }
 
   layer.ApplyGradients(grads);
+
+  layer.ApplyGradients(grads);
   TypeParam prediction3 = layer.Evaluate(output_name);
+
+  std::cout << "prediction.ToString(): " << prediction.ToString() << std::endl;
+  std::cout << "prediction3.ToString(): " << prediction3.ToString() << std::endl;
 
   EXPECT_FALSE(prediction.AllClose(prediction3, fetch::math::function_tolerance<DataType>(),
                                    fetch::math::function_tolerance<DataType>()));
