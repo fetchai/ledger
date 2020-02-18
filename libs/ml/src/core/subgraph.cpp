@@ -26,6 +26,12 @@ namespace ml {
 /// PUBLIC METHODS ///
 //////////////////////
 
+template <typename TensorType>
+void SubGraph<TensorType>::Compile()
+{
+  Graph<TensorType>::Compile();
+}
+
 /**
  *
  * @tparam T

@@ -43,6 +43,8 @@ public:
 
   static constexpr char const *DESCRIPTOR = "SubGraph";
 
+  void Compile() override;
+
   void                    Forward(VecTensorType const &inputs, TensorType &output) override;
   std::vector<TensorType> Backward(VecTensorType const &inputs,
                                    TensorType const &   error_signal) override;

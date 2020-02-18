@@ -163,6 +163,7 @@ TYPED_TEST(PReluTest, graph_forward_test)  // Use the class as a Node
 
   TypeParam data({input_dim_0, input_dim_1, input_dim_2});
   g.SetInput("Input", data);
+  g.Compile();
 
   TypeParam prediction = g.Evaluate("PRelu", true);
   ASSERT_EQ(prediction.shape().size(), 3);

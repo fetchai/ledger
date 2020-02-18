@@ -37,7 +37,7 @@ class Ops;
 /**
  * enum for selecting which type of initialisation to use with weights
  */
-enum class WeightsInitialisation
+enum class WeightsInitialisation : std::uint8_t
 {
   ONES,
   ZEROS,
