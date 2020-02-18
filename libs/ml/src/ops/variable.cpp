@@ -220,8 +220,8 @@ bool Variable<TensorType>::SetData(TensorType const &data)
   bool shape_changed = DataHolder<TensorType>::SetData(data);
   if (shape_changed)
   {
-    gradient_accumulation_ = std::make_shared<TensorType>(this->data_->shape());
-    reset_gradients_       = true;
+    gradient_accumulation_->Reshape(this->data_->shape());
+    reset_gradients_ = true;
     return true;
   }
   return false;
