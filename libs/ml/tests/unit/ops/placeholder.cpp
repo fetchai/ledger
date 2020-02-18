@@ -90,6 +90,7 @@ TYPED_TEST(PlaceholderAllTest, trainable_test)
   auto g = std::make_shared<fetch::ml::Graph<TypeParam>>();
   g->template AddNode<fetch::ml::ops::PlaceHolder<TypeParam>>("PlaceHolder", {});
   g->SetInput("PlaceHolder", data);
+  g->Compile();
 
   auto prediction1 = g->Evaluate("PlaceHolder");
   g->BackPropagate("PlaceHolder");
@@ -126,6 +127,7 @@ TYPED_TEST(PlaceholderNonIntTest, shareable_layer_with_placeholder)
       "FC1", {placeholder_name}, 2, 2);
 
   graph->SetInput(placeholder_name, data);
+  graph->Compile();
 
   auto prediction1 = graph->Evaluate(layer1_name);
   auto prediction2 = graph->Evaluate(layer2_name);

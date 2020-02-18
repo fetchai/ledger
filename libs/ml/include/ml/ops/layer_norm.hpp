@@ -69,6 +69,8 @@ public:
     return OpType::OP_LAYER_NORM;
   }
 
+  void Compile() override;
+
   static constexpr char const *DESCRIPTOR = "LayerNormalization";
 
   OpType OperationType() const override  // TODO(ML-466) : move implementation to .cpp
