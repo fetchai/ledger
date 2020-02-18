@@ -36,26 +36,22 @@ Convolution2D<TensorType>::Convolution2D(SizeType const output_channels,
   , input_channels_{input_channels}
   , output_channels_{output_channels}
   , stride_size_{stride_size}
+  , init_mode_{init_mode}
+  , seed_{seed}
 {
   FETCH_LOG_INFO(Descriptor(), "-- Convolution2D initialisation ... --");
   std::string input =
       this->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>(name + "_Input", {});
 
-  std::string weights =
-      this->template AddNode<fetch::ml::ops::Weights<TensorType>>(name + "_Weights", {});
-
-  TensorType weights_data(
-      std::vector<SizeType>{{output_channels_, input_channels_, kernel_size_, kernel_size_, 1}});
-  fetch::ml::ops::Weights<TensorType>::Initialise(weights_data, 1, 1, init_mode, seed);
-  this->SetInput(weights, weights_data);
+  weights_ = this->template AddNode<fetch::ml::ops::Weights<TensorType>>(name + "_Weights", {});
 
   std::string output = this->template AddNode<fetch::ml::ops::Convolution2D<TensorType>>(
-      name + "_Conv2D", {input, weights}, stride_size_);
+      name + "_Conv2D", {input, weights_}, stride_size_);
 
   output = fetch::ml::details::AddActivationNode<TensorType>(activation_type, this,
                                                              name + "_Activation", output);
 
-  this->GetNode(weights)->SetBatchOutputShape(
+  this->GetNode(weights_)->SetBatchOutputShape(
       {output_channels_, input_channels_, kernel_size_, kernel_size_, 1});
 
   this->AddInputNode(input);
@@ -81,6 +77,9 @@ std::shared_ptr<OpsSaveableParams> Convolution2D<TensorType>::GetOpSaveableParam
   ret->output_channels = output_channels_;
   ret->stride_size     = stride_size_;
   ret->is_initialised  = is_initialised_;
+  ret->weights_name    = weights_;
+  ret->seed            = seed_;
+  ret->init_mode       = static_cast<std::uint8_t>(init_mode_);
 
   return ret;
 }
@@ -94,10 +93,13 @@ void Convolution2D<TensorType>::SetOpSaveableParams(SPType const &sp)
   output_channels_ = sp.output_channels;
   stride_size_     = sp.stride_size;
   is_initialised_  = sp.is_initialised;
+  weights_         = sp.weights_name;
+  seed_            = sp.seed;
+  init_mode_       = static_cast<WeightsInit>(sp.init_mode);
 }
 
 template <typename TensorType>
-void Convolution2D<TensorType>::CompleteConstruction()
+void Convolution2D<TensorType>::CompleteShapeDeduction()
 {
   if (is_initialised_)
   {
@@ -128,6 +130,17 @@ std::vector<math::SizeType> Convolution2D<TensorType>::ComputeOutputShape(
       std::vector<SizeType>{{output_channels_, input_channels_, kernel_size_, kernel_size_, 1}});
   return fetch::ml::ops::Convolution2D<TensorType>(stride_size_)
       .ComputeOutputShape({inputs.at(0), std::make_shared<TensorType>(weights_data)});
+}
+
+template <typename TensorType>
+void Convolution2D<TensorType>::Compile()
+{
+  SubGraph<TensorType>::Compile();
+
+  TensorType weights_data(
+      std::vector<SizeType>{{output_channels_, input_channels_, kernel_size_, kernel_size_, 1}});
+  fetch::ml::ops::Weights<TensorType>::Initialise(weights_data, 1, 1, init_mode_, seed_);
+  this->SetInput(weights_, weights_data);
 }
 
 template <class TensorType>

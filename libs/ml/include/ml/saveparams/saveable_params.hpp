@@ -261,11 +261,14 @@ struct LayerConvolution1DSaveableParams : SubGraphSaveableParams<TensorType>
 
   using SizeType = typename TensorType::SizeType;
 
-  SizeType kernel_size{};
-  SizeType input_channels{};
-  SizeType output_channels{};
-  SizeType stride_size{};
-  bool     is_initialised = false;
+  SizeType              kernel_size{};
+  SizeType              input_channels{};
+  SizeType              output_channels{};
+  SizeType              stride_size{};
+  bool                  is_initialised = false;
+  std::string           weights_name   = "";
+  std::uint8_t          init_mode      = fetch::math::numeric_max<std::uint8_t>();
+  fetch::math::SizeType seed           = fetch::math::numeric_max<fetch::math::SizeType>();
 };
 
 template <typename TensorType>
@@ -275,11 +278,14 @@ struct LayerConvolution2DSaveableParams : SubGraphSaveableParams<TensorType>
 
   using SizeType = typename TensorType::SizeType;
 
-  SizeType kernel_size{};
-  SizeType input_channels{};
-  SizeType output_channels{};
-  SizeType stride_size{};
-  bool     is_initialised = false;
+  SizeType              kernel_size{};
+  SizeType              input_channels{};
+  SizeType              output_channels{};
+  SizeType              stride_size{};
+  bool                  is_initialised = false;
+  std::string           weights_name   = "";
+  std::uint8_t          init_mode      = fetch::math::numeric_max<std::uint8_t>();
+  fetch::math::SizeType seed           = fetch::math::numeric_max<fetch::math::SizeType>();
 };
 
 /**
