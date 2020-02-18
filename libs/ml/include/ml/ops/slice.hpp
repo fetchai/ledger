@@ -60,6 +60,8 @@ public:
 
   std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override;
 
+  void Compile() override;
+
   std::pair<SizeType, SizeType> start_end_slice_;
   std::vector<SizeType>         axes_;
   std::vector<SizeType>         indices_;

@@ -38,7 +38,6 @@ Dropout<TensorType>::Dropout(DataType const probability, SizeType const &random_
     throw std::runtime_error("Dropout probability " + ss.str() + " is out of allowed range [0..1]");
   }
   rng_.Seed(random_seed);
-  drop_values_ = TensorType{0};
 }
 
 template <typename TensorType>
@@ -91,7 +90,7 @@ void Dropout<TensorType>::Forward(VecTensorType const &inputs, TensorType &outpu
   {
     if (drop_values_.shape() != output.shape())
     {
-      drop_values_ = TensorType(output.shape());
+      drop_values_.Reshape(output.shape());
     }
 
     auto out_it = output.begin();
@@ -141,6 +140,12 @@ std::vector<math::SizeType> Dropout<TensorType>::ComputeOutputShape(
     VecTensorType const &inputs) const
 {
   return inputs.front()->shape();
+}
+
+template <typename TensorType>
+void Dropout<TensorType>::Compile()
+{
+  drop_values_ = TensorType{};
 }
 
 template <typename TensorType>

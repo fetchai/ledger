@@ -70,6 +70,8 @@ public:
     return DESCRIPTOR;
   }
 
+  void Compile() override;
+
   OperationsCount ChargeForward() const override;
   OperationsCount ChargeBackward() const override;
 
