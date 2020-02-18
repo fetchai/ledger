@@ -16,6 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ml/charge_estimation/constants.hpp"
 #include "ml/charge_estimation/layers/constants.hpp"
 #include "ml/layers/fully_connected.hpp"
 #include "ml/meta/ml_type_traits.hpp"
@@ -177,7 +178,7 @@ OperationsCount FullyConnected<TensorType>::ChargeCompleteShapeDeduction(bool   
 {
   FETCH_UNUSED(init_mode);
 
-  OperationsCount op_cnt{1};
+  OperationsCount op_cnt{charge_estimation::FUNCTION_CALL_COST};
 
   if (is_initialised)
   {
@@ -215,7 +216,7 @@ OperationsCount FullyConnected<TensorType>::ChargeConstruct(
   using namespace fetch::ml::ops;
   using namespace fetch::ml::details;
 
-  OperationsCount op_cnt{1};
+  OperationsCount op_cnt{charge_estimation::FUNCTION_CALL_COST};
 
   // start to set up the structure
   op_cnt += PlaceHolder<TensorType>::ChargeConstruct();
@@ -261,7 +262,7 @@ OperationsCount FullyConnected<TensorType>::ChargeConstruct(
 template <typename TensorType>
 OperationsCount FullyConnected<TensorType>::ChargeCompile()
 {
-  OperationsCount op_cnt{1};
+  OperationsCount op_cnt{charge_estimation::FUNCTION_CALL_COST};
 
   // Construct weights and bias tensors
   std::vector<SizeType> weights_data_shape({total_outputs_, total_inputs_});

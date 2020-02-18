@@ -18,6 +18,8 @@
 
 #include "core/byte_array/decoders.hpp"
 #include "core/serializers/counter.hpp"
+#include "ml/charge_estimation/constants.hpp"
+#include "ml/charge_estimation/model/constants.hpp"
 #include "ml/dataloaders/tensor_dataloader.hpp"
 #include "ml/layers/convolution_1d.hpp"
 #include "ml/layers/convolution_2d.hpp"
@@ -1040,7 +1042,7 @@ ChargeAmount VMModel::EstimateLayerAddDenseAutoInputs(
 ChargeAmount VMModel::EstimateCompileSequential(Ptr<String> const &loss,
                                                 Ptr<String> const &optimiser)
 {
-  ChargeAmount ret{0};
+  ChargeAmount ret{fetch::ml::charge_estimation::FUNCTION_CALL_COST};
 
   std::vector<MetricType> mets;
   try
@@ -1060,23 +1062,22 @@ fetch::vm::ChargeAmount VMModel::EstimateCompileSequentialImplementation(
     fetch::vm::Ptr<fetch::vm::String> const &      optimiser,
     std::vector<fetch::ml::ops::MetricType> const &metrics)
 {
-  ChargeAmount op_cnt{vm::MAXIMUM_CHARGE};
+  ChargeAmount op_cnt{fetch::ml::charge_estimation::FUNCTION_CALL_COST};
 
   try
   {
     LossType const      loss_type      = ParseName(loss->string(), losses_, "loss function");
     OptimiserType const optimiser_type = ParseName(optimiser->string(), optimisers_, "optimiser");
     SequentialModelPtr  me             = GetMeAsSequentialIfPossible();
-    op_cnt += 3;
+
+    // PrepareDataloader(), ;
+    op_cnt += fetch::ml::charge_estimation::model::COMPILE_SEQUENTIAL_INIT;
 
     if (me->LayerCount() == 0)
     {
       vm_->RuntimeError("Can not compile an empty sequential model, please add layers first.");
       return vm::MAXIMUM_CHARGE;
     }
-
-    // PrepareDataloader();
-    op_cnt += 5;
 
     op_cnt += me->ChargeCompile(optimiser_type, loss_type, metrics);
   }
@@ -1086,7 +1087,7 @@ fetch::vm::ChargeAmount VMModel::EstimateCompileSequentialImplementation(
     return MAXIMUM_CHARGE;
   }
   // set compiled flag
-  op_cnt += 1;
+  op_cnt += fetch::ml::charge_estimation::SET_FLAG;
 
   return op_cnt;
 }
@@ -1127,7 +1128,7 @@ ChargeAmount VMModel::EstimateSerializeToString()
 {
   auto trainables = model_->graph_ptr_->GetTrainables();
 
-  ChargeAmount estimate{1};
+  ChargeAmount estimate{fetch::ml::charge_estimation::FUNCTION_CALL_COST};
 
   for (auto &w : trainables)
   {
@@ -1140,7 +1141,7 @@ ChargeAmount VMModel::EstimateDeserializeFromString(Ptr<String> const &model_str
 {
   ChargeAmount estimate = model_string->string().size();
 
-  return estimate + 1;
+  return estimate + fetch::ml::charge_estimation::FUNCTION_CALL_COST;
 }
 
 fetch::vm::ChargeAmount VMModel::EstimateFit(vm::Ptr<math::VMTensor> const &data,

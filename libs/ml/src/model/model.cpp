@@ -424,7 +424,7 @@ OperationsCount Model<TensorType>::ChargeCompile(OptimiserType                  
                                                  ops::LossType                       loss_type,
                                                  std::vector<ops::MetricType> const &metrics) const
 {
-  OperationsCount op_cnt{1};
+  OperationsCount op_cnt{charge_estimation::FUNCTION_CALL_COST};
 
   // add loss to graph
   if (!loss_set_)
@@ -538,11 +538,11 @@ OperationsCount Model<TensorType>::ChargeCompile(OptimiserType                  
     }
     }
     // set optimiser flag
-    op_cnt += charge_estimation::SET_BOOL_FLAG;
+    op_cnt += charge_estimation::SET_FLAG;
   }
 
   // set compiled flag
-  op_cnt += charge_estimation::SET_BOOL_FLAG;
+  op_cnt += charge_estimation::SET_FLAG;
 
   return op_cnt;
 }

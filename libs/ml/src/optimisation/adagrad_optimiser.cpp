@@ -120,7 +120,7 @@ OperationsCount AdaGradOptimiser<T>::ChargeConstruct(std::shared_ptr<Graph<T>> g
 {
   auto trainables = graph->GetTrainables();
 
-  OperationsCount op_cnt{1};
+  OperationsCount op_cnt{charge_estimation::FUNCTION_CALL_COST};
   for (auto &train : trainables)
   {
     auto weight_shape = train->GetFutureDataShape();

@@ -18,6 +18,8 @@
 
 #include "math/tensor/tensor.hpp"
 #include "math/tensor/tensor_slice_iterator.hpp"
+#include "ml/charge_estimation/constants.hpp"
+#include "ml/charge_estimation/core/constants.hpp"
 #include "ml/core/graph.hpp"
 #include "ml/ops/weights.hpp"
 
@@ -1156,7 +1158,7 @@ OperationsCount Graph<TensorType>::ChargeBackward(const std::string &node_name) 
 template <typename TensorType>
 OperationsCount Graph<TensorType>::ChargeCompile()
 {
-  OperationsCount op_cnt{1};
+  OperationsCount op_cnt{charge_estimation::FUNCTION_CALL_COST};
 
   switch (graph_state_)
   {
@@ -1172,7 +1174,7 @@ OperationsCount Graph<TensorType>::ChargeCompile()
   case GraphState::NOT_COMPILED:
   {
     // ResetCompile();, LinkNodesInGraph(node_name, node_inputs);
-    op_cnt += 2 * connections_.size();
+    op_cnt += charge_estimation::GRAPH_N_LINK_NODES * connections_.size();
 
     // These calls are necessary for optimiser charge estimation
     for (auto &connection : connections_)
@@ -1194,7 +1196,7 @@ OperationsCount Graph<TensorType>::ChargeCompile()
     }
 
     // graph_state_ = GraphState::COMPILED;
-    op_cnt += 1;
+    op_cnt += charge_estimation::SET_FLAG;
     break;
   }
   default:

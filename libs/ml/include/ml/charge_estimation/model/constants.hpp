@@ -22,8 +22,9 @@
 namespace fetch {
 namespace ml {
 namespace charge_estimation {
-static constexpr OperationsCount SET_FLAG           = 1;
-static constexpr OperationsCount FUNCTION_CALL_COST = 1;
+namespace model {
+static constexpr OperationsCount COMPILE_SEQUENTIAL_INIT = 8;
+}
 }  // namespace charge_estimation
 }  // namespace ml
 }  // namespace fetch

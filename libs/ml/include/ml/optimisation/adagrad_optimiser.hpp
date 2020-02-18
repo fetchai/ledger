@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ml/charge_estimation/constants.hpp"
 #include "ml/charge_estimation/types.hpp"
 #include "ml/optimisation/optimiser.hpp"
 

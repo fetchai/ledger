@@ -18,6 +18,7 @@
 
 #include "math/standard_functions/pow.hpp"
 #include "math/standard_functions/sqrt.hpp"
+#include "ml/charge_estimation/constants.hpp"
 #include "ml/charge_estimation/optimisation/constants.hpp"
 #include "ml/core/graph.hpp"
 #include "ml/ops/trainable.hpp"
@@ -127,7 +128,7 @@ OperationsCount RMSPropOptimiser<T>::ChargeConstruct(std::shared_ptr<Graph<T>> g
 {
   auto trainables = graph->GetTrainables();
 
-  OperationsCount op_cnt{1};
+  OperationsCount op_cnt{charge_estimation::FUNCTION_CALL_COST};
   for (auto &train : trainables)
   {
     auto weight_shape = train->GetFutureDataShape();
