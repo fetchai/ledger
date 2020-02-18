@@ -59,7 +59,7 @@ OperationsCount TensorDataLoader<TensorType>::ChargeGetNext()
 
   // cost for copying the data array
   OperationsCount data_copy_cost = 0;
-  for (auto it : one_sample_data_shapes_)
+  for (auto const &it : one_sample_data_shapes_)
   {
     data_copy_cost += math::Product(it);
   }

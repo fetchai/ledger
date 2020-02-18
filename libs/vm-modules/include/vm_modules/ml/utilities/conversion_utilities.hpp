@@ -29,7 +29,6 @@ namespace fetch {
 namespace vm_modules {
 namespace ml {
 namespace utilities {
-namespace {
 
 using SizeType      = fetch::math::SizeType;
 using VMStringPtr   = fetch::vm::Ptr<fetch::vm::String>;
@@ -37,7 +36,6 @@ using ChargeAmount  = fetch::vm::ChargeAmount;
 using VMTensor      = fetch::vm_modules::math::VMTensor;
 using VMTensorPtr   = fetch::vm::Ptr<VMTensor>;
 using VMTensorArray = fetch::vm::Array<VMTensorPtr>;
-}  // namespace
 
 ////////////////////////
 // Helpers to construct VM objects from non-VM ones //

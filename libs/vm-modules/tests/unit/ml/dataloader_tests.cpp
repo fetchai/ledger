@@ -34,8 +34,6 @@ using VMPtr           = std::shared_ptr<fetch::vm::VM>;
 using VMTensorArray   = fetch::vm::Array<VMTensorPtr>;
 using VMDataLoaderPtr = fetch::vm::Ptr<fetch::vm_modules::ml::VMDataLoader>;
 
-}  // namespace
-
 class VMDataloaderTests : public ::testing::Test
 {
 public:
@@ -75,3 +73,4 @@ TEST_F(VMDataloaderTests, vmdataloader_addtensordata)
   charge = dl->EstimateIsDone();
   EXPECT_EQ(charge, 3);
 }
+}  // namespace
