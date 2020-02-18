@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -16,11 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/byte_array/byte_array.hpp"
 #include "bloom_filter/bloom_filter.hpp"
+#include "core/byte_array/byte_array.hpp"
 
-#include <iostream>
 #include <fstream>
+#include <iostream>
 
 using fetch::BasicBloomFilter;
 using fetch::byte_array::ConstByteArray;
@@ -42,14 +42,14 @@ uint64_t ToU64(char const *value)
 
   if (errno == ERANGE)
   {
-    errno = 0;
+    errno  = 0;
     output = 0;
   }
 
   return output;
 }
 
-int main(int argc, char const * const *argv)
+int main(int argc, char const *const *argv)
 {
   if (argc != 3)
   {
@@ -87,12 +87,13 @@ int main(int argc, char const * const *argv)
       std::cout << "False Positive for 0x" << hash.ToHex() << " bit: " << result.bits_checked
                 << " (count: " << total_hashes << ")" << std::endl;
       ++false_positives;
-      continue; // don't unduely fill up bloom
+      continue;  // don't unduely fill up bloom
     }
 
     if (result.bits_checked > bit_match_high_water_mark)
     {
-      std::cout << "High water mark update @ " << total_hashes << " value: " << result.bits_checked << std::endl;
+      std::cout << "High water mark update @ " << total_hashes << " value: " << result.bits_checked
+                << std::endl;
       bit_match_high_water_mark = result.bits_checked;
     }
 
@@ -100,7 +101,8 @@ int main(int argc, char const * const *argv)
     filter.Add(hash);
   }
 
-  std::cout << "\n\nSummary: total: " << total_hashes << " false positives: " << false_positives << std::endl;
+  std::cout << "\n\nSummary: total: " << total_hashes << " false positives: " << false_positives
+            << std::endl;
 
   return EXIT_SUCCESS;
 }

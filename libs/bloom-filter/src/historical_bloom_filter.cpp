@@ -420,7 +420,8 @@ void HistoricalBloomFilter::AddToBucket(ConstByteArray const &element, uint64_t 
  * @param bucket The specified bloom filter bucket to check
  * @return false if the element is not a match, otherwise true
  */
-BloomFilterResult HistoricalBloomFilter::MatchInBucket(ConstByteArray const &element, uint64_t bucket) const
+BloomFilterResult HistoricalBloomFilter::MatchInBucket(ConstByteArray const &element,
+                                                       uint64_t              bucket) const
 {
   // attempt to lookup the bucket in the cache
   auto const it = cache_.find(bucket);
@@ -444,7 +445,8 @@ BloomFilterResult HistoricalBloomFilter::MatchInBucket(ConstByteArray const &ele
  * @param bucket The bucket to be checked
  * @return true if successful, otherwise false
  */
-BloomFilterResult HistoricalBloomFilter::MatchInStore(ConstByteArray const &element, uint64_t bucket) const
+BloomFilterResult HistoricalBloomFilter::MatchInStore(ConstByteArray const &element,
+                                                      uint64_t              bucket) const
 {
   CacheEntry entry{};
   if (LookupBucketFromStore(bucket, entry))

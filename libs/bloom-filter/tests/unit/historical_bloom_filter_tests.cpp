@@ -30,11 +30,8 @@ constexpr std::size_t MAX_CACHED  = 1;
 class HistoricalBloomFilterTests : public ::testing::Test
 {
 protected:
-  HistoricalBloomFilter bloom_{HistoricalBloomFilter::Mode::NEW_DATABASE,
-                               "h-bloom-tests.db",
-                               "h-bloom-tests.meta.db",
-                               WINDOW_SIZE,
-                               MAX_CACHED};
+  HistoricalBloomFilter bloom_{HistoricalBloomFilter::Mode::NEW_DATABASE, "h-bloom-tests.db",
+                               "h-bloom-tests.meta.db", WINDOW_SIZE, MAX_CACHED};
 };
 
 TEST_F(HistoricalBloomFilterTests, BasicCheck)
@@ -119,11 +116,8 @@ TEST_F(HistoricalBloomFilterTests, CheckFlushingToDisk)
   // trigger the flush to disk
   bloom_.Flush();
 
-  HistoricalBloomFilter loaded{HistoricalBloomFilter::Mode::LOAD_DATABASE,
-                               "h-bloom-tests.db",
-                               "h-bloom-tests.meta.db",
-                               WINDOW_SIZE,
-                               MAX_CACHED};
+  HistoricalBloomFilter loaded{HistoricalBloomFilter::Mode::LOAD_DATABASE, "h-bloom-tests.db",
+                               "h-bloom-tests.meta.db", WINDOW_SIZE, MAX_CACHED};
 
   ASSERT_TRUE(bloom_.Match("A", 1, 1));  // this should already be in memory so it is fine
   ASSERT_TRUE(loaded.Match("A", 1, 1));  // <- actual test
@@ -136,22 +130,18 @@ TEST_F(HistoricalBloomFilterTests, DetectLoadFailure)
   // trigger the flush to disk
   bloom_.Flush();
 
-  ASSERT_THROW(
-      HistoricalBloomFilter a(HistoricalBloomFilter::Mode::LOAD_DATABASE, "h-bloom-tests.db",
-                               "h-bloom-tests.meta.db",
-                              WINDOW_SIZE + 1,  // <- the window size is different
-                              MAX_CACHED),
-      std::runtime_error);
+  ASSERT_THROW(HistoricalBloomFilter a(HistoricalBloomFilter::Mode::LOAD_DATABASE,
+                                       "h-bloom-tests.db", "h-bloom-tests.meta.db",
+                                       WINDOW_SIZE + 1,  // <- the window size is different
+                                       MAX_CACHED),
+               std::runtime_error);
 }
 
 TEST(AltHistoricalBloomFilterTests, CheckIntegrityOnReload)
 {
   // create the bloom filter
-  HistoricalBloomFilter bloom1{HistoricalBloomFilter::Mode::NEW_DATABASE,
-                               "h-bloom-tests.db",
-                               "h-bloom-tests.meta.db",
-                               10,
-                               1};
+  HistoricalBloomFilter bloom1{HistoricalBloomFilter::Mode::NEW_DATABASE, "h-bloom-tests.db",
+                               "h-bloom-tests.meta.db", 10, 1};
 
   // add the entries into the bloom filter as usual
   ASSERT_TRUE(bloom1.Add("A", 1));
@@ -174,11 +164,8 @@ TEST(AltHistoricalBloomFilterTests, CheckIntegrityOnReload)
   // simulate a crash by simply trying to restore the previous database from its current state on
   // disk. In this case, we expect the last page that was flushed to be page 2 (index range [20-30)
   // )
-  HistoricalBloomFilter bloom2{HistoricalBloomFilter::Mode::LOAD_DATABASE,
-                               "h-bloom-tests.db",
-                               "h-bloom-tests.meta.db",
-                               10,
-                               1};
+  HistoricalBloomFilter bloom2{HistoricalBloomFilter::Mode::LOAD_DATABASE, "h-bloom-tests.db",
+                               "h-bloom-tests.meta.db", 10, 1};
 
   // check the last flushed buckets
   ASSERT_EQ(bloom2.last_flushed_bucket(), 2);

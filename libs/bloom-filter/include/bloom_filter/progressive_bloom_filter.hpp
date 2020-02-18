@@ -43,9 +43,9 @@ public:
   ProgressiveBloomFilter &operator=(ProgressiveBloomFilter &&) = default;
 
   BloomFilterResult Match(fetch::byte_array::ConstByteArray const &element,
-                                     std::size_t                              element_index) const;
-  void Add(fetch::byte_array::ConstByteArray const &element, std::size_t element_index,
-           std::size_t current_head_index);
+                          std::size_t                              element_index) const;
+  void              Add(fetch::byte_array::ConstByteArray const &element, std::size_t element_index,
+                        std::size_t current_head_index);
 
   void Reset();
 

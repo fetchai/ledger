@@ -20,8 +20,8 @@
 #include "bloom_filter/bloom_filter.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/serializers/main_serializer_definition.hpp"
-#include "storage/single_object_store.hpp"
 #include "storage/fixed_size_journal.hpp"
+#include "storage/single_object_store.hpp"
 #include "telemetry/telemetry.hpp"
 
 #include <cstdint>
@@ -85,13 +85,13 @@ private:
   bool SaveBucketToStore(uint64_t bucket, CacheEntry const &entry);
   void UpdateMetadata();
 
-  std::string          store_filename_{};
-  MetadataStore        metadata_{};
-  uint64_t             window_size_{0};
-  uint64_t             heaviest_persisted_bucket_{0};
-  std::size_t          max_num_cached_buckets_{1};
-  Cache                cache_{};
-  FilterStore          store_;
+  std::string   store_filename_{};
+  MetadataStore metadata_{};
+  uint64_t      window_size_{0};
+  uint64_t      heaviest_persisted_bucket_{0};
+  std::size_t   max_num_cached_buckets_{1};
+  Cache         cache_{};
+  FilterStore   store_;
 
   // telemetry
   telemetry::CounterPtr         total_additions_;

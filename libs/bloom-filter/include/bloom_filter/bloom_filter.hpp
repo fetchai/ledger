@@ -161,7 +161,7 @@ private:
 
 struct BloomFilterResult
 {
-  bool match{false};
+  bool        match{false};
   std::size_t bits_checked{0};
 };
 

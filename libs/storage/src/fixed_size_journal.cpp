@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-//   Copyright 2018-2019 Fetch.AI Limited
+//   Copyright 2018-2020 Fetch.AI Limited
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -101,7 +101,7 @@ bool ReadFromStream(std::fstream &stream, void *buffer, std::size_t length)
 
   if (stream.fail() || stream.bad())
   {
-    stream.clear(); // reset stream flags
+    stream.clear();  // reset stream flags
     return false;
   }
 
@@ -293,7 +293,7 @@ bool FixedSizeJournalFile::Load(std::string const &filename)
   stream_.seekg(0);
   if (stream_.bad() || stream_.fail())
   {
-    stream_.clear(); // reset stream flags
+    stream_.clear();  // reset stream flags
     FETCH_LOG_ERROR(LOGGING_NAME, "Failed to perform stream seek");
     return false;
   }
@@ -318,7 +318,6 @@ bool FixedSizeJournalFile::Load(std::string const &filename)
                                           (SafeDecrement(header.num_sectors, 1u) * sector_size_) +
                                           SECTOR_HEADER_SIZE;
   uint64_t const max_expected_file_size = FILE_HEADER_SIZE + (header.num_sectors * sector_size_);
-
 
   // final check make sure that the actual file size matches the one that is written to the header
   // file.
@@ -348,19 +347,16 @@ bool FixedSizeJournalFile::Get(uint64_t sector, byte_array::ConstByteArray &buff
   // advance to the sector and read the entire sector
 #if 1
   auto const is_fail = stream_.fail();
-  auto const is_bad = stream_.bad();
-  (void) is_fail;
-  (void) is_bad;
+  auto const is_bad  = stream_.bad();
+  (void)is_fail;
+  (void)is_bad;
 
   auto const prev_pos1 = static_cast<std::streamoff>(stream_.tellg());
   auto const prev_pos2 = static_cast<std::streamoff>(stream_.tellp());
   (void)prev_pos1;
   (void)prev_pos2;
 
-
-
   auto const pos = CalculateSectorOffset(sector);
-
 
   stream_.seekg(pos);
 #else
@@ -368,7 +364,7 @@ bool FixedSizeJournalFile::Get(uint64_t sector, byte_array::ConstByteArray &buff
 #endif
   if (stream_.bad() || stream_.fail())
   {
-    stream_.clear(); // reset stream flags
+    stream_.clear();  // reset stream flags
     FETCH_LOG_DEBUG(LOGGING_NAME, "Failed to perform stream seek");
     return false;
   }
@@ -416,7 +412,7 @@ bool FixedSizeJournalFile::Set(uint64_t sector, byte_array::ConstByteArray const
   stream_.seekp(CalculateSectorOffset(sector));
   if (stream_.bad() || stream_.fail())
   {
-    stream_.clear(); // reset stream flags
+    stream_.clear();  // reset stream flags
     FETCH_LOG_ERROR(LOGGING_NAME, "Failed to perform stream seek");
     return false;
   }
@@ -461,7 +457,7 @@ bool FixedSizeJournalFile::Clear(std::string const &filename)
   bool const success = stream_.is_open() && !(stream_.bad() || stream_.fail());
   if (!success)
   {
-    stream_.clear(); // reset stream flags
+    stream_.clear();  // reset stream flags
     FETCH_LOG_ERROR(LOGGING_NAME, "Failed to open requested file");
     return false;
   }
@@ -481,7 +477,7 @@ bool FixedSizeJournalFile::InternalFlush()
   stream_.seekg(0);
   if (stream_.bad() || stream_.fail())
   {
-    stream_.clear(); // reset stream flags
+    stream_.clear();  // reset stream flags
     FETCH_LOG_ERROR(LOGGING_NAME, "Failed to perform stream seek");
     return false;
   }
@@ -502,7 +498,7 @@ bool FixedSizeJournalFile::InternalFlush()
   stream_.flush();
   if (stream_.bad() || stream_.fail())
   {
-    stream_.clear(); // reset stream flags
+    stream_.clear();  // reset stream flags
     FETCH_LOG_ERROR(LOGGING_NAME, "Failed to flush file header to the stream");
     return false;
   }
