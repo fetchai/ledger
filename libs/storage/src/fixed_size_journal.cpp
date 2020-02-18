@@ -474,7 +474,7 @@ bool FixedSizeJournalFile::Clear(std::string const &filename)
     return false;
   }
 
-  // perform a flush, this will make sure that the
+  // perform a flush, this will make sure that the header is correctly populated
   return InternalFlush();
 }
 
