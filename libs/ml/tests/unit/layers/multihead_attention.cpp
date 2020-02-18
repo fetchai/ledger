@@ -62,6 +62,7 @@ TYPED_TEST(MultiheadAttention, input_output_dimension_check)  // Use the class a
   g.SetInput(key, key_data);
   g.SetInput(value, value_data);
   g.SetInput(mask, mask_data);
+  g.Compile();
 
   TypeParam prediction = g.Evaluate("MultiheadAttention", false);
   ASSERT_EQ(prediction.shape().size(), 3);

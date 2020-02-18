@@ -75,7 +75,7 @@ public:
 
   OpPtrType MakeSharedCopy(OpPtrType me) override;
 
-  void CompleteConstruction() override;
+  void CompleteShapeDeduction() override;
 
   OperationsCount ChargeForward() const override;
   OperationsCount ChargeBackward() const override;

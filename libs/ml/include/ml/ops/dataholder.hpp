@@ -89,7 +89,7 @@ public:
   OperationsCount ChargeBackward() const override;
 
 protected:
-  TensorPtrType data_;
+  TensorPtrType data_ = std::make_shared<TensorType>();
 };
 
 }  // namespace ops
