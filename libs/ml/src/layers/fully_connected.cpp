@@ -269,13 +269,12 @@ OperationsCount FullyConnected<TensorType>::ChargeCompile()
   op_cnt += fetch::ml::ops::Weights<TensorType>::ChargeInitialise(weights_data_shape);
   std::vector<SizeType> bias_data_shape = this->batch_output_shape_;
 
-  // this->SetInput(weights_name_, weights_data);
-  // this->SetInput(bias_name_, bias_data);
-
+  // SetInput weights
   auto weights_dataholder = std::dynamic_pointer_cast<ops::DataHolder<TensorType>>(
       this->nodes_.at(weights_name_)->GetOp());
   op_cnt += weights_dataholder->ChargeSetData(weights_data_shape);
 
+  // SetInput biases
   auto bias_dataholder =
       std::dynamic_pointer_cast<ops::DataHolder<TensorType>>(this->nodes_.at(bias_name_)->GetOp());
   op_cnt += bias_dataholder->ChargeSetData(bias_data_shape);
