@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "math/matrix_operations.hpp"
+#include "ml/charge_estimation/ops/constants.hpp"
 #include "ml/ops/flatten.hpp"
 #include "ml/saveparams/saveable_params.hpp"
 
@@ -133,7 +134,7 @@ OperationsCount Flatten<TensorType>::ChargeBackward() const
 template <class TensorType>
 OperationsCount Flatten<TensorType>::ChargeConstruct()
 {
-  return 1;
+  return charge_estimation::ops::OP_DEFAULT_CONSTRUCTION_COST;
 }
 
 ///////////////////////////////

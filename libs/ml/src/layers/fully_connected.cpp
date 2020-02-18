@@ -16,6 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ml/charge_estimation/layers/constants.hpp"
 #include "ml/layers/fully_connected.hpp"
 #include "ml/meta/ml_type_traits.hpp"
 #include "ml/ops/add.hpp"
@@ -180,31 +181,25 @@ OperationsCount FullyConnected<TensorType>::ChargeCompleteShapeDeduction(bool   
 
   if (is_initialised)
   {
-    return 1;
+    return op_cnt;
   }
-
-  // SetBatchInputShapes, SetBatchOutputShape
-  op_cnt += 2;
 
   if (total_inputs == AUTODETECT_INPUTS_COUNT)
   {
     if (time_distributed)
     {
       // total_inputs_ = this->batch_input_shapes_.front().at(0);
-      op_cnt += 1;
+      op_cnt += charge_estimation::layers::FULLY_CONNECTED_SHAPE_DEDUCTION_TIME_DISTRIBUTED;
     }
     else
     {
-      // FindNodeByOpCode
-      op_cnt += 4;
-
-      // ops::Flatten<TensorType>::ComputeBatchOutputShape();
-      op_cnt += 1;
+      // FindNodeByOpCode, ops::Flatten<TensorType>::ComputeBatchOutputShape();
+      op_cnt += charge_estimation::layers::FULLY_CONNECTED_SHAPE_DEDUCTION_NON_TIME_DISTRIBUTED;
     }
   }
 
-  // 2 x SetBatchOutputShape, is_initialised=true
-  op_cnt += 3;
+  // 3 x SetBatchOutputShape, SetBatchInputShapes, is_initialised=true
+  op_cnt += charge_estimation::layers::FULLY_CONNECTED_SHAPE_DEDUCTION;
 
   return op_cnt;
 }
@@ -221,9 +216,6 @@ OperationsCount FullyConnected<TensorType>::ChargeConstruct(
   using namespace fetch::ml::details;
 
   OperationsCount op_cnt{1};
-
-  // get correct name for the layer
-  op_cnt++;
 
   // start to set up the structure
   op_cnt += PlaceHolder<TensorType>::ChargeConstruct();
@@ -249,20 +241,14 @@ OperationsCount FullyConnected<TensorType>::ChargeConstruct(
   // AddActivation
   op_cnt += GetActivationCharge<TensorType>(activation_type);
 
-  // SetRegularisation
-  op_cnt += 1;  // Should be number of nodes in a graph
-
-  // AddInputNode, SetOutputNode
-  op_cnt += 2;
+  // get correct name for the layer, SetRegularisation,  AddInputNode, SetOutputNode
+  op_cnt += charge_estimation::layers::FULLY_CONNECTED_CHARGE_CONSTRUCT;
 
   // If inputs count is known, the initialisation can be completed immediately.
   if (in != AUTODETECT_INPUTS_COUNT)
   {
-    // Set batch_input_shapes_
-    op_cnt += 1;
-
-    // ComputeBatchOutputShape
-    op_cnt += 4;
+    // Set batch_input_shapes_, ComputeBatchOutputShape
+    op_cnt += charge_estimation::layers::FULLY_CONNECTED_CHARGE_CONSTRUCT_NOT_AUTODETECT;
 
     op_cnt += ChargeCompleteShapeDeduction(false, init_mode, time_distributed, in);
   }
@@ -294,7 +280,8 @@ OperationsCount FullyConnected<TensorType>::ChargeCompile()
   op_cnt += bias_dataholder->ChargeSetData(bias_data_shape);
 
   // ResetGraphCache for weights and biases
-  op_cnt += 2 * this->nodes_.size();
+  op_cnt +=
+      charge_estimation::layers::FULLY_CONNECTED_CHARGE_COMPILE_PER_NODE * this->nodes_.size();
 
   op_cnt += Graph<TensorType>::ChargeCompile();
   return op_cnt;

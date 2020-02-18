@@ -16,6 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ml/charge_estimation/ops/constants.hpp"
 #include "ml/ops/dataholder.hpp"
 #include "ml/saveparams/saveable_params.hpp"
 
@@ -113,7 +114,7 @@ OperationsCount DataHolder<TensorType>::ChargeBackward() const
 template <typename TensorType>
 OperationsCount DataHolder<TensorType>::ChargeConstruct()
 {
-  return 1;
+  return charge_estimation::ops::OP_DEFAULT_CONSTRUCTION_COST;
 }
 
 template <typename TensorType>

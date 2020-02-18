@@ -124,7 +124,8 @@ static constexpr OperationsCount SQRT_BACKWARD_PER_ELEMENT =
 static constexpr OperationsCount TANH_BACKWARD_PER_ELEMENT =
     TANH_PER_ELEMENT + 2 * MULTIPLICATION_PER_ELEMENT + SUBTRACTION_PER_ELEMENT;
 
-static constexpr OperationsCount OP_DEFAULT_CONSTRUCTION_COST = 1;
+static constexpr OperationsCount OP_DEFAULT_CONSTRUCTION_COST         = 1;
+static constexpr OperationsCount OP_MATRIX_MULTIPLY_CONSTRUCTION_COST = 3;
 
 }  // namespace ops
 }  // namespace charge_estimation
