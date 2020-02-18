@@ -16,6 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ml/charge_estimation/constants.hpp"
 #include "ml/model/model.hpp"
 #include "ml/ops/loss_functions/cross_entropy_loss.hpp"
 #include "ml/ops/loss_functions/mean_square_error_loss.hpp"
@@ -537,11 +538,11 @@ OperationsCount Model<TensorType>::ChargeCompile(OptimiserType                  
     }
     }
     // set optimiser flag
-    op_cnt += 1;
+    op_cnt += charge_estimation::SET_BOOL_FLAG;
   }
 
   // set compiled flag
-  op_cnt += 1;
+  op_cnt += charge_estimation::SET_BOOL_FLAG;
 
   return op_cnt;
 }
