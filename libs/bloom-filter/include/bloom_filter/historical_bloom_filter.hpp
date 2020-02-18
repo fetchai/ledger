@@ -22,6 +22,7 @@
 #include "core/serializers/main_serializer_definition.hpp"
 #include "storage/single_object_store.hpp"
 #include "storage/fixed_size_journal.hpp"
+#include "telemetry/telemetry.hpp"
 
 #include <cstdint>
 #include <unordered_map>
@@ -40,7 +41,7 @@ public:
     BasicBloomFilterPtr filter{};
     bool                dirty{false};
 
-    bool Match(ConstByteArray const &element) const;
+    BloomFilterResult Match(ConstByteArray const &element) const;
   };
 
   enum class Mode
@@ -76,8 +77,9 @@ private:
 
   uint64_t ToBucket(uint64_t index) const;
   void     AddToBucket(ConstByteArray const &element, uint64_t bucket);
-  bool     MatchInBucket(ConstByteArray const &element, uint64_t bucket) const;
-  bool     MatchInStore(ConstByteArray const &element, uint64_t bucket) const;
+
+  BloomFilterResult MatchInBucket(ConstByteArray const &element, uint64_t bucket) const;
+  BloomFilterResult MatchInStore(ConstByteArray const &element, uint64_t bucket) const;
 
   bool LookupBucketFromStore(uint64_t bucket, CacheEntry &entry) const;
   bool SaveBucketToStore(uint64_t bucket, CacheEntry const &entry);
@@ -90,6 +92,13 @@ private:
   std::size_t          max_num_cached_buckets_{1};
   Cache                cache_{};
   FilterStore          store_;
+
+  // telemetry
+  telemetry::CounterPtr         total_additions_;
+  telemetry::CounterPtr         total_positive_matches_;
+  telemetry::CounterPtr         total_negative_matches_;
+  telemetry::GaugePtr<uint64_t> last_bloom_filter_level_;
+  telemetry::GaugePtr<uint64_t> max_bloom_filter_level_;
 };
 
 inline uint64_t HistoricalBloomFilter::last_flushed_bucket() const

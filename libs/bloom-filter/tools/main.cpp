@@ -82,18 +82,18 @@ int main(int argc, char const * const *argv)
     // check the bloom filter
     auto const result = filter.Match(hash);
 
-    if (result.first)
+    if (result.match)
     {
-      std::cout << "False Positive for 0x" << hash.ToHex() << " bit: " << result.second
+      std::cout << "False Positive for 0x" << hash.ToHex() << " bit: " << result.bits_checked
                 << " (count: " << total_hashes << ")" << std::endl;
       ++false_positives;
       continue; // don't unduely fill up bloom
     }
 
-    if (result.second > bit_match_high_water_mark)
+    if (result.bits_checked > bit_match_high_water_mark)
     {
-      std::cout << "High water mark update @ " << total_hashes << " value: " << result.second << std::endl;
-      bit_match_high_water_mark = result.second;
+      std::cout << "High water mark update @ " << total_hashes << " value: " << result.bits_checked << std::endl;
+      bit_match_high_water_mark = result.bits_checked;
     }
 
     // add the hash to the filter

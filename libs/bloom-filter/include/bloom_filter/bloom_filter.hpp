@@ -159,6 +159,12 @@ private:
 
 }  // namespace internal
 
+struct BloomFilterResult
+{
+  bool match{false};
+  std::size_t bits_checked{0};
+};
+
 class BasicBloomFilter
 {
 public:
@@ -192,7 +198,7 @@ public:
    * returned. The latter number will increase as the filter's performance
    * degrades.
    */
-  std::pair<bool, std::size_t> Match(fetch::byte_array::ConstByteArray const &element) const;
+  BloomFilterResult Match(fetch::byte_array::ConstByteArray const &element) const;
 
   /*
    * Set the bits of the Bloom filter corresponding to the argument

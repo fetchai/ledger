@@ -32,7 +32,6 @@ class HistoricalBloomFilterTests : public ::testing::Test
 protected:
   HistoricalBloomFilter bloom_{HistoricalBloomFilter::Mode::NEW_DATABASE,
                                "h-bloom-tests.db",
-                               "h-bloom-tests.index.db",
                                "h-bloom-tests.meta.db",
                                WINDOW_SIZE,
                                MAX_CACHED};
@@ -122,7 +121,6 @@ TEST_F(HistoricalBloomFilterTests, CheckFlushingToDisk)
 
   HistoricalBloomFilter loaded{HistoricalBloomFilter::Mode::LOAD_DATABASE,
                                "h-bloom-tests.db",
-                               "h-bloom-tests.index.db",
                                "h-bloom-tests.meta.db",
                                WINDOW_SIZE,
                                MAX_CACHED};
@@ -140,7 +138,7 @@ TEST_F(HistoricalBloomFilterTests, DetectLoadFailure)
 
   ASSERT_THROW(
       HistoricalBloomFilter a(HistoricalBloomFilter::Mode::LOAD_DATABASE, "h-bloom-tests.db",
-                              "h-bloom-tests.index.db", "h-bloom-tests.meta.db",
+                               "h-bloom-tests.meta.db",
                               WINDOW_SIZE + 1,  // <- the window size is different
                               MAX_CACHED),
       std::runtime_error);
@@ -151,7 +149,6 @@ TEST(AltHistoricalBloomFilterTests, CheckIntegrityOnReload)
   // create the bloom filter
   HistoricalBloomFilter bloom1{HistoricalBloomFilter::Mode::NEW_DATABASE,
                                "h-bloom-tests.db",
-                               "h-bloom-tests.index.db",
                                "h-bloom-tests.meta.db",
                                10,
                                1};
@@ -179,7 +176,6 @@ TEST(AltHistoricalBloomFilterTests, CheckIntegrityOnReload)
   // )
   HistoricalBloomFilter bloom2{HistoricalBloomFilter::Mode::LOAD_DATABASE,
                                "h-bloom-tests.db",
-                               "h-bloom-tests.index.db",
                                "h-bloom-tests.meta.db",
                                10,
                                1};

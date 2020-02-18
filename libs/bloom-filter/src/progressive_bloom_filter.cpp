@@ -32,7 +32,7 @@ ProgressiveBloomFilter::ProgressiveBloomFilter(uint64_t const overlap)
   : overlap_{overlap}
 {}
 
-std::pair<bool, std::size_t> ProgressiveBloomFilter::Match(
+BloomFilterResult ProgressiveBloomFilter::Match(
     fetch::byte_array::ConstByteArray const &element, std::size_t element_index) const
 {
   if (!IsInCurrentRange(element_index))

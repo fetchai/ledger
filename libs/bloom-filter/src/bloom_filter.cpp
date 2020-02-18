@@ -174,7 +174,7 @@ BasicBloomFilter::BasicBloomFilter(Functions const &functions, std::size_t filte
   , hash_source_factory_(functions)
 {}
 
-std::pair<bool, std::size_t> BasicBloomFilter::Match(
+BloomFilterResult BasicBloomFilter::Match(
     fetch::byte_array::ConstByteArray const &element) const
 {
   auto const  source       = hash_source_factory_(element);

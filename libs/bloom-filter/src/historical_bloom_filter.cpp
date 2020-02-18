@@ -20,6 +20,9 @@
 #include "core/byte_array/byte_array.hpp"
 #include "core/containers/is_in.hpp"
 #include "core/serializers/main_serializer.hpp"
+#include "telemetry/counter.hpp"
+#include "telemetry/gauge.hpp"
+#include "telemetry/registry.hpp"
 
 #include <set>
 
@@ -90,11 +93,14 @@ public:
 namespace bloom {
 namespace {
 
+using telemetry::Registry;
+
 struct BloomFilterMetadata
 {
   uint64_t window_size;
   uint64_t last_bucket;
 };
+
 static_assert(meta::IsPOD<BloomFilterMetadata>, "Metadata must be POD");
 
 constexpr char const *LOGGING_NAME = "HBloomFilter";
@@ -145,6 +151,20 @@ HistoricalBloomFilter::HistoricalBloomFilter(Mode mode, char const *store_path,
   , window_size_{window_size}
   , max_num_cached_buckets_{max_num_cached_buckets}
   , store_{STORAGE_SECTOR_SIZE}
+  , total_additions_{Registry::Instance().CreateCounter(
+        "ledger_hbloom_additions_total", "The total number of entries added to the bloom filter")}
+  , total_positive_matches_{Registry::Instance().CreateCounter(
+        "ledger_hbloom_positive_matches_total",
+        "The total number of positive matches items in the bloom filter")}
+  , total_negative_matches_{Registry::Instance().CreateCounter(
+        "ledger_hbloom_negative_matches_total",
+        "The total number of negative matches items in the bloom filter")}
+  , last_bloom_filter_level_{Registry::Instance().CreateGauge<uint64_t>(
+        "ledger_hbloom_last_fill_level",
+        "The last number of bits that was checked to find a match")}
+  , max_bloom_filter_level_{Registry::Instance().CreateGauge<uint64_t>(
+        "ledger_hbloom_max_fill_level",
+        "The current maximum number of bits that have been searched to find a positive result")}
 {
   metadata_.Load(metadata_path);
 
@@ -236,6 +256,8 @@ bool HistoricalBloomFilter::Add(ConstByteArray const &element, uint64_t index)
   // finally add the element to the bucket
   AddToBucket(element, bucket);
 
+  total_additions_->increment();
+
   return true;
 }
 
@@ -253,13 +275,28 @@ bool HistoricalBloomFilter::Match(ConstByteArray const &element, uint64_t minimu
   bool is_match{false};
 
   // iterate over all the buckets to which this element can apply
-  for (uint64_t bucket = ToBucket(minimum_index), last_bucket = ToBucket(maximum_index);
-       bucket <= last_bucket; ++bucket)
+  uint64_t const first_bucket = ToBucket(minimum_index);
+  uint64_t const last_bucket  = ToBucket(maximum_index);
+  uint64_t const delta_bucket = (last_bucket - first_bucket) + 1;
+
+  for (uint64_t idx = 0; idx < delta_bucket; ++idx)
   {
-    if (MatchInBucket(element, bucket))
+    // search backwards
+    uint64_t const bucket = last_bucket - idx;
+
+    auto const result = MatchInBucket(element, bucket);
+    if (result.match)
     {
       is_match = true;
+
+      total_positive_matches_->increment();
+      max_bloom_filter_level_->max(result.bits_checked);
+      last_bloom_filter_level_->set(result.bits_checked);
       break;
+    }
+    else
+    {
+      total_negative_matches_->increment();
     }
   }
 
@@ -383,25 +420,21 @@ void HistoricalBloomFilter::AddToBucket(ConstByteArray const &element, uint64_t 
  * @param bucket The specified bloom filter bucket to check
  * @return false if the element is not a match, otherwise true
  */
-bool HistoricalBloomFilter::MatchInBucket(ConstByteArray const &element, uint64_t bucket) const
+BloomFilterResult HistoricalBloomFilter::MatchInBucket(ConstByteArray const &element, uint64_t bucket) const
 {
-  bool is_match{false};
-
   // attempt to lookup the bucket in the cache
   auto const it = cache_.find(bucket);
   if (it != cache_.end())
   {
     // match the element against the one that is stored in memory
-    is_match = it->second.Match(element);
+    return it->second.Match(element);
   }
   else
   {
     // only if we have a cache miss on the historical bloom filter do we need to check the
     // persistent bloom filter
-    is_match = MatchInStore(element, bucket);
+    return MatchInStore(element, bucket);
   }
-
-  return is_match;
 }
 
 /**
@@ -411,17 +444,15 @@ bool HistoricalBloomFilter::MatchInBucket(ConstByteArray const &element, uint64_
  * @param bucket The bucket to be checked
  * @return true if successful, otherwise false
  */
-bool HistoricalBloomFilter::MatchInStore(ConstByteArray const &element, uint64_t bucket) const
+BloomFilterResult HistoricalBloomFilter::MatchInStore(ConstByteArray const &element, uint64_t bucket) const
 {
-  bool is_match{false};
-
   CacheEntry entry{};
   if (LookupBucketFromStore(bucket, entry))
   {
-    is_match = entry.Match(element);
+    return entry.Match(element);
   }
 
-  return is_match;
+  return {false, 0};
 }
 
 /**
@@ -544,14 +575,14 @@ void HistoricalBloomFilter::UpdateMetadata()
  * @param element The element to be matched
  * @return true if a valid value, otherwise false
  */
-bool HistoricalBloomFilter::CacheEntry::Match(ConstByteArray const &element) const
+BloomFilterResult HistoricalBloomFilter::CacheEntry::Match(ConstByteArray const &element) const
 {
   if (filter)
   {
-    return filter->Match(element).first;
+    return filter->Match(element);
   }
 
-  return false;
+  return {false, 0};
 }
 
 }  // namespace bloom
