@@ -17,8 +17,8 @@
 //------------------------------------------------------------------------------
 
 #include "core/macros.hpp"
+#include "http/http_server.hpp"
 #include "http/middleware/allow_origin.hpp"
-#include "http/server.hpp"
 
 #include <string>
 
