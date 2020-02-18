@@ -97,6 +97,8 @@ private:
   telemetry::CounterPtr         total_additions_;
   telemetry::CounterPtr         total_positive_matches_;
   telemetry::CounterPtr         total_negative_matches_;
+  telemetry::CounterPtr         total_save_failures_;
+  telemetry::GaugePtr<uint64_t> num_pages_in_memory_;
   telemetry::GaugePtr<uint64_t> last_bloom_filter_level_;
   telemetry::GaugePtr<uint64_t> max_bloom_filter_level_;
 };

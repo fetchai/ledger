@@ -131,6 +131,10 @@ bool WriteToStream(std::fstream &stream, void const *buffer, std::size_t length)
 
 bool ReadFileHeader(std::fstream &stream, FileHeader &header)
 {
+  static_assert(FILE_HEADER_SIZE == 26, "ReadFileHeader only supports 26 byte file header");
+  static_assert(sizeof(FileHeader) == 24,
+                "FileHeader size appears to have changed from when this implementation was made");
+
   std::array<uint8_t, FILE_HEADER_SIZE> buffer{};
   if (!ReadFromStream(stream, buffer.data(), buffer.size()))
   {
@@ -155,6 +159,10 @@ bool ReadFileHeader(std::fstream &stream, FileHeader &header)
 
 bool WriteFileHeader(std::fstream &stream, FileHeader const &header)
 {
+  static_assert(FILE_HEADER_SIZE == 26, "WriteFileHeader only supports 26 byte file header");
+  static_assert(sizeof(FileHeader) == 24,
+                "FileHeader size appears to have changed from when this implementation was made");
+
   // populate the header buffer
   std::array<uint8_t, FILE_HEADER_SIZE> buffer{};
   WriteBigEndian(&buffer[0], FILE_MAGIC);           // (8)
@@ -174,6 +182,10 @@ bool WriteFileHeader(std::fstream &stream, FileHeader const &header)
  */
 bool ReadSectorHeader(std::fstream &stream, uint64_t &data_size)
 {
+  static_assert(SECTOR_HEADER_SIZE == 9, "ReadSectorHeader only supports 9 byte file header");
+  static_assert(sizeof(data_size) == 8,
+                "ReadSectorHeader payload appears to be a different size for the implementation");
+
   std::array<uint8_t, SECTOR_HEADER_SIZE> buffer{};
   if (!ReadFromStream(stream, buffer.data(), buffer.size()))
   {
@@ -204,6 +216,10 @@ bool ReadSectorHeader(std::fstream &stream, uint64_t &data_size)
  */
 bool WriteSectorHeader(std::fstream &stream, uint64_t data_size)
 {
+  static_assert(SECTOR_HEADER_SIZE == 9, "WriteSectorHeader only supports 9 byte file header");
+  static_assert(sizeof(data_size) == 8,
+                "WriteSectorHeader payload appears to be a different size for the implementation");
+
   // populate the buffer
   std::array<uint8_t, SECTOR_HEADER_SIZE> buffer{};
 
@@ -345,23 +361,7 @@ bool FixedSizeJournalFile::Get(uint64_t sector, byte_array::ConstByteArray &buff
   FETCH_LOCK(lock_);
 
   // advance to the sector and read the entire sector
-#if 1
-  auto const is_fail = stream_.fail();
-  auto const is_bad  = stream_.bad();
-  (void)is_fail;
-  (void)is_bad;
-
-  auto const prev_pos1 = static_cast<std::streamoff>(stream_.tellg());
-  auto const prev_pos2 = static_cast<std::streamoff>(stream_.tellp());
-  (void)prev_pos1;
-  (void)prev_pos2;
-
-  auto const pos = CalculateSectorOffset(sector);
-
-  stream_.seekg(pos);
-#else
   stream_.seekg(CalculateSectorOffset(sector));
-#endif
   if (stream_.bad() || stream_.fail())
   {
     stream_.clear();  // reset stream flags
@@ -405,6 +405,7 @@ bool FixedSizeJournalFile::Set(uint64_t sector, byte_array::ConstByteArray const
   // ensure that we can save this much data
   if (buffer.size() > max_sector_data_size_)
   {
+    FETCH_LOG_ERROR(LOGGING_NAME, "Buffer too large for configured sector size");
     return false;
   }
 
@@ -449,9 +450,20 @@ bool FixedSizeJournalFile::Flush()
   return InternalFlush();
 }
 
+/**
+ * Internal: Delete the contents of the file and clean it down to zero again
+ *
+ * @note Thread safety is the prerogative of the caller
+ *
+ * @param filename The filename to be reset
+ * @return true if successful, otherwise false
+ */
 bool FixedSizeJournalFile::Clear(std::string const &filename)
 {
   stream_.open(filename.c_str(), std::ios::in | std::ios::out | std::ios::binary | std::ios::trunc);
+
+  // ensure that the total sectors is correctly reset too
+  total_sectors_ = 0;
 
   // check to see if the open was successful
   bool const success = stream_.is_open() && !(stream_.bad() || stream_.fail());

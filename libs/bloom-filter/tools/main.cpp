@@ -53,7 +53,7 @@ int main(int argc, char const *const *argv)
 {
   if (argc != 3)
   {
-    std::cerr << "Usage: bloom-tool <filter size> <hashes file>" << std::endl;
+    std::cerr << "Usage: bloom-tool <filter bit size> <hashes file>" << std::endl;
     return EXIT_FAILURE;
   }
 

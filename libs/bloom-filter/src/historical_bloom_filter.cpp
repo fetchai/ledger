@@ -106,7 +106,10 @@ static_assert(meta::IsPOD<BloomFilterMetadata>, "Metadata must be POD");
 constexpr char const *LOGGING_NAME = "HBloomFilter";
 
 constexpr std::size_t BLOOM_FILTER_SIZE = 160 * 8 * 1024 * 1024;
-constexpr uint64_t STORAGE_SECTOR_SIZE  = BLOOM_FILTER_SIZE + (BLOOM_FILTER_SIZE >> 3);  // 112.5 %
+
+// this number is vague adjustment to allow room for current and future serialisation over head
+// on the filter. This is, therefore is not a strictly derived value
+constexpr uint64_t STORAGE_SECTOR_SIZE = BLOOM_FILTER_SIZE + (BLOOM_FILTER_SIZE >> 3);  // 112.5 %
 
 /**
  * Generate a order array of the keys of the input map
@@ -159,6 +162,10 @@ HistoricalBloomFilter::HistoricalBloomFilter(Mode mode, char const *store_path,
   , total_negative_matches_{Registry::Instance().CreateCounter(
         "ledger_hbloom_negative_matches_total",
         "The total number of negative matches items in the bloom filter")}
+  , total_save_failures_{Registry::Instance().CreateCounter(
+        "ledger_hbloom_save_failures_total", "The total number of bucket save failures")}
+  , num_pages_in_memory_{Registry::Instance().CreateGauge<uint64_t>(
+        "ledger_hbloom_cached_pages", "The total number of bloom filter entries in memory")}
   , last_bloom_filter_level_{Registry::Instance().CreateGauge<uint64_t>(
         "ledger_hbloom_last_fill_level",
         "The last number of bits that was checked to find a match")}
@@ -332,6 +339,8 @@ std::size_t HistoricalBloomFilter::TrimCache()
         {
           // can't flush the page to disk, for saftey keep the page in memory
           FETCH_LOG_ERROR(LOGGING_NAME, "Unable to flush bucket: ", it->first, " to disk");
+
+          total_save_failures_->increment();
           continue;
         }
 
@@ -351,6 +360,8 @@ std::size_t HistoricalBloomFilter::TrimCache()
     UpdateMetadata();
     store_.Flush();
   }
+
+  num_pages_in_memory_->set(cache_.size());
 
   return pages_flushed;
 }
@@ -515,6 +526,7 @@ bool HistoricalBloomFilter::SaveBucketToStore(uint64_t bucket, CacheEntry const 
   catch (std::exception const &ex)
   {
     FETCH_LOG_ERROR(LOGGING_NAME, "Error serialising bloom filter entry: ", ex.what());
+    return false;
   }
 
   // store the bloom filter into the bucket
