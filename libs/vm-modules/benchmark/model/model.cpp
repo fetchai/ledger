@@ -159,6 +159,8 @@ struct BM_AddLayer_config
 
 void BM_AddLayer(::benchmark::State &state)
 {
+  fetch::SetGlobalLogLevel(fetch::LogLevel::ERROR);
+
   for (auto _ : state)
   {
     state.PauseTiming();
@@ -235,6 +237,8 @@ struct BM_AddConvLayer_config
 
 void BM_AddConvLayer(::benchmark::State &state)
 {
+  fetch::SetGlobalLogLevel(fetch::LogLevel::ERROR);
+
   for (auto _ : state)
   {
     state.PauseTiming();
@@ -322,6 +326,8 @@ struct BM_Conv_config
 
 void BM_ConvLayer(::benchmark::State &state)
 {
+  fetch::SetGlobalLogLevel(fetch::LogLevel::ERROR);
+
   // Get config
   BM_Conv_config config{state};
 
@@ -414,6 +420,8 @@ struct BM_Predict_config
 
 void BM_Predict(::benchmark::State &state)
 {
+  fetch::SetGlobalLogLevel(fetch::LogLevel::ERROR);
+
   // Get args form state
   BM_Predict_config config{state};
 
@@ -620,6 +628,7 @@ struct BM_Compile_config
 
 void BM_Compile(::benchmark::State &state)
 {
+  fetch::SetGlobalLogLevel(fetch::LogLevel::ERROR);
 
   for (auto _ : state)
   {
@@ -890,6 +899,8 @@ struct BM_Activation_config
 
 void BM_Activation(::benchmark::State &state)
 {
+  fetch::SetGlobalLogLevel(fetch::LogLevel::ERROR);
+
   // Get config
   BM_Activation_config config{state};
 
@@ -984,6 +995,8 @@ struct BM_AddActivation_config
 
 void BM_AddActivation(::benchmark::State &state)
 {
+  fetch::SetGlobalLogLevel(fetch::LogLevel::ERROR);
+
   // Get config
   BM_AddActivation_config config{state};
 
@@ -1046,6 +1059,8 @@ struct BM_SerializeToString_config
 
 void BM_SerializeToString(::benchmark::State &state)
 {
+  fetch::SetGlobalLogLevel(fetch::LogLevel::ERROR);
+
   // Get args form state
   BM_SerializeToString_config config{state};
 
@@ -1124,6 +1139,8 @@ BENCHMARK(BM_SerializeToString)->Args({3, 1, 100000, 0, 0})->Unit(::benchmark::k
 
 void BM_DeserializeFromString(::benchmark::State &state)
 {
+  fetch::SetGlobalLogLevel(fetch::LogLevel::ERROR);
+
   // Get args form state
   BM_SerializeToString_config config{state};
 
