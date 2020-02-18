@@ -52,20 +52,20 @@ typename TensorDataLoader<TensorType>::ReturnType TensorDataLoader<TensorType>::
 template <typename TensorType>
 OperationsCount TensorDataLoader<TensorType>::ChargeGetNext()
 {
-  OperationsCount cost = 1;
-  for (auto it : one_sample_label_shape_)
-  {
-    cost *= it;
-  }
-  OperationsCount data_cost = 1;
+  OperationsCount cost = 0;
+  // cost for copying the labels array
+  OperationsCount labels_copy_cost = math::Product(one_sample_label_shape_);
+  cost += labels_copy_cost;
+
+  // cost for copying the data array
+  OperationsCount data_copy_cost = 0;
   for (auto it : one_sample_data_shapes_)
   {
-    for (auto it2 : it)
-    {
-      data_cost *= it2;
-    }
+    data_copy_cost += math::Product(it);
   }
-  cost += data_cost;
+  cost += data_copy_cost;
+
+  // cost for updating cursor
   cost += 5;
   return cost;
 }
@@ -104,14 +104,20 @@ template <typename TensorType>
 OperationsCount TensorDataLoader<TensorType>::ChargeAddData(const std::vector<TensorType> &data,
                                                             const TensorType &             labels)
 {
-  OperationsCount cost = data.size();
-  cost += TensorType::PaddedSizeFromShape(labels.shape());
+  OperationsCount cost = 2;  // setting one_sample_label_shape
+  cost += 4;                 // resizing data vector
+  OperationsCount label_copy_cost = TensorType::PaddedSizeFromShape(labels.shape());
+  cost += label_copy_cost;
+
+  cost += data.size();  // loop cost
   for (SizeType i{0}; i < data.size(); i++)
   {
-    cost += TensorType::PaddedSizeFromShape(data.at(i).shape());
-    cost += data.at(i).shape().size();
+    cost += TensorType::PaddedSizeFromShape(data.at(i).shape());  // copying data cost
+    cost += data.at(i).shape().size();                            // copying data shape cost
   }
-  cost += 50;
+  cost += 7;  // n_samples cost
+
+  cost += 32;  // count of operations in UpdateRanges and UpdateCursor
   return cost;
 }
 
@@ -135,6 +141,7 @@ bool TensorDataLoader<TensorType>::IsDone() const
 template <typename TensorType>
 OperationsCount TensorDataLoader<TensorType>::ChargeIsDone() const
 {
+  // cost for checking count_ is estimated as 3
   return 3;
 }
 

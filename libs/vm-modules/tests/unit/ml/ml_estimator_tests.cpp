@@ -18,10 +18,6 @@
 
 #include "vm_test_toolkit.hpp"
 
-#include "vm_modules/math/tensor/tensor.hpp"
-#include "vm_modules/math/type.hpp"
-#include "vm_modules/ml/dataloaders/dataloader.hpp"
-
 #include "gmock/gmock.h"
 
 namespace {
@@ -49,18 +45,6 @@ TEST_F(VMMLEstimatorTests, vmgraph_constructor_have_infinite_charge)
 
   EXPECT_TRUE(toolkit.Compile(TEXT));
   EXPECT_FALSE(toolkit.Run());
-}
-
-TEST_F(VMMLEstimatorTests, vmdataloader_constructor_not_infinite_charge)
-{
-  static constexpr char const *TEXT = R"(
-    function main()
-      var data_loader = DataLoader("tensor");
-    endfunction
-  )";
-
-  EXPECT_TRUE(toolkit.Compile(TEXT)) << stdout.str();
-  EXPECT_TRUE(toolkit.Run());
 }
 
 TEST_F(VMMLEstimatorTests, vmscaler_constructor_have_infinite_charge)
