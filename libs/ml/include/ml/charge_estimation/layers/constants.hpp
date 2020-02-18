@@ -33,6 +33,9 @@ static constexpr OperationsCount FULLY_CONNECTED_CHARGE_CONSTRUCT_NOT_AUTODETECT
 
 static constexpr OperationsCount FULLY_CONNECTED_CHARGE_COMPILE_PER_NODE = 2;
 
+static constexpr OperationsCount CONV_2D_CHARGE_COMPILE_PER_NODE = 2;
+static constexpr OperationsCount CONV_1D_CHARGE_COMPILE_PER_NODE = 2;
+
 }  // namespace layers
 }  // namespace charge_estimation
 }  // namespace ml
