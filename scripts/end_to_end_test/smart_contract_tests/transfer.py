@@ -95,7 +95,7 @@ def transfer_and_verify_balances(api, entity, address_to, amount):
             amount, to_balance_before, to_balance_after)
 
 
-def call_transfer_action_and_verify_balances(api, source_contract, action, signers, target_address, amount):
+def call_transfer_action_and_verify_balances(api, source_contract, action, signer, target_address, amount):
     from_balance_before = api.tokens.balance(source_contract.address)
     to_balance_before = api.tokens.balance(target_address)
 
@@ -105,7 +105,7 @@ def call_transfer_action_and_verify_balances(api, source_contract, action, signe
     print('Transfer from {} to {}'.format(
         source_contract.address, target_address))
     api.sync(source_contract.action(
-        api, action, 100, signers, target_address, amount))
+        api, action, 100, signer, target_address, amount))
 
     from_balance_after = api.tokens.balance(source_contract.address)
     assert balance_within_range(from_balance_after, from_balance_before - amount), \
@@ -127,13 +127,13 @@ def run(options, benefactor):
         api,
         contract1,
         'transfer_funds1',
-        [entity1],
+        entity1,
         contract2.address,
         1345)
     call_transfer_action_and_verify_balances(
         api,
         contract2,
         'transfer_funds2',
-        [entity1],
+        entity1,
         Address(entity1),
         1000)
