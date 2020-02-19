@@ -109,7 +109,7 @@ constexpr std::size_t BLOOM_FILTER_SIZE = 160 * 8 * 1024 * 1024;
 
 // this number is vague adjustment to allow room for current and future serialisation over head
 // on the filter. This is, therefore is not a strictly derived value
-constexpr uint64_t STORAGE_SECTOR_SIZE = BLOOM_FILTER_SIZE + (BLOOM_FILTER_SIZE >> 3);  // 112.5 %
+constexpr uint64_t STORAGE_SECTOR_SIZE = BLOOM_FILTER_SIZE + (BLOOM_FILTER_SIZE >> 3u);  // 112.5 %
 
 /**
  * Generate a order array of the keys of the input map
@@ -414,7 +414,7 @@ void HistoricalBloomFilter::AddToBucket(ConstByteArray const &element, uint64_t 
   // add the element to the filter and mark it as dirty
   if (!entry.filter)
   {
-    entry.filter = std::make_unique<BasicBloomFilter>();
+    entry.filter = std::make_unique<BasicBloomFilter>(BLOOM_FILTER_SIZE);
   }
   entry.filter->Add(element);
 
