@@ -241,7 +241,7 @@ KarmaPolicyBasic::KARMA KarmaPolicyBasic::parseEffect(KARMA              current
     FETCH_LOG_INFO(LOGGING_NAME, "KARMA: Effect which can't be parsed:", effect);
     return currentBalance;
   }
-  };
+  }
 }
 
 bool KarmaPolicyBasic::perform(const KarmaAccount &identifier, const std::string &event, bool force)

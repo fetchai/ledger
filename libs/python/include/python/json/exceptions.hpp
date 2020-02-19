@@ -32,5 +32,6 @@ void BuildUnrecognisedJSONSymbolException(pybind11::module &module)
       .def(py::init<const byte_array::Token &>())
       .def("what", &UnrecognisedJSONSymbolException::what);
 }
-};  // namespace json
-};  // namespace fetch
+
+}  // namespace json
+}  // namespace fetch
