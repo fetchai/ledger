@@ -17,7 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/consumers.hpp"
-#include "core/byte_array/tokenizer/tokenizer.hpp"
+#include "core/byte_array/tokeniser/tokeniser.hpp"
 #include "core/commandline/parameter_parser.hpp"
 #include "core/string/trim.hpp"
 #include "json/document.hpp"

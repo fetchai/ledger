@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/byte_array.hpp"
-#include "core/byte_array/tokenizer/token.hpp"
+#include "core/byte_array/tokeniser/token.hpp"
 
 #include <exception>
 #include <string>

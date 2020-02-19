@@ -22,7 +22,7 @@
 #include "ml/optimisation/optimiser.hpp"
 #include "ml/optimisation/rmsprop_optimiser.hpp"
 #include "ml/optimisation/sgd_optimiser.hpp"
-#include "ml/serializers/ml_types.hpp"
+#include "ml/serialisers/ml_types.hpp"
 #include "vm/module.hpp"
 #include "vm_modules/math/tensor/tensor.hpp"
 #include "vm_modules/ml/dataloaders/dataloader.hpp"

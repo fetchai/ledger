@@ -19,7 +19,7 @@
 
 #include "ml/model/model_config.hpp"
 #include "ml/ops/loss_functions/types.hpp"
-#include "ml/serializers/model.hpp"
+#include "ml/serialisers/model.hpp"
 #include "ml/utilities/graph_saver.hpp"
 
 #include <string>

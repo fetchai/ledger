@@ -20,7 +20,7 @@
 #include "ml/model/model.hpp"
 #include "ml/model/model_config.hpp"
 #include "ml/ops/placeholder.hpp"
-#include "ml/serializers/sequential.hpp"
+#include "ml/serialisers/sequential.hpp"
 
 #include <string>
 

@@ -24,7 +24,7 @@
 #include "ml/ops/prelu_op.hpp"
 #include "ml/optimisation/sgd_optimiser.hpp"
 #include "ml/regularisers/regulariser.hpp"
-#include "ml/serializers/ml_types.hpp"
+#include "ml/serialisers/ml_types.hpp"
 #include "ml/utilities/graph_builder.hpp"
 
 #include "gtest/gtest.h"

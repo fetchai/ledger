@@ -41,7 +41,7 @@
 #include "ml/ops/max_pool_2d.hpp"
 #include "ml/ops/metrics/types.hpp"
 #include "ml/ops/reshape.hpp"
-#include "ml/serializers/ml_types.hpp"
+#include "ml/serialisers/ml_types.hpp"
 #include "vm/module.hpp"
 #include "vm_modules/ml/model/model.hpp"
 #include "vm_modules/use_estimator.hpp"
