@@ -36,37 +36,27 @@ static char const *FETCH_MAYBE_UNUSED ToString(fetch::ledger::tx_sync::State sta
 {
   using State = fetch::ledger::tx_sync::State;
 
-  char const *text = "Unknown";
-
   switch (state)
   {
   case State::INITIAL:
-    text = "Initial";
-    break;
+    return "Initial";
   case State::QUERY_OBJECT_COUNTS:
-    text = "Query Object Counts";
-    break;
+    return "Query Object Counts";
   case State::RESOLVING_OBJECT_COUNTS:
-    text = "Resolving Object Counts";
-    break;
+    return "Resolving Object Counts";
   case State::QUERY_SUBTREE:
-    text = "Query Subtree";
-    break;
+    return "Query Subtree";
   case State::RESOLVING_SUBTREE:
-    text = "Resolving Subtree";
-    break;
+    return "Resolving Subtree";
   case State::QUERY_OBJECTS:
-    text = "Query Objects";
-    break;
+    return "Query Objects";
   case State::RESOLVING_OBJECTS:
-    text = "Resolving Objects";
-    break;
+    return "Resolving Objects";
   case State::TRIM_CACHE:
-    text = "Trim Cache";
-    break;
+    return "Trim Cache";
   }
 
-  return text;
+  return "Unknown";
 }
 
 namespace fetch {
@@ -126,11 +116,6 @@ TransactionStoreSyncService::TransactionStoreSyncService(Config const &cfg, Mudd
     FETCH_UNUSED(new_state);
     FETCH_LOG_DEBUG(LOGGING_NAME, "*** Updating state to: ", ToString(new_state));
   });
-}
-
-TransactionStoreSyncService::~TransactionStoreSyncService()
-{
-  client_ = nullptr;
 }
 
 TransactionStoreSyncService::State TransactionStoreSyncService::OnInitial()
@@ -305,6 +290,8 @@ TransactionStoreSyncService::State TransactionStoreSyncService::OnResolvingSubtr
 
     for (auto &tx : result.promised)
     {
+      // this transaction is not recent
+      tx.SetFromSubtreeSync();
       // add the transaction to the verifier
       verifier_.AddTransaction(std::make_shared<chain::Transaction>(tx));
 
@@ -489,7 +476,8 @@ void TransactionStoreSyncService::OnTransaction(TransactionPtr const &tx)
     FETCH_LOG_DEBUG(LOGGING_NAME, "Verified Sync TX: ", tx->digest().ToBase64(), " (",
                     tx->digest().ToHex(), ')');
 
-    store_.Add(*tx, true);
+    // This transaction is recent unless it was received at subtree sync.
+    store_.Add(*tx, !tx->IsFromSubtreeSync());
     stored_transactions_->increment();
   }
 }

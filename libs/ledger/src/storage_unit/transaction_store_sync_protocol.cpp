@@ -98,15 +98,15 @@ void TransactionStoreSyncProtocol::TrimCache()
 
   // generate the next cache version
   std::copy_if(cache_.begin(), cache_.end(), std::back_inserter(next_cache),
-               [&cut_off](CachedObject const &object) {
-                 // we only copy objects which are young that we want to keep
+               [cut_off](CachedObject const &object) {
+                 // filter out object that are old enough
                  return object.created > cut_off;
                });
 
   auto const next_cache_size = next_cache.size();
   auto const curr_cache_size = cache_.size();
 
-  if ((curr_cache_size != 0u) && (next_cache_size != curr_cache_size))
+  if (next_cache_size != curr_cache_size)
   {
     FETCH_LOG_VARIABLE(lane_);
     FETCH_LOG_DEBUG(LOGGING_NAME, "Lane ", lane_, ": New cache size: ", next_cache_size,
