@@ -5085,10 +5085,12 @@ void BM_AddForward(benchmark::State &state)
 {
   using TensorType    = typename fetch::math::Tensor<T>;
   using VecTensorType = typename fetch::ml::ops::Ops<TensorType>::VecTensorType;
+  using SizeVectorType = std::vector<fetch::math::SizeType>;
 
-  fetch::math::Tensor<T> input_1({1, N});
-  fetch::math::Tensor<T> input_2({1, N});
-  fetch::math::Tensor<T> output({1, N});
+  SizeVectorType input_shape({1, N});
+    fetch::math::Tensor<T> input_1(input_shape);
+  fetch::math::Tensor<T> input_2(input_shape);
+  fetch::math::Tensor<T> output(input_shape);
 
   // Fill tensors with random values
   input_1.FillUniformRandom();
@@ -5100,25 +5102,30 @@ void BM_AddForward(benchmark::State &state)
   inputs.emplace_back(std::make_shared<TensorType>(input_2));
   fetch::ml::ops::Add<fetch::math::Tensor<T>> add1;
 
-  for (auto _ : state)
+  add1.SetBatchOutputShape(input_shape);
+
+  state.counters["charge"] = static_cast<double>(
+            add1.ChargeForward());
+
+    for (auto _ : state)
   {
     add1.Forward(inputs, output);
   }
 }
 
 BENCHMARK_TEMPLATE(BM_AddForward, float, 2)->Unit(benchmark::kNanosecond);
-BENCHMARK_TEMPLATE(BM_AddForward, float, 256)->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_AddForward, float, 512)->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_AddForward, float, 1024)->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_AddForward, float, 2048)->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_AddForward, float, 4096)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_AddForward, float, 256)->Unit(benchmark::kNanosecond);
+BENCHMARK_TEMPLATE(BM_AddForward, float, 512)->Unit(benchmark::kNanosecond);
+BENCHMARK_TEMPLATE(BM_AddForward, float, 1024)->Unit(benchmark::kNanosecond);
+BENCHMARK_TEMPLATE(BM_AddForward, float, 2048)->Unit(benchmark::kNanosecond);
+BENCHMARK_TEMPLATE(BM_AddForward, float, 4096)->Unit(benchmark::kNanosecond);
 
 BENCHMARK_TEMPLATE(BM_AddForward, double, 2)->Unit(benchmark::kNanosecond);
-BENCHMARK_TEMPLATE(BM_AddForward, double, 256)->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_AddForward, double, 512)->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_AddForward, double, 1024)->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_AddForward, double, 2048)->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_AddForward, double, 4096)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_AddForward, double, 256)->Unit(benchmark::kNanosecond);
+BENCHMARK_TEMPLATE(BM_AddForward, double, 512)->Unit(benchmark::kNanosecond);
+BENCHMARK_TEMPLATE(BM_AddForward, double, 1024)->Unit(benchmark::kNanosecond);
+BENCHMARK_TEMPLATE(BM_AddForward, double, 2048)->Unit(benchmark::kNanosecond);
+BENCHMARK_TEMPLATE(BM_AddForward, double, 4096)->Unit(benchmark::kNanosecond);
 
 BENCHMARK_TEMPLATE(BM_AddForward, fetch::fixed_point::fp32_t, 2)->Unit(benchmark::kNanosecond);
 BENCHMARK_TEMPLATE(BM_AddForward, fetch::fixed_point::fp32_t, 256)->Unit(benchmark::kMicrosecond);
