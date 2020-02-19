@@ -28,12 +28,8 @@ void Historical_Bloom_AddHot(benchmark::State &state)
 {
   fetch::crypto::mcl::details::MCLInitialiser();
 
-  HistoricalBloomFilter bloom{HistoricalBloomFilter::Mode::NEW_DATABASE,
-                              "h-bloom-bench.db",
-                              "h-bloom-bench.index.db",
-                              "h-bloom-bench.meta.db",
-                              10000,
-                              1};
+  HistoricalBloomFilter bloom{HistoricalBloomFilter::Mode::NEW_DATABASE, "h-bloom-bench.db",
+                              "h-bloom-bench.meta.db", 10000, 1};
 
   uint64_t  counter{0};
   ByteArray buffer;
@@ -53,12 +49,8 @@ void Historical_Bloom_WorstCase(benchmark::State &state)
 {
   fetch::crypto::mcl::details::MCLInitialiser();
 
-  HistoricalBloomFilter bloom{HistoricalBloomFilter::Mode::NEW_DATABASE,
-                              "h-bloom-bench.db",
-                              "h-bloom-bench.index.db",
-                              "h-bloom-bench.meta.db",
-                              1,
-                              1};
+  HistoricalBloomFilter bloom{HistoricalBloomFilter::Mode::NEW_DATABASE, "h-bloom-bench.db",
+                              "h-bloom-bench.meta.db", 1, 1};
 
   uint64_t  counter{0};
   ByteArray buffer;
@@ -86,12 +78,8 @@ void Historical_Bloom_NormalCase(benchmark::State &state)
 {
   fetch::crypto::mcl::details::MCLInitialiser();
 
-  HistoricalBloomFilter bloom{HistoricalBloomFilter::Mode::NEW_DATABASE,
-                              "h-bloom-bench.db",
-                              "h-bloom-bench.index.db",
-                              "h-bloom-bench.meta.db",
-                              128,
-                              1};
+  HistoricalBloomFilter bloom{HistoricalBloomFilter::Mode::NEW_DATABASE, "h-bloom-bench.db",
+                              "h-bloom-bench.meta.db", 128, 1};
 
   uint64_t  counter{0};
   ByteArray buffer;

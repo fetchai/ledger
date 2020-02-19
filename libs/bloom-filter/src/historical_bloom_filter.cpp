@@ -20,6 +20,9 @@
 #include "core/byte_array/byte_array.hpp"
 #include "core/containers/is_in.hpp"
 #include "core/serializers/main_serializer.hpp"
+#include "telemetry/counter.hpp"
+#include "telemetry/gauge.hpp"
+#include "telemetry/registry.hpp"
 
 #include <set>
 
@@ -90,33 +93,23 @@ public:
 namespace bloom {
 namespace {
 
+using telemetry::Registry;
+
 struct BloomFilterMetadata
 {
   uint64_t window_size;
   uint64_t last_bucket;
 };
+
 static_assert(meta::IsPOD<BloomFilterMetadata>, "Metadata must be POD");
 
 constexpr char const *LOGGING_NAME = "HBloomFilter";
 
-/**
- * Convert a bucket into a resource ID for the storage engine
- *
- * @param bucket The input bucket to convert
- * @return The generated storage I
- * @return The generated storage ID
- */
-storage::ResourceID ToStorageKey(uint64_t bucket)
-{
-  byte_array::ByteArray key{};
-  key.Resize(32);
-  assert(key.size() == 32);
+constexpr std::size_t BLOOM_FILTER_SIZE = 160 * 8 * 1024 * 1024;
 
-  // write the bucket as the value into the key
-  *reinterpret_cast<uint64_t *>(key.pointer()) = bucket;
-
-  return storage::ResourceID{key};
-}
+// this number is vague adjustment to allow room for current and future serialisation over head
+// on the filter. This is, therefore is not a strictly derived value
+constexpr uint64_t STORAGE_SECTOR_SIZE = BLOOM_FILTER_SIZE + (BLOOM_FILTER_SIZE >> 3);  // 112.5 %
 
 /**
  * Generate a order array of the keys of the input map
@@ -150,19 +143,35 @@ std::vector<uint64_t> GetOrderedKeys(std::unordered_map<uint64_t, T> const &valu
  *
  * @param mode The configured database mode for the bloom filter
  * @param store_path The path to the main database file
- * @param index_path The path to the index database file
  * @param metadata_path The path to the metadata file
  * @param window_size The size of the window
  * @param max_num_cached_buckets The maximum number of cached buckets
  */
 HistoricalBloomFilter::HistoricalBloomFilter(Mode mode, char const *store_path,
-                                             char const *index_path, char const *metadata_path,
-                                             uint64_t    window_size,
+                                             char const *metadata_path, uint64_t window_size,
                                              std::size_t max_num_cached_buckets)
   : store_filename_{store_path}
-  , index_filename_{index_path}
   , window_size_{window_size}
   , max_num_cached_buckets_{max_num_cached_buckets}
+  , store_{STORAGE_SECTOR_SIZE}
+  , total_additions_{Registry::Instance().CreateCounter(
+        "ledger_hbloom_additions_total", "The total number of entries added to the bloom filter")}
+  , total_positive_matches_{Registry::Instance().CreateCounter(
+        "ledger_hbloom_positive_matches_total",
+        "The total number of positive matches items in the bloom filter")}
+  , total_negative_matches_{Registry::Instance().CreateCounter(
+        "ledger_hbloom_negative_matches_total",
+        "The total number of negative matches items in the bloom filter")}
+  , total_save_failures_{Registry::Instance().CreateCounter(
+        "ledger_hbloom_save_failures_total", "The total number of bucket save failures")}
+  , num_pages_in_memory_{Registry::Instance().CreateGauge<uint64_t>(
+        "ledger_hbloom_cached_pages", "The total number of bloom filter entries in memory")}
+  , last_bloom_filter_level_{Registry::Instance().CreateGauge<uint64_t>(
+        "ledger_hbloom_last_fill_level",
+        "The last number of bits that was checked to find a match")}
+  , max_bloom_filter_level_{Registry::Instance().CreateGauge<uint64_t>(
+        "ledger_hbloom_max_fill_level",
+        "The current maximum number of bits that have been searched to find a positive result")}
 {
   metadata_.Load(metadata_path);
 
@@ -174,7 +183,10 @@ HistoricalBloomFilter::HistoricalBloomFilter(Mode mode, char const *store_path,
   switch (mode)
   {
   case Mode::NEW_DATABASE:
-    store_.New(store_filename_, index_filename_, true);
+    if (!store_.New(store_filename_))
+    {
+      throw std::runtime_error("Unable to create database file");
+    }
 
     // Overwrite metadata in the file
     try
@@ -188,7 +200,10 @@ HistoricalBloomFilter::HistoricalBloomFilter(Mode mode, char const *store_path,
 
     break;
   case Mode::LOAD_DATABASE:
-    store_.Load(store_filename_, index_filename_, true);
+    if (!store_.Load(store_filename_))
+    {
+      throw std::runtime_error("Unable to load or create existing database file");
+    }
 
     // Check metadata can be retrieved and is correct
     try
@@ -248,6 +263,8 @@ bool HistoricalBloomFilter::Add(ConstByteArray const &element, uint64_t index)
   // finally add the element to the bucket
   AddToBucket(element, bucket);
 
+  total_additions_->increment();
+
   return true;
 }
 
@@ -265,14 +282,27 @@ bool HistoricalBloomFilter::Match(ConstByteArray const &element, uint64_t minimu
   bool is_match{false};
 
   // iterate over all the buckets to which this element can apply
-  for (uint64_t bucket = ToBucket(minimum_index), last_bucket = ToBucket(maximum_index);
-       bucket <= last_bucket; ++bucket)
+  uint64_t const first_bucket = ToBucket(minimum_index);
+  uint64_t const last_bucket  = ToBucket(maximum_index);
+  uint64_t const delta_bucket = (last_bucket - first_bucket) + 1;
+
+  for (uint64_t idx = 0; idx < delta_bucket; ++idx)
   {
-    if (MatchInBucket(element, bucket))
+    // search backwards
+    uint64_t const bucket = last_bucket - idx;
+
+    auto const result = MatchInBucket(element, bucket);
+    if (result.match)
     {
       is_match = true;
+
+      total_positive_matches_->increment();
+      max_bloom_filter_level_->max(result.bits_checked);
+      last_bloom_filter_level_->set(result.bits_checked);
       break;
     }
+
+    total_negative_matches_->increment();
   }
 
   return is_match;
@@ -303,7 +333,15 @@ std::size_t HistoricalBloomFilter::TrimCache()
       // flush the page if dirty
       if (it->second.dirty)
       {
-        SaveBucketToStore(it->first, it->second);
+        if (!SaveBucketToStore(it->first, it->second))
+        {
+          // can't flush the page to disk, for saftey keep the page in memory
+          FETCH_LOG_ERROR(LOGGING_NAME, "Unable to flush bucket: ", it->first, " to disk");
+
+          total_save_failures_->increment();
+          continue;
+        }
+
         ++pages_updated;
       }
 
@@ -318,8 +356,10 @@ std::size_t HistoricalBloomFilter::TrimCache()
   if (pages_updated > 0)
   {
     UpdateMetadata();
-    store_.Flush(false);
+    store_.Flush();
   }
+
+  num_pages_in_memory_->set(cache_.size());
 
   return pages_flushed;
 }
@@ -346,7 +386,7 @@ void HistoricalBloomFilter::Flush()
 void HistoricalBloomFilter::Reset()
 {
   cache_.clear();
-  store_.New(store_filename_, index_filename_, true);
+  store_.New(store_filename_);
   heaviest_persisted_bucket_ = 0;
 }
 
@@ -389,25 +429,20 @@ void HistoricalBloomFilter::AddToBucket(ConstByteArray const &element, uint64_t 
  * @param bucket The specified bloom filter bucket to check
  * @return false if the element is not a match, otherwise true
  */
-bool HistoricalBloomFilter::MatchInBucket(ConstByteArray const &element, uint64_t bucket) const
+BloomFilterResult HistoricalBloomFilter::MatchInBucket(ConstByteArray const &element,
+                                                       uint64_t              bucket) const
 {
-  bool is_match{false};
-
   // attempt to lookup the bucket in the cache
   auto const it = cache_.find(bucket);
   if (it != cache_.end())
   {
     // match the element against the one that is stored in memory
-    is_match = it->second.Match(element);
-  }
-  else
-  {
-    // only if we have a cache miss on the historical bloom filter do we need to check the
-    // persistent bloom filter
-    is_match = MatchInStore(element, bucket);
+    return it->second.Match(element);
   }
 
-  return is_match;
+  // only if we have a cache miss on the historical bloom filter do we need to check the
+  // persistent bloom filter
+  return MatchInStore(element, bucket);
 }
 
 /**
@@ -417,17 +452,16 @@ bool HistoricalBloomFilter::MatchInBucket(ConstByteArray const &element, uint64_
  * @param bucket The bucket to be checked
  * @return true if successful, otherwise false
  */
-bool HistoricalBloomFilter::MatchInStore(ConstByteArray const &element, uint64_t bucket) const
+BloomFilterResult HistoricalBloomFilter::MatchInStore(ConstByteArray const &element,
+                                                      uint64_t              bucket) const
 {
-  bool is_match{false};
-
   CacheEntry entry{};
   if (LookupBucketFromStore(bucket, entry))
   {
-    is_match = entry.Match(element);
+    return entry.Match(element);
   }
 
-  return is_match;
+  return {false, 0};
 }
 
 /**
@@ -441,11 +475,28 @@ bool HistoricalBloomFilter::LookupBucketFromStore(uint64_t bucket, CacheEntry &e
 {
   FETCH_LOG_DEBUG(LOGGING_NAME, "Restoring cache entry to bucket: ", bucket);
 
-  // compute the storage key
-  auto const key = ToStorageKey(bucket);
+  // load up the contents of the bloom filter
+  ConstByteArray bloom_filter_buffer;
+  if (!store_.Get(bucket, bloom_filter_buffer))
+  {
+    return false;
+  }
 
-  // read the entry from the store
-  return store_.Get(key, entry);
+  // deserialise the bloom filter entry
+  bool success{false};
+  try
+  {
+    serializers::MsgPackSerializer serialiser{bloom_filter_buffer};
+    serialiser >> entry;
+
+    success = true;
+  }
+  catch (std::exception const &ex)
+  {
+    FETCH_LOG_ERROR(LOGGING_NAME, "Error recovering bloom filter entry: ", ex.what());
+  }
+
+  return success;
 }
 
 /**
@@ -453,23 +504,35 @@ bool HistoricalBloomFilter::LookupBucketFromStore(uint64_t bucket, CacheEntry &e
  *
  * @param bucket The bucket to be stored
  * @param entry The cache entry to be written
- * @return true if succesful, otherwise false
+ * @return true if successful, otherwise false
  */
 bool HistoricalBloomFilter::SaveBucketToStore(uint64_t bucket, CacheEntry const &entry)
 {
   FETCH_LOG_DEBUG(LOGGING_NAME, "Saving cache entry to bucket: ", bucket);
 
-  // compute the storage key
-  auto const key = ToStorageKey(bucket);
+  // serialise the bloom filter buffer
+  ConstByteArray bloom_filter_buffer{};
+  try
+  {
+    serializers::LargeObjectSerializeHelper serialiser{};
+    serialiser << entry;
 
-  // store the cache on disk
-  store_.Set(key, entry);
+    bloom_filter_buffer = serialiser.data();
+  }
+  catch (std::exception const &ex)
+  {
+    FETCH_LOG_ERROR(LOGGING_NAME, "Error serialising bloom filter entry: ", ex.what());
+    return false;
+  }
+
+  // store the bloom filter into the bucket
+  if (!store_.Set(bucket, bloom_filter_buffer))
+  {
+    return false;
+  }
 
   // track the heaviest written bucket
-  if (bucket > heaviest_persisted_bucket_)
-  {
-    heaviest_persisted_bucket_ = bucket;
-  }
+  heaviest_persisted_bucket_ = std::max(heaviest_persisted_bucket_, bucket);
 
   return true;
 }
@@ -479,11 +542,14 @@ bool HistoricalBloomFilter::SaveBucketToStore(uint64_t bucket, CacheEntry const 
  */
 void HistoricalBloomFilter::UpdateMetadata()
 {
-  BloomFilterMetadata metadata;
+  BloomFilterMetadata metadata{};
   bool                bad_version = false;
 
   try
   {
+    // ensure that the store is also
+    store_.Flush();
+
     // before loading the database check that the meta data for the database is correct
     metadata_.Get(metadata);
 
@@ -519,14 +585,14 @@ void HistoricalBloomFilter::UpdateMetadata()
  * @param element The element to be matched
  * @return true if a valid value, otherwise false
  */
-bool HistoricalBloomFilter::CacheEntry::Match(ConstByteArray const &element) const
+BloomFilterResult HistoricalBloomFilter::CacheEntry::Match(ConstByteArray const &element) const
 {
   if (filter)
   {
-    return filter->Match(element).first;
+    return filter->Match(element);
   }
 
-  return false;
+  return {false, 0};
 }
 
 }  // namespace bloom

@@ -20,8 +20,9 @@
 #include "bloom_filter/bloom_filter.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/serializers/main_serializer_definition.hpp"
-#include "storage/object_store.hpp"
+#include "storage/fixed_size_journal.hpp"
 #include "storage/single_object_store.hpp"
+#include "telemetry/telemetry.hpp"
 
 #include <cstdint>
 #include <unordered_map>
@@ -34,14 +35,13 @@ class HistoricalBloomFilter
 public:
   using ConstByteArray      = byte_array::ConstByteArray;
   using BasicBloomFilterPtr = std::unique_ptr<BasicBloomFilter>;
-  using MetadataStore       = fetch::storage::SingleObjectStore;
 
   struct CacheEntry
   {
     BasicBloomFilterPtr filter{};
     bool                dirty{false};
 
-    bool Match(ConstByteArray const &element) const;
+    BloomFilterResult Match(ConstByteArray const &element) const;
   };
 
   enum class Mode
@@ -51,9 +51,8 @@ public:
   };
 
   // Construction / Destruction
-  HistoricalBloomFilter(Mode mode, char const *store_path, char const *index_path,
-                        char const *metadata_path, uint64_t window_size,
-                        std::size_t max_num_cached_buckets);
+  HistoricalBloomFilter(Mode mode, char const *store_path, char const *metadata_path,
+                        uint64_t window_size, std::size_t max_num_cached_buckets);
   HistoricalBloomFilter(HistoricalBloomFilter const &) = delete;
   HistoricalBloomFilter(HistoricalBloomFilter &&)      = delete;
   ~HistoricalBloomFilter();
@@ -72,26 +71,36 @@ public:
   HistoricalBloomFilter &operator=(HistoricalBloomFilter &&) = delete;
 
 private:
-  using Cache = std::unordered_map<uint64_t, CacheEntry>;
-  using Store = storage::ObjectStore<CacheEntry>;
+  using Cache         = std::unordered_map<uint64_t, CacheEntry>;
+  using MetadataStore = fetch::storage::SingleObjectStore;
+  using FilterStore   = fetch::storage::FixedSizeJournalFile;
 
   uint64_t ToBucket(uint64_t index) const;
   void     AddToBucket(ConstByteArray const &element, uint64_t bucket);
-  bool     MatchInBucket(ConstByteArray const &element, uint64_t bucket) const;
-  bool     MatchInStore(ConstByteArray const &element, uint64_t bucket) const;
+
+  BloomFilterResult MatchInBucket(ConstByteArray const &element, uint64_t bucket) const;
+  BloomFilterResult MatchInStore(ConstByteArray const &element, uint64_t bucket) const;
 
   bool LookupBucketFromStore(uint64_t bucket, CacheEntry &entry) const;
   bool SaveBucketToStore(uint64_t bucket, CacheEntry const &entry);
   void UpdateMetadata();
 
   std::string   store_filename_{};
-  std::string   index_filename_{};
   MetadataStore metadata_{};
   uint64_t      window_size_{0};
   uint64_t      heaviest_persisted_bucket_{0};
   std::size_t   max_num_cached_buckets_{1};
   Cache         cache_{};
-  mutable Store store_{};
+  FilterStore   store_;
+
+  // telemetry
+  telemetry::CounterPtr         total_additions_;
+  telemetry::CounterPtr         total_positive_matches_;
+  telemetry::CounterPtr         total_negative_matches_;
+  telemetry::CounterPtr         total_save_failures_;
+  telemetry::GaugePtr<uint64_t> num_pages_in_memory_;
+  telemetry::GaugePtr<uint64_t> last_bloom_filter_level_;
+  telemetry::GaugePtr<uint64_t> max_bloom_filter_level_;
 };
 
 inline uint64_t HistoricalBloomFilter::last_flushed_bucket() const
