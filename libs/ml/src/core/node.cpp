@@ -256,7 +256,7 @@ Shape Node<TensorType>::BatchOutputShape()
 
   // After all shapes for current Node are deduced, shape-dependent Ops could be
   // updated and their initialisation completed.
-  op_ptr_->CompleteConstruction();
+  op_ptr_->CompleteShapeDeduction();
 
   return return_shape;
 }
