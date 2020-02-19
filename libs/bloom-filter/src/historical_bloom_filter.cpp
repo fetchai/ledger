@@ -439,12 +439,10 @@ BloomFilterResult HistoricalBloomFilter::MatchInBucket(ConstByteArray const &ele
     // match the element against the one that is stored in memory
     return it->second.Match(element);
   }
-  else
-  {
-    // only if we have a cache miss on the historical bloom filter do we need to check the
-    // persistent bloom filter
-    return MatchInStore(element, bucket);
-  }
+
+  // only if we have a cache miss on the historical bloom filter do we need to check the
+  // persistent bloom filter
+  return MatchInStore(element, bucket);
 }
 
 /**
