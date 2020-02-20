@@ -96,7 +96,7 @@ constexpr PublicTxStatus Convert(TransactionStatus       tx_processing_pipeline_
   return PublicTxStatus::UNKNOWN;
 }
 
-Variant ToVariant(Digest const &digest, TransactionStatusCache::TxStatus const &tx_status)
+Variant ToVariant(Digest const &digest, TransactionStatusInterface::TxStatus const &tx_status)
 {
   auto retval{Variant::Object()};
 

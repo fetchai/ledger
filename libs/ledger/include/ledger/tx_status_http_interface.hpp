@@ -22,12 +22,12 @@
 namespace fetch {
 namespace ledger {
 
-class TransactionStatusCache;
+class TransactionStatusInterface;
 
 class TxStatusHttpInterface : public http::HTTPModule
 {
 public:
-  using TxStatusCachePtr = std::shared_ptr<TransactionStatusCache>;
+  using TxStatusCachePtr = std::shared_ptr<TransactionStatusInterface>;
 
   // Construction / Destruction
   explicit TxStatusHttpInterface(TxStatusCachePtr status_cache);
