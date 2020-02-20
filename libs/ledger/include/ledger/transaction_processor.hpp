@@ -37,13 +37,13 @@ namespace ledger {
 
 class StorageUnitInterface;
 class BlockPackerInterface;
-class TransactionStatusCache;
+class TransactionStatusInterface;
 
 class TransactionProcessor : public TransactionSink
 {
 public:
   using DAGPtr           = std::shared_ptr<fetch::ledger::DAGInterface>;
-  using TxStatusCachePtr = std::shared_ptr<TransactionStatusCache>;
+  using TxStatusCachePtr = std::shared_ptr<TransactionStatusInterface>;
 
   // Construction / Destruction
   TransactionProcessor(DAGPtr dag, StorageUnitInterface &storage, BlockPackerInterface &packer,

@@ -25,6 +25,7 @@
 #include "ledger/transaction_status_cache.hpp"
 
 #include <cstddef>
+#include <memory>
 #include <thread>
 #include <utility>
 #include <vector>
