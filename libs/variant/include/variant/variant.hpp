@@ -737,7 +737,7 @@ public:
     {
       auto map = deserializer.NewMapDeserializer();
 
-      var = variant::Variant::Array(map.size());
+      var = variant::Variant::Object();
       for (std::size_t i = 0; i < map.size(); i++)
       {
         byte_array::ConstByteArray key;
