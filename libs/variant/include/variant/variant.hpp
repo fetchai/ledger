@@ -651,7 +651,8 @@ public:
       });
       return;
     }
-    };
+    }
+
     throw std::runtime_error{"Variant has unknown type."};
   }
 
@@ -748,7 +749,8 @@ public:
       }
       return;
     }
-    };
+    }
+
     throw std::runtime_error{"Variant has unknown type."};
   }
 };
