@@ -7,7 +7,6 @@ MACOS_NODE_LABEL = 'osx'
 enum Platform
 {
   MACOS_CLANG('Clang',   'clang',     'clang++',     ''),
-
   CLANG6     ('Clang 6', 'clang-6.0', 'clang++-6.0', 'gcr.io/organic-storm-201412/ledger-ci-clang6:v0.1.3'),
   CLANG7     ('Clang 7', 'clang-7',   'clang++-7',   'gcr.io/organic-storm-201412/ledger-ci-clang7:v0.1.3'),
   GCC7       ('GCC 7',   'gcc-7',     'g++-7',       'gcr.io/organic-storm-201412/ledger-ci-gcc7:v0.1.3'),
