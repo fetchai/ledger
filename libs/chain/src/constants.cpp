@@ -17,7 +17,6 @@
 //------------------------------------------------------------------------------
 
 #include "chain/constants.hpp"
-
 #include "core/byte_array/decoders.hpp"
 #include "core/digest.hpp"
 #include "core/synchronisation/protected.hpp"

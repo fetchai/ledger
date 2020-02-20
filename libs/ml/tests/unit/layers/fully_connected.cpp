@@ -16,13 +16,16 @@
 //
 //------------------------------------------------------------------------------
 
-#include "gtest/gtest.h"
+#include "test_types.hpp"
+
 #include "ml/layers/fully_connected.hpp"
 #include "ml/ops/loss_functions/mean_square_error_loss.hpp"
 #include "ml/ops/placeholder.hpp"
 #include "ml/optimisation/sgd_optimiser.hpp"
 #include "ml/serializers/ml_types.hpp"
-#include "test_types.hpp"
+
+#include "gtest/gtest.h"
+
 #include <memory>
 
 namespace fetch {
@@ -73,6 +76,7 @@ TYPED_TEST(FullyConnectedTest, set_input_and_evaluate_test)  // Use the class as
   fetch::ml::layers::FullyConnected<TypeParam> fc(100u, 10u);
   TypeParam input_data(std::vector<typename TypeParam::SizeType>({10, 10, 2}));
   fc.SetInput("FullyConnected_Input", input_data);
+  fc.Compile();
   TypeParam output = fc.Evaluate("FullyConnected_Add", true);
 
   ASSERT_EQ(output.shape().size(), 2);
@@ -96,6 +100,7 @@ TYPED_TEST(FullyConnectedTest,
                     WeightsInitType::XAVIER_GLOROT, FullyConnected::TIME_DISTRIBUTED);
   TypeParam      input_data(std::vector<typename TypeParam::SizeType>({10, 10, 2}));
   fc.SetInput("TimeDistributed_FullyConnected_Input", input_data);
+  fc.Compile();
   TypeParam output = fc.Evaluate("TimeDistributed_FullyConnected_MatrixMultiply", true);
 
   ASSERT_EQ(output.shape().size(), 3);
@@ -111,6 +116,7 @@ TYPED_TEST(FullyConnectedTest, ops_forward_test)  // Use the class as an Ops
   TypeParam input_data(std::vector<typename TypeParam::SizeType>({5, 10, 2}));
 
   TypeParam output(fc.ComputeOutputShape({std::make_shared<TypeParam>(input_data)}));
+  fc.Compile();
   fc.Forward({std::make_shared<TypeParam>(input_data)}, output);
 
   ASSERT_EQ(output.shape().size(), 2);
@@ -125,6 +131,7 @@ TYPED_TEST(FullyConnectedTest, ops_backward_test)  // Use the class as an Ops
   TypeParam input_data(std::vector<typename TypeParam::SizeType>({5, 10, 2}));
 
   TypeParam output(fc.ComputeOutputShape({std::make_shared<TypeParam>(input_data)}));
+  fc.Compile();
   fc.Forward({std::make_shared<TypeParam>(input_data)}, output);
 
   TypeParam error_signal(std::vector<typename TypeParam::SizeType>({10, 2}));
@@ -153,6 +160,7 @@ TYPED_TEST(FullyConnectedTest, ops_backward_test_time_distributed)  // Use the c
   TypeParam input_data(std::vector<typename TypeParam::SizeType>({50, 10, 2}));
 
   TypeParam output(fc.ComputeOutputShape({std::make_shared<TypeParam>(input_data)}));
+  fc.Compile();
   fc.Forward({std::make_shared<TypeParam>(input_data)}, output);
 
   TypeParam error_signal(std::vector<typename TypeParam::SizeType>({10, 10, 2}));
@@ -437,6 +445,10 @@ TYPED_TEST(FullyConnectedTest, node_forward_test)  // Use the class as a Node
       });
   fc.AddInput(placeholder);
 
+  auto op_ptr    = fc.GetOp();
+  auto graph_ptr = std::dynamic_pointer_cast<Graph<TypeParam>>(op_ptr);
+  graph_ptr->Compile();
+
   TypeParam prediction = *fc.Evaluate(true);
 
   ASSERT_EQ(prediction.shape().size(), 2);
@@ -461,6 +473,11 @@ TYPED_TEST(FullyConnectedTest, node_backward_test)  // Use the class as a Node
         return std::make_shared<fetch::ml::layers::FullyConnected<TypeParam>>(in_size, out_size);
       });
   fc.AddInput(placeholder);
+
+  auto op_ptr    = fc.GetOp();
+  auto graph_ptr = std::dynamic_pointer_cast<Graph<TypeParam>>(op_ptr);
+  graph_ptr->Compile();
+
   TypeParam prediction = *fc.Evaluate(true);
 
   TypeParam error_signal(std::vector<typename TypeParam::SizeType>({42, 2}));
@@ -485,6 +502,7 @@ TYPED_TEST(FullyConnectedTest, graph_forward_test)  // Use the class as a Node
   TypeParam data({5, 10, 2});
   g.SetInput("Input", data);
 
+  g.Compile();
   TypeParam prediction = g.Evaluate("FullyConnected", true);
   ASSERT_EQ(prediction.shape().size(), 2);
   ASSERT_EQ(prediction.shape()[0], 42);
@@ -522,14 +540,18 @@ TYPED_TEST(FullyConnectedTest, training_should_change_output)
   // Add loss function
   std::string error_output = layer.template AddNode<fetch::ml::ops::MeanSquareErrorLoss<TypeParam>>(
       "num_error", {output_name, label_name});
+  layer.Compile();
 
   // set input and evaluate
   layer.SetInput(input_name, input);
+
   TypeParam prediction;
   prediction = layer.Evaluate(output_name, true);
+  std::cout << "prediction.ToString(): " << prediction.ToString() << std::endl;
 
   // train g
   layer.SetInput(label_name, labels);
+
   TypeParam loss = layer.Evaluate(error_output);
   layer.BackPropagate(error_output);
   auto grads = layer.GetGradients();
@@ -537,9 +559,16 @@ TYPED_TEST(FullyConnectedTest, training_should_change_output)
   {
     grad *= fetch::math::Type<DataType>("-0.1");
   }
+
+  std::cout << "grads[0].ToString(): " << grads[0].ToString() << std::endl;
+  std::cout << "grads[1].ToString(): " << grads[1].ToString() << std::endl;
+
   layer.ApplyGradients(grads);
 
   TypeParam prediction3 = layer.Evaluate(output_name);
+
+  std::cout << "prediction.ToString(): " << prediction.ToString() << std::endl;
+  std::cout << "prediction3.ToString(): " << prediction3.ToString() << std::endl;
 
   EXPECT_FALSE(prediction.AllClose(prediction3, fetch::math::function_tolerance<DataType>(),
                                    fetch::math::function_tolerance<DataType>()));

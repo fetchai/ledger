@@ -16,14 +16,15 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/layers/multihead_attention.hpp"
+#include "test_types.hpp"
 
-#include "gtest/gtest.h"
+#include "ml/layers/multihead_attention.hpp"
 #include "ml/ops/loss_functions/mean_square_error_loss.hpp"
 #include "ml/ops/placeholder.hpp"
 #include "ml/serializers/ml_types.hpp"
 #include "ml/utilities/graph_builder.hpp"
-#include "test_types.hpp"
+
+#include "gtest/gtest.h"
 
 namespace fetch {
 namespace ml {
@@ -61,6 +62,7 @@ TYPED_TEST(MultiheadAttention, input_output_dimension_check)  // Use the class a
   g.SetInput(key, key_data);
   g.SetInput(value, value_data);
   g.SetInput(mask, mask_data);
+  g.Compile();
 
   TypeParam prediction = g.Evaluate("MultiheadAttention", false);
   ASSERT_EQ(prediction.shape().size(), 3);

@@ -16,11 +16,13 @@
 //
 //------------------------------------------------------------------------------
 
-#include "gmock/gmock.h"
+#include "vm_test_toolkit.hpp"
+
 #include "vm_modules/math/tensor/tensor.hpp"
 #include "vm_modules/math/type.hpp"
 #include "vm_modules/ml/dataloaders/dataloader.hpp"
-#include "vm_test_toolkit.hpp"
+
+#include "gmock/gmock.h"
 
 #include <regex>
 #include <sstream>
@@ -46,10 +48,40 @@ std::string const ADD_VALID_LAYER_TEST_SOURCE = R"(
     endfunction
   )";
 
+std::string const ADD_THREE_DIM_VALID_LAYER_TEST_SOURCE = R"(
+    function main()
+      var data_shape = Array<UInt64>(3);
+      data_shape[0] = 10u64;
+      data_shape[1] = 10u64;
+      data_shape[2] = 10u64;
+      var x = Tensor(data_shape);
+
+      var model = Model("sequential");
+      model.addExperimental("input", x.shape());
+      <<TOKEN>>
+      model.compile("scel", "adam");
+    endfunction
+  )";
+
+std::string const ADD_FOUR_DIM_VALID_LAYER_TEST_SOURCE = R"(
+    function main()
+      var data_shape = Array<UInt64>(4);
+      data_shape[0] = 10u64;
+      data_shape[1] = 10u64;
+      data_shape[2] = 10u64;
+      data_shape[3] = 10u64;
+      var x = Tensor(data_shape);
+
+      var model = Model("sequential");
+      model.addExperimental("input", x.shape());
+      <<TOKEN>>
+      model.compile("scel", "adam");
+    endfunction
+  )";
+
 std::string const ACTIVATION_LAYER_TEST_SOURCE = R"(
      function main() : Tensor
          var x = Tensor();
-
          x.fromString("<<INPUT>>");
 
          var model = Model("sequential");
@@ -76,6 +108,38 @@ public:
   {
     std::string const src =
         std::regex_replace(ADD_VALID_LAYER_TEST_SOURCE, std::regex("<<TOKEN>>"), test_case_source);
+    ASSERT_TRUE(toolkit.Compile(src));
+    if (ignore_charge_estimation)
+    {
+      ASSERT_TRUE(toolkit.Run(nullptr, ChargeAmount{0}));
+    }
+    else
+    {
+      ASSERT_TRUE(toolkit.Run());
+    }
+  }
+
+  void TestValidThreeDimLayerAdding(std::string const &test_case_source,
+                                    bool               ignore_charge_estimation = false)
+  {
+    std::string const src = std::regex_replace(ADD_THREE_DIM_VALID_LAYER_TEST_SOURCE,
+                                               std::regex("<<TOKEN>>"), test_case_source);
+    ASSERT_TRUE(toolkit.Compile(src));
+    if (ignore_charge_estimation)
+    {
+      ASSERT_TRUE(toolkit.Run(nullptr, ChargeAmount{0}));
+    }
+    else
+    {
+      ASSERT_TRUE(toolkit.Run());
+    }
+  }
+
+  void TestValidFourDimLayerAdding(std::string const &test_case_source,
+                                   bool               ignore_charge_estimation = false)
+  {
+    std::string const src = std::regex_replace(ADD_FOUR_DIM_VALID_LAYER_TEST_SOURCE,
+                                               std::regex("<<TOKEN>>"), test_case_source);
     ASSERT_TRUE(toolkit.Compile(src));
     if (ignore_charge_estimation)
     {
@@ -410,26 +474,26 @@ TEST_F(VMModelTests, model_add_dense_relu)
 
 TEST_F(VMModelTests, model_add_conv1d_noact)
 {
-  TestValidLayerAdding(R"(model.add("conv1d", 10u64, 10u64, 10u64, 10u64);)",
-                       IGNORE_CHARGE_ESTIMATION);
+  TestValidThreeDimLayerAdding(R"(model.add("conv1d", 10u64, 10u64, 10u64, 10u64);)",
+                               IGNORE_CHARGE_ESTIMATION);
 }
 
 TEST_F(VMModelTests, model_add_conv1d_relu)
 {
-  TestValidLayerAdding(R"(model.add("conv1d", 10u64, 10u64, 10u64, 10u64, "relu");)",
-                       IGNORE_CHARGE_ESTIMATION);
+  TestValidThreeDimLayerAdding(R"(model.add("conv1d", 10u64, 10u64, 10u64, 10u64, "relu");)",
+                               IGNORE_CHARGE_ESTIMATION);
 }
 
 TEST_F(VMModelTests, model_add_conv2d_noact)
 {
-  TestValidLayerAdding(R"(model.add("conv2d", 10u64, 10u64, 10u64, 10u64);)",
-                       IGNORE_CHARGE_ESTIMATION);
+  TestValidFourDimLayerAdding(R"(model.add("conv2d", 10u64, 10u64, 10u64, 10u64);)",
+                              IGNORE_CHARGE_ESTIMATION);
 }
 
 TEST_F(VMModelTests, model_add_conv2d_relu)
 {
-  TestValidLayerAdding(R"(model.add("conv2d", 10u64, 10u64, 10u64, 10u64, "relu");)",
-                       IGNORE_CHARGE_ESTIMATION);
+  TestValidFourDimLayerAdding(R"(model.add("conv2d", 10u64, 10u64, 10u64, 10u64, "relu");)",
+                              IGNORE_CHARGE_ESTIMATION);
 }
 
 TEST_F(VMModelTests, model_add_dropout)
@@ -641,13 +705,24 @@ TEST_F(VMModelTests, model_compilation_invalid_params)
 // Disableduntil AddDropout estimator implementation
 TEST_F(VMModelTests, model_dropout_comparison)
 {
+
   static char const *SOURCE = R"(
     function main()
+        var shape = Array<UInt64>(3);
+        shape[0] = 25u64;
+        shape[1] = 25u64;
+        shape[2] = 1u64;
+        var x = Tensor(shape);
+
         var dropouted_model = Model("sequential");
+        dropouted_model.addExperimental("input", x.shape());
+
         dropouted_model.add("dropout", 0.1fp64);
         dropouted_model.compile("mse", "adam");
 
         var reference_model = Model("sequential");
+        reference_model.addExperimental("input", x.shape());
+
         // Dropout with probability 0 acts as a simple connection
         // between input layers and output layer; this workaround is needed
         // because a sequential model with direct connection of inputs to
@@ -655,11 +730,6 @@ TEST_F(VMModelTests, model_dropout_comparison)
         reference_model.add("dropout", 0.0fp64);
         reference_model.compile("mse", "adam");
 
-        var shape = Array<UInt64>(3);
-        shape[0] = 25u64;
-        shape[1] = 25u64;
-        shape[2] = 1u64;
-        var x = Tensor(shape);
 
         x.fillRandom();
 
@@ -682,7 +752,6 @@ TEST_F(VMModelTests, model_dropout_comparison)
 
     endfunction
     )";
-
   ASSERT_TRUE(toolkit.Compile(SOURCE));
   EXPECT_TRUE(toolkit.Run(nullptr, ChargeAmount{0}));
 }

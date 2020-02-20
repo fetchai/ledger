@@ -55,7 +55,7 @@ public:
                 std::string const &     name            = "Conv1D",
                 WeightsInit init_mode = WeightsInit::XAVIER_GLOROT, SizeType seed = 123456789);
 
-  void CompleteConstruction() override;
+  void CompleteShapeDeduction() override;
 
   std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override;
 
@@ -79,6 +79,8 @@ public:
     return DESCRIPTOR;
   }
 
+  void Compile() override;
+
   OperationsCount ChargeForward() const override;
   OperationsCount ChargeBackward() const override;
 
@@ -88,6 +90,10 @@ private:
   SizeType output_channels_{};
   SizeType stride_size_{};
   bool     is_initialised_ = false;
+
+  WeightsInit init_mode_;
+  SizeType    seed_;
+  std::string weights_;
 };
 
 }  // namespace layers

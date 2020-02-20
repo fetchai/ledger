@@ -11,6 +11,6 @@ autopep8 = "==1.4.4"
 cmake-format = "==0.5.1"
 fetchai-netutils = {editable = true,path = "./scripts/fetchai_netutils"}
 pyyaml = "==5.3"
+fetchai-ledger-api = "==1.0.2"
 
 [packages]
-fetchai-ledger-api = "==1.0.1"

@@ -64,17 +64,17 @@ def run(options, benefactor):
     api.sync(api.contracts.create(entity1, contract3, 2000))
 
     api.sync(contract0.action(api, 'set_callee',
-                              400, [entity1], str(contract1.address)))
+                              400, entity1, str(contract1.address)))
     api.sync(contract1.action(api, 'set_callee',
-                              400, [entity1], str(contract2.address)))
+                              400, entity1, str(contract2.address)))
     api.sync(contract2.action(api, 'set_callee',
-                              400, [entity1], str(contract3.address)))
+                              400, entity1, str(contract3.address)))
     api.sync(contract3.action(api, 'set_callee',
-                              400, [entity1], str(contract0.address)))
+                              400, entity1, str(contract0.address)))
 
     try:
         api.sync(contract0.action(api, 'c2c_call',
-                                  400, [entity1]))
+                                  400, entity1))
         assert False, \
             'Expected transaction to fail'
     except RuntimeError:

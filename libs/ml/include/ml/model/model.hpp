@@ -31,7 +31,8 @@ namespace vm_modules {
 namespace ml {
 namespace model {
 class ModelEstimator;
-}
+class VMModel;
+}  // namespace model
 }  // namespace ml
 }  // namespace vm_modules
 
@@ -107,9 +108,12 @@ public:
 
   template <typename X, typename D>
   friend struct serializers::MapSerializer;
+
+  friend class fetch::vm_modules::ml::model::VMModel;
   friend class fetch::vm_modules::ml::model::ModelEstimator;
 
   virtual fetch::ml::OperationsCount ChargeForward() const;
+  virtual fetch::ml::OperationsCount ChargeBackward() const;
 
 protected:
   ModelConfig<DataType> model_config_;

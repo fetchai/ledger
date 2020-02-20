@@ -16,9 +16,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "muddle/muddle_interface.hpp"
-#include "muddle/packet.hpp"
-
 #include "constellation/muddle_status_http_module.hpp"
 #include "core/byte_array/encoders.hpp"
 #include "core/random/lfg.hpp"
@@ -31,6 +28,7 @@
 #include "http/server.hpp"
 #include "muddle/muddle_endpoint.hpp"
 #include "muddle/muddle_interface.hpp"
+#include "muddle/packet.hpp"
 #include "network/management/network_manager.hpp"
 
 #include <atomic>

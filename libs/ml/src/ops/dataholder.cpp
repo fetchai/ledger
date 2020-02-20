@@ -26,7 +26,14 @@ namespace ops {
 template <typename TensorType>
 std::shared_ptr<OpsSaveableParams> DataHolder<TensorType>::GetOpSaveableParams()
 {
-  return std::make_shared<SPType>();
+  auto sp = std::make_shared<SPType>();
+
+  // Add base class savable params
+  auto ops_sp  = Ops<TensorType>::GetOpSaveableParams();
+  auto cast_sp = std::static_pointer_cast<OpsSaveableParams>(sp);
+  *cast_sp     = *(std::static_pointer_cast<OpsSaveableParams>(ops_sp));
+
+  return sp;
 }
 
 /**
@@ -59,19 +66,15 @@ std::vector<TensorType> DataHolder<TensorType>::Backward(VecTensorType const &in
 }
 
 /**
- * sets the internally stored data
+ * sets the internally stored data, and returns a bool indicating whether the shape has changed
  * @param data
  * @return
  */
 template <class TensorType>
 bool DataHolder<TensorType>::SetData(TensorType const &data)
 {
-  bool shape_changed = true;
-  if (data_)
-  {
-    shape_changed = (data_->shape() != data.shape());
-  }
-  data_ = std::make_shared<TensorType>(data);
+  bool shape_changed = (data_->shape() != data.shape());
+  data_->Copy(data);
   return shape_changed;
 }
 

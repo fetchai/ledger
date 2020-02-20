@@ -16,9 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "gtest/gtest.h"
-#include "math/metrics/cross_entropy.hpp"
 #include "test_types.hpp"
+
+#include "math/metrics/cross_entropy.hpp"
+
+#include "gtest/gtest.h"
 
 namespace fetch {
 namespace math {

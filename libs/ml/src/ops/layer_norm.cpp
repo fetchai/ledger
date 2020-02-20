@@ -46,6 +46,12 @@ std::shared_ptr<OpsSaveableParams> LayerNorm<TensorType>::GetOpSaveableParams()
   auto sp     = std::make_shared<SPType>();
   sp->epsilon = epsilon_;
   sp->axis    = axis_;
+
+  // Add base class savable params
+  auto ops_sp  = Ops<TensorType>::GetOpSaveableParams();
+  auto cast_sp = std::static_pointer_cast<OpsSaveableParams>(sp);
+  *cast_sp     = *(std::static_pointer_cast<OpsSaveableParams>(ops_sp));
+
   return sp;
 }
 
@@ -128,6 +134,14 @@ std::vector<math::SizeType> LayerNorm<TensorType>::ComputeOutputShape(
     VecTensorType const &inputs) const
 {
   return inputs.at(0)->shape();
+}
+
+template <typename TensorType>
+void LayerNorm<TensorType>::Compile()
+{
+  prev_input_          = TensorType();
+  cached_inv_sqrt_var_ = TensorType();
+  cached_output_       = TensorType();
 }
 
 template <typename TensorType>

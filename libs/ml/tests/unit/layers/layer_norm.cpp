@@ -16,14 +16,16 @@
 //
 //------------------------------------------------------------------------------
 
-#include "gtest/gtest.h"
+#include "test_types.hpp"
+
 #include "math/fundamental_operators.hpp"
 #include "ml/layers/normalisation/layer_norm.hpp"
 #include "ml/meta/ml_type_traits.hpp"
 #include "ml/ops/loss_functions/mean_square_error_loss.hpp"
 #include "ml/ops/placeholder.hpp"
 #include "ml/serializers/ml_types.hpp"
-#include "test_types.hpp"
+
+#include "gtest/gtest.h"
 
 namespace fetch {
 namespace ml {
@@ -42,6 +44,8 @@ TYPED_TEST(LayerNormTest, set_input_and_evaluate_test_2D)  // Use the class as a
 
   TypeParam input_data(std::vector<typename TypeParam::SizeType>({100, 10, 2}));
   ln.SetInput("LayerNorm_Input", input_data);
+  ln.Compile();
+
   TypeParam output = ln.Evaluate("LayerNorm_Beta_Addition", true);
 
   ASSERT_EQ(output.shape().size(), 3);
@@ -156,6 +160,7 @@ TYPED_TEST(LayerNormTest, graph_forward_test_exact_value_2D)  // Use the class a
   gt.Reshape({3, 2, 2});
 
   g.SetInput("Input", data);
+  g.Compile();
 
   TypeParam prediction = g.Evaluate("LayerNorm", true);
   // test correct values

@@ -16,13 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/core/graph.hpp"
-
-#include <unordered_set>
-
 #include "math/tensor/tensor.hpp"
 #include "math/tensor/tensor_slice_iterator.hpp"
+#include "ml/core/graph.hpp"
 #include "ml/ops/weights.hpp"
+
+#include <unordered_set>
 
 namespace fetch {
 
@@ -84,9 +83,18 @@ void Graph<TensorType>::Compile()
 
     // TODO(1467) - implement validity checks on graph compilation - e.g. loss function should not
     // appear in middle of graph
+
     if (valid)
     {
       ComputeAllNodeShapes();
+
+      // RecursivelyCompleteWeightsInitialisation
+      for (auto const &node_name_and_ptr : nodes_)
+      {
+        NodePtrType node = node_name_and_ptr.second;
+        node->GetOp()->Compile();
+      }
+
       graph_state_ = GraphState::COMPILED;
     }
     else
@@ -171,8 +179,6 @@ template <typename TensorType>
 TensorType Graph<TensorType>::ForwardImplementation(std::string const &node_name, bool is_training,
                                                     bool evaluate_mode)
 {
-  Compile();
-
   if (nodes_.find(node_name) != nodes_.end())
   {
     switch (graph_state_)
@@ -249,8 +255,6 @@ void Graph<TensorType>::ComputeAllNodeShapes()
 template <typename TensorType>
 void Graph<TensorType>::BackPropagate(std::string const &node_name, TensorType const &error_signal)
 {
-  Compile();
-
   // check node to backprop from exists in graph
   if (nodes_.find(node_name) != nodes_.end())
   {
@@ -322,7 +326,6 @@ template <typename TensorType>
 bool Graph<TensorType>::SetRegularisation(std::string const &node_name, RegPtrType regulariser,
                                           DataType regularisation_rate)
 {
-  Compile();
   NodePtrType t             = trainable_lookup_.at(node_name);
   auto        trainable_ptr = std::dynamic_pointer_cast<ops::Trainable<TensorType>>(t->GetOp());
   trainable_ptr->SetRegularisation(regulariser, regularisation_rate);
@@ -380,8 +383,6 @@ bool Graph<TensorType>::SetFrozenState(std::string const &node_name, bool frozen
 template <typename TensorType>
 void Graph<TensorType>::ApplyGradients(std::vector<TensorType> &grad)
 {
-  Compile();
-
   switch (graph_state_)
   {
   case GraphState::INVALID:
@@ -428,8 +429,6 @@ template <typename TensorType>
 void Graph<TensorType>::ApplySparseGradients(std::vector<TensorType> &grad,
                                              std::vector<SizeSet> &   update_rows)
 {
-  Compile();
-
   switch (graph_state_)
   {
   case GraphState::INVALID:

@@ -16,13 +16,15 @@
 //
 //------------------------------------------------------------------------------
 
-#include "gtest/gtest.h"
+#include "test_types.hpp"
+
 #include "ml/layers/convolution_1d.hpp"
 #include "ml/ops/convolution_1d.hpp"
 #include "ml/ops/loss_functions/mean_square_error_loss.hpp"
 #include "ml/ops/placeholder.hpp"
 #include "ml/serializers/ml_types.hpp"
-#include "test_types.hpp"
+
+#include "gtest/gtest.h"
 
 #include <memory>
 
@@ -56,6 +58,8 @@ TYPED_TEST(Convolution1DTest, set_input_and_evaluate_test)  // Use the class as 
   fetch::ml::layers::Convolution1D<TensorType> conv(output_channels, input_channels, kernel_height,
                                                     stride_size);
   conv.SetInput("Conv1D_Input", input);
+  conv.Compile();
+
   TensorType output = conv.Evaluate("Conv1D_Conv1D", true);
 
   // Get ground truth
@@ -93,7 +97,7 @@ TYPED_TEST(Convolution1DTest, ops_forward_test)  // Use the class as an Ops
                                                     stride_size);
 
   conv.ComputeBatchOutputShape({input_shape});  // necessary for out-of-Graph usage
-  conv.CompleteConstruction();                  // necessary for out-of-Graph usage
+  conv.CompleteShapeDeduction();                // necessary for out-of-Graph usage
 
   TensorType output(conv.ComputeOutputShape({std::make_shared<TensorType>(input)}));
   conv.Forward({std::make_shared<TensorType>(input)}, output);
@@ -138,7 +142,7 @@ TYPED_TEST(Convolution1DTest, ops_backward_test)  // Use the class as an Ops
                                                     stride_size);
 
   conv.ComputeBatchOutputShape({input_shape});  // necessary for out-of-Graph usage
-  conv.CompleteConstruction();                  // necessary for out-of-Graph usage
+  conv.CompleteShapeDeduction();                // necessary for out-of-Graph usage
 
   TensorType output(conv.ComputeOutputShape({std::make_shared<TensorType>(input)}));
   conv.Forward({std::make_shared<TensorType>(input)}, output);
@@ -192,7 +196,7 @@ TYPED_TEST(Convolution1DTest, node_forward_test)  // Use the class as a Node
       });
   conv.AddInput(placeholder_node);
   conv.GetOp()->ComputeBatchOutputShape({input_shape});  // necessary for out-of-Graph usage
-  conv.GetOp()->CompleteConstruction();                  // necessary for out-of-Graph usage
+  conv.GetOp()->CompleteShapeDeduction();                // necessary for out-of-Graph usage
 
   TensorType prediction = *conv.Evaluate(true);
 
@@ -248,7 +252,7 @@ TYPED_TEST(Convolution1DTest, node_backward_test)  // Use the class as a Node
       });
   conv.AddInput(placeholder_node);
   conv.GetOp()->ComputeBatchOutputShape({input_shape});  // necessary for out-of-Graph usage
-  conv.GetOp()->CompleteConstruction();                  // necessary for out-of-Graph usage
+  conv.GetOp()->CompleteShapeDeduction();                // necessary for out-of-Graph usage
 
   TensorType prediction     = *conv.Evaluate(true);
   auto       backprop_error = conv.BackPropagate(error_signal);
@@ -292,6 +296,7 @@ TYPED_TEST(Convolution1DTest, graph_forward_test)  // Use the class as a Node
   g.template AddNode<fetch::ml::layers::Convolution1D<TensorType>>(
       "Convolution1D", {"Input"}, output_channels, input_channels, kernel_height, stride_size);
   g.SetInput("Input", input);
+  g.Compile();
 
   TensorType prediction = g.Evaluate("Convolution1D", true);
 

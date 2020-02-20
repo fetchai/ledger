@@ -45,6 +45,7 @@ public:
   using VecTensorType = std::vector<std::shared_ptr<TensorType const>>;
   using Shape         = fetch::math::SizeVector;
   using ShapeVector   = std::vector<Shape>;
+  using SPType        = OpsSaveableParams;
 
   virtual ~Ops() = default;
 
@@ -77,7 +78,14 @@ public:
     return batch_output_shape_;
   }
 
-  virtual std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() = 0;
+  virtual std::shared_ptr<OpsSaveableParams> GetOpSaveableParams()
+  {
+    auto sp                = std::make_shared<SPType>();
+    sp->is_training        = is_training_;
+    sp->batch_input_shapes = batch_input_shapes_;
+    sp->batch_output_shape = batch_output_shape_;
+    return sp;
+  }
 
   Ops() = default;
 
@@ -147,10 +155,15 @@ public:
 
   /// Should be called after shape linking in Graph to complete all initialisations, that depends
   /// on layer shapes (like trainable parameter tensors init. and so on)
-  virtual void CompleteConstruction()
-  {
-    // Empty deafult implementation for non-trainable Ops.
-  }
+  virtual void CompleteShapeDeduction()
+  {}
+
+  /*
+   * Compile is called to initialise tensors. Many ops have no tensors to initialise, this is the
+   * default behaviour
+   */
+  virtual void Compile()
+  {}
 
   /**
    * @brief ChargeForward

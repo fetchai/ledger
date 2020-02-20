@@ -16,10 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/byte_array/const_byte_array.hpp"
-#include "core/byte_array/decoders.hpp"
 #include "tx_storage_client.hpp"
 #include "tx_storage_tool.hpp"
+
+#include "core/byte_array/const_byte_array.hpp"
+#include "core/byte_array/decoders.hpp"
 
 #include <chrono>
 #include <cstdlib>

@@ -19,19 +19,10 @@
 #include "core/byte_array/decoders.hpp"
 #include "core/serializers/counter.hpp"
 #include "ml/dataloaders/tensor_dataloader.hpp"
-#include "ml/layers/fully_connected.hpp"
-
-#include "ml/model/sequential.hpp"
-
 #include "ml/layers/convolution_1d.hpp"
 #include "ml/layers/convolution_2d.hpp"
-
-#include "ml/ops/loss_functions/mean_square_error_loss.hpp"
-#include "ml/ops/loss_functions/types.hpp"
-
-#include "ml/ops/metrics/types.hpp"
-#include "ml/serializers/ml_types.hpp"
-
+#include "ml/layers/fully_connected.hpp"
+#include "ml/model/sequential.hpp"
 #include "ml/ops/activations/dropout.hpp"
 #include "ml/ops/activations/gelu.hpp"
 #include "ml/ops/activations/leaky_relu.hpp"
@@ -44,10 +35,13 @@
 #include "ml/ops/avg_pool_2d.hpp"
 #include "ml/ops/embeddings.hpp"
 #include "ml/ops/flatten.hpp"
+#include "ml/ops/loss_functions/mean_square_error_loss.hpp"
+#include "ml/ops/loss_functions/types.hpp"
 #include "ml/ops/max_pool_1d.hpp"
 #include "ml/ops/max_pool_2d.hpp"
+#include "ml/ops/metrics/types.hpp"
 #include "ml/ops/reshape.hpp"
-
+#include "ml/serializers/ml_types.hpp"
 #include "vm/module.hpp"
 #include "vm_modules/ml/model/model.hpp"
 #include "vm_modules/use_estimator.hpp"
@@ -237,11 +231,8 @@ void VMModel::Fit(vm::Ptr<VMTensor> const &data, vm::Ptr<VMTensor> const &labels
 {
   try
   {
-    // prepare dataloader
-    auto data_loader = std::make_unique<TensorDataloader>();
-    data_loader->SetRandomMode(true);
-    data_loader->AddData({data->GetTensor()}, labels->GetTensor());
-    model_->SetDataloader(std::move(data_loader));
+    // set data in the model
+    model_->SetData(std::vector<TensorType>{data->GetTensor()}, labels->GetTensor());
 
     // set batch size
     model_config_->batch_size = batch_size;
@@ -307,7 +298,8 @@ void VMModel::Bind(Module &module, bool const experimental_enabled)
       .CreateMemberFunction("compile", &VMModel::CompileSequentialWithMetrics,
                             UseEstimator(&ModelEstimator::CompileSequentialWithMetrics))
       .CreateMemberFunction("fit", &VMModel::Fit, UseEstimator(&ModelEstimator::Fit))
-      .CreateMemberFunction("evaluate", &VMModel::Evaluate, UseEstimator(&ModelEstimator::Evaluate))
+      .CreateMemberFunction("evaluate", &VMModel::Evaluate,
+                            UseMemberEstimator(&VMModel::EstimateEvaluate))
       .CreateMemberFunction("predict", &VMModel::Predict,
                             UseMemberEstimator(&VMModel::EstimatePredict))
       .CreateMemberFunction("serializeToString", &VMModel::SerializeToString,
@@ -890,6 +882,31 @@ ChargeAmount VMModel::EstimatePredict(const vm::Ptr<math::VMTensor> &data)
 {
   ChargeAmount const cost       = model_->ChargeForward();
   SizeType const     batch_size = data->shape().back();
+  ChargeAmount const batch_cost = batch_size * cost;
+  FETCH_LOG_INFO("Model", " forward pass estimated batch cost is " + std::to_string(batch_size) +
+                              " * " + std::to_string(cost) + " = " + std::to_string(batch_cost));
+  return batch_cost;
+}
+
+/**
+ * @brief VMModel::EstimateEvaluate calculates a charge amount, required for a forward pass
+ * @param data
+ * @return charge estimation
+ */
+ChargeAmount VMModel::EstimateEvaluate()
+{
+  if (!model_->compiled_)
+  {
+    throw std::runtime_error("must compile model before evaluating");
+  }
+  if (!model_->DataLoaderIsSet())
+  {
+    throw std::runtime_error("must set data before evaluating");
+  }
+
+  ChargeAmount const cost = model_->ChargeForward();
+  model_->dataloader_ptr_->SetMode(fetch::ml::dataloaders::DataLoaderMode::TRAIN);
+  SizeType const     batch_size = model_->dataloader_ptr_->Size();
   ChargeAmount const batch_cost = batch_size * cost;
   FETCH_LOG_INFO("Model", " forward pass estimated batch cost is " + std::to_string(batch_size) +
                               " * " + std::to_string(cost) + " = " + std::to_string(batch_cost));

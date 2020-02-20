@@ -16,8 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/string/replace.hpp"
 #include "vm_test_toolkit.hpp"
+
+#include "core/string/replace.hpp"
 
 #include "gmock/gmock.h"
 

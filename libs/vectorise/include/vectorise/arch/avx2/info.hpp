@@ -19,11 +19,12 @@
 
 #include "vectorise/fixed_point/fixed_point.hpp"
 
-#include <cstddef>
-#include <cstdint>
 #include <emmintrin.h>
 #include <immintrin.h>
 #include <smmintrin.h>
+
+#include <cstddef>
+#include <cstdint>
 
 namespace fetch {
 namespace vectorise {
