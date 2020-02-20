@@ -92,7 +92,6 @@ struct MapSerializer<ml::model::Model<TensorType>, D>
 
     case ml::LoaderType::SGNS:
     case ml::LoaderType::W2V:
-    case ml::LoaderType::COMMODITY:
     case ml::LoaderType::C2V:
     {
       throw ml::exceptions::NotImplemented(
@@ -159,7 +158,6 @@ struct MapSerializer<ml::model::Model<TensorType>, D>
     }
     case ml::LoaderType::SGNS:
     case ml::LoaderType::W2V:
-    case ml::LoaderType::COMMODITY:
     case ml::LoaderType::C2V:
     {
       throw ml::exceptions::NotImplemented(
