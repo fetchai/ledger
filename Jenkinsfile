@@ -6,11 +6,12 @@ MACOS_NODE_LABEL = 'osx'
 
 enum Platform
 {
-  DEFAULT_CLANG('Clang',   'clang',     'clang++',     ''),
-  CLANG6       ('Clang 6', 'clang-6.0', 'clang++-6.0', 'gcr.io/organic-storm-201412/ledger-ci-clang6:v0.1.3'),
-  CLANG7       ('Clang 7', 'clang-7',   'clang++-7',   'gcr.io/organic-storm-201412/ledger-ci-clang7:v0.1.3'),
-  GCC7         ('GCC 7',   'gcc-7',     'g++-7',       'gcr.io/organic-storm-201412/ledger-ci-gcc7:v0.1.3'),
-  GCC8         ('GCC 8',   'gcc-8',     'g++-8',       'gcr.io/organic-storm-201412/ledger-ci-gcc8:v0.1.3')
+  MACOS_CLANG('Clang',   'clang',     'clang++',     ''),
+
+  CLANG6     ('Clang 6', 'clang-6.0', 'clang++-6.0', 'gcr.io/organic-storm-201412/ledger-ci-clang6:v0.1.3'),
+  CLANG7     ('Clang 7', 'clang-7',   'clang++-7',   'gcr.io/organic-storm-201412/ledger-ci-clang7:v0.1.3'),
+  GCC7       ('GCC 7',   'gcc-7',     'g++-7',       'gcr.io/organic-storm-201412/ledger-ci-gcc7:v0.1.3'),
+  GCC8       ('GCC 8',   'gcc-8',     'g++-8',       'gcr.io/organic-storm-201412/ledger-ci-gcc8:v0.1.3')
 
   public Platform(label, cc, cxx, image)
   {
@@ -90,7 +91,11 @@ def build_stage(Platform platform, Configuration config)
 {
   return {
     stage("Build ${stage_name_suffix(platform, config)}") {
-      sh "pipenv run ./scripts/ci-tool.py -B ${config.label}"
+      def concurrency_opt = platform == Platform.MACOS_CLANG
+        ? "-j4"
+        : "";
+
+      sh "pipenv run ./scripts/ci-tool.py -B ${concurrency_opt} ${config.label}"
     }
   }
 }
@@ -233,8 +238,8 @@ def run_builds_in_parallel()
     // Only run macOS builds on master and head branches
     if (run_full_build())
     {
-      stages["macOS ${Platform.DEFAULT_CLANG.label} ${config.label}"] = create_macos_build(
-        Platform.DEFAULT_CLANG,
+      stages["macOS ${Platform.MACOS_CLANG.label} ${config.label}"] = create_macos_build(
+        Platform.MACOS_CLANG,
         config)
     }
   }
