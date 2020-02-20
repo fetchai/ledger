@@ -128,7 +128,7 @@ def run(options, benefactor):
     assert init_result == 123
 
     print('Execute action...')
-    api.sync(contract.action(api, 'action_test', 10000, [entity1]))
+    api.sync(contract.action(api, 'action_test', 10000, entity1))
 
     print('Query action state...')
     action_result = contract.query(api, 'query_action_test')
