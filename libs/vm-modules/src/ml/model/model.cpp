@@ -211,7 +211,7 @@ void VMModel::CompileSequentialImplementation(Ptr<String> const &loss, Ptr<Strin
     SequentialModelPtr  me             = GetMeAsSequentialIfPossible();
     if (me->LayerCount() == 0)
     {
-      vm_->RuntimeError("Can not compile an empty sequential model, please add layers first.");
+      vm_->RuntimeError("Cannot compile an empty sequential model, please add layers first.");
       return;
     }
     PrepareDataloader();
