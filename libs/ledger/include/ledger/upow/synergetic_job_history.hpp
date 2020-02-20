@@ -22,6 +22,7 @@
 #include "vm/vm.hpp"
 #include "vm_modules/ledger/synergetic_job.hpp"
 #include "vm_modules/ledger/synergetic_job_history_element.hpp"
+
 #include <vector>
 
 namespace fetch {
