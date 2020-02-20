@@ -60,18 +60,6 @@ public:
   }
 };
 
-TEST_F(MLTests, DISABLED_dataloader_commodity_construction)
-{
-  static char const *SOURCE = R"(
-    function main()
-      var dataloader = DataLoader("commodity");
-    endfunction
-  )";
-
-  ASSERT_TRUE(toolkit.Compile(SOURCE));
-  ASSERT_TRUE(toolkit.Run());
-}
-
 TEST_F(MLTests, DISABLED_dataloader_tensor_construction)
 {
   static char const *SOURCE = R"(
@@ -94,20 +82,6 @@ TEST_F(MLTests, DISABLED_dataloader_invalid_mode_construction)
 
   ASSERT_TRUE(toolkit.Compile(SOURCE));
   ASSERT_FALSE(toolkit.Run());
-}
-
-TEST_F(MLTests, DISABLED_dataloader_commodity_invalid_serialisation)
-{
-  static char const *SOURCE = R"(
-    function main()
-      var dataloader = DataLoader("commodity");
-      var state = State<DataLoader>("dataloader");
-      state.set(dataloader);
-    endfunction
-  )";
-
-  ASSERT_TRUE(toolkit.Compile(SOURCE));
-  EXPECT_FALSE(toolkit.Run());
 }
 
 TEST_F(MLTests, DISABLED_dataloader_tensor_serialisation_test)
@@ -164,23 +138,6 @@ TEST_F(MLTests, DISABLED_trivial_persistent_tensor_dataloader_serialisation_test
   ASSERT_TRUE(toolkit.Compile(dataloader_deserialise_src));
   EXPECT_CALL(toolkit.observer(), Exists(state_name));
   ASSERT_TRUE(toolkit.Run());
-}
-
-TEST_F(MLTests, DISABLED_dataloader_commodity_mode_invalid_add_data_by_tensor)
-{
-  static char const *SOURCE = R"(
-    function main()
-        var tensor_shape = Array<UInt64>(1);
-        tensor_shape[0] = 1u64;
-        var data_tensor = Tensor(tensor_shape);
-        var label_tensor = Tensor(tensor_shape);
-        var dataloader = DataLoader("commodity");
-        dataloader.addData({data_tensor}, label_tensor);
-    endfunction
-  )";
-
-  ASSERT_TRUE(toolkit.Compile(SOURCE));
-  ASSERT_FALSE(toolkit.Run());
 }
 
 TEST_F(MLTests, DISABLED_dataloader_tensor_mode_invalid_add_data_by_files)
