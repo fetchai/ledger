@@ -39,7 +39,6 @@ enum class LoaderType : uint8_t
   TENSOR,
   SGNS,
   W2V,
-  COMMODITY,
   C2V
 };
 
