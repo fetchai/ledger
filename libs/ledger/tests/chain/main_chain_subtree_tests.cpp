@@ -50,6 +50,7 @@ protected:
 
   void SetUp() override
   {
+    fetch::chain::InitialiseTestConstants();
     fetch::crypto::mcl::details::MCLInitialiser();
     block_generator_.Reset();
 
