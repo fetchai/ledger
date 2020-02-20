@@ -270,5 +270,25 @@ bool Transaction::IsVerified() const
   return verified_;
 }
 
+/**
+ * Signal that this transaction is obtained via a subtree sync response,
+ * and should not be added to the recent queue.
+ */
+void Transaction::SetFromSubtreeSync()
+{
+  old_ = true;
+}
+
+/**
+ * Check to see if this transaction is obtained via a subtree sync response,
+ * and shoud not be added to the recent queue.
+ *
+ * @return
+ */
+bool Transaction::IsFromSubtreeSync() const
+{
+  return old_;
+}
+
 }  // namespace chain
 }  // namespace fetch

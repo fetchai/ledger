@@ -231,11 +231,8 @@ void VMModel::Fit(vm::Ptr<VMTensor> const &data, vm::Ptr<VMTensor> const &labels
 {
   try
   {
-    // prepare dataloader
-    auto data_loader = std::make_unique<TensorDataloader>();
-    data_loader->SetRandomMode(true);
-    data_loader->AddData({data->GetTensor()}, labels->GetTensor());
-    model_->SetDataloader(std::move(data_loader));
+    // set data in the model
+    model_->SetData(std::vector<TensorType>{data->GetTensor()}, labels->GetTensor());
 
     // set batch size
     model_config_->batch_size = batch_size;
