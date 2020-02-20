@@ -57,6 +57,7 @@ Settings::Settings()
   , private_network       {*this, "private-network",         false,                        "Signal the network should run as part of a private network"}
   , initial_address       {*this, "initial-address",         "",                           "The initial address where all funds can be found for a standalone node"}
   , db_prefix             {*this, "db-prefix",               "node_storage",               "The prefix for filenames related to constellation databases"}
+  , persistent_status     {*this, "persistent-status",       false,                        "The ledger will store the status of executed transactions forever, instead of the default 24 hours"}
   , port                  {*this, "port",                    DEFAULT_PORT,                 "The starting port for ledger services"}
   , peers                 {*this, "peers",                   {},                           "The comma separated list of addresses to initially connect to"}
   , external              {*this, "external",                "127.0.0.1",                  "This node's global IP address or hostname"}
