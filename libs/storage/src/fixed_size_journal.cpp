@@ -330,9 +330,16 @@ bool FixedSizeJournalFile::Load(std::string const &filename)
   }
 
   // compute the expected file size based on the header information
-  uint64_t const min_expected_file_size = FILE_HEADER_SIZE +
-                                          (SafeDecrement(header.num_sectors, 1u) * sector_size_) +
-                                          SECTOR_HEADER_SIZE;
+  uint64_t min_expected_file_size = FILE_HEADER_SIZE +
+                                    (SafeDecrement(header.num_sectors, 1u) * sector_size_) +
+                                    SECTOR_HEADER_SIZE;
+
+  // edge case - when there are 0 sectors the minimum file size is simply the file header size
+  if (header.num_sectors == 0)
+  {
+    min_expected_file_size = FILE_HEADER_SIZE;
+  }
+
   uint64_t const max_expected_file_size = FILE_HEADER_SIZE + (header.num_sectors * sector_size_);
 
   // final check make sure that the actual file size matches the one that is written to the header
