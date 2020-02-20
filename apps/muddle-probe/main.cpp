@@ -19,7 +19,7 @@
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/decoders.hpp"
 #include "core/commandline/parameter_parser.hpp"
-#include "core/serializers/main_serializer.hpp"
+#include "core/serialisers/main_serialiser.hpp"
 #include "core/service_ids.hpp"
 #include "crypto/ecdsa.hpp"
 #include "muddle/network_id.hpp"

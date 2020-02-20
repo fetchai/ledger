@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/serializers/group_definitions.hpp"
+#include "core/serialisers/group_definitions.hpp"
 #include "kademlia/primitives.hpp"
 #include "moment/clock_interfaces.hpp"
 #include "network/uri.hpp"

@@ -18,7 +18,7 @@
 
 #include "test_types.hpp"
 
-#include "core/serializers/main_serializer_definition.hpp"
+#include "core/serialisers/main_serialiser_definition.hpp"
 #include "ml/ops/loss_functions/softmax_cross_entropy_loss.hpp"
 #include "ml/serialisers/ml_types.hpp"
 

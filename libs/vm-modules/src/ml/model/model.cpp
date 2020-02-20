@@ -17,7 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/decoders.hpp"
-#include "core/serializers/counter.hpp"
+#include "core/serialisers/counter.hpp"
 #include "ml/dataloaders/tensor_dataloader.hpp"
 #include "ml/layers/convolution_1d.hpp"
 #include "ml/layers/convolution_2d.hpp"

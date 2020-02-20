@@ -18,9 +18,9 @@
 
 #include "chain/transaction.hpp"
 #include "chain/transaction_encoding.hpp"
-#include "chain/transaction_serializer.hpp"
+#include "chain/transaction_serialiser.hpp"
 #include "core/byte_array/byte_array.hpp"
-#include "core/serializers/main_serializer.hpp"
+#include "core/serialisers/main_serialiser.hpp"
 #include "crypto/sha256.hpp"
 #include "logging/logging.hpp"
 #include "meta/type_traits.hpp"

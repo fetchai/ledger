@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/const_byte_array.hpp"
-#include "core/serializers/serializable_exception.hpp"
+#include "core/serialisers/serializable_exception.hpp"
 
 #include <cstddef>
 #include <cstdint>

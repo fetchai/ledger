@@ -21,7 +21,7 @@
 #include "core/byte_array/decoders.hpp"
 #include "core/byte_array/encoders.hpp"
 #include "core/commandline/parameter_parser.hpp"
-#include "core/serializers/main_serializer.hpp"
+#include "core/serialisers/main_serialiser.hpp"
 #include "vm/common.hpp"
 #include "vm/execution_task.hpp"
 #include "vm/module.hpp"

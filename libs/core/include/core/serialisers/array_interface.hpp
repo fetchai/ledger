@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/serializers/serializable_exception.hpp"
+#include "core/serialisers/serializable_exception.hpp"
 
 #include <cstdint>
 #include <string>

@@ -18,7 +18,7 @@
 
 #include "test_types.hpp"
 
-#include "core/serializers/main_serializer_definition.hpp"
+#include "core/serialisers/main_serialiser_definition.hpp"
 #include "ml/ops/metrics/categorical_accuracy.hpp"
 #include "ml/serialisers/ml_types.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"

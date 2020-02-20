@@ -21,7 +21,7 @@
 #include "beacon/block_entropy.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/digest.hpp"
-#include "core/serializers/main_serializer_definition.hpp"
+#include "core/serialisers/main_serialiser_definition.hpp"
 #include "crypto/prover.hpp"
 
 #include <atomic>

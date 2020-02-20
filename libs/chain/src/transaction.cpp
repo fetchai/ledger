@@ -17,7 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "chain/transaction.hpp"
-#include "chain/transaction_serializer.hpp"
+#include "chain/transaction_serialiser.hpp"
 #include "chain/transaction_validity_period.hpp"
 #include "crypto/verifier.hpp"
 

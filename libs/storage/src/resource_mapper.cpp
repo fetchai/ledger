@@ -18,7 +18,7 @@
 
 #include "core/assert.hpp"
 #include "core/byte_array/encoders.hpp"
-#include "core/serializers/group_definitions.hpp"
+#include "core/serialisers/group_definitions.hpp"
 #include "crypto/fnv.hpp"
 #include "crypto/hash.hpp"
 #include "crypto/sha256.hpp"

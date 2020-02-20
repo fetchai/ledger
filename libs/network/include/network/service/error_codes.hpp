@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/serializers/exception.hpp"
+#include "core/serialisers/exception.hpp"
 
 namespace fetch {
 namespace service {
