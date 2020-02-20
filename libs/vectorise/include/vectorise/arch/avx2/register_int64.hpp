@@ -17,16 +17,18 @@
 //
 //------------------------------------------------------------------------------
 
+#include "vectorise/arch/avx2/register_int8.hpp"
+
+#include <emmintrin.h>
+#include <immintrin.h>
+#include <smmintrin.h>
+
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
 #include <iomanip>
 #include <limits>
 #include <ostream>
-
-#include <emmintrin.h>
-#include <immintrin.h>
-#include <smmintrin.h>
 
 namespace fetch {
 namespace vectorise {
@@ -376,7 +378,7 @@ inline int64_t first_element(VectorRegister<int64_t, 256> const &x)
 }
 
 template <int32_t elements>
-inline VectorRegister<int64_t, 128> rotate_elements_left(VectorRegister<int64_t, 128> const &x)
+VectorRegister<int64_t, 128> rotate_elements_left(VectorRegister<int64_t, 128> const &x)
 {
   __m128i n = x.data();
   n         = _mm_alignr_epi8(n, n, elements * 8);
@@ -384,7 +386,7 @@ inline VectorRegister<int64_t, 128> rotate_elements_left(VectorRegister<int64_t,
 }
 
 template <int64_t elements>
-inline VectorRegister<int64_t, 256> rotate_elements_left(VectorRegister<int64_t, 256> const &x);
+VectorRegister<int64_t, 256> rotate_elements_left(VectorRegister<int64_t, 256> const &x);
 
 template <>
 inline VectorRegister<int64_t, 256> rotate_elements_left<0>(VectorRegister<int64_t, 256> const &x)
@@ -392,36 +394,9 @@ inline VectorRegister<int64_t, 256> rotate_elements_left<0>(VectorRegister<int64
   return x;
 }
 
-template <>
-inline VectorRegister<int64_t, 256> rotate_elements_left<1>(VectorRegister<int64_t, 256> const &x)
-{
-  __m128i hi  = _mm256_extractf128_si256(x.data(), 1);
-  __m128i lo  = _mm256_extractf128_si256(x.data(), 0);
-  __m128i hi1 = _mm_alignr_epi8(lo, hi, 8);
-  __m128i lo1 = _mm_alignr_epi8(hi, lo, 8);
-
-  return {_mm256_set_m128i(hi1, lo1)};
-}
-
-template <>
-inline VectorRegister<int64_t, 256> rotate_elements_left<2>(VectorRegister<int64_t, 256> const &x)
-{
-  __m128i hi = _mm256_extractf128_si256(x.data(), 1);
-  __m128i lo = _mm256_extractf128_si256(x.data(), 0);
-
-  return {_mm256_set_m128i(lo, hi)};
-}
-
-template <>
-inline VectorRegister<int64_t, 256> rotate_elements_left<3>(VectorRegister<int64_t, 256> const &x)
-{
-  __m128i hi  = _mm256_extractf128_si256(x.data(), 1);
-  __m128i lo  = _mm256_extractf128_si256(x.data(), 0);
-  __m128i hi1 = _mm_alignr_epi8(lo, hi, 8);
-  __m128i lo1 = _mm_alignr_epi8(hi, lo, 8);
-
-  return {_mm256_set_m128i(lo1, hi1)};
-}
+FETCH_ROTATE_ELEMENTS_LEFT(int64_t, 1)
+FETCH_ROTATE_ELEMENTS_LEFT(int64_t, 2)
+FETCH_ROTATE_ELEMENTS_LEFT(int64_t, 3)
 
 template <>
 inline VectorRegister<int64_t, 256> rotate_elements_left<4>(VectorRegister<int64_t, 256> const &x)
@@ -455,16 +430,19 @@ inline VectorRegister<int64_t, 256> shift_elements_right(VectorRegister<int64_t,
 
 inline int64_t reduce(VectorRegister<int64_t, 128> const &x)
 {
-  __m128i r = _mm_add_epi64(x.data(), _mm_bsrli_si128(x.data(), 8));
-  return static_cast<int64_t>(_mm_extract_epi64(r, 0));  // NOLINT
+  VectorRegister<int64_t, 128> r{x};
+
+  r = r + rotate_elements_left<1>(r);
+  return static_cast<int64_t>(_mm_extract_epi64(r.data(), 0));  // NOLINT
 }
 
 inline int64_t reduce(VectorRegister<int64_t, 256> const &x)
 {
-  VectorRegister<int64_t, 128> hi{_mm256_extractf128_si256(x.data(), 1)};
-  VectorRegister<int64_t, 128> lo{_mm256_extractf128_si256(x.data(), 0)};
-  hi = hi + lo;
-  return reduce(hi);
+  VectorRegister<int64_t, 256> r{x};
+
+  r = r + rotate_elements_left<2>(r);
+  r = r + rotate_elements_left<1>(r);
+  return static_cast<int64_t>(_mm256_extract_epi64(r.data(), 0));  // NOLINT
 }
 
 inline bool all_less_than(VectorRegister<int64_t, 128> const &x,

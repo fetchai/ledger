@@ -38,10 +38,16 @@ MatrixMultiply<T>::MatrixMultiply(const SPType &sp)
 template <typename T>
 std::shared_ptr<OpsSaveableParams> MatrixMultiply<T>::GetOpSaveableParams()
 {
-  auto ret         = std::make_shared<SPType>();
-  ret->transpose_a = transpose_a_;
-  ret->transpose_b = transpose_b_;
-  return ret;
+  auto sp         = std::make_shared<SPType>();
+  sp->transpose_a = transpose_a_;
+  sp->transpose_b = transpose_b_;
+
+  // Add base class savable params
+  auto ops_sp  = Ops<TensorType>::GetOpSaveableParams();
+  auto cast_sp = std::static_pointer_cast<OpsSaveableParams>(sp);
+  *cast_sp     = *(std::static_pointer_cast<OpsSaveableParams>(ops_sp));
+
+  return sp;
 }
 
 template <typename T>
@@ -285,6 +291,45 @@ std::vector<typename fetch::math::SizeType> MatrixMultiply<T>::ComputeOutputShap
   return output_shape;
 }
 
+template <typename T>
+OperationsCount MatrixMultiply<T>::ChargeForward() const
+{
+  assert(!this->batch_input_shapes_.empty());
+
+  // TODO(ML-482): impl. for n-dimensional case, not only for 2D.
+  assert(this->batch_input_shapes_.size() == 2);
+
+  // Assuming this is a matrix multiplication of weights * input_vector
+  // e.g. [n; m] * [m; batch_size], then total operations cost is n * m * batch_size,
+  // and default batch_size is 1.
+  OperationsCount const n = this->batch_input_shapes_.front().at(0);
+  OperationsCount const m = this->batch_input_shapes_.back().at(0);
+  OperationsCount const p = 1;
+
+  OperationsCount const cost =
+      n * m * p * fetch::ml::charge_estimation::ops::MULTIPLICATION_PER_ELEMENT;
+  return cost;
+}
+
+template <typename T>
+OperationsCount MatrixMultiply<T>::ChargeBackward() const
+{
+  assert(!this->batch_input_shapes_.empty());
+
+  assert(this->batch_input_shapes_.size() == 2);
+
+  OperationsCount const n = this->batch_input_shapes_.front().at(0);
+  OperationsCount const m = this->batch_input_shapes_.back().at(0);
+  OperationsCount const p = 1;
+
+  OperationsCount const cost =
+      n * m * p * fetch::ml::charge_estimation::ops::MULTIPLICATION_PER_ELEMENT +
+      fetch::ml::charge_estimation::ops::ADDITION_PER_ELEMENT *
+          this->TotalElementsIn({this->batch_input_shapes_});
+  ;
+  return cost;
+}
+
 /**
  * Updates temporary container objects used in some cases of batched forward pass
  * @tparam T tensor type
@@ -449,15 +494,10 @@ std::shared_ptr<fetch::ml::ops::Ops<TensorType>> MatrixMultiply<TensorType>::Mak
 /// EXPLICIT INSTANTIATIONS ///
 ///////////////////////////////
 
-// TODO(ML-438)
 template class MatrixMultiply<math::Tensor<int8_t>>;
 template class MatrixMultiply<math::Tensor<int16_t>>;
 template class MatrixMultiply<math::Tensor<int32_t>>;
 template class MatrixMultiply<math::Tensor<int64_t>>;
-// template class MatrixMultiply<math::Tensor<uint8_t>>;
-// template class MatrixMultiply<math::Tensor<uint16_t>>;
-template class MatrixMultiply<math::Tensor<uint32_t>>;
-template class MatrixMultiply<math::Tensor<uint64_t>>;
 template class MatrixMultiply<math::Tensor<float>>;
 template class MatrixMultiply<math::Tensor<double>>;
 template class MatrixMultiply<math::Tensor<fixed_point::fp32_t>>;

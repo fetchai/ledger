@@ -19,7 +19,6 @@
 #include "core/random/lfg.hpp"
 #include "math/standard_functions/sqrt.hpp"
 #include "ml/ops/weights.hpp"
-#include "ml/state_dict.hpp"
 
 namespace fetch {
 namespace ml {
@@ -39,6 +38,11 @@ std::shared_ptr<OpsSaveableParams> Weights<TensorType>::GetOpSaveableParams()
   auto cast_sp = std::static_pointer_cast<OpVariableSaveableParams<TensorType>>(sp);
   *cast_sp     = *(std::static_pointer_cast<OpVariableSaveableParams<TensorType>>(p_sp));
 
+  // Add base class savable params
+  auto ops_sp      = Ops<TensorType>::GetOpSaveableParams();
+  auto cast_ops_sp = std::static_pointer_cast<OpsSaveableParams>(sp);
+  *cast_ops_sp     = *(std::static_pointer_cast<OpsSaveableParams>(ops_sp));
+
   return sp;
 }
 
@@ -49,29 +53,6 @@ std::shared_ptr<fetch::ml::ops::Ops<TensorType>> Weights<TensorType>::MakeShared
   // This overrides implementation in Placeholder
   assert(me.get() == this);
   return me;
-}
-
-/**
- * constructs a state dictionary used for exporting/saving weights
- * @return
- */
-template <typename TensorType>
-fetch::ml::StateDict<TensorType> Weights<TensorType>::StateDict() const
-{
-  fetch::ml::StateDict<TensorType> d;
-  d.weights_ = this->data_;
-  return d;
-}
-
-/**
- * load from a state dictionary to import weights
- * @param dict
- */
-template <typename TensorType>
-void Weights<TensorType>::LoadStateDict(fetch::ml::StateDict<TensorType> const &dict)
-{
-  assert(dict.dict_.empty());
-  this->SetData(*dict.weights_);
 }
 
 /**
@@ -307,6 +288,15 @@ const char *ops::Weights<TensorType>::Descriptor() const
   return DESCRIPTOR;
 }
 
+template <typename TensorType>
+OperationsCount Weights<TensorType>::ChargeForward() const
+{
+  assert(!this->batch_output_shape_.empty());
+  OperationsCount cost = fetch::ml::charge_estimation::ops::WEIGHTS_READING_PER_ELEMENT *
+                         this->TotalElementsIn({this->batch_output_shape_});
+  return cost;
+}
+
 template <class T>
 const typename T::Type ops::Weights<T>::HALF = fetch::math::Type<DataType>("0.5");
 
@@ -318,10 +308,6 @@ template class Weights<math::Tensor<int8_t>>;
 template class Weights<math::Tensor<int16_t>>;
 template class Weights<math::Tensor<int32_t>>;
 template class Weights<math::Tensor<int64_t>>;
-template class Weights<math::Tensor<uint8_t>>;
-template class Weights<math::Tensor<uint16_t>>;
-template class Weights<math::Tensor<uint32_t>>;
-template class Weights<math::Tensor<uint64_t>>;
 template class Weights<math::Tensor<float>>;
 template class Weights<math::Tensor<double>>;
 template class Weights<math::Tensor<fixed_point::fp32_t>>;

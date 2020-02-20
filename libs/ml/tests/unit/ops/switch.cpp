@@ -16,9 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include "test_types.hpp"
+
 #include "math/base_types.hpp"
 #include "ml/ops/switch.hpp"
-#include "test_types.hpp"
 
 #include "gtest/gtest.h"
 
@@ -33,7 +34,7 @@ class SwitchTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(SwitchTest, fetch::math::test::TensorFloatingTypes);
+TYPED_TEST_SUITE(SwitchTest, fetch::math::test::TensorFloatingTypes, );
 
 TYPED_TEST(SwitchTest, forward_test)
 {

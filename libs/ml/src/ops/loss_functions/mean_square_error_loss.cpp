@@ -38,10 +38,16 @@ MeanSquareErrorLoss<TensorType>::MeanSquareErrorLoss(TensorType weightings)
 template <typename TensorType>
 std::shared_ptr<OpsSaveableParams> MeanSquareErrorLoss<TensorType>::GetOpSaveableParams()
 {
-  auto ret = std::make_shared<SPType>();
+  auto sp = std::make_shared<SPType>();
 
-  ret->weightings = weightings_;
-  return ret;
+  sp->weightings = weightings_;
+
+  // Add base class savable params
+  auto ops_sp  = Ops<TensorType>::GetOpSaveableParams();
+  auto cast_sp = std::static_pointer_cast<OpsSaveableParams>(sp);
+  *cast_sp     = *(std::static_pointer_cast<OpsSaveableParams>(ops_sp));
+
+  return sp;
 }
 
 template <typename TensorType>
@@ -247,6 +253,24 @@ std::vector<math::SizeType> MeanSquareErrorLoss<TensorType>::ComputeOutputShape(
   return {1, 1};
 }
 
+template <typename TensorType>
+OperationsCount MeanSquareErrorLoss<TensorType>::ChargeForward() const
+{
+  assert(!this->batch_output_shape_.empty());
+  OperationsCount cost = fetch::ml::charge_estimation::ops::MEAN_SQ_ERROR_PER_ELEMENT *
+                         this->TotalElementsIn({this->batch_input_shapes_});
+  return cost;
+}
+
+template <typename TensorType>
+OperationsCount MeanSquareErrorLoss<TensorType>::ChargeBackward() const
+{
+  assert(!this->batch_input_shapes_.empty());
+  OperationsCount cost = fetch::ml::charge_estimation::ops::MEAN_SQ_ERROR_BACKWARD_PER_ELEMENT *
+                         this->TotalElementsIn({this->batch_input_shapes_.at(0)});
+  return cost;
+}
+
 ///////////////////////////////
 /// EXPLICIT INSTANTIATIONS ///
 ///////////////////////////////
@@ -255,10 +279,6 @@ template class MeanSquareErrorLoss<math::Tensor<int8_t>>;
 template class MeanSquareErrorLoss<math::Tensor<int16_t>>;
 template class MeanSquareErrorLoss<math::Tensor<int32_t>>;
 template class MeanSquareErrorLoss<math::Tensor<int64_t>>;
-template class MeanSquareErrorLoss<math::Tensor<uint8_t>>;
-template class MeanSquareErrorLoss<math::Tensor<uint16_t>>;
-template class MeanSquareErrorLoss<math::Tensor<uint32_t>>;
-template class MeanSquareErrorLoss<math::Tensor<uint64_t>>;
 template class MeanSquareErrorLoss<math::Tensor<float>>;
 template class MeanSquareErrorLoss<math::Tensor<double>>;
 template class MeanSquareErrorLoss<math::Tensor<fixed_point::fp32_t>>;

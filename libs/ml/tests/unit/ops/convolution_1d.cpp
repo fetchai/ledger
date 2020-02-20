@@ -16,9 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include "test_types.hpp"
+
 #include "math/base_types.hpp"
 #include "ml/ops/convolution_1d.hpp"
-#include "test_types.hpp"
 
 #include "gtest/gtest.h"
 
@@ -32,7 +33,7 @@ class Convolution1DTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(Convolution1DTest, fetch::math::test::TensorFloatingTypes);
+TYPED_TEST_SUITE(Convolution1DTest, fetch::math::test::TensorFloatingTypes, );
 
 TYPED_TEST(Convolution1DTest, forward_1x1x2_1x1x1x2)
 {

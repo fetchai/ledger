@@ -70,6 +70,9 @@ public:
     return DESCRIPTOR;
   }
 
+  OperationsCount ChargeForward() const override;
+  OperationsCount ChargeBackward() const override;
+
 private:
   // minimum possible output value of the sigmoid should not be zero, but actually epsilon
   // likewise maximum output should be 1 - epsilon

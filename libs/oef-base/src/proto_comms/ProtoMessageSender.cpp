@@ -18,6 +18,7 @@
 
 #include "oef-base/proto_comms/ProtoMessageEndpoint.hpp"
 #include "oef-base/proto_comms/ProtoMessageSender.hpp"
+
 #include <google/protobuf/message.h>
 
 ProtoMessageSender::consumed_needed_pair ProtoMessageSender::CheckForSpace(
@@ -46,7 +47,12 @@ ProtoMessageSender::consumed_needed_pair ProtoMessageSender::CheckForSpace(
       }
       Lock lock(mutex);
 
-      auto     body_size = static_cast<uint32_t>(txq.front()->ByteSize());
+#ifdef FETCH_PLATFORM_MACOS
+      auto body_size = static_cast<uint32_t>(txq.front()->ByteSizeLong());
+#else
+      auto body_size = static_cast<uint32_t>(txq.front()->ByteSize());
+#endif
+
       uint32_t head_size = sizeof(uint32_t);
       uint32_t mesg_size = body_size + head_size;
       if (chars.RemainingSpace() < mesg_size)

@@ -76,6 +76,9 @@ MainChain::MainChain(Mode mode, bool dirty_block_functionality)
         "Total number of false positive queries to the Ledger Main Chain Bloom filter"))
   , dirty_blocks_attempt_add_(telemetry::Registry::Instance().CreateCounter(
         "ledger_main_chain_dirty_blocks_attempt_add_total", "Total attempts to add a dirty block"))
+  , children_on_storage_checks_total_(telemetry::Registry::Instance().CreateCounter(
+        "ledger_main_chain_children_on_storage_checks_total",
+        "Total checks for block's children on storage"))
 {
   if (Mode::IN_MEMORY_DB != mode)
   {
@@ -259,24 +262,9 @@ bool MainChain::LookupReference(BlockHash const &hash, BlockHash &next_hash) con
     assert(parent_block);
     assert(heaviest_.ChainLabel() != 0);
     // check if this block is cached and known to lie on the current heaviest chain
-    if (parent_block->chain_label != heaviest_.ChainLabel())
+    if (parent_block->chain_label == heaviest_.ChainLabel())
     {
-      // we need to descend from tip
-      auto next_block = HeaviestChainBlockAbove(parent_block->block_number);
-      if (!next_block)
-      {
-        // there was a failure on block lookup attempt
-        return false;
-      }
-      if (next_block->previous_hash == hash)
-      {
-        next_hash = next_block->hash;
-        return true;
-      }
-    }
-    else
-    {
-      // it does
+      // it is
       auto references_range = forward_references_.equal_range(hash);
       for (auto reference_it = references_range.first; reference_it != references_range.second;
            ++reference_it)
@@ -291,6 +279,21 @@ bool MainChain::LookupReference(BlockHash const &hash, BlockHash &next_hash) con
       }
       // at least one forward ref has to be to a block of current chain
       assert(false);
+    }
+    else
+    {
+      // we need to descend from tip
+      auto next_block = HeaviestChainBlockAbove(parent_block->block_number);
+      if (!next_block)
+      {
+        // there was a failure on block lookup attempt
+        return false;
+      }
+      if (next_block->previous_hash == hash)
+      {
+        next_hash = next_block->hash;
+        return true;
+      }
     }
     // there are several forward references from the parent hash
     // and it is not on the heaviest chain
@@ -338,8 +341,8 @@ MainChain::BlockMap::size_type MainChain::UncacheBlock(BlockHash const &hash) co
  */
 void MainChain::KeepBlock(BlockPtr const &block) const
 {
-  ASSERT(static_cast<bool>(block));
-  ASSERT(static_cast<bool>(block_store_));
+  assert(static_cast<bool>(block));
+  assert(static_cast<bool>(block_store_));
 
   auto const &hash{block->hash};
 
@@ -363,15 +366,19 @@ void MainChain::KeepBlock(BlockPtr const &block) const
   record.block = *block;
 
   // detect if any of this block's children has made it to the store already
-  auto forward_refs{forward_references_.equal_range(hash)};
-  for (auto ref_it{forward_refs.first}; ref_it != forward_refs.second; ++ref_it)
   {
-    auto const &child{ref_it->second};
-    if (block_store_->Has(storage::ResourceID(child)))
+    MilliTimer tmr("ChildrenOnStore", 2000);
+    children_on_storage_checks_total_->increment();
+    auto forward_refs{forward_references_.equal_range(hash)};
+    for (auto ref_it{forward_refs.first}; ref_it != forward_refs.second; ++ref_it)
     {
-      record.next_hash = child;
-      CacheReference(hash, child, true);
-      break;
+      auto const &child{ref_it->second};
+      if (block_store_->Has(storage::ResourceID(child)))
+      {
+        record.next_hash = child;
+        CacheReference(hash, child, true);
+        break;
+      }
     }
   }
 
@@ -680,7 +687,7 @@ Blocks MainChain::GetChainPreceding(BlockHash start, uint64_t limit) const
 }
 
 /**
- * Walk the chain forward collecting at most UPPER_LIMIT blocks, until either tip reached,
+ * Walk the chain forward collecting at most UPPER_LIMIT blocks, until either tip is reached,
  * or next block is ambiguous, which can happen off-heaviest chain.
  * If current_hash is empty, travel starts from genesis.
  *
@@ -714,7 +721,7 @@ MainChain::Travelogue MainChain::TimeTravel(BlockHash current_hash, std::size_t 
       FETCH_LOG_DEBUG(LOGGING_NAME, "Block lookup failure for block: 0x", ToHex(current_hash),
                       " during time travel. Note, next hash: ", next_hash);
 
-      return {};
+      return {heaviest->hash, heaviest->block_number};
     }
   }
 

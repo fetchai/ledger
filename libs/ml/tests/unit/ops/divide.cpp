@@ -16,9 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include "test_types.hpp"
+
 #include "math/base_types.hpp"
 #include "ml/ops/divide.hpp"
-#include "test_types.hpp"
 
 #include "gtest/gtest.h"
 
@@ -32,7 +33,7 @@ class DivideTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(DivideTest, fetch::math::test::TensorFloatingTypes);
+TYPED_TEST_SUITE(DivideTest, fetch::math::test::TensorFloatingTypes, );
 
 TYPED_TEST(DivideTest, forward_test)
 {

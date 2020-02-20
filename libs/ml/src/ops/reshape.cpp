@@ -41,10 +41,16 @@ Reshape<TensorType>::Reshape(SPType const &sp)
 template <typename TensorType>
 std::shared_ptr<OpsSaveableParams> Reshape<TensorType>::GetOpSaveableParams()
 {
-  SPType sp{};
-  sp.new_shape = new_shape_;
-  sp.new_size  = new_size_;
-  return std::make_shared<SPType>(sp);
+  auto sp       = std::make_shared<SPType>();
+  sp->new_shape = new_shape_;
+  sp->new_size  = new_size_;
+
+  // Add base class savable params
+  auto ops_sp  = Ops<TensorType>::GetOpSaveableParams();
+  auto cast_sp = std::static_pointer_cast<OpsSaveableParams>(sp);
+  *cast_sp     = *(std::static_pointer_cast<OpsSaveableParams>(ops_sp));
+
+  return sp;
 }
 
 template <typename TensorType>
@@ -118,6 +124,26 @@ std::vector<math::SizeType> Reshape<TensorType>::ComputeOutputShape(
   return output_shape;
 }
 
+template <typename TensorType>
+OperationsCount Reshape<TensorType>::ChargeForward() const
+{
+  assert(!this->batch_output_shape_.empty());
+  OperationsCount cost = fetch::ml::charge_estimation::ops::RESHAPE_PER_ELEMENT *
+                             this->TotalElementsIn({this->batch_output_shape_}) +
+                         fetch::ml::charge_estimation::ops::ASSIGN_PER_ELEMENT *
+                             this->TotalElementsIn({this->batch_output_shape_});
+  return cost;
+}
+
+template <typename TensorType>
+OperationsCount Reshape<TensorType>::ChargeBackward() const
+{
+  assert(!this->batch_output_shape_.empty());
+  OperationsCount cost = fetch::ml::charge_estimation::ops::ASSIGN_PER_ELEMENT *
+                         this->TotalElementsIn({this->batch_output_shape_});
+  return cost;
+}
+
 ///////////////////////////////
 /// EXPLICIT INSTANTIATIONS ///
 ///////////////////////////////
@@ -126,10 +152,6 @@ template class Reshape<math::Tensor<int8_t>>;
 template class Reshape<math::Tensor<int16_t>>;
 template class Reshape<math::Tensor<int32_t>>;
 template class Reshape<math::Tensor<int64_t>>;
-template class Reshape<math::Tensor<uint8_t>>;
-template class Reshape<math::Tensor<uint16_t>>;
-template class Reshape<math::Tensor<uint32_t>>;
-template class Reshape<math::Tensor<uint64_t>>;
 template class Reshape<math::Tensor<float>>;
 template class Reshape<math::Tensor<double>>;
 template class Reshape<math::Tensor<fixed_point::fp32_t>>;

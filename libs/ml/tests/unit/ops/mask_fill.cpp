@@ -16,9 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include "test_types.hpp"
+
 #include "math/base_types.hpp"
 #include "ml/ops/mask_fill.hpp"
-#include "test_types.hpp"
 
 #include "gtest/gtest.h"
 
@@ -31,7 +32,7 @@ class MaskFillTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(MaskFillTest, fetch::math::test::TensorFloatingTypes);
+TYPED_TEST_SUITE(MaskFillTest, fetch::math::test::TensorFloatingTypes, );
 
 TYPED_TEST(MaskFillTest, forward_test)
 {

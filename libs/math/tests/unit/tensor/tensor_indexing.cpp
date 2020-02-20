@@ -16,9 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "gtest/gtest.h"
-#include "math/tensor/tensor.hpp"
 #include "test_types.hpp"
+
+#include "math/tensor/tensor.hpp"
+
+#include "gtest/gtest.h"
 
 namespace fetch {
 namespace math {
@@ -29,7 +31,7 @@ class TensorIndexingTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(TensorIndexingTest, FloatIntAndUIntTypes);
+TYPED_TEST_SUITE(TensorIndexingTest, FloatIntAndUIntTypes, );
 
 TYPED_TEST(TensorIndexingTest, empty_tensor_test)
 {

@@ -70,6 +70,11 @@ std::shared_ptr<OpsSaveableParams> Slice<TensorType>::GetOpSaveableParams()
   sp->start_end_slice = start_end_slice_;
   sp->slice_type      = static_cast<uint8_t>(slice_type_);
 
+  // Add base class savable params
+  auto ops_sp  = Ops<TensorType>::GetOpSaveableParams();
+  auto cast_sp = std::static_pointer_cast<OpsSaveableParams>(sp);
+  *cast_sp     = *(std::static_pointer_cast<OpsSaveableParams>(ops_sp));
+
   return sp;
 }
 
@@ -184,6 +189,38 @@ std::vector<math::SizeType> Slice<TensorType>::ComputeOutputShape(VecTensorType 
   return output_shape;
 }
 
+template <typename TensorType>
+void Slice<TensorType>::Compile()
+{
+  ret_error_signal_ = TensorType();
+}
+
+template <typename TensorType>
+OperationsCount Slice<TensorType>::ChargeForward() const
+{
+  assert(!this->batch_input_shapes_.empty());
+  OperationsCount cost = fetch::ml::charge_estimation::ops::SLICE_PER_ELEMENT *
+                             this->TotalElementsIn({this->batch_input_shapes_}) +
+                         fetch::ml::charge_estimation::ops::ASSIGN_PER_ELEMENT *
+                             this->TotalElementsIn({this->batch_input_shapes_});
+  ;
+  return cost;
+}
+
+template <typename TensorType>
+OperationsCount Slice<TensorType>::ChargeBackward() const
+{
+  assert(!this->batch_output_shape_.empty());
+  OperationsCount cost = fetch::ml::charge_estimation::ops::RESHAPE_PER_ELEMENT *
+                             this->TotalElementsIn({this->batch_output_shape_}) +
+                         fetch::ml::charge_estimation::ops::SLICE_PER_ELEMENT *
+                             this->TotalElementsIn({this->batch_output_shape_}) +
+                         fetch::ml::charge_estimation::ops::ASSIGN_PER_ELEMENT *
+                             this->TotalElementsIn({this->batch_output_shape_});
+  ;
+  return cost;
+}
+
 ///////////////////////////////
 /// EXPLICIT INSTANTIATIONS ///
 ///////////////////////////////
@@ -192,10 +229,6 @@ template class Slice<math::Tensor<int8_t>>;
 template class Slice<math::Tensor<int16_t>>;
 template class Slice<math::Tensor<int32_t>>;
 template class Slice<math::Tensor<int64_t>>;
-template class Slice<math::Tensor<uint8_t>>;
-template class Slice<math::Tensor<uint16_t>>;
-template class Slice<math::Tensor<uint32_t>>;
-template class Slice<math::Tensor<uint64_t>>;
 template class Slice<math::Tensor<float>>;
 template class Slice<math::Tensor<double>>;
 template class Slice<math::Tensor<fixed_point::fp32_t>>;

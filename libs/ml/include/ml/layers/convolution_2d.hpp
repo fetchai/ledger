@@ -59,6 +59,8 @@ public:
 
   void SetOpSaveableParams(SPType const &sp);
 
+  void CompleteShapeDeduction() override;
+
   std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override;
 
   static constexpr OpType OpCode()
@@ -77,6 +79,11 @@ public:
     return DESCRIPTOR;
   }
 
+  void Compile() override;
+
+  OperationsCount ChargeForward() const override;
+  OperationsCount ChargeBackward() const override;
+
 private:
   void Initialise(TensorType &weights, WeightsInit init_mode)
   {
@@ -88,6 +95,11 @@ private:
   SizeType input_channels_{};
   SizeType output_channels_{};
   SizeType stride_size_{};
+  bool     is_initialised_ = false;
+
+  WeightsInit init_mode_;
+  SizeType    seed_;
+  std::string weights_;
 };
 
 }  // namespace layers

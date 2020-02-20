@@ -1,15 +1,16 @@
-DOCKER_IMAGE_NAME = 'gcr.io/organic-storm-201412/fetch-ledger-develop:v0.4.2'
+DOCKER_IMAGE_NAME = 'gcr.io/organic-storm-201412/fetch-ledger-develop:v0.4.5'
 STATIC_ANALYSIS_IMAGE = 'gcr.io/organic-storm-201412/ledger-ci-clang-tidy:v0.1.3'
+
 HIGH_LOAD_NODE_LABEL = 'ledger'
-MACOS_NODE_LABEL = 'mac-mini'
+MACOS_NODE_LABEL = 'osx'
 
 enum Platform
 {
-  DEFAULT_CLANG('Clang',      'clang',     'clang++',     ''),
-  CLANG6       ('Clang 6',    'clang-6.0', 'clang++-6.0', 'gcr.io/organic-storm-201412/ledger-ci-clang6:v0.1.1'),
-  CLANG7       ('Clang 7',    'clang-7',   'clang++-7',   'gcr.io/organic-storm-201412/ledger-ci-clang7:v0.1.1'),
-  GCC7         ('GCC 7',      'gcc-7',     'g++-7',       'gcr.io/organic-storm-201412/ledger-ci-gcc7:v0.1.1'),
-  GCC8         ('GCC 8',      'gcc-8',     'g++-8',       'gcr.io/organic-storm-201412/ledger-ci-gcc8:v0.1.1')
+  MACOS_CLANG('Clang',   'clang',     'clang++',     ''),
+  CLANG6     ('Clang 6', 'clang-6.0', 'clang++-6.0', 'gcr.io/organic-storm-201412/ledger-ci-clang6:v0.1.3'),
+  CLANG7     ('Clang 7', 'clang-7',   'clang++-7',   'gcr.io/organic-storm-201412/ledger-ci-clang7:v0.1.3'),
+  GCC7       ('GCC 7',   'gcc-7',     'g++-7',       'gcr.io/organic-storm-201412/ledger-ci-gcc7:v0.1.3'),
+  GCC8       ('GCC 8',   'gcc-8',     'g++-8',       'gcr.io/organic-storm-201412/ledger-ci-gcc8:v0.1.3')
 
   public Platform(label, cc, cxx, image)
   {
@@ -51,6 +52,12 @@ def run_full_build()
   return true
 }
 
+def set_up_pipenv()
+{
+  sh "pipenv install --dev --deploy"
+  sh "pipenv check"
+}
+
 def static_analysis(Configuration config)
 {
   return {
@@ -60,9 +67,13 @@ def static_analysis(Configuration config)
           checkout scm
         }
 
-        stage('Run Static Analysis') {
-          docker.image(STATIC_ANALYSIS_IMAGE).inside {
-            sh "./scripts/ci-tool.py --lint ${config.label}"
+        docker.image(STATIC_ANALYSIS_IMAGE).inside {
+          stage('Set Up Static Analysis') {
+            set_up_pipenv()
+          }
+
+          stage('Run Static Analysis') {
+            sh "pipenv run ./scripts/ci-tool.py --lint ${config.label}"
           }
         }
       }
@@ -79,7 +90,11 @@ def build_stage(Platform platform, Configuration config)
 {
   return {
     stage("Build ${stage_name_suffix(platform, config)}") {
-      sh "./scripts/ci-tool.py -B ${config.label}"
+      def concurrency_opt = platform == Platform.MACOS_CLANG
+        ? "-j4"
+        : "";
+
+      sh "pipenv run ./scripts/ci-tool.py -B ${concurrency_opt} ${config.label}"
     }
   }
 }
@@ -88,11 +103,11 @@ def fast_tests_stage(Platform platform, Configuration config)
 {
   return {
     stage("Unit Tests ${stage_name_suffix(platform, config)}") {
-      sh "./scripts/ci-tool.py -T ${config.label}"
+      sh "pipenv run ./scripts/ci-tool.py -T ${config.label}"
     }
 
     stage("Etch Lang Tests ${stage_name_suffix(platform, config)}") {
-      sh "./scripts/ci-tool.py -L ${config.label}"
+      sh "pipenv run ./scripts/ci-tool.py -L ${config.label}"
     }
   }
 }
@@ -101,16 +116,15 @@ def slow_tests_stage(Platform platform, Configuration config)
 {
   return {
     stage("Slow Tests ${stage_name_suffix(platform, config)}") {
-      sh "./scripts/ci-tool.py -S ${config.label}"
+      sh "pipenv run ./scripts/ci-tool.py -S ${config.label}"
     }
 
     stage("Integration Tests ${stage_name_suffix(platform, config)}") {
-      sh "./scripts/ci-tool.py -I ${config.label}"
+      sh "pipenv run ./scripts/ci-tool.py -I ${config.label}"
     }
 
     stage("End-to-End Tests ${stage_name_suffix(platform, config)}") {
-      sh './scripts/install-test-dependencies.sh'
-      sh "./scripts/ci-tool.py -E ${config.label}"
+      sh "pipenv run ./scripts/ci-tool.py -E ${config.label}"
     }
   }
 }
@@ -166,6 +180,10 @@ def create_docker_build(Platform platform, Configuration config, stages)
 {
   def build = { build_stages ->
     docker.image(platform.docker_image).inside {
+      stage("Set Up ${stage_name_suffix(platform, config)}") {
+        set_up_pipenv()
+      }
+
       build_stages()
     }
   }
@@ -180,7 +198,19 @@ def create_docker_build(Platform platform, Configuration config, stages)
 
 def create_macos_build(Platform platform, Configuration config)
 {
-  def build = { build_stages -> build_stages() }
+  def build = { build_stages ->
+    try {
+      stage("Set Up ${stage_name_suffix(platform, config)}") {
+        set_up_pipenv()
+      }
+
+      build_stages()
+    } finally {
+      stage("Tear Down ${stage_name_suffix(platform, config)}") {
+        sh "pipenv --rm"
+      }
+    }
+  }
 
   return _create_build(
     platform,
@@ -207,8 +237,8 @@ def run_builds_in_parallel()
     // Only run macOS builds on master and head branches
     if (run_full_build())
     {
-      stages["macOS ${Platform.DEFAULT_CLANG.label} ${config.label}"] = create_macos_build(
-        Platform.DEFAULT_CLANG,
+      stages["macOS ${Platform.MACOS_CLANG.label} ${config.label}"] = create_macos_build(
+        Platform.MACOS_CLANG,
         config)
     }
   }
@@ -244,12 +274,17 @@ def run_basic_checks()
       }
 
       docker.image(DOCKER_IMAGE_NAME).inside {
+        stage('Set Up Basic Checks') {
+          set_up_pipenv()
+        }
+
         stage('Style Check') {
-          sh './scripts/apply_style.py -d'
+          sh 'pipenv run ./scripts/apply_style.py -d'
         }
 
         stage('Circular Dependencies') {
-          sh 'mkdir -p build-deps && cd build-deps && cmake ../ && cd - && ./scripts/detect-circular-dependencies.py build-deps/'
+          sh 'mkdir -p build-deps && cd build-deps && cmake ../'
+          sh 'pipenv run ./scripts/detect-circular-dependencies.py build-deps/'
         }
       }
     }

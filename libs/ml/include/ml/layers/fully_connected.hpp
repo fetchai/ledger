@@ -75,7 +75,10 @@ public:
 
   OpPtrType MakeSharedCopy(OpPtrType me) override;
 
-  void CompleteConstruction() override;
+  void CompleteShapeDeduction() override;
+
+  OperationsCount ChargeForward() const override;
+  OperationsCount ChargeBackward() const override;
 
   std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override;
 
@@ -89,11 +92,11 @@ public:
 
   static constexpr char const *DESCRIPTOR = "FullyConnected";
 
-  inline OpType OperationType() const override
+  OpType OperationType() const override
   {
     return this->OpCode();
   }
-  inline char const *Descriptor() const override
+  char const *Descriptor() const override
   {
     return DESCRIPTOR;
   }

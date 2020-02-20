@@ -36,10 +36,10 @@ class GraphRebuildTest : public ::testing::Test
 {
 };
 
-// TYPED_TEST_CASE(SaveParamsTest, ::fetch::math::test::TensorFloatingTypes);
-TYPED_TEST_CASE(SerializersTestWithInt, ::fetch::math::test::TensorIntAndFloatingTypes);
-TYPED_TEST_CASE(SerializersTestNoInt, ::fetch::math::test::TensorFloatingTypes);
-TYPED_TEST_CASE(GraphRebuildTest, ::fetch::math::test::HighPrecisionTensorFloatingTypes);
+// TYPED_TEST_SUITE(SaveParamsTest, ::fetch::math::test::TensorFloatingTypes,);
+TYPED_TEST_SUITE(SerializersTestWithInt, ::fetch::math::test::TensorIntAndFloatingTypes, );
+TYPED_TEST_SUITE(SerializersTestNoInt, ::fetch::math::test::TensorFloatingTypes, );
+TYPED_TEST_SUITE(GraphRebuildTest, ::fetch::math::test::HighPrecisionTensorFloatingTypes, );
 
 //////////////////////////////
 /// GRAPH OP SERIALISATION ///
@@ -58,30 +58,6 @@ void ComparePrediction(GraphPtrType g, GraphPtrType g2, std::string node_name)
   TensorType prediction  = g->Evaluate(node_name);
   TensorType prediction2 = g2->Evaluate(node_name);
   EXPECT_TRUE(prediction.AllClose(prediction2, DataType{0}, DataType{0}));
-}
-
-TYPED_TEST(SerializersTestWithInt, serialize_empty_state_dict)
-{
-  ::fetch::ml::StateDict<TypeParam>       sd1;
-  ::fetch::serializers::MsgPackSerializer b;
-  b << sd1;
-  b.seek(0);
-  ::fetch::ml::StateDict<TypeParam> sd2;
-  b >> sd2;
-  EXPECT_EQ(sd1, sd2);
-}
-
-TYPED_TEST(SerializersTestNoInt, serialize_state_dict)
-{
-  // Generate a plausible state dict out of a fully connected layer
-  ::fetch::ml::layers::FullyConnected<TypeParam> fc(10, 10);
-  struct ::fetch::ml::StateDict<TypeParam>       sd1 = fc.StateDict();
-  ::fetch::serializers::MsgPackSerializer        b;
-  b << sd1;
-  b.seek(0);
-  ::fetch::ml::StateDict<TypeParam> sd2;
-  b >> sd2;
-  EXPECT_EQ(sd1, sd2);
 }
 
 TYPED_TEST(SerializersTestWithInt, serialize_empty_graph_saveable_params)
@@ -128,6 +104,8 @@ TYPED_TEST(SerializersTestNoInt, serialize_graph_saveable_params)
   /// make a prediction and do nothing with it
   TensorType tmp_data = TensorType::FromString("1, 2, 3, 4, 5, 6, 7, 8, 9, 10");
   g->SetInput("Input", tmp_data.Transpose());
+  g->Compile();
+
   TensorType tmp_prediction = g->Evaluate(output);
 
   ::fetch::ml::GraphSaveableParams<TypeParam>      gsp1 = g->GetGraphSaveableParams();
@@ -265,7 +243,6 @@ TYPED_TEST(GraphRebuildTest, graph_rebuild_every_op)
       AddOp<fetch::ml::ops::MaskFill<TensorType>>(g, {input_1, input_1}, DataType{0});
   std::string matmul =
       AddOp<fetch::ml::ops::MatrixMultiply<TensorType>>(g, {input_1, input_1_transpose});
-  std::string maxpool     = AddOp<fetch::ml::ops::MaxPool<TensorType>>(g, {input_3d}, 1, 1);
   std::string maxpool1d   = AddOp<fetch::ml::ops::MaxPool1D<TensorType>>(g, {input_3d}, 1, 1);
   std::string maxpool2d   = AddOp<fetch::ml::ops::MaxPool2D<TensorType>>(g, {input_4d}, 1, 1);
   std::string maximum     = AddOp<fetch::ml::ops::Maximum<TensorType>>(g, {input_1, input_2});
@@ -414,7 +391,6 @@ TYPED_TEST(GraphRebuildTest, graph_rebuild_every_op)
   ComparePrediction<GraphPtrType, TensorType>(g, g2, log);
   ComparePrediction<GraphPtrType, TensorType>(g, g2, maskfill);
   ComparePrediction<GraphPtrType, TensorType>(g, g2, matmul);
-  ComparePrediction<GraphPtrType, TensorType>(g, g2, maxpool);
   ComparePrediction<GraphPtrType, TensorType>(g, g2, maxpool1d);
   ComparePrediction<GraphPtrType, TensorType>(g, g2, maxpool2d);
   ComparePrediction<GraphPtrType, TensorType>(g, g2, maximum);

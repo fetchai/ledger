@@ -16,9 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include "test_types.hpp"
+
 #include "math/base_types.hpp"
 #include "ml/ops/reduce_mean.hpp"
-#include "test_types.hpp"
 
 #include "gtest/gtest.h"
 
@@ -33,7 +34,7 @@ class ReduceMeanTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(ReduceMeanTest, fetch::math::test::TensorFloatingTypes);
+TYPED_TEST_SUITE(ReduceMeanTest, fetch::math::test::TensorFloatingTypes, );
 
 TYPED_TEST(ReduceMeanTest, forward_2_2_2_test)
 {

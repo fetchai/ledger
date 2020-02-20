@@ -16,9 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "gtest/gtest.h"
-#include "math/tensor/tensor.hpp"
 #include "test_types.hpp"
+
+#include "math/tensor/tensor.hpp"
+
+#include "gtest/gtest.h"
 
 namespace fetch {
 namespace math {
@@ -29,7 +31,7 @@ class TensorConstructorTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(TensorConstructorTest, IntAndFloatingTypes);
+TYPED_TEST_SUITE(TensorConstructorTest, IntAndFloatingTypes, );
 
 TYPED_TEST(TensorConstructorTest, string_construction)
 {

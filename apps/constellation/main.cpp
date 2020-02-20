@@ -17,9 +17,11 @@
 //------------------------------------------------------------------------------
 
 #include "bootstrap_monitor.hpp"
-#include "chain/address.hpp"
 #include "config_builder.hpp"
 #include "constants.hpp"
+#include "settings.hpp"
+
+#include "chain/address.hpp"
 #include "constellation/constellation.hpp"
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/const_byte_array.hpp"
@@ -38,7 +40,6 @@
 #include "network/adapters.hpp"
 #include "network/peer.hpp"
 #include "network/uri.hpp"
-#include "settings.hpp"
 #include "shards/manifest.hpp"
 #include "version/cli_header.hpp"
 #include "version/fetch_version.hpp"
@@ -272,7 +273,8 @@ int main(int argc, char **argv)
       // setting policy for critical signals
       shutdown_on_critical_failure = settings.graceful_failure.value();
 
-      // create the bootrap monitor (if configued to do so)
+      // create the bootstrap monitor (if configured to do so)
+
       auto initial_peers = ToUriSet(settings.peers.value());
       auto bootstrap     = CreateBootstrap(settings, cfg, p2p_key, initial_peers);
 

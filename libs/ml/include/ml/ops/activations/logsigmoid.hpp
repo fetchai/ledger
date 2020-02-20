@@ -64,6 +64,9 @@ public:
 private:
   // maximum possible output value of the log-sigmoid should not be zero, but actually epsilon
   DataType epsilon_ = fetch::math::numeric_min<DataType>();
+
+  OperationsCount ChargeForward() const override;
+  OperationsCount ChargeBackward() const override;
 };
 
 }  // namespace ops

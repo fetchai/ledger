@@ -16,11 +16,14 @@
 //
 //------------------------------------------------------------------------------
 
+#include "test_types.hpp"
+
 #include "core/serializers/main_serializer_definition.hpp"
-#include "gtest/gtest.h"
 #include "ml/ops/loss_functions/softmax_cross_entropy_loss.hpp"
 #include "ml/serializers/ml_types.hpp"
-#include "test_types.hpp"
+
+#include "gtest/gtest.h"
+
 #include <memory>
 
 namespace fetch {
@@ -31,7 +34,7 @@ class SoftmaxCrossEntropyTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(SoftmaxCrossEntropyTest, math::test::HighPrecisionTensorFloatingTypes);
+TYPED_TEST_SUITE(SoftmaxCrossEntropyTest, math::test::HighPrecisionTensorFloatingTypes, );
 
 TYPED_TEST(SoftmaxCrossEntropyTest, perfect_match_forward_test)
 {

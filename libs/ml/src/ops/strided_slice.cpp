@@ -65,6 +65,11 @@ std::shared_ptr<OpsSaveableParams> StridedSlice<TensorType>::GetOpSaveableParams
   sp->ends    = ends_;
   sp->strides = strides_;
 
+  // Add base class savable params
+  auto ops_sp  = Ops<TensorType>::GetOpSaveableParams();
+  auto cast_sp = std::static_pointer_cast<OpsSaveableParams>(sp);
+  *cast_sp     = *(std::static_pointer_cast<OpsSaveableParams>(ops_sp));
+
   return sp;
 }
 
@@ -134,6 +139,29 @@ std::vector<math::SizeType> StridedSlice<TensorType>::ComputeOutputShape(
   return output_shape;
 }
 
+template <typename TensorType>
+OperationsCount StridedSlice<TensorType>::ChargeForward() const
+{
+  assert(!this->batch_input_shapes_.empty());
+  OperationsCount cost = fetch::ml::charge_estimation::ops::SLICE_PER_ELEMENT *
+                             this->TotalElementsIn({this->batch_input_shapes_}) +
+                         fetch::ml::charge_estimation::ops::ASSIGN_PER_ELEMENT *
+                             this->TotalElementsIn({this->batch_input_shapes_});
+  ;
+  return cost;
+}
+
+template <typename TensorType>
+OperationsCount StridedSlice<TensorType>::ChargeBackward() const
+{
+  assert(!this->batch_output_shape_.empty());
+  OperationsCount cost = fetch::ml::charge_estimation::ops::SLICE_PER_ELEMENT *
+                             this->TotalElementsIn({this->batch_output_shape_}) +
+                         fetch::ml::charge_estimation::ops::ASSIGN_PER_ELEMENT *
+                             this->TotalElementsIn({this->batch_output_shape_});
+  ;
+  return cost;
+}
 ///////////////////////////////
 /// EXPLICIT INSTANTIATIONS ///
 ///////////////////////////////
@@ -142,10 +170,6 @@ template class StridedSlice<math::Tensor<int8_t>>;
 template class StridedSlice<math::Tensor<int16_t>>;
 template class StridedSlice<math::Tensor<int32_t>>;
 template class StridedSlice<math::Tensor<int64_t>>;
-template class StridedSlice<math::Tensor<uint8_t>>;
-template class StridedSlice<math::Tensor<uint16_t>>;
-template class StridedSlice<math::Tensor<uint32_t>>;
-template class StridedSlice<math::Tensor<uint64_t>>;
 template class StridedSlice<math::Tensor<float>>;
 template class StridedSlice<math::Tensor<double>>;
 template class StridedSlice<math::Tensor<fixed_point::fp32_t>>;

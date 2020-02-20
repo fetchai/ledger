@@ -43,8 +43,8 @@ namespace {
 using namespace fetch;
 
 using fetch::ledger::Block;
-using fetch::ledger::MainChain;
 using fetch::ledger::BlockStatus;
+using fetch::ledger::MainChain;
 using fetch::ledger::testing::BlockGenerator;
 
 using Rng               = std::mt19937_64;
@@ -995,8 +995,8 @@ TEST_P(MainChainTests, AddingBlockWithDuplicateTxInSameBlockFails)
   ASSERT_EQ(chain_->GetHeaviestBlockHash(), genesis->hash);
 }
 
-INSTANTIATE_TEST_CASE_P(ParamBased, MainChainTests,
-                        ::testing::Values(MainChain::Mode::CREATE_PERSISTENT_DB,
-                                          MainChain::Mode::IN_MEMORY_DB), );
+INSTANTIATE_TEST_SUITE_P(ParamBased, MainChainTests,
+                         ::testing::Values(MainChain::Mode::CREATE_PERSISTENT_DB,
+                                           MainChain::Mode::IN_MEMORY_DB));
 
 }  // namespace

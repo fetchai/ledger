@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "math/base_types.hpp"
+#include "ml/charge_estimation/ops/constants.hpp"
 
 #include <functional>
 #include <memory>
@@ -123,12 +124,12 @@ public:
   void                                ResetCache(bool input_size_changed);
   void                                ResetInputsAndOutputs();
 
-  inline std::string const &GetNodeName() const
+  std::string const &GetNodeName() const
   {
     return name_;
   }
 
-  inline std::shared_ptr<ops::Ops<TensorType>> GetOp()
+  std::shared_ptr<ops::Ops<TensorType>> GetOp()
   {
     return op_ptr_;
   }
@@ -143,10 +144,13 @@ public:
 
   fetch::math::SizeVector BatchOutputShape();
 
-  inline bool HasValidCache() const
+  bool HasValidCache() const
   {
     return static_cast<bool>(cached_output_status_ == CachedOutputState::VALID_CACHE);
   }
+
+  fetch::ml::OperationsCount ChargeForward(std::unordered_set<std::string> &visited_nodes) const;
+  fetch::ml::OperationsCount ChargeBackward(std::unordered_set<std::string> &visited_nodes) const;
 
 private:
   std::vector<NodeWeakPtrType> input_nodes_;

@@ -21,6 +21,8 @@
 #include "ml/core/graph.hpp"
 #include "ml/ops/weights.hpp"
 
+#include <unordered_set>
+
 namespace fetch {
 
 namespace ml {
@@ -81,9 +83,18 @@ void Graph<TensorType>::Compile()
 
     // TODO(1467) - implement validity checks on graph compilation - e.g. loss function should not
     // appear in middle of graph
+
     if (valid)
     {
       ComputeAllNodeShapes();
+
+      // RecursivelyCompleteWeightsInitialisation
+      for (auto const &node_name_and_ptr : nodes_)
+      {
+        NodePtrType node = node_name_and_ptr.second;
+        node->GetOp()->Compile();
+      }
+
       graph_state_ = GraphState::COMPILED;
     }
     else
@@ -168,8 +179,6 @@ template <typename TensorType>
 TensorType Graph<TensorType>::ForwardImplementation(std::string const &node_name, bool is_training,
                                                     bool evaluate_mode)
 {
-  Compile();
-
   if (nodes_.find(node_name) != nodes_.end())
   {
     switch (graph_state_)
@@ -246,8 +255,6 @@ void Graph<TensorType>::ComputeAllNodeShapes()
 template <typename TensorType>
 void Graph<TensorType>::BackPropagate(std::string const &node_name, TensorType const &error_signal)
 {
-  Compile();
-
   // check node to backprop from exists in graph
   if (nodes_.find(node_name) != nodes_.end())
   {
@@ -319,7 +326,6 @@ template <typename TensorType>
 bool Graph<TensorType>::SetRegularisation(std::string const &node_name, RegPtrType regulariser,
                                           DataType regularisation_rate)
 {
-  Compile();
   NodePtrType t             = trainable_lookup_.at(node_name);
   auto        trainable_ptr = std::dynamic_pointer_cast<ops::Trainable<TensorType>>(t->GetOp());
   trainable_ptr->SetRegularisation(regulariser, regularisation_rate);
@@ -377,8 +383,6 @@ bool Graph<TensorType>::SetFrozenState(std::string const &node_name, bool frozen
 template <typename TensorType>
 void Graph<TensorType>::ApplyGradients(std::vector<TensorType> &grad)
 {
-  Compile();
-
   switch (graph_state_)
   {
   case GraphState::INVALID:
@@ -425,8 +429,6 @@ template <typename TensorType>
 void Graph<TensorType>::ApplySparseGradients(std::vector<TensorType> &grad,
                                              std::vector<SizeSet> &   update_rows)
 {
-  Compile();
-
   switch (graph_state_)
   {
   case GraphState::INVALID:
@@ -614,62 +616,6 @@ void Graph<TensorType>::ResetGraphCache(bool input_size_changed, NodePtrType n)
         throw std::runtime_error("Unable to lock weak pointer.");
       }
     }
-  }
-}
-
-/**
- * Assigns all trainable parameters to a stateDict for exporting and serialising
- * @return  d is the StateDict of all trainable params
- */
-
-template <typename TensorType>
-fetch::ml::StateDict<TensorType> Graph<TensorType>::StateDict()
-{
-  Compile();
-  fetch::ml::StateDict<TensorType> state_dict;
-  StateDict(state_dict);
-  return state_dict;
-}
-
-template <typename TensorType>
-void Graph<TensorType>::StateDict(fetch::ml::StateDict<TensorType> &state_dict)
-{
-
-  // add trainables in this graph to state dict
-  for (auto const &t : trainable_lookup_)
-  {
-    auto node_ptr    = t.second;
-    auto op_ptr      = node_ptr->GetOp();
-    auto weights_ptr = std::dynamic_pointer_cast<ops::Weights<TensorType>>(op_ptr);
-    state_dict.dict_.emplace(t.first, weights_ptr->StateDict());
-  }
-
-  // add trainables in any subgraphs to state dict
-  for (auto &node_pair : nodes_)
-  {
-    auto op_ptr    = node_pair.second->GetOp();
-    auto graph_ptr = std::dynamic_pointer_cast<Graph<TensorType>>(op_ptr);
-
-    // if its a graph
-    if (graph_ptr)
-    {
-      graph_ptr->StateDict(state_dict);
-    }
-  }
-}
-
-/**
- * Import trainable parameters from an exported model
- * @param dict  state dictionary to import to weights
- */
-template <typename TensorType>
-void Graph<TensorType>::LoadStateDict(fetch::ml::StateDict<TensorType> const &dict)
-{
-  assert(!dict.weights_);
-  for (auto const &t : trainable_lookup_)
-  {
-    auto trainable_ptr = std::dynamic_pointer_cast<ops::Trainable<TensorType>>(t.second->GetOp());
-    trainable_ptr->LoadStateDict(dict.dict_.at(t.first));
   }
 }
 
@@ -1167,6 +1113,46 @@ std::vector<std::pair<std::string, std::vector<std::string>>> Graph<TensorType>:
   return connections_;
 }
 
+template <typename TensorType>
+fetch::ml::OperationsCount Graph<TensorType>::ChargeForward(const std::string &node_name) const
+{
+  if (nodes_.find(node_name) == nodes_.end())
+  {
+    FETCH_LOG_ERROR(DESCRIPTOR, "The graph does not contain a node with name " + node_name);
+    return 0;
+  }
+
+  if (this->graph_state_ == GraphState::NOT_COMPILED)
+  {
+    throw fetch::ml::exceptions::InvalidMode(
+        "Can not compute charge estimate for a forward pass: graph is not compiled.");
+  }
+
+  NodePtrType                     node = nodes_.at(node_name);
+  std::unordered_set<std::string> visited_nodes;
+  return node->ChargeForward(visited_nodes);
+}
+
+template <typename TensorType>
+OperationsCount Graph<TensorType>::ChargeBackward(const std::string &node_name) const
+{
+  if (nodes_.find(node_name) == nodes_.end())
+  {
+    FETCH_LOG_ERROR(DESCRIPTOR, "The graph does not contain a node with name " + node_name);
+    return 0;
+  }
+
+  if (this->graph_state_ == GraphState::NOT_COMPILED)
+  {
+    throw fetch::ml::exceptions::InvalidMode(
+        "Can not compute charge estimate for a backward pass: graph is not compiled.");
+  }
+
+  NodePtrType                     node = nodes_.at(node_name);
+  std::unordered_set<std::string> visited_nodes;
+  return node->ChargeBackward(visited_nodes);
+}
+
 /**
  * Return list of all node names in format GRAPH1/...SUBGRAPHS../LEAF
  * @return std::vector<std::string> list of names of all nodes in all subgraphs
@@ -1199,6 +1185,24 @@ template <typename TensorType>
 std::map<std::string, typename Graph<TensorType>::NodePtrType> &Graph<TensorType>::GetNodesLookup()
 {
   return nodes_;
+}
+
+/**
+ * Assign tensor to weight addressed by node_name
+ * @tparam TensorType
+ * @param node_name std::string name of weight in format GRAPH1/...SUBGRAPHS../LEAF
+ * @param data tensor which will be assigned to target weight
+ */
+template <class TensorType>
+void Graph<TensorType>::SetWeight(std::string const &node_name, TensorType const &data)
+{
+  auto node_ptr = GetNode(node_name);
+  auto op_ptr   = std::dynamic_pointer_cast<fetch::ml::ops::Weights<TensorType>>(node_ptr->GetOp());
+  if (!op_ptr)
+  {
+    throw ml::exceptions::InvalidMode("[" + node_name + "] is not Weight type!");
+  }
+  op_ptr->SetWeights(data);
 }
 
 ///////////////////////////////

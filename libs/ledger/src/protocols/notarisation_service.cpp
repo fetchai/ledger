@@ -16,27 +16,17 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/containers/trim_to_size.hpp"
 #include "core/service_ids.hpp"
 #include "ledger/chain/main_chain.hpp"
 #include "ledger/protocols/notarisation_service.hpp"
 
 #include <memory>
 
+using fetch::core::TrimToSize;
+
 namespace fetch {
 namespace ledger {
-
-namespace {
-
-template <typename T>
-void TrimToSize(T &container, std::size_t max_size)
-{
-  auto it = container.begin();
-  while ((it != container.end()) && (container.size() > max_size))
-  {
-    it = container.erase(it);
-  }
-}
-}  // namespace
 
 char const *StateToString(NotarisationService::State state);
 

@@ -16,10 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/random/lcg.hpp"
-#include "gtest/gtest.h"
-#include "math/distance/manhattan.hpp"
 #include "test_types.hpp"
+
+#include "core/random/lcg.hpp"
+#include "math/distance/manhattan.hpp"
+
+#include "gtest/gtest.h"
 
 namespace fetch {
 namespace math {
@@ -29,7 +31,7 @@ template <typename T>
 class ManhattanTest : public ::testing::Test
 {
 };
-TYPED_TEST_CASE(ManhattanTest, TensorFloatingTypes);
+TYPED_TEST_SUITE(ManhattanTest, TensorFloatingTypes, );
 
 TYPED_TEST(ManhattanTest, simple_test)
 {

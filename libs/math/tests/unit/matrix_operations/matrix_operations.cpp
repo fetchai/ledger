@@ -16,10 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/random/lcg.hpp"
-#include "gtest/gtest.h"
-#include "math/matrix_operations.hpp"
 #include "test_types.hpp"
+
+#include "core/random/lcg.hpp"
+#include "math/matrix_operations.hpp"
+
+#include "gtest/gtest.h"
 
 #include <vector>
 
@@ -32,7 +34,7 @@ class FreeFunctionsTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(FreeFunctionsTest, TensorFloatingTypes);
+TYPED_TEST_SUITE(FreeFunctionsTest, TensorFloatingTypes, );
 
 TYPED_TEST(FreeFunctionsTest, BooleanMask_SetAll)
 {

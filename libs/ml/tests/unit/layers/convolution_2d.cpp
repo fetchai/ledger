@@ -16,14 +16,16 @@
 //
 //------------------------------------------------------------------------------
 
-#include "gtest/gtest.h"
+#include "test_types.hpp"
+
 #include "ml/layers/convolution_2d.hpp"
 #include "ml/meta/ml_type_traits.hpp"
 #include "ml/ops/convolution_2d.hpp"
 #include "ml/ops/loss_functions/mean_square_error_loss.hpp"
 #include "ml/ops/placeholder.hpp"
 #include "ml/serializers/ml_types.hpp"
-#include "test_types.hpp"
+
+#include "gtest/gtest.h"
 
 #include <memory>
 
@@ -36,7 +38,7 @@ class Convolution2DTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(Convolution2DTest, math::test::TensorFloatingTypes);
+TYPED_TEST_SUITE(Convolution2DTest, math::test::TensorFloatingTypes, );
 
 TYPED_TEST(Convolution2DTest, set_input_and_evaluate_test)  // Use the class as a subgraph
 {
@@ -52,13 +54,20 @@ TYPED_TEST(Convolution2DTest, set_input_and_evaluate_test)  // Use the class as 
   SizeType const stride_size     = 1;
 
   // Generate input
-  TensorType input({input_channels, input_height, input_width, 1});
+  math::SizeVector const input_shape{input_channels, input_height, input_width, 1};
+  TensorType             input(input_shape);
   input.FillUniformRandom();
 
   // Evaluate
   fetch::ml::layers::Convolution2D<TensorType> conv(output_channels, input_channels, kernel_height,
                                                     stride_size);
+
+  conv.ComputeBatchOutputShape({input_shape});  // necessary for out-of-Graph usage
+  conv.CompleteShapeDeduction();                // necessary for out-of-Graph usage
+
   conv.SetInput("Conv2D_Input", input);
+  conv.Compile();
+
   TensorType output = conv.Evaluate("Conv2D_Conv2D", true);
 
   // Get ground truth
@@ -88,12 +97,17 @@ TYPED_TEST(Convolution2DTest, ops_forward_test)  // Use the class as an Ops
   SizeType const stride_size     = 1;
 
   // Generate input
-  TensorType input({input_channels, input_height, input_width, 1});
+  math::SizeVector const input_shape{input_channels, input_height, input_width, 1};
+  TensorType             input(input_shape);
   input.FillUniformRandom();
 
   // Evaluate
   fetch::ml::layers::Convolution2D<TensorType> conv(output_channels, input_channels, kernel_height,
                                                     stride_size);
+
+  conv.ComputeBatchOutputShape({input_shape});  // necessary for out-of-Graph usage
+  conv.CompleteShapeDeduction();                // necessary for out-of-Graph usage
+  conv.Compile();
 
   TensorType output(conv.ComputeOutputShape({std::make_shared<TensorType>(input)}));
   conv.Forward({std::make_shared<TensorType>(input)}, output);
@@ -127,7 +141,8 @@ TYPED_TEST(Convolution2DTest, ops_backward_test)  // Use the class as an Ops
   SizeType const stride_size     = 1;
 
   // Generate input
-  TensorType input({input_channels, input_height, input_width, 1});
+  math::SizeVector const input_shape{input_channels, input_height, input_width, 1};
+  TensorType             input(input_shape);
   input.FillUniformRandom();
 
   // Generate error
@@ -137,6 +152,9 @@ TYPED_TEST(Convolution2DTest, ops_backward_test)  // Use the class as an Ops
   // Evaluate
   fetch::ml::layers::Convolution2D<TensorType> conv(output_channels, input_channels, kernel_height,
                                                     stride_size);
+
+  conv.ComputeBatchOutputShape({input_shape});  // necessary for out-of-Graph usage
+  conv.CompleteShapeDeduction();                // necessary for out-of-Graph usage
 
   TensorType output(conv.ComputeOutputShape({std::make_shared<TensorType>(input)}));
   conv.Forward({std::make_shared<TensorType>(input)}, output);
@@ -158,7 +176,7 @@ TYPED_TEST(Convolution2DTest, ops_backward_test)  // Use the class as an Ops
                                          math::function_tolerance<DataType>()));
 }
 
-TYPED_TEST(Convolution2DTest, node_forward_test)  // Use the class as a Node
+TYPED_TEST(Convolution2DTest, conv2d_node_forward_test)  // Use the class as a Node
 {
   using DataType   = typename TypeParam::Type;
   using TensorType = TypeParam;
@@ -172,7 +190,8 @@ TYPED_TEST(Convolution2DTest, node_forward_test)  // Use the class as a Node
   SizeType const stride_size     = 1;
 
   // Generate input
-  TensorType input({input_channels, input_height, input_width, 1});
+  math::SizeVector const input_shape{input_channels, input_height, input_width, 1};
+  TensorType             input(input_shape);
   input.FillUniformRandom();
 
   // Evaluate
@@ -189,6 +208,8 @@ TYPED_TEST(Convolution2DTest, node_forward_test)  // Use the class as a Node
             output_channels, input_channels, kernel_height, stride_size);
       });
   conv.AddInput(placeholder_node);
+  conv.GetOp()->ComputeBatchOutputShape({input_shape});  // necessary for out-of-Graph usage
+  conv.GetOp()->CompleteShapeDeduction();                // necessary for out-of-Graph usage
 
   TensorType prediction = *conv.Evaluate(true);
 
@@ -223,7 +244,8 @@ TYPED_TEST(Convolution2DTest, node_backward_test)  // Use the class as a Node
   SizeType const stride_size     = 1;
 
   // Generate input
-  TensorType input({input_channels, input_height, input_width, 1});
+  math::SizeVector const input_shape{input_channels, input_height, input_width, 1};
+  TensorType             input(input_shape);
   input.FillUniformRandom();
 
   // Generate error
@@ -246,6 +268,9 @@ TYPED_TEST(Convolution2DTest, node_backward_test)  // Use the class as a Node
             output_channels, input_channels, kernel_height, stride_size);
       });
   conv.AddInput(placeholder_node);
+  conv.GetOp()->ComputeBatchOutputShape({input_shape});  // necessary for out-of-Graph usage
+  conv.GetOp()->CompleteShapeDeduction();                // necessary for out-of-Graph usage
+
   TensorType prediction     = *conv.Evaluate(true);
   auto       backprop_error = conv.BackPropagate(error_signal);
 
@@ -289,6 +314,7 @@ TYPED_TEST(Convolution2DTest, graph_forward_test)  // Use the class as a Node
   g.template AddNode<fetch::ml::layers::Convolution2D<TensorType>>(
       "Convolution2D", {"Input"}, output_channels, input_channels, kernel_height, stride_size);
   g.SetInput("Input", input);
+  g.Compile();
 
   TensorType prediction = g.Evaluate("Convolution2D", true);
 
@@ -303,39 +329,6 @@ TYPED_TEST(Convolution2DTest, graph_forward_test)  // Use the class as a Node
 
   EXPECT_TRUE(prediction.AllClose(gt, math::function_tolerance<DataType>(),
                                   math::function_tolerance<DataType>()));
-}
-
-TYPED_TEST(Convolution2DTest, getStateDict)
-{
-  using TensorType = TypeParam;
-  using DataType   = typename TypeParam::Type;
-  using SizeType   = fetch::math::SizeType;
-
-  SizeType const input_channels  = 3;
-  SizeType const output_channels = 5;
-  SizeType const kernel_height   = 3;
-  SizeType const stride_size     = 1;
-
-  // Initialise weights
-  fetch::ml::layers::Convolution2D<TensorType> conv(
-      output_channels, input_channels, kernel_height, stride_size,
-      fetch::ml::details::ActivationType::NOTHING, "ConvTest");
-  fetch::ml::StateDict<TensorType> sd = conv.StateDict();
-
-  // Get weights
-  EXPECT_EQ(sd.weights_, nullptr);
-  EXPECT_EQ(sd.dict_.size(), 1);
-  auto weights_ptr = sd.dict_["ConvTest_Weights"].weights_;
-
-  // Get ground truth
-  TensorType gt_weights = conv.GetWeights()[0];
-
-  // Test correct values
-  ASSERT_NE(weights_ptr, nullptr);
-  EXPECT_TRUE(weights_ptr->AllClose(gt_weights, math::function_tolerance<DataType>(),
-                                    math::function_tolerance<DataType>()));
-  EXPECT_EQ(weights_ptr->shape(), std::vector<SizeType>({output_channels, input_channels,
-                                                         kernel_height, kernel_height, 1}));
 }
 
 }  // namespace test

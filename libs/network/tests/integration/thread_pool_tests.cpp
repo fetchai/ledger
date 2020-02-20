@@ -30,8 +30,8 @@
 namespace {
 
 using fetch::network::MakeThreadPool;
-using std::chrono::milliseconds;
 using std::chrono::duration_cast;
+using std::chrono::milliseconds;
 using std::this_thread::sleep_for;
 using ::testing::AtLeast;
 
@@ -229,6 +229,6 @@ TEST_P(ThreadPoolTests, DISABLED_SaturationCheck)
   ASSERT_TRUE(workers_stopped);
 }
 
-INSTANTIATE_TEST_CASE_P(ParamBased, ThreadPoolTests, ::testing::Values(1, 10), );
+INSTANTIATE_TEST_SUITE_P(ParamBased, ThreadPoolTests, ::testing::Values(1, 10));
 
 }  // namespace

@@ -71,6 +71,9 @@ public:
     return DESCRIPTOR;
   }
 
+  OperationsCount ChargeForward() const override;
+  OperationsCount ChargeBackward() const override;
+
 private:
   // caching tensors and shapes
   TensorType error_signal_1_;

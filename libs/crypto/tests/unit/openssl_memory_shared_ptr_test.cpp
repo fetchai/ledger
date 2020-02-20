@@ -27,8 +27,8 @@ namespace memory {
 
 namespace {
 
-using ::testing::StrictMock;
 using ::testing::Return;
+using ::testing::StrictMock;
 
 struct TestType
 {
@@ -73,12 +73,6 @@ protected:
   {
     mock_ = MockDeleterPrimitive::SharedPtr();
   }
-
-  // static void SetUpTestCase() {
-  //}
-
-  // static void TearDownTestCase() {
-  //}
 };
 
 TEST_F(OpenSSLSharedPtrTest, test_Deleter_called_after_construction)

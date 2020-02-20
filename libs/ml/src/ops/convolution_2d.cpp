@@ -29,6 +29,12 @@ std::shared_ptr<OpsSaveableParams> Convolution2D<TensorType>::GetOpSaveableParam
 {
   auto sp         = std::make_shared<SPType>();
   sp->stride_size = stride_size_;
+
+  // Add base class savable params
+  auto ops_sp  = Ops<TensorType>::GetOpSaveableParams();
+  auto cast_sp = std::static_pointer_cast<OpsSaveableParams>(sp);
+  *cast_sp     = *(std::static_pointer_cast<OpsSaveableParams>(ops_sp));
+
   return sp;
 }
 
@@ -184,15 +190,24 @@ std::vector<typename TensorType::SizeType> Convolution2D<TensorType>::ComputeOut
   // output_shape_[0]=number of output channels
   output_shape.emplace_back(inputs.at(1)->shape()[0]);
   // output_shape_[1]=number of stride_size steps over input height
-  output_shape.emplace_back((inputs.at(0)->shape()[1] - inputs.at(1)->shape()[2] + stride_size_) /
-                            stride_size_);
+  output_shape.emplace_back(
+      ComputeOutputDim(inputs.at(0)->shape().at(1), inputs.at(1)->shape().at(2)));
   // output_shape_[2]=number of stride_size steps over input width
-  output_shape.emplace_back((inputs.at(0)->shape()[2] - inputs.at(1)->shape()[3] + stride_size_) /
-                            stride_size_);
+  output_shape.emplace_back(
+      ComputeOutputDim(inputs.at(0)->shape().at(2), inputs.at(1)->shape().at(3)));
   // output_shape_[3]=batch dimension
   output_shape.emplace_back(inputs.at(0)->shape().at(3));
 
   return output_shape;
+}
+
+template <class TensorType>
+math::SizeType Convolution2D<TensorType>::ComputeOutputDim(SizeType const input_dim,
+                                                           SizeType const kernel_dim) const
+{
+  SizeType output_dim = (input_dim - kernel_dim + this->stride_size_) / this->stride_size_;
+
+  return output_dim;
 }
 
 // TODO(issue 943): Make im2col efficient using iterators
@@ -434,6 +449,64 @@ void Convolution2D<TensorType>::ReverseFillOutput(TensorType &gemm_output, Tenso
   }
 }
 
+template <typename TensorType>
+OperationsCount Convolution2D<TensorType>::ChargeForward() const
+{
+  assert(!this->batch_output_shape_.empty());
+  assert(this->batch_input_shapes_.size() == 2);
+
+  SizeType input_channels  = this->batch_input_shapes_.front().at(0);
+  SizeType batch_size      = this->batch_input_shapes_.front().at(3);
+  SizeType output_channels = this->batch_input_shapes_.back().at(0);
+  SizeType kernel_height   = this->batch_input_shapes_.back().at(2);
+  SizeType kernel_width    = this->batch_input_shapes_.back().at(3);
+
+  SizeType output_height = ComputeOutputDim(this->batch_input_shapes_.front().at(1),
+                                            this->batch_input_shapes_.back().at(2));
+
+  SizeType output_width = ComputeOutputDim(this->batch_input_shapes_.front().at(2),
+                                           this->batch_input_shapes_.back().at(3));
+
+  SizeType horizontal_stride_width  = kernel_width * kernel_height * input_channels;
+  SizeType horizontal_stride_height = output_height * output_width * batch_size;
+  SizeType vertical_stride_width    = output_channels;
+
+  OperationsCount cost = horizontal_stride_width * horizontal_stride_height *
+                         vertical_stride_width *
+                         fetch::ml::charge_estimation::ops::MULTIPLICATION_PER_ELEMENT;
+
+  return cost;
+}
+
+template <typename TensorType>
+OperationsCount Convolution2D<TensorType>::ChargeBackward() const
+{
+  assert(!this->batch_output_shape_.empty());
+  assert(this->batch_input_shapes_.size() == 2);
+
+  SizeType input_channels  = this->batch_input_shapes_.front().at(0);
+  SizeType batch_size      = this->batch_input_shapes_.front().at(3);
+  SizeType output_channels = this->batch_input_shapes_.back().at(0);
+  SizeType kernel_height   = this->batch_input_shapes_.back().at(2);
+  SizeType kernel_width    = this->batch_input_shapes_.back().at(3);
+
+  SizeType output_height = ComputeOutputDim(this->batch_input_shapes_.front().at(1),
+                                            this->batch_input_shapes_.back().at(2));
+
+  SizeType output_width = ComputeOutputDim(this->batch_input_shapes_.front().at(2),
+                                           this->batch_input_shapes_.back().at(3));
+
+  SizeType horizontal_stride_width  = kernel_width * kernel_height * input_channels;
+  SizeType horizontal_stride_height = output_height * output_width * batch_size;
+  SizeType vertical_stride_width    = output_channels;
+
+  OperationsCount cost =
+      2 * (horizontal_stride_width * horizontal_stride_height * vertical_stride_width *
+           fetch::ml::charge_estimation::ops::MULTIPLICATION_PER_ELEMENT);
+
+  return cost;
+}
+
 ///////////////////////////////
 /// EXPLICIT INSTANTIATIONS ///
 ///////////////////////////////
@@ -442,10 +515,6 @@ template class Convolution2D<math::Tensor<int8_t>>;
 template class Convolution2D<math::Tensor<int16_t>>;
 template class Convolution2D<math::Tensor<int32_t>>;
 template class Convolution2D<math::Tensor<int64_t>>;
-template class Convolution2D<math::Tensor<uint8_t>>;
-template class Convolution2D<math::Tensor<uint16_t>>;
-template class Convolution2D<math::Tensor<uint32_t>>;
-template class Convolution2D<math::Tensor<uint64_t>>;
 template class Convolution2D<math::Tensor<float>>;
 template class Convolution2D<math::Tensor<double>>;
 template class Convolution2D<math::Tensor<fixed_point::fp32_t>>;

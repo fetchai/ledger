@@ -16,11 +16,13 @@
 //
 //------------------------------------------------------------------------------
 
-#include "gtest/gtest.h"
+#include "test_types.hpp"
+
 #include "math/tensor/tensor.hpp"
 #include "meta/type_traits.hpp"
-#include "test_types.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
+
+#include "gtest/gtest.h"
 
 namespace fetch {
 namespace math {
@@ -31,7 +33,7 @@ class TensorViewTests : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(TensorViewTests, FloatIntAndUIntTypes);
+TYPED_TEST_SUITE(TensorViewTests, FloatIntAndUIntTypes, );
 
 using namespace fetch::math;
 

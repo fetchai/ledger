@@ -16,8 +16,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/clustering/tsne.hpp"
-
 #include "core/assert.hpp"
 #include "math/distance/euclidean.hpp"
 #include "math/fundamental_operators.hpp"
@@ -30,6 +28,7 @@
 #include "math/standard_functions/log.hpp"
 #include "math/tensor/tensor.hpp"
 #include "meta/type_traits.hpp"
+#include "ml/clustering/tsne.hpp"
 #include "ml/ops/flatten.hpp"
 
 #include <cmath>
@@ -484,10 +483,6 @@ template class TSNE<math::Tensor<int8_t>>;
 template class TSNE<math::Tensor<int16_t>>;
 template class TSNE<math::Tensor<int32_t>>;
 template class TSNE<math::Tensor<int64_t>>;
-template class TSNE<math::Tensor<uint8_t>>;
-template class TSNE<math::Tensor<uint16_t>>;
-template class TSNE<math::Tensor<uint32_t>>;
-template class TSNE<math::Tensor<uint64_t>>;
 template class TSNE<math::Tensor<float>>;
 template class TSNE<math::Tensor<double>>;
 template class TSNE<math::Tensor<fixed_point::fp32_t>>;

@@ -16,12 +16,15 @@
 //
 //------------------------------------------------------------------------------
 
+#include "test_types.hpp"
+
 #include "core/serializers/main_serializer_definition.hpp"
-#include "gtest/gtest.h"
 #include "math/base_types.hpp"
 #include "ml/ops/activations/relu.hpp"
 #include "ml/serializers/ml_types.hpp"
-#include "test_types.hpp"
+
+#include "gtest/gtest.h"
+
 #include <memory>
 #include <vector>
 
@@ -33,7 +36,7 @@ class ReluTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(ReluTest, math::test::TensorFloatingTypes);
+TYPED_TEST_SUITE(ReluTest, math::test::TensorFloatingTypes, );
 
 TYPED_TEST(ReluTest, forward_all_positive_test)
 {

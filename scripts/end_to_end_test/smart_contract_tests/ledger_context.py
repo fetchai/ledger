@@ -89,6 +89,6 @@ def run(options, benefactor):
         'Returned block number by the contract ({}) is not what expected ({})'.format(
             v, block_number)
 
-    api.sync(contract.action(api, 'set_block_number_state', 400, [entity1]))
+    api.sync(contract.action(api, 'set_block_number_state', 400, entity1))
 
     assert block_number <= contract.query(api, 'query_block_number_state')

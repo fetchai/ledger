@@ -27,10 +27,10 @@
 namespace fetch {
 namespace chain {
 
-using variant::Variant;
-using variant::Extract;
 using byte_array::ConstByteArray;
 using byte_array::FromBase64;
+using variant::Extract;
+using variant::Variant;
 
 static constexpr char const *LOGGING_NAME        = "JsonTx";
 static const ConstByteArray  JSON_FORMAT_VERSION = "1.2";

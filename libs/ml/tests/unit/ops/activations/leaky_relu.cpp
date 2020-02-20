@@ -16,11 +16,14 @@
 //
 //------------------------------------------------------------------------------
 
+#include "test_types.hpp"
+
 #include "core/serializers/main_serializer_definition.hpp"
-#include "gtest/gtest.h"
 #include "ml/ops/activations/leaky_relu.hpp"
 #include "ml/serializers/ml_types.hpp"
-#include "test_types.hpp"
+
+#include "gtest/gtest.h"
+
 #include <memory>
 
 namespace fetch {
@@ -32,7 +35,7 @@ class LeakyReluTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(LeakyReluTest, math::test::TensorFloatingTypes);
+TYPED_TEST_SUITE(LeakyReluTest, math::test::TensorFloatingTypes, );
 
 TYPED_TEST(LeakyReluTest, forward_test)
 {

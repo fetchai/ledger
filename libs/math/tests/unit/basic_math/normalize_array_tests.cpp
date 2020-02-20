@@ -16,9 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "gtest/gtest.h"
-#include "math/normalize_array.hpp"
 #include "test_types.hpp"
+
+#include "math/normalize_array.hpp"
+
+#include "gtest/gtest.h"
 
 namespace fetch {
 namespace math {
@@ -29,7 +31,7 @@ class NormalizeArrayTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(NormalizeArrayTest, TensorFloatingTypes);
+TYPED_TEST_SUITE(NormalizeArrayTest, TensorFloatingTypes, );
 
 TYPED_TEST(NormalizeArrayTest, conditional_distance)
 {

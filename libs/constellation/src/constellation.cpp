@@ -16,12 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "constellation/constellation.hpp"
-
 #include "beacon/beacon_service.hpp"
 #include "beacon/beacon_setup_service.hpp"
 #include "beacon/event_manager.hpp"
 #include "bloom_filter/bloom_filter.hpp"
+#include "constellation/constellation.hpp"
 #include "constellation/health_check_http_module.hpp"
 #include "constellation/logging_http_module.hpp"
 #include "constellation/muddle_status_http_module.hpp"
@@ -74,6 +73,7 @@ using ExecutorPtr = std::shared_ptr<Executor>;
 
 namespace fetch {
 namespace constellation {
+namespace {
 
 using BeaconSetupServicePtr = std::shared_ptr<beacon::BeaconSetupService>;
 using BeaconServicePtr      = std::shared_ptr<fetch::beacon::BeaconService>;
@@ -86,11 +86,11 @@ using Identity              = crypto::Identity;
 using LaneIndex             = uint32_t;
 using MainChain             = ledger::MainChain;
 using StakeManagerPtr       = std::shared_ptr<ledger::StakeManager>;
+using TransactionStatusPtr  = ledger::TransactionStatusPtr;
 
 constexpr char const *LOGGING_NAME = "constellation";
 
 const std::size_t HTTP_THREADS{4};
-char const *      GENESIS_FILENAME = "genesis_file.json";
 
 class Defer
 {
@@ -360,6 +360,18 @@ Constellation::MessengerAPIPtr CreateMessengerAPI(Config const &cfg, muddle::Mud
   return ret;
 }
 
+TransactionStatusPtr CreateTransactionStatusCache(Config const &config)
+{
+  if (config.persistent_tx_status)
+  {
+    return ledger::TransactionStatusInterface::CreatePersistentCache();
+  }
+
+  return ledger::TransactionStatusInterface::CreateTimeBasedCache();
+}
+
+}  // namespace
+
 /**
  * Construct a constellation instance
  *
@@ -385,7 +397,7 @@ Constellation::Constellation(CertificatePtr certificate, Config config)
   , http_network_manager_{"Http", HTTP_THREADS}
   , internal_identity_{std::make_shared<crypto::ECDSASigner>()}
   , external_identity_{std::move(certificate)}
-  , tx_status_cache_(TxStatusCache::factory())
+  , tx_status_cache_{CreateTransactionStatusCache(cfg_)}
   , uptime_{telemetry::Registry::Instance().CreateCounter(
         "ledger_uptime_ticks_total",
         "The number of intervals that ledger instance has been alive for")}
@@ -461,7 +473,7 @@ bool Constellation::OnBringUpLaneServices()
   // create the internal muddle instance
   internal_muddle_ =
       muddle::CreateMuddle("ISRD", internal_identity_, network_manager_,
-                           cfg_.manifest.FindExternalAddress(ServiceIdentifier::Type::CORE));
+                           cfg_.manifest.FindExternalAddress(ServiceIdentifier::Type::CORE), false);
 
   if (!StartInternalMuddle())
   {
@@ -557,7 +569,10 @@ bool Constellation::OnBringUpExternalNetwork(
 
   if (params.snapshot)
   {
-    consensus_->UpdateCurrentBlock(*chain_->GetHeaviestBlock());
+    if (!consensus_->UpdateCurrentBlock(*chain_->GetHeaviestBlock()))
+    {
+      return false;
+    }
     consensus_->Reset(*params.snapshot);
   }
   else
@@ -566,7 +581,10 @@ bool Constellation::OnBringUpExternalNetwork(
   }
 
   // Update with genesis to trigger loading any saved state
-  consensus_->UpdateCurrentBlock(*chain_->CreateGenesisBlock());
+  if (!consensus_->UpdateCurrentBlock(*chain_->CreateGenesisBlock()))
+  {
+    return false;
+  }
 
   block_packer_ = std::make_unique<BlockPackingAlgorithm>(cfg_.log2_num_lanes);
 
@@ -739,20 +757,31 @@ bool Constellation::OnBringUpExternalNetwork(
   // Start the main syncing state machine for main chain service
   reactor_.Attach(main_chain_service_->GetWeakRunnable());
 
-  // The block coordinator needs to access correctly started lanes to recover state in the case of
-  // a crash.
-  reactor_.Attach(block_coordinator_->GetWeakRunnable());
-
   return true;
 }
 
 bool Constellation::OnRunning(core::WeakRunnable const &bootstrap_monitor)
 {
-  bool start_up_in_progress{true};
+  bool       start_up_in_progress{true};
+  bool       attached_block_coord{false};
+  bool const standalone_mode = cfg_.network_mode == NetworkMode::STANDALONE;
 
   // monitor loop
   while (active_)
   {
+    // The block coordinator needs to access correctly started lanes to recover state in the case of
+    // a crash. Additionally, delay starting it until the main chain sync has started to avoid
+    // immediately generating blocks on an old chain
+    if (!attached_block_coord)
+    {
+      if (standalone_mode || main_chain_service_->IsHealthy())
+      {
+        FETCH_LOG_INFO(LOGGING_NAME, "Starting the block coordinator.");
+        reactor_.Attach(block_coordinator_->GetWeakRunnable());
+        attached_block_coord = true;
+      }
+    }
+
     // determine the status of the main chain server
     bool const is_in_sync = main_chain_service_->IsSynced() && block_coordinator_->IsSynced();
 
@@ -861,8 +890,11 @@ void Constellation::OnTearDownExternalNetwork()
 
 void Constellation::OnTearDownLaneServices()
 {
-  // not strictly necessary but make sure that chain has completely flushed to disk
-  chain_->Flush();
+  if (chain_)
+  {
+    // not strictly necessary but make sure that chain has completely flushed to disk
+    chain_->Flush();
+  }
 
   ResetItem(chain_);
   ResetItem(lane_control_);

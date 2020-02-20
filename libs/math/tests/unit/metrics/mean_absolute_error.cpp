@@ -16,9 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "gtest/gtest.h"
-#include "math/metrics/mean_absolute_error.hpp"
 #include "test_types.hpp"
+
+#include "math/metrics/mean_absolute_error.hpp"
+
+#include "gtest/gtest.h"
 
 namespace fetch {
 namespace math {
@@ -29,7 +31,7 @@ class MeanAbsoluteErrorTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(MeanAbsoluteErrorTest, TensorFloatingTypes);
+TYPED_TEST_SUITE(MeanAbsoluteErrorTest, TensorFloatingTypes, );
 
 TYPED_TEST(MeanAbsoluteErrorTest, perfect_match_test)
 {

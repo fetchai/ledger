@@ -16,6 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ml/charge_estimation/ops/constants.hpp"
 #include "ml/ops/dataholder.hpp"
 #include "ml/ops/placeholder.hpp"
 
@@ -31,7 +32,14 @@ PlaceHolder<TensorType>::PlaceHolder(SPType const &sp)
 template <typename TensorType>
 std::shared_ptr<OpsSaveableParams> PlaceHolder<TensorType>::GetOpSaveableParams()
 {
-  return std::make_shared<SPType>();
+  auto sp = std::make_shared<SPType>();
+
+  // Add base class savable params
+  auto ops_sp  = Ops<TensorType>::GetOpSaveableParams();
+  auto cast_sp = std::static_pointer_cast<OpsSaveableParams>(sp);
+  *cast_sp     = *(std::static_pointer_cast<OpsSaveableParams>(ops_sp));
+
+  return sp;
 }
 
 /**
@@ -83,6 +91,15 @@ const char *PlaceHolder<TensorType>::Descriptor() const
   return DESCRIPTOR;
 }
 
+template <typename TensorType>
+OperationsCount PlaceHolder<TensorType>::ChargeForward() const
+{
+  assert(!this->batch_output_shape_.empty());
+  OperationsCount cost = fetch::ml::charge_estimation::ops::PLACEHOLDER_READING_PER_ELEMENT *
+                         this->TotalElementsIn({this->batch_output_shape_});
+  return cost;
+}
+
 ///////////////////////////////
 /// EXPLICIT INSTANTIATIONS ///
 ///////////////////////////////
@@ -91,10 +108,6 @@ template class PlaceHolder<math::Tensor<int8_t>>;
 template class PlaceHolder<math::Tensor<int16_t>>;
 template class PlaceHolder<math::Tensor<int32_t>>;
 template class PlaceHolder<math::Tensor<int64_t>>;
-template class PlaceHolder<math::Tensor<uint8_t>>;
-template class PlaceHolder<math::Tensor<uint16_t>>;
-template class PlaceHolder<math::Tensor<uint32_t>>;
-template class PlaceHolder<math::Tensor<uint64_t>>;
 template class PlaceHolder<math::Tensor<float>>;
 template class PlaceHolder<math::Tensor<double>>;
 template class PlaceHolder<math::Tensor<fixed_point::fp32_t>>;

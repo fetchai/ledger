@@ -16,6 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include "tx_generation.hpp"
+
 #include "chain/transaction_builder.hpp"
 #include "chain/transaction_rpc_serializers.hpp"
 #include "core/byte_array/byte_array.hpp"
@@ -28,8 +30,6 @@
 
 #include "benchmark/benchmark.h"
 
-#include "tx_generation.hpp"
-
 #include <vector>
 
 namespace {
@@ -37,8 +37,8 @@ namespace {
 using fetch::chain::Transaction;
 using fetch::chain::TransactionBuilder;
 using fetch::crypto::ECDSASigner;
-using fetch::ledger::TransactionStore;
 using fetch::ledger::TransactionStorageEngine;
+using fetch::ledger::TransactionStore;
 
 using TransactionList = std::vector<TransactionBuilder::TransactionPtr>;
 

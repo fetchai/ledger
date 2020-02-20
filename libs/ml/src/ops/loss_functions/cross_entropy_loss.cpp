@@ -35,6 +35,12 @@ template <typename TensorType>
 std::shared_ptr<OpsSaveableParams> CrossEntropyLoss<TensorType>::GetOpSaveableParams()
 {
   auto sp = std::make_shared<SPType>();
+
+  // Add base class savable params
+  auto ops_sp  = Ops<TensorType>::GetOpSaveableParams();
+  auto cast_sp = std::static_pointer_cast<OpsSaveableParams>(sp);
+  *cast_sp     = *(std::static_pointer_cast<OpsSaveableParams>(ops_sp));
+
   return sp;
 }
 
@@ -106,6 +112,24 @@ std::vector<math::SizeType> CrossEntropyLoss<TensorType>::ComputeOutputShape(
   return {1, 1};
 }
 
+template <typename TensorType>
+OperationsCount CrossEntropyLoss<TensorType>::ChargeForward() const
+{
+  assert(!this->batch_output_shape_.empty());
+  OperationsCount cost = fetch::ml::charge_estimation::ops::CROSS_ENTROPY_PER_ELEMENT *
+                         this->TotalElementsIn({this->batch_input_shapes_});
+  return cost;
+}
+
+template <typename TensorType>
+OperationsCount CrossEntropyLoss<TensorType>::ChargeBackward() const
+{
+  assert(!this->batch_input_shapes_.empty());
+  OperationsCount cost = fetch::ml::charge_estimation::ops::CROSS_ENTROPY_BACKWARD_PER_ELEMENT *
+                         this->TotalElementsIn({this->batch_input_shapes_.at(0)});
+  return cost;
+}
+
 ///////////////////////////////
 /// EXPLICIT INSTANTIATIONS ///
 ///////////////////////////////
@@ -114,10 +138,6 @@ template class CrossEntropyLoss<math::Tensor<int8_t>>;
 template class CrossEntropyLoss<math::Tensor<int16_t>>;
 template class CrossEntropyLoss<math::Tensor<int32_t>>;
 template class CrossEntropyLoss<math::Tensor<int64_t>>;
-template class CrossEntropyLoss<math::Tensor<uint8_t>>;
-template class CrossEntropyLoss<math::Tensor<uint16_t>>;
-template class CrossEntropyLoss<math::Tensor<uint32_t>>;
-template class CrossEntropyLoss<math::Tensor<uint64_t>>;
 template class CrossEntropyLoss<math::Tensor<float>>;
 template class CrossEntropyLoss<math::Tensor<double>>;
 template class CrossEntropyLoss<math::Tensor<fixed_point::fp32_t>>;

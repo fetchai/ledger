@@ -34,15 +34,15 @@
 
 namespace {
 
+using fetch::BitVector;
 using fetch::byte_array::ConstByteArray;
 using fetch::byte_array::FromHex;
-using fetch::crypto::ECDSASigner;
-using fetch::crypto::ECDSAVerifier;
 using fetch::chain::Address;
 using fetch::chain::Transaction;
 using fetch::chain::TransactionBuilder;
 using fetch::chain::TransactionSerializer;
-using fetch::BitVector;
+using fetch::crypto::ECDSASigner;
+using fetch::crypto::ECDSAVerifier;
 
 struct Identities
 {

@@ -16,10 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/random/lcg.hpp"
-#include "gtest/gtest.h"
-#include "math/distance/hamming.hpp"
 #include "test_types.hpp"
+
+#include "core/random/lcg.hpp"
+#include "math/distance/hamming.hpp"
+
+#include "gtest/gtest.h"
 
 namespace fetch {
 namespace math {
@@ -30,7 +32,7 @@ class HammingTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(HammingTest, TensorFloatingTypes);
+TYPED_TEST_SUITE(HammingTest, TensorFloatingTypes, );
 
 TEST(HammingTest, simple_test)
 {

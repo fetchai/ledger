@@ -17,16 +17,15 @@
 //------------------------------------------------------------------------------
 
 #include "logging/logging.hpp"
-#include "oef-core/comms/EndpointSSL.hpp"
-
 #include "oef-base/monitoring/Gauge.hpp"
 #include "oef-base/utils/Uri.hpp"
+#include "oef-core/comms/EndpointSSL.hpp"
+#include "openssl/ssl.h"
 
-#include <cerrno>  // for fopen
-#include <cstdio>  // for fopen
+#include <cerrno>
+#include <cstdio>
 #include <functional>
 #include <memory>
-#include <openssl/ssl.h>
 #include <system_error>
 
 using std::placeholders::_1;

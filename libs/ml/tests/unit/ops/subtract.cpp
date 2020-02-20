@@ -16,10 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
-#include "gtest/gtest.h"
+#include "test_types.hpp"
+
 #include "math/base_types.hpp"
 #include "ml/ops/subtract.hpp"
-#include "test_types.hpp"
+
+#include "gtest/gtest.h"
 
 #include <memory>
 #include <vector>
@@ -33,7 +35,7 @@ class SubtractTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(SubtractTest, fetch::math::test::TensorFloatingTypes);
+TYPED_TEST_SUITE(SubtractTest, fetch::math::test::TensorFloatingTypes, );
 
 TYPED_TEST(SubtractTest, forward_test)
 {

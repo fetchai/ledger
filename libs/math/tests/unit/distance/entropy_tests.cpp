@@ -16,9 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "gtest/gtest.h"
-#include "math/statistics/entropy.hpp"
 #include "test_types.hpp"
+
+#include "math/statistics/entropy.hpp"
+
+#include "gtest/gtest.h"
 
 namespace fetch {
 namespace math {
@@ -28,7 +30,7 @@ class EntropyTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(EntropyTest, TensorFloatingTypes);
+TYPED_TEST_SUITE(EntropyTest, TensorFloatingTypes, );
 
 TYPED_TEST(EntropyTest, entropy)
 {

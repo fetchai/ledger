@@ -16,9 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include "test_types.hpp"
+
 #include "math/base_types.hpp"
 #include "math/one_hot.hpp"
-#include "test_types.hpp"
 
 #include "gtest/gtest.h"
 
@@ -31,7 +32,7 @@ class OneHotTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(OneHotTest, TensorFloatingTypes);
+TYPED_TEST_SUITE(OneHotTest, TensorFloatingTypes, );
 
 TYPED_TEST(OneHotTest, one_hot_test_axis_0)
 {

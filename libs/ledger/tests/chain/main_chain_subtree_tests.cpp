@@ -33,11 +33,11 @@
 
 namespace {
 
-using fetch::ledger::MainChain;
 using fetch::ledger::BlockHash;
 using fetch::ledger::BlockPtr;
-using fetch::ledger::BlockStatus;
 using fetch::ledger::Blocks;
+using fetch::ledger::BlockStatus;
+using fetch::ledger::MainChain;
 using fetch::ledger::testing::BlockGenerator;
 
 using MainChainPtr = std::unique_ptr<MainChain>;
@@ -50,6 +50,7 @@ protected:
 
   void SetUp() override
   {
+    fetch::chain::InitialiseTestConstants();
     fetch::crypto::mcl::details::MCLInitialiser();
     block_generator_.Reset();
 

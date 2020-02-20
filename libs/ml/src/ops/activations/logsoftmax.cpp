@@ -39,9 +39,15 @@ LogSoftmax<TensorType>::LogSoftmax(SPType const &sp)
 template <typename TensorType>
 std::shared_ptr<OpsSaveableParams> LogSoftmax<TensorType>::GetOpSaveableParams()
 {
-  auto sp_ptr  = std::make_shared<SPType>();
-  sp_ptr->axis = axis_;
-  return sp_ptr;
+  auto sp  = std::make_shared<SPType>();
+  sp->axis = axis_;
+
+  // Add base class savable params
+  auto ops_sp  = Ops<TensorType>::GetOpSaveableParams();
+  auto cast_sp = std::static_pointer_cast<OpsSaveableParams>(sp);
+  *cast_sp     = *(std::static_pointer_cast<OpsSaveableParams>(ops_sp));
+
+  return sp;
 }
 
 template <typename TensorType>
@@ -94,6 +100,24 @@ std::vector<math::SizeType> LogSoftmax<TensorType>::ComputeOutputShape(
   return inputs.front()->shape();
 }
 
+template <typename TensorType>
+OperationsCount LogSoftmax<TensorType>::ChargeForward() const
+{
+  assert(!this->batch_input_shapes_.empty());
+  OperationsCount cost = fetch::ml::charge_estimation::ops::LOG_SOFTMAX_PER_ELEMENT *
+                         this->TotalElementsIn({this->batch_input_shapes_});
+  return cost;
+}
+
+template <typename TensorType>
+OperationsCount LogSoftmax<TensorType>::ChargeBackward() const
+{
+  assert(!this->batch_input_shapes_.empty());
+  OperationsCount cost = fetch::ml::charge_estimation::ops::LOG_SOFTMAX_BACKWARD_PER_ELEMENT *
+                         this->TotalElementsIn({this->batch_input_shapes_});
+  return cost;
+}
+
 ///////////////////////////////
 /// EXPLICIT INSTANTIATIONS ///
 ///////////////////////////////
@@ -102,10 +126,6 @@ template class LogSoftmax<math::Tensor<int8_t>>;
 template class LogSoftmax<math::Tensor<int16_t>>;
 template class LogSoftmax<math::Tensor<int32_t>>;
 template class LogSoftmax<math::Tensor<int64_t>>;
-template class LogSoftmax<math::Tensor<uint8_t>>;
-template class LogSoftmax<math::Tensor<uint16_t>>;
-template class LogSoftmax<math::Tensor<uint32_t>>;
-template class LogSoftmax<math::Tensor<uint64_t>>;
 template class LogSoftmax<math::Tensor<float>>;
 template class LogSoftmax<math::Tensor<double>>;
 template class LogSoftmax<math::Tensor<fixed_point::fp32_t>>;

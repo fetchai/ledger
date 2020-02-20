@@ -36,33 +36,47 @@ Convolution1D<TensorType>::Convolution1D(SizeType const output_channels,
   , input_channels_{input_channels}
   , output_channels_{output_channels}
   , stride_size_{stride_size}
+  , init_mode_{init_mode}
+  , seed_{seed}
 {
   std::string input =
       this->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>(name + "_Input", {});
-
-  std::string weights =
-      this->template AddNode<fetch::ml::ops::Weights<TensorType>>(name + "_Weights", {});
-
-  TensorType weights_data(
-      std::vector<SizeType>{{output_channels_, input_channels_, kernel_size_, 1}});
-  fetch::ml::ops::Weights<TensorType>::Initialise(weights_data, 1, 1, init_mode, seed);
-  this->SetInput(weights, weights_data);
-
+  weights_ = this->template AddNode<fetch::ml::ops::Weights<TensorType>>(name + "_Weights", {});
   std::string output = this->template AddNode<fetch::ml::ops::Convolution1D<TensorType>>(
-      name + "_Conv1D", {input, weights}, stride_size_);
+      name + "_Conv1D", {input, weights_}, stride_size_);
 
   output = fetch::ml::details::AddActivationNode<TensorType>(activation_type, this,
                                                              name + "_Activation", output);
 
-  // A temporary fix to prevent Conv1d shape computing crash. Dummy width (32).
-  // TODO(VH): Split initialisation as in FullyConnected to prevent dummies.
-  this->GetNode(weights)->SetBatchOutputShape({output_channels_, input_channels_, kernel_size_, 1});
-  this->GetNode(input)->SetBatchOutputShape({output_channels_, 32, 1});
+  this->GetNode(weights_)->SetBatchOutputShape(
+      {output_channels_, input_channels_, kernel_size_, 1});
 
   this->AddInputNode(input);
   this->SetOutputNode(output);
+}
+
+template <typename TensorType>
+void Convolution1D<TensorType>::CompleteShapeDeduction()
+{
+  if (is_initialised_)
+  {
+    return;
+  }
+  using NodePtrType = std::shared_ptr<fetch::ml::Node<TensorType>>;
+  FETCH_LOG_INFO(Descriptor(), "-- Finalising Convolution2D initialisation ... --");
+
+  assert(!this->batch_input_shapes_.empty());
+  assert(!this->batch_output_shape_.empty());
+  assert(this->input_node_names_.size() == 1);  // Only 1 input node is allowed
+  assert(output_channels_ == this->batch_output_shape_.front());
+
+  NodePtrType input_node = this->nodes_.at(this->input_node_names_.front());
+  input_node->SetBatchInputShapes(this->batch_input_shapes_);
+  input_node->SetBatchOutputShape(this->batch_input_shapes_.front());
 
   this->Compile();
+  FETCH_LOG_INFO(Descriptor(), "-- Convolution1D initialisation completed. --");
+  is_initialised_ = true;
 }
 
 template <typename TensorType>
@@ -73,6 +87,9 @@ void Convolution1D<TensorType>::SetOpSaveableParams(SPType const &sp)
   input_channels_  = sp.input_channels;
   output_channels_ = sp.output_channels;
   stride_size_     = sp.stride_size;
+  weights_         = sp.weights_name;
+  seed_            = sp.seed;
+  init_mode_       = static_cast<WeightsInit>(sp.init_mode);
 }
 
 template <class TensorType>
@@ -93,6 +110,9 @@ std::shared_ptr<OpsSaveableParams> Convolution1D<TensorType>::GetOpSaveableParam
   ret->input_channels  = input_channels_;
   ret->output_channels = output_channels_;
   ret->stride_size     = stride_size_;
+  ret->weights_name    = weights_;
+  ret->seed            = seed_;
+  ret->init_mode       = static_cast<std::uint8_t>(init_mode_);
 
   return ret;
 }
@@ -105,6 +125,29 @@ std::vector<fetch::math::SizeType> Convolution1D<TensorType>::ComputeOutputShape
       std::vector<SizeType>{{output_channels_, input_channels_, kernel_size_, 1}});
   return fetch::ml::ops::Convolution1D<TensorType>(stride_size_)
       .ComputeOutputShape({inputs.at(0), std::make_shared<TensorType>(weights_data)});
+}
+
+template <typename TensorType>
+void Convolution1D<TensorType>::Compile()
+{
+  SubGraph<TensorType>::Compile();
+
+  TensorType weights_data(
+      std::vector<SizeType>{{output_channels_, input_channels_, kernel_size_, 1}});
+  fetch::ml::ops::Weights<TensorType>::Initialise(weights_data, 1, 1, init_mode_, seed_);
+  this->SetInput(weights_, weights_data);
+}
+
+template <class TensorType>
+OperationsCount Convolution1D<TensorType>::ChargeForward() const
+{
+  return Graph<TensorType>::ChargeForward(this->output_node_name_);
+}
+
+template <class TensorType>
+OperationsCount Convolution1D<TensorType>::ChargeBackward() const
+{
+  return Graph<TensorType>::ChargeBackward(this->output_node_name_);
 }
 
 ///////////////////////////////

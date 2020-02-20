@@ -60,6 +60,9 @@ public:
     return OpType::OP_SQRT;
   }
   static constexpr char const *DESCRIPTOR = "Sqrt";
+
+  OperationsCount ChargeForward() const override;
+  OperationsCount ChargeBackward() const override;
 };
 
 }  // namespace ops

@@ -16,9 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include "test_types.hpp"
+
 #include "math/base_types.hpp"
 #include "ml/ops/multiply.hpp"
-#include "test_types.hpp"
 
 #include "gtest/gtest.h"
 
@@ -34,7 +35,7 @@ class MultiplyTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(MultiplyTest, fetch::math::test::TensorFloatingTypes);
+TYPED_TEST_SUITE(MultiplyTest, fetch::math::test::TensorFloatingTypes, );
 
 TYPED_TEST(MultiplyTest, forward_test)
 {

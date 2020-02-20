@@ -17,17 +17,27 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/protocols/main_chain_rpc_client_interface.hpp"
-#include "muddle/create_muddle_fake.hpp"
+#include "ledger/consensus/consensus_interface.hpp"
+#include "ledger/storage_unit/storage_unit_interface.hpp"
 
 #include "gmock/gmock.h"
 
-class MockMainChainRpcClient : public fetch::ledger::MainChainRpcClientInterface
+class MockConsensus : public fetch::ledger::ConsensusInterface
 {
 public:
-  using Digest = fetch::Digest;
+  using Block            = fetch::ledger::Block;
+  using StorageInterface = fetch::ledger::StorageInterface;
 
-  MOCK_METHOD2(GetHeaviestChain, BlocksPromise(MuddleAddress, uint64_t));
-  MOCK_METHOD4(GetCommonSubChain, BlocksPromise(MuddleAddress, Digest, Digest, uint64_t));
-  MOCK_METHOD2(TimeTravel, TraveloguePromise(MuddleAddress, Digest));
+  MOCK_METHOD1(UpdateCurrentBlock, bool(Block const &));
+  MOCK_METHOD0(GenerateNextBlock, NextBlockPtr());
+  MOCK_CONST_METHOD1(ValidBlock, Status(Block const &));
+
+  MOCK_METHOD1(SetMaxCabinetSize, void(uint16_t));
+  MOCK_METHOD1(SetBlockInterval, void(uint64_t));
+  MOCK_METHOD1(SetAeonPeriod, void(uint16_t));
+  MOCK_METHOD1(SetDefaultStartTime, void(uint64_t));
+
+  MOCK_METHOD2(Reset, void(StakeSnapshot const &, StorageInterface &));
+  MOCK_METHOD1(Reset, void(StakeSnapshot const &));
+  MOCK_METHOD1(SetWhitelist, void(Minerwhitelist const &));
 };

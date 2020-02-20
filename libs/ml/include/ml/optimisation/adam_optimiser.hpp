@@ -59,7 +59,7 @@ public:
   template <typename X, typename D>
   friend struct serializers::MapSerializer;
 
-  inline OptimiserType OptimiserCode() override
+  OptimiserType OptimiserCode() override
   {
     return OptimiserType::ADAM;
   }

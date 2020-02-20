@@ -16,10 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
+#include "test_types.hpp"
+
 #include "math/base_types.hpp"
 #include "math/standard_functions/log.hpp"
 #include "math/trigonometry.hpp"
-#include "test_types.hpp"
 #include "vectorise/math/standard_functions.hpp"
 #include "vectorise/vectorise.hpp"
 
@@ -96,6 +97,8 @@ class VectorRegisterTest : public ::testing::Test
 
 #ifdef __AVX2__
 using MyTypes = ::testing::Types<
+    fetch::vectorise::VectorRegister<int8_t, 128>, fetch::vectorise::VectorRegister<int8_t, 256>,
+    fetch::vectorise::VectorRegister<int16_t, 128>, fetch::vectorise::VectorRegister<int16_t, 256>,
     fetch::vectorise::VectorRegister<float, 128>, fetch::vectorise::VectorRegister<float, 256>,
     fetch::vectorise::VectorRegister<int32_t, 128>, fetch::vectorise::VectorRegister<int32_t, 256>,
     fetch::vectorise::VectorRegister<int64_t, 128>, fetch::vectorise::VectorRegister<int64_t, 256>,
@@ -123,7 +126,7 @@ using MyFPTypes =
                      fetch::vectorise::VectorRegister<fetch::fixed_point::fp64_t, 64>>;
 #endif
 
-TYPED_TEST_CASE(VectorRegisterTest, MyTypes);
+TYPED_TEST_SUITE(VectorRegisterTest, MyTypes, );
 TYPED_TEST(VectorRegisterTest, rotate_tests)
 {
   using type = typename TypeParam::type;
@@ -195,6 +198,7 @@ TYPED_TEST(VectorRegisterTest, minmax_tests)
       sum[TypeParam::E_BLOCK_COUNT], diff[TypeParam::E_BLOCK_COUNT], prod[TypeParam::E_BLOCK_COUNT],
       div[TypeParam::E_BLOCK_COUNT];
 
+  std::srand(6715202L);
   type real_max{0}, real_min{fetch::math::numeric_max<type>()};
   for (std::size_t i = 0; i < TypeParam::E_BLOCK_COUNT; i++)
   {
@@ -202,14 +206,15 @@ TYPED_TEST(VectorRegisterTest, minmax_tests)
     // type's limits
     a[i] = fetch::math::Type<type>(
         std::to_string((static_cast<double>(std::rand()) / static_cast<double>(RAND_MAX)) *
-                       static_cast<double>(fetch::math::numeric_max<type>()) / 2.0));
+                       static_cast<double>(100)));
     b[i] = fetch::math::Type<type>(
         std::to_string((static_cast<double>(std::rand()) / static_cast<double>(RAND_MAX)) *
-                       static_cast<double>(fetch::math::numeric_max<type>()) / 2.0));
-    sum[i]   = a[i] + b[i];
-    diff[i]  = a[i] - b[i];
-    prod[i]  = a[i] * b[i];
-    div[i]   = a[i] / b[i];
+                       static_cast<double>(100)));
+    b[i]     = b[i] == 0 ? a[i] : b[i];
+    sum[i]   = static_cast<type>(a[i] + b[i]);
+    diff[i]  = static_cast<type>(a[i] - b[i]);
+    prod[i]  = static_cast<type>(a[i] * b[i]);
+    div[i]   = static_cast<type>(a[i] / b[i]);
     real_max = fetch::vectorise::Max(a[i], real_max);
     real_max = fetch::vectorise::Max(b[i], real_max);
     real_min = fetch::vectorise::Min(a[i], real_min);
@@ -218,24 +223,33 @@ TYPED_TEST(VectorRegisterTest, minmax_tests)
   TypeParam va{a};
   TypeParam vb{b};
 
-  auto vsum  = va + vb;
-  auto vdiff = va - vb;
-  auto vprod = va * vb;
-  auto vdiv  = va / vb;
+  auto      vsum  = va + vb;
+  auto      vdiff = va - vb;
+  TypeParam vprod;
+  if (sizeof(type) > 1)
+  {
+    vprod = va * vb;
+  }
+  auto vdiv = va / vb;
 
   TypeParam vtmp1{sum}, vtmp2{diff}, vtmp3{prod}, vtmp4{div};
   EXPECT_TRUE(all_equal_to(vtmp1, vsum));
   EXPECT_TRUE(all_equal_to(vtmp2, vdiff));
-  EXPECT_TRUE(all_equal_to(vtmp3, vprod));
+  if (sizeof(type) > 1)
+  {
+    EXPECT_TRUE(all_equal_to(vtmp3, vprod));
+  }
   EXPECT_TRUE(all_equal_to(vtmp4, vdiv));
 
   type reduce1 = reduce(vsum);
   type hsum{0};
   for (std::size_t i = 0; i < TypeParam::E_BLOCK_COUNT; i++)
   {
-    hsum += sum[i];
+    hsum = static_cast<type>(hsum + sum[i]);
   }
-  EXPECT_EQ(hsum, reduce1);
+  // Note: float produces greater inaccuracies than the other types
+  EXPECT_NEAR(static_cast<double>(hsum), static_cast<double>(reduce1),
+              static_cast<double>(function_tolerance<type>()));
 
   TypeParam vmax = Max(va, vb);
   type      max  = Max(vmax);
@@ -251,13 +265,13 @@ class VectorReduceTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(VectorReduceTest, MyFPTypes);
+TYPED_TEST_SUITE(VectorReduceTest, MyFPTypes, );
 TYPED_TEST(VectorReduceTest, reduce_tests)
 {
   using type       = typename TypeParam::type;
   using array_type = fetch::memory::SharedArray<type>;
 
-  std::size_t            N = 20, offset = 2;
+  std::size_t            N = 40, offset = 2;
   alignas(32) array_type A(N), B(N), C(N), D(N), E(N);
   type sum{0}, partial_sum{0}, max_a{fetch::math::Type<type>("0")}, min_a{type(N)}, partial_max{0},
       partial_min{type(N)};
@@ -359,7 +373,7 @@ template <typename T>
 class VectorNaNInfTest : public ::testing::Test
 {
 };
-TYPED_TEST_CASE(VectorNaNInfTest, MyFPTypes);
+TYPED_TEST_SUITE(VectorNaNInfTest, MyFPTypes, );
 TYPED_TEST(VectorNaNInfTest, nan_inf_tests)
 {
   using type = typename TypeParam::type;
@@ -403,6 +417,7 @@ TYPED_TEST(VectorNaNInfTest, nan_inf_tests)
   TypeParam vret;
   struct Test
   {
+    std::string                   name;
     std::function<void(size_t i)> scalar_set;
     std::function<void()>         vector_set;
     bool                          stateNaN;
@@ -411,8 +426,10 @@ TYPED_TEST(VectorNaNInfTest, nan_inf_tests)
   };
   std::vector<Test> tests = {
       {// Normal state check
-       [&](size_t i) { C[i] = A[i] + B[i]; }, [&]() { vret = va + vb; }, false, false, false},
+       "Normal state check", [&](size_t i) { C[i] = A[i] + B[i]; }, [&]() { vret = va + vb; },
+       false, false, false},
       {// Overflow state check
+       "Overflow state check",
        [&](size_t i) {
          A[i] = type::FP_MAX * type::_half + type{i + 1};
          B[i] = type::FP_MAX * type::_half;
@@ -425,6 +442,7 @@ TYPED_TEST(VectorNaNInfTest, nan_inf_tests)
        },
        false, false, true},
       {// Underflow state check
+       "Underflow state check",
        [&](size_t i) {
          A[i] = -type::FP_MAX * type::_half - type{i - 1};
          B[i] = -type::FP_MAX * type::_half;
@@ -437,51 +455,53 @@ TYPED_TEST(VectorNaNInfTest, nan_inf_tests)
        },
        false, false, true},
       {// Infinity state check, A +inf
-       [&](size_t i) { C[i] = A[i] + PInf[i]; }, [&]() { vret = va + vpos_inf; }, false, true,
-       false},
+       "Infinity state check, A +inf", [&](size_t i) { C[i] = A[i] + PInf[i]; },
+       [&]() { vret = va + vpos_inf; }, false, true, false},
       {// Infinity state check, A + (-inf)
-       [&](size_t i) { C[i] = A[i] + NInf[i]; }, [&]() { vret = va + vneg_inf; }, false, true,
-       false},
+       "Infinity state check, A + (-inf)", [&](size_t i) { C[i] = A[i] + NInf[i]; },
+       [&]() { vret = va + vneg_inf; }, false, true, false},
       {// Infinity state check, +inf + B
-       [&](size_t i) { C[i] = PInf[i] + B[i]; }, [&]() { vret = vpos_inf + vb; }, false, true,
-       false},
+       "Infinity state check, +inf + B", [&](size_t i) { C[i] = PInf[i] + B[i]; },
+       [&]() { vret = vpos_inf + vb; }, false, true, false},
       {// Infinity state check, -inf +B
-       [&](size_t i) { C[i] = NInf[i] + B[i]; }, [&]() { vret = vneg_inf + vb; }, false, true,
-       false},
+       "Infinity state check, -inf +B", [&](size_t i) { C[i] = NInf[i] + B[i]; },
+       [&]() { vret = vneg_inf + vb; }, false, true, false},
       {// Infinity state check, (+inf) + (+inf)
-       [&](size_t i) { C[i] = PInf[i] + PInf[i]; }, [&]() { vret = vpos_inf + vpos_inf; }, false,
-       true, false},
+       "Infinity state check, (+inf) + (+inf)", [&](size_t i) { C[i] = PInf[i] + PInf[i]; },
+       [&]() { vret = vpos_inf + vpos_inf; }, false, true, false},
       {// Infinity state check, (-inf) + (-inf)
-       [&](size_t i) { C[i] = NInf[i] + NInf[i]; }, [&]() { vret = vneg_inf + vneg_inf; }, false,
-       true, false},
+       "Infinity state check, (-inf) + (-inf)", [&](size_t i) { C[i] = NInf[i] + NInf[i]; },
+       [&]() { vret = vneg_inf + vneg_inf; }, false, true, false},
       {// NaN state check, +inf + (-inf)
-       [&](size_t i) { C[i] = PInf[i] + NInf[i]; }, [&]() { vret = vpos_inf + vneg_inf; }, true,
-       false, false},
+       "NaN state check, +inf + (-inf)", [&](size_t i) { C[i] = PInf[i] + NInf[i]; },
+       [&]() { vret = vpos_inf + vneg_inf; }, true, false, false},
       {// NaN state check, +inf + (-inf)
-       [&](size_t i) { C[i] = NInf[i] + PInf[i]; }, [&]() { vret = vneg_inf + vpos_inf; }, true,
-       false, false},
+       "NaN state check, +inf + (-inf)", [&](size_t i) { C[i] = NInf[i] + PInf[i]; },
+       [&]() { vret = vneg_inf + vpos_inf; }, true, false, false},
       {// Infinity state check, (+inf) + nan
-       [&](size_t i) { C[i] = PInf[i] + NaN[i]; }, [&]() { vret = vpos_inf + vnan; }, true, false,
-       false},
+       "Infinity state check, (+inf) + nan", [&](size_t i) { C[i] = PInf[i] + NaN[i]; },
+       [&]() { vret = vpos_inf + vnan; }, true, false, false},
       {// Infinity state check, (-inf) + (+inf)
-       [&](size_t i) { C[i] = NInf[i] + NaN[i]; }, [&]() { vret = vneg_inf + vnan; }, true, false,
-       false},
+       "Infinity state check, (-inf) + (+inf)", [&](size_t i) { C[i] = NInf[i] + NaN[i]; },
+       [&]() { vret = vneg_inf + vnan; }, true, false, false},
       {// Infinity state check, nan + (+inf)
-       [&](size_t i) { C[i] = NaN[i] + PInf[i]; }, [&]() { vret = vnan + vpos_inf; }, true, false,
-       false},
+       "Infinity state check, nan + (+inf)", [&](size_t i) { C[i] = NaN[i] + PInf[i]; },
+       [&]() { vret = vnan + vpos_inf; }, true, false, false},
       {// Infinity state check, (-inf) + (+inf)
-       [&](size_t i) { C[i] = NaN[i] + NInf[i]; }, [&]() { vret = vnan + vneg_inf; }, true, false,
-       false},
+       "Infinity state check, (-inf) + (+inf)", [&](size_t i) { C[i] = NaN[i] + NInf[i]; },
+       [&]() { vret = vnan + vneg_inf; }, true, false, false},
       {// Overflow state check, A * B
-       [&](size_t i) { C[i] = A[i] * B[i]; }, [&]() { vret = va * vb; }, false, false, true},
+       "Overflow state check, A * B", [&](size_t i) { C[i] = A[i] * B[i]; },
+       [&]() { vret = va * vb; }, false, false, true},
       {// Infinity state check, A * (+inf)
-       [&](size_t i) { C[i] = A[i] * PInf[i]; }, [&]() { vret = va * vpos_inf; }, false, true,
-       false},
+       "Infinity state check, A * (+inf)", [&](size_t i) { C[i] = A[i] * PInf[i]; },
+       [&]() { vret = va * vpos_inf; }, false, true, false},
       {// Infinity state check, A * (-inf)
-       [&](size_t i) { C[i] = A[i] * NInf[i]; }, [&]() { vret = va * vneg_inf; }, false, true,
-       false},
+       "Infinity state check, A * (-inf)", [&](size_t i) { C[i] = A[i] * NInf[i]; },
+       [&]() { vret = va * vneg_inf; }, false, true, false},
       {// NaN state check, A * nan
-       [&](size_t i) { C[i] = A[i] * NaN[i]; }, [&]() { vret = va * vnan; }, true, false, false}};
+       "NaN state check, A * nan", [&](size_t i) { C[i] = A[i] * NaN[i]; },
+       [&]() { vret = va * vnan; }, true, false, false}};
 
   size_t j = 0;
   for (j = 0; j < tests.size(); j++)
@@ -506,6 +526,50 @@ TYPED_TEST(VectorNaNInfTest, nan_inf_tests)
       {
         EXPECT_EQ(C[i], D[i]);
       }
+    }
+  }
+}
+
+template <typename T>
+class VectorExpTest : public ::testing::Test
+{
+};
+
+TYPED_TEST_SUITE(VectorExpTest, MyFPTypes, );
+TYPED_TEST(VectorExpTest, exp_tests)
+{
+  using type       = typename TypeParam::type;
+  using array_type = fetch::memory::SharedArray<type>;
+
+  std::size_t            N = 40;
+  alignas(32) array_type A(N), C(N), E(N);
+
+  for (std::size_t i = 0; i < N; ++i)
+  {
+    switch (i % 5)
+    {
+    case 0:
+      A[i] = type::POSITIVE_INFINITY;
+      break;
+    case 1:
+      A[i] = type::NEGATIVE_INFINITY;
+      break;
+    case 2:
+      A[i] = type::NaN;
+      break;
+    default:
+      A[i] = fetch::random::Random::generator.AsType<type>() * type::MAX_EXP;
+      break;
+    }
+    E[i] = type::Exp(A[i]);
+  }
+
+  C.in_parallel().Apply([](auto const &a, auto &c) { c = fetch::vectorise::Exp(a); }, A);
+  for (std::size_t i = 0; i < N; ++i)
+  {
+    if (!type::IsNaN(C[i]) && !type::IsNaN(E[i]))
+    {
+      EXPECT_EQ(E[i], C[i]);
     }
   }
 }

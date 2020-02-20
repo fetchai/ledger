@@ -16,8 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/ops/layer_norm.hpp"
 #include "test_types.hpp"
+
+#include "ml/ops/layer_norm.hpp"
 
 #include "gtest/gtest.h"
 
@@ -30,7 +31,7 @@ class LayerNormTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(LayerNormTest, fetch::math::test::TensorFloatingTypes);
+TYPED_TEST_SUITE(LayerNormTest, fetch::math::test::TensorFloatingTypes, );
 
 TYPED_TEST(LayerNormTest, forward_test_2d)
 {

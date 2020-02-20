@@ -16,11 +16,13 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/base_types.hpp"
-#include "ml/ops/concatenate.hpp"
 #include "test_types.hpp"
 
+#include "math/base_types.hpp"
+#include "ml/ops/concatenate.hpp"
+
 #include "gtest/gtest.h"
+
 #include <memory>
 #include <vector>
 
@@ -31,7 +33,7 @@ class ConcatenateTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(ConcatenateTest, fetch::math::test::TensorIntAndFloatingTypes);
+TYPED_TEST_SUITE(ConcatenateTest, fetch::math::test::TensorIntAndFloatingTypes, );
 
 TYPED_TEST(ConcatenateTest, forward_test)
 {

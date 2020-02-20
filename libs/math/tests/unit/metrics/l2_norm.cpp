@@ -16,9 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "gtest/gtest.h"
-#include "math/metrics/l2_norm.hpp"
 #include "test_types.hpp"
+
+#include "math/metrics/l2_norm.hpp"
+
+#include "gtest/gtest.h"
 
 namespace fetch {
 namespace math {
@@ -29,7 +31,7 @@ class L2NormTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(L2NormTest, TensorFloatingTypes);
+TYPED_TEST_SUITE(L2NormTest, TensorFloatingTypes, );
 
 TYPED_TEST(L2NormTest, value_test)
 {

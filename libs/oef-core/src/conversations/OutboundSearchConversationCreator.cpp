@@ -16,16 +16,13 @@
 //
 //------------------------------------------------------------------------------
 
-#include "oef-core/conversations/OutboundSearchConversationCreator.hpp"
-
 #include "logging/logging.hpp"
+#include "oef-base/conversation/OutboundConversationWorkerTask.hpp"
 #include "oef-base/proto_comms/ProtoMessageEndpoint.hpp"
 #include "oef-base/threading/StateMachineTask.hpp"
 #include "oef-base/utils/Uri.hpp"
-
+#include "oef-core/conversations/OutboundSearchConversationCreator.hpp"
 #include "oef-core/conversations/SearchAddressUpdateTask.hpp"
-
-#include "oef-base/conversation/OutboundConversationWorkerTask.hpp"
 #include "oef-messages/dap_interface.hpp"
 #include "oef-messages/search_message.hpp"
 #include "oef-messages/search_query.hpp"
@@ -34,9 +31,8 @@
 #include "oef-messages/search_update.hpp"
 
 #include <google/protobuf/message.h>
-#include <utility>
 
-// ------------------------------------------------------------------------------------------
+#include <utility>
 
 class OutboundSearchConversationWorkerTask : public OutboundConversationWorkerTask
 {

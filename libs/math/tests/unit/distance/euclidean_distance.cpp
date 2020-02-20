@@ -16,9 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include "test_types.hpp"
+
 #include "math/base_types.hpp"
 #include "math/distance/euclidean.hpp"
-#include "test_types.hpp"
 
 #include "gtest/gtest.h"
 
@@ -30,7 +31,7 @@ class EuclideanTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(EuclideanTest, TensorFloatingTypes);
+TYPED_TEST_SUITE(EuclideanTest, TensorFloatingTypes, );
 
 TYPED_TEST(EuclideanTest, simple_test)
 {

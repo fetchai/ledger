@@ -27,6 +27,7 @@ namespace ml {
 
 using Shape       = fetch::math::SizeVector;
 using ShapeVector = std::vector<fetch::math::SizeVector>;
+using fetch::ml::OperationsCount;
 
 /**
  * @brief A helper function for printing node's output shape
@@ -91,6 +92,58 @@ OpType Node<TensorType>::OperationType() const
                                              std::string(op_ptr_->Descriptor()) + ") mismatch!");
   }
   return operation_type_;
+}
+
+template <typename TensorType>
+OperationsCount Node<TensorType>::ChargeForward(
+    std::unordered_set<std::string> &visited_nodes) const
+{
+  OperationsCount cost = op_ptr_->ChargeForward();
+  if (visited_nodes.find(this->name_) != visited_nodes.cend())
+  {
+    // If this node has already been visited, there is no need for recursive calls to its
+    // inputs and only cost of this particular node forward run is returned.
+    return cost;
+  }
+
+  for (auto const &i : input_nodes_)
+  {
+    auto input_node_ptr = i.lock();
+    if (!input_node_ptr)
+    {
+      throw std::runtime_error("Unable to lock weak pointer.");
+    }
+
+    cost += input_node_ptr->ChargeForward(visited_nodes);
+  }
+  visited_nodes.insert(this->name_);
+  return cost;
+}
+
+template <typename TensorType>
+OperationsCount Node<TensorType>::ChargeBackward(
+    std::unordered_set<std::string> &visited_nodes) const
+{
+  OperationsCount cost = op_ptr_->ChargeBackward();
+  if (visited_nodes.find(this->name_) != visited_nodes.cend())
+  {
+    // If this node has already been visited, there is no need for recursive calls to its
+    // inputs and only cost of this particular node forward run is returned.
+    return cost;
+  }
+
+  for (auto const &i : input_nodes_)
+  {
+    auto input_node_ptr = i.lock();
+    if (!input_node_ptr)
+    {
+      throw std::runtime_error("Unable to lock weak pointer.");
+    }
+
+    cost += input_node_ptr->ChargeBackward(visited_nodes);
+  }
+  visited_nodes.insert(this->name_);
+  return cost;
 }
 
 template <typename TensorType>
@@ -203,7 +256,7 @@ Shape Node<TensorType>::BatchOutputShape()
 
   // After all shapes for current Node are deduced, shape-dependent Ops could be
   // updated and their initialisation completed.
-  op_ptr_->CompleteConstruction();
+  op_ptr_->CompleteShapeDeduction();
 
   return return_shape;
 }

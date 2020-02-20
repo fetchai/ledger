@@ -16,9 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "gtest/gtest.h"
-#include "math/activation_functions/softmax.hpp"
 #include "test_types.hpp"
+
+#include "math/activation_functions/softmax.hpp"
+
+#include "gtest/gtest.h"
 
 namespace fetch {
 namespace math {
@@ -29,7 +31,7 @@ class SoftmaxTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(SoftmaxTest, TensorFloatingTypes);
+TYPED_TEST_SUITE(SoftmaxTest, TensorFloatingTypes, );
 
 TYPED_TEST(SoftmaxTest, equal_proportion_test)
 {

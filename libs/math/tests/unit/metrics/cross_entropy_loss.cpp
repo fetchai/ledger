@@ -16,9 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "gtest/gtest.h"
-#include "math/metrics/cross_entropy.hpp"
 #include "test_types.hpp"
+
+#include "math/metrics/cross_entropy.hpp"
+
+#include "gtest/gtest.h"
 
 namespace fetch {
 namespace math {
@@ -29,7 +31,7 @@ class CrossEntropyTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(CrossEntropyTest, TensorFloatingTypes);
+TYPED_TEST_SUITE(CrossEntropyTest, TensorFloatingTypes, );
 
 TYPED_TEST(CrossEntropyTest, perfect_match_test)
 {

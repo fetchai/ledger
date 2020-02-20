@@ -30,9 +30,6 @@
 namespace fetch {
 namespace ml {
 
-template <typename T>
-struct StateDict;
-
 namespace model {
 template <typename TensorType>
 class Model;
@@ -50,6 +47,12 @@ class SGDOptimiser;
 template <typename TensorType>
 class AdamOptimiser;
 }  // namespace optimisers
+
+namespace utilities {
+
+template <typename TensorType>
+class MinMaxScaler;
+}
 
 }  // namespace ml
 
@@ -845,68 +848,6 @@ struct MapSerializer<ml::OpsSaveableParams, D>
     map.ExpectKeyGetValue(IS_TRAINING, osp.is_training);
     map.ExpectKeyGetValue(BATCH_INPUT_SHAPES, osp.batch_input_shapes);
     map.ExpectKeyGetValue(BATCH_OUTPUT_SHAPE, osp.batch_output_shape);
-  }
-};
-
-template <typename V, typename D>
-struct MapSerializer<ml::StateDict<V>, D>
-{
-public:
-  using Type       = ml::StateDict<V>;
-  using DriverType = D;
-
-  constexpr static uint8_t WEIGHTS = 1;
-  constexpr static uint8_t DICT    = 2;
-
-  template <typename Constructor>
-  static void Serialize(Constructor &map_constructor, Type const &sd)
-  {
-    uint64_t n = 0;
-    if (sd.weights_)
-    {
-      ++n;
-    }
-    if (!sd.dict_.empty())
-    {
-      ++n;
-    }
-    auto map = map_constructor(n);
-    if (sd.weights_)
-    {
-      map.Append(WEIGHTS, *sd.weights_);
-    }
-    if (!sd.dict_.empty())
-    {
-      map.Append(DICT, sd.dict_);
-    }
-  }
-
-  template <typename MapDeserializer>
-  static void Deserialize(MapDeserializer &map, Type &output)
-  {
-    for (uint64_t i = 0; i < map.size(); ++i)
-    {
-      uint8_t key;
-      map.GetKey(key);
-      switch (key)
-      {
-      case WEIGHTS:
-      {
-        output.weights_ = std::make_shared<V>();
-        map.GetValue(*output.weights_);
-        break;
-      }
-      case DICT:
-      {
-        map.GetValue(output.dict_);
-        break;
-      }
-      default:
-      {
-        throw ml::exceptions::InvalidMode("unsupported key in statemap deserialization");
-      }
-      }
-    }
   }
 };
 
@@ -3128,11 +3069,15 @@ struct MapSerializer<ml::LayerConvolution1DSaveableParams<TensorType>, D>
   static uint8_t const INPUT_CHANNELS  = 4;
   static uint8_t const OUTPUT_CHANNELS = 5;
   static uint8_t const STRIDE_SIZE     = 6;
+  static uint8_t const IS_INITIALISED  = 7;
+  static uint8_t const WEIGHTS_NAME    = 8;
+  static uint8_t const INIT_MODE       = 9;
+  static uint8_t const SEED            = 10;
 
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &sp)
   {
-    auto map = map_constructor(6);
+    auto map = map_constructor(10);
 
     // serialize parent class first
     auto base_pointer = static_cast<ml::SubGraphSaveableParams<TensorType> const *>(&sp);
@@ -3143,6 +3088,10 @@ struct MapSerializer<ml::LayerConvolution1DSaveableParams<TensorType>, D>
     map.Append(INPUT_CHANNELS, sp.input_channels);
     map.Append(OUTPUT_CHANNELS, sp.output_channels);
     map.Append(STRIDE_SIZE, sp.stride_size);
+    map.Append(IS_INITIALISED, sp.is_initialised);
+    map.Append(WEIGHTS_NAME, sp.weights_name);
+    map.Append(INIT_MODE, sp.init_mode);
+    map.Append(SEED, sp.seed);
   }
 
   template <typename MapDeserializer>
@@ -3157,6 +3106,10 @@ struct MapSerializer<ml::LayerConvolution1DSaveableParams<TensorType>, D>
     map.ExpectKeyGetValue(INPUT_CHANNELS, sp.input_channels);
     map.ExpectKeyGetValue(OUTPUT_CHANNELS, sp.output_channels);
     map.ExpectKeyGetValue(STRIDE_SIZE, sp.stride_size);
+    map.ExpectKeyGetValue(IS_INITIALISED, sp.is_initialised);
+    map.ExpectKeyGetValue(WEIGHTS_NAME, sp.weights_name);
+    map.ExpectKeyGetValue(INIT_MODE, sp.init_mode);
+    map.ExpectKeyGetValue(SEED, sp.seed);
   }
 };
 
@@ -3176,11 +3129,15 @@ struct MapSerializer<ml::LayerConvolution2DSaveableParams<TensorType>, D>
   static uint8_t const INPUT_CHANNELS  = 4;
   static uint8_t const OUTPUT_CHANNELS = 5;
   static uint8_t const STRIDE_SIZE     = 6;
+  static uint8_t const IS_INITIALISED  = 7;
+  static uint8_t const WEIGHTS_NAME    = 8;
+  static uint8_t const INIT_MODE       = 9;
+  static uint8_t const SEED            = 10;
 
   template <typename Constructor>
   static void Serialize(Constructor &map_constructor, Type const &sp)
   {
-    auto map = map_constructor(6);
+    auto map = map_constructor(10);
 
     // serialize parent class first
     auto base_pointer = static_cast<ml::SubGraphSaveableParams<TensorType> const *>(&sp);
@@ -3191,6 +3148,10 @@ struct MapSerializer<ml::LayerConvolution2DSaveableParams<TensorType>, D>
     map.Append(INPUT_CHANNELS, sp.input_channels);
     map.Append(OUTPUT_CHANNELS, sp.output_channels);
     map.Append(STRIDE_SIZE, sp.stride_size);
+    map.Append(IS_INITIALISED, sp.is_initialised);
+    map.Append(WEIGHTS_NAME, sp.weights_name);
+    map.Append(INIT_MODE, sp.init_mode);
+    map.Append(SEED, sp.seed);
   }
 
   template <typename MapDeserializer>
@@ -3205,6 +3166,10 @@ struct MapSerializer<ml::LayerConvolution2DSaveableParams<TensorType>, D>
     map.ExpectKeyGetValue(INPUT_CHANNELS, sp.input_channels);
     map.ExpectKeyGetValue(OUTPUT_CHANNELS, sp.output_channels);
     map.ExpectKeyGetValue(STRIDE_SIZE, sp.stride_size);
+    map.ExpectKeyGetValue(IS_INITIALISED, sp.is_initialised);
+    map.ExpectKeyGetValue(WEIGHTS_NAME, sp.weights_name);
+    map.ExpectKeyGetValue(INIT_MODE, sp.init_mode);
+    map.ExpectKeyGetValue(SEED, sp.seed);
   }
 };
 
@@ -3793,6 +3758,39 @@ struct MapSerializer<ml::optimisers::LearningRateParam<T>, D>
     map.ExpectKeyGetValue(ENDING_LEARNING_RATE, sp.ending_learning_rate);
     map.ExpectKeyGetValue(LINEAR_DECAY_RATE, sp.linear_decay_rate);
     map.ExpectKeyGetValue(EXPONENTIAL_DECAY_RATE, sp.exponential_decay_rate);
+  }
+};
+
+/**
+ * serializer for MinMaxScaler
+ * @tparam TensorType
+ */
+template <typename TensorType, typename D>
+struct MapSerializer<ml::utilities::MinMaxScaler<TensorType>, D>
+{
+  using Type       = ml::utilities::MinMaxScaler<TensorType>;
+  using DriverType = D;
+
+  static uint8_t const MIN_VAL = 1;
+  static uint8_t const MAX_VAL = 2;
+  static uint8_t const RANGE   = 3;
+
+  template <typename Constructor>
+  static void Serialize(Constructor &map_constructor, Type const &sp)
+  {
+    auto map = map_constructor(3);
+
+    map.Append(MIN_VAL, sp.x_min_);
+    map.Append(MAX_VAL, sp.x_max_);
+    map.Append(RANGE, sp.x_range_);
+  }
+
+  template <typename MapDeserializer>
+  static void Deserialize(MapDeserializer &map, Type &sp)
+  {
+    map.ExpectKeyGetValue(MIN_VAL, sp.x_min_);
+    map.ExpectKeyGetValue(MAX_VAL, sp.x_max_);
+    map.ExpectKeyGetValue(RANGE, sp.x_range_);
   }
 };
 

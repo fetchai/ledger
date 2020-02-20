@@ -16,11 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
+#include "in_memory_storage.hpp"
+
 #include "chain/address.hpp"
 #include "chain/transaction_builder.hpp"
 #include "core/bitvector.hpp"
 #include "crypto/ecdsa.hpp"
-#include "in_memory_storage.hpp"
 #include "ledger/chaincode/contract_context.hpp"
 #include "ledger/chaincode/contract_context_attacher.hpp"
 #include "ledger/chaincode/token_contract.hpp"
@@ -33,14 +34,14 @@
 
 namespace {
 
-using fetch::ledger::Executor;
+using fetch::BitVector;
+using fetch::chain::Address;
 using fetch::chain::Transaction;
 using fetch::chain::TransactionBuilder;
-using fetch::chain::Address;
-using fetch::ledger::TokenContract;
-using fetch::ledger::StateSentinelAdapter;
 using fetch::crypto::ECDSASigner;
-using fetch::BitVector;
+using fetch::ledger::Executor;
+using fetch::ledger::StateSentinelAdapter;
+using fetch::ledger::TokenContract;
 
 std::shared_ptr<Transaction> CreateSampleTransaction()
 {

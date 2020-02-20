@@ -16,12 +16,15 @@
 //
 //------------------------------------------------------------------------------
 
+#include "test_types.hpp"
+
 #include "core/serializers/main_serializer_definition.hpp"
-#include "gtest/gtest.h"
 #include "math/base_types.hpp"
 #include "ml/ops/activations/sigmoid.hpp"
 #include "ml/serializers/ml_types.hpp"
-#include "test_types.hpp"
+
+#include "gtest/gtest.h"
+
 #include <memory>
 
 namespace fetch {
@@ -33,7 +36,7 @@ class SigmoidTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(SigmoidTest, math::test::HighPrecisionTensorFloatingTypes);
+TYPED_TEST_SUITE(SigmoidTest, math::test::HighPrecisionTensorFloatingTypes, );
 
 TYPED_TEST(SigmoidTest, forward_test)
 {

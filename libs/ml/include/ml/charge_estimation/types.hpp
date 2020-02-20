@@ -1,3 +1,4 @@
+#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2020 Fetch.AI Limited
@@ -16,32 +17,12 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vm_test_toolkit.hpp"
+#include <cstdint>
 
-#include "gtest/gtest.h"
+namespace fetch {
+namespace ml {
 
-#include <sstream>
+using OperationsCount = std::uint64_t;
 
-namespace {
-
-class VMTests : public ::testing::Test
-{
-public:
-  std::ostringstream output;
-  VmTestToolkit      toolkit{&output};
-};
-
-// Test we can compile and run a fairly inoffensive smart contract
-TEST_F(VMTests, CheckCompileAndExecute)
-{
-  static char const *TEXT = R"(
-    function main()
-      printLn("Hello, world");
-    endfunction
-  )";
-
-  ASSERT_TRUE(toolkit.Compile(TEXT));
-  ASSERT_TRUE(toolkit.Run());
-}
-
-}  // namespace
+}  // namespace ml
+}  // namespace fetch

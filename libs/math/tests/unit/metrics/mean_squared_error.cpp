@@ -16,9 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "gtest/gtest.h"
-#include "math/metrics/mean_square_error.hpp"
 #include "test_types.hpp"
+
+#include "math/metrics/mean_square_error.hpp"
+
+#include "gtest/gtest.h"
 
 namespace fetch {
 namespace math {
@@ -29,7 +31,7 @@ class MeanSquareErrorTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(MeanSquareErrorTest, TensorFloatingTypes);
+TYPED_TEST_SUITE(MeanSquareErrorTest, TensorFloatingTypes, );
 
 TYPED_TEST(MeanSquareErrorTest, perfect_match_test)
 {

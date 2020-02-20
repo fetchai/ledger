@@ -17,9 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "crypto/fnv.hpp"
-
 #include "fetch_pybind.hpp"
+
+#include "crypto/fnv.hpp"
 
 namespace fetch {
 namespace crypto {

@@ -16,9 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "gtest/gtest.h"
-#include "math/tensor/tensor.hpp"
 #include "test_types.hpp"
+
+#include "math/tensor/tensor.hpp"
+
+#include "gtest/gtest.h"
 
 namespace fetch {
 namespace math {
@@ -29,7 +31,7 @@ class TensorConcatenationTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(TensorConcatenationTest, FloatIntAndUIntTypes);
+TYPED_TEST_SUITE(TensorConcatenationTest, FloatIntAndUIntTypes, );
 
 template <typename T>
 fetch::math::Tensor<T> PrepareTensor(std::vector<fetch::math::SizeType> const &shape)

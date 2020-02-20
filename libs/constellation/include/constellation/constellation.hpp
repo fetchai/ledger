@@ -17,6 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include "open_api_http_module.hpp"
+
 #include "core/feature_flags.hpp"
 #include "core/reactor.hpp"
 #include "entropy/entropy_generator_interface.hpp"
@@ -43,7 +45,6 @@
 #include "messenger/messenger_http_interface.hpp"
 #include "muddle/muddle_interface.hpp"
 #include "network/p2pservice/p2ptrust_bayrank.hpp"
-#include "open_api_http_module.hpp"
 #include "shards/manifest.hpp"
 #include "shards/shard_management_service.hpp"
 #include "telemetry/telemetry.hpp"
@@ -105,6 +106,7 @@ public:
     bool           disable_signing{false};
     bool           sign_broadcasts{false};
     bool           kademlia_routing{true};
+    bool           persistent_tx_status{false};
     ConstByteArray genesis_file_contents{};
     bool           proof_of_stake{false};
     NetworkMode    network_mode{NetworkMode::PUBLIC_NETWORK};
@@ -138,7 +140,7 @@ private:
   using MuddlePtr                = muddle::MuddlePtr;
   using NetworkManager           = network::NetworkManager;
   using BlockPackingAlgorithm    = ledger::BasicMiner;
-  using BlockPackingAlgorithmPtr = std::unique_ptr<ledger::BasicMiner>;
+  using BlockPackingAlgorithmPtr = std::unique_ptr<ledger::BlockPackerInterface>;
   using BlockCoordinator         = ledger::BlockCoordinator;
   using BlockCoordinatorPtr      = std::unique_ptr<ledger::BlockCoordinator>;
   using MainChainPtr             = std::unique_ptr<ledger::MainChain>;
@@ -173,8 +175,7 @@ private:
   using ShardManagementService   = shards::ShardManagementService;
   using ShardMgmtServicePtr      = std::shared_ptr<ShardManagementService>;
   using ShardConfigs             = ledger::ShardConfigs;
-  using TxStatusCache            = ledger::TransactionStatusCache;
-  using TxStatusCachePtr         = std::shared_ptr<TxStatusCache>;
+  using TxStatusCachePtr         = std::shared_ptr<ledger::TransactionStatusInterface>;
 
   using OpenAPIHttpModulePtr     = std::shared_ptr<OpenAPIHttpModule>;
   using HealthCheckHttpModulePtr = std::shared_ptr<HealthCheckHttpModule>;

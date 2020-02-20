@@ -18,33 +18,30 @@
 
 #include "MtCore.hpp"
 
-#include <fstream>
-#include <iostream>
-
 #include "oef-base/comms/Core.hpp"
+#include "oef-base/comms/Endpoint.hpp"
+#include "oef-base/comms/EndpointWebSocket.hpp"
 #include "oef-base/comms/OefListenerSet.hpp"
 #include "oef-base/monitoring/Monitoring.hpp"
 #include "oef-base/threading/MonitoringTask.hpp"
+#include "oef-core/comms/EndpointSSL.hpp"
 #include "oef-core/comms/OefAgentEndpoint.hpp"
 #include "oef-core/comms/OefListenerStarterTask.hpp"
 #include "oef-core/conversations/OutboundSearchConversationCreator.hpp"
-#include "oef-core/oef-functions/InitialHandshakeTaskFactory.hpp"
-
 #include "oef-core/karma/KarmaPolicyBasic.hpp"
 #include "oef-core/karma/KarmaPolicyNone.hpp"
 #include "oef-core/karma/KarmaRefreshTask.hpp"
-
-#include "google/protobuf/util/json_util.h"
-#include "oef-base/comms/Endpoint.hpp"
-#include "oef-base/comms/EndpointWebSocket.hpp"
-#include <stdio.h>
-
-#include <ctype.h>
-
-#include "oef-core/comms/EndpointSSL.hpp"
+#include "oef-core/oef-functions/InitialHandshakeTaskFactory.hpp"
 #include "oef-core/oef-functions/InitialSecureHandshakeTaskFactory.hpp"
 #include "oef-core/oef-functions/InitialSslHandshakeTaskFactory.hpp"
 #include "oef-core/tasks/OefLoginTimeoutTask.hpp"
+
+#include <ctype.h>
+#include <google/protobuf/util/json_util.h>
+#include <stdio.h>
+
+#include <fstream>
+#include <iostream>
 
 // openssl utils
 extern std::string RSA_Modulus_from_PEM_f(std::string file_path);

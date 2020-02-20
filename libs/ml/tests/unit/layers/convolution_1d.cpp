@@ -16,13 +16,15 @@
 //
 //------------------------------------------------------------------------------
 
-#include "gtest/gtest.h"
+#include "test_types.hpp"
+
 #include "ml/layers/convolution_1d.hpp"
 #include "ml/ops/convolution_1d.hpp"
 #include "ml/ops/loss_functions/mean_square_error_loss.hpp"
 #include "ml/ops/placeholder.hpp"
 #include "ml/serializers/ml_types.hpp"
-#include "test_types.hpp"
+
+#include "gtest/gtest.h"
 
 #include <memory>
 
@@ -34,7 +36,7 @@ class Convolution1DTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(Convolution1DTest, math::test::TensorFloatingTypes);
+TYPED_TEST_SUITE(Convolution1DTest, math::test::TensorFloatingTypes, );
 
 TYPED_TEST(Convolution1DTest, set_input_and_evaluate_test)  // Use the class as a subgraph
 {
@@ -44,18 +46,20 @@ TYPED_TEST(Convolution1DTest, set_input_and_evaluate_test)  // Use the class as 
 
   SizeType const input_channels  = 3;
   SizeType const output_channels = 5;
-  SizeType const input_height    = 3;
+  SizeType const input_length    = 3;
   SizeType const kernel_height   = 3;
   SizeType const stride_size     = 1;
 
   // Generate input
-  TensorType input({input_channels, input_height, 1});
+  TensorType input({input_channels, input_length, 1});
   input.FillUniformRandom();
 
   // Evaluate
   fetch::ml::layers::Convolution1D<TensorType> conv(output_channels, input_channels, kernel_height,
                                                     stride_size);
   conv.SetInput("Conv1D_Input", input);
+  conv.Compile();
+
   TensorType output = conv.Evaluate("Conv1D_Conv1D", true);
 
   // Get ground truth
@@ -79,17 +83,21 @@ TYPED_TEST(Convolution1DTest, ops_forward_test)  // Use the class as an Ops
 
   SizeType const input_channels  = 3;
   SizeType const output_channels = 5;
-  SizeType const input_height    = 3;
+  SizeType const input_length    = 3;
   SizeType const kernel_height   = 3;
   SizeType const stride_size     = 1;
 
   // Generate input
-  TensorType input({input_channels, input_height, 1});
+  math::SizeVector const input_shape{input_channels, input_length, 1};
+  TensorType             input(input_shape);
   input.FillUniformRandom();
 
   // Evaluate
   fetch::ml::layers::Convolution1D<TensorType> conv(output_channels, input_channels, kernel_height,
                                                     stride_size);
+
+  conv.ComputeBatchOutputShape({input_shape});  // necessary for out-of-Graph usage
+  conv.CompleteShapeDeduction();                // necessary for out-of-Graph usage
 
   TensorType output(conv.ComputeOutputShape({std::make_shared<TensorType>(input)}));
   conv.Forward({std::make_shared<TensorType>(input)}, output);
@@ -115,13 +123,14 @@ TYPED_TEST(Convolution1DTest, ops_backward_test)  // Use the class as an Ops
 
   SizeType const input_channels  = 3;
   SizeType const output_channels = 5;
-  SizeType const input_height    = 3;
+  SizeType const input_length    = 3;
   SizeType const kernel_height   = 3;
   SizeType const output_height   = 1;
   SizeType const stride_size     = 1;
 
   // Generate input
-  TensorType input({input_channels, input_height, 1});
+  math::SizeVector const input_shape{input_channels, input_length, 1};
+  TensorType             input(input_shape);
   input.FillUniformRandom();
 
   // Generate error
@@ -131,6 +140,9 @@ TYPED_TEST(Convolution1DTest, ops_backward_test)  // Use the class as an Ops
   // Evaluate
   fetch::ml::layers::Convolution1D<TensorType> conv(output_channels, input_channels, kernel_height,
                                                     stride_size);
+
+  conv.ComputeBatchOutputShape({input_shape});  // necessary for out-of-Graph usage
+  conv.CompleteShapeDeduction();                // necessary for out-of-Graph usage
 
   TensorType output(conv.ComputeOutputShape({std::make_shared<TensorType>(input)}));
   conv.Forward({std::make_shared<TensorType>(input)}, output);
@@ -160,12 +172,13 @@ TYPED_TEST(Convolution1DTest, node_forward_test)  // Use the class as a Node
 
   SizeType const input_channels  = 3;
   SizeType const output_channels = 5;
-  SizeType const input_height    = 3;
+  SizeType const input_length    = 3;
   SizeType const kernel_height   = 3;
   SizeType const stride_size     = 1;
 
   // Generate input
-  TensorType input({input_channels, input_height, 1});
+  math::SizeVector const input_shape{input_channels, input_length, 1};
+  TensorType             input(input_shape);
   input.FillUniformRandom();
 
   // Evaluate
@@ -182,6 +195,8 @@ TYPED_TEST(Convolution1DTest, node_forward_test)  // Use the class as a Node
             output_channels, input_channels, kernel_height, stride_size);
       });
   conv.AddInput(placeholder_node);
+  conv.GetOp()->ComputeBatchOutputShape({input_shape});  // necessary for out-of-Graph usage
+  conv.GetOp()->CompleteShapeDeduction();                // necessary for out-of-Graph usage
 
   TensorType prediction = *conv.Evaluate(true);
 
@@ -208,13 +223,14 @@ TYPED_TEST(Convolution1DTest, node_backward_test)  // Use the class as a Node
 
   SizeType const input_channels  = 3;
   SizeType const output_channels = 5;
-  SizeType const input_height    = 3;
+  SizeType const input_length    = 3;
   SizeType const kernel_height   = 3;
   SizeType const output_height   = 1;
   SizeType const stride_size     = 1;
 
   // Generate input
-  TensorType input({input_channels, input_height, 1});
+  math::SizeVector const input_shape{input_channels, input_length, 1};
+  TensorType             input(input_shape);
   input.FillUniformRandom();
 
   // Generate error
@@ -235,6 +251,8 @@ TYPED_TEST(Convolution1DTest, node_backward_test)  // Use the class as a Node
             output_channels, input_channels, kernel_height, stride_size);
       });
   conv.AddInput(placeholder_node);
+  conv.GetOp()->ComputeBatchOutputShape({input_shape});  // necessary for out-of-Graph usage
+  conv.GetOp()->CompleteShapeDeduction();                // necessary for out-of-Graph usage
 
   TensorType prediction     = *conv.Evaluate(true);
   auto       backprop_error = conv.BackPropagate(error_signal);
@@ -264,12 +282,12 @@ TYPED_TEST(Convolution1DTest, graph_forward_test)  // Use the class as a Node
 
   SizeType const input_channels  = 3;
   SizeType const output_channels = 5;
-  SizeType const input_height    = 3;
+  SizeType const input_length    = 3;
   SizeType const kernel_height   = 3;
   SizeType const stride_size     = 1;
 
   // Generate input
-  TensorType input({input_channels, input_height, 1});
+  TensorType input({input_channels, input_length, 1});
   input.FillUniformRandom();
 
   // Evaluate
@@ -278,6 +296,7 @@ TYPED_TEST(Convolution1DTest, graph_forward_test)  // Use the class as a Node
   g.template AddNode<fetch::ml::layers::Convolution1D<TensorType>>(
       "Convolution1D", {"Input"}, output_channels, input_channels, kernel_height, stride_size);
   g.SetInput("Input", input);
+  g.Compile();
 
   TensorType prediction = g.Evaluate("Convolution1D", true);
 
@@ -292,40 +311,6 @@ TYPED_TEST(Convolution1DTest, graph_forward_test)  // Use the class as a Node
 
   EXPECT_TRUE(prediction.AllClose(gt, math::function_tolerance<DataType>(),
                                   math::function_tolerance<DataType>()));
-}
-
-TYPED_TEST(Convolution1DTest, getStateDict)
-{
-  using TensorType = TypeParam;
-  using DataType   = typename TensorType::Type;
-  using SizeType   = fetch::math::SizeType;
-
-  SizeType const input_channels  = 3;
-  SizeType const output_channels = 5;
-  SizeType const kernel_height   = 3;
-  SizeType const stride_size     = 1;
-
-  // Initialise weights
-  fetch::ml::layers::Convolution1D<TensorType> conv(
-      output_channels, input_channels, kernel_height, stride_size,
-      fetch::ml::details::ActivationType::NOTHING, "ConvTest");
-  fetch::ml::StateDict<TensorType> sd = conv.StateDict();
-
-  // Get weights
-  EXPECT_EQ(sd.weights_, nullptr);
-  EXPECT_EQ(sd.dict_.size(), 1);
-  auto weights_ptr = sd.dict_["ConvTest_Weights"].weights_;
-
-  // Get ground truth
-  TensorType gt_weights = conv.GetWeights()[0];
-
-  // Test correct values
-  ASSERT_NE(weights_ptr, nullptr);
-  EXPECT_EQ(weights_ptr->shape(),
-            std::vector<SizeType>({output_channels, input_channels, kernel_height, 1}));
-
-  EXPECT_TRUE(weights_ptr->AllClose(gt_weights, math::function_tolerance<DataType>(),
-                                    math::function_tolerance<DataType>()));
 }
 
 }  // namespace test

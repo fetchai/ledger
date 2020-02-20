@@ -16,9 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include "test_types.hpp"
+
 #include "math/base_types.hpp"
 #include "ml/ops/maximum.hpp"
-#include "test_types.hpp"
 
 #include "gtest/gtest.h"
 
@@ -34,7 +35,7 @@ class MaximumTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(MaximumTest, fetch::math::test::TensorFloatingTypes);
+TYPED_TEST_SUITE(MaximumTest, fetch::math::test::TensorFloatingTypes, );
 
 TYPED_TEST(MaximumTest, forward_test)
 {

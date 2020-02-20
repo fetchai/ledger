@@ -34,6 +34,7 @@
 #include "ledger/transaction_status_cache.hpp"
 #include "ledger/upow/synergetic_execution_manager.hpp"
 #include "ledger/upow/synergetic_executor.hpp"
+#include "meta/value_util.hpp"
 #include "network/generics/milli_timer.hpp"
 #include "telemetry/counter.hpp"
 #include "telemetry/gauge.hpp"
@@ -69,8 +70,9 @@ const std::chrono::seconds      STATE_NOTIFY_INTERVAL{20};
 const std::chrono::seconds      NOTIFY_INTERVAL{5};
 const std::chrono::seconds      WAIT_BEFORE_ASKING_FOR_MISSING_TX_INTERVAL{5};
 const std::size_t               MIN_BLOCK_SYNC_SLIPPAGE_FOR_WAITLESS_SYNC_OF_MISSING_TXS{30};
-const std::chrono::seconds      WAIT_FOR_TX_TIMEOUT_INTERVAL{120};
+const std::chrono::seconds      WAIT_FOR_TX_TIMEOUT_INTERVAL{240};
 const uint32_t                  THRESHOLD_FOR_FAST_SYNCING{100u};
+const std::size_t               MAX_ATTEMPTED_PANIC_REVERTS{10};
 
 }  // namespace
 
@@ -167,6 +169,15 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr dag,
                                                                  "Blocks minted")}
   , consensus_update_failure_total_{telemetry::Registry::Instance().CreateCounter(
         "consensus_update_failure_total", "Failures to update consensus")}
+  , remove_block_total_{telemetry::Registry::Instance().CreateCounter(
+        "ledger_block_coordinator_remove_block_total",
+        "The total number of blocks removed from the chain by the block coordinator")}
+  , panic_block_total_{telemetry::Registry::Instance().CreateCounter(
+        "ledger_block_coordinator_panic_block_total",
+        "The total number of times that the block coordinator has paniced")}
+  , panic_search_total_{telemetry::Registry::Instance().CreateCounter(
+        "ledger_block_coordinator_panic_search_total",
+        "The total number of times that the main chain has been searched for a block")}
   , tx_sync_times_{telemetry::Registry::Instance().CreateHistogram(
         {0.001, 0.01, 0.1, 1, 10, 100}, "ledger_block_coordinator_tx_sync_times",
         "The histogram of the time it takes to sync transactions")}
@@ -490,23 +501,14 @@ BlockCoordinator::State BlockCoordinator::OnSynchronised(State current, State pr
     return State::RESET;
   }
 
-  try
+  if (consensus_->UpdateCurrentBlock(*current_block_))
   {
-    consensus_->UpdateCurrentBlock(*current_block_);
-
     // Failure will set this to a nullptr
     next_block_ = consensus_->GenerateNextBlock();
   }
-  catch (std::exception const &ex)
+  else
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Failed to update consensus with error: ", ex.what());
-    consensus_update_failure_total_->increment();
-
-    return State::RESET;
-  }
-  catch (...)
-  {
-    FETCH_LOG_WARN(LOGGING_NAME, "Unknown error when updating consensus!");
+    FETCH_LOG_WARN(LOGGING_NAME, "Failed to update consensus");
     consensus_update_failure_total_->increment();
     next_block_ = nullptr;
 
@@ -574,18 +576,9 @@ BlockCoordinator::State BlockCoordinator::OnPreExecBlockValidation()
       return State::RESET;
     }
 
-    try
+    if (!consensus_->UpdateCurrentBlock(*previous))
     {
-      consensus_->UpdateCurrentBlock(*previous);
-    }
-    catch (std::exception const &ex)
-    {
-      FETCH_LOG_WARN(LOGGING_NAME, "Failed to update consensus with error: ", ex.what());
-      consensus_update_failure_total_->increment();
-    }
-    catch (...)
-    {
-      FETCH_LOG_WARN(LOGGING_NAME, "Unknown error when updating consensus!");
+      FETCH_LOG_WARN(LOGGING_NAME, "Failed to update consensus");
       consensus_update_failure_total_->increment();
     }
 
@@ -861,21 +854,75 @@ void BlockCoordinator::Panic()
 {
   FETCH_LOG_ERROR(LOGGING_NAME, "In Panic -> Reverting to Genesis");
 
-  auto const genesis_digest = chain::GetGenesisDigest();
-  auto const genesis_merkle = chain::GetGenesisMerkleRoot();
+  bool        revert_successful{false};
+  std::size_t revert_attempts{0};
+  BlockPtr    block{};
 
-  if (!storage_unit_.RevertToHash(genesis_merkle, 0))
+  // walk down the chain trying to find the closest hash merkle hash that we can revert to
+  while (revert_attempts < MAX_ATTEMPTED_PANIC_REVERTS)
   {
-    FETCH_LOG_CRITICAL(LOGGING_NAME, "Unable to revert back to Genesis!!!");
+    // on the first loop, or a failure to lookup the previous block then restart from the head of
+    // the chain again
+    if (!block)
+    {
+      // lookup the heaviest block
+      block = chain_.GetHeaviestBlock();
+
+      // edge case - something is very broken with the main chain
+      if (!block)
+      {
+        break;
+      }
+    }
+
+    // break from the search loop as soon as we have found a known check point that we can revert
+    // back to
+    if (storage_unit_.HashExists(block->merkle_hash, block->block_number))
+    {
+      // attempt the revert -  we expect this to work almost 100% of the time, however, in rare
+      // cases it could be the case that the underlying main chain service has made some updates to
+      // the chain and in which case this might not be present.
+      //
+      // In this failure mode we simply continue our search back down the chain. If there are
+      // greater than MAX_ATTEMPTED_PANIC_REVERTS then, something serious has occurred. In order to
+      // proceed revert back to the genesis state
+      if (RevertToBlock(*block))
+      {
+        revert_successful = true;
+        break;
+      }
+
+      // failed to revert the
+      ++revert_attempts;
+    }
+
+    // continue to walk down the chain - this might fail in the case of a large amount of forking,
+    // however, this will be caught at the start of the next loop
+    block = chain_.GetBlock(block->previous_hash);
+
+    panic_search_total_->increment();
   }
 
-  if (dag_ && !dag_->RevertToEpoch(0))
+  // in the worst case when this process completely fails then revert back to the catch all of
+  // reverting back to genesis
+  if (!revert_successful)
   {
-    FETCH_LOG_CRITICAL(LOGGING_NAME, "Unable to revert DAG back to genesis!");
-  }
+    auto const genesis_digest = chain::GetGenesisDigest();
+    auto const genesis_merkle = chain::GetGenesisMerkleRoot();
 
-  last_executed_block_.ApplyVoid([&](auto &digest) { digest = genesis_digest; });
-  execution_manager_.SetLastProcessedBlock(genesis_digest);
+    if (!storage_unit_.RevertToHash(genesis_merkle, 0))
+    {
+      FETCH_LOG_CRITICAL(LOGGING_NAME, "Unable to revert back to Genesis!!!");
+    }
+
+    if (dag_ && !dag_->RevertToEpoch(0))
+    {
+      FETCH_LOG_CRITICAL(LOGGING_NAME, "Unable to revert DAG back to genesis!");
+    }
+
+    last_executed_block_.ApplyVoid([&](auto &digest) { digest = genesis_digest; });
+    execution_manager_.SetLastProcessedBlock(genesis_digest);
+  }
 
   // delay the state machine in these error cases, to allow the network to catch up if the issue
   // is network related and if nothing else restrict logs being spammed
@@ -991,19 +1038,9 @@ BlockCoordinator::State BlockCoordinator::OnPostExecBlockValidation()
     executed_block_count_->increment();
     executed_tx_count_->add(current_block_->GetTransactionCount());
 
-    try
+    if (!consensus_->UpdateCurrentBlock(*current_block_))
     {
-      consensus_->UpdateCurrentBlock(*current_block_);
-    }
-    catch (std::exception const &ex)
-    {
-      FETCH_LOG_WARN(LOGGING_NAME,
-                     "Failed to update consensus with valid block, with error: ", ex.what());
-      consensus_update_failure_total_->increment();
-    }
-    catch (...)
-    {
-      FETCH_LOG_WARN(LOGGING_NAME, "Unknown error when updating consensus!");
+      FETCH_LOG_WARN(LOGGING_NAME, "Failed to update consensus with valid block");
       consensus_update_failure_total_->increment();
     }
   }
@@ -1220,21 +1257,13 @@ BlockCoordinator::State BlockCoordinator::OnReset()
 
     if ((block->block_number % 100) == 0)
     {
-      block_hash_->set(*reinterpret_cast<uint64_t const *>(block->hash.pointer()));
+      block_hash_->set(
+          *reinterpret_cast<uint64_t const *>(value_util::AsConst(block->hash).pointer()));
     }
 
-    try
+    if (!consensus_->UpdateCurrentBlock(*block))
     {
-      consensus_->UpdateCurrentBlock(*block);
-    }
-    catch (std::exception const &ex)
-    {
-      FETCH_LOG_WARN(LOGGING_NAME, "Failed to update consensus with error: ", ex.what());
-      consensus_update_failure_total_->increment();
-    }
-    catch (...)
-    {
-      FETCH_LOG_WARN(LOGGING_NAME, "Unknown error when updating consensus!");
+      FETCH_LOG_WARN(LOGGING_NAME, "Failed to update consensus");
       consensus_update_failure_total_->increment();
     }
   }

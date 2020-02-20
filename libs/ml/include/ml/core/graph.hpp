@@ -17,11 +17,11 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ml/charge_estimation/ops/constants.hpp"
 #include "ml/core/node.hpp"
 #include "ml/exceptions/exceptions.hpp"
 #include "ml/ops/constant.hpp"
 #include "ml/ops/trainable.hpp"
-#include "ml/state_dict.hpp"
 
 // TODO(#1554) - we should only reset the cache for trained nodes, not all nodes
 // TODO(1467) - implement validity checks on graph compilation - e.g. loss function should not
@@ -95,9 +95,9 @@ public:
   std::string AddNode(std::string const &node_name, std::vector<std::string> const &inputs,
                       Params... params);
 
-  void ResetCompile();
-  void Compile();
-  void ComputeAllNodeShapes();
+  void         ResetCompile();
+  virtual void Compile();
+  void         ComputeAllNodeShapes();
 
   void AddTrainable(NodePtrType node_ptr, std::string const &node_name);
   void AddTrainable(NodePtrType node_ptr, std::string const &node_name,
@@ -119,6 +119,7 @@ public:
   void       BackPropagate(std::string const &node_name, TensorType const &error_signal = {});
   void       ApplyGradients(std::vector<TensorType> &grad);
   void       ApplySparseGradients(std::vector<TensorType> &grad, std::vector<SizeSet> &update_rows);
+  void       SetWeight(std::string const &node_name, TensorType const &data);
 
   //////////////////////////////////////////////////////
   /// public serialisation & weight export functions ///
@@ -127,8 +128,6 @@ public:
   bool                            InsertNode(std::string const &node_name, NodePtrType node_ptr);
   GraphSaveableParams<TensorType> GetGraphSaveableParams();
   void                            SetGraphSaveableParams(GraphSaveableParams<TensorType> const &sp);
-  virtual fetch::ml::StateDict<TensorType> StateDict();
-  virtual void                             LoadStateDict(fetch::ml::StateDict<T> const &dict);
 
   ////////////////////////////////////
   /// public setters and accessors ///
@@ -152,6 +151,9 @@ public:
   std::vector<std::string> GetTrainableNames();
 
   std::vector<std::pair<std::string, std::vector<std::string>>> Connections();
+
+  fetch::ml::OperationsCount ChargeForward(std::string const &node_name) const;
+  fetch::ml::OperationsCount ChargeBackward(std::string const &node_name) const;
 
 protected:
   std::map<std::string, NodePtrType>                            nodes_;
@@ -190,7 +192,6 @@ private:
   /// recursive implementation functions ///
   //////////////////////////////////////////
 
-  void StateDict(fetch::ml::StateDict<TensorType> &state_dict);
   void GetTrainables(std::vector<TrainablePtrType> &ret);
   void GetWeightsReferences(std::vector<TensorType> &ret) const;
   void GetGradientsReferences(std::vector<TensorType> &ret) const;

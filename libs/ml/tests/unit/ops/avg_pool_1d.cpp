@@ -16,9 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include "test_types.hpp"
+
 #include "math/base_types.hpp"
 #include "ml/ops/avg_pool_1d.hpp"
-#include "test_types.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 
 #include "gtest/gtest.h"
@@ -32,7 +33,7 @@ class AvgPool1DTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(AvgPool1DTest, fetch::math::test::TensorFloatingTypes);
+TYPED_TEST_SUITE(AvgPool1DTest, fetch::math::test::TensorFloatingTypes, );
 
 TYPED_TEST(AvgPool1DTest, forward_test_3_2_2)
 {

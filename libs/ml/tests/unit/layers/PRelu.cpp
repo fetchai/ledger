@@ -16,13 +16,15 @@
 //
 //------------------------------------------------------------------------------
 
-#include "gtest/gtest.h"
+#include "test_types.hpp"
+
 #include "ml/layers/PRelu.hpp"
 #include "ml/meta/ml_type_traits.hpp"
 #include "ml/ops/loss_functions/mean_square_error_loss.hpp"
 #include "ml/ops/placeholder.hpp"
 #include "ml/serializers/ml_types.hpp"
-#include "test_types.hpp"
+
+#include "gtest/gtest.h"
 
 #include <memory>
 #include <vector>
@@ -36,7 +38,7 @@ class PReluTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(PReluTest, math::test::TensorFloatingTypes);
+TYPED_TEST_SUITE(PReluTest, math::test::TensorFloatingTypes, );
 
 TYPED_TEST(PReluTest, set_input_and_evaluate_test)  // Use the class as a subgraph
 {
@@ -161,25 +163,13 @@ TYPED_TEST(PReluTest, graph_forward_test)  // Use the class as a Node
 
   TypeParam data({input_dim_0, input_dim_1, input_dim_2});
   g.SetInput("Input", data);
+  g.Compile();
 
   TypeParam prediction = g.Evaluate("PRelu", true);
   ASSERT_EQ(prediction.shape().size(), 3);
   ASSERT_EQ(prediction.shape()[0], input_dim_0);
   ASSERT_EQ(prediction.shape()[1], input_dim_1);
   ASSERT_EQ(prediction.shape()[2], input_dim_2);
-}
-
-TYPED_TEST(PReluTest, getStateDict)
-{
-  fetch::ml::layers::PRelu<TypeParam> fc(50, "PReluTest");
-  fetch::ml::StateDict<TypeParam>     sd = fc.StateDict();
-
-  EXPECT_EQ(sd.weights_, nullptr);
-  EXPECT_EQ(sd.dict_.size(), 1);
-
-  ASSERT_NE(sd.dict_["PReluTest_Alpha"].weights_, nullptr);
-  EXPECT_EQ(sd.dict_["PReluTest_Alpha"].weights_->shape(),
-            std::vector<typename TypeParam::SizeType>({50, 1}));
 }
 
 }  // namespace test

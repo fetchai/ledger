@@ -16,7 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "gtest/gtest.h"
+#include "test_types.hpp"
+
 #include "ml/core/graph.hpp"
 #include "ml/layers/fully_connected.hpp"
 #include "ml/ops/activations/relu.hpp"
@@ -29,7 +30,8 @@
 #include "ml/optimisation/sgd_optimiser.hpp"
 #include "ml/saveparams/saveable_params.hpp"
 #include "ml/serializers/ml_types.hpp"
-#include "test_types.hpp"
+
+#include "gtest/gtest.h"
 
 namespace fetch {
 namespace ml {
@@ -39,7 +41,7 @@ class OptimisersTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(OptimisersTest, math::test::HighPrecisionTensorFloatingTypes);
+TYPED_TEST_SUITE(OptimisersTest, math::test::HighPrecisionTensorFloatingTypes, );
 
 //////////////////////////
 /// reusable functions ///
@@ -69,6 +71,8 @@ std::shared_ptr<fetch::ml::Graph<TypeParam>> PrepareTestGraph(
 
   error_name = g->template AddNode<fetch::ml::ops::MeanSquareErrorLoss<TypeParam>>(
       "Error", {output_name, label_name});
+
+  g->Compile();
 
   // Fill weights with non-random values
   auto weights_refs = g->GetWeightsReferences();

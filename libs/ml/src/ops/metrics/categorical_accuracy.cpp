@@ -43,10 +43,16 @@ CategoricalAccuracy<TensorType>::CategoricalAccuracy(TensorType weightings)
 template <typename TensorType>
 std::shared_ptr<OpsSaveableParams> CategoricalAccuracy<TensorType>::GetOpSaveableParams()
 {
-  auto ret = std::make_shared<SPType>();
+  auto sp = std::make_shared<SPType>();
 
-  ret->weightings = weightings_;
-  return ret;
+  sp->weightings = weightings_;
+
+  // Add base class savable params
+  auto ops_sp  = Ops<TensorType>::GetOpSaveableParams();
+  auto cast_sp = std::static_pointer_cast<OpsSaveableParams>(sp);
+  *cast_sp     = *(std::static_pointer_cast<OpsSaveableParams>(ops_sp));
+
+  return sp;
 }
 
 template <typename TensorType>
@@ -148,10 +154,6 @@ template class CategoricalAccuracy<math::Tensor<int8_t>>;
 template class CategoricalAccuracy<math::Tensor<int16_t>>;
 template class CategoricalAccuracy<math::Tensor<int32_t>>;
 template class CategoricalAccuracy<math::Tensor<int64_t>>;
-template class CategoricalAccuracy<math::Tensor<uint8_t>>;
-template class CategoricalAccuracy<math::Tensor<uint16_t>>;
-template class CategoricalAccuracy<math::Tensor<uint32_t>>;
-template class CategoricalAccuracy<math::Tensor<uint64_t>>;
 template class CategoricalAccuracy<math::Tensor<float>>;
 template class CategoricalAccuracy<math::Tensor<double>>;
 template class CategoricalAccuracy<math::Tensor<fixed_point::fp32_t>>;

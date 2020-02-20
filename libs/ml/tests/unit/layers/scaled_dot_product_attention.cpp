@@ -16,7 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "gtest/gtest.h"
+#include "test_types.hpp"
+
 #include "ml/layers/scaled_dot_product_attention.hpp"
 #include "ml/ops/loss_functions/mean_square_error_loss.hpp"
 #include "ml/ops/placeholder.hpp"
@@ -25,7 +26,8 @@
 #include "ml/regularisers/regulariser.hpp"
 #include "ml/serializers/ml_types.hpp"
 #include "ml/utilities/graph_builder.hpp"
-#include "test_types.hpp"
+
+#include "gtest/gtest.h"
 
 namespace fetch {
 namespace ml {
@@ -35,7 +37,7 @@ template <typename T>
 class ScaledDotProductAttention : public ::testing::Test
 {
 };
-TYPED_TEST_CASE(ScaledDotProductAttention, math::test::HighPrecisionTensorFloatingTypes);
+TYPED_TEST_SUITE(ScaledDotProductAttention, math::test::HighPrecisionTensorFloatingTypes, );
 
 TYPED_TEST(ScaledDotProductAttention, input_output_dimension_check)  // Use the class as a subgraph
 {
@@ -63,6 +65,7 @@ TYPED_TEST(ScaledDotProductAttention, input_output_dimension_check)  // Use the 
   g.SetInput(key, key_data);
   g.SetInput(value, value_data);
   g.SetInput(mask, mask_data);
+  g.Compile();
 
   TypeParam prediction = g.Evaluate("ScaledDotProductAttention", false);
   ASSERT_EQ(prediction.shape()[0], 3);
@@ -96,6 +99,7 @@ TYPED_TEST(ScaledDotProductAttention,
   g.SetInput(key, query_data);
   g.SetInput(value, query_data);
   g.SetInput(mask, mask_data);
+  g.Compile();
 
   TypeParam gt = TypeParam::FromString(
       "1.8496745531, 1.9944926680, 0.3201387782, 0.2406420371; 1.1503254469, 1.0055073320, "
@@ -138,6 +142,8 @@ TYPED_TEST(ScaledDotProductAttention,
       "1.2413162873,  2.4586837127; 0.1640937770,  3.3359062230,  3.8524286190,  3.1475713810");
   gt_value_grad.Reshape({3, 2, 2});
   TypeParam gt_mask_grad({1, 2, 2});
+
+  att.Compile();
 
   // do the forward
   TypeParam output(att.ComputeOutputShape(
@@ -198,6 +204,7 @@ TYPED_TEST(ScaledDotProductAttention,
   g.SetInput(key, query_data);
   g.SetInput(value, query_data);
   g.SetInput(mask, mask_data);
+  g.Compile();
 
   TypeParam gt = TypeParam::FromString(
       "1.8496745531,  1.9944926680,  1.5288354812,  0.1000000000, 0.1000000000,  0.1000000000; "

@@ -16,12 +16,14 @@
 //
 //------------------------------------------------------------------------------
 
+#include "test_types.hpp"
+
 #include "core/serializers/main_serializer_definition.hpp"
-#include "gtest/gtest.h"
 #include "ml/ops/metrics/categorical_accuracy.hpp"
 #include "ml/serializers/ml_types.hpp"
-#include "test_types.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
+
+#include "gtest/gtest.h"
 
 #include <memory>
 
@@ -34,7 +36,7 @@ class CategoricalAccuracyTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(CategoricalAccuracyTest, math::test::HighPrecisionTensorFloatingTypes);
+TYPED_TEST_SUITE(CategoricalAccuracyTest, math::test::HighPrecisionTensorFloatingTypes, );
 
 TYPED_TEST(CategoricalAccuracyTest, perfect_match_forward_test)
 {

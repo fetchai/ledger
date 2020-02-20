@@ -16,9 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "gtest/gtest.h"
-#include "math/activation_functions/gelu.hpp"
 #include "test_types.hpp"
+
+#include "math/activation_functions/gelu.hpp"
+
+#include "gtest/gtest.h"
 
 namespace fetch {
 namespace math {
@@ -29,7 +31,7 @@ class GeluTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(GeluTest, TensorFloatingTypes);
+TYPED_TEST_SUITE(GeluTest, TensorFloatingTypes, );
 
 TYPED_TEST(GeluTest, exact_value_test)
 {

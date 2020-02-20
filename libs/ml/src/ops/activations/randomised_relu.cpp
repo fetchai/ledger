@@ -59,6 +59,12 @@ std::shared_ptr<OpsSaveableParams> RandomisedRelu<TensorType>::GetOpSaveablePara
   sp->buffer       = rng_.GetBuffer();
   sp->index        = rng_.GetIndex();
   sp->random_value = random_value_;
+
+  // Add base class savable params
+  auto ops_sp  = Ops<TensorType>::GetOpSaveableParams();
+  auto cast_sp = std::static_pointer_cast<OpsSaveableParams>(sp);
+  *cast_sp     = *(std::static_pointer_cast<OpsSaveableParams>(ops_sp));
+
   return sp;
 }
 
@@ -136,6 +142,24 @@ std::vector<math::SizeType> RandomisedRelu<TensorType>::ComputeOutputShape(
   return inputs.front()->shape();
 }
 
+template <typename TensorType>
+OperationsCount RandomisedRelu<TensorType>::ChargeForward() const
+{
+  assert(!this->batch_input_shapes_.empty());
+  OperationsCount cost = fetch::ml::charge_estimation::ops::RANDOMISED_RELU_PER_ELEMENT *
+                         this->TotalElementsIn({this->batch_input_shapes_});
+  return cost;
+}
+
+template <typename TensorType>
+OperationsCount RandomisedRelu<TensorType>::ChargeBackward() const
+{
+  assert(!this->batch_input_shapes_.empty());
+  OperationsCount cost = fetch::ml::charge_estimation::ops::RANDOMISED_RELU_BACKWARD_PER_ELEMENT *
+                         this->TotalElementsIn({this->batch_input_shapes_});
+  return cost;
+}
+
 ///////////////////////////////
 /// EXPLICIT INSTANTIATIONS ///
 ///////////////////////////////
@@ -144,10 +168,6 @@ template class RandomisedRelu<math::Tensor<int8_t>>;
 template class RandomisedRelu<math::Tensor<int16_t>>;
 template class RandomisedRelu<math::Tensor<int32_t>>;
 template class RandomisedRelu<math::Tensor<int64_t>>;
-template class RandomisedRelu<math::Tensor<uint8_t>>;
-template class RandomisedRelu<math::Tensor<uint16_t>>;
-template class RandomisedRelu<math::Tensor<uint32_t>>;
-template class RandomisedRelu<math::Tensor<uint64_t>>;
 template class RandomisedRelu<math::Tensor<float>>;
 template class RandomisedRelu<math::Tensor<double>>;
 template class RandomisedRelu<math::Tensor<fixed_point::fp32_t>>;

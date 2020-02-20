@@ -101,7 +101,7 @@ public:
     START_SYNC_WITH_PEER,
     REQUEST_NEXT_BLOCKS,
     WAIT_FOR_NEXT_BLOCKS,
-    COMPLETE_SYNC_WITH_PEER,
+    COMPLETE_SYNC_WITH_PEER
   };
 
   using MuddleEndpoint  = muddle::MuddleEndpoint;
@@ -156,6 +156,8 @@ public:
     return State::SYNCHRONISED == state_machine_->state();
   }
 
+  bool IsHealthy() const;
+
   /// @name Subscription Handlers
   /// @{
   void OnNewBlock(Address const &from, Block &block, Address const &transmitter);
@@ -188,7 +190,8 @@ private:
   State OnWaitForBlocks();
   State OnCompleteSyncWithPeer();
 
-  bool ValidBlock(Block const &block, char const *action) const;
+  bool  ValidBlock(Block const &block) const;
+  State WalkBack();
   /// @}
 
   /// @name System Components
@@ -220,8 +223,11 @@ private:
   DeadlineTimer resync_interval_{"MC_RPC:main"};
   std::size_t   consecutive_failures_{0};
 
+  bool                  healthy_{false};
   BlockHash             current_missing_block_;
   std::atomic<uint16_t> loose_blocks_seen_{0};
+
+  std::size_t back_stride_{1};
   /// @}
 
   /// @name Telemetry

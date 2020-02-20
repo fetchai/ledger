@@ -71,6 +71,11 @@ std::shared_ptr<OpsSaveableParams> Variable<TensorType>::GetOpSaveableParams()
   sp->regularisation_rate = this->regularisation_rate_;
   sp->value_frozen        = this->value_frozen_;
 
+  // Add base class savable params
+  auto ops_sp  = Ops<TensorType>::GetOpSaveableParams();
+  auto cast_sp = std::static_pointer_cast<OpsSaveableParams>(sp);
+  *cast_sp     = *(std::static_pointer_cast<OpsSaveableParams>(ops_sp));
+
   return sp;
 }
 
@@ -215,8 +220,8 @@ bool Variable<TensorType>::SetData(TensorType const &data)
   bool shape_changed = DataHolder<TensorType>::SetData(data);
   if (shape_changed)
   {
-    gradient_accumulation_ = std::make_shared<TensorType>(this->data_->shape());
-    reset_gradients_       = true;
+    gradient_accumulation_->Reshape(this->data_->shape());
+    reset_gradients_ = true;
     return true;
   }
   return false;
@@ -289,10 +294,6 @@ template class Variable<math::Tensor<int8_t>>;
 template class Variable<math::Tensor<int16_t>>;
 template class Variable<math::Tensor<int32_t>>;
 template class Variable<math::Tensor<int64_t>>;
-template class Variable<math::Tensor<uint8_t>>;
-template class Variable<math::Tensor<uint16_t>>;
-template class Variable<math::Tensor<uint32_t>>;
-template class Variable<math::Tensor<uint64_t>>;
 template class Variable<math::Tensor<float>>;
 template class Variable<math::Tensor<double>>;
 template class Variable<math::Tensor<fixed_point::fp32_t>>;

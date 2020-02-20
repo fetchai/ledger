@@ -16,10 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
-#include "gtest/gtest.h"
+#include "test_types.hpp"
+
 #include "math/distance/pairwise_distance.hpp"
 #include "math/matrix_operations.hpp"
-#include "test_types.hpp"
+
+#include "gtest/gtest.h"
 
 namespace fetch {
 namespace math {
@@ -30,7 +32,7 @@ class PairWiseDistanceTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(PairWiseDistanceTest, TensorFloatingTypes);
+TYPED_TEST_SUITE(PairWiseDistanceTest, TensorFloatingTypes, );
 
 TYPED_TEST(PairWiseDistanceTest, simple_test)
 {

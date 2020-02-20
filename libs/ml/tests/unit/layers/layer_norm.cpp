@@ -16,14 +16,16 @@
 //
 //------------------------------------------------------------------------------
 
-#include "gtest/gtest.h"
+#include "test_types.hpp"
+
 #include "math/fundamental_operators.hpp"
 #include "ml/layers/normalisation/layer_norm.hpp"
 #include "ml/meta/ml_type_traits.hpp"
 #include "ml/ops/loss_functions/mean_square_error_loss.hpp"
 #include "ml/ops/placeholder.hpp"
 #include "ml/serializers/ml_types.hpp"
-#include "test_types.hpp"
+
+#include "gtest/gtest.h"
 
 namespace fetch {
 namespace ml {
@@ -34,7 +36,7 @@ class LayerNormTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(LayerNormTest, math::test::TensorFloatingTypes);
+TYPED_TEST_SUITE(LayerNormTest, math::test::TensorFloatingTypes, );
 
 TYPED_TEST(LayerNormTest, set_input_and_evaluate_test_2D)  // Use the class as a subgraph
 {
@@ -42,6 +44,8 @@ TYPED_TEST(LayerNormTest, set_input_and_evaluate_test_2D)  // Use the class as a
 
   TypeParam input_data(std::vector<typename TypeParam::SizeType>({100, 10, 2}));
   ln.SetInput("LayerNorm_Input", input_data);
+  ln.Compile();
+
   TypeParam output = ln.Evaluate("LayerNorm_Beta_Addition", true);
 
   ASSERT_EQ(output.shape().size(), 3);
@@ -156,6 +160,7 @@ TYPED_TEST(LayerNormTest, graph_forward_test_exact_value_2D)  // Use the class a
   gt.Reshape({3, 2, 2});
 
   g.SetInput("Input", data);
+  g.Compile();
 
   TypeParam prediction = g.Evaluate("LayerNorm", true);
   // test correct values
@@ -166,23 +171,6 @@ TYPED_TEST(LayerNormTest, graph_forward_test_exact_value_2D)  // Use the class a
 
 // TODO (#1458) enable large dimension test once Add and Multiply layers can handle input of more
 // than 3 dims
-
-TYPED_TEST(LayerNormTest, getStateDict)
-{
-  fetch::ml::layers::LayerNorm<TypeParam> ln({50, 10});
-  fetch::ml::StateDict<TypeParam>         sd = ln.StateDict();
-
-  EXPECT_EQ(sd.weights_, nullptr);
-  EXPECT_EQ(sd.dict_.size(), 2);
-
-  ASSERT_NE(sd.dict_["LayerNorm_Gamma"].weights_, nullptr);
-  EXPECT_EQ(sd.dict_["LayerNorm_Gamma"].weights_->shape(),
-            std::vector<typename TypeParam::SizeType>({50, 1, 1}));
-
-  ASSERT_NE(sd.dict_["LayerNorm_Beta"].weights_, nullptr);
-  EXPECT_EQ(sd.dict_["LayerNorm_Beta"].weights_->shape(),
-            std::vector<typename TypeParam::SizeType>({50, 1, 1}));
-}
 
 }  // namespace test
 }  // namespace ml

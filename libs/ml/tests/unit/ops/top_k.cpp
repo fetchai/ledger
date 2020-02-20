@@ -16,11 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
+#include "test_types.hpp"
+
 #include "math/base_types.hpp"
 #include "ml/ops/top_k.hpp"
 
 #include "gtest/gtest.h"
-#include "test_types.hpp"
 
 #include <memory>
 #include <vector>
@@ -34,7 +35,7 @@ class TopKOpTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(TopKOpTest, fetch::math::test::TensorFloatingTypes);
+TYPED_TEST_SUITE(TopKOpTest, fetch::math::test::TensorFloatingTypes, );
 
 TYPED_TEST(TopKOpTest, forward_test)
 {

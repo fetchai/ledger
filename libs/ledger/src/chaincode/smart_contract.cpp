@@ -54,8 +54,8 @@
 #include <vector>
 
 using fetch::byte_array::ConstByteArray;
-using fetch::vm_modules::VMFactory;
 using fetch::vm::FunctionDecoratorKind;
+using fetch::vm_modules::VMFactory;
 
 namespace fetch {
 namespace ledger {

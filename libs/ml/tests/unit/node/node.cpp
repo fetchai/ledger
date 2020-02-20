@@ -16,12 +16,14 @@
 //
 //------------------------------------------------------------------------------
 
-#include "gtest/gtest.h"
+#include "test_types.hpp"
+
 #include "ml/core/node.hpp"
 #include "ml/meta/ml_type_traits.hpp"
 #include "ml/ops/activations/relu.hpp"
 #include "ml/ops/placeholder.hpp"
-#include "test_types.hpp"
+
+#include "gtest/gtest.h"
 
 namespace fetch {
 namespace ml {
@@ -32,7 +34,7 @@ class NodeTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(NodeTest, math::test::TensorIntAndFloatingTypes);
+TYPED_TEST_SUITE(NodeTest, math::test::TensorIntAndFloatingTypes, );
 
 TYPED_TEST(NodeTest, node_placeholder)
 {

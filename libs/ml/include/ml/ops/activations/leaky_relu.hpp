@@ -61,6 +61,9 @@ public:
   }
   static constexpr char const *DESCRIPTOR = "LeakyRelu";
 
+  OperationsCount ChargeForward() const override;
+  OperationsCount ChargeBackward() const override;
+
 private:
   DataType a_;
 };

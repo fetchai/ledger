@@ -16,9 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "gtest/gtest.h"
-#include "math/activation_functions/sigmoid.hpp"
 #include "test_types.hpp"
+
+#include "math/activation_functions/sigmoid.hpp"
+
+#include "gtest/gtest.h"
 
 namespace fetch {
 namespace math {
@@ -29,7 +31,7 @@ class SigmoidTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(SigmoidTest, TensorFloatingTypes);
+TYPED_TEST_SUITE(SigmoidTest, TensorFloatingTypes, );
 
 template <typename ArrayType>
 ArrayType RandomArrayNegative(std::size_t n)

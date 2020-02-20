@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "ml/ops/ops.hpp"
+
 #include <vector>
 
 namespace fetch {
@@ -58,6 +59,12 @@ public:
     return OpType::OP_SUBTRACT;
   }
   static constexpr char const *DESCRIPTOR = "Subtract";
+
+  OpType      OperationType() const override;
+  char const *Descriptor() const override;
+
+  OperationsCount ChargeForward() const override;
+  OperationsCount ChargeBackward() const override;
 };
 
 }  // namespace ops

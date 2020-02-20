@@ -81,7 +81,8 @@ public:
   static Packet::Address    ConvertAddress(Packet::RawAddress const &address);
 
   // Construction / Destruction
-  Router(NetworkId network_id, Address address, MuddleRegister &reg, Prover const &prover);
+  Router(NetworkId network_id, Address address, MuddleRegister &reg, Prover const &prover,
+         bool enable_message_signing);
   Router(Router const &) = delete;
   Router(Router &&)      = delete;
   ~Router() override     = default;
@@ -180,6 +181,7 @@ private:
   telemetry::CounterPtr         CreateCounter(char const *name, char const *description) const;
 
   std::string const     name_;
+  bool const            signing_enabled_;
   char const *const     logging_name_{name_.c_str()};
   Address const         address_;
   RawAddress const      address_raw_;

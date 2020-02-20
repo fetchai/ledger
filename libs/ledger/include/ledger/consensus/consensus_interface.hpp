@@ -19,6 +19,7 @@
 
 #include "beacon/block_entropy.hpp"
 #include "ledger/consensus/stake_snapshot.hpp"
+
 #include <memory>
 #include <unordered_map>
 
@@ -37,8 +38,8 @@ public:
 
   enum class Status
   {
-    YES,
-    NO
+    NO,
+    YES
   };
 
   ConsensusInterface()          = default;
@@ -47,7 +48,7 @@ public:
   // Let the consensus know which block you are on. Only valid
   // to update the current block incrementally forward but valid
   // to update backward any number
-  virtual void UpdateCurrentBlock(Block const &current) = 0;
+  virtual bool UpdateCurrentBlock(Block const &current) = 0;
 
   // Populate the next block for packing and submission. Will return
   // an empty pointer if the miner should not emit a block

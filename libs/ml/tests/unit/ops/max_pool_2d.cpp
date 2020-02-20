@@ -16,9 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include "test_types.hpp"
+
 #include "math/base_types.hpp"
 #include "ml/ops/max_pool_2d.hpp"
-#include "test_types.hpp"
 
 #include "gtest/gtest.h"
 
@@ -34,7 +35,7 @@ class MaxPool2DTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(MaxPool2DTest, fetch::math::test::TensorFloatingTypes);
+TYPED_TEST_SUITE(MaxPool2DTest, fetch::math::test::TensorFloatingTypes, );
 
 TYPED_TEST(MaxPool2DTest, forward_test_3_2)
 {

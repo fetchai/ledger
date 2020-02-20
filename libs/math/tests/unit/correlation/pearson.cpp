@@ -16,8 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/correlation/pearson.hpp"
 #include "test_types.hpp"
+
+#include "math/correlation/pearson.hpp"
 
 #include "gtest/gtest.h"
 
@@ -30,7 +31,7 @@ class PearsonCorrelationTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(PearsonCorrelationTest, TensorFloatingTypes);
+TYPED_TEST_SUITE(PearsonCorrelationTest, TensorFloatingTypes, );
 
 TYPED_TEST(PearsonCorrelationTest, simple_test)
 {

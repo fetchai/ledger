@@ -16,9 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "gtest/gtest.h"
-#include "math/statistics/perplexity.hpp"
 #include "test_types.hpp"
+
+#include "math/statistics/perplexity.hpp"
+
+#include "gtest/gtest.h"
 
 namespace fetch {
 namespace math {
@@ -29,7 +31,7 @@ class PerplexityTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(PerplexityTest, TensorFloatingTypes);
+TYPED_TEST_SUITE(PerplexityTest, TensorFloatingTypes, );
 
 TYPED_TEST(PerplexityTest, entropy)
 {

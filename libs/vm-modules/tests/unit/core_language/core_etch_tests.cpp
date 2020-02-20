@@ -16,8 +16,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/string/replace.hpp"
 #include "vm_test_toolkit.hpp"
+
+#include "core/string/replace.hpp"
 
 #include "gmock/gmock.h"
 
@@ -622,34 +623,34 @@ std::vector<std::string> render(std::string const &x)
   return values;
 }
 
-INSTANTIATE_TEST_CASE_P(ValidNumericLiterals, CoreEtchValidNumericLiteralsTests,
-                        ValuesIn(render("")), );
+INSTANTIATE_TEST_SUITE_P(ValidNumericLiterals, CoreEtchValidNumericLiteralsTests,
+                         ValuesIn(render("")));
 
-INSTANTIATE_TEST_CASE_P(ValidNumericLiteralsEngineeringNotationUppercaseZeroImplicitPlus,
-                        CoreEtchValidNumericLiteralsTests, ValuesIn(render("E0")), );
-INSTANTIATE_TEST_CASE_P(ValidNumericLiteralsEngineeringNotationUppercaseZeroExplicitPlus,
-                        CoreEtchValidNumericLiteralsTests, ValuesIn(render("E+0")), );
-INSTANTIATE_TEST_CASE_P(ValidNumericLiteralsEngineeringNotationUppercaseZeroExplicitMinus,
-                        CoreEtchValidNumericLiteralsTests, ValuesIn(render("E-0")), );
-INSTANTIATE_TEST_CASE_P(ValidNumericLiteralsEngineeringNotationLowercaseZeroImplicitPlus,
-                        CoreEtchValidNumericLiteralsTests, ValuesIn(render("e0")), );
-INSTANTIATE_TEST_CASE_P(ValidNumericLiteralsEngineeringNotationLowercaseZeroExplicitPlus,
-                        CoreEtchValidNumericLiteralsTests, ValuesIn(render("e+0")), );
-INSTANTIATE_TEST_CASE_P(ValidNumericLiteralsEngineeringNotationLowercaseZeroExplicitMinus,
-                        CoreEtchValidNumericLiteralsTests, ValuesIn(render("e-0")), );
+INSTANTIATE_TEST_SUITE_P(ValidNumericLiteralsEngineeringNotationUppercaseZeroImplicitPlus,
+                         CoreEtchValidNumericLiteralsTests, ValuesIn(render("E0")));
+INSTANTIATE_TEST_SUITE_P(ValidNumericLiteralsEngineeringNotationUppercaseZeroExplicitPlus,
+                         CoreEtchValidNumericLiteralsTests, ValuesIn(render("E+0")));
+INSTANTIATE_TEST_SUITE_P(ValidNumericLiteralsEngineeringNotationUppercaseZeroExplicitMinus,
+                         CoreEtchValidNumericLiteralsTests, ValuesIn(render("E-0")));
+INSTANTIATE_TEST_SUITE_P(ValidNumericLiteralsEngineeringNotationLowercaseZeroImplicitPlus,
+                         CoreEtchValidNumericLiteralsTests, ValuesIn(render("e0")));
+INSTANTIATE_TEST_SUITE_P(ValidNumericLiteralsEngineeringNotationLowercaseZeroExplicitPlus,
+                         CoreEtchValidNumericLiteralsTests, ValuesIn(render("e+0")));
+INSTANTIATE_TEST_SUITE_P(ValidNumericLiteralsEngineeringNotationLowercaseZeroExplicitMinus,
+                         CoreEtchValidNumericLiteralsTests, ValuesIn(render("e-0")));
 
-INSTANTIATE_TEST_CASE_P(ValidNumericLiteralsEngineeringNotationUppercaseNonZeroImplicitPlus,
-                        CoreEtchValidNumericLiteralsTests, ValuesIn(render("E12")), );
-INSTANTIATE_TEST_CASE_P(ValidNumericLiteralsEngineeringNotationUppercaseNonZeroExplicitPlus,
-                        CoreEtchValidNumericLiteralsTests, ValuesIn(render("E+12")), );
-INSTANTIATE_TEST_CASE_P(ValidNumericLiteralsEngineeringNotationUppercaseNonZeroExplicitMinus,
-                        CoreEtchValidNumericLiteralsTests, ValuesIn(render("E-12")), );
-INSTANTIATE_TEST_CASE_P(ValidNumericLiteralsEngineeringNotationLowercaseNonZeroImplicitPlus,
-                        CoreEtchValidNumericLiteralsTests, ValuesIn(render("e12")), );
-INSTANTIATE_TEST_CASE_P(ValidNumericLiteralsEngineeringNotationLowercaseNonZeroExplicitPlus,
-                        CoreEtchValidNumericLiteralsTests, ValuesIn(render("e+12")), );
-INSTANTIATE_TEST_CASE_P(ValidNumericLiteralsEngineeringNotationLowercaseNonZeroExplicitMinus,
-                        CoreEtchValidNumericLiteralsTests, ValuesIn(render("e-12")), );
+INSTANTIATE_TEST_SUITE_P(ValidNumericLiteralsEngineeringNotationUppercaseNonZeroImplicitPlus,
+                         CoreEtchValidNumericLiteralsTests, ValuesIn(render("E12")));
+INSTANTIATE_TEST_SUITE_P(ValidNumericLiteralsEngineeringNotationUppercaseNonZeroExplicitPlus,
+                         CoreEtchValidNumericLiteralsTests, ValuesIn(render("E+12")));
+INSTANTIATE_TEST_SUITE_P(ValidNumericLiteralsEngineeringNotationUppercaseNonZeroExplicitMinus,
+                         CoreEtchValidNumericLiteralsTests, ValuesIn(render("E-12")));
+INSTANTIATE_TEST_SUITE_P(ValidNumericLiteralsEngineeringNotationLowercaseNonZeroImplicitPlus,
+                         CoreEtchValidNumericLiteralsTests, ValuesIn(render("e12")));
+INSTANTIATE_TEST_SUITE_P(ValidNumericLiteralsEngineeringNotationLowercaseNonZeroExplicitPlus,
+                         CoreEtchValidNumericLiteralsTests, ValuesIn(render("e+12")));
+INSTANTIATE_TEST_SUITE_P(ValidNumericLiteralsEngineeringNotationLowercaseNonZeroExplicitMinus,
+                         CoreEtchValidNumericLiteralsTests, ValuesIn(render("e-12")));
 
 class CoreEtchInvalidNumericLiteralsTests : public TestWithParam<std::string>
 {
@@ -681,8 +682,8 @@ std::vector<std::string> const invalid_numeric_literal_values = {
     "1E-",     "1E1.1",     "1E+1.1",  "1E-1.1",   "0.0{}",     "0.00{}",  "0.000{}", "12.0{}",
     "0.01{}",  "0.00123{}", "0.0{}f",  "0.00{}f",  "0.000{}f",  "12.0{}f", "0.01{}f", "0.00123{}f"};
 
-INSTANTIATE_TEST_CASE_P(InvalidNumericLiterals, CoreEtchInvalidNumericLiteralsTests,
-                        ValuesIn(invalid_numeric_literal_values), );
+INSTANTIATE_TEST_SUITE_P(InvalidNumericLiterals, CoreEtchInvalidNumericLiteralsTests,
+                         ValuesIn(invalid_numeric_literal_values));
 
 class CoreEtchInvalidFixedpointLiteralsTests : public TestWithParam<std::string>
 {
@@ -717,30 +718,30 @@ std::vector<std::string> render_fp(std::string const &x)
   return values;
 }
 
-INSTANTIATE_TEST_CASE_P(ValidNumericLiteralsEngineeringNotationUppercaseZeroImplicitPlus,
-                        CoreEtchInvalidFixedpointLiteralsTests, ValuesIn(render_fp("E0")), );
-INSTANTIATE_TEST_CASE_P(ValidNumericLiteralsEngineeringNotationUppercaseZeroExplicitPlus,
-                        CoreEtchInvalidFixedpointLiteralsTests, ValuesIn(render_fp("E+0")), );
-INSTANTIATE_TEST_CASE_P(ValidNumericLiteralsEngineeringNotationUppercaseZeroExplicitMinus,
-                        CoreEtchInvalidFixedpointLiteralsTests, ValuesIn(render_fp("E-0")), );
-INSTANTIATE_TEST_CASE_P(ValidNumericLiteralsEngineeringNotationLowercaseZeroImplicitPlus,
-                        CoreEtchInvalidFixedpointLiteralsTests, ValuesIn(render_fp("e0")), );
-INSTANTIATE_TEST_CASE_P(ValidNumericLiteralsEngineeringNotationLowercaseZeroExplicitPlus,
-                        CoreEtchInvalidFixedpointLiteralsTests, ValuesIn(render_fp("e+0")), );
-INSTANTIATE_TEST_CASE_P(ValidNumericLiteralsEngineeringNotationLowercaseZeroExplicitMinus,
-                        CoreEtchInvalidFixedpointLiteralsTests, ValuesIn(render_fp("e-0")), );
+INSTANTIATE_TEST_SUITE_P(ValidNumericLiteralsEngineeringNotationUppercaseZeroImplicitPlus,
+                         CoreEtchInvalidFixedpointLiteralsTests, ValuesIn(render_fp("E0")));
+INSTANTIATE_TEST_SUITE_P(ValidNumericLiteralsEngineeringNotationUppercaseZeroExplicitPlus,
+                         CoreEtchInvalidFixedpointLiteralsTests, ValuesIn(render_fp("E+0")));
+INSTANTIATE_TEST_SUITE_P(ValidNumericLiteralsEngineeringNotationUppercaseZeroExplicitMinus,
+                         CoreEtchInvalidFixedpointLiteralsTests, ValuesIn(render_fp("E-0")));
+INSTANTIATE_TEST_SUITE_P(ValidNumericLiteralsEngineeringNotationLowercaseZeroImplicitPlus,
+                         CoreEtchInvalidFixedpointLiteralsTests, ValuesIn(render_fp("e0")));
+INSTANTIATE_TEST_SUITE_P(ValidNumericLiteralsEngineeringNotationLowercaseZeroExplicitPlus,
+                         CoreEtchInvalidFixedpointLiteralsTests, ValuesIn(render_fp("e+0")));
+INSTANTIATE_TEST_SUITE_P(ValidNumericLiteralsEngineeringNotationLowercaseZeroExplicitMinus,
+                         CoreEtchInvalidFixedpointLiteralsTests, ValuesIn(render_fp("e-0")));
 
-INSTANTIATE_TEST_CASE_P(ValidNumericLiteralsEngineeringNotationUppercaseNonZeroImplicitPlus,
-                        CoreEtchInvalidFixedpointLiteralsTests, ValuesIn(render_fp("E12")), );
-INSTANTIATE_TEST_CASE_P(ValidNumericLiteralsEngineeringNotationUppercaseNonZeroExplicitPlus,
-                        CoreEtchInvalidFixedpointLiteralsTests, ValuesIn(render_fp("E+12")), );
-INSTANTIATE_TEST_CASE_P(ValidNumericLiteralsEngineeringNotationUppercaseNonZeroExplicitMinus,
-                        CoreEtchInvalidFixedpointLiteralsTests, ValuesIn(render_fp("E-12")), );
-INSTANTIATE_TEST_CASE_P(ValidNumericLiteralsEngineeringNotationLowercaseNonZeroImplicitPlus,
-                        CoreEtchInvalidFixedpointLiteralsTests, ValuesIn(render_fp("e12")), );
-INSTANTIATE_TEST_CASE_P(ValidNumericLiteralsEngineeringNotationLowercaseNonZeroExplicitPlus,
-                        CoreEtchInvalidFixedpointLiteralsTests, ValuesIn(render_fp("e+12")), );
-INSTANTIATE_TEST_CASE_P(ValidNumericLiteralsEngineeringNotationLowercaseNonZeroExplicitMinus,
-                        CoreEtchInvalidFixedpointLiteralsTests, ValuesIn(render_fp("e-12")), );
+INSTANTIATE_TEST_SUITE_P(ValidNumericLiteralsEngineeringNotationUppercaseNonZeroImplicitPlus,
+                         CoreEtchInvalidFixedpointLiteralsTests, ValuesIn(render_fp("E12")));
+INSTANTIATE_TEST_SUITE_P(ValidNumericLiteralsEngineeringNotationUppercaseNonZeroExplicitPlus,
+                         CoreEtchInvalidFixedpointLiteralsTests, ValuesIn(render_fp("E+12")));
+INSTANTIATE_TEST_SUITE_P(ValidNumericLiteralsEngineeringNotationUppercaseNonZeroExplicitMinus,
+                         CoreEtchInvalidFixedpointLiteralsTests, ValuesIn(render_fp("E-12")));
+INSTANTIATE_TEST_SUITE_P(ValidNumericLiteralsEngineeringNotationLowercaseNonZeroImplicitPlus,
+                         CoreEtchInvalidFixedpointLiteralsTests, ValuesIn(render_fp("e12")));
+INSTANTIATE_TEST_SUITE_P(ValidNumericLiteralsEngineeringNotationLowercaseNonZeroExplicitPlus,
+                         CoreEtchInvalidFixedpointLiteralsTests, ValuesIn(render_fp("e+12")));
+INSTANTIATE_TEST_SUITE_P(ValidNumericLiteralsEngineeringNotationLowercaseNonZeroExplicitMinus,
+                         CoreEtchInvalidFixedpointLiteralsTests, ValuesIn(render_fp("e-12")));
 
 }  // namespace

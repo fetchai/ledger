@@ -16,12 +16,15 @@
 //
 //------------------------------------------------------------------------------
 
+#include "test_types.hpp"
+
 #include "core/serializers/main_serializer_definition.hpp"
-#include "gtest/gtest.h"
 #include "math/base_types.hpp"
 #include "ml/ops/activations/softmax.hpp"
 #include "ml/serializers/ml_types.hpp"
-#include "test_types.hpp"
+
+#include "gtest/gtest.h"
+
 #include <memory>
 
 namespace fetch {
@@ -32,7 +35,7 @@ class SoftmaxTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(SoftmaxTest, math::test::HighPrecisionTensorFloatingTypes);
+TYPED_TEST_SUITE(SoftmaxTest, math::test::HighPrecisionTensorFloatingTypes, );
 
 TYPED_TEST(SoftmaxTest, forward_test)
 {

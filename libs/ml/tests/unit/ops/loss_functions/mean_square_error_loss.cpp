@@ -16,12 +16,15 @@
 //
 //------------------------------------------------------------------------------
 
+#include "test_types.hpp"
+
 #include "core/serializers/main_serializer_definition.hpp"
-#include "gtest/gtest.h"
 #include "ml/ops/loss_functions/mean_square_error_loss.hpp"
 #include "ml/serializers/ml_types.hpp"
-#include "test_types.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
+
+#include "gtest/gtest.h"
+
 #include <memory>
 
 namespace fetch {
@@ -32,7 +35,7 @@ class MeanSquareErrorTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(MeanSquareErrorTest, math::test::HighPrecisionTensorFloatingTypes);
+TYPED_TEST_SUITE(MeanSquareErrorTest, math::test::HighPrecisionTensorFloatingTypes, );
 
 TYPED_TEST(MeanSquareErrorTest, perfect_match_forward_test)
 {

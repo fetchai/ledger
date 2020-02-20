@@ -16,10 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/serializers/main_serializer.hpp"
-#include "gtest/gtest.h"
-#include "math/tensor/tensor.hpp"
 #include "test_types.hpp"
+
+#include "core/serializers/main_serializer.hpp"
+#include "math/tensor/tensor.hpp"
+
+#include "gtest/gtest.h"
 
 namespace fetch {
 namespace math {
@@ -30,7 +32,7 @@ class SerializersTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(SerializersTest, FloatIntAndUIntTypes);
+TYPED_TEST_SUITE(SerializersTest, FloatIntAndUIntTypes, );
 
 TYPED_TEST(SerializersTest, serialize_empty_tensor)
 {

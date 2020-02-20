@@ -16,9 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include "test_types.hpp"
+
 #include "ml/core/graph.hpp"
 #include "ml/ops/constant.hpp"
-#include "test_types.hpp"
 
 #include "gtest/gtest.h"
 
@@ -28,14 +29,14 @@ class ConstantTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(ConstantTest, fetch::math::test::TensorIntAndFloatingTypes);
+TYPED_TEST_SUITE(ConstantTest, fetch::math::test::TensorIntAndFloatingTypes, );
 
 TYPED_TEST(ConstantTest, set_data)
 {
   TypeParam data = TypeParam::FromString("1, 2, 3, 4, 5, 6, 7, 8");
   TypeParam gt   = TypeParam::FromString("1, 2, 3, 4, 5, 6, 7, 8");
 
-  fetch::ml::ops::Constant<TypeParam> op;
+  fetch::ml::ops::Constant<TypeParam> op{};
   op.SetData(data);
 
   TypeParam prediction(op.ComputeOutputShape({}));
@@ -50,7 +51,7 @@ TYPED_TEST(ConstantTest, mutable_test)
   TypeParam data = TypeParam::FromString("1, 2, 3, 4, 5, 6, 7, 8");
   TypeParam gt   = TypeParam::FromString("1, 2, 3, 4, 5, 6, 7, 8");
 
-  fetch::ml::ops::Constant<TypeParam> op;
+  fetch::ml::ops::Constant<TypeParam> op{};
   op.SetData(data);
 
   TypeParam prediction(op.ComputeOutputShape({}));
@@ -70,6 +71,7 @@ TYPED_TEST(ConstantTest, trainable_test)
   auto g = std::make_shared<fetch::ml::Graph<TypeParam>>();
   g->template AddNode<fetch::ml::ops::Constant<TypeParam>>("Constant", {});
   g->SetInput("Constant", data);
+  g->Compile();
 
   auto prediction1 = g->Evaluate("Constant");
   g->BackPropagate("Constant");
@@ -89,6 +91,7 @@ TYPED_TEST(ConstantTest, shareable_test)
   auto name_1 = g->template AddNode<fetch::ml::ops::Constant<TypeParam>>("Constant", {});
   auto name_2 = g->template AddNode<fetch::ml::ops::Constant<TypeParam>>("Constant", {});
   g->SetInput(name_1, data);
+  g->Compile();
 
   auto prediction1_node1 = g->Evaluate(name_1);
   auto prediction1_node2 = g->Evaluate(name_2);

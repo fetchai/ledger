@@ -16,9 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include "test_types.hpp"
+
 #include "math/base_types.hpp"
 #include "ml/ops/flatten.hpp"
-#include "test_types.hpp"
 
 #include "gtest/gtest.h"
 
@@ -33,7 +34,7 @@ class FlattenTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(FlattenTest, fetch::math::test::TensorIntAndFloatingTypes);
+TYPED_TEST_SUITE(FlattenTest, fetch::math::test::TensorIntAndFloatingTypes, );
 
 TYPED_TEST(FlattenTest, forward_test)
 {

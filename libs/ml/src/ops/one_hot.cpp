@@ -38,13 +38,19 @@ OneHot<T>::OneHot(const OneHot::SPType &sp)
 template <typename T>
 std::shared_ptr<OpsSaveableParams> OneHot<T>::GetOpSaveableParams()
 {
-  SPType sp{};
-  sp.depth     = depth_;
-  sp.axis      = axis_;
-  sp.on_value  = on_value_;
-  sp.off_value = off_value_;
+  auto sp = std::make_shared<SPType>();
 
-  return std::make_shared<SPType>(sp);
+  sp->depth     = depth_;
+  sp->axis      = axis_;
+  sp->on_value  = on_value_;
+  sp->off_value = off_value_;
+
+  // Add base class savable params
+  auto ops_sp  = Ops<TensorType>::GetOpSaveableParams();
+  auto cast_sp = std::static_pointer_cast<OpsSaveableParams>(sp);
+  *cast_sp     = *(std::static_pointer_cast<OpsSaveableParams>(ops_sp));
+
+  return sp;
 }
 
 template <typename TensorType>
@@ -100,6 +106,22 @@ std::vector<fetch::math::SizeType> OneHot<T>::ComputeOutputShape(
   return shape;
 }
 
+template <typename TensorType>
+OperationsCount OneHot<TensorType>::ChargeForward() const
+{
+  assert(!this->batch_input_shapes_.empty());
+  OperationsCount cost = fetch::ml::charge_estimation::ops::ONE_HOT_PER_ELEMENT *
+                         this->TotalElementsIn({this->batch_input_shapes_});
+  return cost;
+}
+
+template <typename TensorType>
+OperationsCount OneHot<TensorType>::ChargeBackward() const
+{
+  OperationsCount cost = 0;
+  return cost;
+}
+
 ///////////////////////////////
 /// EXPLICIT INSTANTIATIONS ///
 ///////////////////////////////
@@ -108,10 +130,6 @@ template class OneHot<math::Tensor<int8_t>>;
 template class OneHot<math::Tensor<int16_t>>;
 template class OneHot<math::Tensor<int32_t>>;
 template class OneHot<math::Tensor<int64_t>>;
-template class OneHot<math::Tensor<uint8_t>>;
-template class OneHot<math::Tensor<uint16_t>>;
-template class OneHot<math::Tensor<uint32_t>>;
-template class OneHot<math::Tensor<uint64_t>>;
 template class OneHot<math::Tensor<float>>;
 template class OneHot<math::Tensor<double>>;
 template class OneHot<math::Tensor<fixed_point::fp32_t>>;

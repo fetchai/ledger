@@ -16,13 +16,15 @@
 //
 //------------------------------------------------------------------------------
 
+#include "test_types.hpp"
+
 #include "core/serializers/main_serializer.hpp"
-#include "gtest/gtest.h"
 #include "math/base_types.hpp"
 #include "math/standard_functions/abs.hpp"
 #include "ml/ops/activations/randomised_relu.hpp"
 #include "ml/serializers/ml_types.hpp"
-#include "test_types.hpp"
+
+#include "gtest/gtest.h"
 
 namespace fetch {
 namespace ml {
@@ -32,7 +34,7 @@ class RandomisedReluTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(RandomisedReluTest, math::test::TensorFloatingTypes);
+TYPED_TEST_SUITE(RandomisedReluTest, math::test::TensorFloatingTypes, );
 
 /**
  * @tparam DataType

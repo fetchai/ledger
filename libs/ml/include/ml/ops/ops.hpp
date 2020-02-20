@@ -18,7 +18,10 @@
 //------------------------------------------------------------------------------
 
 #include "core/assert.hpp"
+#include "math/matrix_operations.hpp"
 #include "math/tensor/tensor.hpp"
+#include "ml/charge_estimation/ops/constants.hpp"
+#include "ml/exceptions/exceptions.hpp"
 #include "ml/saveparams/saveable_params.hpp"
 
 #include <functional>
@@ -42,6 +45,7 @@ public:
   using VecTensorType = std::vector<std::shared_ptr<TensorType const>>;
   using Shape         = fetch::math::SizeVector;
   using ShapeVector   = std::vector<Shape>;
+  using SPType        = OpsSaveableParams;
 
   virtual ~Ops() = default;
 
@@ -74,7 +78,14 @@ public:
     return batch_output_shape_;
   }
 
-  virtual std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() = 0;
+  virtual std::shared_ptr<OpsSaveableParams> GetOpSaveableParams()
+  {
+    auto sp                = std::make_shared<SPType>();
+    sp->is_training        = is_training_;
+    sp->batch_input_shapes = batch_input_shapes_;
+    sp->batch_output_shape = batch_output_shape_;
+    return sp;
+  }
 
   Ops() = default;
 
@@ -91,17 +102,17 @@ public:
     is_training_ = is_training;
   }
 
-  inline bool IsTraining() const
+  bool IsTraining() const
   {
     return is_training_;
   }
 
-  inline void SetBatchOutputShape(Shape const &new_shape)
+  void SetBatchOutputShape(Shape const &new_shape)
   {
     batch_output_shape_ = new_shape;
   }
 
-  inline void SetBatchInputShapes(ShapeVector const &new_shapes)
+  void SetBatchInputShapes(ShapeVector const &new_shapes)
   {
     batch_input_shapes_ = new_shapes;
   }
@@ -119,7 +130,7 @@ public:
    * @brief BatchInputShapes returns a vector of shapes, that describes expected input
    * slice shapes (e.g. when batch size of input data is 1)
    */
-  inline ShapeVector const &BatchInputShapes() const
+  ShapeVector const &BatchInputShapes() const
   {
     return batch_input_shapes_;
   }
@@ -144,9 +155,59 @@ public:
 
   /// Should be called after shape linking in Graph to complete all initialisations, that depends
   /// on layer shapes (like trainable parameter tensors init. and so on)
-  virtual void CompleteConstruction()
+  virtual void CompleteShapeDeduction()
+  {}
+
+  /*
+   * Compile is called to initialise tensors. Many ops have no tensors to initialise, this is the
+   * default behaviour
+   */
+  virtual void Compile()
+  {}
+
+  /**
+   * @brief ChargeForward
+   * @return estimated charge amount, necessary for performing a forward pass on data of given
+   * shapes.
+   */
+  virtual OperationsCount ChargeForward() const
   {
-    // Empty deafult implementation for non-trainable Ops.
+    // TODO(ML-483): make a pure virtual method after all Ops have their overrides;
+    FETCH_LOG_ERROR(Descriptor(),
+                    " Error: call to unexisting ChargeForward() implementation! returned 0.");
+    return 0;
+  }
+
+  /**
+   * @brief ChargeBackward
+   * @return estimated charge amount, necessary for performing a backward pass on data of given
+   * shapes.
+   */
+  virtual OperationsCount ChargeBackward() const
+  {
+    // TODO(ML-483): make a pure virtual method after all Ops have their overrides;
+    FETCH_LOG_ERROR(Descriptor(),
+                    " Error: call to unexisting ChargeBackward() implementation! returned 0.");
+    return 0;
+  }
+
+  /**
+   * @brief TotalElementsIn calculated a sum of total elements in all given tensors
+   * @param shapes - vector of tensor shapes
+   */
+  static fetch::math::SizeType TotalElementsIn(std::vector<fetch::math::SizeVector> const &shapes)
+  {
+    using fetch::math::SizeType;
+    if (shapes.empty())
+    {
+      return 0;
+    }
+    SizeType total_elements = 0;
+    for (fetch::math::SizeVector const &shape : shapes)
+    {
+      total_elements += math::Product(shape);
+    }
+    return total_elements;
   }
 
 protected:

@@ -16,13 +16,15 @@
 //
 //------------------------------------------------------------------------------
 
+#include "test_types.hpp"
+
 #include "core/serializers/main_serializer_definition.hpp"
-#include "gtest/gtest.h"
 #include "math/base_types.hpp"
 #include "math/standard_functions/sqrt.hpp"
 #include "ml/ops/activations/dropout.hpp"
 #include "ml/serializers/ml_types.hpp"
-#include "test_types.hpp"
+
+#include "gtest/gtest.h"
 
 #include <memory>
 
@@ -35,7 +37,7 @@ class DropoutTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(DropoutTest, math::test::TensorFloatingTypes);
+TYPED_TEST_SUITE(DropoutTest, math::test::TensorFloatingTypes, );
 
 namespace {
 template <typename TensorType>

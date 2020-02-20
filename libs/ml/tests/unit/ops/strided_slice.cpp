@@ -16,10 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/ops/strided_slice.hpp"
 #include "test_types.hpp"
 
+#include "ml/ops/strided_slice.hpp"
+
 #include "gtest/gtest.h"
+
 #include <vector>
 
 namespace {
@@ -31,7 +33,7 @@ class StridedSliceTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(StridedSliceTest, fetch::math::test::TensorIntAndFloatingTypes);
+TYPED_TEST_SUITE(StridedSliceTest, fetch::math::test::TensorIntAndFloatingTypes, );
 
 TYPED_TEST(StridedSliceTest, forward_1D_test)
 {

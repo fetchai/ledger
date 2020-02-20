@@ -16,6 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ml/charge_estimation/ops/constants.hpp"
 #include "ml/ops/subtract.hpp"
 
 namespace fetch {
@@ -30,8 +31,14 @@ Subtract<TensorType>::Subtract(SPType const &sp)
 template <typename TensorType>
 std::shared_ptr<OpsSaveableParams> Subtract<TensorType>::GetOpSaveableParams()
 {
-  SPType sp{};
-  return std::make_shared<SPType>(sp);
+  auto sp = std::make_shared<SPType>();
+
+  // Add base class savable params
+  auto ops_sp  = Ops<TensorType>::GetOpSaveableParams();
+  auto cast_sp = std::static_pointer_cast<OpsSaveableParams>(sp);
+  *cast_sp     = *(std::static_pointer_cast<OpsSaveableParams>(ops_sp));
+
+  return sp;
 }
 
 template <typename TensorType>
@@ -73,6 +80,42 @@ std::vector<math::SizeType> Subtract<TensorType>::ComputeOutputShape(
     VecTensorType const &inputs) const
 {
   return inputs.front()->shape();
+}
+
+/**
+ * An OOP wrapper around static constexpr OpType member method.
+ */
+template <typename TensorType>
+OpType Subtract<TensorType>::OperationType() const
+{
+  return this->OpCode();
+}
+
+/**
+ * An OOP wrapper around static constexpr OpType member field.
+ */
+template <typename TensorType>
+const char *Subtract<TensorType>::Descriptor() const
+{
+  return DESCRIPTOR;
+}
+
+template <typename TensorType>
+OperationsCount Subtract<TensorType>::ChargeForward() const
+{
+  assert(!this->batch_output_shape_.empty());
+  OperationsCount cost = fetch::ml::charge_estimation::ops::SUBTRACTION_PER_ELEMENT *
+                         this->TotalElementsIn({this->batch_output_shape_});
+  return cost;
+}
+
+template <typename TensorType>
+OperationsCount Subtract<TensorType>::ChargeBackward() const
+{
+  assert(!this->batch_output_shape_.empty());
+  OperationsCount cost = fetch::ml::charge_estimation::ops::MULTIPLICATION_PER_ELEMENT *
+                         this->TotalElementsIn({this->batch_output_shape_});
+  return cost;
 }
 
 ///////////////////////////////

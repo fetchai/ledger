@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "bootstrap_monitor.hpp"
+
 #include "ledger/chaincode/contract_context.hpp"
 #include "variant/variant.hpp"
 #include "variant/variant_utils.hpp"
@@ -33,11 +34,11 @@
 namespace fetch {
 namespace {
 
-using variant::Variant;
-using variant::Extract;
-using network::Uri;
-using http::JsonClient;
 using byte_array::ConstByteArray;
+using http::JsonClient;
+using network::Uri;
+using variant::Extract;
+using variant::Variant;
 
 char const *               BOOTSTRAP_HOST = "https://bootstrap.fetch.ai";
 const std::chrono::seconds UPDATE_INTERVAL{30};

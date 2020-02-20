@@ -16,9 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include "test_types.hpp"
+
 #include "math/base_types.hpp"
 #include "ml/ops/prelu_op.hpp"
-#include "test_types.hpp"
 
 #include "gtest/gtest.h"
 
@@ -34,7 +35,7 @@ class PReluOpTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(PReluOpTest, fetch::math::test::TensorFloatingTypes);
+TYPED_TEST_SUITE(PReluOpTest, fetch::math::test::TensorFloatingTypes, );
 
 TYPED_TEST(PReluOpTest, forward_test)
 {

@@ -16,11 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/dataloaders/tensor_dataloader.hpp"
+#include "test_types.hpp"
 
 #include "core/serializers/main_serializer.hpp"
 #include "math/base_types.hpp"
-#include "test_types.hpp"
+#include "ml/dataloaders/tensor_dataloader.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 
 #include "gtest/gtest.h"
@@ -34,7 +34,7 @@ class TensorDataloaderTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(TensorDataloaderTest, math::test::TensorFloatingTypes);
+TYPED_TEST_SUITE(TensorDataloaderTest, math::test::TensorFloatingTypes, );
 
 TYPED_TEST(TensorDataloaderTest, serialize_tensor_dataloader)
 {

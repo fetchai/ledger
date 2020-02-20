@@ -16,11 +16,13 @@
 //
 //------------------------------------------------------------------------------
 
-#include "gtest/gtest.h"
+#include "test_types.hpp"
+
 #include "math/matrix_operations.hpp"
 #include "math/tensor/tensor.hpp"
-#include "test_types.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
+
+#include "gtest/gtest.h"
 
 namespace {
 
@@ -31,7 +33,7 @@ class TensorOperationsTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(TensorOperationsTest, fetch::math::test::FloatIntAndUIntTypes);
+TYPED_TEST_SUITE(TensorOperationsTest, fetch::math::test::FloatIntAndUIntTypes, );
 
 template <typename TypeParam>
 void ReshapeTest(std::vector<SizeType> const &initial_shape,

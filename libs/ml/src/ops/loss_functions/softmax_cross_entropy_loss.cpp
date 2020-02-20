@@ -35,8 +35,14 @@ SoftmaxCrossEntropyLoss<TensorType>::SoftmaxCrossEntropyLoss(SPType const &sp)
 template <typename TensorType>
 std::shared_ptr<OpsSaveableParams> SoftmaxCrossEntropyLoss<TensorType>::GetOpSaveableParams()
 {
-  SPType sp{};
-  return std::make_shared<SPType>(sp);
+  auto sp = std::make_shared<SPType>();
+
+  // Add base class savable params
+  auto ops_sp  = Ops<TensorType>::GetOpSaveableParams();
+  auto cast_sp = std::static_pointer_cast<OpsSaveableParams>(sp);
+  *cast_sp     = *(std::static_pointer_cast<OpsSaveableParams>(ops_sp));
+
+  return sp;
 }
 
 template <typename TensorType>
@@ -92,6 +98,25 @@ std::vector<math::SizeType> SoftmaxCrossEntropyLoss<TensorType>::ComputeOutputSh
   return {1, 1};
 }
 
+template <typename TensorType>
+OperationsCount SoftmaxCrossEntropyLoss<TensorType>::ChargeForward() const
+{
+  assert(!this->batch_input_shapes_.empty());
+  OperationsCount cost = fetch::ml::charge_estimation::ops::SOFTMAX_CROSS_ENTROPY_PER_ELEMENT *
+                         this->TotalElementsIn({this->batch_input_shapes_});
+  return cost;
+}
+
+template <typename TensorType>
+OperationsCount SoftmaxCrossEntropyLoss<TensorType>::ChargeBackward() const
+{
+  assert(!this->batch_input_shapes_.empty());
+  OperationsCount cost =
+      fetch::ml::charge_estimation::ops::SOFTMAX_CROSS_ENTROPY_BACKWARD_PER_ELEMENT *
+      this->TotalElementsIn({this->batch_input_shapes_.at(0)});
+  return cost;
+}
+
 ///////////////////////////////
 /// EXPLICIT INSTANTIATIONS ///
 ///////////////////////////////
@@ -100,10 +125,6 @@ template class SoftmaxCrossEntropyLoss<math::Tensor<int8_t>>;
 template class SoftmaxCrossEntropyLoss<math::Tensor<int16_t>>;
 template class SoftmaxCrossEntropyLoss<math::Tensor<int32_t>>;
 template class SoftmaxCrossEntropyLoss<math::Tensor<int64_t>>;
-template class SoftmaxCrossEntropyLoss<math::Tensor<uint8_t>>;
-template class SoftmaxCrossEntropyLoss<math::Tensor<uint16_t>>;
-template class SoftmaxCrossEntropyLoss<math::Tensor<uint32_t>>;
-template class SoftmaxCrossEntropyLoss<math::Tensor<uint64_t>>;
 template class SoftmaxCrossEntropyLoss<math::Tensor<float>>;
 template class SoftmaxCrossEntropyLoss<math::Tensor<double>>;
 template class SoftmaxCrossEntropyLoss<math::Tensor<fixed_point::fp32_t>>;

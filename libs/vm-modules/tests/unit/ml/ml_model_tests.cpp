@@ -16,11 +16,13 @@
 //
 //------------------------------------------------------------------------------
 
-#include "gmock/gmock.h"
+#include "vm_test_toolkit.hpp"
+
 #include "vm_modules/math/tensor/tensor.hpp"
 #include "vm_modules/math/type.hpp"
 #include "vm_modules/ml/dataloaders/dataloader.hpp"
-#include "vm_test_toolkit.hpp"
+
+#include "gmock/gmock.h"
 
 #include <regex>
 #include <sstream>
@@ -46,15 +48,46 @@ std::string const ADD_VALID_LAYER_TEST_SOURCE = R"(
     endfunction
   )";
 
+std::string const ADD_THREE_DIM_VALID_LAYER_TEST_SOURCE = R"(
+    function main()
+      var data_shape = Array<UInt64>(3);
+      data_shape[0] = 10u64;
+      data_shape[1] = 10u64;
+      data_shape[2] = 10u64;
+      var x = Tensor(data_shape);
+
+      var model = Model("sequential");
+      model.addExperimental("input", x.shape());
+      <<TOKEN>>
+      model.compile("scel", "adam");
+    endfunction
+  )";
+
+std::string const ADD_FOUR_DIM_VALID_LAYER_TEST_SOURCE = R"(
+    function main()
+      var data_shape = Array<UInt64>(4);
+      data_shape[0] = 10u64;
+      data_shape[1] = 10u64;
+      data_shape[2] = 10u64;
+      data_shape[3] = 10u64;
+      var x = Tensor(data_shape);
+
+      var model = Model("sequential");
+      model.addExperimental("input", x.shape());
+      <<TOKEN>>
+      model.compile("scel", "adam");
+    endfunction
+  )";
+
 std::string const ACTIVATION_LAYER_TEST_SOURCE = R"(
      function main() : Tensor
+         var x = Tensor();
+         x.fromString("<<INPUT>>");
+
          var model = Model("sequential");
+         model.addExperimental("input", x.shape());
          model.add("activation", "<<ACTIVATION>>");
          model.compile("mse", "sgd");
-
-         var x = Tensor();
-
-         x.fromString("<<INPUT>>");
 
          var activated = model.predict(x);
 
@@ -75,6 +108,38 @@ public:
   {
     std::string const src =
         std::regex_replace(ADD_VALID_LAYER_TEST_SOURCE, std::regex("<<TOKEN>>"), test_case_source);
+    ASSERT_TRUE(toolkit.Compile(src));
+    if (ignore_charge_estimation)
+    {
+      ASSERT_TRUE(toolkit.Run(nullptr, ChargeAmount{0}));
+    }
+    else
+    {
+      ASSERT_TRUE(toolkit.Run());
+    }
+  }
+
+  void TestValidThreeDimLayerAdding(std::string const &test_case_source,
+                                    bool               ignore_charge_estimation = false)
+  {
+    std::string const src = std::regex_replace(ADD_THREE_DIM_VALID_LAYER_TEST_SOURCE,
+                                               std::regex("<<TOKEN>>"), test_case_source);
+    ASSERT_TRUE(toolkit.Compile(src));
+    if (ignore_charge_estimation)
+    {
+      ASSERT_TRUE(toolkit.Run(nullptr, ChargeAmount{0}));
+    }
+    else
+    {
+      ASSERT_TRUE(toolkit.Run());
+    }
+  }
+
+  void TestValidFourDimLayerAdding(std::string const &test_case_source,
+                                   bool               ignore_charge_estimation = false)
+  {
+    std::string const src = std::regex_replace(ADD_FOUR_DIM_VALID_LAYER_TEST_SOURCE,
+                                               std::regex("<<TOKEN>>"), test_case_source);
     ASSERT_TRUE(toolkit.Compile(src));
     if (ignore_charge_estimation)
     {
@@ -409,26 +474,26 @@ TEST_F(VMModelTests, model_add_dense_relu)
 
 TEST_F(VMModelTests, model_add_conv1d_noact)
 {
-  TestValidLayerAdding(R"(model.add("conv1d", 10u64, 10u64, 10u64, 10u64);)",
-                       IGNORE_CHARGE_ESTIMATION);
+  TestValidThreeDimLayerAdding(R"(model.add("conv1d", 10u64, 10u64, 10u64, 10u64);)",
+                               IGNORE_CHARGE_ESTIMATION);
 }
 
 TEST_F(VMModelTests, model_add_conv1d_relu)
 {
-  TestValidLayerAdding(R"(model.add("conv1d", 10u64, 10u64, 10u64, 10u64, "relu");)",
-                       IGNORE_CHARGE_ESTIMATION);
+  TestValidThreeDimLayerAdding(R"(model.add("conv1d", 10u64, 10u64, 10u64, 10u64, "relu");)",
+                               IGNORE_CHARGE_ESTIMATION);
 }
 
 TEST_F(VMModelTests, model_add_conv2d_noact)
 {
-  TestValidLayerAdding(R"(model.add("conv2d", 10u64, 10u64, 10u64, 10u64);)",
-                       IGNORE_CHARGE_ESTIMATION);
+  TestValidFourDimLayerAdding(R"(model.add("conv2d", 10u64, 10u64, 10u64, 10u64);)",
+                              IGNORE_CHARGE_ESTIMATION);
 }
 
 TEST_F(VMModelTests, model_add_conv2d_relu)
 {
-  TestValidLayerAdding(R"(model.add("conv2d", 10u64, 10u64, 10u64, 10u64, "relu");)",
-                       IGNORE_CHARGE_ESTIMATION);
+  TestValidFourDimLayerAdding(R"(model.add("conv2d", 10u64, 10u64, 10u64, 10u64, "relu");)",
+                              IGNORE_CHARGE_ESTIMATION);
 }
 
 TEST_F(VMModelTests, model_add_dropout)
@@ -439,6 +504,12 @@ TEST_F(VMModelTests, model_add_dropout)
 TEST_F(VMModelTests, model_add_flatten)
 {
   TestValidLayerAdding(R"(model.add("flatten");)", IGNORE_CHARGE_ESTIMATION);
+}
+
+TEST_F(VMModelTests, model_add_embeddings)
+{
+  TestValidLayerAdding(R"(model.addExperimental("embeddings", 2u64, 3u64, true);)",
+                       IGNORE_CHARGE_ESTIMATION);
 }
 
 TEST_F(VMModelTests, model_add_activation)
@@ -473,6 +544,11 @@ TEST_F(VMModelTests, model_add_dense_invalid_params_noact)
   TestInvalidLayerAdding(R"(model.add("dense", 1u64, 1u64, 1u64, 1u64);)");
 }
 
+TEST_F(VMModelTests, model_add_embeddings_invalid_params)
+{
+  TestInvalidLayerAdding(R"(model.addExperimental("embeddings", 1u64);)");
+}
+
 TEST_F(VMModelTests, model_add_dense_invalid_params_relu)
 {
   TestInvalidLayerAdding(R"(model.add("dense", 1u64, 1u64, 1u64, 1u64, "relu");)");
@@ -486,6 +562,36 @@ TEST_F(VMModelTests, model_add_conv_invalid_params_noact)
 TEST_F(VMModelTests, model_add_conv_invalid_params_relu)
 {
   TestInvalidLayerAdding(R"(model.add("conv1d", 10u64, 10u64, "relu");)");
+}
+
+TEST_F(VMModelTests, model_add_maxpool1d_invalid_params_relu)
+{
+  TestInvalidLayerAdding(R"(model.addExperimental("maxpool1d", 10u64, 10u64, "relu");)");
+}
+
+TEST_F(VMModelTests, model_add_maxpool2d_invalid_params_relu)
+{
+  TestInvalidLayerAdding(R"(model.addExperimental("maxpool2d", 10u64, 10u64, "relu");)");
+}
+
+TEST_F(VMModelTests, model_add_maxpool1d_invalid_params_less_than_needed)
+{
+  TestInvalidLayerAdding(R"(model.addExperimental("maxpool1d", 1u64);)");
+}
+
+TEST_F(VMModelTests, model_add_maxpool2d_invalid_params_less_than_needed)
+{
+  TestInvalidLayerAdding(R"(model.addExperimental("maxpool2d", 10u64);)");
+}
+
+TEST_F(VMModelTests, model_add_avgpool1d_invalid_params_less_than_needed)
+{
+  TestInvalidLayerAdding(R"(model.addExperimental("avgpool1d", 1u64);)");
+}
+
+TEST_F(VMModelTests, model_add_avgpool2d_invalid_params_less_than_needed)
+{
+  TestInvalidLayerAdding(R"(model.addExperimental("avgpool2d", 10u64);)");
 }
 
 TEST_F(VMModelTests, model_add_activation_invalid_params)
@@ -599,13 +705,24 @@ TEST_F(VMModelTests, model_compilation_invalid_params)
 // Disableduntil AddDropout estimator implementation
 TEST_F(VMModelTests, model_dropout_comparison)
 {
+
   static char const *SOURCE = R"(
     function main()
+        var shape = Array<UInt64>(3);
+        shape[0] = 25u64;
+        shape[1] = 25u64;
+        shape[2] = 1u64;
+        var x = Tensor(shape);
+
         var dropouted_model = Model("sequential");
+        dropouted_model.addExperimental("input", x.shape());
+
         dropouted_model.add("dropout", 0.1fp64);
         dropouted_model.compile("mse", "adam");
 
         var reference_model = Model("sequential");
+        reference_model.addExperimental("input", x.shape());
+
         // Dropout with probability 0 acts as a simple connection
         // between input layers and output layer; this workaround is needed
         // because a sequential model with direct connection of inputs to
@@ -613,11 +730,6 @@ TEST_F(VMModelTests, model_dropout_comparison)
         reference_model.add("dropout", 0.0fp64);
         reference_model.compile("mse", "adam");
 
-        var shape = Array<UInt64>(3);
-        shape[0] = 25u64;
-        shape[1] = 25u64;
-        shape[2] = 1u64;
-        var x = Tensor(shape);
 
         x.fillRandom();
 
@@ -640,7 +752,6 @@ TEST_F(VMModelTests, model_dropout_comparison)
 
     endfunction
     )";
-
   ASSERT_TRUE(toolkit.Compile(SOURCE));
   EXPECT_TRUE(toolkit.Run(nullptr, ChargeAmount{0}));
 }
@@ -713,6 +824,7 @@ TEST_F(VMModelTests, conv1d_sequential_model_test)
 
       // set up a model
       var model = Model("sequential");
+      model.addExperimental("input", data.shape());
       model.add("conv1d", output_channels, input_channels, kernel_size, stride_size);
       model.compile("mse", "adam");
 
@@ -786,6 +898,7 @@ TEST_F(VMModelTests, conv2d_sequential_model_test)
 
       // set up a model
       var model = Model("sequential");
+      model.addExperimental("input", data.shape());
       model.add("conv2d", output_channels, input_channels, kernel_size, stride_size);
       model.compile("mse", "adam");
 
@@ -911,6 +1024,203 @@ TEST_F(VMModelTests, model_sequential_flatten)
   ASSERT_TRUE(toolkit.Run(nullptr, ChargeAmount{0}));
 }
 
+TEST_F(VMModelTests, model_sequential_maxpool1d)
+{
+  static char const *SRC_METRIC = R"(
+        function main()
+          var model = Model("sequential");
+          model.addExperimental("maxpool1d", 4u64, 1u64);
+          model.compile("scel", "adam");
+        endfunction
+      )";
+
+  ASSERT_TRUE(toolkit.Compile(SRC_METRIC));
+  ASSERT_TRUE(toolkit.Run(nullptr, ChargeAmount{0}));
+}
+
+TEST_F(VMModelTests, model_sequential_maxpool2d)
+{
+  static char const *SRC_METRIC = R"(
+        function main()
+          var model = Model("sequential");
+          model.addExperimental("maxpool2d", 4u64, 1u64);
+          model.compile("scel", "adam");
+        endfunction
+      )";
+
+  ASSERT_TRUE(toolkit.Compile(SRC_METRIC));
+  ASSERT_TRUE(toolkit.Run(nullptr, ChargeAmount{0}));
+}
+
+TEST_F(VMModelTests, model_sequential_avgpool1d)
+{
+  static char const *SRC_METRIC = R"(
+        function main()
+          var model = Model("sequential");
+          model.addExperimental("avgpool1d", 4u64, 1u64);
+          model.compile("scel", "adam");
+        endfunction
+      )";
+
+  ASSERT_TRUE(toolkit.Compile(SRC_METRIC));
+  ASSERT_TRUE(toolkit.Run(nullptr, ChargeAmount{0}));
+}
+
+TEST_F(VMModelTests, model_sequential_avgpool2d)
+{
+  static char const *SRC_METRIC = R"(
+        function main()
+          var model = Model("sequential");
+          model.addExperimental("avgpool2d", 4u64, 1u64);
+          model.compile("scel", "adam");
+        endfunction
+      )";
+
+  ASSERT_TRUE(toolkit.Compile(SRC_METRIC));
+  ASSERT_TRUE(toolkit.Run(nullptr, ChargeAmount{0}));
+}
+
+TEST_F(VMModelTests, model_sequential_embeddings)
+{
+  static char const *sequential_model_src = R"(
+        function main()
+          var x = Tensor();
+          var str_vals = "1; 2; 3; 4; 5; 6; 7; 8; 9;";
+          x.fromString(str_vals);
+          var model = Model("sequential");
+          model.addExperimental("input", x.shape());
+          model.addExperimental("embeddings", 10u64, 4u64, true);
+          model.compile("scel", "adam");
+          var prediction = model.predict(x);
+        endfunction
+      )";
+
+  ASSERT_TRUE(toolkit.Compile(sequential_model_src));
+  ASSERT_TRUE(toolkit.Run(nullptr, ChargeAmount{0}));
+}
+
+TEST_F(VMModelTests, model_sequential_conv_maxpool)
+{
+  static char const *sequential_model_src = R"(
+      function main() : Tensor
+        // conv1d parameters
+        var input_channels  = 1u64;
+        var output_channels = 5u64;
+        var input_height    = 4u64;
+        var kernel_size     = 3u64;
+        var pooling_kernel_size = 2u64;
+        var output_height   = 1u64;
+        var stride_size     = 1u64;
+
+        // set up input data tensor
+        var data_shape = Array<UInt64>(3);
+        data_shape[0] = input_channels;
+        data_shape[1] = input_height;
+        data_shape[2] = 1u64;
+        var data = Tensor(data_shape);
+        for (in_channel in 0u64:input_channels)
+            for (in_height in 0u64:input_height)
+              data.setAt(in_channel, in_height, 0u64, toFixed64(in_height + 1u64));
+            endfor
+        endfor
+
+        // set up a gt label tensor
+        var label_shape = Array<UInt64>(3);
+        label_shape[0] = output_channels;
+        label_shape[1] = output_height;
+        label_shape[2] = 1u64;
+        var label = Tensor(label_shape);
+
+        // set up a model
+        var model = Model("sequential");
+        model.addExperimental("input", data.shape());
+        model.add("conv1d", output_channels, input_channels, kernel_size, stride_size);
+        model.addExperimental("maxpool1d", pooling_kernel_size, stride_size);
+        model.compile("mse", "adam");
+
+        // make an initial prediction
+        var prediction = model.predict(data);
+
+        // train the model
+        model.fit(data, label, 1u64);
+
+        // evaluate performance
+        var loss = model.evaluate();
+        return prediction;
+      endfunction
+    )";
+
+  Variant res;
+  ASSERT_TRUE(toolkit.Compile(sequential_model_src));
+  ASSERT_TRUE(toolkit.Run(&res, ChargeAmount{0}));
+  auto const prediction = res.Get<Ptr<fetch::vm_modules::math::VMTensor>>();
+
+  fetch::math::Tensor<fetch::vm_modules::math::DataType> gt({5, 1});
+  gt(0, 0) = fetch::math::Type<DataType>("0.216929543");
+  gt(1, 0) = fetch::math::Type<DataType>("3.221990707");
+  gt(2, 0) = fetch::math::Type<DataType>("-2.258469872");
+  gt(3, 0) = fetch::math::Type<DataType>("4.200327958");
+  gt(4, 0) = fetch::math::Type<DataType>("0.810748917");
+  // the actual model output is {5, 1, 1}
+  ASSERT_TRUE((prediction->GetTensor())
+                  .AllClose(gt, fetch::math::function_tolerance<DataType>(),
+                            fetch::math::function_tolerance<DataType>()));
+}
+
+TEST_F(VMModelTests, model_sequential_conv_maxpool_wrong_pooling_kernel_size)
+{
+  static char const *sequential_model_src = R"(
+      function main() : Tensor
+        // conv1d parameters
+        var input_channels  = 1u64;
+        var output_channels = 5u64;
+        var input_height    = 4u64;
+        var kernel_size     = 3u64;
+        var pooling_kernel_size = 3u64;
+        var output_height   = 1u64;
+        var stride_size     = 1u64;
+
+        // set up input data tensor
+        var data_shape = Array<UInt64>(3);
+        data_shape[0] = input_channels;
+        data_shape[1] = input_height;
+        data_shape[2] = 1u64;
+        var data = Tensor(data_shape);
+        for (in_channel in 0u64:input_channels)
+            for (in_height in 0u64:input_height)
+              data.setAt(in_channel, in_height, 0u64, toFixed64(in_height + 1u64));
+            endfor
+        endfor
+
+        // set up a gt label tensor
+        var label_shape = Array<UInt64>(3);
+        label_shape[0] = output_channels;
+        label_shape[1] = output_height;
+        label_shape[2] = 1u64;
+        var label = Tensor(label_shape);
+
+        // set up a model
+        var model = Model("sequential");
+        model.addExperimental("input", data.shape());
+        model.add("conv1d", output_channels, input_channels, kernel_size, stride_size);
+        model.addExperimental("maxpool1d", pooling_kernel_size, stride_size);
+        model.compile("mse", "adam");
+
+        // make an initial prediction
+        var prediction = model.predict(data);
+
+        // train the model
+        model.fit(data, label, 1u64);
+
+        // evaluate performance
+        var loss = model.evaluate();
+        return prediction;
+      endfunction
+    )";
+  ASSERT_TRUE(toolkit.Compile(sequential_model_src));
+  ASSERT_FALSE(toolkit.Run(nullptr, ChargeAmount{0}));
+}
+
 TEST_F(VMModelTests, model_sequential_reshape)
 {
   static char const *SRC_METRIC = R"(
@@ -939,6 +1249,7 @@ TEST_F(VMModelTests, model_sequential_flatten_tensor_data)
           var data = x.unsqueeze();
 
           var model = Model("sequential");
+          model.addExperimental("input", x.shape());
           model.add("flatten");
           model.compile("scel", "adam", {"categorical accuracy"});
           var prediction = model.predict(data);
@@ -977,6 +1288,7 @@ TEST_F(VMModelTests, model_sequential_flatten_2d_in_2d_out)
                 x.fromString(str_vals);
 
                 var model = Model("sequential");
+                model.addExperimental("input", x.shape());
                 model.add("flatten");
                 model.compile("scel", "adam");
                 var prediction = model.predict(x);
@@ -1011,6 +1323,7 @@ TEST_F(VMModelTests, model_sequential_reshape_2d_in_2d_out)
                           to_shape[1] = 1u64;
 
                           var model = Model("sequential");
+                          model.addExperimental("input", x.shape());
                           model.add("reshape", to_shape);
                           model.compile("scel", "adam");
                           var prediction = model.predict(x);
@@ -1049,6 +1362,7 @@ TEST_F(VMModelTests, model_sequential_reshape_2d_in_2d_out_wrong_shape)
                           to_shape[1] = 4u64;
 
                           var model = Model("sequential");
+                          model.addExperimental("input", x.shape());
                           model.add("reshape", to_shape);
                           model.compile("scel", "adam");
                           var prediction = model.predict(x);
@@ -1074,6 +1388,7 @@ TEST_F(VMModelTests, model_sequential_reshape_3d_in_2d_out)
                 to_shape[1] = 1u64;
 
                 var model = Model("sequential");
+                model.addExperimental("input", x.shape());
                 model.add("reshape", to_shape);
                 model.compile("scel", "adam");
                 var prediction = model.predict(x);
@@ -1118,6 +1433,7 @@ TEST_F(VMModelTests, model_sequential_reshape_2d_in_3d_out)
                           to_shape[2] = 1u64;
 
                           var model = Model("sequential");
+                          model.addExperimental("input", x.shape());
                           model.add("reshape", to_shape);
                           model.compile("scel", "adam");
                           var prediction = model.predict(x);
@@ -1162,6 +1478,7 @@ TEST_F(VMModelTests, model_sequential_reshape_5d_in_3d_out)
                           to_shape[2] = 1u64;
 
                           var model = Model("sequential");
+                          model.addExperimental("input", x.shape());
                           model.add("reshape", to_shape);
                           model.compile("scel", "adam");
                           var prediction = model.predict(x);
@@ -1208,6 +1525,7 @@ TEST_F(VMModelTests, model_sequential_reshape_2d_in_8d_out)
                           to_shape[7] = 1u64;
 
                           var model = Model("sequential");
+                          model.addExperimental("input", x.shape());
                           model.add("reshape", to_shape);
                           model.compile("scel", "adam");
                           var prediction = model.predict(x);
@@ -1245,6 +1563,7 @@ TEST_F(VMModelTests, model_sequential_flatten_4d_in_2d_out)
                 x = x.unsqueeze();
 
                 var model = Model("sequential");
+                model.addExperimental("input", x.shape());
                 model.add("flatten");
                 model.compile("scel", "adam");
                 var prediction = model.predict(x);
@@ -1342,20 +1661,22 @@ TEST_F(VMModelTests, model_sequential_activation_layer_gelu)
 TEST_F(VMModelTests, model_sequential_flatten_1d_in_2d_out)
 {
   static char const *SRC_METRIC = R"(
-              function main() : Tensor
-                var shape = Array<UInt64>(1);
-                shape[0] = 1u64;
-                var x = Tensor(shape);
+      function main() : Tensor
+        var shape = Array<UInt64>(2);
+        shape[0] = 1u64;
+        shape[1] = 1u64;
+        var x = Tensor(shape);
 
-                var model = Model("sequential");
-                model.add("flatten");
-                model.compile("scel", "adam");
-                var prediction = model.predict(x);
-                print(prediction.toString());
+        var model = Model("sequential");
+        model.addExperimental("input", x.shape());
+        model.add("flatten");
+        model.compile("scel", "adam");
+        var prediction = model.predict(x);
+        print(prediction.toString());
 
-                return prediction;
-              endfunction
-      )";
+        return prediction;
+      endfunction
+  )";
 
   Variant res;
   ASSERT_TRUE(toolkit.Compile(SRC_METRIC));

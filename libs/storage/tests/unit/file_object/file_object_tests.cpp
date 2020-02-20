@@ -16,10 +16,11 @@
 //
 //------------------------------------------------------------------------------
 
+#include "mock_file_object.hpp"
+
 #include "core/random/lcg.hpp"
 #include "crypto/hash.hpp"
 #include "crypto/sha256.hpp"
-#include "mock_file_object.hpp"
 #include "storage/storage_exception.hpp"
 
 #include "gtest/gtest.h"
@@ -33,8 +34,8 @@ using namespace fetch;
 using namespace fetch::byte_array;
 using namespace fetch::storage;
 
-using ::testing::StrictMock;
 using fetch::random::LinearCongruentialGenerator;
+using ::testing::StrictMock;
 
 using FileObjectM   = StrictMock<MockFileObject>;
 using FileObjectPtr = std::unique_ptr<FileObjectM>;

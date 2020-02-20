@@ -24,9 +24,6 @@
 namespace fetch {
 namespace ml {
 
-template <typename TensorType>
-struct StateDict;
-
 struct OpsSaveableParams;
 
 namespace ops {
@@ -40,7 +37,7 @@ class Ops;
 /**
  * enum for selecting which type of initialisation to use with weights
  */
-enum class WeightsInitialisation
+enum class WeightsInitialisation : std::uint8_t
 {
   ONES,
   ZEROS,
@@ -76,10 +73,6 @@ public:
 
   std::shared_ptr<Ops<TensorType>> MakeSharedCopy(std::shared_ptr<Ops<TensorType>> me) override;
 
-  fetch::ml::StateDict<T> StateDict() const override;
-
-  void LoadStateDict(fetch::ml::StateDict<T> const &dict) override;
-
   static void Initialise(TensorType &array, uint64_t in_size, uint64_t out_size,
                          WeightsInitialisation mode = WeightsInitialisation::XAVIER_GLOROT,
                          SizeType              seed = 123456789);
@@ -109,6 +102,8 @@ public:
 
   OpType      OperationType() const override;
   char const *Descriptor() const override;
+
+  OperationsCount ChargeForward() const override;
 
 private:
   static void XavierInitialisation(TensorType &array, DataType normalising_factor,

@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "mock_environment.hpp"
+
 #include "settings/setting.hpp"
 #include "settings/setting_collection.hpp"
 
@@ -30,10 +31,10 @@
 
 namespace {
 
-using testing::StrEq;
-using testing::Return;
 using fetch::settings::Setting;
 using fetch::settings::SettingCollection;
+using testing::Return;
+using testing::StrEq;
 
 class SystemArgAdapter
 {

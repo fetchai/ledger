@@ -17,12 +17,13 @@
 //------------------------------------------------------------------------------
 
 #include "block_configs.hpp"
-#include "ledger/chaincode/contract_context.hpp"
-#include "ledger/execution_manager.hpp"
-#include "ledger/transaction_status_cache.hpp"
 #include "mock_executor.hpp"
 #include "mock_storage_unit.hpp"
 #include "test_block.hpp"
+
+#include "ledger/chaincode/contract_context.hpp"
+#include "ledger/execution_manager.hpp"
+#include "ledger/transaction_status_cache.hpp"
 
 #include "gmock/gmock.h"
 
@@ -154,10 +155,10 @@ protected:
     return success;
   }
 
-  MockStorageUnitPtr              mock_storage_;
-  ExecutionManagerPtr             manager_;
-  FakeExecutorList                executors_;
-  TransactionStatusCache::ShrdPtr tx_status_cache_{TransactionStatusCache::factory()};
+  MockStorageUnitPtr   mock_storage_;
+  ExecutionManagerPtr  manager_;
+  FakeExecutorList     executors_;
+  TransactionStatusPtr tx_status_cache_{TransactionStatusInterface::CreateTimeBasedCache()};
 };
 
 TEST_P(ExecutionManagerTests, DISABLED_CheckIncrementalExecution)
@@ -186,7 +187,7 @@ TEST_P(ExecutionManagerTests, DISABLED_CheckIncrementalExecution)
   manager_->Stop();
 }
 
-INSTANTIATE_TEST_CASE_P(Param, ExecutionManagerTests,
-                        ::testing::ValuesIn(BlockConfig::REDUCED_SET), );
+INSTANTIATE_TEST_SUITE_P(Param, ExecutionManagerTests,
+                         ::testing::ValuesIn(BlockConfig::REDUCED_SET));
 
 }  // namespace

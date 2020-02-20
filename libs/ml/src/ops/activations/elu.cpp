@@ -43,6 +43,12 @@ std::shared_ptr<OpsSaveableParams> Elu<TensorType>::GetOpSaveableParams()
 {
   auto sp = std::make_shared<SPType>();
   sp->a   = a_;
+
+  // Add base class savable params
+  auto ops_sp  = Ops<TensorType>::GetOpSaveableParams();
+  auto cast_sp = std::static_pointer_cast<OpsSaveableParams>(sp);
+  *cast_sp     = *(std::static_pointer_cast<OpsSaveableParams>(ops_sp));
+
   return sp;
 }
 
@@ -108,6 +114,24 @@ std::vector<math::SizeType> Elu<TensorType>::ComputeOutputShape(VecTensorType co
   return inputs.front()->shape();
 }
 
+template <typename TensorType>
+OperationsCount Elu<TensorType>::ChargeForward() const
+{
+  assert(!this->batch_input_shapes_.empty());
+  OperationsCount cost = fetch::ml::charge_estimation::ops::ELU_PER_ELEMENT *
+                         this->TotalElementsIn({this->batch_input_shapes_});
+  return cost;
+}
+
+template <typename TensorType>
+OperationsCount Elu<TensorType>::ChargeBackward() const
+{
+  assert(!this->batch_input_shapes_.empty());
+  OperationsCount cost = fetch::ml::charge_estimation::ops::ELU_BACKWARD_PER_ELEMENT *
+                         this->TotalElementsIn({this->batch_input_shapes_.at(0)});
+  return cost;
+}
+
 ///////////////////////////////
 /// EXPLICIT INSTANTIATIONS ///
 ///////////////////////////////
@@ -116,10 +140,6 @@ template class Elu<math::Tensor<int8_t>>;
 template class Elu<math::Tensor<int16_t>>;
 template class Elu<math::Tensor<int32_t>>;
 template class Elu<math::Tensor<int64_t>>;
-template class Elu<math::Tensor<uint8_t>>;
-template class Elu<math::Tensor<uint16_t>>;
-template class Elu<math::Tensor<uint32_t>>;
-template class Elu<math::Tensor<uint64_t>>;
 template class Elu<math::Tensor<float>>;
 template class Elu<math::Tensor<double>>;
 template class Elu<math::Tensor<fixed_point::fp32_t>>;

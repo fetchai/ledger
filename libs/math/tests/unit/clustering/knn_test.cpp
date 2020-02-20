@@ -16,9 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include "test_types.hpp"
+
 #include "math/clustering/knn.hpp"
 #include "math/distance/euclidean.hpp"
-#include "test_types.hpp"
 
 #include "gtest/gtest.h"
 
@@ -31,7 +32,7 @@ class ClusteringTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(ClusteringTest, TensorFloatingTypes);
+TYPED_TEST_SUITE(ClusteringTest, TensorFloatingTypes, );
 
 TYPED_TEST(ClusteringTest, knn_euclidean_test)
 {

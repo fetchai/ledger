@@ -33,6 +33,12 @@ template <typename TensorType>
 std::shared_ptr<OpsSaveableParams> PReluOp<TensorType>::GetOpSaveableParams()
 {
   auto sp = std::make_shared<SPType>();
+
+  // Add base class savable params
+  auto ops_sp  = Ops<TensorType>::GetOpSaveableParams();
+  auto cast_sp = std::static_pointer_cast<OpsSaveableParams>(sp);
+  *cast_sp     = *(std::static_pointer_cast<OpsSaveableParams>(ops_sp));
+
   return sp;
 }
 
@@ -128,6 +134,24 @@ std::vector<math::SizeType> PReluOp<TensorType>::ComputeOutputShape(
   return inputs.front()->shape();
 }
 
+template <typename TensorType>
+OperationsCount PReluOp<TensorType>::ChargeForward() const
+{
+  assert(!this->batch_input_shapes_.empty());
+  OperationsCount cost = fetch::ml::charge_estimation::ops::LEAKY_RELU_PER_ELEMENT *
+                         this->TotalElementsIn({this->batch_input_shapes_});
+  return cost;
+}
+
+template <typename TensorType>
+OperationsCount PReluOp<TensorType>::ChargeBackward() const
+{
+  assert(!this->batch_output_shape_.empty());
+  OperationsCount cost = fetch::ml::charge_estimation::ops::LEAKY_RELU_BACKWARD_PER_ELEMENT *
+                         this->TotalElementsIn({this->batch_output_shape_});
+  return cost;
+}
+
 ///////////////////////////////
 /// EXPLICIT INSTANTIATIONS ///
 ///////////////////////////////
@@ -136,10 +160,6 @@ template class PReluOp<math::Tensor<int8_t>>;
 template class PReluOp<math::Tensor<int16_t>>;
 template class PReluOp<math::Tensor<int32_t>>;
 template class PReluOp<math::Tensor<int64_t>>;
-template class PReluOp<math::Tensor<uint8_t>>;
-template class PReluOp<math::Tensor<uint16_t>>;
-template class PReluOp<math::Tensor<uint32_t>>;
-template class PReluOp<math::Tensor<uint64_t>>;
 template class PReluOp<math::Tensor<float>>;
 template class PReluOp<math::Tensor<double>>;
 template class PReluOp<math::Tensor<fixed_point::fp32_t>>;

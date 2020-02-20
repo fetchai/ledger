@@ -17,19 +17,17 @@
 //
 //------------------------------------------------------------------------------
 
-#include <memory>
-
-#include "oef-base/comms/Endpoint.hpp"
-
-class ProtoMessageReader;
-class ProtoMessageSender;
-
 #include "oef-base/comms/Endianness.hpp"
 #include "oef-base/comms/Endpoint.hpp"
 #include "oef-base/comms/EndpointPipe.hpp"
 #include "oef-base/proto_comms/ProtoMessageReader.hpp"
 #include "oef-base/proto_comms/ProtoPathMessageReader.hpp"
 #include "oef-base/threading/Notification.hpp"
+
+#include <memory>
+
+class ProtoMessageReader;
+class ProtoMessageSender;
 
 namespace google {
 namespace protobuf {

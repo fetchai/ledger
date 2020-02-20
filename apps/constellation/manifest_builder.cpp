@@ -17,12 +17,13 @@
 //------------------------------------------------------------------------------
 
 #include "constants.hpp"
+#include "manifest_builder.hpp"
+#include "settings.hpp"
+
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/byte_array/decoders.hpp"
 #include "core/filesystem/read_file_contents.hpp"
-#include "manifest_builder.hpp"
 #include "network/peer.hpp"
-#include "settings.hpp"
 #include "shards/manifest.hpp"
 
 #include <cstdint>
@@ -33,10 +34,10 @@ namespace {
 
 using fetch::byte_array::ConstByteArray;
 using fetch::byte_array::FromBase64;
+using fetch::network::Peer;
 using fetch::shards::Manifest;
 using fetch::shards::ManifestEntry;
 using fetch::shards::ServiceIdentifier;
-using fetch::network::Peer;
 
 /**
  * Generate a default simple manifest for all the services provided

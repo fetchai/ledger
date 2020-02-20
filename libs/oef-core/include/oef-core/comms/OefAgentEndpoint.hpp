@@ -20,6 +20,7 @@
 #include "logging/logging.hpp"
 #include "oef-base/proto_comms/ProtoMessageEndpoint.hpp"
 #include "oef-core/karma/KarmaAccount.hpp"
+
 #include <map>
 #include <memory>
 

@@ -16,11 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
+#include "test_types.hpp"
+
 #include "core/random/lcg.hpp"
 #include "math/distance/euclidean.hpp"
 #include "math/distance/manhattan.hpp"
 #include "math/distance/minkowski.hpp"
-#include "test_types.hpp"
 
 #include "gtest/gtest.h"
 
@@ -33,7 +34,7 @@ class MinkowskiTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(MinkowskiTest, TensorFloatingTypes);
+TYPED_TEST_SUITE(MinkowskiTest, TensorFloatingTypes, );
 
 TYPED_TEST(MinkowskiTest, simple_test)
 {

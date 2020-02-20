@@ -50,6 +50,11 @@ std::shared_ptr<OpsSaveableParams> Embeddings<TensorType>::GetOpSaveableParams()
   auto cast_sp = std::static_pointer_cast<OpWeightsSaveableParams<TensorType>>(sp);
   *cast_sp     = *(std::static_pointer_cast<OpWeightsSaveableParams<TensorType>>(w_sp));
 
+  // Add base class savable params
+  auto ops_sp      = Ops<TensorType>::GetOpSaveableParams();
+  auto cast_ops_sp = std::static_pointer_cast<OpsSaveableParams>(sp);
+  *cast_ops_sp     = *(std::static_pointer_cast<OpsSaveableParams>(ops_sp));
+
   return sp;
 }
 
@@ -132,6 +137,29 @@ std::vector<math::SizeType> Embeddings<TensorType>::ComputeOutputShape(
   return output_shape;
 }
 
+template <typename TensorType>
+OperationsCount Embeddings<TensorType>::ChargeForward() const
+{
+  assert(!this->batch_input_shapes_.empty());
+  assert(!this->batch_output_shape_.empty());
+
+  OperationsCount cost = fetch::ml::charge_estimation::ops::EMBEDDING_PER_ELEMENT;
+
+  return cost;
+}
+
+template <typename TensorType>
+OperationsCount Embeddings<TensorType>::ChargeBackward() const
+{
+  assert(!this->batch_input_shapes_.empty());
+
+  OperationsCount cost = fetch::ml::charge_estimation::ops::ADDITION_PER_ELEMENT *
+                         this->TotalElementsIn({this->batch_input_shapes_});
+  ;
+
+  return cost;
+}
+
 ///////////////////////////////
 /// EXPLICIT INSTANTIATIONS ///
 ///////////////////////////////
@@ -140,10 +168,6 @@ template class Embeddings<math::Tensor<int8_t>>;
 template class Embeddings<math::Tensor<int16_t>>;
 template class Embeddings<math::Tensor<int32_t>>;
 template class Embeddings<math::Tensor<int64_t>>;
-template class Embeddings<math::Tensor<uint8_t>>;
-template class Embeddings<math::Tensor<uint16_t>>;
-template class Embeddings<math::Tensor<uint32_t>>;
-template class Embeddings<math::Tensor<uint64_t>>;
 template class Embeddings<math::Tensor<float>>;
 template class Embeddings<math::Tensor<double>>;
 template class Embeddings<math::Tensor<fixed_point::fp32_t>>;

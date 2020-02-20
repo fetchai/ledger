@@ -16,9 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include "yaml_test_cases.hpp"
+
 #include "yaml/document.hpp"
 #include "yaml/exceptions.hpp"
-#include "yaml_test_cases.hpp"
 
 #include "gtest/gtest.h"
 
@@ -59,4 +60,4 @@ TEST_P(YamlTests, CheckParsing)
   }
 }
 
-INSTANTIATE_TEST_CASE_P(ParamBased, YamlTests, testing::ValuesIn(TEST_CASES), );
+INSTANTIATE_TEST_SUITE_P(ParamBased, YamlTests, testing::ValuesIn(TEST_CASES));

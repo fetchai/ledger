@@ -32,6 +32,12 @@ std::shared_ptr<OpsSaveableParams> Constant<TensorType>::GetOpSaveableParams()
   {
     sp->data = std::make_shared<TensorType>(this->data_->Copy());
   }
+
+  // Add base class savable params
+  auto ops_sp  = Ops<TensorType>::GetOpSaveableParams();
+  auto cast_sp = std::static_pointer_cast<OpsSaveableParams>(sp);
+  *cast_sp     = *(std::static_pointer_cast<OpsSaveableParams>(ops_sp));
+
   return sp;
 }
 
@@ -73,10 +79,6 @@ template class Constant<math::Tensor<int8_t>>;
 template class Constant<math::Tensor<int16_t>>;
 template class Constant<math::Tensor<int32_t>>;
 template class Constant<math::Tensor<int64_t>>;
-template class Constant<math::Tensor<uint8_t>>;
-template class Constant<math::Tensor<uint16_t>>;
-template class Constant<math::Tensor<uint32_t>>;
-template class Constant<math::Tensor<uint64_t>>;
 template class Constant<math::Tensor<float>>;
 template class Constant<math::Tensor<double>>;
 template class Constant<math::Tensor<fixed_point::fp32_t>>;

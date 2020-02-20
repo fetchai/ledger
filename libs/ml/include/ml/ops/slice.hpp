@@ -60,6 +60,8 @@ public:
 
   std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override;
 
+  void Compile() override;
+
   std::pair<SizeType, SizeType> start_end_slice_;
   std::vector<SizeType>         axes_;
   std::vector<SizeType>         indices_;
@@ -73,6 +75,9 @@ public:
   {
     return OpType::OP_SLICE;
   }
+
+  OperationsCount ChargeForward() const override;
+  OperationsCount ChargeBackward() const override;
 
   static constexpr char const *DESCRIPTOR = "Slice";
 };

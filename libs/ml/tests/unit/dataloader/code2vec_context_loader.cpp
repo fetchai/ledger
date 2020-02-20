@@ -16,12 +16,15 @@
 //
 //------------------------------------------------------------------------------
 
-#include "gtest/gtest.h"
+#include "test_types.hpp"
+
 #include "math/matrix_operations.hpp"
 #include "math/tensor/tensor.hpp"
 #include "ml/dataloaders/code2vec_context_loaders/context_loader.hpp"
-#include "test_types.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
+
+#include "gtest/gtest.h"
+
 #include <string>
 
 namespace fetch {
@@ -33,7 +36,7 @@ class C2vLoaderTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(C2vLoaderTest, math::test::TensorIntAndFloatingTypes);
+TYPED_TEST_SUITE(C2vLoaderTest, math::test::TensorIntAndFloatingTypes, );
 
 TYPED_TEST(C2vLoaderTest, loader_test)
 {

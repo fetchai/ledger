@@ -48,11 +48,17 @@ TopK<TensorType>::TopK(SPType const &sp)
 template <typename TensorType>
 std::shared_ptr<OpsSaveableParams> TopK<TensorType>::GetOpSaveableParams()
 {
-  SPType sp{};
-  sp.k      = k_;
-  sp.sorted = sorted_;
+  auto sp = std::make_shared<SPType>();
 
-  return std::make_shared<SPType>(sp);
+  sp->k      = k_;
+  sp->sorted = sorted_;
+
+  // Add base class savable params
+  auto ops_sp  = Ops<TensorType>::GetOpSaveableParams();
+  auto cast_sp = std::static_pointer_cast<OpsSaveableParams>(sp);
+  *cast_sp     = *(std::static_pointer_cast<OpsSaveableParams>(ops_sp));
+
+  return sp;
 }
 
 template <typename TensorType>
@@ -153,6 +159,24 @@ void TopK<TensorType>::UpdateIndices(VecTensorType const &inputs)
   }
 }
 
+template <typename TensorType>
+OperationsCount TopK<TensorType>::ChargeForward() const
+{
+  assert(!this->batch_input_shapes_.empty());
+  OperationsCount cost = fetch::ml::charge_estimation::ops::TOPK_PER_ELEMENT *
+                         this->TotalElementsIn({this->batch_input_shapes_});
+  return cost;
+}
+
+template <typename TensorType>
+OperationsCount TopK<TensorType>::ChargeBackward() const
+{
+  assert(!this->batch_output_shape_.empty());
+  OperationsCount cost = fetch::ml::charge_estimation::ops::ASSIGN_PER_ELEMENT *
+                         this->TotalElementsIn({this->batch_output_shape_});
+  return cost;
+}
+
 ///////////////////////////////
 /// EXPLICIT INSTANTIATIONS ///
 ///////////////////////////////
@@ -161,10 +185,6 @@ template class TopK<math::Tensor<int8_t>>;
 template class TopK<math::Tensor<int16_t>>;
 template class TopK<math::Tensor<int32_t>>;
 template class TopK<math::Tensor<int64_t>>;
-template class TopK<math::Tensor<uint8_t>>;
-template class TopK<math::Tensor<uint16_t>>;
-template class TopK<math::Tensor<uint32_t>>;
-template class TopK<math::Tensor<uint64_t>>;
 template class TopK<math::Tensor<float>>;
 template class TopK<math::Tensor<double>>;
 template class TopK<math::Tensor<fixed_point::fp32_t>>;

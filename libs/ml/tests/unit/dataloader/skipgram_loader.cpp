@@ -16,9 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
+#include "test_types.hpp"
+
 #include "math/matrix_operations.hpp"
 #include "ml/dataloaders/word2vec_loaders/sgns_w2v_dataloader.hpp"
-#include "test_types.hpp"
 
 #include "gtest/gtest.h"
 
@@ -44,7 +45,7 @@ class SkipGramDataloaderTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(SkipGramDataloaderTest, math::test::TensorFloatingTypes);
+TYPED_TEST_SUITE(SkipGramDataloaderTest, math::test::TensorFloatingTypes, );
 
 TYPED_TEST(SkipGramDataloaderTest, loader_test)
 {

@@ -134,6 +134,7 @@ void Model<TensorType>::Compile(OptimiserType optimiser_type, ops::LossType loss
     optimiser_set_ = true;
   }
 
+  graph_ptr_->Compile();
   compiled_ = true;
 }
 
@@ -403,6 +404,18 @@ bool Model<TensorType>::DataLoaderIsSet()
     return false;
   }
   return dataloader_ptr_->Size() != 0;
+}
+
+template <typename TensorType>
+OperationsCount Model<TensorType>::ChargeForward() const
+{
+  return this->graph_ptr_->ChargeForward(this->output_);
+}
+
+template <typename TensorType>
+OperationsCount Model<TensorType>::ChargeBackward() const
+{
+  return this->graph_ptr_->ChargeBackward(this->output_);
 }
 
 ///////////////////////////////

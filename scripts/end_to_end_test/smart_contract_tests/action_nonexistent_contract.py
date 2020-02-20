@@ -36,7 +36,7 @@ def run(options, benefactor):
     contract = Contract(CONTRACT_TEXT, entity1)
 
     try:
-        api.sync([contract.action(api, 'some_action', 100, [entity1])])
+        api.sync([contract.action(api, 'some_action', 100, entity1)])
         assert False, 'Expected action to fail'
     except RuntimeError as e:
         assert 'Contract Lookup Failure' in str(e), \

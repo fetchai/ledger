@@ -16,11 +16,13 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/base_types.hpp"
-#include "ml/ops/abs.hpp"
 #include "test_types.hpp"
 
+#include "math/base_types.hpp"
+#include "ml/ops/abs.hpp"
+
 #include "gtest/gtest.h"
+
 #include <vector>
 
 namespace {
@@ -29,7 +31,7 @@ class AbsTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(AbsTest, fetch::math::test::TensorFloatingTypes);
+TYPED_TEST_SUITE(AbsTest, fetch::math::test::TensorFloatingTypes, );
 
 TYPED_TEST(AbsTest, forward_test)
 {

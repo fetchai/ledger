@@ -16,11 +16,13 @@
 //
 //------------------------------------------------------------------------------
 
-#include "gtest/gtest.h"
+#include "test_types.hpp"
+
 #include "math/tensor/tensor.hpp"
 #include "meta/type_traits.hpp"
-#include "test_types.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
+
+#include "gtest/gtest.h"
 
 namespace fetch {
 namespace math {
@@ -30,7 +32,7 @@ class TensorBasicTests : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(TensorBasicTests, FloatIntAndUIntTypes);
+TYPED_TEST_SUITE(TensorBasicTests, FloatIntAndUIntTypes, );
 
 // template for producing a random array of FixedPoints
 template <uint16_t I, uint16_t F>

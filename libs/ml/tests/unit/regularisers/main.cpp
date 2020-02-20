@@ -16,13 +16,15 @@
 //
 //------------------------------------------------------------------------------
 
-#include "gtest/gtest.h"
+#include "test_types.hpp"
+
 #include "ml/ops/weights.hpp"
 #include "ml/regularisers/l1_regulariser.hpp"
 #include "ml/regularisers/l2_regulariser.hpp"
 #include "ml/regularisers/regularisation.hpp"
-#include "test_types.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
+
+#include "gtest/gtest.h"
 
 namespace fetch {
 namespace ml {
@@ -32,7 +34,7 @@ class WeightsTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(WeightsTest, math::test::TensorFloatingTypes);
+TYPED_TEST_SUITE(WeightsTest, math::test::TensorFloatingTypes, );
 
 TYPED_TEST(WeightsTest, allocation_test)
 {

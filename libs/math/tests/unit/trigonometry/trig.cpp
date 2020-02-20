@@ -16,10 +16,12 @@
 //
 //------------------------------------------------------------------------------
 
-#include "gtest/gtest.h"
+#include "test_types.hpp"
+
 #include "math/tensor/tensor.hpp"
 #include "math/trigonometry.hpp"
-#include "test_types.hpp"
+
+#include "gtest/gtest.h"
 
 namespace fetch {
 namespace math {
@@ -30,7 +32,7 @@ class TrigTest : public ::testing::Test
 {
 };
 
-TYPED_TEST_CASE(TrigTest, HighPrecisionFloatingTypes);
+TYPED_TEST_SUITE(TrigTest, HighPrecisionFloatingTypes, );
 
 TYPED_TEST(TrigTest, sin)
 {

@@ -35,10 +35,16 @@ MaxPool1D<T>::MaxPool1D(const SPType &sp)
 template <typename T>
 std::shared_ptr<OpsSaveableParams> MaxPool1D<T>::GetOpSaveableParams()
 {
-  SPType sp{};
-  sp.kernel_size = kernel_size_;
-  sp.stride_size = stride_size_;
-  return std::make_shared<SPType>(sp);
+  auto sp         = std::make_shared<SPType>();
+  sp->kernel_size = kernel_size_;
+  sp->stride_size = stride_size_;
+
+  // Add base class savable params
+  auto ops_sp  = Ops<TensorType>::GetOpSaveableParams();
+  auto cast_sp = std::static_pointer_cast<OpsSaveableParams>(sp);
+  *cast_sp     = *(std::static_pointer_cast<OpsSaveableParams>(ops_sp));
+
+  return sp;
 }
 
 template <typename TensorType>
@@ -170,11 +176,36 @@ std::vector<fetch::math::SizeType> MaxPool1D<T>::ComputeOutputShape(
   // output_shape_[0]=number of output channels
   output_shape.emplace_back(inputs.at(0)->shape().at(0));
   // output_shape_[1]=number of stride_size steps over input size
-  output_shape.emplace_back((inputs.at(0)->shape().at(1) - (kernel_size_ - stride_size_)) /
-                            stride_size_);
+  SizeType output_height = ((inputs.at(0)->shape().at(1) - kernel_size_) / stride_size_) + 1;
+  if (output_height == 0 || output_height == std::numeric_limits<SizeType>::max())
+  {
+    throw fetch::math::exceptions::WrongShape(
+        "MaxPool1D::ComputeOutputShape: output shape has 0 or -1 values!");
+  }
+  output_shape.emplace_back(output_height);
   // output_shape_[2]=batch dimension
   output_shape.emplace_back(inputs.at(0)->shape().at(2));
   return output_shape;
+}
+
+template <typename TensorType>
+OperationsCount MaxPool1D<TensorType>::ChargeForward() const
+{
+  assert(!this->batch_output_shape_.empty());
+  OperationsCount cost = fetch::ml::charge_estimation::ops::MAX_PER_ELEMENT *
+                         this->batch_output_shape_.at(0) * this->batch_output_shape_.at(1) *
+                         this->batch_output_shape_.at(2) * this->kernel_size_;
+  return cost;
+}
+
+template <typename TensorType>
+OperationsCount MaxPool1D<TensorType>::ChargeBackward() const
+{
+  assert(!this->batch_output_shape_.empty());
+  OperationsCount cost = fetch::ml::charge_estimation::ops::MAX_PER_ELEMENT *
+                         this->batch_output_shape_.at(0) * this->batch_output_shape_.at(1) *
+                         this->batch_output_shape_.at(2) * this->kernel_size_;
+  return cost;
 }
 
 ///////////////////////////////
@@ -185,10 +216,6 @@ template class MaxPool1D<math::Tensor<int8_t>>;
 template class MaxPool1D<math::Tensor<int16_t>>;
 template class MaxPool1D<math::Tensor<int32_t>>;
 template class MaxPool1D<math::Tensor<int64_t>>;
-template class MaxPool1D<math::Tensor<uint8_t>>;
-template class MaxPool1D<math::Tensor<uint16_t>>;
-template class MaxPool1D<math::Tensor<uint32_t>>;
-template class MaxPool1D<math::Tensor<uint64_t>>;
 template class MaxPool1D<math::Tensor<float>>;
 template class MaxPool1D<math::Tensor<double>>;
 template class MaxPool1D<math::Tensor<fixed_point::fp32_t>>;

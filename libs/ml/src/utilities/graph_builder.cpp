@@ -16,9 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/utilities/graph_builder.hpp"
-
 #include "ml/meta/ml_type_traits.hpp"
+#include "ml/utilities/graph_builder.hpp"
 
 // layers
 #include "ml/layers/PRelu.hpp"
@@ -47,7 +46,6 @@
 #include "ml/ops/log.hpp"
 #include "ml/ops/mask_fill.hpp"
 #include "ml/ops/matrix_multiply.hpp"
-#include "ml/ops/max_pool.hpp"
 #include "ml/ops/max_pool_1d.hpp"
 #include "ml/ops/max_pool_2d.hpp"
 #include "ml/ops/maximum.hpp"
@@ -87,7 +85,6 @@
 #include "ml/ops/loss_functions/cross_entropy_loss.hpp"
 #include "ml/ops/loss_functions/mean_square_error_loss.hpp"
 #include "ml/ops/loss_functions/softmax_cross_entropy_loss.hpp"
-
 #include "ml/saveparams/saveable_params.hpp"
 
 namespace fetch {
@@ -228,11 +225,6 @@ void BuildNodeAndInsertTrainables(NodeSaveableParams<T> const &nsp, std::string 
   case ops::MaxPool2D<T>::OpCode():
   {
     op_ptr = GetOp<ops::MaxPool2D<T>>(nsp.op_save_params);
-    break;
-  }
-  case ops::MaxPool<T>::OpCode():
-  {
-    op_ptr = GetOp<ops::MaxPool<T>>(nsp.op_save_params);
     break;
   }
   case ops::AvgPool1D<T>::OpCode():
