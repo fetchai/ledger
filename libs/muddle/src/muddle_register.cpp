@@ -25,7 +25,6 @@
 #include "telemetry/gauge.hpp"
 #include "telemetry/registry.hpp"
 
-
 namespace fetch {
 namespace muddle {
 
@@ -76,11 +75,12 @@ MuddleRegister::Entry::Entry(WeakConnectionPtr c)
 MuddleRegister::MuddleRegister(NetworkId const &network)
   : name_{GenerateLoggingName(BASE_NAME, network)}
   , connections_entered_total_(CreateCounter(name_, "connections_entered_total",
-                                       "The total number of connections entered"))
-  , connections_left_total_(CreateCounter(name_, "connections_left_total",
-                                       "The total number of connections left"))
-  , connections_callbacks_called_total_(CreateCounter(name_, "connections_callbacks_called_total",
-                                       "The total number of connections handlers called"))
+                                             "The total number of connections entered"))
+  , connections_left_total_(
+        CreateCounter(name_, "connections_left_total", "The total number of connections left"))
+  , connections_callbacks_called_total_(
+        CreateCounter(name_, "connections_callbacks_called_total",
+                      "The total number of connections handlers called"))
 {}
 
 void MuddleRegister::OnConnectionLeft(ConnectionLeftCallback cb)
