@@ -40,7 +40,7 @@ TYPED_TEST(MNistTest, one_pass_test)
   using namespace fetch::ml::optimisers;
   using DataType = typename TypeParam::Type;
 
-  fetch::math::SizeType N_DATA = 32;
+  fetch::math::SizeType N_DATA = 10;
 
   /// setup config ///
   ModelConfig<DataType> model_config;

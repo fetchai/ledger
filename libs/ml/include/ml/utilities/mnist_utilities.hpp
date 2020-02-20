@@ -74,7 +74,7 @@ fetch::ml::model::Sequential<TensorType> setup_mnist_model(
   model.template Add<fetch::ml::layers::FullyConnected<TensorType>>(
       100, 20, fetch::ml::details::ActivationType::RELU);
   model.template Add<fetch::ml::layers::FullyConnected<TensorType>>(
-      20, 10, fetch::ml::details::ActivationType::RELU);
+      20, 10, fetch::ml::details::ActivationType::SOFTMAX);
 
   model.SetDataloader(std::move(data_loader_ptr));
   model.Compile(OptimiserType::ADAM, LossType::CROSS_ENTROPY);
