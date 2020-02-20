@@ -65,6 +65,7 @@ public:
   /// @name Shards
   /// @{
   settings::Setting<std::string> db_prefix;
+  settings::Setting<bool>        persistent_status;
   /// @}
 
   /// @name Networking / P2P Manifest
