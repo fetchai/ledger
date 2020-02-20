@@ -59,7 +59,7 @@ public:
 
   // Construction / Destruction
   ExecutionManager(std::size_t num_executors, uint32_t log2_num_lanes, StorageUnitPtr storage,
-                   ExecutorFactory const &factory, TransactionStatusCache::ShrdPtr tx_status_cache);
+                   ExecutorFactory const &factory, TransactionStatusPtr tx_status_cache);
 
   /// @name Execution Manager Interface
   /// @{
@@ -140,7 +140,8 @@ private:
   ThreadPool thread_pool_;
   ThreadPtr  monitor_thread_;
 
-  TransactionStatusCache::ShrdPtr tx_status_cache_;  ///< Ref to the tx status cache
+  TransactionStatusPtr tx_status_cache_;  ///< Ref to the tx status cache
+
   // Telemetry
   CounterPtr   tx_executed_count_;
   CounterPtr   slices_executed_count_;

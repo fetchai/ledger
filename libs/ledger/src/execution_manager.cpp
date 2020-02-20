@@ -56,7 +56,7 @@ using telemetry::Registry;
  */
 ExecutionManager::ExecutionManager(std::size_t num_executors, uint32_t log2_num_lanes,
                                    StorageUnitPtr storage, ExecutorFactory const &factory,
-                                   TransactionStatusCache::ShrdPtr tx_status_cache)
+                                   TransactionStatusPtr tx_status_cache)
   : log2_num_lanes_{log2_num_lanes}
   , storage_{std::move(storage)}
   , thread_pool_{network::MakeThreadPool(num_executors, "Executor")}
