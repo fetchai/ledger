@@ -80,6 +80,8 @@ public:
   OperationsCount ChargeForward() const override;
   OperationsCount ChargeBackward() const override;
 
+  void Compile() override;
+
   static OperationsCount ChargeCompleteShapeDeduction(bool is_initialised, WeightsInit init_mode,
                                                       bool time_distributed, SizeType total_inputs);
 

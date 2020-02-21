@@ -138,10 +138,21 @@ void FullyConnected<TensorType>::CompleteShapeDeduction()
   }
 
   math::SizeVector const weights_shape = {total_outputs_, total_inputs_};
+
   // At this point we know everything necessary to directly assign shapes to
   // leaf nodes such as Weights and Bias.
   this->nodes_.at(weights_name_)->SetBatchOutputShape(weights_shape);
   this->nodes_.at(bias_name_)->SetBatchOutputShape(this->batch_output_shape_);
+
+  FETCH_LOG_INFO(Descriptor(), "-- FullyConnected initialisation completed. --");
+  is_initialised_ = true;
+}
+
+template <typename TensorType>
+void FullyConnected<TensorType>::Compile()
+{
+  SubGraph<TensorType>::Compile();
+  math::SizeVector const weights_shape = {total_outputs_, total_inputs_};
 
   // initialize weight with specified method.
   TensorType weights_data(weights_shape);
@@ -151,11 +162,6 @@ void FullyConnected<TensorType>::CompleteShapeDeduction()
 
   this->SetInput(weights_name_, weights_data);
   this->SetInput(bias_name_, bias_data);
-
-  this->Compile();
-
-  FETCH_LOG_INFO(Descriptor(), "-- FullyConnected initialisation completed. --");
-  is_initialised_ = true;
 }
 
 template <typename TensorType>
