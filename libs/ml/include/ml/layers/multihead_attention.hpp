@@ -71,7 +71,6 @@ public:
     return DESCRIPTOR;
   }
 
-  OperationsCount ChargeForward() const override;
   OperationsCount ChargeBackward() const override;
 
 private:

@@ -170,12 +170,26 @@ public:
    * @return estimated charge amount, necessary for performing a forward pass on data of given
    * shapes.
    */
-  virtual OperationsCount ChargeForward() const
-  {
+   virtual OperationsCount ChargeForward() const
+   {
     // TODO(ML-483): make a pure virtual method after all Ops have their overrides;
     FETCH_LOG_ERROR(Descriptor(),
                     " Error: call to unexisting ChargeForward() implementation! returned 0.");
     return 0;
+  }
+
+  virtual std::pair<OperationsCount, math::SizeVector> ChargeForward(std::vector<math::SizeVector> input_shapes)
+  {
+    // TODO(ML-483): make a pure virtual method after all Ops have their overrides;
+    FETCH_UNUSED(input_shapes);
+    FETCH_LOG_ERROR(Descriptor(),
+                    " Error: call to unexisting ChargeForward() implementation! returned 0.");
+
+    math::SizeVector output_shape = this->batch_output_shape_;
+    if (!input_shapes.empty()) {
+      output_shape.back() = input_shapes.back().back();  // let's hope this is the batch size...
+    }
+    return std::make_pair(0, output_shape);
   }
 
   /**

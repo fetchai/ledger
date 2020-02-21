@@ -95,17 +95,19 @@ OpType Node<TensorType>::OperationType() const
 }
 
 template <typename TensorType>
-OperationsCount Node<TensorType>::ChargeForward(
+std::pair<OperationsCount, math::SizeVector>  Node<TensorType>::ChargeForward(
     std::unordered_set<std::string> &visited_nodes) const
 {
-  OperationsCount cost = op_ptr_->ChargeForward();
   if (visited_nodes.find(this->name_) != visited_nodes.cend())
   {
     // If this node has already been visited, there is no need for recursive calls to its
     // inputs and only cost of this particular node forward run is returned.
-    return cost;
+    // todo: should return zero?  Not sure what to do about shape either!
+    return std::make_pair(0, math::SizeVector{});
   }
 
+  OperationsCount cost = 0;
+  std::vector<math::SizeVector> input_shapes{};
   for (auto const &i : input_nodes_)
   {
     auto input_node_ptr = i.lock();
@@ -114,10 +116,15 @@ OperationsCount Node<TensorType>::ChargeForward(
       throw std::runtime_error("Unable to lock weak pointer.");
     }
 
-    cost += input_node_ptr->ChargeForward(visited_nodes);
+    auto cost_and_outputshape = input_node_ptr->ChargeForward(visited_nodes);
+    cost += cost_and_outputshape.first;
+    input_shapes.push_back(cost_and_outputshape.second);
   }
   visited_nodes.insert(this->name_);
-  return cost;
+
+  auto op_cost_and_outputshape = op_ptr_->ChargeForward(input_shapes);
+  cost += op_cost_and_outputshape.first;
+  return std::make_pair(cost, op_cost_and_outputshape.second);;
 }
 
 template <typename TensorType>

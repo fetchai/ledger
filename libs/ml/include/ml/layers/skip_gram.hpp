@@ -92,7 +92,6 @@ private:
     fetch::ml::ops::Weights<TensorType>::Initialise(weights, dim_1_size, dim_2_size, init_mode);
   }
 
-  OperationsCount ChargeForward() const override;
   OperationsCount ChargeBackward() const override;
 };
 

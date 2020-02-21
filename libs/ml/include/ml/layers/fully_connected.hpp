@@ -77,7 +77,6 @@ public:
 
   void CompleteShapeDeduction() override;
 
-  OperationsCount ChargeForward() const override;
   OperationsCount ChargeBackward() const override;
 
   void Compile() override;

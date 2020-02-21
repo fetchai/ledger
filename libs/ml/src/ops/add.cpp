@@ -104,12 +104,18 @@ const char *Add<TensorType>::Descriptor() const
 }
 
 template <typename TensorType>
-OperationsCount Add<TensorType>::ChargeForward() const
+std::pair<OperationsCount, math::SizeVector> Add<TensorType>::ChargeForward(std::vector<math::SizeVector> input_shapes)
 {
   assert(!this->batch_output_shape_.empty());
+  // todo: check correctness
   OperationsCount cost = fetch::ml::charge_estimation::ops::ADDITION_PER_ELEMENT *
-                         this->TotalElementsIn({this->batch_output_shape_});
-  return cost;
+                         this->TotalElementsIn({input_shapes[0]});
+
+  // Calculate the output shape. As a shortcut, use batch_output_shape with last dimension changed to batch size
+  math::SizeVector output_shape = this->batch_output_shape_;
+  output_shape.back() = input_shapes[0].back();
+
+  return std::make_pair(cost, output_shape);
 }
 
 template <typename TensorType>

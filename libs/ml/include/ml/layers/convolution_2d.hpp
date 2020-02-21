@@ -81,7 +81,6 @@ public:
 
   void Compile() override;
 
-  OperationsCount ChargeForward() const override;
   OperationsCount ChargeBackward() const override;
 
   OperationsCount ChargeCompile() override;

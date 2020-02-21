@@ -89,7 +89,6 @@ private:
   std::string residual_connection(std::string const &name, std::string const &prev_layer_input,
                                   std::string const &prev_layer_output);
 
-  OperationsCount ChargeForward() const override;
   OperationsCount ChargeBackward() const override;
 };
 
