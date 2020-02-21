@@ -104,7 +104,7 @@ def run(options, benefactor):
     except RuntimeError:
         pass
 
-    api.sync(contract.action(api, 'set_x_to_3', 200, [entity1]))
+    api.sync(contract.action(api, 'set_x_to_3', 200, entity1))
 
     result = contract.query(api, 'check_x_with_default')
     assert result == 3, \
@@ -113,7 +113,7 @@ def run(options, benefactor):
     assert result == 3, \
         'Expected to receive value of 3, got {}'.format(result)
 
-    api.sync(contract.action(api, 'set_x_to_5', 200, [entity1]))
+    api.sync(contract.action(api, 'set_x_to_5', 200, entity1))
 
     result = contract.query(api, 'check_x_with_default')
     assert result == 5, \

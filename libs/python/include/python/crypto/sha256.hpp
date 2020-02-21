@@ -34,5 +34,6 @@ void BuildSHA256(pybind11::module &module)
       .def("digest", &SHA256::digest)
       .def("Final", &SHA256::Final);
 }
-};  // namespace crypto
-};  // namespace fetch
+
+}  // namespace crypto
+}  // namespace fetch

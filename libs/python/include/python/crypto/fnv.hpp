@@ -35,5 +35,6 @@ void BuildFNV(pybind11::module &module)
       .def("digest", &FNV::digest)
       .def("Final", &FNV::Final);
 }
-};  // namespace crypto
-};  // namespace fetch
+
+}  // namespace crypto
+}  // namespace fetch

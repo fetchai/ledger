@@ -560,11 +560,7 @@ TYPED_TEST(FullyConnectedTest, training_should_change_output)
     grad *= fetch::math::Type<DataType>("-0.1");
   }
 
-  std::cout << "grads[0].ToString(): " << grads[0].ToString() << std::endl;
-  std::cout << "grads[1].ToString(): " << grads[1].ToString() << std::endl;
-
   layer.ApplyGradients(grads);
-
   TypeParam prediction3 = layer.Evaluate(output_name);
 
   std::cout << "prediction.ToString(): " << prediction.ToString() << std::endl;

@@ -18,6 +18,8 @@
 
 #include "core/byte_array/decoders.hpp"
 #include "core/serializers/counter.hpp"
+#include "ml/charge_estimation/constants.hpp"
+#include "ml/charge_estimation/model/constants.hpp"
 #include "ml/dataloaders/tensor_dataloader.hpp"
 #include "ml/layers/convolution_1d.hpp"
 #include "ml/layers/convolution_2d.hpp"
@@ -52,6 +54,9 @@ namespace fetch {
 namespace vm_modules {
 namespace ml {
 namespace model {
+
+static constexpr char const *LOGGING_NAME            = "VMModel";
+static constexpr char const *NOT_IMPLEMENTED_MESSAGE = " is not yet implemented.";
 
 using fetch::math::SizeType;
 using fetch::ml::OptimiserType;
@@ -110,21 +115,18 @@ static constexpr char const *LAYER_TYPE_MESSAGE     = "layer type";
 
 VMModel::VMModel(VM *vm, TypeId type_id)
   : Object(vm, type_id)
-  , estimator_{*this}
 {
   Init("none");
 }
 
 VMModel::VMModel(VM *vm, TypeId type_id, fetch::vm::Ptr<fetch::vm::String> const &model_category)
   : Object(vm, type_id)
-  , estimator_{*this}
 {
   Init(model_category->string());
 }
 
 VMModel::VMModel(VM *vm, TypeId type_id, std::string const &model_category)
   : Object(vm, type_id)
-  , estimator_{*this}
 {
   Init(model_category);
 }
@@ -211,7 +213,7 @@ void VMModel::CompileSequentialImplementation(Ptr<String> const &loss, Ptr<Strin
     SequentialModelPtr  me             = GetMeAsSequentialIfPossible();
     if (me->LayerCount() == 0)
     {
-      vm_->RuntimeError("Can not compile an empty sequential model, please add layers first.");
+      vm_->RuntimeError("Cannot compile an empty sequential model, please add layers first.");
       return;
     }
     PrepareDataloader();
@@ -231,11 +233,8 @@ void VMModel::Fit(vm::Ptr<VMTensor> const &data, vm::Ptr<VMTensor> const &labels
 {
   try
   {
-    // prepare dataloader
-    auto data_loader = std::make_unique<TensorDataloader>();
-    data_loader->SetRandomMode(true);
-    data_loader->AddData({data->GetTensor()}, labels->GetTensor());
-    model_->SetDataloader(std::move(data_loader));
+    // set data in the model
+    model_->SetData(std::vector<TensorType>{data->GetTensor()}, labels->GetTensor());
 
     // set batch size
     model_config_->batch_size = batch_size;
@@ -293,49 +292,50 @@ void VMModel::Bind(Module &module, bool const experimental_enabled)
         return Ptr<VMModel>{new VMModel(vm, type_id)};
       })
       .CreateMemberFunction("add", &VMModel::LayerAddDense,
-                            UseEstimator(&ModelEstimator::LayerAddDense))
+                            UseMemberEstimator(&VMModel::EstimateLayerAddDense))
       .CreateMemberFunction("add", &VMModel::LayerAddDenseActivation,
-                            UseEstimator(&ModelEstimator::LayerAddDenseActivation))
+                            UseMemberEstimator(&VMModel::EstimateLayerAddDenseActivation))
       .CreateMemberFunction("compile", &VMModel::CompileSequential,
-                            UseEstimator(&ModelEstimator::CompileSequential))
+                            UseMemberEstimator(&VMModel::EstimateCompileSequential))
       .CreateMemberFunction("compile", &VMModel::CompileSequentialWithMetrics,
-                            UseEstimator(&ModelEstimator::CompileSequentialWithMetrics))
-      .CreateMemberFunction("fit", &VMModel::Fit, UseEstimator(&ModelEstimator::Fit))
+                            UseMemberEstimator(&VMModel::EstimateCompileSequentialWithMetrics))
+      .CreateMemberFunction("fit", &VMModel::Fit, UseMemberEstimator(&VMModel::EstimateFit))
       .CreateMemberFunction("evaluate", &VMModel::Evaluate,
                             UseMemberEstimator(&VMModel::EstimateEvaluate))
       .CreateMemberFunction("predict", &VMModel::Predict,
                             UseMemberEstimator(&VMModel::EstimatePredict))
       .CreateMemberFunction("serializeToString", &VMModel::SerializeToString,
-                            UseEstimator(&ModelEstimator::SerializeToString))
+                            UseMemberEstimator(&VMModel::EstimateSerializeToString))
       .CreateMemberFunction("deserializeFromString", &VMModel::DeserializeFromString,
-                            UseEstimator(&ModelEstimator::DeserializeFromString));
+                            UseMemberEstimator(&VMModel::EstimateDeserializeFromString));
 
   // experimental features are bound only if the VMFactory given the flag to do so
   if (experimental_enabled)
   {
     module.GetClassInterface<VMModel>()
         .CreateMemberFunction("add", &VMModel::LayerAddConv,
-                              UseEstimator(&ModelEstimator::LayerAddConv))
+                              UseMemberEstimator(&VMModel::EstimateLayerAddConv))
         .CreateMemberFunction("add", &VMModel::LayerAddConvActivation,
-                              UseEstimator(&ModelEstimator::LayerAddConvActivation))
+                              UseMemberEstimator(&VMModel::EstimateLayerAddConvActivation))
         .CreateMemberFunction("add", &VMModel::LayerAddFlatten,
-                              UseEstimator(&ModelEstimator::LayerAddFlatten))
+                              UseMemberEstimator(&VMModel::EstimateLayerAddFlatten))
         .CreateMemberFunction("add", &VMModel::LayerAddDropout,
-                              UseEstimator(&ModelEstimator::LayerAddDropout))
+                              UseMemberEstimator(&VMModel::EstimateLayerAddDropout))
         .CreateMemberFunction("add", &VMModel::LayerAddActivation,
-                              UseEstimator(&ModelEstimator::LayerAddActivation))
+                              UseMemberEstimator(&VMModel::EstimateLayerAddActivation))
         .CreateMemberFunction("add", &VMModel::LayerAddReshape,
-                              UseEstimator(&ModelEstimator::LayerAddReshape))
+                              UseMemberEstimator(&VMModel::EstimateLayerAddReshape))
         .CreateMemberFunction("addExperimental", &VMModel::LayerAddPool,
-                              UseEstimator(&ModelEstimator::LayerAddPool))
+                              UseMemberEstimator(&VMModel::EstimateLayerAddPool))
         .CreateMemberFunction("addExperimental", &VMModel::LayerAddEmbeddings,
-                              UseEstimator(&ModelEstimator::LayerAddEmbeddings))
-        .CreateMemberFunction("addExperimental", &VMModel::LayerAddDenseActivationExperimental,
-                              UseEstimator(&ModelEstimator::LayerAddDenseActivationExperimental))
+                              UseMemberEstimator(&VMModel::EstimateLayerAddEmbeddings))
+        .CreateMemberFunction(
+            "addExperimental", &VMModel::LayerAddDenseActivationExperimental,
+            UseMemberEstimator(&VMModel::EstimateLayerAddDenseActivationExperimental))
         .CreateMemberFunction("addExperimental", &VMModel::LayerAddInput,
-                              UseEstimator(&ModelEstimator::LayerAddInput))
+                              UseMemberEstimator(&VMModel::EstimateLayerAddInput))
         .CreateMemberFunction("addExperimental", &VMModel::LayerAddDenseAutoInputs,
-                              UseEstimator(&ModelEstimator::LayerAddDenseAutoInputs));
+                              UseMemberEstimator(&VMModel::EstimateLayerAddDenseAutoInputs));
   }
 }
 
@@ -379,16 +379,35 @@ bool VMModel::SerializeTo(serializers::MsgPackSerializer &buffer)
     counter << static_cast<uint8_t>(model_category_);
     counter << *model_config_;
     counter << compiled_;
-    counter << *model_;
+    counter << static_cast<uint8_t>(model_->ModelCode());
+
+    if (model_->ModelCode() == fetch::ml::ModelType::SEQUENTIAL)
+    {
+      auto *model_ptr = static_cast<fetch::ml::model::Sequential<TensorType> *>(model_.get());
+      counter << *model_ptr;
+    }
+    else
+    {
+      counter << *model_;
+    }
 
     buffer.Reserve(counter.size());
 
     buffer << static_cast<uint8_t>(model_category_);
     buffer << *model_config_;
     buffer << compiled_;
-    buffer << *model_;
+    buffer << static_cast<uint8_t>(model_->ModelCode());
 
-    estimator_.SerializeTo(buffer);
+    if (model_->ModelCode() == fetch::ml::ModelType::SEQUENTIAL)
+    {
+      auto *model_ptr = static_cast<fetch::ml::model::Sequential<TensorType> *>(model_.get());
+      buffer << *model_ptr;
+    }
+    else
+    {
+      buffer << *model_;
+    }
+
     success = true;
   }
 
@@ -428,12 +447,30 @@ bool VMModel::DeserializeFrom(serializers::MsgPackSerializer &buffer)
   bool compiled = false;
   buffer >> compiled;
 
-  // deserialise the model
-  auto model_ptr = std::make_shared<fetch::ml::model::Model<TensorType>>();
-  buffer >> (*model_ptr);
+  std::shared_ptr<fetch::ml::model::Model<TensorType>> model_ptr;
 
-  // deserialise the estimator
-  estimator_.DeserializeFrom(buffer);
+  uint8_t model_type_int;
+  buffer >> model_type_int;
+  auto const model_type = static_cast<fetch::ml::ModelType>(model_type_int);
+
+  // deserialise the model
+  switch (model_type)
+  {
+  case fetch::ml::ModelType::SEQUENTIAL:
+  {
+    auto sequential_ptr = std::make_shared<fetch::ml::model::Sequential<TensorType>>();
+    sequential_ptr      = std::make_shared<fetch::ml::model::Sequential<TensorType>>();
+    buffer >> (*sequential_ptr);
+    model_ptr = sequential_ptr;
+    break;
+  }
+  default:
+  {
+    model_ptr = std::make_shared<fetch::ml::model::Model<TensorType>>();
+    buffer >> (*model_ptr);
+    break;
+  }
+  }
 
   // assign deserialised model category
   VMModel vm_model(this->vm_, this->type_id_, model_category_name);
@@ -447,9 +484,6 @@ bool VMModel::DeserializeFrom(serializers::MsgPackSerializer &buffer)
 
   // assign compiled status
   vm_model.compiled_ = compiled;
-
-  // assign estimator
-  vm_model.estimator_ = estimator_;
 
   // point this object pointer at the deserialised model
   *this = vm_model;
@@ -477,11 +511,6 @@ fetch::vm::Ptr<VMModel> VMModel::DeserializeFromString(
   vm_model->SetModel(model_);
 
   return vm_model;
-}
-
-VMModel::ModelEstimator &VMModel::Estimator()
-{
-  return estimator_;
 }
 
 void VMModel::AssertLayerTypeMatches(SupportedLayerType                layer,
@@ -877,6 +906,32 @@ void VMModel::LayerAddEmbeddings(const fetch::vm::Ptr<fetch::vm::String> &layer,
 }
 
 /**
+ * for regressor and classifier we can't prepare the dataloder until after compile has begun
+ * because model_ isn't ready until then.
+ */
+void VMModel::PrepareDataloader()
+{
+  try
+  {
+    // set up the dataloader
+    auto data_loader = std::make_unique<TensorDataloader>();
+    data_loader->SetRandomMode(true);
+    model_->SetDataloader(std::move(data_loader));
+  }
+  catch (std::exception const &e)
+  {
+    vm_->RuntimeError("Can't prepare DataLoader: " + std::string(e.what()));
+    return;
+  }
+}
+
+ChargeAmount VMModel::MaximumCharge(std::string const &log_msg)
+{
+  FETCH_LOG_ERROR(LOGGING_NAME, "operation charge is vm::MAXIMUM_CHARGE : " + log_msg);
+  return vm::MAXIMUM_CHARGE;
+}
+
+/**
  * @brief VMModel::EstimatePredict calculates a charge amount, required for a forward pass
  * @param data
  * @return charge estimation
@@ -886,8 +941,9 @@ ChargeAmount VMModel::EstimatePredict(const vm::Ptr<math::VMTensor> &data)
   ChargeAmount const cost       = model_->ChargeForward();
   SizeType const     batch_size = data->shape().back();
   ChargeAmount const batch_cost = batch_size * cost;
-  FETCH_LOG_INFO("Model", " forward pass estimated batch cost is " + std::to_string(batch_size) +
-                              " * " + std::to_string(cost) + " = " + std::to_string(batch_cost));
+  FETCH_LOG_INFO(LOGGING_NAME, " forward pass estimated batch cost is " +
+                                   std::to_string(batch_size) + " * " + std::to_string(cost) +
+                                   " = " + std::to_string(batch_cost));
   return batch_cost;
 }
 
@@ -911,29 +967,302 @@ ChargeAmount VMModel::EstimateEvaluate()
   model_->dataloader_ptr_->SetMode(fetch::ml::dataloaders::DataLoaderMode::TRAIN);
   SizeType const     batch_size = model_->dataloader_ptr_->Size();
   ChargeAmount const batch_cost = batch_size * cost;
-  FETCH_LOG_INFO("Model", " forward pass estimated batch cost is " + std::to_string(batch_size) +
-                              " * " + std::to_string(cost) + " = " + std::to_string(batch_cost));
+  FETCH_LOG_INFO(LOGGING_NAME, " forward pass estimated batch cost is " +
+                                   std::to_string(batch_size) + " * " + std::to_string(cost) +
+                                   " = " + std::to_string(batch_cost));
   return batch_cost;
 }
 
-/**
- * for regressor and classifier we can't prepare the dataloder until after compile has begun
- * because model_ isn't ready until then.
- */
-void VMModel::PrepareDataloader()
+ChargeAmount VMModel::EstimateLayerAddDense(fetch::vm::Ptr<fetch::vm::String> const &layer,
+                                            math::SizeType const &                   inputs,
+                                            math::SizeType const &                   hidden_nodes)
 {
+  FETCH_UNUSED(layer);
+
+  ChargeAmount charge{0};
+
+  charge = fetch::ml::layers::FullyConnected<TensorType>::ChargeConstruct(inputs, hidden_nodes);
+
+  return charge + 1;
+}
+
+ChargeAmount VMModel::EstimateLayerAddDenseActivation(
+    fetch::vm::Ptr<fetch::vm::String> const &layer, math::SizeType const &inputs,
+    math::SizeType const &hidden_nodes, fetch::vm::Ptr<fetch::vm::String> const &activation)
+{
+  FETCH_UNUSED(layer);
+
+  ChargeAmount charge{0};
   try
   {
-    // set up the dataloader
-    auto data_loader = std::make_unique<TensorDataloader>();
-    data_loader->SetRandomMode(true);
-    model_->SetDataloader(std::move(data_loader));
+    fetch::ml::details::ActivationType activation_type =
+        ParseName(activation->string(), activations_, "activation function");
+
+    if (activation_type == fetch::ml::details::ActivationType::RELU)
+    {
+      charge = fetch::ml::layers::FullyConnected<TensorType>::ChargeConstruct(inputs, hidden_nodes,
+                                                                              activation_type);
+    }
+    else
+    {
+      vm_->RuntimeError("cannot add activation type : " + activation->string());
+    }
   }
   catch (std::exception const &e)
   {
-    vm_->RuntimeError("Can't prepare DataLoader: " + std::string(e.what()));
-    return;
+    vm_->RuntimeError(std::string(e.what()));
   }
+
+  return charge + 1;
+}
+
+ChargeAmount VMModel::EstimateLayerAddDenseActivationExperimental(
+    fetch::vm::Ptr<fetch::vm::String> const &layer, math::SizeType const &inputs,
+    math::SizeType const &hidden_nodes, fetch::vm::Ptr<fetch::vm::String> const &activation)
+{
+  return EstimateLayerAddDenseActivation(layer, inputs, hidden_nodes, activation);
+}
+
+ChargeAmount VMModel::EstimateLayerAddDenseAutoInputs(
+    fetch::vm::Ptr<fetch::vm::String> const &layer, math::SizeType const &hidden_nodes)
+{
+  FETCH_UNUSED(layer);
+  FETCH_UNUSED(hidden_nodes);
+  return MaximumCharge(layer->string() + NOT_IMPLEMENTED_MESSAGE);
+}
+
+/**
+ * @brief VMModel::EstimateCompileSequential
+ * @param loss a valid loss function ["mse", ...]
+ * @param optimiser a valid optimiser name ["adam", "sgd" ...]
+ */
+ChargeAmount VMModel::EstimateCompileSequential(Ptr<String> const &loss,
+                                                Ptr<String> const &optimiser)
+{
+  ChargeAmount ret{fetch::ml::charge_estimation::FUNCTION_CALL_COST};
+
+  std::vector<MetricType> mets;
+  try
+  {
+    ret = EstimateCompileSequentialImplementation(loss, optimiser, mets);
+  }
+  catch (std::exception const &e)
+  {
+    vm_->RuntimeError("Compile sequential failed: " + std::string(e.what()));
+    return vm::MAXIMUM_CHARGE;
+  }
+  return ret;
+}
+
+fetch::vm::ChargeAmount VMModel::EstimateCompileSequentialImplementation(
+    fetch::vm::Ptr<fetch::vm::String> const &      loss,
+    fetch::vm::Ptr<fetch::vm::String> const &      optimiser,
+    std::vector<fetch::ml::ops::MetricType> const &metrics)
+{
+  ChargeAmount op_cnt{fetch::ml::charge_estimation::FUNCTION_CALL_COST};
+
+  try
+  {
+    LossType const      loss_type      = ParseName(loss->string(), losses_, "loss function");
+    OptimiserType const optimiser_type = ParseName(optimiser->string(), optimisers_, "optimiser");
+    SequentialModelPtr  me             = GetMeAsSequentialIfPossible();
+
+    // PrepareDataloader(), ;
+    op_cnt += fetch::ml::charge_estimation::model::COMPILE_SEQUENTIAL_INIT;
+
+    if (me->LayerCount() == 0)
+    {
+      vm_->RuntimeError("Can not compile an empty sequential model, please add layers first.");
+      return vm::MAXIMUM_CHARGE;
+    }
+
+    op_cnt += me->ChargeCompile(optimiser_type, loss_type, metrics);
+  }
+  catch (std::exception const &e)
+  {
+    vm_->RuntimeError("Compilation of a sequential model failed : " + std::string(e.what()));
+    return MAXIMUM_CHARGE;
+  }
+  // set compiled flag
+  op_cnt += fetch::ml::charge_estimation::SET_FLAG;
+
+  return op_cnt;
+}
+
+/**
+ * @brief VMModel::EstimateCompileSequentialWithMetrics
+ * @param loss a valid loss function ["mse", ...]
+ * @param optimiser a valid optimiser name ["adam", "sgd" ...]
+ * @param metrics an array of valid metric names ["categorical accuracy", "mse" ...]
+ */
+ChargeAmount VMModel::EstimateCompileSequentialWithMetrics(
+    Ptr<String> const &loss, Ptr<String> const &optimiser,
+    Ptr<vm::Array<Ptr<String>>> const &metrics)
+{
+  try
+  {
+    // Make vector<MetricType> from vm::Array
+    std::size_t const       n_metrics = metrics->elements.size();
+    std::vector<MetricType> mets;
+    mets.reserve(n_metrics);
+
+    for (std::size_t i = 0; i < n_metrics; ++i)
+    {
+      Ptr<String> ptr_string = metrics->elements.at(i);
+      MetricType  mt         = ParseName(ptr_string->string(), metrics_, "metric");
+      mets.emplace_back(mt);
+    }
+    return EstimateCompileSequentialImplementation(loss, optimiser, mets);
+  }
+  catch (std::exception const &e)
+  {
+    vm_->RuntimeError("Compile model failed: " + std::string(e.what()));
+    return MAXIMUM_CHARGE;
+  }
+}
+
+ChargeAmount VMModel::EstimateSerializeToString()
+{
+  auto trainables = model_->graph_ptr_->GetTrainables();
+
+  ChargeAmount estimate{fetch::ml::charge_estimation::FUNCTION_CALL_COST};
+
+  for (auto &w : trainables)
+  {
+    estimate += TensorType::PaddedSizeFromShape(w->GetWeights().shape());
+  }
+  return estimate;
+}
+
+ChargeAmount VMModel::EstimateDeserializeFromString(Ptr<String> const &model_string)
+{
+  ChargeAmount estimate = model_string->string().size();
+
+  return estimate + fetch::ml::charge_estimation::FUNCTION_CALL_COST;
+}
+
+fetch::vm::ChargeAmount VMModel::EstimateFit(vm::Ptr<math::VMTensor> const &data,
+                                             vm::Ptr<math::VMTensor> const &labels,
+                                             ::fetch::math::SizeType const &batch_size)
+{
+  FETCH_UNUSED(labels);
+  FETCH_UNUSED(data);
+  FETCH_UNUSED(batch_size);
+
+  ChargeAmount estimate{1};
+
+  SizeType subset_size       = data->GetTensor().shape().at(data->GetTensor().shape().size() - 1);
+  SizeType number_of_batches = subset_size / batch_size;
+
+  // Forward pass
+  estimate += ChargeForward() * subset_size;
+
+  // Backward pass
+  estimate += ChargeBackward() * subset_size;
+
+  // Optimiser step
+  estimate += model_->optimiser_ptr_->ChargeStep() * number_of_batches;
+
+  return estimate;
+}
+
+fetch::vm::ChargeAmount VMModel::EstimateLayerAddConv(
+    fetch::vm::Ptr<fetch::vm::String> const &layer, math::SizeType const &output_channels,
+    math::SizeType const &input_channels, math::SizeType const &kernel_size,
+    math::SizeType const &stride_size)
+{
+  FETCH_UNUSED(layer);
+  FETCH_UNUSED(output_channels);
+  FETCH_UNUSED(input_channels);
+  FETCH_UNUSED(kernel_size);
+  FETCH_UNUSED(stride_size);
+
+  return MaximumCharge(layer->string() + NOT_IMPLEMENTED_MESSAGE);
+}
+
+fetch::vm::ChargeAmount VMModel::EstimateLayerAddConvActivation(
+    fetch::vm::Ptr<fetch::vm::String> const &layer, math::SizeType const &output_channels,
+    math::SizeType const &input_channels, math::SizeType const &kernel_size,
+    math::SizeType const &stride_size, fetch::vm::Ptr<fetch::vm::String> const &activation)
+{
+  FETCH_UNUSED(layer);
+  FETCH_UNUSED(output_channels);
+  FETCH_UNUSED(input_channels);
+  FETCH_UNUSED(kernel_size);
+  FETCH_UNUSED(stride_size);
+  FETCH_UNUSED(activation);
+
+  return MaximumCharge(layer->string() + NOT_IMPLEMENTED_MESSAGE);
+}
+
+fetch::vm::ChargeAmount VMModel::EstimateLayerAddFlatten(
+    fetch::vm::Ptr<fetch::vm::String> const &layer)
+{
+  FETCH_UNUSED(layer);
+
+  return MaximumCharge(layer->string() + NOT_IMPLEMENTED_MESSAGE);
+}
+
+fetch::vm::ChargeAmount VMModel::EstimateLayerAddDropout(
+    fetch::vm::Ptr<fetch::vm::String> const &layer, math::DataType const &probability)
+{
+  FETCH_UNUSED(layer);
+  FETCH_UNUSED(probability);
+
+  return MaximumCharge(layer->string() + NOT_IMPLEMENTED_MESSAGE);
+}
+
+fetch::vm::ChargeAmount VMModel::EstimateLayerAddActivation(
+    fetch::vm::Ptr<fetch::vm::String> const &layer,
+    fetch::vm::Ptr<fetch::vm::String> const &activation_name)
+{
+  FETCH_UNUSED(layer);
+  FETCH_UNUSED(activation_name);
+
+  return MaximumCharge(layer->string() + NOT_IMPLEMENTED_MESSAGE);
+}
+
+fetch::vm::ChargeAmount VMModel::EstimateLayerAddReshape(
+    fetch::vm::Ptr<fetch::vm::String> const &                     layer,
+    fetch::vm::Ptr<fetch::vm::Array<TensorType::SizeType>> const &shape)
+{
+  FETCH_UNUSED(layer);
+  FETCH_UNUSED(shape);
+
+  return MaximumCharge(layer->string() + NOT_IMPLEMENTED_MESSAGE);
+}
+
+fetch::vm::ChargeAmount VMModel::EstimateLayerAddInput(
+    fetch::vm::Ptr<fetch::vm::String> const &        layer,
+    fetch::vm::Ptr<vm::Array<math::SizeType>> const &shape)
+{
+  FETCH_UNUSED(layer);
+  FETCH_UNUSED(shape);
+
+  return MaximumCharge(layer->string() + NOT_IMPLEMENTED_MESSAGE);
+}
+
+fetch::vm::ChargeAmount VMModel::EstimateLayerAddPool(
+    fetch::vm::Ptr<fetch::vm::String> const &layer, math::SizeType const &kernel_size,
+    math::SizeType const &stride_size)
+{
+  FETCH_UNUSED(layer);
+  FETCH_UNUSED(kernel_size);
+  FETCH_UNUSED(stride_size);
+
+  return MaximumCharge(layer->string() + NOT_IMPLEMENTED_MESSAGE);
+}
+
+fetch::vm::ChargeAmount VMModel::EstimateLayerAddEmbeddings(
+    fetch::vm::Ptr<fetch::vm::String> const &layer, math::SizeType const &dimensions,
+    math::SizeType const &data_points, bool stub)
+{
+  FETCH_UNUSED(layer);
+  FETCH_UNUSED(dimensions);
+  FETCH_UNUSED(data_points);
+  FETCH_UNUSED(stub);
+
+  return MaximumCharge(layer->string() + NOT_IMPLEMENTED_MESSAGE);
 }
 
 }  // namespace model
