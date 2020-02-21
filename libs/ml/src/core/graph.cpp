@@ -1132,7 +1132,7 @@ fetch::ml::OperationsCount Graph<TensorType>::ChargeForward(const std::string &n
 
   NodePtrType                     node = nodes_.at(node_name);
   std::unordered_set<std::string> visited_nodes;
-  auto cost_and_outputshape = node->ChargeForward(visited_nodes);
+  auto                            cost_and_outputshape = node->ChargeForward(visited_nodes);
   return cost_and_outputshape.first;
 }
 

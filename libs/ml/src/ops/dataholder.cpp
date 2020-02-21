@@ -83,15 +83,20 @@ bool DataHolder<TensorType>::SetData(TensorType const &data)
 
 template <class TensorType>
 std::vector<math::SizeType> DataHolder<TensorType>::ComputeOutputShape(
-    VecTensorType const &inputs) const
+    std::vector<math::SizeVector> const &inputs) const
 {
   FETCH_UNUSED(inputs);
-  if (!data_)
+  if (!future_data_shape_.empty())
   {
-    throw std::runtime_error("Data is not set for " + std ::string(Descriptor()) +
-                             ", shape computing is not possible.");
+    return future_data_shape_;
   }
-  return data_->shape();
+  else if (data_)
+  {
+    return data_->shape();
+  }
+
+  throw std::runtime_error("Neither data_ nor future_data_shape_ is set for " +
+                           std ::string(Descriptor()) + " so shape computing is not possible.");
 }
 
 template <typename TensorType>

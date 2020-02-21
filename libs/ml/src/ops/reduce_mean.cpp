@@ -71,7 +71,7 @@ template <typename TensorType>
 void ReduceMean<TensorType>::Forward(VecTensorType const &inputs, TensorType &output)
 {
   assert(inputs.size() == 1);
-  assert(output.shape() == this->ComputeOutputShape(inputs));
+  assert(output.shape() == Ops<TensorType>::ComputeOutputShape(inputs));
 
   fetch::math::ReduceMean((*inputs.at(0)), axis_, output);
 }
@@ -86,7 +86,7 @@ std::vector<TensorType> ReduceMean<TensorType>::Backward(VecTensorType const &in
                                                          TensorType const &   error_signal)
 {
   assert(inputs.size() == 1);
-  assert(error_signal.shape() == this->ComputeOutputShape(inputs));
+  assert(error_signal.shape() == Ops<TensorType>::ComputeOutputShape(inputs));
 
   TensorType ret_error_signal(inputs.at(0)->shape());
 
@@ -100,9 +100,9 @@ std::vector<TensorType> ReduceMean<TensorType>::Backward(VecTensorType const &in
 
 template <typename TensorType>
 std::vector<math::SizeType> ReduceMean<TensorType>::ComputeOutputShape(
-    VecTensorType const &inputs) const
+    std::vector<math::SizeVector> const &inputs) const
 {
-  auto shape = inputs.front()->shape();
+  auto shape = inputs.front();
 
   shape.at(axis_) = static_cast<SizeType>(1);
 

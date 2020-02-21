@@ -148,9 +148,9 @@ void MultiheadAttention<TensorType>::SetOpSaveableParams(SPType const &sp)
 
 template <typename TensorType>
 std::vector<math::SizeType> MultiheadAttention<TensorType>::ComputeOutputShape(
-    VecTensorType const &inputs) const
+    std::vector<math::SizeVector> const &inputs) const
 {
-  return inputs.front()->shape();
+  return inputs.front();
 }
 
 template <class TensorType>

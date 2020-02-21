@@ -84,7 +84,7 @@ template <typename TensorType>
 void RandomisedRelu<TensorType>::Forward(VecTensorType const &inputs, TensorType &output)
 {
   assert(inputs.size() == 1);
-  assert(output.shape() == this->ComputeOutputShape(inputs));
+  assert(output.shape() == Ops<TensorType>::ComputeOutputShape(inputs));
 
   if (this->is_training_)
   {
@@ -137,9 +137,9 @@ std::vector<TensorType> RandomisedRelu<TensorType>::Backward(VecTensorType const
 
 template <typename TensorType>
 std::vector<math::SizeType> RandomisedRelu<TensorType>::ComputeOutputShape(
-    VecTensorType const &inputs) const
+    std::vector<math::SizeVector> const &inputs) const
 {
-  return inputs.front()->shape();
+  return inputs.front();
 }
 
 template <typename TensorType>

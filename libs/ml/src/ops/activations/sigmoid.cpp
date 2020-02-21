@@ -59,7 +59,7 @@ template <typename TensorType>
 void Sigmoid<TensorType>::Forward(VecTensorType const &inputs, TensorType &output)
 {
   assert(inputs.size() == 1);
-  assert(output.shape() == this->ComputeOutputShape(inputs));
+  assert(output.shape() == Ops<TensorType>::ComputeOutputShape(inputs));
   fetch::math::Sigmoid(*(inputs.front()), output);
 
   // ensures numerical stability
@@ -88,9 +88,9 @@ std::vector<TensorType> Sigmoid<TensorType>::Backward(VecTensorType const &input
 
 template <typename TensorType>
 std::vector<math::SizeType> Sigmoid<TensorType>::ComputeOutputShape(
-    VecTensorType const &inputs) const
+    std::vector<math::SizeVector> const &inputs) const
 {
-  return inputs.front()->shape();
+  return inputs.front();
 }
 
 template <typename TensorType>

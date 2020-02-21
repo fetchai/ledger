@@ -50,8 +50,7 @@ TYPED_TEST(MaskFillTest, forward_test)
 
   fetch::ml::ops::MaskFill<TensorType> op(static_cast<DataType>(-100));
 
-  TypeParam prediction(op.ComputeOutputShape(
-      {std::make_shared<const TensorType>(mask), std::make_shared<const TensorType>(then_array)}));
+  TypeParam prediction(op.ComputeOutputShape({mask.shape(), then_array.shape()}));
   op.Forward(
       {std::make_shared<const TensorType>(mask), std::make_shared<const TensorType>(then_array)},
       prediction);
@@ -77,8 +76,7 @@ TYPED_TEST(MaskFillTest, forward_test_mask_broadcasted)
 
   fetch::ml::ops::MaskFill<TensorType> op(static_cast<DataType>(-100));
 
-  TypeParam prediction(op.ComputeOutputShape(
-      {std::make_shared<const TensorType>(mask), std::make_shared<const TensorType>(then_array)}));
+  TypeParam prediction(op.ComputeOutputShape({mask.shape(), then_array.shape()}));
   op.Forward(
       {std::make_shared<const TensorType>(mask), std::make_shared<const TensorType>(then_array)},
       prediction);

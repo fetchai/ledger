@@ -61,7 +61,7 @@ template <typename TensorType>
 void Add<TensorType>::Forward(VecTensorType const &inputs, TensorType &output)
 {
   assert(inputs.size() == 2);
-  assert(output.shape() == this->ComputeOutputShape(inputs));
+  assert(output.shape() == Ops<TensorType>::ComputeOutputShape(inputs));
   fetch::math::Add((*inputs.at(0)), (*inputs.at(1)), output);
 }
 
@@ -72,7 +72,7 @@ std::vector<TensorType> Add<TensorType>::Backward(VecTensorType const &inputs,
   assert(inputs.size() == 2);
   assert(inputs.at(0)->shape().size() == inputs.at(1)->shape().size());
   assert(inputs.at(0)->shape() == error_signal.shape());
-  assert(error_signal.shape() == ComputeOutputShape(inputs));
+  assert(error_signal.shape() == Ops<TensorType>::ComputeOutputShape(inputs));
 
   if (inputs.at(0)->shape() == inputs.at(1)->shape())
   {
@@ -86,9 +86,10 @@ std::vector<TensorType> Add<TensorType>::Backward(VecTensorType const &inputs,
 }
 
 template <typename TensorType>
-std::vector<math::SizeType> Add<TensorType>::ComputeOutputShape(VecTensorType const &inputs) const
+std::vector<math::SizeType> Add<TensorType>::ComputeOutputShape(
+    std::vector<math::SizeVector> const &inputs) const
 {
-  return inputs.at(0)->shape();
+  return inputs.at(0);
 }
 
 template <typename TensorType>
@@ -104,7 +105,8 @@ const char *Add<TensorType>::Descriptor() const
 }
 
 template <typename TensorType>
-std::pair<OperationsCount, math::SizeVector> Add<TensorType>::ChargeForward(std::vector<math::SizeVector> input_shapes)
+std::pair<OperationsCount, math::SizeVector> Add<TensorType>::ChargeForward(
+    std::vector<math::SizeVector> input_shapes)
 {
   assert(!this->batch_output_shape_.empty());
 
@@ -118,9 +120,9 @@ std::pair<OperationsCount, math::SizeVector> Add<TensorType>::ChargeForward(std:
   OperationsCount iteration_ops = TensorType::ChargeIterate(this->batch_output_shape_);
   op_cnt += iteration_ops * 3;
 
-  // Calculate the output shape. As a shortcut, use batch_output_shape with last dimension changed to batch size
-  math::SizeVector output_shape = this->batch_output_shape_;
-  output_shape.back() = input_shapes[0].back();
+  // Calculate the output shape. As a shortcut, use batch_output_shape with last dimension changed
+  // to batch size
+  auto output_shape = ComputeOutputShape(input_shapes);
 
   return std::make_pair(op_cnt, output_shape);
 }

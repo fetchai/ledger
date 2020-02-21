@@ -63,7 +63,7 @@ template <class TensorType>
 void Exp<TensorType>::Forward(VecTensorType const &inputs, TensorType &output)
 {
   assert(inputs.size() == 1);
-  assert(output.shape() == this->ComputeOutputShape(inputs));
+  assert(output.shape() == Ops<TensorType>::ComputeOutputShape(inputs));
 
   fetch::math::Exp((*inputs.at(0)), output);
 }
@@ -77,7 +77,7 @@ std::vector<TensorType> Exp<TensorType>::Backward(VecTensorType const &inputs,
                                                   TensorType const &   error_signal)
 {
   assert(inputs.size() == 1);
-  assert(error_signal.shape() == this->ComputeOutputShape(inputs));
+  assert(error_signal.shape() == Ops<TensorType>::ComputeOutputShape(inputs));
 
   TensorType ret_error_signal(inputs.at(0)->shape());
   fetch::math::Exp((*inputs.at(0)), ret_error_signal);
@@ -87,9 +87,10 @@ std::vector<TensorType> Exp<TensorType>::Backward(VecTensorType const &inputs,
 }
 
 template <class TensorType>
-std::vector<math::SizeType> Exp<TensorType>::ComputeOutputShape(VecTensorType const &inputs) const
+std::vector<math::SizeType> Exp<TensorType>::ComputeOutputShape(
+    std::vector<math::SizeVector> const &inputs) const
 {
-  return inputs.front()->shape();
+  return inputs.front();
 }
 
 template <typename TensorType>

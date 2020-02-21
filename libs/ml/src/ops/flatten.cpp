@@ -62,7 +62,7 @@ template <class TensorType>
 void Flatten<TensorType>::Forward(VecTensorType const &inputs, TensorType &output)
 {
   assert(inputs.size() == 1);
-  assert(output.shape() == ComputeOutputShape(inputs));
+  assert(output.shape() == Ops<TensorType>::ComputeOutputShape(inputs));
   input_shape_ = inputs.front()->shape();
 
   assert(output.shape().at(output.shape().size() - 1) ==
@@ -87,13 +87,13 @@ std::vector<TensorType> Flatten<TensorType>::Backward(VecTensorType const &input
 
 template <class TensorType>
 std::vector<math::SizeType> Flatten<TensorType>::ComputeOutputShape(
-    VecTensorType const &inputs) const
+    std::vector<math::SizeVector> const &inputs) const
 {
-  SizeType batch_size = inputs.at(0)->shape().at(inputs.at(0)->shape().size() - SizeType{1});
+  SizeType batch_size = inputs.at(0).at(inputs.at(0).size() - SizeType{1});
   SizeType data_size  = 1;
-  for (SizeType i{0}; i < inputs.at(0)->shape().size() - SizeType{1}; i++)
+  for (SizeType i{0}; i < inputs.at(0).size() - SizeType{1}; i++)
   {
-    data_size *= inputs.at(0)->shape().at(i);
+    data_size *= inputs.at(0).at(i);
   }
 
   return {data_size, batch_size};

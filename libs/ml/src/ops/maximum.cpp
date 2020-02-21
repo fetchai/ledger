@@ -60,7 +60,7 @@ void Maximum<T>::Forward(const VecTensorType &inputs, TensorType &output)
 {
   assert(inputs.size() == 2);
   assert(inputs.at(0)->size() == inputs.at(1)->size());
-  assert(output.shape() == this->ComputeOutputShape(inputs));
+  assert(output.shape() == Ops<TensorType>::ComputeOutputShape(inputs));
 
   fetch::math::Maximum((*inputs.at(0)), (*inputs.at(1)), output);
 }
@@ -108,9 +108,10 @@ std::vector<TensorType> Maximum<TensorType>::Backward(const VecTensorType &input
 }
 
 template <typename T>
-std::vector<fetch::math::SizeType> Maximum<T>::ComputeOutputShape(const VecTensorType &inputs) const
+std::vector<fetch::math::SizeType> Maximum<T>::ComputeOutputShape(
+    const std::vector<math::SizeVector> &inputs) const
 {
-  return inputs.front()->shape();
+  return inputs.front();
 }
 
 template <typename TensorType>

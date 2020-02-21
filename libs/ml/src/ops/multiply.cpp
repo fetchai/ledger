@@ -128,9 +128,9 @@ std::vector<TensorType> Multiply<TensorType>::Backward(const VecTensorType &inpu
 
 template <typename T>
 std::vector<fetch::math::SizeType> Multiply<T>::ComputeOutputShape(
-    const VecTensorType &inputs) const
+    const std::vector<math::SizeVector> &inputs) const
 {
-  return inputs.front()->shape();
+  return inputs.front();
 }
 
 template <typename TensorType>

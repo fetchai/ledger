@@ -47,9 +47,10 @@ public:
     FETCH_UNUSED(sp);
   }
 
-  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
+  std::vector<SizeType> ComputeOutputShape(
+      std::vector<math::SizeVector> const &inputs) const override
   {
-    return {inputs.at(0)->shape()};
+    return {inputs.at(0)};
   }
 
   static constexpr OpType OpCode()

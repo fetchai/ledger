@@ -129,11 +129,10 @@ std::vector<TensorType> Embeddings<TensorType>::Backward(VecTensorType const &in
 
 template <class TensorType>
 std::vector<math::SizeType> Embeddings<TensorType>::ComputeOutputShape(
-    VecTensorType const &inputs) const
+    std::vector<math::SizeVector> const &inputs) const
 {
   auto                  feature_size = this->data_->shape().at(0);
-  std::vector<SizeType> output_shape{feature_size, inputs.front()->shape().at(0),
-                                     inputs.front()->shape().at(1)};
+  std::vector<SizeType> output_shape{feature_size, inputs.front().at(0), inputs.front().at(1)};
   return output_shape;
 }
 

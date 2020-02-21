@@ -64,7 +64,7 @@ template <class TensorType>
 void Transpose<TensorType>::Forward(VecTensorType const &inputs, TensorType &output)
 {
   assert(inputs.size() == 1);
-  assert(output.shape() == this->ComputeOutputShape(inputs));
+  assert(output.shape() == Ops<TensorType>::ComputeOutputShape(inputs));
 
   if (inputs.front()->shape().size() == 2)
   {
@@ -82,7 +82,7 @@ std::vector<TensorType> Transpose<TensorType>::Backward(VecTensorType const &inp
 {
   FETCH_UNUSED(inputs);
   assert(inputs.size() == 1);
-  assert(error_signal.shape() == this->ComputeOutputShape(inputs));
+  assert(error_signal.shape() == Ops<TensorType>::ComputeOutputShape(inputs));
 
   if (error_signal.shape().size() == 2)
   {
@@ -94,16 +94,16 @@ std::vector<TensorType> Transpose<TensorType>::Backward(VecTensorType const &inp
 
 template <class TensorType>
 std::vector<math::SizeType> Transpose<TensorType>::ComputeOutputShape(
-    VecTensorType const &inputs) const
+    std::vector<math::SizeVector> const &inputs) const
 {
   // 2D transpose
-  if (inputs.at(0)->shape().size() == 2)
+  if (inputs.at(0).size() == 2)
   {
-    return {inputs.front()->shape().at(1), inputs.front()->shape().at(0)};
+    return {inputs.front().at(1), inputs.front().at(0)};
   }
   // Transpose by given vector
 
-  std::vector<SizeType> input_shape = inputs.front()->shape();
+  std::vector<SizeType> input_shape = inputs.front();
   std::vector<SizeType> shape;
 
   shape.reserve(shape.size());

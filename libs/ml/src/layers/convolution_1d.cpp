@@ -120,12 +120,11 @@ std::shared_ptr<OpsSaveableParams> Convolution1D<TensorType>::GetOpSaveableParam
 
 template <class TensorType>
 std::vector<fetch::math::SizeType> Convolution1D<TensorType>::ComputeOutputShape(
-    VecTensorType const &inputs) const
+    std::vector<math::SizeVector> const &inputs) const
 {
-  TensorType weights_data(
-      std::vector<SizeType>{{output_channels_, input_channels_, kernel_size_, 1}});
+  std::vector<SizeType> weights_data{output_channels_, input_channels_, kernel_size_, 1};
   return fetch::ml::ops::Convolution1D<TensorType>(stride_size_)
-      .ComputeOutputShape({inputs.at(0), std::make_shared<TensorType>(weights_data)});
+      .ComputeOutputShape({inputs.at(0), weights_data});
 }
 
 template <typename TensorType>

@@ -55,7 +55,7 @@ template <typename T>
 void MatrixMultiply<T>::Forward(VecTensorType const &inputs, TensorType &output)
 {
   assert(inputs.size() == 2);
-  assert(output.shape() == ComputeOutputShape(inputs));
+  assert(output.shape() == Ops<TensorType>::ComputeOutputShape(inputs));
 
   UpdateContainersForward(inputs);
 
@@ -225,7 +225,7 @@ std::vector<T> MatrixMultiply<T>::Backward(VecTensorType const &inputs,
 
 template <typename T>
 std::vector<typename fetch::math::SizeType> MatrixMultiply<T>::ComputeOutputShape(
-    VecTensorType const &inputs) const
+    std::vector<math::SizeVector> const &inputs) const
 {
   if (transpose_a_ && transpose_b_)
   {
@@ -235,38 +235,35 @@ std::vector<typename fetch::math::SizeType> MatrixMultiply<T>::ComputeOutputShap
   std::vector<fetch::math::SizeType> output_shape;
 
   // Normal Matmul
-  if (inputs.at(0)->shape().size() == 2 && inputs.at(1)->shape().size() == 2)
+  if (inputs.at(0).size() == 2 && inputs.at(1).size() == 2)
   {
     if (!transpose_a_ && !transpose_b_)
     {
-      output_shape = {inputs.at(0)->shape().at(0), inputs.at(1)->shape().at(1)};
+      output_shape = {inputs.at(0).at(0), inputs.at(1).at(1)};
     }
     else if (transpose_a_ & !transpose_b_)
     {
-      output_shape = {inputs.at(0)->shape().at(1), inputs.at(1)->shape().at(1)};
+      output_shape = {inputs.at(0).at(1), inputs.at(1).at(1)};
     }
     else
     {
-      output_shape = {inputs.at(0)->shape().at(0), inputs.at(1)->shape().at(0)};
+      output_shape = {inputs.at(0).at(0), inputs.at(1).at(0)};
     }
   }
   // Batchwise matmul or 3D @ 2D broadcast matmul
-  else if (inputs.at(0)->shape().size() == 3)
+  else if (inputs.at(0).size() == 3)
   {
     if (!transpose_a_ && !transpose_b_)
     {
-      output_shape = {inputs.at(0)->shape().at(0), inputs.at(1)->shape().at(1),
-                      inputs.at(0)->shape().at(2)};
+      output_shape = {inputs.at(0).at(0), inputs.at(1).at(1), inputs.at(0).at(2)};
     }
     else if (transpose_a_ & !transpose_b_)
     {
-      output_shape = {inputs.at(0)->shape().at(1), inputs.at(1)->shape().at(1),
-                      inputs.at(0)->shape().at(2)};
+      output_shape = {inputs.at(0).at(1), inputs.at(1).at(1), inputs.at(0).at(2)};
     }
     else
     {
-      output_shape = {inputs.at(0)->shape().at(0), inputs.at(1)->shape().at(0),
-                      inputs.at(0)->shape().at(2)};
+      output_shape = {inputs.at(0).at(0), inputs.at(1).at(0), inputs.at(0).at(2)};
     }
   }
   else
@@ -274,18 +271,15 @@ std::vector<typename fetch::math::SizeType> MatrixMultiply<T>::ComputeOutputShap
     // 2D @ 3D broadcast matmul
     if (!transpose_a_ && !transpose_b_)
     {
-      output_shape = {inputs.at(0)->shape().at(0), inputs.at(1)->shape().at(1),
-                      inputs.at(1)->shape().at(2)};
+      output_shape = {inputs.at(0).at(0), inputs.at(1).at(1), inputs.at(1).at(2)};
     }
     else if (transpose_a_ & !transpose_b_)
     {
-      output_shape = {inputs.at(0)->shape().at(1), inputs.at(1)->shape().at(1),
-                      inputs.at(1)->shape().at(2)};
+      output_shape = {inputs.at(0).at(1), inputs.at(1).at(1), inputs.at(1).at(2)};
     }
     else
     {
-      output_shape = {inputs.at(0)->shape().at(0), inputs.at(1)->shape().at(0),
-                      inputs.at(1)->shape().at(2)};
+      output_shape = {inputs.at(0).at(0), inputs.at(1).at(0), inputs.at(1).at(2)};
     }
   }
 

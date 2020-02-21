@@ -151,22 +151,22 @@ void SubGraph<TensorType>::InsertSharedCopy(
   Graph<TensorType>::InsertSharedCopy(copyshare);
 }
 
-template<class T>
-std::pair<OperationsCount, math::SizeVector>
-SubGraph<T>::ChargeForward(std::vector<math::SizeVector> input_shapes)
+template <class T>
+std::pair<OperationsCount, math::SizeVector> SubGraph<T>::ChargeForward(
+    std::vector<math::SizeVector> input_shapes)
 {
   // set inputs. Actually this might be unnecessary...
   // todo: Need a SetInputSize method; SetInput is expensive
   math::SizeType i = 0;
-  for (auto const & in_node_name: input_node_names_)
+  for (auto const &in_node_name : input_node_names_)
   {
     this->SetInput(in_node_name, TensorType{input_shapes.at(i)});
     i++;
   }
 
-  NodePtrType last_node = Graph<TensorType>::GetNode(this->output_node_name_);
+  NodePtrType                     last_node = Graph<TensorType>::GetNode(this->output_node_name_);
   std::unordered_set<std::string> visited_nodes;
-  auto cost_and_outputshape = last_node->ChargeForward(visited_nodes);
+  auto                            cost_and_outputshape = last_node->ChargeForward(visited_nodes);
 
   return cost_and_outputshape;
 }

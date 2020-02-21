@@ -941,7 +941,8 @@ ChargeAmount VMModel::EstimatePredict(const vm::Ptr<math::VMTensor> &data)
   FETCH_UNUSED(data);
   // todo: set data size
   ChargeAmount const batch_cost = model_->ChargeForward();
-  FETCH_LOG_INFO(LOGGING_NAME, " forward pass estimated batch cost is " + std::to_string(batch_cost));
+  FETCH_LOG_INFO(LOGGING_NAME,
+                 " forward pass estimated batch cost is " + std::to_string(batch_cost));
   return batch_cost;
 }
 
@@ -963,7 +964,8 @@ ChargeAmount VMModel::EstimateEvaluate()
 
   // VMModel::ChargeForwards now returns the batch cost and not the datapoint cost
   ChargeAmount const batch_cost = model_->ChargeForward();
-  FETCH_LOG_INFO(LOGGING_NAME, " forward pass estimated batch cost is " + std::to_string(batch_cost));
+  FETCH_LOG_INFO(LOGGING_NAME,
+                 " forward pass estimated batch cost is " + std::to_string(batch_cost));
   return batch_cost;
 }
 

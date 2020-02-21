@@ -408,14 +408,24 @@ bool Model<TensorType>::DataLoaderIsSet()
 }
 
 template <typename TensorType>
+OperationsCount Model<TensorType>::ChargeEvaluate() const
+{
+  OperationsCount cost = 0;
+  cost += 10;
+
+  cost += ChargeForward();
+  return cost;
+}
+
+template <typename TensorType>
 OperationsCount Model<TensorType>::ChargeForward() const
 {
-  bool is_done_set;
-  auto evaluate_pair = dataloader_ptr_->PrepareBatch(dataloader_ptr_->Size(), is_done_set);
+  //  bool is_done_set;
+  //  auto evaluate_pair = dataloader_ptr_->PrepareBatch(dataloader_ptr_->Size(), is_done_set);
 
   // todo: actually set input sizes, not inputs
-  this->graph_ptr_->SetInput(label_, evaluate_pair.first);
-  this->graph_ptr_->SetInput(input_, evaluate_pair.second.at(0));
+  //  this->graph_ptr_->SetInput(label_, evaluate_pair.first);
+  //  this->graph_ptr_->SetInput(input_, evaluate_pair.second.at(0));
   return this->graph_ptr_->ChargeForward(this->output_);
 }
 

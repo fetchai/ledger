@@ -95,7 +95,7 @@ OpType Node<TensorType>::OperationType() const
 }
 
 template <typename TensorType>
-std::pair<OperationsCount, math::SizeVector>  Node<TensorType>::ChargeForward(
+std::pair<OperationsCount, math::SizeVector> Node<TensorType>::ChargeForward(
     std::unordered_set<std::string> &visited_nodes) const
 {
   if (visited_nodes.find(this->name_) != visited_nodes.cend())
@@ -106,7 +106,7 @@ std::pair<OperationsCount, math::SizeVector>  Node<TensorType>::ChargeForward(
     return std::make_pair(0, math::SizeVector{});
   }
 
-  OperationsCount cost = 0;
+  OperationsCount               cost = 0;
   std::vector<math::SizeVector> input_shapes{};
   for (auto const &i : input_nodes_)
   {
@@ -124,7 +124,8 @@ std::pair<OperationsCount, math::SizeVector>  Node<TensorType>::ChargeForward(
 
   auto op_cost_and_outputshape = op_ptr_->ChargeForward(input_shapes);
   cost += op_cost_and_outputshape.first;
-  return std::make_pair(cost, op_cost_and_outputshape.second);;
+  return std::make_pair(cost, op_cost_and_outputshape.second);
+  ;
 }
 
 template <typename TensorType>

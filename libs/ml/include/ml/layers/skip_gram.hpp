@@ -60,9 +60,10 @@ public:
     return embed_in_;
   }
 
-  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
+  std::vector<SizeType> ComputeOutputShape(
+      std::vector<math::SizeVector> const &inputs) const override
   {
-    return {inputs.front()->shape().at(1), 1};
+    return {inputs.front().at(1), 1};
   }
 
   static constexpr OpType OpCode()

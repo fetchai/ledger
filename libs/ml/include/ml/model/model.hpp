@@ -115,6 +115,10 @@ public:
 
   friend class fetch::vm_modules::ml::model::VMModel;
 
+  virtual fetch::ml::OperationsCount ChargeEvaluate() const;
+
+  //  virtual fetch::ml::OperationsCount ChargePredict() const;
+
   virtual fetch::ml::OperationsCount ChargeForward() const;
   virtual fetch::ml::OperationsCount ChargeBackward() const;
   virtual fetch::ml::OperationsCount ChargeCompile(

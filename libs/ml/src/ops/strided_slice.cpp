@@ -93,7 +93,7 @@ template <typename TensorType>
 void StridedSlice<TensorType>::Forward(VecTensorType const &inputs, TensorType &output)
 {
   assert(inputs.size() == 1);
-  assert(output.shape() == this->ComputeOutputShape(inputs));
+  assert(output.shape() == Ops<TensorType>::ComputeOutputShape(inputs));
 
   auto slice = inputs.at(0)->Slice(begins_, ends_, strides_);
   output.Assign(slice);
@@ -110,7 +110,7 @@ std::vector<TensorType> StridedSlice<TensorType>::Backward(VecTensorType const &
                                                            TensorType const &   error_signal)
 {
   assert(inputs.size() == 1);
-  assert(error_signal.shape() == this->ComputeOutputShape(inputs));
+  assert(error_signal.shape() == Ops<TensorType>::ComputeOutputShape(inputs));
 
   TensorType ret_error_signal_{inputs.at(0)->shape()};
 
@@ -122,10 +122,10 @@ std::vector<TensorType> StridedSlice<TensorType>::Backward(VecTensorType const &
 
 template <typename TensorType>
 std::vector<math::SizeType> StridedSlice<TensorType>::ComputeOutputShape(
-    VecTensorType const &inputs) const
+    std::vector<math::SizeVector> const &inputs) const
 {
 
-  SizeVector output_shape = inputs.front()->shape();
+  SizeVector output_shape = inputs.front();
 
   // Calculate number of stride size steps from specified begin to specified end for each
   // dimension

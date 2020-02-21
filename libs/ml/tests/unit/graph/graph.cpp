@@ -1401,7 +1401,8 @@ TYPED_TEST(GraphTest, graph_charge_forward_diamond)
   g.SetInput(input, data);
   g.Compile();
 
-  static const std::size_t expected_calls_to_add = (2 * (N - 1) + 1);
+  //  static const std::size_t expected_calls_to_add = (2 * (N - 1) + 1);
+  static const std::size_t expected_calls_to_add = N;
   OperationsCount const    charge                = g.ChargeForward(output);
 
   OperationsCount add_charge{1};
