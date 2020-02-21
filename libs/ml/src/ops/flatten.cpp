@@ -116,18 +116,19 @@ OperationsCount Flatten<TensorType>::ChargeForward() const
 {
   assert(!this->batch_input_shapes_.empty());
 
-
   OperationsCount cost = fetch::ml::charge_estimation::ops::OP_OVERHEAD;
 
   auto n_elements = this->TotalElementsIn(this->batch_input_shapes_);
 
   if (n_elements < fetch::ml::charge_estimation::ops::PIECEWISE_LOWER_THRESHOLD)
   {
-    cost += fetch::ml::charge_estimation::ops::LOW_FLATTEN_PER_ELEMENT * this->TotalElementsIn(this->batch_input_shapes_);
+    cost += fetch::ml::charge_estimation::ops::LOW_FLATTEN_PER_ELEMENT *
+            this->TotalElementsIn(this->batch_input_shapes_);
   }
   else if (n_elements < fetch::ml::charge_estimation::ops::PIECEWISE_HARD_CAP)
   {
-    cost += fetch::ml::charge_estimation::ops::HIGH_FLATTEN_PER_ELEMENT * this->TotalElementsIn(this->batch_input_shapes_);
+    cost += fetch::ml::charge_estimation::ops::HIGH_FLATTEN_PER_ELEMENT *
+            this->TotalElementsIn(this->batch_input_shapes_);
   }
   else
   {

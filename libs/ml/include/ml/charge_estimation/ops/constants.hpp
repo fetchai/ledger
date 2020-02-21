@@ -24,13 +24,12 @@ namespace ml {
 namespace charge_estimation {
 namespace ops {
 
-// ML OP Charge estimations allow for none piecewise discontinuity to match benchmarked performance better
-// An upper cap is also implemented to prevent especially expensive operations
-static constexpr OperationsCount PIECEWISE_LOWER_THRESHOLD       = 16384; // 2^14
-static constexpr OperationsCount PIECEWISE_HARD_CAP              = 1048576; // 2^20
+// ML OP Charge estimations allow for none piecewise discontinuity to match benchmarked performance
+// better An upper cap is also implemented to prevent especially expensive operations
+static constexpr OperationsCount PIECEWISE_LOWER_THRESHOLD = 16384;    // 2^14
+static constexpr OperationsCount PIECEWISE_HARD_CAP        = 1048576;  // 2^20
 
-
-static constexpr OperationsCount OP_OVERHEAD                     = 60;
+static constexpr OperationsCount OP_OVERHEAD = 60;
 
 static constexpr OperationsCount FIBONNACI_GENERATOR_PER_ELEMENT = 1;
 static constexpr OperationsCount TANH_PER_ELEMENT                = 1;
@@ -39,8 +38,8 @@ static constexpr OperationsCount MAX_PER_ELEMENT                 = 1;
 static constexpr OperationsCount ADDITION_PER_ELEMENT            = 1;
 static constexpr OperationsCount SUBTRACTION_PER_ELEMENT         = ADDITION_PER_ELEMENT;
 static constexpr OperationsCount ASSIGN_PER_ELEMENT              = 5;
-static constexpr OperationsCount LOW_FLATTEN_PER_ELEMENT             = ASSIGN_PER_ELEMENT;
-static constexpr OperationsCount HIGH_FLATTEN_PER_ELEMENT            = 25;
+static constexpr OperationsCount LOW_FLATTEN_PER_ELEMENT         = ASSIGN_PER_ELEMENT;
+static constexpr OperationsCount HIGH_FLATTEN_PER_ELEMENT        = 25;
 static constexpr OperationsCount EXP_PER_ELEMENT                 = 1;
 static constexpr OperationsCount LOG_PER_ELEMENT                 = 1;
 static constexpr OperationsCount MULTIPLICATION_PER_ELEMENT      = 3;

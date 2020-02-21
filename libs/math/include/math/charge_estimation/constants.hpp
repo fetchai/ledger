@@ -17,27 +17,15 @@
 //
 //------------------------------------------------------------------------------
 
-#include "fetch_pybind.hpp"
-
-#include "network/network_manager.hpp"
+#include "math/charge_estimation/types.hpp"
 
 namespace fetch {
-namespace network {
+namespace math {
+namespace charge_estimation {
 
-void BuildNetworkManager(pybind11::module &module)
-{
-  namespace py = pybind11;
-  py::class_<NetworkManager>(module, "NetworkManager")
-      .def(py::init<std::size_t>())
-      .def("io_service", &NetworkManager::io_service)
-      .def("OnBeforeStart", &NetworkManager::OnBeforeStart)
-      .def("OnAfterStop", &NetworkManager::OnAfterStop)
-      .def("OnAfterStart", &NetworkManager::OnAfterStart)
-      .def("Stop", &NetworkManager::Stop)
-      .def("OnBeforeStop", &NetworkManager::OnBeforeStop)
-      .def("Start", &NetworkManager::Start)
-      .def("Off", &NetworkManager::Off);
-}
+static constexpr OperationsCount TENSOR_ITERATION_DEFAULT    = 3;
+static constexpr OperationsCount TENSOR_ITERATION_END_OF_ROW = 6;
 
-}  // namespace network
+}  // namespace charge_estimation
+}  // namespace math
 }  // namespace fetch

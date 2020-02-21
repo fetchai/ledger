@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2020 Fetch.AI Limited
@@ -17,27 +16,23 @@
 //
 //------------------------------------------------------------------------------
 
-#include "fetch_pybind.hpp"
-
-#include "network/network_manager.hpp"
+#include "vm_modules/ml/utilities/conversion_utilities.hpp"
 
 namespace fetch {
-namespace network {
+namespace vm_modules {
+namespace ml {
+namespace utilities {
 
-void BuildNetworkManager(pybind11::module &module)
+VMStringPtr VMStringConverter(fetch::vm::VM *vm, std::string const &str)
 {
-  namespace py = pybind11;
-  py::class_<NetworkManager>(module, "NetworkManager")
-      .def(py::init<std::size_t>())
-      .def("io_service", &NetworkManager::io_service)
-      .def("OnBeforeStart", &NetworkManager::OnBeforeStart)
-      .def("OnAfterStop", &NetworkManager::OnAfterStop)
-      .def("OnAfterStart", &NetworkManager::OnAfterStart)
-      .def("Stop", &NetworkManager::Stop)
-      .def("OnBeforeStop", &NetworkManager::OnBeforeStop)
-      .def("Start", &NetworkManager::Start)
-      .def("Off", &NetworkManager::Off);
+  return VMStringPtr{new fetch::vm::String{vm, str}};
 }
 
-}  // namespace network
+VMTensorPtr VMTensorConverter(fetch::vm::VM *vm, std::vector<fetch::math::SizeType> const &shape)
+{
+  return vm->CreateNewObject<VMTensor>(shape);
+}
+}  // namespace utilities
+}  // namespace ml
+}  // namespace vm_modules
 }  // namespace fetch

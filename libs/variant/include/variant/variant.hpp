@@ -651,7 +651,8 @@ public:
       });
       return;
     }
-    };
+    }
+
     throw std::runtime_error{"Variant has unknown type."};
   }
 
@@ -737,7 +738,7 @@ public:
     {
       auto map = deserializer.NewMapDeserializer();
 
-      var = variant::Variant::Array(map.size());
+      var = variant::Variant::Object();
       for (std::size_t i = 0; i < map.size(); i++)
       {
         byte_array::ConstByteArray key;
@@ -748,7 +749,8 @@ public:
       }
       return;
     }
-    };
+    }
+
     throw std::runtime_error{"Variant has unknown type."};
   }
 };

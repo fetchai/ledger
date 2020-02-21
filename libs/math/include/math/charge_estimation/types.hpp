@@ -17,27 +17,12 @@
 //
 //------------------------------------------------------------------------------
 
-#include "fetch_pybind.hpp"
-
-#include "network/network_manager.hpp"
+#include <cstdint>
 
 namespace fetch {
-namespace network {
+namespace math {
 
-void BuildNetworkManager(pybind11::module &module)
-{
-  namespace py = pybind11;
-  py::class_<NetworkManager>(module, "NetworkManager")
-      .def(py::init<std::size_t>())
-      .def("io_service", &NetworkManager::io_service)
-      .def("OnBeforeStart", &NetworkManager::OnBeforeStart)
-      .def("OnAfterStop", &NetworkManager::OnAfterStop)
-      .def("OnAfterStart", &NetworkManager::OnAfterStart)
-      .def("Stop", &NetworkManager::Stop)
-      .def("OnBeforeStop", &NetworkManager::OnBeforeStop)
-      .def("Start", &NetworkManager::Start)
-      .def("Off", &NetworkManager::Off);
-}
+using OperationsCount = std::uint64_t;
 
-}  // namespace network
+}  // namespace math
 }  // namespace fetch
