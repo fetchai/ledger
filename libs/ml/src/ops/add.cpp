@@ -110,16 +110,16 @@ OperationsCount Add<TensorType>::ChargeForward() const
 
   OperationsCount op_cnt{1};
 
-    SizeType num_elements = TensorType::SizeFromShape(this->batch_output_shape_);
-    SizeType height = this->batch_output_shape_[0];
+  SizeType num_elements = TensorType::SizeFromShape(this->batch_output_shape_);
+  SizeType height       = this->batch_output_shape_[0];
 
-    SizeType if_ops = num_elements/height;
-    SizeType iteration_ops = 6 * (if_ops) + 3*(num_elements-if_ops);
+  SizeType if_ops        = num_elements / height;
+  SizeType iteration_ops = 6 * (if_ops) + 3 * (num_elements - if_ops);
 
-    // Addition
-    op_cnt += num_elements;
-    // Iteration
-    op_cnt += iteration_ops * 3;
+  // Addition
+  op_cnt += num_elements;
+  // Iteration
+  op_cnt += iteration_ops * 3;
 
   return op_cnt;
 }
