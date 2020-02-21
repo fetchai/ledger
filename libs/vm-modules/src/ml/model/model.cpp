@@ -213,7 +213,7 @@ void VMModel::CompileSequentialImplementation(Ptr<String> const &loss, Ptr<Strin
     SequentialModelPtr  me             = GetMeAsSequentialIfPossible();
     if (me->LayerCount() == 0)
     {
-      vm_->RuntimeError("Can not compile an empty sequential model, please add layers first.");
+      vm_->RuntimeError("Cannot compile an empty sequential model, please add layers first.");
       return;
     }
     PrepareDataloader();
@@ -233,11 +233,8 @@ void VMModel::Fit(vm::Ptr<VMTensor> const &data, vm::Ptr<VMTensor> const &labels
 {
   try
   {
-    // prepare dataloader
-    auto data_loader = std::make_unique<TensorDataloader>();
-    data_loader->SetRandomMode(true);
-    data_loader->AddData({data->GetTensor()}, labels->GetTensor());
-    model_->SetDataloader(std::move(data_loader));
+    // set data in the model
+    model_->SetData(std::vector<TensorType>{data->GetTensor()}, labels->GetTensor());
 
     // set batch size
     model_config_->batch_size = batch_size;

@@ -70,4 +70,4 @@ def run(options, benefactor):
     api.sync(api.contracts.create(entity1, contract2, 2000))
 
     api.sync(contract.action(api, 'c2c_call', 400,
-                             [entity1], str(contract2.address)))
+                             entity1, str(contract2.address)))

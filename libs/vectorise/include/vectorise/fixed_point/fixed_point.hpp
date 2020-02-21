@@ -1240,7 +1240,7 @@ constexpr meta::IfIsFloat<T, FixedPoint<I, F>> FixedPoint<I, F>::FromFloat(T n)
     fp_state |= STATE_OVERFLOW;
     ret.Data() = MIN;
   }
-  return std::move(ret);
+  return ret;
 }
 
 /////////////////////////
@@ -1546,7 +1546,7 @@ constexpr FixedPoint<I, F> FixedPoint<I, F>::operator-() const
   }
   FixedPoint t(*this);
   t.data_ = -t.data_;
-  return std::move(t);
+  return t;
 }
 
 /**

@@ -107,15 +107,22 @@ template <typename TensorType>
 std::pair<OperationsCount, math::SizeVector> Add<TensorType>::ChargeForward(std::vector<math::SizeVector> input_shapes)
 {
   assert(!this->batch_output_shape_.empty());
-  // todo: check correctness
-  OperationsCount cost = fetch::ml::charge_estimation::ops::ADDITION_PER_ELEMENT *
-                         this->TotalElementsIn({input_shapes[0]});
+
+  OperationsCount op_cnt{1};
+
+  // Addition cost
+  SizeType num_elements = TensorType::SizeFromShape(this->batch_output_shape_);
+  op_cnt += num_elements;
+
+  // Iteration over 3 tensors (input1, input2, ret)
+  OperationsCount iteration_ops = TensorType::ChargeIterate(this->batch_output_shape_);
+  op_cnt += iteration_ops * 3;
 
   // Calculate the output shape. As a shortcut, use batch_output_shape with last dimension changed to batch size
   math::SizeVector output_shape = this->batch_output_shape_;
   output_shape.back() = input_shapes[0].back();
 
-  return std::make_pair(cost, output_shape);
+  return std::make_pair(op_cnt, output_shape);
 }
 
 template <typename TensorType>

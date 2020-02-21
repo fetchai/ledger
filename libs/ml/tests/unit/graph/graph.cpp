@@ -1403,9 +1403,19 @@ TYPED_TEST(GraphTest, graph_charge_forward_diamond)
 
   static const std::size_t expected_calls_to_add = (2 * (N - 1) + 1);
   OperationsCount const    charge                = g.ChargeForward(output);
-  OperationsCount const    expected_charge =
-      ADDITION_PER_ELEMENT * total_data_elements * expected_calls_to_add +
-      PLACEHOLDER_READING_PER_ELEMENT * total_data_elements;
+
+  OperationsCount add_charge{1};
+
+  // Addition cost
+  math::SizeType num_elements = TensorType::SizeFromShape(data.shape());
+  add_charge += num_elements;
+
+  // Iteration over 3 tensors (input1, input2, ret)
+  OperationsCount iteration_ops = TensorType::ChargeIterate(data.shape());
+  add_charge += iteration_ops * 3;
+
+  OperationsCount const expected_charge =
+      add_charge * expected_calls_to_add + PLACEHOLDER_READING_PER_ELEMENT * total_data_elements;
 
   ASSERT_EQ(charge, expected_charge);
 }

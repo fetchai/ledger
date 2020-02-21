@@ -207,7 +207,7 @@ template <typename TensorType>
 std::pair<TensorType const, typename Weights<TensorType>::SizeSet const>
 Weights<TensorType>::GetSparseGradientsReferences() const
 {
-  return std::move(std::make_pair(*this->gradient_accumulation_, this->updated_rows_));
+  return std::make_pair(*this->gradient_accumulation_, this->updated_rows_);
 }
 
 /**

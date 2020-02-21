@@ -73,7 +73,6 @@ void Monitoring::max(IdType id, CountType value)
   auto prev_value   = inner->access(id).load();
   while (prev_value < value && !inner->access(id).compare_exchange_weak(prev_value, value))
   {
-    ;
   }
 }
 
