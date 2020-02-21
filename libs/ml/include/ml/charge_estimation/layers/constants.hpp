@@ -17,27 +17,23 @@
 //
 //------------------------------------------------------------------------------
 
-#include "fetch_pybind.hpp"
-
-#include "network/network_manager.hpp"
+#include "ml/charge_estimation/types.hpp"
 
 namespace fetch {
-namespace network {
+namespace ml {
+namespace charge_estimation {
+namespace layers {
 
-void BuildNetworkManager(pybind11::module &module)
-{
-  namespace py = pybind11;
-  py::class_<NetworkManager>(module, "NetworkManager")
-      .def(py::init<std::size_t>())
-      .def("io_service", &NetworkManager::io_service)
-      .def("OnBeforeStart", &NetworkManager::OnBeforeStart)
-      .def("OnAfterStop", &NetworkManager::OnAfterStop)
-      .def("OnAfterStart", &NetworkManager::OnAfterStart)
-      .def("Stop", &NetworkManager::Stop)
-      .def("OnBeforeStop", &NetworkManager::OnBeforeStop)
-      .def("Start", &NetworkManager::Start)
-      .def("Off", &NetworkManager::Off);
-}
+static constexpr OperationsCount FULLY_CONNECTED_SHAPE_DEDUCTION                      = 5;
+static constexpr OperationsCount FULLY_CONNECTED_SHAPE_DEDUCTION_TIME_DISTRIBUTED     = 1;
+static constexpr OperationsCount FULLY_CONNECTED_SHAPE_DEDUCTION_NON_TIME_DISTRIBUTED = 5;
 
-}  // namespace network
+static constexpr OperationsCount FULLY_CONNECTED_CHARGE_CONSTRUCT                = 4;
+static constexpr OperationsCount FULLY_CONNECTED_CHARGE_CONSTRUCT_NOT_AUTODETECT = 5;
+
+static constexpr OperationsCount FULLY_CONNECTED_CHARGE_COMPILE_PER_NODE = 2;
+
+}  // namespace layers
+}  // namespace charge_estimation
+}  // namespace ml
 }  // namespace fetch

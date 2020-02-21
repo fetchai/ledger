@@ -16,6 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ml/charge_estimation/constants.hpp"
+#include "ml/charge_estimation/layers/constants.hpp"
 #include "ml/layers/fully_connected.hpp"
 #include "ml/meta/ml_type_traits.hpp"
 #include "ml/ops/add.hpp"
@@ -166,6 +168,123 @@ template <typename TensorType>
 OperationsCount FullyConnected<TensorType>::ChargeBackward() const
 {
   return Graph<TensorType>::ChargeBackward(this->output_node_name_);
+}
+
+template <typename TensorType>
+OperationsCount FullyConnected<TensorType>::ChargeCompleteShapeDeduction(bool        is_initialised,
+                                                                         WeightsInit init_mode,
+                                                                         bool     time_distributed,
+                                                                         SizeType total_inputs)
+{
+  FETCH_UNUSED(init_mode);
+
+  OperationsCount op_cnt{charge_estimation::FUNCTION_CALL_COST};
+
+  if (is_initialised)
+  {
+    return op_cnt;
+  }
+
+  if (total_inputs == AUTODETECT_INPUTS_COUNT)
+  {
+    if (time_distributed)
+    {
+      // total_inputs_ = this->batch_input_shapes_.front().at(0);
+      op_cnt += charge_estimation::layers::FULLY_CONNECTED_SHAPE_DEDUCTION_TIME_DISTRIBUTED;
+    }
+    else
+    {
+      // FindNodeByOpCode, ops::Flatten<TensorType>::ComputeBatchOutputShape();
+      op_cnt += charge_estimation::layers::FULLY_CONNECTED_SHAPE_DEDUCTION_NON_TIME_DISTRIBUTED;
+    }
+  }
+
+  // 3 x SetBatchOutputShape, SetBatchInputShapes, is_initialised=true
+  op_cnt += charge_estimation::layers::FULLY_CONNECTED_SHAPE_DEDUCTION;
+
+  return op_cnt;
+}
+
+template <typename TensorType>
+OperationsCount FullyConnected<TensorType>::ChargeConstruct(
+    SizeType in, SizeType out, details::ActivationType activation_type,
+    fetch::ml::RegularisationType regulariser, DataType regularisation_rate, WeightsInit init_mode,
+    bool time_distributed)
+{
+  FETCH_UNUSED(out);
+
+  using namespace fetch::ml::ops;
+  using namespace fetch::ml::details;
+
+  OperationsCount op_cnt{charge_estimation::FUNCTION_CALL_COST};
+
+  // start to set up the structure
+  op_cnt += PlaceHolder<TensorType>::ChargeConstruct();
+
+  // for non time distributed layer, flatten the input
+  if (!time_distributed)
+  {
+    op_cnt += Flatten<TensorType>::ChargeConstruct();
+  }
+
+  // weights
+  op_cnt += Weights<TensorType>::ChargeConstruct();
+
+  // matmul_out = input * weights
+  op_cnt += MatrixMultiply<TensorType>::ChargeConstruct();
+
+  // biases
+  op_cnt += Weights<TensorType>::ChargeConstruct();
+
+  // output = matmul_out + biases
+  op_cnt += Add<TensorType>::ChargeConstruct();
+
+  // AddActivation
+  op_cnt += GetActivationCharge<TensorType>(activation_type);
+
+  // get correct name for the layer, SetRegularisation,  AddInputNode, SetOutputNode
+  op_cnt += charge_estimation::layers::FULLY_CONNECTED_CHARGE_CONSTRUCT;
+
+  // If inputs count is known, the initialisation can be completed immediately.
+  if (in != AUTODETECT_INPUTS_COUNT)
+  {
+    // Set batch_input_shapes_, ComputeBatchOutputShape
+    op_cnt += charge_estimation::layers::FULLY_CONNECTED_CHARGE_CONSTRUCT_NOT_AUTODETECT;
+
+    op_cnt += ChargeCompleteShapeDeduction(false, init_mode, time_distributed, in);
+  }
+
+  FETCH_UNUSED(regulariser);
+  FETCH_UNUSED(regularisation_rate);
+  return op_cnt;
+}
+
+template <typename TensorType>
+OperationsCount FullyConnected<TensorType>::ChargeCompile()
+{
+  OperationsCount op_cnt{charge_estimation::FUNCTION_CALL_COST};
+
+  // Construct weights and bias tensors
+  std::vector<SizeType> weights_data_shape({total_outputs_, total_inputs_});
+  op_cnt += fetch::ml::ops::Weights<TensorType>::ChargeInitialise(weights_data_shape);
+  std::vector<SizeType> bias_data_shape = this->batch_output_shape_;
+
+  // SetInput weights
+  auto weights_dataholder = std::dynamic_pointer_cast<ops::DataHolder<TensorType>>(
+      this->nodes_.at(weights_name_)->GetOp());
+  op_cnt += weights_dataholder->ChargeSetData(weights_data_shape);
+
+  // SetInput biases
+  auto bias_dataholder =
+      std::dynamic_pointer_cast<ops::DataHolder<TensorType>>(this->nodes_.at(bias_name_)->GetOp());
+  op_cnt += bias_dataholder->ChargeSetData(bias_data_shape);
+
+  // ResetGraphCache for weights and biases
+  op_cnt +=
+      charge_estimation::layers::FULLY_CONNECTED_CHARGE_COMPILE_PER_NODE * this->nodes_.size();
+
+  op_cnt += Graph<TensorType>::ChargeCompile();
+  return op_cnt;
 }
 
 template <typename TensorType>

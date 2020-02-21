@@ -23,7 +23,7 @@ namespace vm_modules {
 namespace scripts {
 namespace ml {
 
-std::string BostonHousingScript(std::string & batch_size, bool load_data)
+std::string BostonHousingScript(std::string &batch_size, bool load_data)
 {
 
   std::string script = R"(
@@ -64,9 +64,9 @@ std::string BostonHousingScript(std::string & batch_size, bool load_data)
       model.compile("mse", "adam");
       )";
 
-  std::string batch_script      = R"(
+  std::string batch_script = R"(
       var batch_size =)";
-  std::string end_line          = R"(;)";
+  std::string end_line     = R"(;)";
 
   std::string work_script = R"(
       // train the model
@@ -83,7 +83,8 @@ std::string BostonHousingScript(std::string & batch_size, bool load_data)
   )";
 
   std::ostringstream ss;
-  ss << script << data_script << model_script << batch_script << batch_size << end_line << work_script;
+  ss << script << data_script << model_script << batch_script << batch_size << end_line
+     << work_script;
   std::string result = ss.str();
 
   return result;

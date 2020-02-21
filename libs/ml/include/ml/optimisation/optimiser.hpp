@@ -84,7 +84,8 @@ public:
 
   template <typename X, typename D>
   friend struct serializers::MapSerializer;
-  virtual OptimiserType OptimiserCode() = 0;
+  virtual OptimiserType              OptimiserCode()    = 0;
+  virtual fetch::ml::OperationsCount ChargeStep() const = 0;
 
 protected:
   std::shared_ptr<Graph<T>> graph_;

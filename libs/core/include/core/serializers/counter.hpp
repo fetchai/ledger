@@ -84,7 +84,7 @@ public:
         seek(size_);
       }
       break;
-    };
+    }
   }
 
   void Reserve(std::size_t size, ResizeParadigm const &resize_paradigm = ResizeParadigm::RELATIVE,
@@ -104,7 +104,7 @@ public:
         reserved_size_ = size;
       }
       break;
-    };
+    }
   }
 
   void WriteByte(uint8_t /*unused*/)

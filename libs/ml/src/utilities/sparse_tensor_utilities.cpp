@@ -126,7 +126,7 @@ TensorType ToSparse(TensorType const &                               src,
     dst_index++;
   }
 
-  return std::move(dst);
+  return dst;
 }
 
 template <class TensorType>
@@ -148,7 +148,7 @@ TensorType FromSparse(TensorType const &                               src,
     src_index++;
   }
 
-  return std::move(dst);
+  return dst;
 }
 
 template void SparseAdd<math::Tensor<int8_t>>(

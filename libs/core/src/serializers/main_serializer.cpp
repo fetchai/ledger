@@ -73,7 +73,7 @@ void MsgPackSerializer::Resize(uint64_t const &size, ResizeParadigm const &resiz
       seek(size);
     }
     break;
-  };
+  }
 }
 
 MsgPackSerializer::ArrayConstructor MsgPackSerializer::NewArrayConstructor()
