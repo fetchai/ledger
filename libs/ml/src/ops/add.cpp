@@ -112,17 +112,15 @@ std::pair<OperationsCount, math::SizeVector> Add<TensorType>::ChargeForward(
 
   OperationsCount op_cnt{1};
 
+  auto output_shape = ComputeOutputShape(input_shapes);
+
   // Addition cost
-  SizeType num_elements = TensorType::SizeFromShape(this->batch_output_shape_);
+  SizeType num_elements = TensorType::SizeFromShape(output_shape);
   op_cnt += num_elements;
 
   // Iteration over 3 tensors (input1, input2, ret)
-  OperationsCount iteration_ops = TensorType::ChargeIterate(this->batch_output_shape_);
+  OperationsCount iteration_ops = TensorType::ChargeIterate(output_shape);
   op_cnt += iteration_ops * 3;
-
-  // Calculate the output shape. As a shortcut, use batch_output_shape with last dimension changed
-  // to batch size
-  auto output_shape = ComputeOutputShape(input_shapes);
 
   return std::make_pair(op_cnt, output_shape);
 }
