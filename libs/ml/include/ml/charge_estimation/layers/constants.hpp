@@ -17,35 +17,23 @@
 //
 //------------------------------------------------------------------------------
 
-#include <string>
+#include "ml/charge_estimation/types.hpp"
 
 namespace fetch {
 namespace ml {
+namespace charge_estimation {
+namespace layers {
 
-template <class T>
-class Graph;
+static constexpr OperationsCount FULLY_CONNECTED_SHAPE_DEDUCTION                      = 5;
+static constexpr OperationsCount FULLY_CONNECTED_SHAPE_DEDUCTION_TIME_DISTRIBUTED     = 1;
+static constexpr OperationsCount FULLY_CONNECTED_SHAPE_DEDUCTION_NON_TIME_DISTRIBUTED = 5;
 
-namespace details {
+static constexpr OperationsCount FULLY_CONNECTED_CHARGE_CONSTRUCT                = 4;
+static constexpr OperationsCount FULLY_CONNECTED_CHARGE_CONSTRUCT_NOT_AUTODETECT = 5;
 
-enum class ActivationType
-{
-  NOTHING,
-  LEAKY_RELU,
-  LOG_SIGMOID,
-  LOG_SOFTMAX,
-  RELU,
-  SIGMOID,
-  SOFTMAX,
-  GELU
-};
+static constexpr OperationsCount FULLY_CONNECTED_CHARGE_COMPILE_PER_NODE = 2;
 
-template <class T>
-std::string AddActivationNode(ActivationType type, Graph<T> *g, std::string name,
-                              std::string input);
-
-template <class T>
-OperationsCount GetActivationCharge(ActivationType type);
-
-}  // namespace details
+}  // namespace layers
+}  // namespace charge_estimation
 }  // namespace ml
 }  // namespace fetch

@@ -154,6 +154,7 @@ public:
 
   fetch::ml::OperationsCount ChargeForward(std::string const &node_name) const;
   fetch::ml::OperationsCount ChargeBackward(std::string const &node_name) const;
+  fetch::ml::OperationsCount ChargeCompile();
 
 protected:
   std::map<std::string, NodePtrType>                            nodes_;

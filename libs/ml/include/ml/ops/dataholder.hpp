@@ -85,11 +85,15 @@ public:
     return DESCRIPTOR;
   }
 
-  OperationsCount ChargeForward() const override;
-  OperationsCount ChargeBackward() const override;
+  OperationsCount        ChargeForward() const override;
+  OperationsCount        ChargeBackward() const override;
+  static OperationsCount ChargeConstruct();
+
+  OperationsCount ChargeSetData(std::vector<SizeType> const &data);
 
 protected:
-  TensorPtrType data_ = std::make_shared<TensorType>();
+  TensorPtrType         data_ = std::make_shared<TensorType>();
+  std::vector<SizeType> future_data_shape_;
 };
 
 }  // namespace ops

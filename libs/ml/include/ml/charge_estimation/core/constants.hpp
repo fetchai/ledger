@@ -17,35 +17,12 @@
 //
 //------------------------------------------------------------------------------
 
-#include <string>
+#include "ml/charge_estimation/types.hpp"
 
 namespace fetch {
 namespace ml {
-
-template <class T>
-class Graph;
-
-namespace details {
-
-enum class ActivationType
-{
-  NOTHING,
-  LEAKY_RELU,
-  LOG_SIGMOID,
-  LOG_SOFTMAX,
-  RELU,
-  SIGMOID,
-  SOFTMAX,
-  GELU
-};
-
-template <class T>
-std::string AddActivationNode(ActivationType type, Graph<T> *g, std::string name,
-                              std::string input);
-
-template <class T>
-OperationsCount GetActivationCharge(ActivationType type);
-
-}  // namespace details
+namespace charge_estimation {
+static constexpr OperationsCount GRAPH_N_LINK_NODES = 2;
+}
 }  // namespace ml
 }  // namespace fetch

@@ -62,6 +62,37 @@ std::string AddActivationNode(ActivationType type, Graph<T> *g, std::string name
   }
 }
 
+template <class T>
+OperationsCount GetActivationCharge(ActivationType type)
+{
+  switch (type)
+  {
+  case ActivationType::LEAKY_RELU:
+    return ops::LeakyRelu<T>::ChargeConstruct();
+
+  case ActivationType::LOG_SIGMOID:
+    return ops::LogSigmoid<T>::ChargeConstruct();
+
+  case ActivationType::LOG_SOFTMAX:
+    return ops::LogSoftmax<T>::ChargeConstruct();
+
+  case ActivationType::RELU:
+    return ops::Relu<T>::ChargeConstruct();
+
+  case ActivationType::SIGMOID:
+    return ops::Sigmoid<T>::ChargeConstruct();
+
+  case ActivationType::SOFTMAX:
+    return ops::Softmax<T>::ChargeConstruct();
+
+  case ActivationType::GELU:
+    return ops::Gelu<T>::ChargeConstruct();
+
+  default:
+    return 0;
+  }
+}
+
 ///////////////////////////////
 /// EXPLICIT INSTANTIATIONS ///
 ///////////////////////////////
@@ -93,6 +124,19 @@ template std::string AddActivationNode<math::Tensor<fixed_point::fp64_t>>(
 template std::string AddActivationNode<math::Tensor<fixed_point::fp128_t>>(
     ActivationType type, Graph<math::Tensor<fixed_point::fp128_t>> *g, std::string name,
     std::string input);
+
+template OperationsCount GetActivationCharge<math::Tensor<int8_t>>(ActivationType type);
+template OperationsCount GetActivationCharge<math::Tensor<int16_t>>(ActivationType type);
+template OperationsCount GetActivationCharge<math::Tensor<int32_t>>(ActivationType type);
+template OperationsCount GetActivationCharge<math::Tensor<int64_t>>(ActivationType type);
+template OperationsCount GetActivationCharge<math::Tensor<float>>(ActivationType type);
+template OperationsCount GetActivationCharge<math::Tensor<double>>(ActivationType type);
+template OperationsCount GetActivationCharge<math::Tensor<fixed_point::fp32_t>>(
+    ActivationType type);
+template OperationsCount GetActivationCharge<math::Tensor<fixed_point::fp64_t>>(
+    ActivationType type);
+template OperationsCount GetActivationCharge<math::Tensor<fixed_point::fp128_t>>(
+    ActivationType type);
 
 }  // namespace details
 }  // namespace ml
