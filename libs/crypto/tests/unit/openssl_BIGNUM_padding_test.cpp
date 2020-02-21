@@ -59,7 +59,7 @@ protected:
     case ePadding::suffix:
       padded_bin_bn = orig_bin_bn + padding_bin;
       break;
-    };
+    }
 
     ASSERT_EQ(num_of_padding_bytes, padding_bin.size());
     ASSERT_EQ(orig_bin_bn.size() + padding_bin.size(), padded_bin_bn.size());
@@ -78,7 +78,7 @@ protected:
       ASSERT_EQ(padding_bin, padded_bin_bn.SubArray(padded_bin_bn.size() - padding_bin.size(),
                                                     padding_bin.size()));
       break;
-    };
+    }
 
     SharedPointerType<BIGNUM> padded_bn{BN_new()};
 
