@@ -98,6 +98,7 @@ TYPED_TEST(Convolution1DTest, ops_forward_test)  // Use the class as an Ops
 
   conv.ComputeBatchOutputShape({input_shape});  // necessary for out-of-Graph usage
   conv.CompleteShapeDeduction();                // necessary for out-of-Graph usage
+  conv.Compile();                               // necessary for out-of-Graph usage
 
   TensorType output(conv.ComputeOutputShape({std::make_shared<TensorType>(input)}));
   conv.Forward({std::make_shared<TensorType>(input)}, output);
@@ -143,6 +144,7 @@ TYPED_TEST(Convolution1DTest, ops_backward_test)  // Use the class as an Ops
 
   conv.ComputeBatchOutputShape({input_shape});  // necessary for out-of-Graph usage
   conv.CompleteShapeDeduction();                // necessary for out-of-Graph usage
+  conv.Compile();                               // necessary for out-of-Graph usage
 
   TensorType output(conv.ComputeOutputShape({std::make_shared<TensorType>(input)}));
   conv.Forward({std::make_shared<TensorType>(input)}, output);
@@ -197,6 +199,7 @@ TYPED_TEST(Convolution1DTest, node_forward_test)  // Use the class as a Node
   conv.AddInput(placeholder_node);
   conv.GetOp()->ComputeBatchOutputShape({input_shape});  // necessary for out-of-Graph usage
   conv.GetOp()->CompleteShapeDeduction();                // necessary for out-of-Graph usage
+  conv.GetOp()->Compile();                               // necessary for out-of-Graph usage
 
   TensorType prediction = *conv.Evaluate(true);
 
@@ -253,6 +256,7 @@ TYPED_TEST(Convolution1DTest, node_backward_test)  // Use the class as a Node
   conv.AddInput(placeholder_node);
   conv.GetOp()->ComputeBatchOutputShape({input_shape});  // necessary for out-of-Graph usage
   conv.GetOp()->CompleteShapeDeduction();                // necessary for out-of-Graph usage
+  conv.GetOp()->Compile();                               // necessary for out-of-Graph usage
 
   TensorType prediction     = *conv.Evaluate(true);
   auto       backprop_error = conv.BackPropagate(error_signal);

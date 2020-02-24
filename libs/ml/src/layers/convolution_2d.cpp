@@ -16,6 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ml/charge_estimation/constants.hpp"
+#include "ml/charge_estimation/layers/constants.hpp"
 #include "ml/layers/convolution_2d.hpp"
 #include "ml/meta/ml_type_traits.hpp"
 #include "ml/ops/convolution_2d.hpp"
@@ -117,7 +119,6 @@ void Convolution2D<TensorType>::CompleteShapeDeduction()
   input_node->SetBatchInputShapes(this->batch_input_shapes_);
   input_node->SetBatchOutputShape(this->batch_input_shapes_.front());
 
-  this->Compile();
   FETCH_LOG_INFO(Descriptor(), "-- Convolution2D initialisation completed. --");
   is_initialised_ = true;
 }
@@ -153,6 +154,28 @@ template <class TensorType>
 OperationsCount Convolution2D<TensorType>::ChargeBackward() const
 {
   return Graph<TensorType>::ChargeBackward(this->output_node_name_);
+}
+
+template <typename TensorType>
+OperationsCount Convolution2D<TensorType>::ChargeCompile()
+{
+  OperationsCount op_cnt{charge_estimation::FUNCTION_CALL_COST};
+
+  // Construct weights and bias tensors
+  std::vector<SizeType> weights_data_shape(
+      {output_channels_, input_channels_, kernel_size_, kernel_size_, 1});
+  op_cnt += fetch::ml::ops::Weights<TensorType>::ChargeInitialise(weights_data_shape);
+
+  // SetInput weights
+  auto weights_dataholder =
+      std::dynamic_pointer_cast<ops::DataHolder<TensorType>>(this->nodes_.at(weights_)->GetOp());
+  op_cnt += weights_dataholder->ChargeSetData(weights_data_shape);
+
+  // ResetGraphCache for weights and biases
+  op_cnt += charge_estimation::layers::CONV_2D_CHARGE_COMPILE_PER_NODE * this->nodes_.size();
+
+  op_cnt += Graph<TensorType>::ChargeCompile();
+  return op_cnt;
 }
 
 ///////////////////////////////

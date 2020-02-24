@@ -226,7 +226,7 @@ void Graph<TensorType>::ComputeAllNodeShapes()
 {
   if (nodes_.empty() || connections_.empty())
   {
-    FETCH_LOG_ERROR(
+    FETCH_LOG_WARN(
         DESCRIPTOR,
         " Batch output shape computing is impossible : connection list empty or no nodes");
     return;
@@ -241,8 +241,8 @@ void Graph<TensorType>::ComputeAllNodeShapes()
 
     if (output_shape.empty())
     {
-      FETCH_LOG_ERROR(DESCRIPTOR, " Batch output shape computing failed for node " +
-                                      node_name_and_ptr.first + ".");
+      FETCH_LOG_WARN(DESCRIPTOR, " Batch output shape computing failed for node " +
+                                     node_name_and_ptr.first + ".");
     }
   }
 }
