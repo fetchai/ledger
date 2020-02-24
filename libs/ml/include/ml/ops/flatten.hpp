@@ -72,8 +72,8 @@ public:
   OpType      OperationType() const override;
   char const *Descriptor() const override;
 
-    std::pair<OperationsCount, math::SizeVector> ChargeForward(
-            std::vector<math::SizeVector> input_shapes) override;
+  std::pair<OperationsCount, math::SizeVector> ChargeForward(
+      std::vector<math::SizeVector> input_shapes) override;
   OperationsCount        ChargeBackward() const override;
   static OperationsCount ChargeConstruct();
 

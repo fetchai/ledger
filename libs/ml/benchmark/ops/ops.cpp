@@ -305,7 +305,7 @@ void BM_AvgPool1DBackward(benchmark::State &state)
   VecTensorType inputs;
   inputs.emplace_back(std::make_shared<TensorType>(input));
   fetch::ml::ops::AvgPool1D<TensorType> avg_pool_1d(K, S);
-  fetch::math::Tensor<T>                error_signal(avg_pool_1d.ComputeOutputShape({input.shape()}));
+  fetch::math::Tensor<T> error_signal(avg_pool_1d.ComputeOutputShape({input.shape()}));
 
   for (auto _ : state)
   {
@@ -934,7 +934,7 @@ void BM_Conv1DBackward(benchmark::State &state)
   inputs.emplace_back(std::make_shared<TensorType>(kernel));
 
   fetch::ml::ops::Convolution1D<TensorType> conv_1d;
-  fetch::math::Tensor<T>                    error_signal(conv_1d.ComputeOutputShape({input.shape()}));
+  fetch::math::Tensor<T> error_signal(conv_1d.ComputeOutputShape({input.shape()}));
 
   for (auto _ : state)
   {
@@ -2536,7 +2536,7 @@ void BM_MaxPool1DBackward(benchmark::State &state)
   VecTensorType inputs;
   inputs.emplace_back(std::make_shared<TensorType>(input));
   fetch::ml::ops::MaxPool1D<TensorType> max_pool_1d(K, S);
-  fetch::math::Tensor<T>                error_signal(max_pool_1d.ComputeOutputShape({input.shape()}));
+  fetch::math::Tensor<T> error_signal(max_pool_1d.ComputeOutputShape({input.shape()}));
 
   for (auto _ : state)
   {
@@ -2734,7 +2734,7 @@ void BM_MaxPool2DBackward(benchmark::State &state)
   VecTensorType inputs;
   inputs.emplace_back(std::make_shared<TensorType>(input));
   fetch::ml::ops::MaxPool2D<TensorType> max_pool_2d(K, S);
-  fetch::math::Tensor<T>                error_signal(max_pool_2d.ComputeOutputShape({input.shape()}));
+  fetch::math::Tensor<T> error_signal(max_pool_2d.ComputeOutputShape({input.shape()}));
 
   for (auto _ : state)
   {
@@ -2986,7 +2986,7 @@ void BM_OneHotForward(benchmark::State &state)
   VecTensorType inputs;
   inputs.emplace_back(std::make_shared<TensorType>(input));
   fetch::ml::ops::OneHot<fetch::math::Tensor<T>> one_hot(depth);
-  fetch::math::Tensor<T>                         output(one_hot.ComputeOutputShape({input.shape()}));
+  fetch::math::Tensor<T> output(one_hot.ComputeOutputShape({input.shape()}));
 
   for (auto _ : state)
   {
@@ -3146,7 +3146,7 @@ void BM_OneHotBackward(benchmark::State &state)
   VecTensorType inputs;
   inputs.emplace_back(std::make_shared<TensorType>(input));
   fetch::ml::ops::OneHot<fetch::math::Tensor<T>> one_hot(depth);
-  fetch::math::Tensor<T>                         output(one_hot.ComputeOutputShape({input.shape()}));
+  fetch::math::Tensor<T> output(one_hot.ComputeOutputShape({input.shape()}));
 
   for (auto _ : state)
   {
@@ -3451,7 +3451,7 @@ void BM_ReduceMeanForward(benchmark::State &state)
   SizeType      axis = 1;
   inputs.emplace_back(std::make_shared<TensorType>(input));
   fetch::ml::ops::ReduceMean<fetch::math::Tensor<T>> rmean(axis);
-  fetch::math::Tensor<T>                             output(rmean.ComputeOutputShape({input.shape()}));
+  fetch::math::Tensor<T> output(rmean.ComputeOutputShape({input.shape()}));
 
   for (auto _ : state)
   {
@@ -3528,7 +3528,7 @@ void BM_ReduceMeanBackward(benchmark::State &state)
   SizeType      axis = 1;
   inputs.emplace_back(std::make_shared<TensorType>(input));
   fetch::ml::ops::ReduceMean<fetch::math::Tensor<T>> rmean(axis);
-  fetch::math::Tensor<T>                             output(rmean.ComputeOutputShape({input.shape()}));
+  fetch::math::Tensor<T> output(rmean.ComputeOutputShape({input.shape()}));
 
   for (auto _ : state)
   {
@@ -3605,7 +3605,7 @@ void BM_ReshapeForward(benchmark::State &state)
   VecTensorType inputs;
   inputs.emplace_back(std::make_shared<TensorType>(input));
   fetch::ml::ops::Reshape<fetch::math::Tensor<T>> reshape(new_shape);
-  fetch::math::Tensor<T>                          output(reshape.ComputeOutputShape({input.shape()}));
+  fetch::math::Tensor<T> output(reshape.ComputeOutputShape({input.shape()}));
 
   for (auto _ : state)
   {
@@ -3682,7 +3682,7 @@ void BM_ReshapeBackward(benchmark::State &state)
   VecTensorType inputs;
   inputs.emplace_back(std::make_shared<TensorType>(input));
   fetch::ml::ops::Reshape<fetch::math::Tensor<T>> reshape(new_shape);
-  fetch::math::Tensor<T>                          output(reshape.ComputeOutputShape({input.shape()}));
+  fetch::math::Tensor<T> output(reshape.ComputeOutputShape({input.shape()}));
 
   for (auto _ : state)
   {
