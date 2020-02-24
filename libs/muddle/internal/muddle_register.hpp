@@ -115,7 +115,6 @@ protected:
   /// @}
 
 private:
-  using GaugePtr   = telemetry::GaugePtr<uint64_t>;
   using CounterPtr = telemetry::CounterPtr;
 
   std::string const name_;

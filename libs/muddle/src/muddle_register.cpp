@@ -50,9 +50,13 @@ std::string CreateMetricName(std::string const &prefix, std::string const &name)
   return metric_name;
 }
 
-telemetry::CounterPtr CreateCounter(std::string const &prefix, std::string const &name,
+telemetry::CounterPtr CreateCounter(std::string prefix, std::string const &name,
                                     std::string const &description)
 {
+  // Telemetry requires lowercase, no special characters other than underscore
+  std::transform(prefix.begin(), prefix.end(), prefix.begin(),
+                 [](unsigned char c) { return c == ':' ? '_' : std::tolower(c); });
+
   std::string metric_name = CreateMetricName(prefix, name);
   return Registry::Instance().CreateCounter(std::move(metric_name), description);
 }
@@ -339,7 +343,7 @@ Address MuddleRegister::GetAddress(ConnectionHandle handle) const
  */
 void MuddleRegister::Enter(WeakConnectionPtr const &ptr)
 {
-  connections_entered_total_->add(1);
+  connections_entered_total_->increment();
   FETCH_LOCK(lock_);
 
   auto strong_conn = ptr.lock();
@@ -372,7 +376,7 @@ void MuddleRegister::Enter(WeakConnectionPtr const &ptr)
  */
 void MuddleRegister::Leave(ConnectionHandle handle)
 {
-  connections_left_total_->add(1);
+  connections_left_total_->increment();
 
   ConnectionLeftCallback callback_copy;
   {
@@ -411,7 +415,7 @@ void MuddleRegister::Leave(ConnectionHandle handle)
   // signal the router
   if (callback_copy)
   {
-    connections_callbacks_called_total_->add(1);
+    connections_callbacks_called_total_->increment();
     callback_copy(handle);
   }
   else
