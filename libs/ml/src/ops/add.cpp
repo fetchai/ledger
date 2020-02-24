@@ -115,8 +115,9 @@ std::pair<OperationsCount, math::SizeVector> Add<TensorType>::ChargeForward(
 
   auto output_shape = ComputeOutputShape(input_shapes);
   auto n_elements   = TensorType::SizeFromShape(output_shape);
+  auto padded_size  = TensorType::PaddedSizeFromShape(output_shape);
 
-  if (n_elements < fetch::ml::charge_estimation::ops::PIECEWISE_LOWER_THRESHOLD)
+  if ((padded_size / 32) < fetch::ml::charge_estimation::ops::PIECEWISE_LOWER_THRESHOLD)
   {
     // Addition cost
     SizeType num_elements =
@@ -127,7 +128,7 @@ std::pair<OperationsCount, math::SizeVector> Add<TensorType>::ChargeForward(
     OperationsCount iteration_ops = TensorType::ChargeIterate(output_shape);
     cost += iteration_ops * 3;
   }
-  else if (n_elements < fetch::ml::charge_estimation::ops::PIECEWISE_HARD_CAP)
+  else if ((padded_size / 32) < fetch::ml::charge_estimation::ops::PIECEWISE_HARD_CAP)
   {
     // Addition cost
     SizeType num_elements =

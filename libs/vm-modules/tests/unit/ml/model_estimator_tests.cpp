@@ -17,6 +17,8 @@
 //------------------------------------------------------------------------------
 
 #include "core/serializers/main_serializer.hpp"
+#include "math/base_types.hpp"
+#include "ml/charge_estimation/types.hpp"
 #include "ml/layers/fully_connected.hpp"
 #include "vm_modules/ml/model/model.hpp"
 #include "vm_modules/vm_factory.hpp"
@@ -1020,29 +1022,47 @@ TEST_F(VMModelEstimatorTests, charge_forward_one_dense)
   // n placeholder readings
   expected_cost += inputs * PLACEHOLDER_READING_PER_ELEMENT;
   // n flattening operations (because Dense is not time-distributed in this test)
-  expected_cost += inputs * FLATTEN_PER_ELEMENT;
-  // n*m Weights reading (100 weights total)
-  expected_cost += (inputs * outputs) * WEIGHTS_READING_PER_ELEMENT;
-  // n*m*1 matmul operations
-  expected_cost += (inputs * outputs) * MULTIPLICATION_PER_ELEMENT;
-  // m bias weights reading
-  expected_cost += outputs * WEIGHTS_READING_PER_ELEMENT;
 
-  fetch::ml::OperationsCount add_charge{1};
+  bool max_charge = false;
+  if (inputs < fetch::ml::charge_estimation::ops::PIECEWISE_LOWER_THRESHOLD)
+  {
+    expected_cost += fetch::ml::charge_estimation::ops::LOW_FLATTEN_PER_ELEMENT * inputs;
+  }
+  else if (inputs < fetch::ml::charge_estimation::ops::PIECEWISE_HARD_CAP)
+  {
+    expected_cost += fetch::ml::charge_estimation::ops::HIGH_FLATTEN_PER_ELEMENT * inputs;
+  }
+  else
+  {
+    expected_cost = fetch::math::numeric_max<fetch::ml::OperationsCount>();
+    max_charge    = true;
+  }
 
-  // Addition cost
-  // Type of tensor is not important for SizeFromShape
-  fetch::math::SizeType num_elements = fetch::math::Tensor<float>::SizeFromShape({outputs, 1});
-  add_charge += num_elements;
+  if (!max_charge)
+  {
+    // n*m Weights reading (100 weights total)
+    expected_cost += (inputs * outputs) * WEIGHTS_READING_PER_ELEMENT;
+    // n*m*1 matmul operations
+    expected_cost += (inputs * outputs) * MULTIPLICATION_PER_ELEMENT;
+    // m bias weights reading
+    expected_cost += outputs * WEIGHTS_READING_PER_ELEMENT;
 
-  // Iteration over 3 tensors (input1, input2, ret)
-  // Type of tensor is not important for ChargeIterate
-  fetch::ml::OperationsCount iteration_ops =
-      fetch::math::Tensor<float>::ChargeIterate({outputs, 1});
-  add_charge += iteration_ops * 3;
+    fetch::ml::OperationsCount add_charge{1};
 
-  // m adding (bias + matmul result)
-  expected_cost += add_charge;
+    // Addition cost
+    // Type of tensor is not important for SizeFromShape
+    fetch::math::SizeType num_elements = fetch::math::Tensor<float>::SizeFromShape({outputs, 1});
+    add_charge += num_elements;
+
+    // Iteration over 3 tensors (input1, input2, ret)
+    // Type of tensor is not important for ChargeIterate
+    fetch::ml::OperationsCount iteration_ops =
+        fetch::math::Tensor<float>::ChargeIterate({outputs, 1});
+    add_charge += iteration_ops * 3;
+
+    // m adding (bias + matmul result)
+    expected_cost += add_charge;
+  }
 
   ASSERT_EQ(cost, expected_cost * batch_size);
 }

@@ -119,21 +119,19 @@ std::pair<OperationsCount, math::SizeVector> Flatten<TensorType>::ChargeForward(
 
   OperationsCount cost = fetch::ml::charge_estimation::ops::OP_OVERHEAD;
 
-  auto n_elements = this->TotalElementsIn(this->batch_input_shapes_);
+  auto padded_size = TensorType::PaddedSizeFromShape(this->batch_input_shapes_.front());
 
-  if (n_elements < fetch::ml::charge_estimation::ops::PIECEWISE_LOWER_THRESHOLD)
+  if (padded_size < fetch::ml::charge_estimation::ops::PIECEWISE_LOWER_THRESHOLD)
   {
-    cost += fetch::ml::charge_estimation::ops::LOW_FLATTEN_PER_ELEMENT *
-            this->TotalElementsIn(this->batch_input_shapes_);
+    cost += fetch::ml::charge_estimation::ops::LOW_FLATTEN_PER_ELEMENT * (padded_size / 32);
   }
-  else if (n_elements < fetch::ml::charge_estimation::ops::PIECEWISE_HARD_CAP)
+  else if (padded_size < fetch::ml::charge_estimation::ops::PIECEWISE_HARD_CAP)
   {
-    cost += fetch::ml::charge_estimation::ops::HIGH_FLATTEN_PER_ELEMENT *
-            this->TotalElementsIn(this->batch_input_shapes_);
+    cost += fetch::ml::charge_estimation::ops::HIGH_FLATTEN_PER_ELEMENT * (padded_size / 32);
   }
   else
   {
-    cost += math::numeric_max<OperationsCount>();
+    cost = math::numeric_max<OperationsCount>();
   }
 
   auto output_shape = ComputeOutputShape(input_shapes);

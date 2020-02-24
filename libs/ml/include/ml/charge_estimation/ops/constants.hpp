@@ -26,8 +26,8 @@ namespace ops {
 
 // ML OP Charge estimations allow for none piecewise discontinuity to match benchmarked performance
 // better An upper cap is also implemented to prevent especially expensive operations
-static constexpr OperationsCount PIECEWISE_LOWER_THRESHOLD = 16384;    // 2^14
-static constexpr OperationsCount PIECEWISE_HARD_CAP        = 1048576;  // 2^20
+static constexpr OperationsCount PIECEWISE_LOWER_THRESHOLD = 524288;    // 2^14 * 32 (padded size)
+static constexpr OperationsCount PIECEWISE_HARD_CAP        = 33554432;  // 2^20 * 32 (padded size)
 
 static constexpr OperationsCount OP_OVERHEAD = 60;
 
