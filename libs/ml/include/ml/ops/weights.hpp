@@ -61,6 +61,7 @@ public:
   using VecTensorType  = typename Variable<T>::VecTensorType;
   using SPType         = OpWeightsSaveableParams<TensorType>;
   using WeightsPtrType = typename std::shared_ptr<Weights<TensorType>>;
+  using ParentClass    = Variable<TensorType>;
 
 public:
   Weights() = default;

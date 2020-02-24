@@ -17,10 +17,10 @@
 //------------------------------------------------------------------------------
 
 #include "ml/core/node.hpp"
-#include "ml/core/subgraph.hpp"
 #include "ml/ops/ops.hpp"
 #include "ml/ops/weights.hpp"
 #include "ml/saveparams/saveable_params.hpp"
+#include "ml/utilities/utils.hpp"
 
 namespace fetch {
 namespace ml {
@@ -98,14 +98,6 @@ template <typename TensorType>
 std::pair<OperationsCount, math::SizeVector> Node<TensorType>::ChargeForward(
     std::unordered_set<std::string> &visited_nodes) const
 {
-  if (visited_nodes.find(this->name_) != visited_nodes.cend())
-  {
-    // If this node has already been visited, there is no need for recursive calls to its
-    // inputs and only cost of this particular node forward run is returned.
-    // todo: should return zero?  Not sure what to do about shape either!
-    return std::make_pair(0, math::SizeVector{});
-  }
-
   OperationsCount               cost = 0;
   std::vector<math::SizeVector> input_shapes{};
   for (auto const &i : input_nodes_)
@@ -120,12 +112,21 @@ std::pair<OperationsCount, math::SizeVector> Node<TensorType>::ChargeForward(
     cost += cost_and_outputshape.first;
     input_shapes.push_back(cost_and_outputshape.second);
   }
-  visited_nodes.insert(this->name_);
 
   auto op_cost_and_outputshape = op_ptr_->ChargeForward(input_shapes);
-  cost += op_cost_and_outputshape.first;
-  return std::make_pair(cost, op_cost_and_outputshape.second);
-  ;
+
+  if (visited_nodes.find(this->name_) == visited_nodes.cend())
+  {
+    visited_nodes.insert(this->name_);
+    cost += op_cost_and_outputshape.first;
+    return std::make_pair(cost, op_cost_and_outputshape.second);
+  }
+  else
+  {
+    // If this node has already been visited then the cost is zero. But we still need to do the
+    // recursion above in order to get the correct output shape.
+    return std::make_pair(0, op_cost_and_outputshape.second);
+  }
 }
 
 template <typename TensorType>
@@ -329,7 +330,8 @@ std::shared_ptr<TensorType> Node<TensorType>::Evaluate(bool is_training)
 
     if (cached_output_status_ == CachedOutputState::CHANGED_SIZE)
     {
-      auto output_shape = op_ptr_->ComputeOutputShape(inputs);
+      auto output_shape =
+          op_ptr_->ComputeOutputShape(fetch::ml::utilities::TensorPtrsToSizes(inputs));
 
       // make shape compatible right before we do the forwarding
       if (cached_output_.shape() != output_shape)

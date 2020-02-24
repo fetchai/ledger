@@ -73,7 +73,7 @@ public:
   void Forward(VecTensorType const &inputs, TensorType &output) override
   {
     assert(inputs.size() == 3);
-    assert(output.shape() == Ops<TensorType>::ComputeOutputShape(inputs));
+    assert(output.shape() == ComputeOutputShape(fetch::ml::utilities::TensorPtrsToSizes(inputs)));
     assert(inputs.at(1)->shape() == inputs.at(2)->shape());
 
     fetch::math::Switch(*(inputs.at(0)), *(inputs.at(1)), *(inputs.at(2)), output);

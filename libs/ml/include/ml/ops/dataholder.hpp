@@ -49,12 +49,11 @@ public:
   using VecTensorType = typename Ops<T>::VecTensorType;
   using SPType        = OpDataHolderSaveableParams<T>;
   using MyType        = DataHolder<TensorType>;
+  using ParentClass   = Ops<T>;
 
   DataHolder() = default;
 
-  explicit DataHolder(SPType const &sp)
-    : Ops<T>(sp)
-  {}
+  explicit DataHolder(SPType const &sp);
 
   ~DataHolder() override = default;
 
@@ -91,6 +90,7 @@ public:
   static OperationsCount ChargeConstruct();
 
   OperationsCount ChargeSetData(std::vector<SizeType> const &data);
+  void            SetFutureDataShape(const std::vector<SizeType> &data);
 
 protected:
   TensorPtrType         data_ = std::make_shared<TensorType>();

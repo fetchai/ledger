@@ -61,7 +61,7 @@ template <typename TensorType>
 void Add<TensorType>::Forward(VecTensorType const &inputs, TensorType &output)
 {
   assert(inputs.size() == 2);
-  assert(output.shape() == Ops<TensorType>::ComputeOutputShape(inputs));
+  assert(output.shape() == ComputeOutputShape(fetch::ml::utilities::TensorPtrsToSizes(inputs)));
   fetch::math::Add((*inputs.at(0)), (*inputs.at(1)), output);
 }
 
@@ -72,7 +72,8 @@ std::vector<TensorType> Add<TensorType>::Backward(VecTensorType const &inputs,
   assert(inputs.size() == 2);
   assert(inputs.at(0)->shape().size() == inputs.at(1)->shape().size());
   assert(inputs.at(0)->shape() == error_signal.shape());
-  assert(error_signal.shape() == Ops<TensorType>::ComputeOutputShape(inputs));
+  assert(error_signal.shape() ==
+         ComputeOutputShape(fetch::ml::utilities::TensorPtrsToSizes(inputs)));
 
   if (inputs.at(0)->shape() == inputs.at(1)->shape())
   {

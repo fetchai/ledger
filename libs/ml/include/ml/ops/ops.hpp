@@ -23,6 +23,7 @@
 #include "ml/charge_estimation/ops/constants.hpp"
 #include "ml/exceptions/exceptions.hpp"
 #include "ml/saveparams/saveable_params.hpp"
+#include "ml/utilities/utils.hpp"
 
 #include <functional>
 #include <memory>
@@ -52,21 +53,6 @@ public:
   virtual void                    Forward(VecTensorType const &inputs, TensorType &output) = 0;
   virtual std::vector<TensorType> Backward(VecTensorType const &inputs,
                                            TensorType const &   error_signal)                 = 0;
-  /*
-   * ComputeOutputShape is usually expensive function and should be used only for initialisation or
-   * in ASSERT. On Forward you can use output.shape() and on Backward there is error_signal.shape()
-   */
-  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const
-  {
-    std::vector<math::SizeVector> input_shapes{};
-    for (auto const &inp : inputs)
-    {
-      input_shapes.emplace_back(inp->shape());
-    }
-    auto result = ComputeOutputShape(input_shapes);
-    // todo: add asserts here about batch shape
-    return ComputeOutputShape(input_shapes);
-  }
 
   virtual std::vector<SizeType> ComputeOutputShape(
       std::vector<math::SizeVector> const &inputs) const = 0;

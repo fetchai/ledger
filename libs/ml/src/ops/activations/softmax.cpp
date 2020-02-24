@@ -74,7 +74,7 @@ std::shared_ptr<fetch::ml::ops::Ops<TensorType>> Softmax<TensorType>::MakeShared
 template <typename TensorType>
 void Softmax<TensorType>::Forward(VecTensorType const &inputs, TensorType &output)
 {
-  assert(output.shape() == Ops<TensorType>::ComputeOutputShape(inputs));
+  assert(output.shape() == ComputeOutputShape(fetch::ml::utilities::TensorPtrsToSizes(inputs)));
   assert(inputs.size() == 1);
 
   if (axes_.empty())

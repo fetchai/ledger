@@ -68,7 +68,7 @@ void Convolution2D<TensorType>::Forward(VecTensorType const &inputs, TensorType 
   assert(inputs.at(0)->shape().size() == 4);
   // Kernels should be a 5D tensor [oC x iC x H x W x N]
   assert(inputs.at(1)->shape().size() == 5);
-  assert(output.shape() == Ops<TensorType>::ComputeOutputShape(inputs));
+  assert(output.shape() == ComputeOutputShape(fetch::ml::utilities::TensorPtrsToSizes(inputs)));
 
   TensorType input   = (*inputs.at(0));
   TensorType kernels = (*inputs.at(1));
@@ -126,7 +126,8 @@ std::vector<TensorType> Convolution2D<TensorType>::Backward(VecTensorType const 
   assert(inputs.at(0)->shape().size() == 4);
   // Kernels should be a 5D tensor [oC x iC x H x W x N]
   assert(inputs.at(1)->shape().size() == 5);
-  assert(error_signal.shape() == Ops<TensorType>::ComputeOutputShape(inputs));
+  assert(error_signal.shape() ==
+         ComputeOutputShape(fetch::ml::utilities::TensorPtrsToSizes(inputs)));
 
   // input data channels = kernel input channels
   assert(inputs.at(0)->shape().at(0) == inputs.at(1)->shape().at(1));

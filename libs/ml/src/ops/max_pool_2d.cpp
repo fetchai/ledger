@@ -75,7 +75,7 @@ void MaxPool2D<T>::Forward(const VecTensorType &inputs, TensorType &output)
   assert(inputs.size() == 1);
   // Input must be a 4D tensor [C x W x H x N]
   assert(inputs.at(0)->shape().size() == 4);
-  assert(output.shape() == Ops<TensorType>::ComputeOutputShape(inputs));
+  assert(output.shape() == ComputeOutputShape(fetch::ml::utilities::TensorPtrsToSizes(inputs)));
 
   SizeType iterw;
   SizeType iterh;
@@ -135,7 +135,8 @@ std::vector<TensorType> MaxPool2D<TensorType>::Backward(const VecTensorType &inp
                                                         const TensorType &   error_signal)
 {
   assert(inputs.size() == 1);
-  assert(error_signal.shape() == Ops<TensorType>::ComputeOutputShape(inputs));
+  assert(error_signal.shape() ==
+         ComputeOutputShape(fetch::ml::utilities::TensorPtrsToSizes(inputs)));
   TensorType return_signal{inputs.at(0)->shape()};
 
   SizeType iterh;

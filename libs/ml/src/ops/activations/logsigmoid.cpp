@@ -60,7 +60,7 @@ template <typename TensorType>
 void LogSigmoid<TensorType>::Forward(VecTensorType const &inputs, TensorType &output)
 {
   assert(inputs.size() == 1);
-  assert(output.shape() == Ops<TensorType>::ComputeOutputShape(inputs));
+  assert(output.shape() == ComputeOutputShape(fetch::ml::utilities::TensorPtrsToSizes(inputs)));
 
   fetch::math::Sigmoid((*inputs.front()), output);
   fetch::math::Log(output, output);

@@ -54,7 +54,7 @@ TYPED_TEST(OpsSaveParamsTest, abs_saveparams_test)
 
   OpKind op;
 
-  TensorType    prediction(op.ComputeOutputShape({std::make_shared<TensorType const>(data)}));
+  TensorType    prediction(op.ComputeOutputShape({data.shape()}));
   VecTensorType vec_data({std::make_shared<const TensorType>(data)});
 
   op.Forward(vec_data, prediction);
@@ -125,8 +125,7 @@ TYPED_TEST(OpsSaveParamsTest, add_saveparams_test)
 
   OpKind op;
 
-  TensorType    prediction(op.ComputeOutputShape(
-      {std::make_shared<const TensorType>(data_1), std::make_shared<const TensorType>(data_2)}));
+  TensorType    prediction(op.ComputeOutputShape({data_1.shape(), data_2.shape()}));
   VecTensorType vec_data(
       {std::make_shared<const TensorType>(data_1), std::make_shared<const TensorType>(data_2)});
 
@@ -136,8 +135,7 @@ TYPED_TEST(OpsSaveParamsTest, add_saveparams_test)
   OpKind new_op(*dsp);
 
   // check that new predictions match the old
-  TensorType new_prediction(op.ComputeOutputShape(
-      {std::make_shared<const TensorType>(data_1), std::make_shared<const TensorType>(data_2)}));
+  TensorType new_prediction(op.ComputeOutputShape({data_1.shape(), data_2.shape()}));
   new_op.Forward(vec_data, new_prediction);
 
   // test correct values
@@ -400,8 +398,7 @@ TYPED_TEST(OpsSaveParamsTest, concatenate_saveparams_test)
 
   OpKind op(1);
 
-  TensorType    prediction(op.ComputeOutputShape(
-      {std::make_shared<const TensorType>(data1), std::make_shared<const TensorType>(data2)}));
+  TensorType    prediction(op.ComputeOutputShape({data1.shape(), data2.shape()}));
   VecTensorType vec_data(
       {std::make_shared<const TensorType>(data1), std::make_shared<const TensorType>(data2)});
 
@@ -411,8 +408,7 @@ TYPED_TEST(OpsSaveParamsTest, concatenate_saveparams_test)
   OpKind new_op(*dsp);
 
   // check that new predictions match the old
-  TensorType new_prediction(op.ComputeOutputShape(
-      {std::make_shared<const TensorType>(data1), std::make_shared<const TensorType>(data2)}));
+  TensorType new_prediction(op.ComputeOutputShape({data1.shape(), data2.shape()}));
   new_op.Forward(vec_data, new_prediction);
 
   // test correct values
@@ -504,8 +500,7 @@ TYPED_TEST(OpsSaveParamsTest, conv1c_op_saveparams_test)
 
   OpKind op;
 
-  TensorType    prediction(op.ComputeOutputShape(
-      {std::make_shared<const TensorType>(input), std::make_shared<const TensorType>(weights)}));
+  TensorType    prediction(op.ComputeOutputShape({input.shape(), weights.shape()}));
   VecTensorType vec_data(
       {std::make_shared<const TensorType>(input), std::make_shared<const TensorType>(weights)});
 
@@ -515,8 +510,7 @@ TYPED_TEST(OpsSaveParamsTest, conv1c_op_saveparams_test)
   OpKind new_op(*dsp);
 
   // check that new predictions match the old
-  TensorType new_prediction(op.ComputeOutputShape(
-      {std::make_shared<const TensorType>(input), std::make_shared<const TensorType>(weights)}));
+  TensorType new_prediction(op.ComputeOutputShape({input.shape(), weights.shape()}));
   new_op.Forward(vec_data, new_prediction);
 
   // test correct values
@@ -630,8 +624,7 @@ TYPED_TEST(OpsSaveParamsTest, conv2d_op_saveparams_test)
 
   OpKind op;
 
-  TensorType    prediction(op.ComputeOutputShape(
-      {std::make_shared<const TensorType>(input), std::make_shared<const TensorType>(weights)}));
+  TensorType    prediction(op.ComputeOutputShape({input.shape(), weights.shape()}));
   VecTensorType vec_data(
       {std::make_shared<const TensorType>(input), std::make_shared<const TensorType>(weights)});
 
@@ -641,8 +634,7 @@ TYPED_TEST(OpsSaveParamsTest, conv2d_op_saveparams_test)
   OpKind new_op(*dsp);
 
   // check that new predictions match the old
-  TensorType new_prediction(op.ComputeOutputShape(
-      {std::make_shared<const TensorType>(input), std::make_shared<const TensorType>(weights)}));
+  TensorType new_prediction(op.ComputeOutputShape({input.shape(), weights.shape()}));
   new_op.Forward(vec_data, new_prediction);
 
   // test correct values
@@ -763,8 +755,7 @@ TYPED_TEST(OpsSaveParamsTest, divide_saveparams_test)
 
   OpKind op;
 
-  TensorType    prediction(op.ComputeOutputShape(
-      {std::make_shared<const TensorType>(data_1), std::make_shared<const TensorType>(data_2)}));
+  TensorType    prediction(op.ComputeOutputShape({data_1.shape(), data_2.shape()}));
   VecTensorType vec_data(
       {std::make_shared<const TensorType>(data_1), std::make_shared<const TensorType>(data_2)});
 
@@ -774,8 +765,7 @@ TYPED_TEST(OpsSaveParamsTest, divide_saveparams_test)
   OpKind new_op(*dsp);
 
   // check that new predictions match the old
-  TensorType new_prediction(op.ComputeOutputShape(
-      {std::make_shared<const TensorType>(data_1), std::make_shared<const TensorType>(data_2)}));
+  TensorType new_prediction(op.ComputeOutputShape({data_1.shape(), data_2.shape()}));
   new_op.Forward(vec_data, new_prediction);
 
   // test correct values
@@ -848,7 +838,7 @@ TYPED_TEST(OpsSaveParamsTest, embeddings_saveparams_test)
 
   op.SetData(weights);
 
-  TensorType prediction(op.ComputeOutputShape({std::make_shared<TensorType const>(input)}));
+  TensorType prediction(op.ComputeOutputShape({input.shape()}));
 
   op.Forward({std::make_shared<TensorType const>(input)}, prediction);
 
@@ -856,7 +846,7 @@ TYPED_TEST(OpsSaveParamsTest, embeddings_saveparams_test)
   OpKind new_op(*dsp);
 
   // check that new predictions match the old
-  TensorType new_prediction(op.ComputeOutputShape({std::make_shared<TensorType const>(input)}));
+  TensorType new_prediction(op.ComputeOutputShape({input.shape()}));
   new_op.Forward({std::make_shared<TensorType const>(input)}, new_prediction);
 
   // test correct values
@@ -1297,8 +1287,7 @@ TYPED_TEST(OpsSaveParamsTest, matrix_multiply_saveparams_test)
 
   OpKind op;
 
-  TensorType    prediction(op.ComputeOutputShape(
-      {std::make_shared<const TensorType>(data_1), std::make_shared<const TensorType>(data_2)}));
+  TensorType    prediction(op.ComputeOutputShape({data_1.shape(), data_2.shape()}));
   VecTensorType vec_data(
       {std::make_shared<const TensorType>(data_1), std::make_shared<const TensorType>(data_2)});
 
@@ -1308,8 +1297,7 @@ TYPED_TEST(OpsSaveParamsTest, matrix_multiply_saveparams_test)
   OpKind new_op(*dsp);
 
   // check that new predictions match the old
-  TensorType new_prediction(op.ComputeOutputShape(
-      {std::make_shared<const TensorType>(data_1), std::make_shared<const TensorType>(data_2)}));
+  TensorType new_prediction(op.ComputeOutputShape({data_1.shape(), data_2.shape()}));
   new_op.Forward(vec_data, new_prediction);
 
   // test correct values
@@ -1777,8 +1765,7 @@ TYPED_TEST(OpsSaveParamsTest, maximum_saveparams_test)
 
   OpKind op;
 
-  TensorType    prediction(op.ComputeOutputShape(
-      {std::make_shared<const TensorType>(data_1), std::make_shared<const TensorType>(data_2)}));
+  TensorType    prediction(op.ComputeOutputShape({data_1.shape(), data_2.shape()}));
   VecTensorType vec_data(
       {std::make_shared<const TensorType>(data_1), std::make_shared<const TensorType>(data_2)});
 
@@ -1788,8 +1775,7 @@ TYPED_TEST(OpsSaveParamsTest, maximum_saveparams_test)
   OpKind new_op(*dsp);
 
   // check that new predictions match the old
-  TensorType new_prediction(op.ComputeOutputShape(
-      {std::make_shared<const TensorType>(data_1), std::make_shared<const TensorType>(data_2)}));
+  TensorType new_prediction(op.ComputeOutputShape({data_1.shape(), data_2.shape()}));
   new_op.Forward(vec_data, new_prediction);
 
   // test correct values
@@ -1856,8 +1842,7 @@ TYPED_TEST(OpsSaveParamsTest, multiply_saveparams_test)
 
   OpKind op;
 
-  TensorType    prediction(op.ComputeOutputShape(
-      {std::make_shared<const TensorType>(data_1), std::make_shared<const TensorType>(data_2)}));
+  TensorType    prediction(op.ComputeOutputShape({data_1.shape(), data_2.shape()}));
   VecTensorType vec_data(
       {std::make_shared<const TensorType>(data_1), std::make_shared<const TensorType>(data_2)});
 
@@ -1867,8 +1852,7 @@ TYPED_TEST(OpsSaveParamsTest, multiply_saveparams_test)
   OpKind new_op(*dsp);
 
   // check that new predictions match the old
-  TensorType new_prediction(op.ComputeOutputShape(
-      {std::make_shared<const TensorType>(data_1), std::make_shared<const TensorType>(data_2)}));
+  TensorType new_prediction(op.ComputeOutputShape({data_1.shape(), data_2.shape()}));
   new_op.Forward(vec_data, new_prediction);
 
   // test correct values
@@ -2682,7 +2666,7 @@ TYPED_TEST(OpsSaveParamsTest, strided_slice_saveparams_test)
 
   OpKind op(begins, ends, strides);
 
-  TensorType    prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(input)}));
+  TensorType    prediction(op.ComputeOutputShape({input.shape()}));
   VecTensorType vec_data({std::make_shared<const TensorType>(input)});
 
   op.Forward(vec_data, prediction);
@@ -2691,7 +2675,7 @@ TYPED_TEST(OpsSaveParamsTest, strided_slice_saveparams_test)
   OpKind new_op(*dsp);
 
   // check that new predictions match the old
-  TensorType new_prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(input)}));
+  TensorType new_prediction(op.ComputeOutputShape({input.shape()}));
   new_op.Forward(vec_data, new_prediction);
 
   // test correct values
@@ -2763,8 +2747,7 @@ TYPED_TEST(OpsSaveParamsTest, subtract_saveparams_test)
 
   OpKind op;
 
-  TensorType    prediction(op.ComputeOutputShape(
-      {std::make_shared<const TensorType>(data_1), std::make_shared<const TensorType>(data_2)}));
+  TensorType    prediction(op.ComputeOutputShape({data_1.shape(), data_2.shape()}));
   VecTensorType vec_data(
       {std::make_shared<const TensorType>(data_1), std::make_shared<const TensorType>(data_2)});
 
@@ -2774,8 +2757,7 @@ TYPED_TEST(OpsSaveParamsTest, subtract_saveparams_test)
   OpKind new_op(*dsp);
 
   // check that new predictions match the old
-  TensorType new_prediction(op.ComputeOutputShape(
-      {std::make_shared<const TensorType>(data_1), std::make_shared<const TensorType>(data_2)}));
+  TensorType new_prediction(op.ComputeOutputShape({data_1.shape(), data_2.shape()}));
   new_op.Forward(vec_data, new_prediction);
 
   // test correct values

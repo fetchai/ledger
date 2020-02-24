@@ -92,7 +92,7 @@ template <typename TensorType>
 void Slice<TensorType>::Forward(VecTensorType const &inputs, TensorType &output)
 {
   assert(inputs.size() == 1);
-  assert(output.shape() == Ops<TensorType>::ComputeOutputShape(inputs));
+  assert(output.shape() == ComputeOutputShape(fetch::ml::utilities::TensorPtrsToSizes(inputs)));
 
   switch (slice_type_)
   {
@@ -122,7 +122,8 @@ std::vector<TensorType> Slice<TensorType>::Backward(VecTensorType const &inputs,
 {
   FETCH_UNUSED(inputs);
   assert(inputs.size() == 1);
-  assert(error_signal.shape() == Ops<TensorType>::ComputeOutputShape(inputs));
+  assert(error_signal.shape() ==
+         ComputeOutputShape(fetch::ml::utilities::TensorPtrsToSizes(inputs)));
 
   // N.B. At this position of the code, we have to make sure that every position other than the
   // sliced position of the ret error signal should be zero If a reshape is done, then the whole

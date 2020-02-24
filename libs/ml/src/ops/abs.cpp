@@ -63,7 +63,7 @@ void Abs<TensorType>::Forward(VecTensorType const &inputs, TensorType &output)
 {
   assert(inputs.size() == 1);
   assert(inputs.at(0)->shape() == output.shape());
-  assert(output.shape() == Ops<TensorType>::ComputeOutputShape(inputs));
+  assert(output.shape() == ComputeOutputShape(fetch::ml::utilities::TensorPtrsToSizes(inputs)));
 
   fetch::math::Abs((*inputs.at(0)), output);
 }

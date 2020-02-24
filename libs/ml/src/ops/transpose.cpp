@@ -64,7 +64,7 @@ template <class TensorType>
 void Transpose<TensorType>::Forward(VecTensorType const &inputs, TensorType &output)
 {
   assert(inputs.size() == 1);
-  assert(output.shape() == Ops<TensorType>::ComputeOutputShape(inputs));
+  assert(output.shape() == ComputeOutputShape(fetch::ml::utilities::TensorPtrsToSizes(inputs)));
 
   if (inputs.front()->shape().size() == 2)
   {
@@ -82,7 +82,8 @@ std::vector<TensorType> Transpose<TensorType>::Backward(VecTensorType const &inp
 {
   FETCH_UNUSED(inputs);
   assert(inputs.size() == 1);
-  assert(error_signal.shape() == Ops<TensorType>::ComputeOutputShape(inputs));
+  assert(error_signal.shape() ==
+         ComputeOutputShape(fetch::ml::utilities::TensorPtrsToSizes(inputs)));
 
   if (error_signal.shape().size() == 2)
   {

@@ -67,7 +67,7 @@ template <typename TensorType>
 void Reshape<TensorType>::Forward(VecTensorType const &inputs, TensorType &output)
 {
   assert(inputs.size() == 1);
-  assert(output.shape() == Ops<TensorType>::ComputeOutputShape(inputs));
+  assert(output.shape() == ComputeOutputShape(fetch::ml::utilities::TensorPtrsToSizes(inputs)));
 
   // if batch sizes don't agree - update specified new_shape
   SizeType input_batch_size = inputs.at(0)->shape(inputs.at(0)->shape().size() - 1);

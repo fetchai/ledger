@@ -17,11 +17,29 @@
 //
 //------------------------------------------------------------------------------
 
+#include "math/base_types.hpp"
+
+#include <string>
+#include <vector>
+
 namespace fetch {
 namespace ml {
 namespace utilities {
 
 std::string GetStrTimestamp();
+
+template <class TensorType>
+std::vector<math::SizeVector> TensorPtrsToSizes(
+    std::vector<std::shared_ptr<TensorType>> const &inputs)
+{
+  std::vector<math::SizeVector> input_shapes{};
+  input_shapes.reserve(inputs.size());
+  for (auto const &inp : inputs)
+  {
+    input_shapes.emplace_back(inp->shape());
+  }
+  return input_shapes;
+}
 
 }  // namespace utilities
 }  // namespace ml

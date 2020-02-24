@@ -58,7 +58,7 @@ void Subtract<TensorType>::Forward(VecTensorType const &inputs, TensorType &outp
 {
   assert(inputs.size() == 2);
   assert(inputs.at(0)->size() == inputs.at(1)->size());
-  assert(output.shape() == Ops<TensorType>::ComputeOutputShape(inputs));
+  assert(output.shape() == ComputeOutputShape(fetch::ml::utilities::TensorPtrsToSizes(inputs)));
 
   fetch::math::Subtract((*inputs.at(0)), (*inputs.at(1)), output);
 }
