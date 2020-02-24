@@ -165,27 +165,6 @@ OperationsCount Convolution1D<TensorType>::ChargeCompile()
   return op_cnt;
 }
 
-template <typename TensorType>
-OperationsCount Convolution1D<TensorType>::ChargeCompile()
-{
-  OperationsCount op_cnt{charge_estimation::FUNCTION_CALL_COST};
-
-  // Construct weights and bias tensors
-  std::vector<SizeType> weights_data_shape({output_channels_, input_channels_, kernel_size_, 1});
-  op_cnt += fetch::ml::ops::Weights<TensorType>::ChargeInitialise(weights_data_shape);
-
-  // SetInput weights
-  auto weights_dataholder =
-      std::dynamic_pointer_cast<ops::DataHolder<TensorType>>(this->nodes_.at(weights_)->GetOp());
-  op_cnt += weights_dataholder->ChargeSetData(weights_data_shape);
-
-  // ResetGraphCache for weights and biases
-  op_cnt += charge_estimation::layers::CONV_1D_CHARGE_COMPILE_PER_NODE * this->nodes_.size();
-
-  op_cnt += Graph<TensorType>::ChargeCompile();
-  return op_cnt;
-}
-
 ///////////////////////////////
 /// EXPLICIT INSTANTIATIONS ///
 ///////////////////////////////
