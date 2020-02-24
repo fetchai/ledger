@@ -20,20 +20,30 @@
 #include "bloom_filter/historical_bloom_filter.hpp"
 #include "core/byte_array/byte_array.hpp"
 #include "crypto/mcl_dkg.hpp"
+#include "crypto/sha256.hpp"
 
 using fetch::bloom::HistoricalBloomFilter;
 using fetch::byte_array::ByteArray;
+using fetch::byte_array::ConstByteArray;
+using fetch::crypto::SHA256;
+
+ConstByteArray GenerateDigest(uint64_t seed)
+{
+  SHA256 hasher{};
+  hasher.Update(reinterpret_cast<uint8_t const *>(&seed), sizeof(seed));
+  auto const v1 = hasher.Final();
+
+  hasher.Reset();
+  hasher.Update(v1);
+  return {hasher.Final()};
+}
 
 void Historical_Bloom_AddHot(benchmark::State &state)
 {
   fetch::crypto::mcl::details::MCLInitialiser();
 
-  HistoricalBloomFilter bloom{HistoricalBloomFilter::Mode::NEW_DATABASE,
-                              "h-bloom-bench.db",
-                              "h-bloom-bench.index.db",
-                              "h-bloom-bench.meta.db",
-                              10000,
-                              1};
+  HistoricalBloomFilter bloom{HistoricalBloomFilter::Mode::NEW_DATABASE, "h-bloom-bench.db",
+                              "h-bloom-bench.meta.db", 10000, 1};
 
   uint64_t  counter{0};
   ByteArray buffer;
@@ -53,12 +63,8 @@ void Historical_Bloom_WorstCase(benchmark::State &state)
 {
   fetch::crypto::mcl::details::MCLInitialiser();
 
-  HistoricalBloomFilter bloom{HistoricalBloomFilter::Mode::NEW_DATABASE,
-                              "h-bloom-bench.db",
-                              "h-bloom-bench.index.db",
-                              "h-bloom-bench.meta.db",
-                              1,
-                              1};
+  HistoricalBloomFilter bloom{HistoricalBloomFilter::Mode::NEW_DATABASE, "h-bloom-bench.db",
+                              "h-bloom-bench.meta.db", 1, 1};
 
   uint64_t  counter{0};
   ByteArray buffer;
@@ -86,12 +92,8 @@ void Historical_Bloom_NormalCase(benchmark::State &state)
 {
   fetch::crypto::mcl::details::MCLInitialiser();
 
-  HistoricalBloomFilter bloom{HistoricalBloomFilter::Mode::NEW_DATABASE,
-                              "h-bloom-bench.db",
-                              "h-bloom-bench.index.db",
-                              "h-bloom-bench.meta.db",
-                              128,
-                              1};
+  HistoricalBloomFilter bloom{HistoricalBloomFilter::Mode::NEW_DATABASE, "h-bloom-bench.db",
+                              "h-bloom-bench.meta.db", 128, 1};
 
   uint64_t  counter{0};
   ByteArray buffer;
@@ -115,6 +117,47 @@ void Historical_Bloom_NormalCase(benchmark::State &state)
   }
 }
 
+void Historical_Bloom_Flush(benchmark::State &state)
+{
+  fetch::crypto::mcl::details::MCLInitialiser();
+
+  auto d1 = GenerateDigest(1);
+
+  for (auto _ : state)
+  {
+    // create first version of the bloom filter
+    state.PauseTiming();
+    HistoricalBloomFilter bloom{HistoricalBloomFilter::Mode::NEW_DATABASE, "h-bloom-bench.db",
+                                "h-bloom-bench.meta.db", 128, 1};
+    bloom.Add(d1, 1);
+    state.ResumeTiming();
+
+    bloom.Flush();
+  }
+}
+
+void Historical_Bloom_Prune(benchmark::State &state)
+{
+  fetch::crypto::mcl::details::MCLInitialiser();
+
+  auto d1 = GenerateDigest(1);
+  auto d2 = GenerateDigest(2);
+
+  for (auto _ : state)
+  {
+    // create first version of the bloom filter
+    state.PauseTiming();
+    HistoricalBloomFilter bloom{HistoricalBloomFilter::Mode::NEW_DATABASE, "h-bloom-bench.db",
+                                "h-bloom-bench.meta.db", 128, 1};
+    bloom.Add(d1, 1);
+    state.ResumeTiming();
+
+    bloom.Add(d2, 200);
+  }
+}
+
 BENCHMARK(Historical_Bloom_AddHot);
-BENCHMARK(Historical_Bloom_WorstCase);
+// BENCHMARK(Historical_Bloom_WorstCase);
 BENCHMARK(Historical_Bloom_NormalCase);
+BENCHMARK(Historical_Bloom_Flush);
+BENCHMARK(Historical_Bloom_Prune);

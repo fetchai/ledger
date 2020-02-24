@@ -92,6 +92,8 @@ public:
   static constexpr uint64_t TX_FINDER_PROTO_LIMIT = 1000;
   // Limit the amount a single rpc call will provide
   static constexpr uint64_t PULL_LIMIT = 10000;
+  // Maximum size the recently seen cache can become
+  static constexpr uint64_t RECENTLY_SEEN_CACHE_SIZE = 10000;
 
   struct Config
   {
@@ -145,6 +147,12 @@ private:
   State OnResolvingObjects();
   State OnTrimCache();
 
+  // Avoid processing transactions that have been recently
+  // seen or are already in storage
+  bool                                   AlreadySeen(chain::Transaction const &tx);
+  std::set<byte_array::ConstByteArray>   recently_seen_txs_;
+  std::deque<byte_array::ConstByteArray> recently_seen_txs_ordered_;
+
   TrimCacheCallback                  trim_cache_callback_;
   std::shared_ptr<StateMachine>      state_machine_;
   TxFinderProtocol *                 tx_finder_protocol_;
@@ -175,6 +183,7 @@ private:
   telemetry::CounterPtr         subtree_requests_total_;
   telemetry::CounterPtr         subtree_response_total_;
   telemetry::CounterPtr         subtree_failure_total_;
+  telemetry::CounterPtr         tss_duplicates_dropped_;
   telemetry::GaugePtr<uint64_t> current_tss_state_;
   telemetry::GaugePtr<uint64_t> current_tss_peers_;
 };

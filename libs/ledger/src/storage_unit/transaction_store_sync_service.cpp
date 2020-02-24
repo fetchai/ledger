@@ -91,6 +91,9 @@ TransactionStoreSyncService::TransactionStoreSyncService(Config const &cfg, Mudd
   , subtree_failure_total_{telemetry::Registry::Instance().CreateCounter(
         "ledger_tx_store_sync_service_subtree_failure_total",
         "The total number of subtree request failures observed")}
+  , tss_duplicates_dropped_{telemetry::Registry::Instance().CreateCounter(
+        "ledger_tx_store_sync_service_tss_duplicates_dropped_total",
+        "The total number of duplicate TXs dropped during syncing")}
   , current_tss_state_{telemetry::Registry::Instance().CreateGauge<uint64_t>(
         "current_tss_state", "The state in the state machine of the tx store")}
   , current_tss_peers_{telemetry::Registry::Instance().CreateGauge<uint64_t>(
@@ -425,8 +428,16 @@ TransactionStoreSyncService::State TransactionStoreSyncService::OnResolvingObjec
 
     for (auto &tx : result.promised)
     {
-      verifier_.AddTransaction(std::make_shared<chain::Transaction>(tx));
-      ++synced_tx;
+      if (AlreadySeen(tx))
+      {
+        FETCH_LOG_DEBUG(LOGGING_NAME, "Dropping already seen transaction");
+        tss_duplicates_dropped_->add(1);
+      }
+      else
+      {
+        verifier_.AddTransaction(std::make_shared<chain::Transaction>(tx));
+        ++synced_tx;
+      }
     }
   }
 
@@ -480,6 +491,36 @@ void TransactionStoreSyncService::OnTransaction(TransactionPtr const &tx)
     store_.Add(*tx, !tx->IsFromSubtreeSync());
     stored_transactions_->increment();
   }
+}
+
+bool TransactionStoreSyncService::AlreadySeen(chain::Transaction const &tx)
+{
+  auto const &digest = tx.digest();
+  bool        result{false};
+
+  if (store_.Has(digest))
+  {
+    result = true;
+  }
+
+  if (recently_seen_txs_.find(digest) == recently_seen_txs_.end())
+  {
+    // TX not recently seen, add it and trim
+    recently_seen_txs_.insert(digest);
+    recently_seen_txs_ordered_.push_front(digest);
+
+    while (recently_seen_txs_.size() > RECENTLY_SEEN_CACHE_SIZE)
+    {
+      recently_seen_txs_.erase(recently_seen_txs_ordered_.back());
+      recently_seen_txs_ordered_.pop_back();
+    }
+  }
+  else
+  {
+    result = true;
+  }
+
+  return result;
 }
 
 }  // namespace ledger
