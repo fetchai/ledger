@@ -107,9 +107,18 @@ template <typename TensorType>
 OperationsCount Add<TensorType>::ChargeForward() const
 {
   assert(!this->batch_output_shape_.empty());
-  OperationsCount cost = fetch::ml::charge_estimation::ops::ADDITION_PER_ELEMENT *
-                         this->TotalElementsIn({this->batch_output_shape_});
-  return cost;
+
+  OperationsCount op_cnt{1};
+
+  // Addition cost
+  SizeType num_elements = TensorType::SizeFromShape(this->batch_output_shape_);
+  op_cnt += num_elements;
+
+  // Iteration over 3 tensors (input1, input2, ret)
+  OperationsCount iteration_ops = TensorType::ChargeIterate(this->batch_output_shape_);
+  op_cnt += iteration_ops * 3;
+
+  return op_cnt;
 }
 
 template <typename TensorType>

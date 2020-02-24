@@ -64,6 +64,7 @@ TYPED_TEST(Convolution2DTest, set_input_and_evaluate_test)  // Use the class as 
 
   conv.ComputeBatchOutputShape({input_shape});  // necessary for out-of-Graph usage
   conv.CompleteShapeDeduction();                // necessary for out-of-Graph usage
+  conv.Compile();                               // necessary for out-of-Graph usage
 
   conv.SetInput("Conv2D_Input", input);
   conv.Compile();
@@ -107,7 +108,7 @@ TYPED_TEST(Convolution2DTest, ops_forward_test)  // Use the class as an Ops
 
   conv.ComputeBatchOutputShape({input_shape});  // necessary for out-of-Graph usage
   conv.CompleteShapeDeduction();                // necessary for out-of-Graph usage
-  conv.Compile();
+  conv.Compile();                               // necessary for out-of-Graph usage
 
   TensorType output(conv.ComputeOutputShape({std::make_shared<TensorType>(input)}));
   conv.Forward({std::make_shared<TensorType>(input)}, output);
@@ -155,6 +156,7 @@ TYPED_TEST(Convolution2DTest, ops_backward_test)  // Use the class as an Ops
 
   conv.ComputeBatchOutputShape({input_shape});  // necessary for out-of-Graph usage
   conv.CompleteShapeDeduction();                // necessary for out-of-Graph usage
+  conv.Compile();                               // necessary for out-of-Graph usage
 
   TensorType output(conv.ComputeOutputShape({std::make_shared<TensorType>(input)}));
   conv.Forward({std::make_shared<TensorType>(input)}, output);
@@ -210,6 +212,7 @@ TYPED_TEST(Convolution2DTest, conv2d_node_forward_test)  // Use the class as a N
   conv.AddInput(placeholder_node);
   conv.GetOp()->ComputeBatchOutputShape({input_shape});  // necessary for out-of-Graph usage
   conv.GetOp()->CompleteShapeDeduction();                // necessary for out-of-Graph usage
+  conv.GetOp()->Compile();                               // necessary for out-of-Graph usage
 
   TensorType prediction = *conv.Evaluate(true);
 
@@ -270,6 +273,7 @@ TYPED_TEST(Convolution2DTest, node_backward_test)  // Use the class as a Node
   conv.AddInput(placeholder_node);
   conv.GetOp()->ComputeBatchOutputShape({input_shape});  // necessary for out-of-Graph usage
   conv.GetOp()->CompleteShapeDeduction();                // necessary for out-of-Graph usage
+  conv.GetOp()->Compile();                               // necessary for out-of-Graph usage
 
   TensorType prediction     = *conv.Evaluate(true);
   auto       backprop_error = conv.BackPropagate(error_signal);

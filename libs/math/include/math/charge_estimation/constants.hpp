@@ -17,26 +17,15 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ml/charge_estimation/types.hpp"
+#include "math/charge_estimation/types.hpp"
 
 namespace fetch {
-namespace ml {
+namespace math {
 namespace charge_estimation {
-namespace layers {
 
-static constexpr OperationsCount FULLY_CONNECTED_SHAPE_DEDUCTION                      = 5;
-static constexpr OperationsCount FULLY_CONNECTED_SHAPE_DEDUCTION_TIME_DISTRIBUTED     = 1;
-static constexpr OperationsCount FULLY_CONNECTED_SHAPE_DEDUCTION_NON_TIME_DISTRIBUTED = 5;
+static constexpr OperationsCount TENSOR_ITERATION_DEFAULT    = 3;
+static constexpr OperationsCount TENSOR_ITERATION_END_OF_ROW = 6;
 
-static constexpr OperationsCount FULLY_CONNECTED_CHARGE_CONSTRUCT                = 4;
-static constexpr OperationsCount FULLY_CONNECTED_CHARGE_CONSTRUCT_NOT_AUTODETECT = 5;
-
-static constexpr OperationsCount FULLY_CONNECTED_CHARGE_COMPILE_PER_NODE = 2;
-
-static constexpr OperationsCount CONV_2D_CHARGE_COMPILE_PER_NODE = 2;
-static constexpr OperationsCount CONV_1D_CHARGE_COMPILE_PER_NODE = 2;
-
-}  // namespace layers
 }  // namespace charge_estimation
-}  // namespace ml
+}  // namespace math
 }  // namespace fetch
