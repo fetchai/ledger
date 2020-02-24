@@ -2089,8 +2089,6 @@ DigestSet MainChain::DetectDuplicateTransactions(BlockHash const &           sta
             ? (valid_until - chain::Transaction::MAXIMUM_TX_VALIDITY_PERIOD)
             : 0;
 
-    static_assert(chain::Transaction::MAXIMUM_TX_VALIDITY_PERIOD == 40000, "");
-
     auto const from_calculated = std::max(tx_layout.valid_from(), default_valid_from);
 
     if (bloom_filter_.Match(tx_layout.digest(), from_calculated, valid_until))
