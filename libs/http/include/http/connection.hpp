@@ -217,7 +217,12 @@ public:
       }
     };
 
-    asio::async_write(socket_, *buffer_ptr, cb);
+    FETCH_LOCK(is_open_mutex_);
+
+    if (is_open_)
+    {
+      asio::async_write(socket_, *buffer_ptr, cb);
+    }
   }
 
   void CloseConnnection() override
