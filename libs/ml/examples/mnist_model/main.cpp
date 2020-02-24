@@ -17,9 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "ml/dataloaders/tensor_dataloader.hpp"
-#include "ml/layers/fully_connected.hpp"
 #include "ml/model/sequential.hpp"
-#include "ml/ops/activation.hpp"
 #include "ml/optimisation/types.hpp"
 #include "ml/utilities/mnist_utilities.hpp"
 
@@ -66,21 +64,8 @@ int main(int ac, char **av)
   auto mnist_labels = fetch::ml::utilities::read_mnist_labels<TensorType>(av[2]);
   mnist_labels      = fetch::ml::utilities::convert_labels_to_onehot(mnist_labels);
 
-  auto data_loader_ptr = std::make_unique<DataLoaderType>();
-  data_loader_ptr->AddData({mnist_images}, mnist_labels);
-  data_loader_ptr->SetTestRatio(fetch::fixed_point::fp32_t{"0.2"});
-
-  // setup model and pass dataloader
-  ModelType model(model_config);
-  model.Add<fetch::ml::layers::FullyConnected<TensorType>>(
-      784, 100, fetch::ml::details::ActivationType::RELU);
-  model.Add<fetch::ml::layers::FullyConnected<TensorType>>(
-      100, 20, fetch::ml::details::ActivationType::RELU);
-  model.Add<fetch::ml::layers::FullyConnected<TensorType>>(
-      20, 10, fetch::ml::details::ActivationType::RELU);
-
-  model.SetDataloader(std::move(data_loader_ptr));
-  model.Compile(OptimiserType::ADAM);
+  auto model =
+      fetch::ml::utilities::setup_mnist_model<TensorType>(model_config, mnist_images, mnist_labels);
 
   // training loop - early stopping will prevent long training time
   DataType loss;
