@@ -17,6 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ml/charge_estimation/constants.hpp"
+#include "ml/charge_estimation/types.hpp"
 #include "ml/optimisation/optimiser.hpp"
 
 namespace fetch {
@@ -55,6 +57,10 @@ public:
   {
     return OptimiserType::ADAGRAD;
   }
+
+  static OperationsCount ChargeConstruct(std::shared_ptr<Graph<T>> graph);
+
+  fetch::ml::OperationsCount ChargeStep() const override;
 
 private:
   std::vector<TensorType> cache_;

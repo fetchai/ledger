@@ -71,8 +71,9 @@ public:
   OpType      OperationType() const override;
   char const *Descriptor() const override;
 
-  OperationsCount ChargeForward() const override;
-  OperationsCount ChargeBackward() const override;
+  OperationsCount        ChargeForward() const override;
+  OperationsCount        ChargeBackward() const override;
+  static OperationsCount ChargeConstruct();
 
 private:
   std::vector<SizeType> input_shape_;

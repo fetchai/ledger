@@ -18,6 +18,8 @@
 
 #include "math/tensor/tensor.hpp"
 #include "math/tensor/tensor_slice_iterator.hpp"
+#include "ml/charge_estimation/constants.hpp"
+#include "ml/charge_estimation/core/constants.hpp"
 #include "ml/core/graph.hpp"
 #include "ml/ops/weights.hpp"
 
@@ -224,7 +226,7 @@ void Graph<TensorType>::ComputeAllNodeShapes()
 {
   if (nodes_.empty() || connections_.empty())
   {
-    FETCH_LOG_ERROR(
+    FETCH_LOG_WARN(
         DESCRIPTOR,
         " Batch output shape computing is impossible : connection list empty or no nodes");
     return;
@@ -239,8 +241,8 @@ void Graph<TensorType>::ComputeAllNodeShapes()
 
     if (output_shape.empty())
     {
-      FETCH_LOG_ERROR(DESCRIPTOR, " Batch output shape computing failed for node " +
-                                      node_name_and_ptr.first + ".");
+      FETCH_LOG_WARN(DESCRIPTOR, " Batch output shape computing failed for node " +
+                                     node_name_and_ptr.first + ".");
     }
   }
 }
@@ -1151,6 +1153,59 @@ OperationsCount Graph<TensorType>::ChargeBackward(const std::string &node_name) 
   NodePtrType                     node = nodes_.at(node_name);
   std::unordered_set<std::string> visited_nodes;
   return node->ChargeBackward(visited_nodes);
+}
+
+template <typename TensorType>
+OperationsCount Graph<TensorType>::ChargeCompile()
+{
+  OperationsCount op_cnt{charge_estimation::FUNCTION_CALL_COST};
+
+  switch (graph_state_)
+  {
+  case GraphState::COMPILED:
+  case GraphState::EVALUATED:
+  case GraphState::BACKWARD:
+  case GraphState::UPDATED:
+  {
+    // graph already compiled. do nothing
+    return op_cnt;
+  }
+  case GraphState::INVALID:
+  case GraphState::NOT_COMPILED:
+  {
+    // ResetCompile();, LinkNodesInGraph(node_name, node_inputs);
+    op_cnt += charge_estimation::GRAPH_N_LINK_NODES * connections_.size();
+
+    // These calls are necessary for optimiser charge estimation
+    for (auto &connection : connections_)
+    {
+      auto node_name   = connection.first;
+      auto node_inputs = connection.second;
+      LinkNodesInGraph(node_name, node_inputs);
+    }
+    ComputeAllNodeShapes();
+
+    // ComputeAllNodeShapes();
+    op_cnt += nodes_.size();
+
+    // RecursivelyCompleteWeightsInitialisation
+    for (auto const &node_name_and_ptr : nodes_)
+    {
+      NodePtrType node = node_name_and_ptr.second;
+      op_cnt           = node->GetOp()->ChargeCompile();
+    }
+
+    // graph_state_ = GraphState::COMPILED;
+    op_cnt += charge_estimation::SET_FLAG;
+    break;
+  }
+  default:
+  {
+    throw ml::exceptions::InvalidMode("cannot evaluate graph - unrecognised graph state");
+  }
+  }
+
+  return op_cnt;
 }
 
 /**

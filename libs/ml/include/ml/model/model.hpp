@@ -30,7 +30,6 @@ namespace fetch {
 namespace vm_modules {
 namespace ml {
 namespace model {
-class ModelEstimator;
 class VMModel;
 }  // namespace model
 }  // namespace ml
@@ -106,14 +105,21 @@ public:
 
   bool DataLoaderIsSet();
 
+  virtual ModelType ModelCode()
+  {
+    return ModelType::NONE;
+  }
+
   template <typename X, typename D>
   friend struct serializers::MapSerializer;
 
   friend class fetch::vm_modules::ml::model::VMModel;
-  friend class fetch::vm_modules::ml::model::ModelEstimator;
 
   virtual fetch::ml::OperationsCount ChargeForward() const;
   virtual fetch::ml::OperationsCount ChargeBackward() const;
+  virtual fetch::ml::OperationsCount ChargeCompile(
+      OptimiserType optimiser_type, ops::LossType loss_type,
+      std::vector<ops::MetricType> const &metrics) const;
 
 protected:
   ModelConfig<DataType> model_config_;
