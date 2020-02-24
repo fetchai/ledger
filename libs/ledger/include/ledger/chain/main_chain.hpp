@@ -139,9 +139,8 @@ public:
   using Travelogue           = TimeTravelogue<BlockPtr>;
   using DirtyMap = std::map<BlockHash, uint64_t>;  // Map of hash to the time until is becomes valid
 
-  static constexpr char const *LOGGING_NAME    = "MainChain";
-  static constexpr uint64_t    UPPER_BOUND     = 5000ull;
-  chain::BlockIndex MAXIMUM_TX_VALIDITY_PERIOD = chain::Transaction::MAXIMUM_TX_VALIDITY_PERIOD;
+  static constexpr char const *LOGGING_NAME = "MainChain";
+  static constexpr uint64_t    UPPER_BOUND  = 5000ull;
 
   enum class Mode
   {
