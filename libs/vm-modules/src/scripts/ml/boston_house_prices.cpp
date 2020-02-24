@@ -17,13 +17,14 @@
 //------------------------------------------------------------------------------
 
 #include "vm_modules/scripts/ml/boston_house_prices.hpp"
+
 #include <sstream>
 
 namespace vm_modules {
 namespace scripts {
 namespace ml {
 
-std::string BostonHousingScript(std::string batch_size, bool load_data)
+std::string BostonHousingScript(std::string &batch_size, bool load_data)
 {
 
   std::string script = R"(

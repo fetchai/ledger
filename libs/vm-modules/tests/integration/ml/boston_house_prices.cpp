@@ -44,8 +44,8 @@ public:
 
 TEST_F(VMBostonTests, model_add_dense_noact)
 {
-  std::string batch_size = "8u64";
-  std::string const src = vm_modules::scripts::ml::BostonHousingScript(batch_size);
+  std::string       batch_size = "8u64";
+  std::string const src        = vm_modules::scripts::ml::BostonHousingScript(batch_size);
 
   ASSERT_TRUE(toolkit.Compile(src));
   if (IGNORE_CHARGE_ESTIMATION)
