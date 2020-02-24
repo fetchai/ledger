@@ -319,7 +319,7 @@ OperationsCount MatrixMultiply<T>::ChargeBackward() const
 
   OperationsCount const cost =
       n * m * p * fetch::ml::charge_estimation::ops::MULTIPLICATION_PER_ELEMENT +
-      fetch::ml::charge_estimation::ops::ADDITION_PER_ELEMENT *
+      fetch::ml::charge_estimation::ops::LOW_ADDITION_PER_ELEMENT *
           this->TotalElementsIn({this->batch_input_shapes_});
   ;
   return cost;

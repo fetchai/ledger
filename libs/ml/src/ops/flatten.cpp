@@ -112,7 +112,8 @@ const char *Flatten<TensorType>::Descriptor() const
 }
 
 template <class TensorType>
-OperationsCount Flatten<TensorType>::ChargeForward() const
+std::pair<OperationsCount, math::SizeVector> Flatten<TensorType>::ChargeForward(
+        std::vector<math::SizeVector> input_shapes)
 {
   assert(!this->batch_input_shapes_.empty());
 
@@ -135,7 +136,9 @@ OperationsCount Flatten<TensorType>::ChargeForward() const
     cost += math::numeric_max<OperationsCount>();
   }
 
-  return cost;
+    auto output_shape = ComputeOutputShape(input_shapes);
+
+    return std::make_pair(cost, output_shape);
 }
 
 template <class TensorType>
