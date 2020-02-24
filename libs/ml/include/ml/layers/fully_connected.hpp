@@ -80,6 +80,21 @@ public:
   OperationsCount ChargeForward() const override;
   OperationsCount ChargeBackward() const override;
 
+  void Compile() override;
+
+  static OperationsCount ChargeCompleteShapeDeduction(bool is_initialised, WeightsInit init_mode,
+                                                      bool time_distributed, SizeType total_inputs);
+
+  static OperationsCount ChargeConstruct(
+      SizeType in, SizeType out,
+      details::ActivationType       activation_type     = details::ActivationType::NOTHING,
+      fetch::ml::RegularisationType regulariser         = fetch::ml::RegularisationType::NONE,
+      DataType                      regularisation_rate = DataType{0},
+      WeightsInit                   init_mode           = WeightsInit::XAVIER_GLOROT,
+      bool                          time_distributed    = !TIME_DISTRIBUTED);
+
+  OperationsCount ChargeCompile() override;
+
   std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override;
 
   math::SizeVector ComputeBatchOutputShape(
