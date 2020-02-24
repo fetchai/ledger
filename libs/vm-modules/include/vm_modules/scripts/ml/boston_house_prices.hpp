@@ -23,7 +23,7 @@ namespace vm_modules {
 namespace scripts {
 namespace ml {
 
-std::string BostonHousingScript(std::string batch_size = "8u64", bool load_data = false);
+std::string BostonHousingScript(std::string &batch_size, bool load_data = false);
 
 }  // namespace ml
 }  // namespace scripts
