@@ -59,14 +59,18 @@ std::vector<SharedJsonClient> SimpleTest()
   http.AddModule(http_module);
   http.Start(8000);
 
-  std::this_thread::sleep_for(std::chrono::milliseconds(2000));
+  // s100td::this_thread::sleep_for(std::chrono::milliseconds(2000));
 
-  SharedJsonClient client =
-      std::make_shared<JsonClient>(JsonClient::CreateFromUrl("http://127.0.0.1:8000"));
-  ret.push_back(client);
-  Variant result;
-  client->Post("/test", result);
-  std::this_thread::sleep_for(std::chrono::milliseconds(2000));
+  // SharedJsonClient client =
+  //     std::make_shared<JsonClient>(JsonClient::CreateFromUrl("http://127.0.0.1:8000"));
+  // ret.push_back(client);
+  // Variant result;
+  // client->Post("/test", result);
+  // std::this_thread::sleep_for(std::chrono::milliseconds(2000));
+
+  std::cerr << "nows your chance" << std::endl;  // DELETEME_NH
+
+  std::this_thread::sleep_for(std::chrono::milliseconds(50000));
 
   http.Stop();
 
