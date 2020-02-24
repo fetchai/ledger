@@ -17,6 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include <string>
+
 namespace vm_modules {
 namespace scripts {
 namespace ml {

@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "vm_modules/scripts/ml/boston_house_prices.hpp"
+#include <sstream>
 
 namespace vm_modules {
 namespace scripts {
