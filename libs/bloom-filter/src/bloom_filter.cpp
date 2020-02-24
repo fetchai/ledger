@@ -153,8 +153,7 @@ BasicBloomFilter::Functions const default_hash_functions{internal::raw_data, int
                                                          internal::md5};
 
 BasicBloomFilter::BasicBloomFilter()
-  : bits_(INITIAL_SIZE_IN_BITS)
-  , hash_source_factory_(default_hash_functions)
+  : BasicBloomFilter(default_hash_functions, INITIAL_SIZE_IN_BITS)
 {}
 
 BasicBloomFilter::BasicBloomFilter(BitVector const &vector)
@@ -163,12 +162,19 @@ BasicBloomFilter::BasicBloomFilter(BitVector const &vector)
 {}
 
 BasicBloomFilter::BasicBloomFilter(Functions const &functions)
-  : bits_(INITIAL_SIZE_IN_BITS)
+  : BasicBloomFilter(functions, INITIAL_SIZE_IN_BITS)
+{}
+
+BasicBloomFilter::BasicBloomFilter(std::size_t bit_size)
+  : BasicBloomFilter(default_hash_functions, bit_size)
+{}
+
+BasicBloomFilter::BasicBloomFilter(Functions const &functions, std::size_t filter_size)
+  : bits_(filter_size)
   , hash_source_factory_(functions)
 {}
 
-std::pair<bool, std::size_t> BasicBloomFilter::Match(
-    fetch::byte_array::ConstByteArray const &element) const
+BloomFilterResult BasicBloomFilter::Match(fetch::byte_array::ConstByteArray const &element) const
 {
   auto const  source       = hash_source_factory_(element);
   std::size_t bits_checked = 0u;
