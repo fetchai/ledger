@@ -120,17 +120,17 @@ OperationsCount Flatten<TensorType>::ChargeForward() const
 
   auto padded_size = TensorType::PaddedSizeFromShape(this->batch_input_shapes_.front());
 
-  if ((padded_size / 32) < fetch::ml::charge_estimation::ops::PIECEWISE_LOWER_THRESHOLD)
+  if (padded_size < fetch::ml::charge_estimation::ops::PIECEWISE_LOWER_THRESHOLD)
   {
     cost += fetch::ml::charge_estimation::ops::LOW_FLATTEN_PER_ELEMENT * (padded_size / 32);
   }
-  else if ((padded_size / 32) < fetch::ml::charge_estimation::ops::PIECEWISE_HARD_CAP)
+  else if (padded_size  < fetch::ml::charge_estimation::ops::PIECEWISE_HARD_CAP)
   {
     cost += fetch::ml::charge_estimation::ops::HIGH_FLATTEN_PER_ELEMENT * (padded_size / 32);
   }
   else
   {
-    cost += math::numeric_max<OperationsCount>();
+    cost = math::numeric_max<OperationsCount>();
   }
 
   return cost;
