@@ -265,4 +265,10 @@ TEST_F(FixedSizeJournalFileTests, CheckOutOfOrderSectorWrites)
   ASSERT_EQ(buffer, data4);
 }
 
+TEST_F(FixedSizeJournalFileTests, CheckLoadOfZeroSectorFile)
+{
+  journal_ = std::make_unique<FixedSizeJournalFile>(SECTOR_SIZE);
+  ASSERT_TRUE(journal_->Load(filename_));
+}
+
 }  // namespace

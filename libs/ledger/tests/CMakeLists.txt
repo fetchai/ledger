@@ -20,3 +20,5 @@ target_include_directories(ledger-executor-tests PRIVATE chaincode)
 fetch_add_slow_test(ledger-dag-tests fetch-ledger dag)
 fetch_add_slow_test(ledger-notarisation-tests fetch-ledger notarisation)
 fetch_add_slow_test(ledger-consensus-tests fetch-ledger consensus)
+
+fetch_add_integration_test(ledger-integration-tests fetch-ledger integration)
