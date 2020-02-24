@@ -210,6 +210,24 @@ public:
     return total_elements;
   }
 
+  /**
+   * Default Op construction charge
+   * @return
+   */
+  static OperationsCount ChargeConstruct()
+  {
+    return charge_estimation::ops::OP_DEFAULT_CONSTRUCTION_COST;
+  }
+
+  /**
+   * Default Op compile charge
+   * @return
+   */
+  virtual OperationsCount ChargeCompile()
+  {
+    return 1;
+  }
+
 protected:
   bool is_training_ = true;
 

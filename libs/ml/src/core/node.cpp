@@ -196,7 +196,7 @@ Shape Node<TensorType>::BatchOutputShape()
       // If there is no input node, and underlying Op's shape is not known - the Graph,
       // probably, is incorrect; however, some nodes (like Label placeholder) could have
       // empty shape without causing Graph malfunction or shape deduction failure.
-      FETCH_LOG_ERROR(
+      FETCH_LOG_WARN(
           name_.c_str(),
           " Shape deduction reached a leaf Node with empty/unknown shape : " + this->name_);
 

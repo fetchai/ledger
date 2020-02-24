@@ -71,16 +71,6 @@ public:
       fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> const &labels);
 
   /**
-   * Add data to tensor data loader
-   * @param xfilename
-   * @param yfilename
-   */
-  void AddTensorData(
-      fetch::vm::Ptr<fetch::vm::Array<fetch::vm::Ptr<fetch::vm_modules::math::VMTensor>>> const
-          &                                                    data,
-      fetch::vm::Ptr<fetch::vm_modules::math::VMTensor> const &labels);
-
-  /**
    * Get the next training pair of data and labels from the dataloader
    * @return
    */
@@ -98,6 +88,14 @@ public:
 
   template <typename X, typename D>
   friend struct serializers::MapSerializer;
+
+  vm::ChargeAmount EstimateAddDataByData(
+      const vm::Ptr<fetch::vm::Array<fetch::vm::Ptr<fetch::vm_modules::math::VMTensor>>> &data,
+      const vm::Ptr<fetch::vm_modules::math::VMTensor> &                                  labels);
+
+  vm::ChargeAmount EstimateGetNext();
+
+  vm::ChargeAmount EstimateIsDone();
 
 private:
   DataLoaderPtrType loader_;

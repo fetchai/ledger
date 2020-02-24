@@ -43,6 +43,9 @@ template <class T>
 std::string AddActivationNode(ActivationType type, Graph<T> *g, std::string name,
                               std::string input);
 
+template <class T>
+OperationsCount GetActivationCharge(ActivationType type);
+
 }  // namespace details
 }  // namespace ml
 }  // namespace fetch

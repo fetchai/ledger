@@ -130,6 +130,13 @@ void Weights<TensorType>::Initialise(TensorType &array, uint64_t in_size, uint64
   }
 }
 
+template <typename TensorType>
+OperationsCount Weights<TensorType>::ChargeInitialise(std::vector<SizeType> const &shape)
+{
+  // Cost of filling tensor data_ which doesn't exist yet.
+  return TensorType::SizeFromShape(shape);
+}
+
 /**
  * interface to call standard weights initialisation routines. defaults to xavier.
  * Fan in and fan out xavier not permitted with input and output sizes not known independently
@@ -175,6 +182,16 @@ TensorType const &Weights<TensorType>::GetWeights() const
   return *this->data_;
 }
 
+/**
+ * @tparam TensorType
+ * @return bool TRUE if weights are initialised - data_ aren't NULL pointer
+ */
+template <typename TensorType>
+bool Weights<TensorType>::IsInit() const
+{
+  return this->data_ != nullptr;
+}
+
 template <typename TensorType>
 void Weights<TensorType>::SetWeights(TensorType const &new_value)
 {
@@ -190,7 +207,7 @@ template <typename TensorType>
 std::pair<TensorType const, typename Weights<TensorType>::SizeSet const>
 Weights<TensorType>::GetSparseGradientsReferences() const
 {
-  return std::move(std::make_pair(*this->gradient_accumulation_, this->updated_rows_));
+  return std::make_pair(*this->gradient_accumulation_, this->updated_rows_);
 }
 
 /**
@@ -286,6 +303,12 @@ template <typename TensorType>
 const char *ops::Weights<TensorType>::Descriptor() const
 {
   return DESCRIPTOR;
+}
+
+template <class TensorType>
+std::vector<math::SizeType> Weights<TensorType>::GetFutureDataShape() const
+{
+  return this->future_data_shape_;
 }
 
 template <typename TensorType>
