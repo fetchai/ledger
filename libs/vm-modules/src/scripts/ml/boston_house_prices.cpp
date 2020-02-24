@@ -16,7 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vm_modules/scripts/ml/boston_house_prices.cpp"
+#include "vm_modules/scripts/ml/boston_house_prices.hpp"
 
 namespace vm_modules {
 namespace scripts {
