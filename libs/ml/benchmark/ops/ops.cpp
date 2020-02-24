@@ -1698,6 +1698,80 @@ BENCHMARK_TEMPLATE(BM_EmbeddingsBackward, fetch::fixed_point::fp32_t, 16, 256, 2
 BENCHMARK_TEMPLATE(BM_EmbeddingsBackward, fetch::fixed_point::fp32_t, 16, 1024, 1024)
     ->Unit(benchmark::kMicrosecond);
 
+BENCHMARK_TEMPLATE(BM_EmbeddingsBackward, fetch::fixed_point::fp64_t, 2, 2, 2)
+    ->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_EmbeddingsBackward, fetch::fixed_point::fp64_t, 2, 4, 4)
+    ->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_EmbeddingsBackward, fetch::fixed_point::fp64_t, 2, 16, 16)
+    ->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_EmbeddingsBackward, fetch::fixed_point::fp64_t, 2, 64, 64)
+    ->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_EmbeddingsBackward, fetch::fixed_point::fp64_t, 2, 256, 256)
+    ->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_EmbeddingsBackward, fetch::fixed_point::fp64_t, 2, 1024, 1024)
+    ->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_EmbeddingsBackward, fetch::fixed_point::fp64_t, 4, 2, 2)
+    ->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_EmbeddingsBackward, fetch::fixed_point::fp64_t, 4, 4, 4)
+    ->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_EmbeddingsBackward, fetch::fixed_point::fp64_t, 4, 16, 16)
+    ->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_EmbeddingsBackward, fetch::fixed_point::fp64_t, 4, 64, 64)
+    ->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_EmbeddingsBackward, fetch::fixed_point::fp64_t, 4, 256, 256)
+    ->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_EmbeddingsBackward, fetch::fixed_point::fp64_t, 4, 1024, 1024)
+    ->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_EmbeddingsBackward, fetch::fixed_point::fp64_t, 16, 2, 2)
+    ->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_EmbeddingsBackward, fetch::fixed_point::fp64_t, 16, 4, 4)
+    ->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_EmbeddingsBackward, fetch::fixed_point::fp64_t, 16, 16, 16)
+    ->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_EmbeddingsBackward, fetch::fixed_point::fp64_t, 16, 64, 64)
+    ->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_EmbeddingsBackward, fetch::fixed_point::fp64_t, 16, 256, 256)
+    ->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_EmbeddingsBackward, fetch::fixed_point::fp64_t, 16, 1024, 1024)
+    ->Unit(benchmark::kMicrosecond);
+
+BENCHMARK_TEMPLATE(BM_EmbeddingsBackward, fetch::fixed_point::fp128_t, 2, 2, 2)
+    ->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_EmbeddingsBackward, fetch::fixed_point::fp128_t, 2, 4, 4)
+    ->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_EmbeddingsBackward, fetch::fixed_point::fp128_t, 2, 16, 16)
+    ->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_EmbeddingsBackward, fetch::fixed_point::fp128_t, 2, 64, 64)
+    ->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_EmbeddingsBackward, fetch::fixed_point::fp128_t, 2, 256, 256)
+    ->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_EmbeddingsBackward, fetch::fixed_point::fp128_t, 2, 1024, 1024)
+    ->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_EmbeddingsBackward, fetch::fixed_point::fp128_t, 4, 2, 2)
+    ->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_EmbeddingsBackward, fetch::fixed_point::fp128_t, 4, 4, 4)
+    ->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_EmbeddingsBackward, fetch::fixed_point::fp128_t, 4, 16, 16)
+    ->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_EmbeddingsBackward, fetch::fixed_point::fp128_t, 4, 64, 64)
+    ->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_EmbeddingsBackward, fetch::fixed_point::fp128_t, 4, 256, 256)
+    ->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_EmbeddingsBackward, fetch::fixed_point::fp128_t, 4, 1024, 1024)
+    ->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_EmbeddingsBackward, fetch::fixed_point::fp128_t, 16, 2, 2)
+    ->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_EmbeddingsBackward, fetch::fixed_point::fp128_t, 16, 4, 4)
+    ->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_EmbeddingsBackward, fetch::fixed_point::fp128_t, 16, 16, 16)
+    ->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_EmbeddingsBackward, fetch::fixed_point::fp128_t, 16, 64, 64)
+    ->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_EmbeddingsBackward, fetch::fixed_point::fp128_t, 16, 256, 256)
+    ->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_EmbeddingsBackward, fetch::fixed_point::fp128_t, 16, 1024, 1024)
+    ->Unit(benchmark::kMicrosecond);
+
 template <class T, int N>
 void BM_FlattenForward(benchmark::State &state)
 {
