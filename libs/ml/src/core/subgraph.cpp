@@ -153,7 +153,7 @@ void SubGraph<TensorType>::InsertSharedCopy(
 
 template <class T>
 std::pair<OperationsCount, math::SizeVector> SubGraph<T>::ChargeForward(
-    std::vector<math::SizeVector> input_shapes)
+    std::vector<math::SizeVector> const &input_shapes)
 {
   math::SizeType i = 0;
   for (auto const &in_node_name : input_node_names_)

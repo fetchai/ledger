@@ -119,14 +119,14 @@ std::pair<OperationsCount, math::SizeVector> Node<TensorType>::ChargeForward(
   {
     visited_nodes.insert(this->name_);
     cost += op_cost_and_outputshape.first;
-    return std::make_pair(cost, op_cost_and_outputshape.second);
   }
   else
   {
     // If this node has already been visited then the cost is zero. But we still need to do the
     // recursion above in order to get the correct output shape.
-    return std::make_pair(0, op_cost_and_outputshape.second);
+    cost = 0;
   }
+  return std::make_pair(cost, op_cost_and_outputshape.second);
 }
 
 template <typename TensorType>

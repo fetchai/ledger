@@ -178,7 +178,7 @@ public:
    * output
    */
   virtual std::pair<OperationsCount, math::SizeVector> ChargeForward(
-      std::vector<math::SizeVector> input_shapes)
+      std::vector<math::SizeVector> const &input_shapes)
   {
     // Todo: all Ops should implement their own ChargeForward(input_shapes)
     math::SizeVector output_shape = ComputeOutputShape(input_shapes);

@@ -107,7 +107,7 @@ const char *Add<TensorType>::Descriptor() const
 
 template <typename TensorType>
 std::pair<OperationsCount, math::SizeVector> Add<TensorType>::ChargeForward(
-    std::vector<math::SizeVector> input_shapes)
+    std::vector<math::SizeVector> const &input_shapes)
 {
   assert(!this->batch_output_shape_.empty());
 
