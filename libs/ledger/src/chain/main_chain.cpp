@@ -2082,11 +2082,16 @@ DigestSet MainChain::DetectDuplicateTransactions(BlockHash const &           sta
 
   for (auto const &tx_layout : transactions)
   {
+    auto const valid_until = tx_layout.valid_until();
+
     auto const default_valid_from =
-        tx_layout.valid_until() - std::min(MAXIMUM_TX_VALIDITY_PERIOD, tx_layout.valid_until());
+        valid_until >= chain::Transaction::MAXIMUM_TX_VALIDITY_PERIOD
+            ? (valid_until - chain::Transaction::MAXIMUM_TX_VALIDITY_PERIOD)
+            : 0;
+
     auto const from_calculated = std::max(tx_layout.valid_from(), default_valid_from);
 
-    if (bloom_filter_.Match(tx_layout.digest(), from_calculated, tx_layout.valid_until()))
+    if (bloom_filter_.Match(tx_layout.digest(), from_calculated, valid_until))
     {
       potential_duplicates.insert(tx_layout.digest());
       earliest_possible_block_with_duplicate =
