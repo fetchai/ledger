@@ -17,6 +17,8 @@
 //------------------------------------------------------------------------------
 
 #include "core/serializers/main_serializer.hpp"
+#include "math/base_types.hpp"
+#include "ml/charge_estimation/types.hpp"
 #include "ml/layers/fully_connected.hpp"
 #include "vm_modules/ml/model/model.hpp"
 #include "vm_modules/vm_factory.hpp"
@@ -1020,7 +1022,20 @@ TEST_F(VMModelEstimatorTests, charge_forward_one_dense)
   // n placeholder readings
   expected_cost += inputs * PLACEHOLDER_READING_PER_ELEMENT;
   // n flattening operations (because Dense is not time-distributed in this test)
-  expected_cost += inputs * FLATTEN_PER_ELEMENT;
+
+  if (inputs < fetch::ml::charge_estimation::ops::PIECEWISE_LOWER_THRESHOLD)
+  {
+    expected_cost += fetch::ml::charge_estimation::ops::LOW_FLATTEN_PER_ELEMENT * inputs;
+  }
+  else if (inputs < fetch::ml::charge_estimation::ops::PIECEWISE_HARD_CAP)
+  {
+    expected_cost += fetch::ml::charge_estimation::ops::HIGH_FLATTEN_PER_ELEMENT * inputs;
+  }
+  else
+  {
+    expected_cost += fetch::math::numeric_max<fetch::ml::OperationsCount>();
+  }
+
   // n*m Weights reading (100 weights total)
   expected_cost += (inputs * outputs) * WEIGHTS_READING_PER_ELEMENT;
   // n*m*1 matmul operations
