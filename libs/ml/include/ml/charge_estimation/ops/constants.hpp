@@ -35,8 +35,8 @@ static constexpr OperationsCount FIBONNACI_GENERATOR_PER_ELEMENT = 1;
 static constexpr OperationsCount TANH_PER_ELEMENT                = 1;
 static constexpr OperationsCount COSH_PER_ELEMENT                = 1;
 static constexpr OperationsCount MAX_PER_ELEMENT                 = 1;
-static constexpr OperationsCount LOW_ADDITION_PER_ELEMENT        = 6;
-static constexpr OperationsCount HIGH_ADDITION_PER_ELEMENT       = 25;
+static constexpr OperationsCount LOW_ADDITION_PER_ELEMENT        = 5;
+static constexpr OperationsCount HIGH_ADDITION_PER_ELEMENT       = 20;
 
 static constexpr OperationsCount SUBTRACTION_PER_ELEMENT         = LOW_ADDITION_PER_ELEMENT;
 static constexpr OperationsCount ASSIGN_PER_ELEMENT              = 5;

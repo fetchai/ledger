@@ -5154,7 +5154,8 @@ void BM_AddForward(benchmark::State &state)
 
   add1.SetBatchOutputShape(config.shape);
 
-  state.counters["charge"] = static_cast<double>(add1.ChargeForward({config.shape}).first);
+  state.counters["charge_total"]   = static_cast<double>(add1.ChargeForward({config.shape}).first);
+  state.counters["charge_iterate"] = static_cast<double>(TensorType::ChargeIterate(config.shape));
 
   for (auto _ : state)
   {
@@ -5182,12 +5183,13 @@ static void AddArguments(benchmark::internal::Benchmark *b)
 }
 // TODO - 2D data + 1D for batch size
 // TODO - sum input and output iteration charges
+
+BENCHMARK_TEMPLATE(BM_AddForward, fetch::fixed_point::fp64_t)
+    ->Apply(AddArguments)
+    ->Unit(::benchmark::kNanosecond);
 BENCHMARK_TEMPLATE(BM_AddForward, float)->Apply(AddArguments)->Unit(::benchmark::kNanosecond);
 BENCHMARK_TEMPLATE(BM_AddForward, double)->Apply(AddArguments)->Unit(::benchmark::kNanosecond);
 BENCHMARK_TEMPLATE(BM_AddForward, fetch::fixed_point::fp32_t)
-    ->Apply(AddArguments)
-    ->Unit(::benchmark::kNanosecond);
-BENCHMARK_TEMPLATE(BM_AddForward, fetch::fixed_point::fp64_t)
     ->Apply(AddArguments)
     ->Unit(::benchmark::kNanosecond);
 BENCHMARK_TEMPLATE(BM_AddForward, fetch::fixed_point::fp128_t)
