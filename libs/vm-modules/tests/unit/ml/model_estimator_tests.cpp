@@ -1027,13 +1027,13 @@ TEST_F(VMModelEstimatorTests, charge_forward_one_dense)
   // m bias weights reading
   expected_cost += outputs * WEIGHTS_READING_PER_ELEMENT * batch_size;
 
-  fetch::ml::OperationsCount add_charge{1};
+  fetch::ml::OperationsCount add_charge{OP_OVERHEAD};
 
   // Addition cost
   // Type of tensor is not important for SizeFromShape
   fetch::math::SizeType num_elements =
       fetch::math::Tensor<float>::SizeFromShape({outputs, batch_size});
-  add_charge += num_elements;
+  add_charge += num_elements * LOW_ADDITION_PER_ELEMENT;
 
   // Iteration over 3 tensors (input1, input2, ret)
   // Type of tensor is not important for ChargeIterate
