@@ -212,4 +212,83 @@ BENCHMARK_TEMPLATE(BM_TensorSlice, int, 256, 256, 256)->Unit(benchmark::kMillise
 BENCHMARK_TEMPLATE(BM_TensorSlice, float, 256, 256, 256)->Unit(benchmark::kMillisecond);
 BENCHMARK_TEMPLATE(BM_TensorSlice, double, 256, 256, 256)->Unit(benchmark::kMillisecond);
 
+struct BM_Tensor_config
+{
+  using SizeType = fetch::math::SizeType;
+
+  explicit BM_Tensor_config(::benchmark::State const &state)
+  {
+    auto size_len = static_cast<SizeType>(state.range(0));
+
+    shape.reserve(size_len);
+    for (SizeType i{0}; i < size_len; ++i)
+    {
+      shape.emplace_back(static_cast<SizeType>(state.range(1 + i)));
+    }
+  }
+
+  std::vector<SizeType> shape;  // layers input/output sizes
+};
+
+template <class T>
+void BM_Iterate(benchmark::State &state)
+{
+  using TensorType = typename fetch::math::Tensor<T>;
+
+  // Get args form state
+  BM_Tensor_config config{state};
+
+  fetch::math::Tensor<T> input(config.shape);
+
+  // Fill tensors with random values
+  input.FillUniformRandom();
+
+  state.counters["charge"] = static_cast<double>(TensorType::ChargeIterate(config.shape));
+
+  for (auto _ : state)
+  {
+    auto it = input.begin();
+    while (it.is_valid())
+    {
+      ++it;
+    }
+  }
+}
+
+static void AddArguments(benchmark::internal::Benchmark *b)
+{
+  using SizeType            = fetch::math::SizeType;
+  SizeType const N_ELEMENTS = 2;
+  std::int64_t   MAX_SIZE   = 2097152;
+
+  std::vector<std::int64_t> dim_size;
+  std::int64_t              i{1};
+  while (i <= MAX_SIZE)
+  {
+    dim_size.push_back(i);
+    i *= 2;
+  }
+
+  for (std::int64_t &j : dim_size)
+  {
+    b->Args({N_ELEMENTS, j, 1});
+  }
+  for (std::int64_t &j : dim_size)
+  {
+    b->Args({N_ELEMENTS, 1, j});
+  }
+}
+
+BENCHMARK_TEMPLATE(BM_Iterate, fetch::fixed_point::fp64_t)
+    ->Apply(AddArguments)
+    ->Unit(::benchmark::kNanosecond);
+BENCHMARK_TEMPLATE(BM_Iterate, float)->Apply(AddArguments)->Unit(::benchmark::kNanosecond);
+BENCHMARK_TEMPLATE(BM_Iterate, double)->Apply(AddArguments)->Unit(::benchmark::kNanosecond);
+BENCHMARK_TEMPLATE(BM_Iterate, fetch::fixed_point::fp32_t)
+    ->Apply(AddArguments)
+    ->Unit(::benchmark::kNanosecond);
+BENCHMARK_TEMPLATE(BM_Iterate, fetch::fixed_point::fp128_t)
+    ->Apply(AddArguments)
+    ->Unit(::benchmark::kNanosecond);
+
 BENCHMARK_MAIN();
