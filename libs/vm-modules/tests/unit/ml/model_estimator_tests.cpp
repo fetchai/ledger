@@ -1035,7 +1035,7 @@ TEST_F(VMModelEstimatorTests, charge_forward_one_dense)
   else
   {
     expected_cost = fetch::math::numeric_max<fetch::ml::OperationsCount>();
-    max_charge = true;
+    max_charge    = true;
   }
 
   if (!max_charge)

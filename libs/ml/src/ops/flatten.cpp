@@ -90,11 +90,7 @@ std::vector<math::SizeType> Flatten<TensorType>::ComputeOutputShape(
     VecTensorType const &inputs) const
 {
   SizeType batch_size = inputs.at(0)->shape().at(inputs.at(0)->shape().size() - SizeType{1});
-  SizeType data_size  = 1;
-  for (SizeType i{0}; i < inputs.at(0)->shape().size() - SizeType{1}; i++)
-  {
-    data_size *= inputs.at(0)->shape().at(i);
-  }
+  SizeType data_size  = fetch::math::Product(inputs.at(0)->shape());
 
   return {data_size, batch_size};
 }
@@ -122,11 +118,13 @@ OperationsCount Flatten<TensorType>::ChargeForward() const
 
   if (padded_size < fetch::ml::charge_estimation::ops::PIECEWISE_LOWER_THRESHOLD)
   {
-    cost += fetch::ml::charge_estimation::ops::LOW_FLATTEN_PER_ELEMENT * (padded_size / 32);
+    cost += fetch::ml::charge_estimation::ops::LOW_FLATTEN_PER_ELEMENT *
+            TensorType::ChargeIterate(this->batch_input_shapes_.front());
   }
-  else if (padded_size  < fetch::ml::charge_estimation::ops::PIECEWISE_HARD_CAP)
+  else if (padded_size < fetch::ml::charge_estimation::ops::PIECEWISE_HARD_CAP)
   {
-    cost += fetch::ml::charge_estimation::ops::HIGH_FLATTEN_PER_ELEMENT * (padded_size / 32);
+    cost += fetch::ml::charge_estimation::ops::HIGH_FLATTEN_PER_ELEMENT *
+            TensorType::ChargeIterate(this->batch_input_shapes_.front());
   }
   else
   {
