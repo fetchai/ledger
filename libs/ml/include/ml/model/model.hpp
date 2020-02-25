@@ -115,7 +115,7 @@ public:
 
   friend class fetch::vm_modules::ml::model::VMModel;
 
-  virtual fetch::ml::OperationsCount ChargeForward() const;
+  virtual fetch::ml::OperationsCount ChargeForward(math::SizeVector const &input_shape) const;
   virtual fetch::ml::OperationsCount ChargeBackward() const;
   virtual fetch::ml::OperationsCount ChargeCompile(
       OptimiserType optimiser_type, ops::LossType loss_type,
