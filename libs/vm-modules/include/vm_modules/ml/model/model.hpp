@@ -175,8 +175,13 @@ public:
                           math::SizeType const &dimensions, math::SizeType const &data_points,
                           bool stub);
 
-  fetch::ml::OperationsCount ChargeForward() const
+  fetch::ml::OperationsCount ChargeForward(math::SizeVector input_shape) const
   {
+    // todo: this logic should be in model_->ChargeForward()
+    auto input_node = model_->graph_ptr_->GetNode(model_->input_);
+    auto dataholder =
+        std::dynamic_pointer_cast<fetch::ml::ops::DataHolder<TensorType>>(input_node->GetOp());
+    dataholder->SetFutureDataShape(input_shape);
     return model_->ChargeForward();
   }
 

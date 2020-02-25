@@ -94,7 +94,7 @@ public:
 
 protected:
   TensorPtrType         data_ = std::make_shared<TensorType>();
-  std::vector<SizeType> future_data_shape_;
+  std::vector<SizeType> future_data_shape_{};
 };
 
 }  // namespace ops
