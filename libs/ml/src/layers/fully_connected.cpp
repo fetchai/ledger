@@ -165,12 +165,6 @@ void FullyConnected<TensorType>::Compile()
 }
 
 template <typename TensorType>
-OperationsCount FullyConnected<TensorType>::ChargeForward() const
-{
-  return Graph<TensorType>::ChargeForward(this->output_node_name_);
-}
-
-template <typename TensorType>
 OperationsCount FullyConnected<TensorType>::ChargeBackward() const
 {
   return Graph<TensorType>::ChargeBackward(this->output_node_name_);
@@ -357,24 +351,25 @@ void FullyConnected<TensorType>::SetOpSaveableParams(SPType const &sp)
 }
 
 template <typename TensorType>
-math::SizeVector FullyConnected<TensorType>::ComputeOutputShape(VecTensorType const &inputs) const
+math::SizeVector FullyConnected<TensorType>::ComputeOutputShape(
+    std::vector<math::SizeVector> const &inputs) const
 {
   if (!time_distributed_)
   {
     SizeType total_in_size = 1;
-    for (std::size_t i = 0; i < inputs.front()->shape().size() - 1; i++)
+    for (std::size_t i = 0; i < inputs.front().size() - 1; i++)
     {
-      total_in_size *= inputs.front()->shape(i);
+      total_in_size *= inputs.front().at(i);
     }
     assert((this->total_inputs_ == AUTODETECT_INPUTS_COUNT) ||
            (total_in_size == this->total_inputs_));
-    return {this->total_outputs_, inputs.front()->shape(inputs.front()->shape().size() - 1)};
+    return {this->total_outputs_, inputs.front().back()};
   }
 
-  assert(inputs.front()->shape().size() == 3);
-  assert(inputs.front()->shape(0) == total_inputs_);
-  return {this->total_outputs_, inputs.front()->shape(inputs.front()->shape().size() - 2),
-          inputs.front()->shape(inputs.front()->shape().size() - 1)};
+  assert(inputs.front().size() == 3);
+  assert(inputs.front().at(0) == total_inputs_);
+  return {this->total_outputs_, inputs.front().at(inputs.front().size() - 2),
+          inputs.front().at(inputs.front().size() - 1)};
 }
 
 template <typename TensorType>

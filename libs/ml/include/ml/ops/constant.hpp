@@ -46,17 +46,13 @@ public:
   using VecTensorType = typename Ops<T>::VecTensorType;
   using SPType        = OpConstantSaveableParams<TensorType>;
   using MyType        = Constant<TensorType>;
+  using ParentClass   = DataHolder<TensorType>;
 
   Constant() = default;
 
   explicit Constant(SPType const &sp)
     : DataHolder<T>(sp)
-  {
-    if (sp.data)
-    {
-      this->data_ = std::make_shared<TensorType>(sp.data->Copy());
-    }
-  }
+  {}
 
   ~Constant() override = default;
 

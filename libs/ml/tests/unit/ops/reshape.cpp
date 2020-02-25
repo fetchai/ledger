@@ -44,7 +44,7 @@ void ReshapeTestForward(std::vector<SizeType> const &initial_shape,
   TensorType                          gt(final_shape);
   fetch::ml::ops::Reshape<TensorType> op(final_shape);
 
-  TensorType prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
+  TensorType prediction(op.ComputeOutputShape({data.shape()}));
   op.Forward({std::make_shared<const TensorType>(data)}, prediction);
 
   EXPECT_EQ(prediction.shape().size(), final_shape.size());
@@ -62,7 +62,7 @@ void ReshapeTestForwardWrong(std::vector<SizeType> const &initial_shape,
   TensorType                          gt(final_shape);
   fetch::ml::ops::Reshape<TensorType> op(final_shape);
 
-  TensorType prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
+  TensorType prediction(op.ComputeOutputShape({data.shape()}));
   EXPECT_ANY_THROW(op.Forward({std::make_shared<const TensorType>(data)}, prediction));
 }
 
