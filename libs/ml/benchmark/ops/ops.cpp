@@ -5164,7 +5164,7 @@ void BM_AddForward(benchmark::State &state)
 
 static void AddArguments(benchmark::internal::Benchmark *b)
 {
-  using SizeType                       = typename fetch::math::SizeType;
+  using SizeType                       = fetch::math::SizeType;
   SizeType const            N_ELEMENTS = 3;
   std::vector<std::int64_t> batch_size{1, 32, 128};
   std::vector<std::int64_t> dim_size{2, 128, 8192, 65536, 524288};

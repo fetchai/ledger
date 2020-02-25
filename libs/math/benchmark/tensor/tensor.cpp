@@ -257,9 +257,10 @@ void BM_Iterate(benchmark::State &state)
 
 static void AddArguments(benchmark::internal::Benchmark *b)
 {
-  using SizeType            = fetch::math::SizeType;
-  SizeType const N_ELEMENTS = 2;
-  std::int64_t   MAX_SIZE   = 2097152;
+  using SizeType                   = fetch::math::SizeType;
+  SizeType const N_ELEMENTS        = 2;
+  std::int64_t   MAX_SIZE          = 2097152;
+  std::int64_t   MAX_COMBINED_SIZE = 1024;
 
   std::vector<std::int64_t> dim_size;
   std::int64_t              i{1};
@@ -276,6 +277,19 @@ static void AddArguments(benchmark::internal::Benchmark *b)
   for (std::int64_t &j : dim_size)
   {
     b->Args({N_ELEMENTS, 1, j});
+  }
+
+  std::vector<std::int64_t> combined_dim_size;
+  i = 1;
+  while (i <= MAX_COMBINED_SIZE)
+  {
+    combined_dim_size.push_back(i);
+    i *= 2;
+  }
+
+  for (std::int64_t &j : combined_dim_size)
+  {
+    b->Args({N_ELEMENTS, j, j});
   }
 }
 
