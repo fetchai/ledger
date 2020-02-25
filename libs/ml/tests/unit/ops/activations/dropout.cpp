@@ -85,7 +85,7 @@ TYPED_TEST(DropoutTest, forward_test)
 
   fetch::ml::ops::Dropout<TensorType> op(prob, 12345);
 
-  TensorType    prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
+  TensorType    prediction(op.ComputeOutputShape({data.shape()}));
   VecTensorType vec_data({std::make_shared<const TensorType>(data)});
 
   op.Forward(vec_data, prediction);
@@ -132,7 +132,7 @@ TYPED_TEST(DropoutTest, forward_3d_tensor_test)
   DataType prob = fetch::math::Type<DataType>("0.3");
 
   fetch::ml::ops::Dropout<TensorType> op(prob, 12345);
-  TypeParam prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
+  TypeParam                           prediction(op.ComputeOutputShape({data.shape()}));
   op.Forward({std::make_shared<const TensorType>(data)}, prediction);
 
   // test correct fraction, sum and shape
@@ -160,7 +160,7 @@ TYPED_TEST(DropoutTest, backward_test)
   fetch::ml::ops::Dropout<TensorType> op(prob, 12345);
 
   // It's necessary to do a forward pass first
-  TensorType output(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
+  TensorType output(op.ComputeOutputShape({data.shape()}));
   op.Forward({std::make_shared<const TensorType>(data)}, output);
 
   std::vector<TensorType> prediction =
@@ -207,7 +207,7 @@ TYPED_TEST(DropoutTest, backward_3d_tensor_test)
   fetch::ml::ops::Dropout<TensorType> op(prob, 12345);
 
   // It's necessary to do a forward pass first
-  TensorType output(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
+  TensorType output(op.ComputeOutputShape({data.shape()}));
   op.Forward(VecTensorType({std::make_shared<const TensorType>(data)}), output);
 
   std::vector<TensorType> prediction =
@@ -239,7 +239,7 @@ TYPED_TEST(DropoutTest, saveparams_test)
 
   OpType op(prob, random_seed);
 
-  TensorType    prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
+  TensorType    prediction(op.ComputeOutputShape({data.shape()}));
   VecTensorType vec_data({std::make_shared<const TensorType>(data)});
 
   op.Forward(vec_data, prediction);
@@ -266,7 +266,7 @@ TYPED_TEST(DropoutTest, saveparams_test)
   OpType new_op(*dsp2);
 
   // check that new predictions match the old
-  TensorType new_prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
+  TensorType new_prediction(op.ComputeOutputShape({data.shape()}));
   new_op.Forward(vec_data, new_prediction);
 
   // test correct values
@@ -292,7 +292,7 @@ TYPED_TEST(DropoutTest, saveparams_backward_3d_tensor_test)
   fetch::ml::ops::Dropout<TensorType> op(prob, 12345);
 
   // It's necessary to do Forward pass first
-  TensorType output(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
+  TensorType output(op.ComputeOutputShape({data.shape()}));
   op.Forward(VecTensorType({std::make_shared<const TensorType>(data)}), output);
 
   // run op once to make sure caches etc. have been filled. Otherwise the test might be trivial!

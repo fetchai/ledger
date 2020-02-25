@@ -66,7 +66,7 @@ TYPED_TEST(AvgPool1DTest, forward_test_3_2_2)
 
   fetch::ml::ops::AvgPool1D<TensorType> op(3, 2);
 
-  TensorType prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
+  TensorType prediction(op.ComputeOutputShape({data.shape()}));
   op.Forward({std::make_shared<const TensorType>(data)}, prediction);
 
   // test correct values
@@ -210,7 +210,7 @@ TYPED_TEST(AvgPool1DTest, forward_test_4_2)
 
   fetch::ml::ops::AvgPool1D<TensorType> op(4, 2);
 
-  TensorType prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
+  TensorType prediction(op.ComputeOutputShape({data.shape()}));
   op.Forward({std::make_shared<const TensorType>(data)}, prediction);
 
   // test correct values
@@ -251,7 +251,7 @@ TYPED_TEST(AvgPool1DTest, forward_test_2_channels_4_1_2)
 
   fetch::ml::ops::AvgPool1D<TensorType> op(4, 1);
 
-  TensorType prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
+  TensorType prediction(op.ComputeOutputShape({data.shape()}));
   op.Forward({std::make_shared<const TensorType>(data)}, prediction);
 
   // test correct values
@@ -281,7 +281,7 @@ TYPED_TEST(AvgPool1DTest, forward_test_2_4_2)
 
   fetch::ml::ops::AvgPool1D<TensorType> op(2, 4);
 
-  TensorType prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
+  TensorType prediction(op.ComputeOutputShape({data.shape()}));
   op.Forward({std::make_shared<const TensorType>(data)}, prediction);
 
   // test correct values

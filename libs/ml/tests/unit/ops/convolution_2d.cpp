@@ -48,8 +48,7 @@ TYPED_TEST(Convolution2DTest, forward_1x1x1x2_1x1x1x1x2)
   weights.At(0, 0, 0, 0, 0) = DataType{-4};
   fetch::ml::ops::Convolution2D<TensorType> c;
 
-  TensorType output(c.ComputeOutputShape(
-      {std::make_shared<TensorType>(input), std::make_shared<TensorType>(weights)}));
+  TensorType output(c.ComputeOutputShape({input.shape(), weights.shape()}));
   c.Forward({std::make_shared<TensorType>(input), std::make_shared<TensorType>(weights)}, output);
 
   ASSERT_EQ(output.shape(), std::vector<SizeType>({1, 1, 1, 2}));
@@ -75,8 +74,7 @@ TYPED_TEST(Convolution2DTest, forward_1x3x3x1_1x1x3x3x1)
   }
   fetch::ml::ops::Convolution2D<TensorType> c;
 
-  TensorType output(c.ComputeOutputShape(
-      {std::make_shared<TensorType>(input), std::make_shared<TensorType>(weights)}));
+  TensorType output(c.ComputeOutputShape({input.shape(), weights.shape()}));
   c.Forward({std::make_shared<TensorType>(input), std::make_shared<TensorType>(weights)}, output);
 
   ASSERT_EQ(output.shape(), std::vector<SizeType>({1, 1, 1, 1}));
@@ -106,8 +104,7 @@ TYPED_TEST(Convolution2DTest, forward_3x3x3x1_1x3x3x3x1)
   }
   fetch::ml::ops::Convolution2D<TensorType> c;
 
-  TensorType output(c.ComputeOutputShape(
-      {std::make_shared<TensorType>(input), std::make_shared<TensorType>(weights)}));
+  TensorType output(c.ComputeOutputShape({input.shape(), weights.shape()}));
   c.Forward({std::make_shared<TensorType>(input), std::make_shared<TensorType>(weights)}, output);
 
   ASSERT_EQ(output.shape(), std::vector<SizeType>({1, 1, 1, 1}));
@@ -123,8 +120,7 @@ TYPED_TEST(Convolution2DTest, forward_3x3x3x1_5x3x3x3x1)
   TensorType                                weights(std::vector<SizeType>({5, 3, 3, 3, 1}));
   fetch::ml::ops::Convolution2D<TensorType> c;
 
-  TensorType output(c.ComputeOutputShape(
-      {std::make_shared<TensorType>(input), std::make_shared<TensorType>(weights)}));
+  TensorType output(c.ComputeOutputShape({input.shape(), weights.shape()}));
   c.Forward({std::make_shared<TensorType>(input), std::make_shared<TensorType>(weights)}, output);
 
   ASSERT_EQ(output.shape(), std::vector<SizeType>({5, 1, 1, 1}));
@@ -139,8 +135,7 @@ TYPED_TEST(Convolution2DTest, forward_1x5x5x3_1x1x3x3x3)
   TensorType                                weights(std::vector<SizeType>({1, 1, 3, 3, 1}));
   fetch::ml::ops::Convolution2D<TensorType> c;
 
-  TensorType output(c.ComputeOutputShape(
-      {std::make_shared<TensorType>(input), std::make_shared<TensorType>(weights)}));
+  TensorType output(c.ComputeOutputShape({input.shape(), weights.shape()}));
   c.Forward({std::make_shared<TensorType>(input), std::make_shared<TensorType>(weights)}, output);
 
   ASSERT_EQ(output.shape(), std::vector<SizeType>({1, 3, 3, 3}));
@@ -155,8 +150,7 @@ TYPED_TEST(Convolution2DTest, forward_1x5x5x3_1x1x3x3x3_stride_2)
   TensorType                                weights(std::vector<SizeType>({1, 1, 3, 3, 3}));
   fetch::ml::ops::Convolution2D<TensorType> c(2);
 
-  TensorType output(c.ComputeOutputShape(
-      {std::make_shared<TensorType>(input), std::make_shared<TensorType>(weights)}));
+  TensorType output(c.ComputeOutputShape({input.shape(), weights.shape()}));
   c.Forward({std::make_shared<TensorType>(input), std::make_shared<TensorType>(weights)}, output);
 
   ASSERT_EQ(output.shape(), std::vector<SizeType>({1, 2, 2, 3}));

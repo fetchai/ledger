@@ -206,7 +206,8 @@ void BM_AvgPool1DForward(benchmark::State &state)
   VecTensorType inputs;
   inputs.emplace_back(std::make_shared<TensorType>(input));
   fetch::ml::ops::AvgPool1D<TensorType> avg_pool_1d(K, S);
-  fetch::math::Tensor<T>                output(avg_pool_1d.ComputeOutputShape(inputs));
+  fetch::math::Tensor<T>                output(
+      avg_pool_1d.ComputeOutputShape(fetch::ml::utilities::TensorPtrsToSizes(inputs)));
 
   for (auto _ : state)
   {
@@ -305,7 +306,8 @@ void BM_AvgPool1DBackward(benchmark::State &state)
   VecTensorType inputs;
   inputs.emplace_back(std::make_shared<TensorType>(input));
   fetch::ml::ops::AvgPool1D<TensorType> avg_pool_1d(K, S);
-  fetch::math::Tensor<T>                error_signal(avg_pool_1d.ComputeOutputShape(inputs));
+  fetch::math::Tensor<T>                error_signal(
+      avg_pool_1d.ComputeOutputShape(fetch::ml::utilities::TensorPtrsToSizes(inputs)));
 
   for (auto _ : state)
   {
@@ -404,7 +406,8 @@ void BM_AvgPool2DForward(benchmark::State &state)
   VecTensorType inputs;
   inputs.emplace_back(std::make_shared<TensorType>(input));
   fetch::ml::ops::AvgPool2D<TensorType> avg_pool_2d(K, S);
-  fetch::math::Tensor<T>                output(avg_pool_2d.ComputeOutputShape(inputs));
+  fetch::math::Tensor<T>                output(
+      avg_pool_2d.ComputeOutputShape(fetch::ml::utilities::TensorPtrsToSizes(inputs)));
 
   for (auto _ : state)
   {
@@ -503,7 +506,8 @@ void BM_AvgPool2DBackward(benchmark::State &state)
   VecTensorType inputs;
   inputs.emplace_back(std::make_shared<TensorType>(input));
   fetch::ml::ops::AvgPool2D<TensorType> avg_pool_2d(K, S);
-  fetch::math::Tensor<T>                output(avg_pool_2d.ComputeOutputShape(inputs));
+  fetch::math::Tensor<T>                output(
+      avg_pool_2d.ComputeOutputShape(fetch::ml::utilities::TensorPtrsToSizes(inputs)));
 
   for (auto _ : state)
   {
@@ -768,7 +772,8 @@ void BM_Conv1DForward(benchmark::State &state)
   inputs.emplace_back(std::make_shared<TensorType>(kernel));
 
   fetch::ml::ops::Convolution1D<TensorType> conv_1d;
-  fetch::math::Tensor<T>                    output(conv_1d.ComputeOutputShape(inputs));
+  fetch::math::Tensor<T>                    output(
+      conv_1d.ComputeOutputShape(fetch::ml::utilities::TensorPtrsToSizes(inputs)));
 
   for (auto _ : state)
   {
@@ -934,7 +939,8 @@ void BM_Conv1DBackward(benchmark::State &state)
   inputs.emplace_back(std::make_shared<TensorType>(kernel));
 
   fetch::ml::ops::Convolution1D<TensorType> conv_1d;
-  fetch::math::Tensor<T>                    error_signal(conv_1d.ComputeOutputShape(inputs));
+  fetch::math::Tensor<T>                    error_signal(
+      conv_1d.ComputeOutputShape(fetch::ml::utilities::TensorPtrsToSizes(inputs)));
 
   for (auto _ : state)
   {
@@ -1103,7 +1109,8 @@ void BM_Conv2DForward(benchmark::State &state)
   inputs.emplace_back(std::make_shared<TensorType>(kernel));
 
   fetch::ml::ops::Convolution2D<TensorType> conv_2d;
-  fetch::math::Tensor<T>                    output(conv_2d.ComputeOutputShape(inputs));
+  fetch::math::Tensor<T>                    output(
+      conv_2d.ComputeOutputShape(fetch::ml::utilities::TensorPtrsToSizes(inputs)));
 
   for (auto _ : state)
   {
@@ -1273,7 +1280,8 @@ void BM_Conv2DBackward(benchmark::State &state)
   inputs.emplace_back(std::make_shared<TensorType>(kernel));
 
   fetch::ml::ops::Convolution2D<TensorType> conv_2d;
-  fetch::math::Tensor<T>                    output(conv_2d.ComputeOutputShape(inputs));
+  fetch::math::Tensor<T>                    output(
+      conv_2d.ComputeOutputShape(fetch::ml::utilities::TensorPtrsToSizes(inputs)));
 
   for (auto _ : state)
   {
@@ -2406,7 +2414,8 @@ void BM_MaxPool1DForward(benchmark::State &state)
   VecTensorType inputs;
   inputs.emplace_back(std::make_shared<TensorType>(input));
   fetch::ml::ops::MaxPool1D<TensorType> max_pool_1d(K, S);
-  fetch::math::Tensor<T>                output(max_pool_1d.ComputeOutputShape(inputs));
+  fetch::math::Tensor<T>                output(
+      max_pool_1d.ComputeOutputShape(fetch::ml::utilities::TensorPtrsToSizes(inputs)));
 
   for (auto _ : state)
   {
@@ -2505,7 +2514,8 @@ void BM_MaxPool1DBackward(benchmark::State &state)
   VecTensorType inputs;
   inputs.emplace_back(std::make_shared<TensorType>(input));
   fetch::ml::ops::MaxPool1D<TensorType> max_pool_1d(K, S);
-  fetch::math::Tensor<T>                error_signal(max_pool_1d.ComputeOutputShape(inputs));
+  fetch::math::Tensor<T>                error_signal(
+      max_pool_1d.ComputeOutputShape(fetch::ml::utilities::TensorPtrsToSizes(inputs)));
 
   for (auto _ : state)
   {
@@ -2604,7 +2614,8 @@ void BM_MaxPool2DForward(benchmark::State &state)
   VecTensorType inputs;
   inputs.emplace_back(std::make_shared<TensorType>(input));
   fetch::ml::ops::MaxPool2D<TensorType> max_pool_2d(K, S);
-  fetch::math::Tensor<T>                output(max_pool_2d.ComputeOutputShape(inputs));
+  fetch::math::Tensor<T>                output(
+      max_pool_2d.ComputeOutputShape(fetch::ml::utilities::TensorPtrsToSizes(inputs)));
 
   for (auto _ : state)
   {
@@ -2703,7 +2714,8 @@ void BM_MaxPool2DBackward(benchmark::State &state)
   VecTensorType inputs;
   inputs.emplace_back(std::make_shared<TensorType>(input));
   fetch::ml::ops::MaxPool2D<TensorType> max_pool_2d(K, S);
-  fetch::math::Tensor<T>                error_signal(max_pool_2d.ComputeOutputShape(inputs));
+  fetch::math::Tensor<T>                error_signal(
+      max_pool_2d.ComputeOutputShape(fetch::ml::utilities::TensorPtrsToSizes(inputs)));
 
   for (auto _ : state)
   {
@@ -2955,7 +2967,8 @@ void BM_OneHotForward(benchmark::State &state)
   VecTensorType inputs;
   inputs.emplace_back(std::make_shared<TensorType>(input));
   fetch::ml::ops::OneHot<fetch::math::Tensor<T>> one_hot(depth);
-  fetch::math::Tensor<T>                         output(one_hot.ComputeOutputShape(inputs));
+  fetch::math::Tensor<T>                         output(
+      one_hot.ComputeOutputShape(fetch::ml::utilities::TensorPtrsToSizes(inputs)));
 
   for (auto _ : state)
   {
@@ -3115,7 +3128,8 @@ void BM_OneHotBackward(benchmark::State &state)
   VecTensorType inputs;
   inputs.emplace_back(std::make_shared<TensorType>(input));
   fetch::ml::ops::OneHot<fetch::math::Tensor<T>> one_hot(depth);
-  fetch::math::Tensor<T>                         output(one_hot.ComputeOutputShape(inputs));
+  fetch::math::Tensor<T>                         output(
+      one_hot.ComputeOutputShape(fetch::ml::utilities::TensorPtrsToSizes(inputs)));
 
   for (auto _ : state)
   {
@@ -3420,7 +3434,8 @@ void BM_ReduceMeanForward(benchmark::State &state)
   SizeType      axis = 1;
   inputs.emplace_back(std::make_shared<TensorType>(input));
   fetch::ml::ops::ReduceMean<fetch::math::Tensor<T>> rmean(axis);
-  fetch::math::Tensor<T>                             output(rmean.ComputeOutputShape(inputs));
+  fetch::math::Tensor<T>                             output(
+      rmean.ComputeOutputShape(fetch::ml::utilities::TensorPtrsToSizes(inputs)));
 
   for (auto _ : state)
   {
@@ -3497,7 +3512,8 @@ void BM_ReduceMeanBackward(benchmark::State &state)
   SizeType      axis = 1;
   inputs.emplace_back(std::make_shared<TensorType>(input));
   fetch::ml::ops::ReduceMean<fetch::math::Tensor<T>> rmean(axis);
-  fetch::math::Tensor<T>                             output(rmean.ComputeOutputShape(inputs));
+  fetch::math::Tensor<T>                             output(
+      rmean.ComputeOutputShape(fetch::ml::utilities::TensorPtrsToSizes(inputs)));
 
   for (auto _ : state)
   {
@@ -3574,7 +3590,8 @@ void BM_ReshapeForward(benchmark::State &state)
   VecTensorType inputs;
   inputs.emplace_back(std::make_shared<TensorType>(input));
   fetch::ml::ops::Reshape<fetch::math::Tensor<T>> reshape(new_shape);
-  fetch::math::Tensor<T>                          output(reshape.ComputeOutputShape(inputs));
+  fetch::math::Tensor<T>                          output(
+      reshape.ComputeOutputShape(fetch::ml::utilities::TensorPtrsToSizes(inputs)));
 
   for (auto _ : state)
   {
@@ -3651,7 +3668,8 @@ void BM_ReshapeBackward(benchmark::State &state)
   VecTensorType inputs;
   inputs.emplace_back(std::make_shared<TensorType>(input));
   fetch::ml::ops::Reshape<fetch::math::Tensor<T>> reshape(new_shape);
-  fetch::math::Tensor<T>                          output(reshape.ComputeOutputShape(inputs));
+  fetch::math::Tensor<T>                          output(
+      reshape.ComputeOutputShape(fetch::ml::utilities::TensorPtrsToSizes(inputs)));
 
   for (auto _ : state)
   {
@@ -3729,7 +3747,8 @@ void BM_SliceForward(benchmark::State &state)
   SizeType      index = N - 1;
   inputs.emplace_back(std::make_shared<TensorType>(input));
   fetch::ml::ops::Slice<fetch::math::Tensor<T>> slice(index, axis);
-  fetch::math::Tensor<T>                        output(slice.ComputeOutputShape(inputs));
+  fetch::math::Tensor<T>                        output(
+      slice.ComputeOutputShape(fetch::ml::utilities::TensorPtrsToSizes(inputs)));
 
   for (auto _ : state)
   {
@@ -3800,7 +3819,8 @@ void BM_SliceBackward(benchmark::State &state)
   SizeType      index = N - 1;
   inputs.emplace_back(std::make_shared<TensorType>(input));
   fetch::ml::ops::Slice<fetch::math::Tensor<T>> slice(index, axis);
-  fetch::math::Tensor<T>                        output(slice.ComputeOutputShape(inputs));
+  fetch::math::Tensor<T>                        output(
+      slice.ComputeOutputShape(fetch::ml::utilities::TensorPtrsToSizes(inputs)));
 
   for (auto _ : state)
   {
@@ -3878,7 +3898,8 @@ void BM_SwitchForward(benchmark::State &state)
   inputs.emplace_back(std::make_shared<TensorType>(input_2));
   inputs.emplace_back(std::make_shared<TensorType>(input_3));
   fetch::ml::ops::Switch<fetch::math::Tensor<T>> sw;
-  fetch::math::Tensor<T>                         output(sw.ComputeOutputShape(inputs));
+  fetch::math::Tensor<T>                         output(
+      sw.ComputeOutputShape(fetch::ml::utilities::TensorPtrsToSizes(inputs)));
 
   for (auto _ : state)
   {
@@ -3956,7 +3977,8 @@ void BM_SwitchBackward(benchmark::State &state)
   inputs.emplace_back(std::make_shared<TensorType>(input_2));
   inputs.emplace_back(std::make_shared<TensorType>(input_3));
   fetch::ml::ops::Switch<fetch::math::Tensor<T>> sw;
-  fetch::math::Tensor<T>                         output(sw.ComputeOutputShape(inputs));
+  fetch::math::Tensor<T>                         output(
+      sw.ComputeOutputShape(fetch::ml::utilities::TensorPtrsToSizes(inputs)));
 
   for (auto _ : state)
   {
@@ -4028,7 +4050,8 @@ void BM_TanHForward(benchmark::State &state)
   VecTensorType inputs;
   inputs.emplace_back(std::make_shared<TensorType>(input));
   fetch::ml::ops::TanH<fetch::math::Tensor<T>> tanh;
-  fetch::math::Tensor<T>                       output(tanh.ComputeOutputShape(inputs));
+  fetch::math::Tensor<T>                       output(
+      tanh.ComputeOutputShape(fetch::ml::utilities::TensorPtrsToSizes(inputs)));
 
   for (auto _ : state)
   {
@@ -4088,7 +4111,8 @@ void BM_TanHBackward(benchmark::State &state)
   VecTensorType inputs;
   inputs.emplace_back(std::make_shared<TensorType>(input));
   fetch::ml::ops::TanH<fetch::math::Tensor<T>> tanh;
-  fetch::math::Tensor<T>                       output(tanh.ComputeOutputShape(inputs));
+  fetch::math::Tensor<T>                       output(
+      tanh.ComputeOutputShape(fetch::ml::utilities::TensorPtrsToSizes(inputs)));
 
   for (auto _ : state)
   {
@@ -4156,7 +4180,8 @@ void BM_TopKForward(benchmark::State &state)
   VecTensorType inputs;
   inputs.emplace_back(std::make_shared<TensorType>(input));
   fetch::ml::ops::TopK<fetch::math::Tensor<T>> topk(N - 1);
-  fetch::math::Tensor<T>                       output(topk.ComputeOutputShape(inputs));
+  fetch::math::Tensor<T>                       output(
+      topk.ComputeOutputShape(fetch::ml::utilities::TensorPtrsToSizes(inputs)));
 
   for (auto _ : state)
   {
@@ -4216,7 +4241,8 @@ void BM_TopKBackward(benchmark::State &state)
   VecTensorType inputs;
   inputs.emplace_back(std::make_shared<TensorType>(input));
   fetch::ml::ops::TopK<fetch::math::Tensor<T>> topk(N - 1);
-  fetch::math::Tensor<T>                       output(topk.ComputeOutputShape(inputs));
+  fetch::math::Tensor<T>                       output(
+      topk.ComputeOutputShape(fetch::ml::utilities::TensorPtrsToSizes(inputs)));
 
   topk.Forward(inputs, output);
 
@@ -4286,7 +4312,8 @@ void BM_TransposeForward(benchmark::State &state)
   VecTensorType inputs;
   inputs.emplace_back(std::make_shared<TensorType>(input));
   fetch::ml::ops::Transpose<fetch::math::Tensor<T>> tr;
-  fetch::math::Tensor<T>                            output(tr.ComputeOutputShape(inputs));
+  fetch::math::Tensor<T>                            output(
+      tr.ComputeOutputShape(fetch::ml::utilities::TensorPtrsToSizes(inputs)));
 
   for (auto _ : state)
   {
@@ -4361,7 +4388,8 @@ void BM_TransposeBackward(benchmark::State &state)
   VecTensorType inputs;
   inputs.emplace_back(std::make_shared<TensorType>(input));
   fetch::ml::ops::Transpose<fetch::math::Tensor<T>> tr;
-  fetch::math::Tensor<T>                            output(tr.ComputeOutputShape(inputs));
+  fetch::math::Tensor<T>                            output(
+      tr.ComputeOutputShape(fetch::ml::utilities::TensorPtrsToSizes(inputs)));
 
   for (auto _ : state)
   {
@@ -5121,9 +5149,8 @@ void BM_AddForward(benchmark::State &state)
   inputs.emplace_back(std::make_shared<TensorType>(input_2));
   fetch::ml::ops::Add<fetch::math::Tensor<T>> add1;
 
-  add1.SetBatchOutputShape(config.shape);
-
-  state.counters["charge"] = static_cast<double>(add1.ChargeForward());
+  state.counters["charge"] =
+      static_cast<double>(add1.ChargeForward({config.shape, config.shape}).first);
 
   for (auto _ : state)
   {

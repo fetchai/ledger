@@ -75,7 +75,7 @@ void MaxPool2D<T>::Forward(const VecTensorType &inputs, TensorType &output)
   assert(inputs.size() == 1);
   // Input must be a 4D tensor [C x W x H x N]
   assert(inputs.at(0)->shape().size() == 4);
-  assert(output.shape() == ComputeOutputShape(inputs));
+  assert(output.shape() == ComputeOutputShape(fetch::ml::utilities::TensorPtrsToSizes(inputs)));
 
   SizeType iterw;
   SizeType iterh;
@@ -135,7 +135,8 @@ std::vector<TensorType> MaxPool2D<TensorType>::Backward(const VecTensorType &inp
                                                         const TensorType &   error_signal)
 {
   assert(inputs.size() == 1);
-  assert(error_signal.shape() == ComputeOutputShape(inputs));
+  assert(error_signal.shape() ==
+         ComputeOutputShape(fetch::ml::utilities::TensorPtrsToSizes(inputs)));
   TensorType return_signal{inputs.at(0)->shape()};
 
   SizeType iterh;
@@ -193,20 +194,18 @@ std::vector<TensorType> MaxPool2D<TensorType>::Backward(const VecTensorType &inp
 
 template <typename T>
 std::vector<fetch::math::SizeType> MaxPool2D<T>::ComputeOutputShape(
-    const VecTensorType &inputs) const
+    const std::vector<math::SizeVector> &inputs) const
 {
   std::vector<SizeType> output_shape;
 
   // output_shape_[0]=number of output channels
-  output_shape.emplace_back(inputs.at(0)->shape().at(0));
+  output_shape.emplace_back(inputs.at(0).at(0));
   // output_shape_[1]=number of stride_size steps over input height
-  output_shape.emplace_back((inputs.at(0)->shape().at(1) - (kernel_size_ - stride_size_)) /
-                            stride_size_);
+  output_shape.emplace_back((inputs.at(0).at(1) - (kernel_size_ - stride_size_)) / stride_size_);
   // output_shape_[2]=number of stride_size steps over input width
-  output_shape.emplace_back((inputs.at(0)->shape().at(2) - (kernel_size_ - stride_size_)) /
-                            stride_size_);
+  output_shape.emplace_back((inputs.at(0).at(2) - (kernel_size_ - stride_size_)) / stride_size_);
   // output_shape_[3]=batch dimension
-  output_shape.emplace_back(inputs.at(0)->shape().at(3));
+  output_shape.emplace_back(inputs.at(0).at(3));
   return output_shape;
 }
 

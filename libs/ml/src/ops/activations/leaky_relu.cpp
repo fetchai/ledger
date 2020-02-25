@@ -109,9 +109,9 @@ std::vector<TensorType> LeakyRelu<TensorType>::Backward(VecTensorType const &inp
 
 template <typename TensorType>
 std::vector<math::SizeType> LeakyRelu<TensorType>::ComputeOutputShape(
-    VecTensorType const &inputs) const
+    std::vector<math::SizeVector> const &inputs) const
 {
-  return inputs.front()->shape();
+  return inputs.front();
 }
 
 template <typename TensorType>
