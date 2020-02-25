@@ -179,7 +179,7 @@ private:
   void HandleChainResponse(Address const &address, Blocks blocks);
   template <class Begin, class End>
   void HandleChainResponse(Address const &address, Begin begin, End end);
-  void NetworkMismatch() const;
+  void NetworkMismatch();
   /// @}
 
   /// @name State Machine Handlers

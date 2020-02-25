@@ -531,7 +531,8 @@ State MainChainRpcService::WalkBack()
   case 0:
     assert(block_resolving_->IsGenesis());
     // these are the wrong sort of nodes, so I should think they would make the wrong sort of blocks
-    return NetworkMismatch();
+    NetworkMismatch();
+    return State::COMPLETE_SYNC_WITH_PEER;
 
   case 1:
     assert(block_resolving_->previous_hash == chain::GetGenesisDigest());
@@ -590,7 +591,7 @@ bool MainChainRpcService::IsHealthy() const
 /**
  * Hanlde the situation when this network's genesis digest is absoutely different.
  */
-void MainChainRpcService::NetworkMismatch() const
+void MainChainRpcService::NetworkMismatch()
 {
   network_mismatches_->increment();
   FETCH_LOG_CRITICAL(LOGGING_NAME, " chain sync: the peer ", current_peer_address_.ToBase64(),
@@ -599,7 +600,6 @@ void MainChainRpcService::NetworkMismatch() const
   // genesis digest mismatch, stop sync with this peer
   block_resolving_.reset();
   back_stride_ = 1;
-  return State::COMPLETE_SYNC_WITH_PEER;
 }
 
 }  // namespace ledger
