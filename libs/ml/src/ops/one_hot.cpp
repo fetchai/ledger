@@ -80,7 +80,8 @@ std::vector<TensorType> OneHot<TensorType>::Backward(const VecTensorType &inputs
 {
   FETCH_UNUSED(error_signal);
   assert(inputs.size() == 1);
-  assert(error_signal.shape() == Ops<TensorType>::ComputeOutputShape(inputs));
+  assert(error_signal.shape() ==
+         ComputeOutputShape(fetch::ml::utilities::TensorPtrsToSizes(inputs)));
 
   // No derivative defined for OneHotOp
   return {TensorType{inputs.at(0)->shape()}};

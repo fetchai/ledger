@@ -153,14 +153,14 @@ void SubGraph<TensorType>::InsertSharedCopy(
 
 template <class T>
 std::pair<OperationsCount, math::SizeVector> SubGraph<T>::ChargeForward(
-    std::vector<math::SizeVector> input_shapes)
+    std::vector<math::SizeVector> const &input_shapes)
 {
-  // set inputs. Actually this might be unnecessary...
-  // todo: Need a SetInputSize method; SetInput is expensive
   math::SizeType i = 0;
   for (auto const &in_node_name : input_node_names_)
   {
-    this->SetInput(in_node_name, TensorType{input_shapes.at(i)});
+    auto input_node = this->GetNode(in_node_name);
+    auto dataholder = std::dynamic_pointer_cast<ops::DataHolder<TensorType>>(input_node->GetOp());
+    dataholder->SetFutureDataShape(input_shapes.at(i));
     i++;
   }
 

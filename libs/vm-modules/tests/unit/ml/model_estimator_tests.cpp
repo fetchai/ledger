@@ -17,8 +17,6 @@
 //------------------------------------------------------------------------------
 
 #include "core/serializers/main_serializer.hpp"
-#include "math/base_types.hpp"
-#include "ml/charge_estimation/types.hpp"
 #include "ml/layers/fully_connected.hpp"
 #include "vm_modules/ml/model/model.hpp"
 #include "vm_modules/vm_factory.hpp"
@@ -1017,14 +1015,13 @@ TEST_F(VMModelEstimatorTests, charge_forward_one_dense)
   ChargeAmount expected_cost = 0;
   // For a Dense layer with n inputs and m outputs and empty activation there is expected
   // n placeholder readings
-
   expected_cost += inputs * PLACEHOLDER_READING_PER_ELEMENT * batch_size;
   // n*m Weights reading (100 weights total)
   expected_cost += (inputs * outputs) * WEIGHTS_READING_PER_ELEMENT * batch_size;
   // There is a second placeholder - one is in the graph and the other in the FC layer
   expected_cost += inputs * PLACEHOLDER_READING_PER_ELEMENT * batch_size;
   // n flattening operations (because Dense is not time-distributed in this test)
-  expected_cost += inputs * FLATTEN_PER_ELEMENT * batch_size;
+  expected_cost += inputs * LOW_FLATTEN_PER_ELEMENT * batch_size;
   // n*m*1 matmul operations
   expected_cost += (inputs * outputs) * MULTIPLICATION_PER_ELEMENT * batch_size;
   // m bias weights reading

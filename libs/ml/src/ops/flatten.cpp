@@ -113,7 +113,7 @@ const char *Flatten<TensorType>::Descriptor() const
 
 template <class TensorType>
 std::pair<OperationsCount, math::SizeVector> Flatten<TensorType>::ChargeForward(
-    std::vector<math::SizeVector> input_shapes)
+    std::vector<math::SizeVector> const &input_shapes)
 {
   assert(!this->batch_input_shapes_.empty());
 
