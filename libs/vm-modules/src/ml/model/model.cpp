@@ -938,9 +938,8 @@ ChargeAmount VMModel::MaximumCharge(std::string const &log_msg)
  */
 ChargeAmount VMModel::EstimatePredict(const vm::Ptr<math::VMTensor> &data)
 {
-  FETCH_UNUSED(data);
-  // todo: set data size
-  ChargeAmount const batch_cost = model_->ChargeForward();
+  ChargeAmount const batch_cost = ChargeForward(data->GetConstTensor().shape());
+
   FETCH_LOG_INFO(LOGGING_NAME,
                  " forward pass estimated batch cost is " + std::to_string(batch_cost));
   return batch_cost;
@@ -962,8 +961,8 @@ ChargeAmount VMModel::EstimateEvaluate()
     throw std::runtime_error("must set data before evaluating");
   }
 
-  // VMModel::ChargeForwards now returns the batch cost and not the datapoint cost
   ChargeAmount const batch_cost = model_->ChargeForward();
+
   FETCH_LOG_INFO(LOGGING_NAME,
                  " forward pass estimated batch cost is " + std::to_string(batch_cost));
   return batch_cost;
@@ -1149,7 +1148,7 @@ fetch::vm::ChargeAmount VMModel::EstimateFit(vm::Ptr<math::VMTensor> const &data
   SizeType number_of_batches = subset_size / batch_size;
 
   // Forward pass
-  estimate += ChargeForward() * number_of_batches;
+  estimate += ChargeForward(data->GetTensor().shape()) * number_of_batches;
 
   // Backward pass
   estimate += ChargeBackward() * subset_size;

@@ -55,7 +55,7 @@ template <typename T>
 void MatrixMultiply<T>::Forward(VecTensorType const &inputs, TensorType &output)
 {
   assert(inputs.size() == 2);
-  assert(output.shape() == Ops<TensorType>::ComputeOutputShape(inputs));
+  assert(output.shape() == ComputeOutputShape(fetch::ml::utilities::TensorPtrsToSizes(inputs)));
 
   UpdateContainersForward(inputs);
 

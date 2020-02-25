@@ -73,7 +73,7 @@ void MaxPool1D<T>::Forward(const VecTensorType &inputs, TensorType &output)
   assert(inputs.size() == 1);
   // Input must be a 3D tensor [C x W x N]
   assert(inputs.at(0)->shape().size() == 3);
-  assert(output.shape() == Ops<TensorType>::ComputeOutputShape(inputs));
+  assert(output.shape() == ComputeOutputShape(fetch::ml::utilities::TensorPtrsToSizes(inputs)));
 
   SizeType iter;
   DataType max;
@@ -124,7 +124,8 @@ std::vector<TensorType> MaxPool1D<TensorType>::Backward(const VecTensorType &inp
                                                         const TensorType &   error_signal)
 {
   assert(inputs.size() == 1);
-  assert(error_signal.shape() == Ops<TensorType>::ComputeOutputShape(inputs));
+  assert(error_signal.shape() ==
+         ComputeOutputShape(fetch::ml::utilities::TensorPtrsToSizes(inputs)));
 
   TensorType return_signal{inputs.at(0)->shape()};
 

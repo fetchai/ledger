@@ -28,11 +28,16 @@ template <typename TensorType>
 std::shared_ptr<OpsSaveableParams> DataHolder<TensorType>::GetOpSaveableParams()
 {
   auto sp = std::make_shared<SPType>();
+  if (this->data_)
+  {
+    sp->data = std::make_shared<TensorType>(this->data_->Copy());
+  }
+  sp->future_data_shape = future_data_shape_;
 
   // Add base class savable params
-  auto ops_sp  = Ops<TensorType>::GetOpSaveableParams();
-  auto cast_sp = std::static_pointer_cast<OpsSaveableParams>(sp);
-  *cast_sp     = *(std::static_pointer_cast<OpsSaveableParams>(ops_sp));
+  auto ops_sp  = ParentClass::GetOpSaveableParams();
+  auto cast_sp = std::static_pointer_cast<typename ParentClass::SPType>(sp);
+  *cast_sp     = *(std::static_pointer_cast<typename ParentClass::SPType>(ops_sp));
 
   return sp;
 }
@@ -86,17 +91,13 @@ std::vector<math::SizeType> DataHolder<TensorType>::ComputeOutputShape(
     std::vector<math::SizeVector> const &inputs) const
 {
   FETCH_UNUSED(inputs);
-  if (!future_data_shape_.empty())
+  if (future_data_shape_.empty())
   {
-    return future_data_shape_;
-  }
-  else if (data_)
-  {
-    return data_->shape();
+    throw std::runtime_error("future_data_shape_ is not set for " + std::string(Descriptor()) +
+                             " so shape computing is not possible.");
   }
 
-  throw std::runtime_error("Neither data_ nor future_data_shape_ is set for " +
-                           std ::string(Descriptor()) + " so shape computing is not possible.");
+  return future_data_shape_;
 }
 
 template <typename TensorType>
@@ -127,6 +128,29 @@ OperationsCount DataHolder<TensorType>::ChargeSetData(std::vector<SizeType> cons
 {
   future_data_shape_ = data;
   return TensorType::PaddedSizeFromShape(data);
+}
+
+/**
+ * This is used for charge estimation, where the shape of the data tensor is needed but
+ * setting the full tensor would be too expensive.
+ * @tparam TensorType
+ * @param data
+ */
+template <typename TensorType>
+void DataHolder<TensorType>::SetFutureDataShape(std::vector<SizeType> const &data)
+{
+  future_data_shape_ = data;
+}
+
+template <typename T>
+DataHolder<T>::DataHolder(const DataHolder::SPType &sp)
+  : Ops<T>(sp)
+{
+  if (sp.data)
+  {
+    this->data_ = std::make_shared<TensorType>(sp.data->Copy());
+  }
+  future_data_shape_ = sp.future_data_shape;
 }
 
 ///////////////////////////////

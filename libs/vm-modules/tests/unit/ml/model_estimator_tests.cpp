@@ -453,7 +453,7 @@ TEST_F(VMModelEstimatorTests, estimator_fit_and_predict_test)
           SizeType number_of_batches = subset_size / batch_size;
 
           // Forward pass
-          val += model.ChargeForward() * subset_size;
+          val += model.ChargeForward(data_shape) * number_of_batches;
 
           // Backward pass
           val += model.ChargeBackward() * subset_size;
@@ -466,14 +466,12 @@ TEST_F(VMModelEstimatorTests, estimator_fit_and_predict_test)
           // Optimiser step - Adam
           val += (8 + weights_size * 15) * number_of_batches;
 
-          EXPECT_TRUE(model.EstimateFit(vm_ptr_tensor_data, vm_ptr_tensor_labels, batch_size) ==
-                      static_cast<SizeType>(val) + 1);
+          EXPECT_EQ(model.EstimateFit(vm_ptr_tensor_data, vm_ptr_tensor_labels, batch_size),
+                    static_cast<SizeType>(val) + 1);
 
-          ChargeAmount const cost        = model.ChargeForward();
-          ChargeAmount const predict_val = n_data * cost;
+          ChargeAmount const predict_val = model.ChargeForward(data_shape);
 
-          EXPECT_TRUE(model.EstimatePredict(vm_ptr_tensor_data) ==
-                      static_cast<SizeType>(predict_val));
+          EXPECT_EQ(model.EstimatePredict(vm_ptr_tensor_data), static_cast<SizeType>(predict_val));
         }
       }
     }
@@ -558,10 +556,9 @@ TEST_F(VMModelEstimatorTests, estimator_evaluate_with_metrics)
           // Calling Fit is needed to set the data
           model.Fit(vm_ptr_tensor_data, vm_ptr_tensor_labels, batch_size);
 
-          ChargeAmount const cost = model.ChargeForward();
-          ChargeAmount const val  = n_data * cost;
+          ChargeAmount const cost = model.ChargeForward(data_shape);
 
-          EXPECT_EQ(model.EstimateEvaluate(), static_cast<ChargeAmount>(val));
+          EXPECT_EQ(model.EstimateEvaluate(), static_cast<ChargeAmount>(cost));
         }
       }
     }
@@ -1020,51 +1017,37 @@ TEST_F(VMModelEstimatorTests, charge_forward_one_dense)
   ChargeAmount expected_cost = 0;
   // For a Dense layer with n inputs and m outputs and empty activation there is expected
   // n placeholder readings
-  expected_cost += inputs * PLACEHOLDER_READING_PER_ELEMENT;
+
+  expected_cost += inputs * PLACEHOLDER_READING_PER_ELEMENT * batch_size;
+  // n*m Weights reading (100 weights total)
+  expected_cost += (inputs * outputs) * WEIGHTS_READING_PER_ELEMENT * batch_size;
+  // There is a second placeholder - one is in the graph and the other in the FC layer
+  expected_cost += inputs * PLACEHOLDER_READING_PER_ELEMENT * batch_size;
   // n flattening operations (because Dense is not time-distributed in this test)
+  expected_cost += inputs * FLATTEN_PER_ELEMENT * batch_size;
+  // n*m*1 matmul operations
+  expected_cost += (inputs * outputs) * MULTIPLICATION_PER_ELEMENT * batch_size;
+  // m bias weights reading
+  expected_cost += outputs * WEIGHTS_READING_PER_ELEMENT * batch_size;
 
-  bool max_charge = false;
-  if (inputs < fetch::ml::charge_estimation::ops::PIECEWISE_LOWER_THRESHOLD)
-  {
-    expected_cost += fetch::ml::charge_estimation::ops::LOW_FLATTEN_PER_ELEMENT * inputs;
-  }
-  else if (inputs < fetch::ml::charge_estimation::ops::PIECEWISE_HARD_CAP)
-  {
-    expected_cost += fetch::ml::charge_estimation::ops::HIGH_FLATTEN_PER_ELEMENT * inputs;
-  }
-  else
-  {
-    expected_cost = fetch::math::numeric_max<fetch::ml::OperationsCount>();
-    max_charge    = true;
-  }
+  fetch::ml::OperationsCount add_charge{1};
 
-  if (!max_charge)
-  {
-    // n*m Weights reading (100 weights total)
-    expected_cost += (inputs * outputs) * WEIGHTS_READING_PER_ELEMENT;
-    // n*m*1 matmul operations
-    expected_cost += (inputs * outputs) * MULTIPLICATION_PER_ELEMENT;
-    // m bias weights reading
-    expected_cost += outputs * WEIGHTS_READING_PER_ELEMENT;
+  // Addition cost
+  // Type of tensor is not important for SizeFromShape
+  fetch::math::SizeType num_elements =
+      fetch::math::Tensor<float>::SizeFromShape({outputs, batch_size});
+  add_charge += num_elements;
 
-    fetch::ml::OperationsCount add_charge{1};
+  // Iteration over 3 tensors (input1, input2, ret)
+  // Type of tensor is not important for ChargeIterate
+  fetch::ml::OperationsCount iteration_ops =
+      fetch::math::Tensor<float>::ChargeIterate({outputs, batch_size});
+  add_charge += iteration_ops * 3;
 
-    // Addition cost
-    // Type of tensor is not important for SizeFromShape
-    fetch::math::SizeType num_elements = fetch::math::Tensor<float>::SizeFromShape({outputs, 1});
-    add_charge += num_elements;
+  // m adding (bias + matmul result)
+  expected_cost += add_charge;
 
-    // Iteration over 3 tensors (input1, input2, ret)
-    // Type of tensor is not important for ChargeIterate
-    fetch::ml::OperationsCount iteration_ops =
-        fetch::math::Tensor<float>::ChargeIterate({outputs, 1});
-    add_charge += iteration_ops * 3;
-
-    // m adding (bias + matmul result)
-    expected_cost += add_charge;
-  }
-
-  ASSERT_EQ(cost, expected_cost * batch_size);
+  ASSERT_EQ(cost, expected_cost);
 }
 
 }  // namespace

@@ -62,7 +62,7 @@ template <class TensorType>
 void Flatten<TensorType>::Forward(VecTensorType const &inputs, TensorType &output)
 {
   assert(inputs.size() == 1);
-  assert(output.shape() == Ops<TensorType>::ComputeOutputShape(inputs));
+  assert(output.shape() == ComputeOutputShape(fetch::ml::utilities::TensorPtrsToSizes(inputs)));
   input_shape_ = inputs.front()->shape();
 
   assert(output.shape().at(output.shape().size() - 1) ==

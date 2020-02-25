@@ -93,7 +93,7 @@ template <typename TensorType>
 void StridedSlice<TensorType>::Forward(VecTensorType const &inputs, TensorType &output)
 {
   assert(inputs.size() == 1);
-  assert(output.shape() == Ops<TensorType>::ComputeOutputShape(inputs));
+  assert(output.shape() == ComputeOutputShape(fetch::ml::utilities::TensorPtrsToSizes(inputs)));
 
   auto slice = inputs.at(0)->Slice(begins_, ends_, strides_);
   output.Assign(slice);
@@ -110,7 +110,8 @@ std::vector<TensorType> StridedSlice<TensorType>::Backward(VecTensorType const &
                                                            TensorType const &   error_signal)
 {
   assert(inputs.size() == 1);
-  assert(error_signal.shape() == Ops<TensorType>::ComputeOutputShape(inputs));
+  assert(error_signal.shape() ==
+         ComputeOutputShape(fetch::ml::utilities::TensorPtrsToSizes(inputs)));
 
   TensorType ret_error_signal_{inputs.at(0)->shape()};
 

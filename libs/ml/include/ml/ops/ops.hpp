@@ -23,6 +23,7 @@
 #include "ml/charge_estimation/ops/constants.hpp"
 #include "ml/exceptions/exceptions.hpp"
 #include "ml/saveparams/saveable_params.hpp"
+#include "ml/utilities/utils.hpp"
 
 #include <functional>
 #include <memory>
@@ -52,21 +53,6 @@ public:
   virtual void                    Forward(VecTensorType const &inputs, TensorType &output) = 0;
   virtual std::vector<TensorType> Backward(VecTensorType const &inputs,
                                            TensorType const &   error_signal)                 = 0;
-  /*
-   * ComputeOutputShape is usually expensive function and should be used only for initialisation or
-   * in ASSERT. On Forward you can use output.shape() and on Backward there is error_signal.shape()
-   */
-  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const
-  {
-    std::vector<math::SizeVector> input_shapes{};
-    for (auto const &inp : inputs)
-    {
-      input_shapes.emplace_back(inp->shape());
-    }
-    auto result = ComputeOutputShape(input_shapes);
-    // todo: add asserts here about batch shape
-    return ComputeOutputShape(input_shapes);
-  }
 
   virtual std::vector<SizeType> ComputeOutputShape(
       std::vector<math::SizeVector> const &inputs) const = 0;
@@ -180,7 +166,8 @@ public:
    */
   virtual OperationsCount ChargeForward() const
   {
-    // todo: should be removed in favour of ChargeForward below
+    // TODO(ML-526): Change all ChargeForward() to ChargeForward(input_shapes) and then remove this
+    // method
     FETCH_LOG_ERROR(Descriptor(),
                     " Error: call to unexisting ChargeForward() implementation! returned 0.");
 
@@ -192,9 +179,8 @@ public:
    * output
    */
   virtual std::pair<OperationsCount, math::SizeVector> ChargeForward(
-      std::vector<math::SizeVector> input_shapes)
+      std::vector<math::SizeVector> const &input_shapes)
   {
-    // Todo: all Ops should implement their own ChargeForward(input_shapes)
     math::SizeVector output_shape = ComputeOutputShape(input_shapes);
     // multiplying ChargeForward() by the batch dimension is correct for Ops that don't have
     // a proper ChargeForward(input_size) implemented.

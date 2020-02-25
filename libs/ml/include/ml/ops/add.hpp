@@ -76,7 +76,7 @@ public:
   char const *Descriptor() const override;
 
   std::pair<OperationsCount, math::SizeVector> ChargeForward(
-      std::vector<math::SizeVector> input_shapes) override;
+      std::vector<math::SizeVector> const &input_shapes) override;
   OperationsCount ChargeBackward() const override;
 
 private:

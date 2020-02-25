@@ -60,7 +60,7 @@ void Maximum<T>::Forward(const VecTensorType &inputs, TensorType &output)
 {
   assert(inputs.size() == 2);
   assert(inputs.at(0)->size() == inputs.at(1)->size());
-  assert(output.shape() == Ops<TensorType>::ComputeOutputShape(inputs));
+  assert(output.shape() == ComputeOutputShape(fetch::ml::utilities::TensorPtrsToSizes(inputs)));
 
   fetch::math::Maximum((*inputs.at(0)), (*inputs.at(1)), output);
 }

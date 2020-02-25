@@ -56,7 +56,7 @@ public:
       std::shared_ptr<fetch::ml::ops::Ops<TensorType>> me) override;
 
   std::pair<OperationsCount, math::SizeVector> ChargeForward(
-      std::vector<math::SizeVector> input_shapes) override;
+      std::vector<math::SizeVector> const &input_shapes) override;
 
 protected:
   void InsertSharedCopy(std::shared_ptr<fetch::ml::ops::Ops<TensorType>> output_ptr);

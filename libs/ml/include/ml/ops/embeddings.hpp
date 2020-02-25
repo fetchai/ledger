@@ -45,6 +45,7 @@ public:
   using VecTensorType = typename Weights<T>::VecTensorType;
   using SPType        = OpEmbeddingsSaveableParams<TensorType>;
   using MyType        = Embeddings<TensorType>;
+  using ParentClass   = Weights<TensorType>;
 
   Embeddings(SizeType dimensions, SizeType data_points);
 

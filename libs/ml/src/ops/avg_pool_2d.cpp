@@ -83,7 +83,7 @@ void AvgPool2D<TensorType>::Forward(VecTensorType const &inputs, TensorType &out
   assert(inputs.size() == 1);
   // Input must be a 4D tensor [C x W x H x N]
   assert(inputs.at(0)->shape().size() == 4);
-  assert(output.shape() == Ops<TensorType>::ComputeOutputShape(inputs));
+  assert(output.shape() == ComputeOutputShape(fetch::ml::utilities::TensorPtrsToSizes(inputs)));
 
   SizeType iterw;
   SizeType iterh;
@@ -139,7 +139,8 @@ std::vector<TensorType> AvgPool2D<TensorType>::Backward(VecTensorType const &inp
                                                         TensorType const &   error_signal)
 {
   assert(inputs.size() == 1);
-  assert(error_signal.shape() == Ops<TensorType>::ComputeOutputShape(inputs));
+  assert(error_signal.shape() ==
+         ComputeOutputShape(fetch::ml::utilities::TensorPtrsToSizes(inputs)));
   TensorType return_signal{inputs.at(0)->shape()};
 
   SizeType iterh;

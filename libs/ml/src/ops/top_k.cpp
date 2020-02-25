@@ -88,7 +88,7 @@ void TopK<TensorType>::Forward(VecTensorType const &inputs, TensorType &output)
 
   // Only 2D input is supported
   assert(inputs.at(0)->shape().size() == 2);
-  assert(output.shape() == Ops<TensorType>::ComputeOutputShape(inputs));
+  assert(output.shape() == ComputeOutputShape(fetch::ml::utilities::TensorPtrsToSizes(inputs)));
 
   UpdateIndices(inputs);
 
@@ -115,7 +115,8 @@ std::vector<TensorType> TopK<TensorType>::Backward(VecTensorType const &inputs,
   // Forward needs to be run first
   assert(indices_.size() != 0);
 
-  assert(error_signal.shape() == Ops<TensorType>::ComputeOutputShape(inputs));
+  assert(error_signal.shape() ==
+         ComputeOutputShape(fetch::ml::utilities::TensorPtrsToSizes(inputs)));
 
   TensorType ret_signal(inputs.at(0)->shape());
 
@@ -153,7 +154,8 @@ std::vector<math::SizeType> TopK<TensorType>::ComputeOutputShape(
 template <class TensorType>
 void TopK<TensorType>::UpdateIndices(VecTensorType const &inputs)
 {
-  std::vector<SizeType> ret_shape = Ops<TensorType>::ComputeOutputShape(inputs);
+  std::vector<SizeType> ret_shape =
+      ComputeOutputShape(fetch::ml::utilities::TensorPtrsToSizes(inputs));
   if (indices_.shape() != ret_shape)
   {
     indices_ = TensorSizeType(ret_shape);
