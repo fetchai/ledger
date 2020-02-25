@@ -169,11 +169,11 @@ constexpr std::enable_if_t<detail_::AreSameReadPODV<T, Ts...>, char const *> Buf
   auto const            realigned_buf = memory::Realign<T>(buf, amount);
 
   value_util::Accumulate(
-      [realigned_buf](std::size_t index, T &&var) {
-        var = realigned_buf[index];
-        return index + 1;
+      [](T const *buf, T &&var) {
+        var = *buf;
+        return buf + 1;
       },
-      0, std::forward<T>(t), std::forward<Ts>(ts)...);
+      realigned_buf, std::forward<T>(t), std::forward<Ts>(ts)...);
 
   return buf + amount * sizeof(T);
 }
@@ -208,11 +208,12 @@ constexpr std::enable_if_t<detail_::AreSameReadPODV<T, Ts...>, std::size_t> FRea
   stream.read(&buf, sizeof(buf));
 
   value_util::Accumulate(
-      [buf](std::size_t index, T &&var) {
-        var = buf[index];
-        return index + 1;
+      [](T *buf, T &&var) {
+        var = *buf;
+        return buf + 1;
       },
-      0, std::forward<T>(t), std::forward<Ts>(ts)...);
+      static_cast<T const *>(buf), std::forward<T>(t), std::forward<Ts>(ts)...);
+
   return sizeof(buf);
 }
 
