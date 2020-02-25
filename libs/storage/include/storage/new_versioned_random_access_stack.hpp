@@ -88,20 +88,6 @@ private:
    */
   struct HistoryBookmark
   {
-    HistoryBookmark()
-    {
-      // Clear the whole structure (including padded regions) are zeroed
-      memset(this, 0, sizeof(decltype(*this)));
-    }
-
-    HistoryBookmark(uint64_t val, DefaultKey const &key_in)
-    {
-      // Clear the whole structure (including padded regions) are zeroed
-      memset(this, 0, sizeof(decltype(*this)));
-      bookmark = val;
-      key      = key_in;
-    }
-
     enum
     {
       value = 0
@@ -109,6 +95,21 @@ private:
 
     uint64_t   bookmark = 0;  // Internal index
     DefaultKey key{};         // User supplied key
+
+    static constexpr std::size_t BinarySize() noexcept
+    {
+      return sizeof(bookmark) + sizeof(key);
+    }
+
+    constexpr char const *BinaryRead(char const *buf)
+    {
+      return buffer_io::BufRead(buf, bookmark, key);
+    }
+
+    constexpr char *BinaryWrite(char *buf) const
+    {
+      return buffer_io::BufWrite(buf, bookmark, key);
+    }
   };
 
   /**
@@ -118,21 +119,6 @@ private:
    */
   struct HistorySwap
   {
-    HistorySwap()
-    {
-      // Clear the whole structure (including padded regions) are zeroed
-      memset(this, 0, sizeof(decltype(*this)));
-    }
-
-    HistorySwap(uint64_t i_, uint64_t j_)
-    {
-      // Clear the whole structure (including padded regions) are zeroed
-      memset(this, 0, sizeof(decltype(*this)));
-
-      i = i_;
-      j = j_;
-    }
-
     enum
     {
       value = 1
@@ -140,6 +126,21 @@ private:
 
     uint64_t i = 0;
     uint64_t j = 0;
+
+    static constexpr std::size_t BinarySize() noexcept
+    {
+      return sizeof(i) + sizeof(j);
+    }
+
+    constexpr char const *BinaryRead(char const *buf)
+    {
+      return buffer_io::BufRead(buf, i, j);
+    }
+
+    constexpr char *BinaryWrite(char *buf) const
+    {
+      return buffer_io::BufWrite(buf, i, j);
+    }
   };
 
   /**
@@ -149,26 +150,27 @@ private:
    */
   struct HistoryPop
   {
-    HistoryPop()
-    {
-      // Clear the whole structure (including padded regions) are zeroed
-      memset(this, 0, sizeof(decltype(*this)));
-    }
-
-    explicit HistoryPop(T const &d)
-    {
-      // Clear the whole structure (including padded regions) are zeroed
-      memset(this, 0, sizeof(decltype(*this)));
-
-      data = d;
-    }
-
     enum
     {
       value = 2
     };
 
     T data{};
+
+    static constexpr std::size_t BinarySize() noexcept
+    {
+      return sizeof(data);
+    }
+
+    constexpr char const *BinaryRead(char const *buf)
+    {
+      return buffer_io::BufRead(buf, data);
+    }
+
+    constexpr char *BinaryWrite(char *buf) const
+    {
+      return buffer_io::BufWrite(buf, data);
+    }
   };
 
   /**
@@ -179,16 +181,25 @@ private:
    */
   struct HistoryPush
   {
-    HistoryPush()
-    {
-      // Clear the whole structure (including padded regions) are zeroed
-      memset(this, 0, sizeof(decltype(*this)));
-    }
-
     enum
     {
       value = 3
     };
+
+    static constexpr std::size_t BinarySize() noexcept
+    {
+      return 0;
+    }
+
+    constexpr char const *BinaryRead(char const *buf)
+    {
+      return buf;
+    }
+
+    constexpr char *BinaryWrite(char *buf) const
+    {
+      return buf;
+    }
   };
 
   /**
@@ -202,21 +213,6 @@ private:
    */
   struct HistorySet
   {
-    HistorySet()
-    {
-      // Clear the whole structure (including padded regions) are zeroed
-      memset(this, 0, sizeof(decltype(*this)));
-    }
-
-    HistorySet(uint64_t i_, T const &d)
-    {
-      // Clear the whole structure (including padded regions) are zeroed
-      memset(this, 0, sizeof(decltype(*this)));
-
-      i    = i_;
-      data = d;
-    }
-
     enum
     {
       value = 4
@@ -224,6 +220,21 @@ private:
 
     uint64_t i = 0;
     T        data;
+
+    static constexpr std::size_t BinarySize() noexcept
+    {
+      return sizeof(i) + sizeof(data);
+    }
+
+    constexpr char const *BinaryRead(char const *buf)
+    {
+      return buffer_io::BufRead(buf, i, data);
+    }
+
+    constexpr char *BinaryWrite(char *buf) const
+    {
+      return buffer_io::BufWrite(buf, i, data);
+    }
   };
 
   /**
@@ -232,26 +243,27 @@ private:
    */
   struct HistoryHeader
   {
-    HistoryHeader()
-    {
-      // Clear the whole structure (including padded regions) are zeroed
-      memset(this, 0, sizeof(decltype(*this)));
-    }
-
-    explicit HistoryHeader(uint64_t d)
-    {
-      // Clear the whole structure (including padded regions) are zeroed
-      memset(this, 0, sizeof(decltype(*this)));
-
-      data = d;
-    }
-
     enum
     {
       value = 5
     };
 
     uint64_t data = 0;
+
+    static constexpr std::size_t BinarySize() noexcept
+    {
+      return sizeof(data);
+    }
+
+    constexpr char const *BinaryRead(char const *buf)
+    {
+      return buffer_io::BufRead(buf, data);
+    }
+
+    constexpr char *BinaryWrite(char *buf) const
+    {
+      return buffer_io::BufWrite(buf, data);
+    }
   };
 
 public:

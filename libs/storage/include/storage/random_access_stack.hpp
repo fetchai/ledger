@@ -25,6 +25,7 @@
 //  └──────┴───────────┴───────────┴───────────┴───────────┘
 
 #include "core/assert.hpp"
+#include "core/buffer_io.hpp"
 #include "storage/storage_exception.hpp"
 
 #include <algorithm>
@@ -76,9 +77,7 @@ private:
         return false;
       }
       stream.seekg(0, std::fstream::beg);
-      stream.write(reinterpret_cast<char const *>(&magic), sizeof(magic));
-      stream.write(reinterpret_cast<char const *>(&objects), sizeof(objects));
-      stream.write(reinterpret_cast<char const *>(&extra), sizeof(extra));
+      buffer_io::FWrite(stream, magic, objects, extra);
       return bool(stream);
     }
 
@@ -89,9 +88,7 @@ private:
         return false;
       }
       stream.seekg(0, std::fstream::beg);
-      stream.read(reinterpret_cast<char *>(&magic), sizeof(magic));
-      stream.read(reinterpret_cast<char *>(&objects), sizeof(objects));
-      stream.read(reinterpret_cast<char *>(&extra), sizeof(extra));
+      buffer_io::FRead(stream, magic, objects, extra);
       return bool(stream);
     }
 
@@ -231,7 +228,7 @@ public:
     auto n = int64_t(i * sizeof(type) + header_.size());
 
     file_handle_.seekg(n);
-    file_handle_.read(reinterpret_cast<char *>(&object), sizeof(type));
+    buffer_io::FRead(file_handle_, object);
   }
 
   /**
@@ -248,7 +245,7 @@ public:
     auto start = int64_t(i * sizeof(type) + header_.size());
 
     file_handle_.seekg(start, std::fstream::beg);
-    file_handle_.write(reinterpret_cast<char const *>(&object), sizeof(type));
+    buffer_io::FWrite(file_handle_, object);
   }
 
   /**
@@ -286,8 +283,7 @@ public:
     auto start = int64_t((i * sizeof(type)) + header_.size());
 
     file_handle_.seekg(start, std::fstream::beg);
-    file_handle_.write(reinterpret_cast<char const *>(objects),
-                       std::streamsize(sizeof(type)) * std::streamsize(elements));
+    buffer_io::BulkWrite(file_handle_, objects, elements);
 
     // Catch case where a set extends the underlying stack
     if ((i + elements) > header_.objects)
@@ -325,8 +321,7 @@ public:
     elements = std::min(elements, std::size_t(header_.objects - i));
 
     file_handle_.seekg(start, std::fstream::beg);
-    file_handle_.read(reinterpret_cast<char *>(objects),
-                      std::streamsize(sizeof(type)) * std::streamsize(elements));
+    buffer_io::BulkRead(file_handle_, objects, elements);
   }
 
   void SetExtraHeader(HeaderExtraType const &he)
@@ -382,7 +377,7 @@ public:
 
     file_handle_.seekg(n, std::fstream::beg);
     type object;
-    file_handle_.read(reinterpret_cast<char *>(&object), sizeof(type));
+    buffer_io::FRead(file_handle_, object);
 
     return object;
   }
@@ -407,14 +402,14 @@ public:
     auto n2 = int64_t(j * sizeof(type) + header_.size());
 
     file_handle_.seekg(n1);
-    file_handle_.read(reinterpret_cast<char *>(&a), sizeof(type));
+    buffer_io::FRead(file_handle_, a);
     file_handle_.seekg(n2);
-    file_handle_.read(reinterpret_cast<char *>(&b), sizeof(type));
+    buffer_io::FRead(file_handle_, b);
 
     file_handle_.seekg(n1);
-    file_handle_.write(reinterpret_cast<char const *>(&b), sizeof(type));
+    buffer_io::FWrite(file_handle_, b);
     file_handle_.seekg(n2);
-    file_handle_.write(reinterpret_cast<char const *>(&a), sizeof(type));
+    buffer_io::FWrite(file_handle_, a);
   }
 
   std::size_t size() const
@@ -477,7 +472,7 @@ public:
     auto     n   = int64_t(ret * sizeof(type) + header_.size());
 
     file_handle_.seekg(n, std::fstream::beg);
-    file_handle_.write(reinterpret_cast<char const *>(&object), sizeof(type));
+    buffer_io::FWrite(file_handle_, object);
     ++header_.objects;
 
     return ret;

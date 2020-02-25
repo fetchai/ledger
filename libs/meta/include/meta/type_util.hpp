@@ -24,7 +24,9 @@ namespace fetch {
 namespace type_util {
 
 template <typename... Ts>
-struct Conjunction;
+struct Conjunction : std::true_type
+{
+};
 
 template <typename... Ts>
 static constexpr auto ConjunctionV = Conjunction<Ts...>::value;
@@ -35,12 +37,6 @@ struct Conjunction<T, Ts...>
   static constexpr bool value = T::value && ConjunctionV<Ts...>;
 };
 
-template <>
-struct Conjunction<>
-{
-  static constexpr bool value = true;
-};
-
 template <template <typename...> class F, typename... Ts>
 using All = Conjunction<F<Ts>...>;
 
@@ -48,7 +44,9 @@ template <template <typename...> class F, typename... Ts>
 static constexpr auto AllV = All<F, Ts...>::value;
 
 template <typename... Ts>
-struct Disjunction;
+struct Disjunction : std::false_type
+{
+};
 
 template <typename... Ts>
 static constexpr auto DisjunctionV = Disjunction<Ts...>::value;
@@ -57,12 +55,6 @@ template <typename T, typename... Ts>
 struct Disjunction<T, Ts...>
 {
   static constexpr bool value = T::value || DisjunctionV<Ts...>;
-};
-
-template <>
-struct Disjunction<>
-{
-  static constexpr bool value = false;
 };
 
 template <template <typename...> class F, typename... Ts>
@@ -76,7 +68,7 @@ struct Bind
 };
 
 template <typename T, typename... Ts>
-using IsAnyOf = Any<Bind<std::is_same, T>::template type, Ts...>;
+using IsAnyOf = Disjunction<std::is_same<T, Ts>...>;
 
 template <typename T, typename... Ts>
 static constexpr auto IsAnyOfV = IsAnyOf<T, Ts...>::value;
@@ -88,15 +80,6 @@ template <typename T, template <typename...> class... Predicates>
 static constexpr bool SatisfiesAllV = SatisfiesAll<T, Predicates...>::value;
 
 template <typename F, typename... Args>
-struct IsNothrowInvocable
-{
-  static constexpr bool value = noexcept(std::declval<F>()(std::declval<Args>()...));
-};
-
-template <typename F, typename... Args>
-static constexpr auto IsNothrowInvocableV = IsNothrowInvocable<F, Args...>::value;
-
-template <typename F, typename... Args>
 struct InvokeResult
 {
   using type = decltype(std::declval<F>()(std::declval<Args>()...));
@@ -104,6 +87,19 @@ struct InvokeResult
 
 template <typename F, typename... Args>
 using InvokeResultT = typename InvokeResult<F, Args...>::type;
+
+template <class...>
+struct AreSame : std::true_type
+{
+};
+
+template <class... Ts>
+static constexpr auto AreSameV = AreSame<Ts...>::value;
+
+template <class T, class... Ts>
+struct AreSame<T, Ts...> : Conjunction<std::is_same<T, Ts>...>
+{
+};
 
 }  // namespace type_util
 }  // namespace fetch

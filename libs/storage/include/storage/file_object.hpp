@@ -55,15 +55,6 @@ struct FileBlockType
   static_assert(BS > META_DATA_BYTES,
                 "Block size needs to exceed the min requirement for metadata");
 
-  FileBlockType()
-  {
-    // Ensures that padded bytes are not uninitialised.
-    memset(this, 0, sizeof(decltype(*this)));
-    previous         = UNDEFINED;
-    next             = UNDEFINED;
-    file_object_size = UNDEFINED;
-  }
-
   // Metadata
   uint64_t next     = UNDEFINED;
   uint64_t previous = UNDEFINED;  // For the free block, this points to the end of the LL.
@@ -75,10 +66,29 @@ struct FileBlockType
   {
     uint64_t file_object_size = UNDEFINED;
     uint64_t free_blocks;
-  };
+  } space_indicator;
 
   // Data
   uint8_t data[CAPACITY]{};
+
+  static constexpr std::size_t BinarySize()
+  {
+    return sizeof(next) + sizeof(previous) + sizeof(space_indicator) + sizeof(data);
+  }
+
+  constexpr char const *BinaryRead(char const *buf)
+  {
+    buf = buffer_io::BufRead(buf, next, previous);
+    buf = buffer_io::DirtyBufRead(buf, space_indicator);
+    return buffer_io::BufRead(buf, data);
+  }
+
+  constexpr char *BinaryWrite(char *buf) const
+  {
+    buf = buffer_io::BufWrite(buf, next, previous);
+    buf = buffer_io::DirtyBufWrite(buf, space_indicator);
+    return buffer_io::BufWrite(buf, data);
+  }
 };
 
 /**
@@ -281,7 +291,7 @@ void FileObject<S>::Resize(uint64_t size)
   {
     Get(id_, block);
 
-    block.file_object_size = size;
+    block.space_indicator.file_object_size = size;
     Set(id_, block);
     length_ = size;
   }
@@ -466,7 +476,7 @@ bool FileObject<S>::SeekFile(std::size_t position)
   BlockType block;
   Get(id_, block);
 
-  length_ = block.file_object_size;
+  length_ = block.space_indicator.file_object_size;
 
   return true;
 }
@@ -487,7 +497,7 @@ void FileObject<S>::CreateNewFile(uint64_t size)
 
   BlockType block;
   Get(id_, block);
-  block.file_object_size = size;
+  block.space_indicator.file_object_size = size;
   Set(id_, block);
 }
 
@@ -544,7 +554,7 @@ uint64_t FileObject<S>::FreeBlocks()
   BlockType free_block;
   Get(free_block_index_, free_block);
 
-  return free_block.free_blocks;
+  return free_block.space_indicator.free_blocks;
 }
 
 /**
@@ -555,11 +565,11 @@ template <typename S>
 void FileObject<S>::Initalise()
 {
   BlockType free_block;
-  free_block.free_blocks = 0;
-  free_block.next        = 0;
-  free_block.previous    = 0;
-  block_index_           = 0;
-  id_                    = 0;
+  free_block.space_indicator.free_blocks = 0;
+  free_block.next                        = 0;
+  free_block.previous                    = 0;
+  block_index_                           = 0;
+  id_                                    = 0;
 
   if (stack_.size() == 0)
   {
@@ -609,8 +619,8 @@ uint64_t FileObject<S>::GetFreeBlocks(uint64_t min_index, uint64_t num)
   // Only allow free blocks to be taken from the free LL in the scenario that there are enough
   // blocks in the LL above min_index. This way it is easier to traverse from the end of the stack
   // backwards, then 'cut' the LL at that point. Check here for easy exit.
-  if (free_block.free_blocks == 0 || free_block.previous < min_index ||
-      free_block.free_blocks < num)
+  if (free_block.space_indicator.free_blocks == 0 || free_block.previous < min_index ||
+      free_block.space_indicator.free_blocks < num)
   {
     return DefaultFreeAllocation(num);
   }
@@ -652,9 +662,9 @@ uint64_t FileObject<S>::GetFreeBlocks(uint64_t min_index, uint64_t num)
       Set(index_prev, block);
 
       // Update free block - NEED get here as index_prev might be free block
-      assert(free_block.free_blocks >= num);
+      assert(free_block.space_indicator.free_blocks >= num);
       Get(free_block_index_, free_block);
-      free_block.free_blocks -= num;
+      free_block.space_indicator.free_blocks -= num;
       free_block.previous = index_prev;
       Set(free_block_index_, free_block);
 
@@ -776,7 +786,7 @@ void FileObject<S>::FreeBlocksInList(uint64_t remove_index)
 
   // Finally update the free block with the new amount of free blocks added
   Get(free_block_index_, free_block);
-  free_block.free_blocks += free_blocks_added;
+  free_block.space_indicator.free_blocks += free_blocks_added;
   Set(free_block_index_, free_block);
 }
 
@@ -861,7 +871,7 @@ bool FileObject<S>::VerifyConsistency(std::vector<uint64_t> const &ids)
   Get(index, block);
   fake_stack[index] = 0;
 
-  if (block.free_blocks == 0)
+  if (block.space_indicator.free_blocks == 0)
   {
     if (block.next != index || block.previous != index)
     {
@@ -873,7 +883,7 @@ bool FileObject<S>::VerifyConsistency(std::vector<uint64_t> const &ids)
   }
   else
   {
-    uint64_t free_blocks = block.free_blocks;
+    uint64_t free_blocks = block.space_indicator.free_blocks;
 
     // Plus one for free block
     for (uint64_t i = 0; i < free_blocks + 1; ++i)
@@ -900,7 +910,7 @@ bool FileObject<S>::VerifyConsistency(std::vector<uint64_t> const &ids)
 
     Get(index, block);
 
-    uint64_t file_bytes      = block.file_object_size;
+    uint64_t file_bytes      = block.space_indicator.file_object_size;
     auto     expected_blocks = platform::DivideCeil<uint64_t>(file_bytes, BlockType::CAPACITY);
     expected_blocks          = expected_blocks == 0 ? 1 : expected_blocks;
 

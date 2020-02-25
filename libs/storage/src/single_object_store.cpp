@@ -16,6 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/buffer_io.hpp"
+#include "meta/type_traits.hpp"
 #include "storage/single_object_store.hpp"
 #include "storage/storage_exception.hpp"
 
@@ -24,6 +26,7 @@ static constexpr char const *LOGGING_NAME = "SingleObjectStore";
 namespace fetch {
 
 namespace platform {
+
 enum
 {
   LITTLE_ENDIAN_MAGIC = 2337
@@ -48,17 +51,28 @@ struct FileMetadata
     magic   = platform::LITTLE_ENDIAN_MAGIC;
     version = version_to_set;
   }
+
+  static constexpr std::size_t BinarySize()
+  {
+    return sizeof(magic) + sizeof(version) + sizeof(object_size);
+  }
+
+  char const *BinaryRead(char const *buffer)
+  {
+    return buffer_io::BufRead(buffer, magic, version, object_size);
+  }
+
+  char *BinaryWrite(char *buffer) const
+  {
+    return buffer_io::BufWrite(buffer, magic, version, object_size);
+  }
 };
 
-// Helper function to read a file handle, throwing if the bytes read is not
-// what was asked or if the stream dies afterwards
-void ReadFile(std::fstream &stream, char *data, std::streamsize size)
+void CheckIStream(std::istream const &stream, std::streamsize expected_size)
 {
-  stream.read(data, size);
-
-  if (stream.gcount() != size)
+  if (stream.gcount() != expected_size)
   {
-    FETCH_LOG_WARN("ReadFileHelper", "Failed to read enough bytes. Expected: ", size,
+    FETCH_LOG_WARN("ReadFileHelper", "Failed to read enough bytes. Expected: ", expected_size,
                    " got: ", stream.gcount());
     throw StorageException("Attempted to read file failed");
   }
@@ -68,6 +82,23 @@ void ReadFile(std::fstream &stream, char *data, std::streamsize size)
     FETCH_LOG_WARN("ReadFileHelper", "stream died.");
     throw StorageException("File handle died after reading");
   }
+}
+
+// Helper function to read a file handle, throwing if the bytes read is not
+// what was asked or if the stream dies afterwards
+void ReadFile(std::fstream &stream, char *data, std::streamsize size)
+{
+  stream.read(data, size);
+  CheckIStream(stream, size);
+}
+
+// Helper function to read a file handle, throwing if the bytes read is not
+// what was asked or if the stream dies afterwards
+template <class Object>
+void ReadFile(std::fstream &stream, Object &&object)
+{
+  buffer_io::FRead(stream, std::forward<Object>(object));
+  CheckIStream(stream, static_cast<std::streamsize>(sizeof(Object)));
 }
 
 // helper to write file, similar to read file
@@ -82,13 +113,26 @@ void WriteFile(std::fstream &stream, char const *data, std::streamsize size)
   }
 }
 
+// helper to write file, similar to read file
+template <class Object>
+void WriteFile(std::fstream &stream, Object &&object)
+{
+  buffer_io::FWrite(stream, std::forward<Object>(object));
+
+  if (!stream)
+  {
+    FETCH_LOG_WARN("ReadFileHelper", "stream died.");
+    throw StorageException("File handle died after writing");
+  }
+}
+
 bool SingleObjectStore::Load(std::string const &file_name)
 {
   file_name_ = file_name;
 
   file_handle_.open(file_name, std::fstream::in | std::fstream::out | std::fstream::binary);
 
-  // If does not exist
+  // If does not exis_t
   if (!file_handle_)
   {
     file_handle_.open(file_name, std::fstream::in | std::fstream::out | std::fstream::binary |
@@ -104,13 +148,13 @@ bool SingleObjectStore::Load(std::string const &file_name)
   // To remain POD, this must be initialized rather than constructed
   FileMetadata meta{};
   meta.Initialise(version_);
-  static_assert(std::is_pod<FileMetadata>::value, "FileMetadata must be POD");
+  static_assert(meta::IsPOD<FileMetadata>, "FileMetadata must be POD");
 
   // Check it is either empty or non-corrupted
   if (FileSize() == 0)
   {
     // Write metadata to new file
-    WriteFile(file_handle_, reinterpret_cast<char const *>(&meta), sizeof(meta));
+    WriteFile(file_handle_, meta);
     file_handle_.flush();
     return true;
   }
@@ -125,7 +169,7 @@ bool SingleObjectStore::Load(std::string const &file_name)
 
   // Read the metadata
   file_handle_.seekg(0, std::fstream::beg);
-  ReadFile(file_handle_, reinterpret_cast<char *>(&meta), sizeof(meta));
+  ReadFile(file_handle_, &meta);
 
   if (meta.version != version_)
   {
@@ -168,7 +212,7 @@ void SingleObjectStore::GetRaw(ByteArray &data) const
   }
 
   file_handle_.seekg(0, std::fstream::beg);
-  ReadFile(file_handle_, reinterpret_cast<char *>(&meta), sizeof(meta));
+  ReadFile(file_handle_, &meta);
 
   if (meta.object_size == 0)
   {
@@ -203,7 +247,7 @@ void SingleObjectStore::SetRaw(ByteArray &data)
   Clear();
 
   file_handle_.seekg(0, std::fstream::beg);
-  WriteFile(file_handle_, reinterpret_cast<char *>(&meta), sizeof(meta));
+  WriteFile(file_handle_, meta);
   WriteFile(file_handle_, data.char_pointer(), static_cast<int64_t>(data.size()));
   file_handle_.flush();
 }

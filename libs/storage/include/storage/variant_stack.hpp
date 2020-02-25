@@ -34,6 +34,7 @@
 //                                  └─────────────────────┴─────────────────────┘
 
 #include "core/assert.hpp"
+#include "core/buffer_io.hpp"
 #include "core/macros.hpp"
 #include "storage/storage_exception.hpp"
 
@@ -78,6 +79,21 @@ public:
       , object_size{o}
       , previous{p}
     {}
+
+    static constexpr std::size_t BinarySize()
+    {
+      return sizeof(type) + sizeof(object_size) + sizeof(previous);
+    }
+
+    constexpr char const *BinaryRead(char const *buf)
+    {
+      return buffer_io::BufRead(buf, type, object_size, previous);
+    }
+
+    constexpr char *BinaryWrite(char *buf)
+    {
+      return buffer_io::BufWrite(buf, type, object_size, previous);
+    }
   };
 
   // This check is necessary to ensure structures are correctly packed
@@ -96,6 +112,21 @@ public:
       : object_count{o}
       , end{e}
     {}
+
+    static constexpr std::size_t BinarySize()
+    {
+      return sizeof(object_count) + sizeof(end);
+    }
+
+    constexpr char const *BinaryRead(char const *buf)
+    {
+      return buffer_io::BufRead(buf, object_count, end);
+    }
+
+    constexpr char *BinaryWrite(char *buf)
+    {
+      return buffer_io::BufWrite(buf, object_count, end);
+    }
   };
 
   // This check is necessary to ensure structures are correctly packed
@@ -169,9 +200,7 @@ public:
     file_handle_.seekg(header_.end, std::fstream::beg);
     Separator separator = {type, sizeof(T), header_.end};
 
-    file_handle_.write(reinterpret_cast<char const *>(&object), sizeof(T));
-    file_handle_.write(reinterpret_cast<char const *>(&separator), sizeof(Separator));
-    header_.end += sizeof(T) + sizeof(Separator);
+    header_.end += buffer_io::FWrite(file_handle_, object, separator);
     ++header_.object_count;
     // WriteHeader();
   }
@@ -185,7 +214,7 @@ public:
     file_handle_.seekg(header_.end - int64_t(sizeof(Separator)), std::fstream::beg);
     Separator separator;
 
-    file_handle_.read(reinterpret_cast<char *>(&separator), sizeof(Separator));
+    buffer_io::FRead(file_handle_, separator);
 
     header_.end = separator.previous;
     --header_.object_count;
@@ -207,7 +236,7 @@ public:
     file_handle_.seekg(header_.end - int64_t(sizeof(Separator)), std::fstream::beg);
     Separator separator;
 
-    file_handle_.read(reinterpret_cast<char *>(&separator), sizeof(Separator));
+    buffer_io::FRead(file_handle_, separator);
     auto offset = int64_t(sizeof(Separator) + separator.object_size);
 
     if (separator.object_size != sizeof(T))
@@ -221,7 +250,7 @@ public:
     }
 
     file_handle_.seekg(header_.end - offset, std::fstream::beg);
-    file_handle_.read(reinterpret_cast<char *>(&object), sizeof(T));
+    buffer_io::FRead(file_handle_, object);
     return separator.type;
   }
 
@@ -235,7 +264,7 @@ public:
     file_handle_.seekg(header_.end - int64_t(sizeof(Separator)), std::fstream::beg);
     Separator separator;
 
-    file_handle_.read(reinterpret_cast<char *>(&separator), sizeof(Separator));
+    buffer_io::FRead(file_handle_, separator);
 
     return separator.type;
   }
@@ -255,8 +284,7 @@ public:
     header_     = Header();
     header_.end = sizeof(Header) + sizeof(Separator);
 
-    fin.write(reinterpret_cast<char const *>(&header_), sizeof(Header));
-    fin.write(reinterpret_cast<char const *>(&separator), sizeof(Separator));
+    buffer_io::FWrite(fin, header_, separator);
 
     fin.close();
   }
@@ -282,13 +310,13 @@ protected:
   void ReadHeader()
   {
     file_handle_.seekg(0, std::fstream::beg);
-    file_handle_.read(reinterpret_cast<char *>(&header_), sizeof(Header));
+    buffer_io::FRead(file_handle_, header_);
   }
 
   void WriteHeader()
   {
     file_handle_.seekg(0, std::fstream::beg);
-    file_handle_.write(reinterpret_cast<char const *>(&header_), sizeof(Header));
+    buffer_io::FWrite(file_handle_, header_);
   }
 
 private:

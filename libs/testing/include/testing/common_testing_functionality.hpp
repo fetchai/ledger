@@ -56,6 +56,21 @@ public:
   }
 
   char string_as_chars[128];
+
+  static constexpr std::size_t BinarySize() noexcept
+  {
+    return sizeof(string_as_chars);
+  }
+
+  constexpr char const *BinaryRead(char const *buf)
+  {
+    return buffer_io::BufRead(buf, string_as_chars);
+  }
+
+  constexpr char *BinaryWrite(char *buf) const
+  {
+    return buffer_io::BufWrite(buf, string_as_chars);
+  }
 };
 
 inline std::ostream &operator<<(std::ostream &os, StringProxy const &m)

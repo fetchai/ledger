@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/buffer_io.hpp"
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/macros.hpp"
@@ -174,6 +175,21 @@ struct Key
   static constexpr std::size_t size_in_bits()
   {
     return BITS;
+  }
+
+  static constexpr std::size_t BinarySize() noexcept
+  {
+    return sizeof(key_);
+  }
+
+  constexpr char const *BinaryRead(char const *buf)
+  {
+    return buffer_io::BufRead(buf, key_);
+  }
+
+  constexpr char *BinaryWrite(char *buf) const
+  {
+    return buffer_io::BufWrite(buf, key_);
   }
 
 private:

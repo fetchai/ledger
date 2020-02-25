@@ -54,16 +54,6 @@ public:
   uint16_t Version() const;
 
   /**
-   * Get a byte array to the file data
-   */
-  void GetRaw(ByteArray &data) const;
-
-  /**
-   * Set the file data
-   */
-  void SetRaw(ByteArray &data);
-
-  /**
    * Get an object from the file
    */
   template <typename T>
@@ -104,6 +94,15 @@ public:
 
 private:
   uint64_t FileSize() const;
+
+  /**
+   * Get a byte array to the file data
+   */
+  void GetRaw(ByteArray &data) const;
+  /**
+   * Set the file data
+   */
+  void SetRaw(ByteArray &data);
 
   std::string          file_name_;
   uint16_t             version_{1};

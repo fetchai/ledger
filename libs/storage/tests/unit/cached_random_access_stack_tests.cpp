@@ -35,6 +35,21 @@ public:
   {
     return value1 == rhs.value1 && value2 == rhs.value2;
   }
+
+  static constexpr std::size_t BinarySize() noexcept
+  {
+    return sizeof(value1) + sizeof(value2);
+  }
+
+  constexpr char const *BinaryRead(char const *buf)
+  {
+    return fetch::buffer_io::BufRead(buf, value1, value2);
+  }
+
+  constexpr char *BinaryWrite(char *buf) const
+  {
+    return fetch::buffer_io::BufWrite(buf, value1, value2);
+  }
 };
 
 TEST(cached_random_access_stack, basic_functionality)
