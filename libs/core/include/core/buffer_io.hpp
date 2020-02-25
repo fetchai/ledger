@@ -139,20 +139,22 @@ struct BufferOStream
 };
 
 template <class T, class... Ts>
-using AreSameSizePOD = std::integral_constant<bool, IsSizePOD<T> && type_util::AreSameV<T, Ts...>>;
+using AreSameSizelessPOD =
+    std::integral_constant<bool, IsSizePOD<T> && type_util::AreSameV<T, Ts...>>;
 template <class T, class... Ts>
-static constexpr auto AreSameSizePODV = AreSameSizePOD<T, Ts...>::value;
+static constexpr auto AreSameSizelessPODV = AreSameSizelessPOD<T, Ts...>::value;
 
 template <class T, class... Ts>
-using AreSameReadPOD = std::integral_constant<bool, IsReadPOD<T> && type_util::AreSameV<T, Ts...>>;
+using AreSameReadlessPOD =
+    std::integral_constant<bool, IsReadPOD<T> && type_util::AreSameV<T, Ts...>>;
 template <class T, class... Ts>
-static constexpr auto AreSameReadPODV = AreSameReadPOD<T, Ts...>::value;
+static constexpr auto AreSameReadlessPODV = AreSameReadlessPOD<T, Ts...>::value;
 
 template <class T, class... Ts>
-using AreSameWritePOD =
+using AreSameWritelessPOD =
     std::integral_constant<bool, IsWritePOD<T> && type_util::AreSameV<T, Ts...>>;
 template <class T, class... Ts>
-static constexpr auto AreSameWritePODV = AreSameWritePOD<T, Ts...>::value;
+static constexpr auto AreSameWritelessPODV = AreSameWritelessPOD<T, Ts...>::value;
 
 }  // namespace detail_
 
@@ -162,7 +164,7 @@ constexpr char const *BufRead(char const *buf) noexcept
 }
 
 template <class T, class... Ts>
-constexpr std::enable_if_t<detail_::AreSameReadPODV<T, Ts...>, char const *> BufRead(
+constexpr std::enable_if_t<detail_::AreSameReadlessPODV<T, Ts...>, char const *> BufRead(
     char const *buf, T t, Ts... ts)
 {
   constexpr std::size_t amount        = 1 + sizeof...(Ts);
@@ -179,7 +181,7 @@ constexpr std::enable_if_t<detail_::AreSameReadPODV<T, Ts...>, char const *> Buf
 }
 
 template <class T, class... Ts>
-constexpr std::enable_if_t<!detail_::AreSameReadPODV<T, Ts...>, char const *> BufRead(
+constexpr std::enable_if_t<!detail_::AreSameReadlessPODV<T, Ts...>, char const *> BufRead(
     char const *buf, T &&t, Ts &&... ts)
 {
   return value_util::Accumulate(detail_::BufferIStream{}, buf, std::forward<T>(t),
@@ -187,7 +189,7 @@ constexpr std::enable_if_t<!detail_::AreSameReadPODV<T, Ts...>, char const *> Bu
 }
 
 template <class Stream>
-constexpr std::size_t FRead(Stream &&stream) noexcept
+constexpr std::size_t FRead(Stream && /*stream*/) noexcept
 {
   return 0;
 }
@@ -200,9 +202,8 @@ constexpr std::enable_if_t<detail_::IsReadPOD<T>, std::size_t> FRead(Stream &&st
 }
 
 template <class Stream, class T, class... Ts>
-constexpr std::enable_if_t<detail_::AreSameReadPODV<T, Ts...>, std::size_t> FRead(Stream &&stream,
-                                                                                  T &&     t,
-                                                                                  Ts &&... ts)
+constexpr std::enable_if_t<detail_::AreSameReadlessPODV<T, Ts...>, std::size_t> FRead(
+    Stream &&stream, T &&t, Ts &&... ts)
 {
   T buf[sizeof...(Ts) + 1];
   stream.read(&buf, sizeof(buf));
@@ -218,9 +219,8 @@ constexpr std::enable_if_t<detail_::AreSameReadPODV<T, Ts...>, std::size_t> FRea
 }
 
 template <class Stream, class T, class... Ts>
-constexpr std::enable_if_t<!detail_::AreSameReadPODV<T, Ts...>, std::size_t> FRead(Stream &&stream,
-                                                                                   T &&     t,
-                                                                                   Ts &&... ts)
+constexpr std::enable_if_t<!detail_::AreSameReadlessPODV<T, Ts...>, std::size_t> FRead(
+    Stream &&stream, T &&t, Ts &&... ts)
 {
   const std::size_t size = value_util::Accumulate(detail_::BinarySize{}, 0, ts...);
 
@@ -267,8 +267,8 @@ constexpr meta::EnableIf<!detail_::IsReadPOD<T>, std::size_t> BulkRead(Stream &&
 }
 
 template <class T, class... Ts>
-constexpr std::enable_if_t<detail_::AreSameWritePODV<T, Ts...>, char *> BufWrite(char *buf, T t,
-                                                                                 Ts... ts)
+constexpr std::enable_if_t<detail_::AreSameWritelessPODV<T, Ts...>, char *> BufWrite(char *buf, T t,
+                                                                                     Ts... ts)
 {
   T const array[] = {t, ts...};
   std::memcpy(buf, array, sizeof(array));
@@ -276,8 +276,9 @@ constexpr std::enable_if_t<detail_::AreSameWritePODV<T, Ts...>, char *> BufWrite
 }
 
 template <class T, class... Ts>
-constexpr std::enable_if_t<!detail_::AreSameWritePODV<T, Ts...>, char *> BufWrite(char *buf, T &&t,
-                                                                                  Ts &&... ts)
+constexpr std::enable_if_t<!detail_::AreSameWritelessPODV<T, Ts...>, char *> BufWrite(char *buf,
+                                                                                      T &&  t,
+                                                                                      Ts &&... ts)
 {
   return value_util::Accumulate(detail_::BufferOStream{}, buf, std::forward<T>(t),
                                 std::forward<Ts>(ts)...);
@@ -297,8 +298,8 @@ constexpr std::enable_if_t<detail_::IsWritePOD<T>, std::size_t> FWrite(Stream &&
 }
 
 template <class Stream, class T, class... Ts>
-constexpr std::enable_if_t<detail_::AreSameWritePODV<T, Ts...>, std::size_t> FWrite(Stream &&stream,
-                                                                                    T t, Ts... ts)
+constexpr std::enable_if_t<detail_::AreSameWritelessPODV<T, Ts...>, std::size_t> FWrite(
+    Stream &&stream, T t, Ts... ts)
 {
   T buf[sizeof...(Ts) + 1] = {t, ts...};
   stream.write(buf, sizeof(buf));
@@ -306,7 +307,7 @@ constexpr std::enable_if_t<detail_::AreSameWritePODV<T, Ts...>, std::size_t> FWr
 }
 
 template <class Stream, class T, class... Ts>
-constexpr std::enable_if_t<!detail_::AreSameWritePODV<T, Ts...>, std::size_t> FWrite(
+constexpr std::enable_if_t<!detail_::AreSameWritelessPODV<T, Ts...>, std::size_t> FWrite(
     Stream &&stream, T &&t, Ts &&... ts)
 {
   const std::size_t size = value_util::Accumulate(detail_::BinarySize{}, 0, ts...);
