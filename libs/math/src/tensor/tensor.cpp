@@ -19,6 +19,7 @@
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/byte_array/consumers.hpp"
 #include "math/base_types.hpp"
+#include "math/charge_estimation/constants.hpp"
 #include "math/matrix_operations.hpp"
 #include "math/standard_functions/abs.hpp"
 #include "math/tensor/tensor.hpp"
@@ -959,6 +960,22 @@ typename Tensor<T, C>::SizeType Tensor<T, C>::PaddedSizeFromShape(SizeVector con
   }
   return PadValue(shape[0]) *
          std::accumulate(std::begin(shape) + 1, std::end(shape), SizeType{1}, std::multiplies<>());
+}
+
+template <typename T, typename C>
+typename Tensor<T, C>::SizeType Tensor<T, C>::ChargeIterate(SizeVector const &shape)
+{
+  SizeType op_cnt{1};
+
+  SizeType num_elements = Tensor<T, C>::SizeFromShape(shape);
+  SizeType height       = shape[0];
+
+  // Iterations at the end of each row are more expensive
+  SizeType end_of_row_cnt = num_elements / height;
+  op_cnt += charge_estimation::TENSOR_ITERATION_END_OF_ROW * (end_of_row_cnt) +
+            charge_estimation::TENSOR_ITERATION_DEFAULT * (num_elements - end_of_row_cnt);
+
+  return op_cnt;
 }
 
 /**

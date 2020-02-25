@@ -18,6 +18,7 @@
 
 #include "math/matrix_operations.hpp"
 #include "math/tensor/tensor.hpp"
+#include "ml/charge_estimation/ops/constants.hpp"
 #include "ml/exceptions/exceptions.hpp"
 #include "ml/ops/matrix_multiply.hpp"
 
@@ -328,6 +329,12 @@ OperationsCount MatrixMultiply<T>::ChargeBackward() const
           this->TotalElementsIn({this->batch_input_shapes_});
   ;
   return cost;
+}
+
+template <typename T>
+OperationsCount MatrixMultiply<T>::ChargeConstruct()
+{
+  return charge_estimation::ops::OP_MATRIX_MULTIPLY_CONSTRUCTION_COST;
 }
 
 /**
