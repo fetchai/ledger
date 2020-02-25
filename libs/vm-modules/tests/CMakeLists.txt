@@ -11,3 +11,5 @@ include(${FETCH_ROOT_CMAKE_DIR}/BuildTools.cmake)
 setup_compiler()
 
 fetch_add_test(vm-modules-unit-tests fetch-vm-modules unit/)
+
+fetch_add_integration_test(vm-modules-integration-tests fetch-vm-modules integration/)
