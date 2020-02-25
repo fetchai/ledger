@@ -16,6 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ml/charge_estimation/constants.hpp"
+#include "ml/charge_estimation/optimisation/constants.hpp"
 #include "ml/core/graph.hpp"
 #include "ml/ops/trainable.hpp"
 #include "ml/optimisation/sgd_optimiser.hpp"
@@ -112,6 +114,79 @@ void SGDOptimiser<T>::ApplyGradients(SizeType batch_size)
 
   // calling apply gradients on the graph ensures that the node caches are reset properly
   this->graph_->ApplySparseGradients(this->gradients_, rows);
+}
+
+template <class T>
+OperationsCount SGDOptimiser<T>::ChargeConstruct(std::shared_ptr<Graph<T>> graph)
+{
+  auto trainables = graph->GetTrainables();
+
+  OperationsCount op_cnt{charge_estimation::FUNCTION_CALL_COST};
+  for (auto &train : trainables)
+  {
+    auto weight_shape = train->GetFutureDataShape();
+    if (weight_shape.empty())
+    {
+      throw std::runtime_error("Shape deduction failed");
+    }
+
+    SizeType data_size = TensorType::PaddedSizeFromShape(weight_shape);
+    op_cnt += data_size * charge_estimation::optimisers::SGD_N_CACHES;
+  }
+
+  return op_cnt;
+}
+
+template <class T>
+fetch::ml::OperationsCount SGDOptimiser<T>::ChargeStep() const
+{
+  auto gradient_it  = this->gradients_.begin();
+  auto trainable_it = this->graph_trainables_.begin();
+
+  // Update betas, initialise
+  OperationsCount ops_count = charge_estimation::optimisers::SGD_STEP_INIT;
+
+  OperationsCount loop_count{0};
+  while (gradient_it != this->gradients_.end())
+  {
+    // Skip frozen trainables
+    if (!(*trainable_it)->GetFrozenState())
+    {
+      loop_count += T::SizeFromShape((*trainable_it)->GetWeights().shape());
+    }
+
+    // Skip frozen trainables
+    if (!(*trainable_it)->GetFrozenState())
+    {
+
+      auto gradient_pair = (*trainable_it)->GetSparseGradientsReferences();
+      loop_count += charge_estimation::optimisers::SGD_PER_TRAINABLE;
+
+      // Normal ApplyGradient
+      if (gradient_pair.second.empty() ||
+          (gradient_pair.second.size() * sparsity_threshold_) > gradient_pair.first.shape().at(1))
+      {
+        loop_count += T::SizeFromShape((*trainable_it)->GetWeights().shape());
+      }
+      else
+      {
+        // Sparse apply gradient
+        std::vector<SizeType> slice_size = gradient_it->shape();
+        slice_size.at(0)                 = 1;
+
+        loop_count += gradient_pair.second.size() * T::SizeFromShape(slice_size) *
+                      charge_estimation::optimisers::SGD_SPARSE_APPLY;
+      }
+
+      // ResetGradients();
+      loop_count += T::SizeFromShape((*trainable_it)->GetWeights().shape());
+    }
+
+    ++gradient_it;
+    ++trainable_it;
+  }
+
+  return ops_count + loop_count;
 }
 
 ///////////////////////////////

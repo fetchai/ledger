@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "math/matrix_operations.hpp"
+#include "ml/charge_estimation/ops/constants.hpp"
 #include "ml/ops/flatten.hpp"
 #include "ml/saveparams/saveable_params.hpp"
 
@@ -128,6 +129,12 @@ OperationsCount Flatten<TensorType>::ChargeBackward() const
                          fetch::ml::charge_estimation::ops::ASSIGN_PER_ELEMENT *
                              this->TotalElementsIn(this->batch_input_shapes_);
   return cost;
+}
+
+template <class TensorType>
+OperationsCount Flatten<TensorType>::ChargeConstruct()
+{
+  return charge_estimation::ops::OP_DEFAULT_CONSTRUCTION_COST;
 }
 
 ///////////////////////////////

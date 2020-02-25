@@ -147,7 +147,7 @@ OperationsCount StridedSlice<TensorType>::ChargeForward() const
                              this->TotalElementsIn({this->batch_input_shapes_}) +
                          fetch::ml::charge_estimation::ops::ASSIGN_PER_ELEMENT *
                              this->TotalElementsIn({this->batch_input_shapes_});
-  ;
+
   return cost;
 }
 
@@ -159,7 +159,7 @@ OperationsCount StridedSlice<TensorType>::ChargeBackward() const
                              this->TotalElementsIn({this->batch_output_shape_}) +
                          fetch::ml::charge_estimation::ops::ASSIGN_PER_ELEMENT *
                              this->TotalElementsIn({this->batch_output_shape_});
-  ;
+
   return cost;
 }
 ///////////////////////////////

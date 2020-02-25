@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/serializers/group_definitions.hpp"
+#include "ml/charge_estimation/types.hpp"
 #include "ml/dataloaders/dataloader.hpp"
 #include "ml/meta/ml_type_traits.hpp"
 
@@ -41,6 +42,10 @@ public:
   ReturnType GetNext() override;
 
   bool AddData(std::vector<TensorType> const &data, TensorType const &labels) override;
+
+  OperationsCount ChargeAddData(std::vector<TensorType> const &data, TensorType const &labels);
+  OperationsCount ChargeIsDone() const;
+  OperationsCount ChargeGetNext();
 
   SizeType Size() const override;
   bool     IsDone() const override;

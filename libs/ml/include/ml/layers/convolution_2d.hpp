@@ -84,6 +84,8 @@ public:
   OperationsCount ChargeForward() const override;
   OperationsCount ChargeBackward() const override;
 
+  OperationsCount ChargeCompile() override;
+
 private:
   void Initialise(TensorType &weights, WeightsInit init_mode)
   {

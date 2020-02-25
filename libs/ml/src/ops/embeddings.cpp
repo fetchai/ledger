@@ -155,7 +155,6 @@ OperationsCount Embeddings<TensorType>::ChargeBackward() const
 
   OperationsCount cost = fetch::ml::charge_estimation::ops::ADDITION_PER_ELEMENT *
                          this->TotalElementsIn({this->batch_input_shapes_});
-  ;
 
   return cost;
 }

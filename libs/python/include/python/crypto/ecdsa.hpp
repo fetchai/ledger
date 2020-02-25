@@ -39,5 +39,6 @@ void BuildECDSASigner(pybind11::module &module)
       .def("signature", &ECDSASigner::signature)
       .def("document_hash", &ECDSASigner::document_hash);
 }
-};  // namespace crypto
-};  // namespace fetch
+
+}  // namespace crypto
+}  // namespace fetch

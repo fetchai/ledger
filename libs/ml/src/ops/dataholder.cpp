@@ -16,6 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ml/charge_estimation/ops/constants.hpp"
 #include "ml/ops/dataholder.hpp"
 #include "ml/saveparams/saveable_params.hpp"
 
@@ -75,6 +76,8 @@ bool DataHolder<TensorType>::SetData(TensorType const &data)
 {
   bool shape_changed = (data_->shape() != data.shape());
   data_->Copy(data);
+  this->future_data_shape_ = data.shape();
+
   return shape_changed;
 }
 
@@ -106,6 +109,19 @@ OperationsCount DataHolder<TensorType>::ChargeBackward() const
   OperationsCount cost = 0;
 
   return cost;
+}
+
+template <typename TensorType>
+OperationsCount DataHolder<TensorType>::ChargeConstruct()
+{
+  return charge_estimation::ops::OP_DEFAULT_CONSTRUCTION_COST;
+}
+
+template <typename TensorType>
+OperationsCount DataHolder<TensorType>::ChargeSetData(std::vector<SizeType> const &data)
+{
+  future_data_shape_ = data;
+  return TensorType::PaddedSizeFromShape(data);
 }
 
 ///////////////////////////////

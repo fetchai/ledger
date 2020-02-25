@@ -81,7 +81,11 @@ public:
                          WeightsInitialisation mode = WeightsInitialisation::XAVIER_GLOROT,
                          SizeType              seed = 123456789);
 
+  static OperationsCount ChargeInitialise(std::vector<SizeType> const &shape);
+
   TensorType const &GetWeights() const override;
+
+  bool IsInit() const override;
 
   void SetWeights(TensorType const &new_value) override;
 
@@ -102,6 +106,8 @@ public:
 
   OpType      OperationType() const override;
   char const *Descriptor() const override;
+
+  std::vector<SizeType> GetFutureDataShape() const override;
 
   OperationsCount ChargeForward() const override;
 
