@@ -59,7 +59,7 @@ std::pair<math::SizeVector, std::vector<math::SizeVector>> DataLoader<TensorType
   }
   std::pair<math::SizeVector, std::vector<math::SizeVector>> ret;
   ret.first = ret_pair_.first.shape();
-  if (batch_size)
+  if (batch_size != 0)
   {
     ret.first.back() = batch_size;
   }
@@ -68,7 +68,7 @@ std::pair<math::SizeVector, std::vector<math::SizeVector>> DataLoader<TensorType
   for (auto const &inp : ret_pair_.second)
   {
     ret.second.emplace_back(inp.shape());
-    if (batch_size)
+    if (batch_size != 0)
     {
       ret.second.back().back() = batch_size;
     }
