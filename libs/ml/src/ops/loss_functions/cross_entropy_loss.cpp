@@ -106,9 +106,9 @@ std::vector<TensorType> CrossEntropyLoss<TensorType>::Backward(VecTensorType con
 
 template <typename TensorType>
 std::vector<math::SizeType> CrossEntropyLoss<TensorType>::ComputeOutputShape(
-    VecTensorType const &inputs) const
+    std::vector<math::SizeVector> const &inputs) const
 {
-  (void)inputs;
+  FETCH_UNUSED(inputs);
   return {1, 1};
 }
 

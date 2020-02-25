@@ -52,7 +52,7 @@ TYPED_TEST(TopKOpTest, forward_test)
 
   fetch::ml::ops::TopK<TypeParam> op(k, sorted);
 
-  TypeParam prediction(op.ComputeOutputShape({std::make_shared<TypeParam>(data)}));
+  TypeParam prediction(op.ComputeOutputShape({data.shape()}));
   op.Forward({std::make_shared<TypeParam>(data)}, prediction);
 
   // test correct values
@@ -80,7 +80,7 @@ TYPED_TEST(TopKOpTest, backward_2D_test)
 
   fetch::ml::ops::TopK<TypeParam> op(k, sorted);
 
-  TypeParam prediction(op.ComputeOutputShape({std::make_shared<TypeParam>(data)}));
+  TypeParam prediction(op.ComputeOutputShape({data.shape()}));
   op.Forward({std::make_shared<TypeParam>(data)}, prediction);
 
   std::vector<TensorType> error_signal =

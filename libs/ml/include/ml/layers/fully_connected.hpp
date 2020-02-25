@@ -77,7 +77,6 @@ public:
 
   void CompleteShapeDeduction() override;
 
-  OperationsCount ChargeForward() const override;
   OperationsCount ChargeBackward() const override;
 
   void Compile() override;
@@ -95,7 +94,8 @@ public:
 
   OperationsCount ChargeCompile() override;
 
-  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override;
+  std::vector<SizeType> ComputeOutputShape(
+      std::vector<math::SizeVector> const &inputs) const override;
 
   math::SizeVector ComputeBatchOutputShape(
       std::vector<math::SizeVector> const &input_shapes) override;

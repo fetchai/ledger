@@ -161,8 +161,7 @@ void TSNE<TensorType>::Init(TensorType const &input_matrix, TensorType const &ou
   if (input_matrix.shape().size() != 2)
   {
     fetch::ml::ops::Flatten<TensorType> flatten_op;
-    TensorType                          flat_input(
-        flatten_op.ComputeOutputShape({std::make_shared<TensorType>(input_matrix)}));
+    TensorType flat_input(flatten_op.ComputeOutputShape({input_matrix.shape()}));
     flatten_op.Forward({std::make_shared<TensorType>(input_matrix)}, flat_input);
     input_matrix_ = flat_input.Transpose();
   }

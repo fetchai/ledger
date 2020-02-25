@@ -100,12 +100,6 @@ void SkipGram<TensorType>::SetOpSaveableParams(SPType const &sp)
 }
 
 template <class TensorType>
-OperationsCount SkipGram<TensorType>::ChargeForward() const
-{
-  return Graph<TensorType>::ChargeForward(this->output_node_name_);
-}
-
-template <class TensorType>
 OperationsCount SkipGram<TensorType>::ChargeBackward() const
 {
   return Graph<TensorType>::ChargeBackward(this->output_node_name_);

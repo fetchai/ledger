@@ -49,12 +49,11 @@ public:
   using VecTensorType = typename Ops<T>::VecTensorType;
   using SPType        = OpDataHolderSaveableParams<T>;
   using MyType        = DataHolder<TensorType>;
+  using ParentClass   = Ops<T>;
 
   DataHolder() = default;
 
-  explicit DataHolder(SPType const &sp)
-    : Ops<T>(sp)
-  {}
+  explicit DataHolder(SPType const &sp);
 
   ~DataHolder() override = default;
 
@@ -67,7 +66,8 @@ public:
 
   virtual bool SetData(TensorType const &data);
 
-  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override;
+  std::vector<SizeType> ComputeOutputShape(
+      std::vector<math::SizeVector> const &inputs) const override;
 
   static constexpr OpType OpCode()
   {
@@ -90,10 +90,11 @@ public:
   static OperationsCount ChargeConstruct();
 
   OperationsCount ChargeSetData(std::vector<SizeType> const &data);
+  void            SetFutureDataShape(const std::vector<SizeType> &data);
 
 protected:
   TensorPtrType         data_ = std::make_shared<TensorType>();
-  std::vector<SizeType> future_data_shape_;
+  std::vector<SizeType> future_data_shape_{};
 };
 
 }  // namespace ops

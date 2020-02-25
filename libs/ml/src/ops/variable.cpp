@@ -29,11 +29,6 @@ template <typename TensorType>
 Variable<TensorType>::Variable(SPType const &sp)
   : DataHolder<TensorType>(sp)
 {
-  if (sp.data)
-  {
-    this->data_ = std::make_shared<TensorType>(sp.data->Copy());
-  }
-
   if (sp.gradient_accumulation)
   {
     gradient_accumulation_ = std::make_shared<TensorType>(sp.gradient_accumulation->Copy());
@@ -49,10 +44,6 @@ template <typename TensorType>
 std::shared_ptr<OpsSaveableParams> Variable<TensorType>::GetOpSaveableParams()
 {
   auto sp = std::make_shared<SPType>();
-  if (this->data_)
-  {
-    sp->data = std::make_shared<TensorType>(this->data_->Copy());
-  }
 
   if (gradient_accumulation_)
   {
@@ -72,9 +63,9 @@ std::shared_ptr<OpsSaveableParams> Variable<TensorType>::GetOpSaveableParams()
   sp->value_frozen        = this->value_frozen_;
 
   // Add base class savable params
-  auto ops_sp  = Ops<TensorType>::GetOpSaveableParams();
-  auto cast_sp = std::static_pointer_cast<OpsSaveableParams>(sp);
-  *cast_sp     = *(std::static_pointer_cast<OpsSaveableParams>(ops_sp));
+  auto ops_sp  = ParentClass::GetOpSaveableParams();
+  auto cast_sp = std::static_pointer_cast<typename ParentClass::SPType>(sp);
+  *cast_sp     = *(std::static_pointer_cast<typename ParentClass::SPType>(ops_sp));
 
   return sp;
 }

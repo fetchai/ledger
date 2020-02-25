@@ -124,9 +124,9 @@ std::vector<TensorType> Divide<TensorType>::Backward(VecTensorType const &inputs
 
 template <class TensorType>
 std::vector<math::SizeType> Divide<TensorType>::ComputeOutputShape(
-    VecTensorType const &inputs) const
+    std::vector<math::SizeVector> const &inputs) const
 {
-  return inputs.front()->shape();
+  return inputs.front();
 }
 
 template <typename TensorType>
