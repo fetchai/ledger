@@ -166,7 +166,8 @@ public:
    */
   virtual OperationsCount ChargeForward() const
   {
-    // todo: should be removed in favour of ChargeForward below
+    // TODO(ML-526): Change all ChargeForward() to ChargeForward(input_shapes) and then remove this
+    // method
     FETCH_LOG_ERROR(Descriptor(),
                     " Error: call to unexisting ChargeForward() implementation! returned 0.");
 
@@ -180,7 +181,6 @@ public:
   virtual std::pair<OperationsCount, math::SizeVector> ChargeForward(
       std::vector<math::SizeVector> const &input_shapes)
   {
-    // Todo: all Ops should implement their own ChargeForward(input_shapes)
     math::SizeVector output_shape = ComputeOutputShape(input_shapes);
     // multiplying ChargeForward() by the batch dimension is correct for Ops that don't have
     // a proper ChargeForward(input_size) implemented.

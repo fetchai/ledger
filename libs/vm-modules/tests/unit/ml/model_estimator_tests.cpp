@@ -555,9 +555,8 @@ TEST_F(VMModelEstimatorTests, estimator_evaluate_with_metrics)
           model.Fit(vm_ptr_tensor_data, vm_ptr_tensor_labels, batch_size);
 
           ChargeAmount const cost = model.ChargeForward(data_shape);
-          ChargeAmount const val  = cost;
 
-          EXPECT_EQ(model.EstimateEvaluate(), static_cast<ChargeAmount>(val));
+          EXPECT_EQ(model.EstimateEvaluate(), static_cast<ChargeAmount>(cost));
         }
       }
     }

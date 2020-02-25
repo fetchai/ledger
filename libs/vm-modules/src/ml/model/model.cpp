@@ -961,16 +961,8 @@ ChargeAmount VMModel::EstimateEvaluate()
     throw std::runtime_error("must set data before evaluating");
   }
 
-  //  SizeType const     batch_size = model_->dataloader_ptr_->Size();
-
-  // todo: this logic should be in model_->ChargeForward()
-  //  auto input_node = model_->graph_ptr_->GetNode(model_->input_);
-  //  auto dataholder =
-  //    std::dynamic_pointer_cast<fetch::ml::ops::DataHolder<TensorType>>(input_node->GetOp());
-  //  dataholder->SetFutureDataShape(data->GetConstTensor().shape());
-
-  // VMModel::ChargeForwards now returns the batch cost and not the datapoint cost
   ChargeAmount const batch_cost = model_->ChargeForward();
+
   FETCH_LOG_INFO(LOGGING_NAME,
                  " forward pass estimated batch cost is " + std::to_string(batch_cost));
   return batch_cost;

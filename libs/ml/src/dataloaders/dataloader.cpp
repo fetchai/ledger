@@ -19,6 +19,7 @@
 #include "math/tensor/tensor.hpp"
 #include "ml/dataloaders/dataloader.hpp"
 #include "ml/exceptions/exceptions.hpp"
+#include "ml/utilities/utils.hpp"
 
 namespace fetch {
 namespace ml {
@@ -39,6 +40,40 @@ void DataLoader<TensorType>::SetDataSize(std::pair<TensorType, std::vector<Tenso
   {
     ret_pair_.second.emplace_back(tensor.Copy());
   }
+}
+
+/**
+ * This method gets the shapes of the next batch of data and labels
+ * @tparam TensorType
+ * @param batch_size Optional batch_size parameter. If set then last dimension will be replaced with
+ * the batch size.
+ * @return pair of ShapeVector (for labels) and vector of ShapeVectors (for data)
+ */
+template <typename TensorType>
+std::pair<math::SizeVector, std::vector<math::SizeVector>> DataLoader<TensorType>::GetDataSize(
+    SizeType const &batch_size)
+{
+  if (this->size_not_set_)
+  {
+    throw std::runtime_error("Shape not set so data size cannot be computed.");
+  }
+  std::pair<math::SizeVector, std::vector<math::SizeVector>> ret;
+  ret.first = ret_pair_.first.shape();
+  if (batch_size)
+  {
+    ret.first.back() = batch_size;
+  }
+
+  ret.second.reserve(ret_pair_.second.size());
+  for (auto const &inp : ret_pair_.second)
+  {
+    ret.second.emplace_back(inp.shape());
+    if (batch_size)
+    {
+      ret.second.back().back() = batch_size;
+    }
+  }
+  return ret;
 }
 
 /**
@@ -64,7 +99,7 @@ typename DataLoader<TensorType>::ReturnType DataLoader<TensorType>::PrepareBatch
   }
 
   // if the label is set to be the wrong batch_size reshape
-  if (ret_pair_.first.shape().at(ret_pair_.first.shape().size() - 1) != batch_size)
+  if (ret_pair_.first.shape().back() != batch_size)
   {
     SizeVector new_shape               = ret_pair_.first.shape();
     new_shape.at(new_shape.size() - 1) = batch_size;

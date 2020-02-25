@@ -28,6 +28,12 @@ namespace utilities {
 
 std::string GetStrTimestamp();
 
+/**
+ * This converts a vector of shared_ptr<TensorType> to a vector of Tensor shapes.
+ * @tparam TensorType
+ * @param inputs vector of Tensor ptrs
+ * @return vector of shapes of the tensors
+ */
 template <class TensorType>
 std::vector<math::SizeVector> TensorPtrsToSizes(
     std::vector<std::shared_ptr<TensorType>> const &inputs)

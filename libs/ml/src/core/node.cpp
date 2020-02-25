@@ -100,6 +100,7 @@ std::pair<OperationsCount, math::SizeVector> Node<TensorType>::ChargeForward(
 {
   OperationsCount               cost = 0;
   std::vector<math::SizeVector> input_shapes{};
+  // Go through inputs to this node getting their costs and output shapes
   for (auto const &i : input_nodes_)
   {
     auto input_node_ptr = i.lock();
@@ -113,6 +114,7 @@ std::pair<OperationsCount, math::SizeVector> Node<TensorType>::ChargeForward(
     input_shapes.push_back(cost_and_outputshape.second);
   }
 
+  // Get cost and output_shape of this node's Op
   auto op_cost_and_outputshape = op_ptr_->ChargeForward(input_shapes);
 
   if (visited_nodes.find(this->name_) == visited_nodes.cend())

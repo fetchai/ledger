@@ -91,13 +91,13 @@ std::vector<math::SizeType> DataHolder<TensorType>::ComputeOutputShape(
     std::vector<math::SizeVector> const &inputs) const
 {
   FETCH_UNUSED(inputs);
-  if (!future_data_shape_.empty())
+  if (future_data_shape_.empty())
   {
-    return future_data_shape_;
+    throw std::runtime_error("future_data_shape_ is not set for " + std::string(Descriptor()) +
+                             " so shape computing is not possible.");
   }
 
-  throw std::runtime_error("future_data_shape_ is not set for " + std ::string(Descriptor()) +
-                           " so shape computing is not possible.");
+  return future_data_shape_;
 }
 
 template <typename TensorType>
