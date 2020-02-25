@@ -436,7 +436,7 @@ void BM_Predict(::benchmark::State &state)
     std::vector<SizeType> data_shape{config.sizes[0], config.batch_size};
     auto                  data    = vmTensor(vm, data_shape);
     state.counters["charge"]      = static_cast<double>(model->EstimatePredict(data));
-    state.counters["ForwardCost"] = static_cast<double>(model->ChargeForward());
+    state.counters["ForwardCost"] = static_cast<double>(model->ChargeForward(data_shape));
 
     state.ResumeTiming();
     auto res = model->Predict(data);
@@ -757,7 +757,7 @@ void BM_Fit(::benchmark::State &state)
     state.counters["charge"] =
         static_cast<double>(model->EstimateFit(data, label, config.batch_size));
 
-    state.counters["ChargeForward"]   = static_cast<double>(model->ChargeForward());
+    state.counters["ChargeForward"]   = static_cast<double>(model->ChargeForward(data_shape));
     state.counters["ChargeBackwards"] = static_cast<double>(model->ChargeBackward());
 
     state.ResumeTiming();
