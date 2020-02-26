@@ -64,7 +64,7 @@ TYPED_TEST(StridedSliceTest, forward_1D_test)
 
   fetch::ml::ops::StridedSlice<TypeParam> op(begins, ends, strides);
 
-  TypeParam prediction(op.ComputeOutputShape({std::make_shared<TypeParam>(input)}));
+  TypeParam prediction(op.ComputeOutputShape({input.shape()}));
   op.Forward({std::make_shared<TypeParam>(input)}, prediction);
 
   // test correct values
@@ -146,7 +146,7 @@ TYPED_TEST(StridedSliceTest, forward_2D_test)
 
   fetch::ml::ops::StridedSlice<TypeParam> op(begins, ends, strides);
 
-  TypeParam prediction(op.ComputeOutputShape({std::make_shared<TypeParam>(input)}));
+  TypeParam prediction(op.ComputeOutputShape({input.shape()}));
   op.Forward({std::make_shared<TypeParam>(input)}, prediction);
 
   // test correct values
@@ -236,7 +236,7 @@ TYPED_TEST(StridedSliceTest, forward_3D_test)
 
   fetch::ml::ops::StridedSlice<TypeParam> op(begins, ends, strides);
 
-  TypeParam prediction(op.ComputeOutputShape({std::make_shared<TypeParam>(input)}));
+  TypeParam prediction(op.ComputeOutputShape({input.shape()}));
   op.Forward({std::make_shared<TypeParam>(input)}, prediction);
 
   // test correct values
@@ -333,7 +333,7 @@ TYPED_TEST(StridedSliceTest, forward_4D_test)
 
   fetch::ml::ops::StridedSlice<TypeParam> op(begins, ends, strides);
 
-  TypeParam prediction(op.ComputeOutputShape({std::make_shared<TypeParam>(input)}));
+  TypeParam prediction(op.ComputeOutputShape({input.shape()}));
   op.Forward({std::make_shared<TypeParam>(input)}, prediction);
 
   // test correct values
@@ -438,7 +438,7 @@ TYPED_TEST(StridedSliceTest, forward_5D_test)
 
   fetch::ml::ops::StridedSlice<TypeParam> op(begins, ends, strides);
 
-  TypeParam prediction(op.ComputeOutputShape({std::make_shared<TypeParam>(input)}));
+  TypeParam prediction(op.ComputeOutputShape({input.shape()}));
   op.Forward({std::make_shared<TypeParam>(input)}, prediction);
 
   // test correct values

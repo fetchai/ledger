@@ -55,7 +55,7 @@ public:
   std::vector<TensorType> Backward(VecTensorType const &inputs,
                                    TensorType const &   error_signal) override;
 
-  SizeVector ComputeOutputShape(VecTensorType const &inputs) const override;
+  SizeVector ComputeOutputShape(std::vector<math::SizeVector> const &inputs) const override;
 
   SizeVector begins_;
   SizeVector ends_;

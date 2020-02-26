@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ml/charge_estimation/types.hpp"
 #include "ml/optimisation/optimiser.hpp"
 
 namespace fetch {
@@ -63,6 +64,10 @@ public:
   {
     return OptimiserType::ADAM;
   }
+
+  static OperationsCount ChargeConstruct(std::shared_ptr<Graph<T>> graph);
+
+  fetch::ml::OperationsCount ChargeStep() const override;
 
 protected:
   std::vector<TensorType> cache_;

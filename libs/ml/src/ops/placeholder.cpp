@@ -35,9 +35,9 @@ std::shared_ptr<OpsSaveableParams> PlaceHolder<TensorType>::GetOpSaveableParams(
   auto sp = std::make_shared<SPType>();
 
   // Add base class savable params
-  auto ops_sp  = Ops<TensorType>::GetOpSaveableParams();
-  auto cast_sp = std::static_pointer_cast<OpsSaveableParams>(sp);
-  *cast_sp     = *(std::static_pointer_cast<OpsSaveableParams>(ops_sp));
+  auto ops_sp  = DataHolder<TensorType>::GetOpSaveableParams();
+  auto cast_sp = std::static_pointer_cast<OpDataHolderSaveableParams<TensorType>>(sp);
+  *cast_sp     = *(std::static_pointer_cast<OpDataHolderSaveableParams<TensorType>>(ops_sp));
 
   return sp;
 }
