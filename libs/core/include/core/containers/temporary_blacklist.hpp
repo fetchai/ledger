@@ -27,70 +27,71 @@
 namespace fetch {
 namespace core {
 
-template<class T, std::size_t cooldown_ms = 5000>
+template <class T, std::size_t cooldown_ms = 5000>
 class TemporaryBlacklist
 {
 public:
-	using type = T;
+  using type = T;
 
-	TemporaryBlacklist() = default;
-	TemporaryBlacklist(TemporaryBlacklist const &) = delete;
-	TemporaryBlacklist(TemporaryBlacklist &&) = delete;
+  TemporaryBlacklist()                           = default;
+  TemporaryBlacklist(TemporaryBlacklist const &) = delete;
+  TemporaryBlacklist(TemporaryBlacklist &&)      = delete;
 
-	TemporaryBlacklist &operator=(TemporaryBlacklist const &) = delete;
-	TemporaryBlacklist &operator=(TemporaryBlacklist &&) = delete;
+  TemporaryBlacklist &operator=(TemporaryBlacklist const &) = delete;
+  TemporaryBlacklist &operator=(TemporaryBlacklist &&) = delete;
 
-	void Blacklist(T t)
-	{
-		FETCH_LOCK(lock_);
-		auto now = Clock::now();
-		Cleanup(now);
-		chronology_.emplace(now, t);
-		blacklisted_.insert(std::move(t));
-	}
+  void Blacklist(T t)
+  {
+    FETCH_LOCK(lock_);
+    auto now = Clock::now();
+    Cleanup(now);
+    chronology_.emplace(now, t);
+    blacklisted_.insert(std::move(t));
+  }
 
-	bool IsBlacklisted(T const &t) const
-	{
-		FETCH_LOCK(lock_);
-		Cleanup(Clock::now());
-		return IsIn(blacklisted_, t);
-	}
+  bool IsBlacklisted(T const &t) const
+  {
+    FETCH_LOCK(lock_);
+    Cleanup(Clock::now());
+    return IsIn(blacklisted_, t);
+  }
 
-	std::size_t size() const
-	{
-		FETCH_LOCK(lock_);
-		Cleanup(Clock::now());
-		return blacklisted_.size();
-	}
+  std::size_t size() const
+  {
+    FETCH_LOCK(lock_);
+    Cleanup(Clock::now());
+    return blacklisted_.size();
+  }
+
 private:
-	using Clock = std::chrono::steady_clock;
-	using TimePoint = Clock::time_point;
-	using Duration = Clock::duration;
+  using Clock     = std::chrono::steady_clock;
+  using TimePoint = Clock::time_point;
+  using Duration  = Clock::duration;
 
-	using Chronology = std::map<TimePoint, type>;
-	using Blacklisted = std::unordered_set<type>;
+  using Chronology  = std::map<TimePoint, type>;
+  using Blacklisted = std::unordered_set<type>;
 
-	static constexpr Duration COOLDOWN_PERIOD = std::chrono::milliseconds(cooldown_ms);
+  static constexpr Duration COOLDOWN_PERIOD = std::chrono::milliseconds(cooldown_ms);
 
-	void Cleanup(TimePoint t) const
-	{
-		const_cast<TemporaryBlacklist *>(this)->Cleanup(t);
-	}
+  void Cleanup(TimePoint t) const
+  {
+    const_cast<TemporaryBlacklist *>(this)->Cleanup(t);
+  }
 
-	void Cleanup(TimePoint t)
-	{
-		t -= COOLDOWN_PERIOD;
-		auto earliest_surviving_record = chronology_.upper_bound(t);
-		for (auto chrono_it = chronology_.begin(); chrono_it != earliest_surviving_record; ++chrono_it)
-		{
-			blacklisted_.erase(chrono_it->second);
-		}
-		chronology_.erase(chronology_.begin(), earliest_surviving_record);
-	}
+  void Cleanup(TimePoint t)
+  {
+    t -= COOLDOWN_PERIOD;
+    auto earliest_surviving_record = chronology_.upper_bound(t);
+    for (auto chrono_it = chronology_.begin(); chrono_it != earliest_surviving_record; ++chrono_it)
+    {
+      blacklisted_.erase(chrono_it->second);
+    }
+    chronology_.erase(chronology_.begin(), earliest_surviving_record);
+  }
 
-	Chronology chronology_;
-	Blacklisted blacklisted_;
-	mutable Mutex lock_;
+  Chronology    chronology_;
+  Blacklisted   blacklisted_;
+  mutable Mutex lock_;
 };
 
 }  // namespace core
