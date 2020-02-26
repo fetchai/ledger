@@ -89,5 +89,9 @@ private:
   mutable Mutex       lock_;
 };
 
+template <class T, std::size_t cooldown_ms>
+constexpr typename TemporaryBlacklist<T, cooldown_ms>::Duration
+    TemporaryBlacklist<T, cooldown_ms>::COOLDOWN_PERIOD;
+
 }  // namespace core
 }  // namespace fetch
