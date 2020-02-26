@@ -17,11 +17,34 @@
 //
 //------------------------------------------------------------------------------
 
+#include "math/base_types.hpp"
+#include "benchmark/benchmark.h"
+
+#include <string>
+
 namespace fetch {
 namespace ml {
 namespace utilities {
 
 std::string GetStrTimestamp();
+
+struct BM_Tensor_config
+{
+  using SizeType = fetch::math::SizeType;
+
+  explicit BM_Tensor_config(::benchmark::State const &state)
+  {
+    auto size_len = static_cast<SizeType>(state.range(0));
+
+    shape.reserve(size_len);
+    for (SizeType i{0}; i < size_len; ++i)
+    {
+      shape.emplace_back(static_cast<SizeType>(state.range(1 + i)));
+    }
+  }
+
+  std::vector<SizeType> shape;  // layers input/output sizes
+};
 
 }  // namespace utilities
 }  // namespace ml

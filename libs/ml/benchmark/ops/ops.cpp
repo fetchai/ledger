@@ -49,29 +49,12 @@
 #include "ml/ops/tanh.hpp"
 #include "ml/ops/top_k.hpp"
 #include "ml/ops/transpose.hpp"
+#include "ml/utilities/utils.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 
 #include "benchmark/benchmark.h"
 
 #include <vector>
-
-struct BM_Tensor_config
-{
-  using SizeType = fetch::math::SizeType;
-
-  explicit BM_Tensor_config(::benchmark::State const &state)
-  {
-    auto size_len = static_cast<SizeType>(state.range(0));
-
-    shape.reserve(size_len);
-    for (SizeType i{0}; i < size_len; ++i)
-    {
-      shape.emplace_back(static_cast<SizeType>(state.range(1 + i)));
-    }
-  }
-
-  std::vector<SizeType> shape;  // layers input/output sizes
-};
 
 template <class T, int N>
 void BM_AbsForward(benchmark::State &state)
@@ -5105,7 +5088,7 @@ void BM_AddForward(benchmark::State &state)
   using VecTensorType = typename fetch::ml::ops::Ops<TensorType>::VecTensorType;
 
   // Get args form state
-  BM_Tensor_config config{state};
+  fetch::ml::utilities::BM_Tensor_config config{state};
 
   fetch::math::Tensor<T> input_1(config.shape);
   fetch::math::Tensor<T> input_2(config.shape);
