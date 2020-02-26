@@ -16,11 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vm_test_toolkit.hpp"
-
 #include "math/base_types.hpp"
 #include "math/trigonometry.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
+#include "vm_modules/test_utilities/vm_test_toolkit.hpp"
 
 #include "gmock/gmock.h"
 

@@ -52,7 +52,7 @@ TYPED_TEST(ExpTest, forward_test)
 
   fetch::ml::ops::Exp<TensorType> op;
 
-  TypeParam prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
+  TypeParam prediction(op.ComputeOutputShape({data.shape()}));
   op.Forward({std::make_shared<const TensorType>(data)}, prediction);
 
   // test correct values

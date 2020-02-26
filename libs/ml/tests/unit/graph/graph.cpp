@@ -1269,8 +1269,7 @@ TYPED_TEST(GraphTest, graph_charge_forward_subtraction)
 
   g.Compile();
 
-  OperationsCount const charge       = g.ChargeForward(subtract);
-  OperationsCount const batch_charge = charge * data.shape().back();
+  OperationsCount const batch_charge = g.ChargeForward(subtract);
 
   std::size_t const     total_elements_in_output = 4 * 4;
   OperationsCount const expected_charge = total_elements_in_output * SUBTRACTION_PER_ELEMENT;
@@ -1314,8 +1313,7 @@ TYPED_TEST(GraphTest, graph_charge_forward_matmul)
   ASSERT_EQ(out_shape.size(), 2);
   ASSERT_EQ(out_shape.front(), 2);
 
-  OperationsCount const charge       = g.ChargeForward(matmul);
-  OperationsCount const batch_charge = charge * batch_size;
+  OperationsCount const batch_charge = g.ChargeForward(matmul);
 
   SizeType const        matmul_ops      = weight_width * input_height * batch_size;
   OperationsCount const expected_charge = matmul_ops * MULTIPLICATION_PER_ELEMENT;
@@ -1357,8 +1355,7 @@ TYPED_TEST(GraphTest, graph_charge_forward_conv2d)
   ASSERT_EQ(out_shape.size(), shape.size());
   ASSERT_EQ(out_shape.front(), outputs);
 
-  OperationsCount const charge       = g.ChargeForward(conv2d);
-  OperationsCount const batch_charge = charge * batch_size;
+  OperationsCount const batch_charge = g.ChargeForward(conv2d);
 
   OperationsCount const expected_charge = 161989632;  // TODO(VH): calc proper expected charge
 
@@ -1401,11 +1398,21 @@ TYPED_TEST(GraphTest, graph_charge_forward_diamond)
   g.SetInput(input, data);
   g.Compile();
 
-  static const std::size_t expected_calls_to_add = (2 * (N - 1) + 1);
+  static const std::size_t expected_calls_to_add = N;
   OperationsCount const    charge                = g.ChargeForward(output);
-  OperationsCount const    expected_charge =
-      ADDITION_PER_ELEMENT * total_data_elements * expected_calls_to_add +
-      PLACEHOLDER_READING_PER_ELEMENT * total_data_elements;
+
+  OperationsCount add_charge{1};
+
+  // Addition cost
+  math::SizeType num_elements = TensorType::SizeFromShape(data.shape());
+  add_charge += num_elements;
+
+  // Iteration over 3 tensors (input1, input2, ret)
+  OperationsCount iteration_ops = TensorType::ChargeIterate(data.shape());
+  add_charge += iteration_ops * 3;
+
+  OperationsCount const expected_charge =
+      add_charge * expected_calls_to_add + PLACEHOLDER_READING_PER_ELEMENT * total_data_elements;
 
   ASSERT_EQ(charge, expected_charge);
 }

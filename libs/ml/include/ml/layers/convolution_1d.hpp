@@ -61,7 +61,8 @@ public:
 
   void SetOpSaveableParams(SPType const &sp);
 
-  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override;
+  std::vector<SizeType> ComputeOutputShape(
+      std::vector<math::SizeVector> const &inputs) const override;
 
   static constexpr OpType OpCode()
   {
@@ -81,8 +82,8 @@ public:
 
   void Compile() override;
 
-  OperationsCount ChargeForward() const override;
   OperationsCount ChargeBackward() const override;
+  OperationsCount ChargeCompile() override;
 
 private:
   SizeType kernel_size_{};

@@ -42,8 +42,7 @@ TYPED_TEST(ConcatenateTest, forward_test)
 
   fetch::ml::ops::Concatenate<TypeParam> op{1};
 
-  TypeParam prediction(op.ComputeOutputShape(
-      {std::make_shared<TypeParam>(data1), std::make_shared<TypeParam>(data2)}));
+  TypeParam prediction(op.ComputeOutputShape({data1.shape(), data2.shape()}));
   op.Forward({std::make_shared<TypeParam>(data1), std::make_shared<TypeParam>(data2)}, prediction);
 
   // test correct shape
@@ -57,8 +56,8 @@ TYPED_TEST(ConcatenateTest, compute_output_shape_test)
 
   fetch::ml::ops::Concatenate<TypeParam> op{2};
 
-  std::vector<typename TypeParam::SizeType> output_shape = op.ComputeOutputShape(
-      {std::make_shared<TypeParam>(data1), std::make_shared<TypeParam>(data2)});
+  std::vector<typename TypeParam::SizeType> output_shape =
+      op.ComputeOutputShape({data1.shape(), data2.shape()});
 
   // test correct computed output shape
   ASSERT_EQ(output_shape, std::vector<typename TypeParam::SizeType>({8, 8, 12}));
@@ -71,8 +70,7 @@ TYPED_TEST(ConcatenateTest, backward_test)
 
   fetch::ml::ops::Concatenate<TypeParam> op{1};
 
-  TypeParam prediction(op.ComputeOutputShape(
-      {std::make_shared<TypeParam>(data1), std::make_shared<TypeParam>(data2)}));
+  TypeParam prediction(op.ComputeOutputShape({data1.shape(), data2.shape()}));
   op.Forward({std::make_shared<TypeParam>(data1), std::make_shared<TypeParam>(data2)}, prediction);
 
   TypeParam              error_signal(prediction.shape());

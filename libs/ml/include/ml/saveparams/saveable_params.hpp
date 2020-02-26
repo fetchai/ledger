@@ -48,6 +48,7 @@ struct OpDataHolderSaveableParams : public OpsSaveableParams
 {
   fetch::ml::OpType           op_type = OpType::OP_DATAHOLDER;
   std::shared_ptr<TensorType> data;
+  std::vector<math::SizeType> future_data_shape;
 };
 
 template <typename TensorType>
@@ -55,7 +56,6 @@ struct OpVariableSaveableParams : public OpDataHolderSaveableParams<TensorType>
 {
   using DataType                      = typename TensorType::Type;
   fetch::ml::OpType           op_type = OpType::OP_PLACEHOLDER;
-  std::shared_ptr<TensorType> data;
   std::shared_ptr<TensorType> gradient_accumulation;
   RegularisationType          regularisation_type = RegularisationType::NONE;
   DataType                    regularisation_rate = fetch::math::numeric_max<DataType>();

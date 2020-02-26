@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ml/charge_estimation/types.hpp"
 #include "ml/optimisation/optimiser.hpp"
 
 namespace fetch {
@@ -55,6 +56,10 @@ public:
   {
     return OptimiserType::MOMENTUM;
   }
+
+  static OperationsCount ChargeConstruct(std::shared_ptr<Graph<T>> graph);
+
+  fetch::ml::OperationsCount ChargeStep() const override;
 
 private:
   std::vector<TensorType> momentum_;

@@ -54,8 +54,7 @@ TYPED_TEST(PReluOpTest, forward_test)
 
   fetch::ml::ops::PReluOp<TensorType> op;
 
-  TypeParam prediction(op.ComputeOutputShape(
-      {std::make_shared<TypeParam>(data), std::make_shared<TypeParam>(alpha)}));
+  TypeParam prediction(op.ComputeOutputShape({data.shape(), alpha.shape()}));
   op.Forward({std::make_shared<TypeParam>(data), std::make_shared<TypeParam>(alpha)}, prediction);
 
   // test correct values

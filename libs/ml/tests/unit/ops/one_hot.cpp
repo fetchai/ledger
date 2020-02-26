@@ -53,7 +53,7 @@ TYPED_TEST(OneHotOpTest, forward_test)
 
   fetch::ml::ops::OneHot<TypeParam> op(depth, axis, on_value, off_value);
 
-  TypeParam prediction(op.ComputeOutputShape({std::make_shared<TypeParam>(data)}));
+  TypeParam prediction(op.ComputeOutputShape({data.shape()}));
   op.Forward({std::make_shared<TypeParam>(data)}, prediction);
 
   // test correct values

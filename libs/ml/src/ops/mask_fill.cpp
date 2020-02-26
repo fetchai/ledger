@@ -73,7 +73,7 @@ void MaskFill<TensorType>::Forward(const MaskFill::VecTensorType &inputs,
                                    MaskFill::TensorType &         output)
 {
   assert(inputs.size() == 2);
-  assert(output.shape() == this->ComputeOutputShape(inputs));
+  assert(output.shape() == ComputeOutputShape(fetch::ml::utilities::TensorPtrsToSizes(inputs)));
 
   fetch::math::Multiply(*(inputs.at(0)), *(inputs.at(1)), output);
   TensorType inv_mask = fetch::math::Subtract(DataType{1}, *(inputs.at(0)));
@@ -105,9 +105,9 @@ std::vector<TensorType> MaskFill<TensorType>::Backward(const VecTensorType &inpu
 
 template <typename TensorType>
 std::vector<fetch::math::SizeType> MaskFill<TensorType>::ComputeOutputShape(
-    const VecTensorType &inputs) const
+    const std::vector<math::SizeVector> &inputs) const
 {
-  return inputs.at(1)->shape();
+  return inputs.at(1);
 }
 
 template <typename TensorType>

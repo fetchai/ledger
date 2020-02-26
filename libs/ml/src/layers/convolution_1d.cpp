@@ -16,6 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ml/charge_estimation/constants.hpp"
+#include "ml/charge_estimation/layers/constants.hpp"
 #include "ml/layers/convolution_1d.hpp"
 #include "ml/meta/ml_type_traits.hpp"
 #include "ml/ops/convolution_1d.hpp"
@@ -74,7 +76,6 @@ void Convolution1D<TensorType>::CompleteShapeDeduction()
   input_node->SetBatchInputShapes(this->batch_input_shapes_);
   input_node->SetBatchOutputShape(this->batch_input_shapes_.front());
 
-  this->Compile();
   FETCH_LOG_INFO(Descriptor(), "-- Convolution1D initialisation completed. --");
   is_initialised_ = true;
 }
@@ -119,12 +120,11 @@ std::shared_ptr<OpsSaveableParams> Convolution1D<TensorType>::GetOpSaveableParam
 
 template <class TensorType>
 std::vector<fetch::math::SizeType> Convolution1D<TensorType>::ComputeOutputShape(
-    VecTensorType const &inputs) const
+    std::vector<math::SizeVector> const &inputs) const
 {
-  TensorType weights_data(
-      std::vector<SizeType>{{output_channels_, input_channels_, kernel_size_, 1}});
+  std::vector<SizeType> weights_data{output_channels_, input_channels_, kernel_size_, 1};
   return fetch::ml::ops::Convolution1D<TensorType>(stride_size_)
-      .ComputeOutputShape({inputs.at(0), std::make_shared<TensorType>(weights_data)});
+      .ComputeOutputShape({inputs.at(0), weights_data});
 }
 
 template <typename TensorType>
@@ -139,15 +139,30 @@ void Convolution1D<TensorType>::Compile()
 }
 
 template <class TensorType>
-OperationsCount Convolution1D<TensorType>::ChargeForward() const
-{
-  return Graph<TensorType>::ChargeForward(this->output_node_name_);
-}
-
-template <class TensorType>
 OperationsCount Convolution1D<TensorType>::ChargeBackward() const
 {
   return Graph<TensorType>::ChargeBackward(this->output_node_name_);
+}
+
+template <typename TensorType>
+OperationsCount Convolution1D<TensorType>::ChargeCompile()
+{
+  OperationsCount op_cnt{charge_estimation::FUNCTION_CALL_COST};
+
+  // Construct weights and bias tensors
+  std::vector<SizeType> weights_data_shape({output_channels_, input_channels_, kernel_size_, 1});
+  op_cnt += fetch::ml::ops::Weights<TensorType>::ChargeInitialise(weights_data_shape);
+
+  // SetInput weights
+  auto weights_dataholder =
+      std::dynamic_pointer_cast<ops::DataHolder<TensorType>>(this->nodes_.at(weights_)->GetOp());
+  op_cnt += weights_dataholder->ChargeSetData(weights_data_shape);
+
+  // ResetGraphCache for weights and biases
+  op_cnt += charge_estimation::layers::CONV_1D_CHARGE_COMPILE_PER_NODE * this->nodes_.size();
+
+  op_cnt += Graph<TensorType>::ChargeCompile();
+  return op_cnt;
 }
 
 ///////////////////////////////
