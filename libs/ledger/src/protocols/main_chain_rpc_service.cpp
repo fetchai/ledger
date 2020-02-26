@@ -240,11 +240,18 @@ MainChainRpcService::Address MainChainRpcService::GetRandomTrustedPeer() const
 
   if (!direct_peers.empty())
   {
-    // generate a random peer index
-    std::size_t const index = rng() % direct_peers.size();
+    if (alien_peers_.size() == direct_peers.size())
+    {
+      return {};
+    }
+    do
+    {
+      // generate a random peer index
+      std::size_t const index = rng() % direct_peers.size();
 
-    // select the address
-    address = direct_peers[index];
+      // select the address
+      address = direct_peers[index];
+    } while (alien_peers_.IsBlacklisted(address));
   }
 
   return address;
@@ -598,6 +605,7 @@ void MainChainRpcService::NetworkMismatch()
                      " wasn't able to identify our Genesis block 0x",
                      block_resolving_->hash.ToHex().SubArray(0, 8));
   // genesis digest mismatch, stop sync with this peer
+  alien_peers_.Blacklist(current_peer_address_);
   block_resolving_.reset();
   back_stride_ = 1;
 }
