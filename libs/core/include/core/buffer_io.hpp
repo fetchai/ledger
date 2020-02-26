@@ -141,12 +141,14 @@ struct BufferOStream
 template <class T, class... Ts>
 using AreSameSizelessPOD =
     std::integral_constant<bool, IsSizePOD<T> && type_util::AreSameV<T, Ts...>>;
+
 template <class T, class... Ts>
 static constexpr auto AreSameSizelessPODV = AreSameSizelessPOD<T, Ts...>::value;
 
 template <class T, class... Ts>
 using AreSameReadlessPOD =
     std::integral_constant<bool, IsReadPOD<T> && type_util::AreSameV<T, Ts...>>;
+
 template <class T, class... Ts>
 static constexpr auto AreSameReadlessPODV = AreSameReadlessPOD<T, Ts...>::value;
 
