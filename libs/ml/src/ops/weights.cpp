@@ -32,16 +32,12 @@ Weights<TensorType>::Weights(SPType const &sp)
 template <typename TensorType>
 std::shared_ptr<OpsSaveableParams> Weights<TensorType>::GetOpSaveableParams()
 {
-  auto sp   = std::make_shared<SPType>();
-  auto p_sp = Variable<TensorType>::GetOpSaveableParams();
-
-  auto cast_sp = std::static_pointer_cast<OpVariableSaveableParams<TensorType>>(sp);
-  *cast_sp     = *(std::static_pointer_cast<OpVariableSaveableParams<TensorType>>(p_sp));
+  auto sp = std::make_shared<SPType>();
 
   // Add base class savable params
-  auto ops_sp      = Ops<TensorType>::GetOpSaveableParams();
-  auto cast_ops_sp = std::static_pointer_cast<OpsSaveableParams>(sp);
-  *cast_ops_sp     = *(std::static_pointer_cast<OpsSaveableParams>(ops_sp));
+  auto ops_sp  = ParentClass::GetOpSaveableParams();
+  auto cast_sp = std::static_pointer_cast<typename ParentClass::SPType>(sp);
+  *cast_sp     = *(std::static_pointer_cast<typename ParentClass::SPType>(ops_sp));
 
   return sp;
 }

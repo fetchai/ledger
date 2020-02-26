@@ -50,7 +50,7 @@ TYPED_TEST(GeluTest, forward_test_3d)
   gt.Reshape({3, 1, 3});
 
   fetch::ml::ops::Gelu<TensorType> op;
-  TensorType prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
+  TensorType                       prediction(op.ComputeOutputShape({data.shape()}));
   op.Forward({std::make_shared<const TensorType>(data)}, prediction);
   // test correct values
   ASSERT_TRUE(prediction.AllClose(
@@ -102,7 +102,7 @@ TYPED_TEST(GeluTest, saveparams_test)
   gt.Reshape({3, 1, 3});
 
   fetch::ml::ops::Gelu<TensorType> op;
-  TensorType prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
+  TensorType                       prediction(op.ComputeOutputShape({data.shape()}));
   op.Forward({std::make_shared<const TensorType>(data)}, prediction);
 
   // extract saveparams
@@ -124,7 +124,7 @@ TYPED_TEST(GeluTest, saveparams_test)
   fetch::ml::ops::Gelu<TensorType> new_op(*dsp2);
 
   // check that new predictions match the old
-  TensorType new_prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
+  TensorType new_prediction(op.ComputeOutputShape({data.shape()}));
   new_op.Forward(VecTensorType({std::make_shared<const TensorType>(data)}), new_prediction);
 
   // test correct values

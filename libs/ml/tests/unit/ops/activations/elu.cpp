@@ -48,7 +48,7 @@ TYPED_TEST(EluTest, forward_test)
 
   fetch::ml::ops::Elu<TensorType> op(DataType{2});
 
-  TensorType prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
+  TensorType prediction(op.ComputeOutputShape({data.shape()}));
   op.Forward({std::make_shared<const TensorType>(data)}, prediction);
 
   // test correct values
@@ -82,7 +82,7 @@ TYPED_TEST(EluTest, forward_3d_tensor_test)
 
   fetch::ml::ops::Elu<TensorType> op(DataType{2});
 
-  TensorType prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
+  TensorType prediction(op.ComputeOutputShape({data.shape()}));
   op.Forward({std::make_shared<const TensorType>(data)}, prediction);
 
   // test correct values
@@ -156,7 +156,7 @@ TYPED_TEST(EluTest, saveparams_test)
 
   fetch::ml::ops::Elu<TensorType> op(DataType{2});
 
-  TensorType prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
+  TensorType prediction(op.ComputeOutputShape({data.shape()}));
   op.Forward(VecTensorType({std::make_shared<const TensorType>(data)}), prediction);
 
   // extract saveparams
@@ -178,7 +178,7 @@ TYPED_TEST(EluTest, saveparams_test)
   fetch::ml::ops::Elu<TensorType> new_op(*dsp2);
 
   // check that new predictions match the old
-  TensorType new_prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
+  TensorType new_prediction(op.ComputeOutputShape({data.shape()}));
   new_op.Forward(VecTensorType({std::make_shared<const TensorType>(data)}), new_prediction);
 
   // test correct values

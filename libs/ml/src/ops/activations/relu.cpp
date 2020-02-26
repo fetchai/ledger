@@ -58,7 +58,7 @@ template <typename TensorType>
 void Relu<TensorType>::Forward(VecTensorType const &inputs, TensorType &output)
 {
   assert(inputs.size() == 1);
-  assert(output.shape() == this->ComputeOutputShape(inputs));
+  assert(output.shape() == ComputeOutputShape(fetch::ml::utilities::TensorPtrsToSizes(inputs)));
   fetch::math::Relu((*inputs.front()), output);
 }
 
@@ -103,9 +103,10 @@ std::vector<TensorType> Relu<TensorType>::Backward(VecTensorType const &inputs,
 }
 
 template <typename TensorType>
-std::vector<math::SizeType> Relu<TensorType>::ComputeOutputShape(VecTensorType const &inputs) const
+std::vector<math::SizeType> Relu<TensorType>::ComputeOutputShape(
+    std::vector<math::SizeVector> const &inputs) const
 {
-  return inputs.front()->shape();
+  return inputs.front();
 }
 
 template <typename TensorType>

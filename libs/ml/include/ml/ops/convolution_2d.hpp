@@ -62,7 +62,7 @@ public:
                                    TensorType const &   error_signal) override;
 
   std::vector<typename TensorType::SizeType> ComputeOutputShape(
-      VecTensorType const &inputs) const override;
+      std::vector<math::SizeVector> const &inputs) const override;
 
   static constexpr OpType OpCode()
   {
