@@ -90,7 +90,11 @@ std::vector<math::SizeType> Flatten<TensorType>::ComputeOutputShape(
     std::vector<math::SizeVector> const &inputs) const
 {
   SizeType batch_size = inputs.at(0).at(inputs.at(0).size() - SizeType{1});
-  SizeType data_size  = fetch::math::Product(inputs.at(0));
+  SizeType data_size  = 1;
+  for (SizeType i{0}; i < inputs.at(0).size() - SizeType{1}; i++)
+  {
+    data_size *= inputs.at(0).at(i);
+  }
 
   return {data_size, batch_size};
 }

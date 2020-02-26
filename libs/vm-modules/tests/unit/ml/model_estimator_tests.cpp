@@ -1026,48 +1026,31 @@ TEST_F(VMModelEstimatorTests, charge_forward_one_dense)
   expected_cost += inputs * PLACEHOLDER_READING_PER_ELEMENT * batch_size;
 
   // n flattening operations (because Dense is not time-distributed in this test)
-  bool max_charge = false;
-  if (inputs < fetch::ml::charge_estimation::ops::PIECEWISE_LOWER_THRESHOLD)
-  {
-    expected_cost +=
-        fetch::ml::charge_estimation::ops::LOW_FLATTEN_PER_ELEMENT * inputs * batch_size;
-  }
-  else if (inputs < fetch::ml::charge_estimation::ops::PIECEWISE_HARD_CAP)
-  {
-    expected_cost +=
-        fetch::ml::charge_estimation::ops::HIGH_FLATTEN_PER_ELEMENT * inputs * batch_size;
-  }
-  else
-  {
-    expected_cost = fetch::math::numeric_max<fetch::ml::OperationsCount>();
-    max_charge    = true;
-  }
+  // in this case we know that
+  expected_cost +=
+          fetch::ml::charge_estimation::ops::LOW_FLATTEN_PER_ELEMENT * inputs * batch_size;
 
-  if (!max_charge)
-  {
+  // n*m*1 matmul operations
+  expected_cost += (inputs * outputs) * MULTIPLICATION_PER_ELEMENT * batch_size;
+  // m bias weights reading
+  expected_cost += outputs * WEIGHTS_READING_PER_ELEMENT * batch_size;
 
-    // n*m*1 matmul operations
-    expected_cost += (inputs * outputs) * MULTIPLICATION_PER_ELEMENT * batch_size;
-    // m bias weights reading
-    expected_cost += outputs * WEIGHTS_READING_PER_ELEMENT * batch_size;
+  fetch::ml::OperationsCount add_charge{1};
 
-    fetch::ml::OperationsCount add_charge{1};
+  // Addition cost
+  // Type of tensor is not important for SizeFromShape
+  fetch::math::SizeType num_elements =
+      fetch::math::Tensor<float>::SizeFromShape({outputs, batch_size});
+  add_charge += num_elements;
 
-    // Addition cost
-    // Type of tensor is not important for SizeFromShape
-    fetch::math::SizeType num_elements =
-        fetch::math::Tensor<float>::SizeFromShape({outputs, batch_size});
-    add_charge += num_elements;
+  // Iteration over 3 tensors (input1, input2, ret)
+  // Type of tensor is not important for ChargeIterate
+  fetch::ml::OperationsCount iteration_ops =
+      fetch::math::Tensor<float>::ChargeIterate({outputs, batch_size});
+  add_charge += iteration_ops * 3;
 
-    // Iteration over 3 tensors (input1, input2, ret)
-    // Type of tensor is not important for ChargeIterate
-    fetch::ml::OperationsCount iteration_ops =
-        fetch::math::Tensor<float>::ChargeIterate({outputs, batch_size});
-    add_charge += iteration_ops * 3;
-
-    // m adding (bias + matmul result)
-    expected_cost += add_charge;
-  }
+  // m adding (bias + matmul result)
+  expected_cost += add_charge;
 
   ASSERT_EQ(cost, expected_cost);
 }
