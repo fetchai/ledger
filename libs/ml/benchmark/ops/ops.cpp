@@ -5116,7 +5116,7 @@ void BM_AddForward(benchmark::State &state)
   using VecTensorType = typename fetch::ml::ops::Ops<TensorType>::VecTensorType;
 
   // Get args form state
-  fetch::ml::utilities::BM_Tensor_config config{state};
+  fetch::ml::utilities::BM_Tensor_config<::benchmark::State> config{state};
 
   fetch::math::Tensor<T> input_1(config.shape);
   fetch::math::Tensor<T> input_2(config.shape);
