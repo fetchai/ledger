@@ -27,27 +27,27 @@ namespace {
 
 using namespace std::chrono_literals;
 
-using TestedClass = fetch::core::TemporaryBlacklist<int, 100>;
+using TestedClass = fetch::core::TemporaryBlacklist<int, 1000>;
 
 TEST(TemporaryBlacklistTests, Main)
 {
   TestedClass blacklist;
 
   blacklist.Blacklist(10);
-  std::this_thread::sleep_for(20ms);
+  std::this_thread::sleep_for(500ms);
   blacklist.Blacklist(42);
 
   ASSERT_TRUE(blacklist.IsBlacklisted(10));
   ASSERT_TRUE(blacklist.IsBlacklisted(42));
   ASSERT_EQ(blacklist.size(), 2);
 
-  std::this_thread::sleep_for(90ms);
+  std::this_thread::sleep_for(600ms);
 
   ASSERT_FALSE(blacklist.IsBlacklisted(10));
   ASSERT_TRUE(blacklist.IsBlacklisted(42));
   ASSERT_EQ(blacklist.size(), 1);
 
-  std::this_thread::sleep_for(20ms);
+  std::this_thread::sleep_for(500ms);
 
   ASSERT_FALSE(blacklist.IsBlacklisted(10));
   ASSERT_FALSE(blacklist.IsBlacklisted(42));
