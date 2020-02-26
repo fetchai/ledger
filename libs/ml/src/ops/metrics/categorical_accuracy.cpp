@@ -140,7 +140,7 @@ std::vector<TensorType> CategoricalAccuracy<TensorType>::Backward(VecTensorType 
 
 template <typename TensorType>
 std::vector<math::SizeType> CategoricalAccuracy<TensorType>::ComputeOutputShape(
-    VecTensorType const &inputs) const
+    std::vector<math::SizeVector> const &inputs) const
 {
   FETCH_UNUSED(inputs);
   return {1, 1};

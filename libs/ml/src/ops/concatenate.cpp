@@ -91,12 +91,12 @@ std::vector<TensorType> Concatenate<TensorType>::Backward(VecTensorType const &i
 
 template <typename TensorType>
 std::vector<math::SizeType> Concatenate<TensorType>::ComputeOutputShape(
-    VecTensorType const &inputs) const
+    std::vector<math::SizeVector> const &inputs) const
 {
-  std::vector<SizeType> ret_shape{inputs.front()->shape()};
+  std::vector<SizeType> ret_shape{inputs.front()};
   for (std::size_t i = 1; i < inputs.size(); i++)
   {
-    ret_shape[axis_] += inputs.at(i)->shape(axis_);
+    ret_shape[axis_] += inputs.at(i).at(axis_);
   }
 
   return ret_shape;

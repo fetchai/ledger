@@ -55,9 +55,8 @@ TYPED_TEST(SwitchTest, forward_test)
 
   fetch::ml::ops::Switch<TensorType> op;
 
-  TypeParam prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(mask),
-                                              std::make_shared<const TensorType>(then_array),
-                                              std::make_shared<const TensorType>(else_array)}));
+  TypeParam prediction(
+      op.ComputeOutputShape({mask.shape(), then_array.shape(), else_array.shape()}));
   op.Forward(
       {std::make_shared<const TensorType>(mask), std::make_shared<const TensorType>(then_array),
        std::make_shared<const TensorType>(else_array)},
@@ -87,9 +86,8 @@ TYPED_TEST(SwitchTest, forward_test_mask_broadcasted)
 
   fetch::ml::ops::Switch<TensorType> op;
 
-  TypeParam prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(mask),
-                                              std::make_shared<const TensorType>(then_array),
-                                              std::make_shared<const TensorType>(else_array)}));
+  TypeParam prediction(
+      op.ComputeOutputShape({mask.shape(), then_array.shape(), else_array.shape()}));
   op.Forward(
       {std::make_shared<const TensorType>(mask), std::make_shared<const TensorType>(then_array),
        std::make_shared<const TensorType>(else_array)},

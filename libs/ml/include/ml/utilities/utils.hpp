@@ -18,9 +18,9 @@
 //------------------------------------------------------------------------------
 
 #include "math/base_types.hpp"
-#include "benchmark/benchmark.h"
 
 #include <string>
+#include <vector>
 
 namespace fetch {
 namespace ml {
@@ -28,11 +28,12 @@ namespace utilities {
 
 std::string GetStrTimestamp();
 
+template <typename T>
 struct BM_Tensor_config
 {
   using SizeType = fetch::math::SizeType;
 
-  explicit BM_Tensor_config(::benchmark::State const &state)
+  explicit BM_Tensor_config(T const &state)
   {
     auto size_len = static_cast<SizeType>(state.range(0));
 
@@ -45,6 +46,25 @@ struct BM_Tensor_config
 
   std::vector<SizeType> shape;  // layers input/output sizes
 };
+
+/**
+ * This converts a vector of shared_ptr<TensorType> to a vector of Tensor shapes.
+ * @tparam TensorType
+ * @param inputs vector of Tensor ptrs
+ * @return vector of shapes of the tensors
+ */
+template <class TensorType>
+std::vector<math::SizeVector> TensorPtrsToSizes(
+    std::vector<std::shared_ptr<TensorType>> const &inputs)
+{
+  std::vector<math::SizeVector> input_shapes{};
+  input_shapes.reserve(inputs.size());
+  for (auto const &inp : inputs)
+  {
+    input_shapes.emplace_back(inp->shape());
+  }
+  return input_shapes;
+}
 
 }  // namespace utilities
 }  // namespace ml
