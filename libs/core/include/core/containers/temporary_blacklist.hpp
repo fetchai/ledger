@@ -49,14 +49,14 @@ public:
     blacklisted_.insert(std::move(t));
   }
 
-  bool IsBlacklisted(T const &t) const
+  bool IsBlacklisted(T const &t)
   {
     FETCH_LOCK(lock_);
     Cleanup(Clock::now());
     return IsIn(blacklisted_, t);
   }
 
-  std::size_t size() const
+  std::size_t size()
   {
     FETCH_LOCK(lock_);
     Cleanup(Clock::now());
@@ -73,11 +73,6 @@ private:
 
   static constexpr Duration COOLDOWN_PERIOD = std::chrono::milliseconds(cooldown_ms);
 
-  void Cleanup(TimePoint t) const
-  {
-    const_cast<TemporaryBlacklist *>(this)->Cleanup(t);
-  }
-
   void Cleanup(TimePoint t)
   {
     t -= COOLDOWN_PERIOD;
@@ -89,9 +84,9 @@ private:
     chronology_.erase(chronology_.begin(), earliest_surviving_record);
   }
 
-  Chronology    chronology_;
-  Blacklisted   blacklisted_;
-  mutable Mutex lock_;
+  Chronology  chronology_;
+  Blacklisted blacklisted_;
+  Mutex       lock_;
 };
 
 }  // namespace core
