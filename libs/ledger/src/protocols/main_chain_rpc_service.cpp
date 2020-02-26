@@ -113,6 +113,9 @@ MainChainRpcService::MainChainRpcService(MuddleEndpoint &             endpoint,
   , new_block_duration_{telemetry::Registry::Instance().CreateHistogram(
         {1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1, 1.0, 1e1, 1e2, 1e3},
         "ledger_mainchain_service_new_block_duration", "The duration of the new block handler")}
+  , network_mismatches_{telemetry::Registry::Instance().CreateCounter(
+        "ledger_mainchain_service_network_mismatches_total",
+        "The number of times a remote peer failed to identify our genesis block on sync")}
 {
   assert(consensus_);
 
@@ -527,9 +530,8 @@ State MainChainRpcService::WalkBack()
   {
   case 0:
     assert(block_resolving_->IsGenesis());
-    // genesis digest mismatch, stop sync with this peer
-    block_resolving_.reset();
-    back_stride_ = 1;
+    // these are the wrong sort of nodes, so I should think they would make the wrong sort of blocks
+    NetworkMismatch();
     return State::COMPLETE_SYNC_WITH_PEER;
 
   case 1:
@@ -584,6 +586,20 @@ State MainChainRpcService::WalkBack()
 bool MainChainRpcService::IsHealthy() const
 {
   return healthy_;
+}
+
+/**
+ * Hanlde the situation when this network's genesis digest is absoutely different.
+ */
+void MainChainRpcService::NetworkMismatch()
+{
+  network_mismatches_->increment();
+  FETCH_LOG_CRITICAL(LOGGING_NAME, " chain sync: the peer ", current_peer_address_.ToBase64(),
+                     " wasn't able to identify our Genesis block 0x",
+                     block_resolving_->hash.ToHex().SubArray(0, 8));
+  // genesis digest mismatch, stop sync with this peer
+  block_resolving_.reset();
+  back_stride_ = 1;
 }
 
 }  // namespace ledger
