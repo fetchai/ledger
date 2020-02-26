@@ -16,7 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "fake_io_observer.hpp"
+#include "vm_modules/test_utilities/fake_io_observer.hpp"
 
 #include <cstdint>
 #include <string>

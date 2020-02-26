@@ -131,9 +131,9 @@ std::vector<TensorType> LayerNorm<TensorType>::Backward(VecTensorType const &inp
 
 template <class TensorType>
 std::vector<math::SizeType> LayerNorm<TensorType>::ComputeOutputShape(
-    VecTensorType const &inputs) const
+    std::vector<math::SizeVector> const &inputs) const
 {
-  return inputs.at(0)->shape();
+  return inputs.at(0);
 }
 
 template <typename TensorType>

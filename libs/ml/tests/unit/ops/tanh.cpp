@@ -58,7 +58,7 @@ TYPED_TEST(TanHTest, forward_all_positive_test)
 
   fetch::ml::ops::TanH<TypeParam> op;
 
-  TypeParam prediction(op.ComputeOutputShape({std::make_shared<const TypeParam>(data)}));
+  TypeParam prediction(op.ComputeOutputShape({data.shape()}));
   op.Forward({std::make_shared<const TypeParam>(data)}, prediction);
 
   ASSERT_TRUE(prediction.AllClose(gt, fetch::math::function_tolerance<DataType>() * DataType{5},
@@ -85,7 +85,7 @@ TYPED_TEST(TanHTest, forward_all_negative_test)
 
   fetch::ml::ops::TanH<TypeParam> op;
 
-  TypeParam prediction(op.ComputeOutputShape({std::make_shared<const TypeParam>(data)}));
+  TypeParam prediction(op.ComputeOutputShape({data.shape()}));
   op.Forward({std::make_shared<const TypeParam>(data)}, prediction);
 
   ASSERT_TRUE(prediction.AllClose(gt, fetch::math::function_tolerance<DataType>() * DataType{5},

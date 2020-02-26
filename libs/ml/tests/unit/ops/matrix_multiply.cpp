@@ -44,8 +44,7 @@ TYPED_TEST(MatrixMultiplyTest, forward_test)
 
   fetch::ml::ops::MatrixMultiply<TypeParam> op;
 
-  TypeParam prediction(
-      op.ComputeOutputShape({std::make_shared<TypeParam>(a), std::make_shared<TypeParam>(b)}));
+  TypeParam prediction(op.ComputeOutputShape({a.shape(), b.shape()}));
   op.Forward({std::make_shared<TypeParam>(a), std::make_shared<TypeParam>(b)}, prediction);
 
   // test correct values
@@ -86,8 +85,7 @@ TYPED_TEST(MatrixMultiplyTest, forward_batch_test)
 
   fetch::ml::ops::MatrixMultiply<TypeParam> op;
 
-  TypeParam prediction(
-      op.ComputeOutputShape({std::make_shared<TypeParam>(a), std::make_shared<TypeParam>(b)}));
+  TypeParam prediction(op.ComputeOutputShape({a.shape(), b.shape()}));
   op.Forward({std::make_shared<TypeParam>(a), std::make_shared<TypeParam>(b)}, prediction);
 
   // test correct values

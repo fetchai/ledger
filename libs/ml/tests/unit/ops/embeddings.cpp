@@ -46,7 +46,7 @@ TYPED_TEST(EmbeddingsTest, forward_shape)
     input.At(i, 0) = typename TypeParam::Type(i);
   }
 
-  TypeParam output(e.ComputeOutputShape({std::make_shared<TypeParam>(input)}));
+  TypeParam output(e.ComputeOutputShape({input.shape()}));
   e.Forward({std::make_shared<TypeParam>(input)}, output);
 
   ASSERT_EQ(output.shape(), std::vector<typename TypeParam::SizeType>({60, 10, 1}));
@@ -72,7 +72,7 @@ TYPED_TEST(EmbeddingsTest, forward)
   input.At(0, 0) = typename TypeParam::Type(3);
   input.At(1, 0) = typename TypeParam::Type(5);
 
-  TypeParam output(e.ComputeOutputShape({std::make_shared<TypeParam>(input)}));
+  TypeParam output(e.ComputeOutputShape({input.shape()}));
   e.Forward({std::make_shared<TypeParam>(input)}, output);
 
   ASSERT_EQ(output.shape(), std::vector<typename TypeParam::SizeType>({6, 2, 1}));
@@ -110,7 +110,7 @@ TYPED_TEST(EmbeddingsTest, backward)
   input.At(0, 0) = DataType{3};
   input.At(1, 0) = DataType{5};
 
-  TensorType output(e.ComputeOutputShape({std::make_shared<TypeParam>(input)}));
+  TensorType output(e.ComputeOutputShape({input.shape()}));
   e.Forward({std::make_shared<TypeParam>(input)}, output);
 
   TensorType error_signal(std::vector<uint64_t>({6, 2, 1}));
@@ -134,7 +134,7 @@ TYPED_TEST(EmbeddingsTest, backward)
   EXPECT_TRUE(TensorType::Zeroes({6, 1}).AllClose(grads_copy.View(SizeType(input(0, 0))).Copy()));
   EXPECT_TRUE(TensorType::Zeroes({6, 1}).AllClose(grads_copy.View(SizeType(input(1, 0))).Copy()));
 
-  output = TensorType(e.ComputeOutputShape({std::make_shared<TypeParam>(input)}));
+  output = TensorType(e.ComputeOutputShape({input.shape()}));
   e.Forward({std::make_shared<TypeParam>(input)}, output);
 
   std::vector<int> gt{30, 30, 30, 30, 30, 30, 44, 44, 44, 44, 44, 44};

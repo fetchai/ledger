@@ -109,9 +109,10 @@ std::vector<TensorType> Elu<TensorType>::Backward(VecTensorType const &inputs,
 }
 
 template <typename TensorType>
-std::vector<math::SizeType> Elu<TensorType>::ComputeOutputShape(VecTensorType const &inputs) const
+std::vector<math::SizeType> Elu<TensorType>::ComputeOutputShape(
+    std::vector<math::SizeVector> const &inputs) const
 {
-  return inputs.front()->shape();
+  return inputs.front();
 }
 
 template <typename TensorType>
