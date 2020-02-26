@@ -30,6 +30,7 @@
 #include "ml/ops/flatten.hpp"
 #include "ml/ops/layer_norm.hpp"
 #include "ml/ops/log.hpp"
+#include "ml/ops/loss_functions/mean_square_error_loss.hpp"
 #include "ml/ops/mask_fill.hpp"
 #include "ml/ops/matrix_multiply.hpp"
 #include "ml/ops/max_pool_1d.hpp"
@@ -5286,6 +5287,76 @@ BENCHMARK_TEMPLATE(BM_AddBackward, fetch::fixed_point::fp128_t, 2048)
     ->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_AddBackward, fetch::fixed_point::fp128_t, 4096)
     ->Unit(benchmark::kMicrosecond);
+
+template <class T>
+void BM_MeanSquareErrorLossForward(benchmark::State &state)
+{
+  using TensorType    = typename fetch::math::Tensor<T>;
+  using VecTensorType = typename fetch::ml::ops::Ops<TensorType>::VecTensorType;
+
+  // Get args form state
+  BM_Tensor_config config{state};
+
+  fetch::math::Tensor<T> input_1(config.shape);
+  fetch::math::Tensor<T> input_2(config.shape);
+  fetch::math::Tensor<T> output(config.shape);
+
+  // Fill tensors with random values
+  input_1.FillUniformRandom();
+  input_2.FillUniformRandom();
+  output.FillUniformRandom();
+
+  VecTensorType inputs;
+  inputs.emplace_back(std::make_shared<TensorType>(input_1));
+  inputs.emplace_back(std::make_shared<TensorType>(input_2));
+  fetch::ml::ops::MeanSquareErrorLoss<fetch::math::Tensor<T>> msqe1;
+
+  state.counters["charge_total"] =
+      static_cast<double>(msqe1.ChargeForward({config.shape, config.shape}).first);
+  state.counters["charge_iterate"] = static_cast<double>(TensorType::ChargeIterate(config.shape));
+
+  for (auto _ : state)
+  {
+    msqe1.Forward(inputs, output);
+  }
+}
+
+static void MeanSquareErrorLossArguments(benchmark::internal::Benchmark *b)
+{
+  using SizeType                       = fetch::math::SizeType;
+  SizeType const            N_ELEMENTS = 3;
+  std::vector<std::int64_t> batch_size{1, 32, 128};
+  std::vector<std::int64_t> dim_size{2, 128, 8192, 65536, 524288};
+  for (std::int64_t &i : batch_size)
+  {
+    for (std::int64_t &j : dim_size)
+    {
+      b->Args({N_ELEMENTS, j, 2, i});
+    }
+    for (std::int64_t &j : dim_size)
+    {
+      b->Args({N_ELEMENTS, 2, j, i});
+    }
+  }
+}
+// TODO - 2D data + 1D for batch size
+// TODO - sum input and output iteration charges
+
+BENCHMARK_TEMPLATE(BM_MeanSquareErrorLossForward, fetch::fixed_point::fp64_t)
+    ->Apply(MeanSquareErrorLossArguments)
+    ->Unit(::benchmark::kNanosecond);
+BENCHMARK_TEMPLATE(BM_MeanSquareErrorLossForward, float)
+    ->Apply(MeanSquareErrorLossArguments)
+    ->Unit(::benchmark::kNanosecond);
+BENCHMARK_TEMPLATE(BM_MeanSquareErrorLossForward, double)
+    ->Apply(MeanSquareErrorLossArguments)
+    ->Unit(::benchmark::kNanosecond);
+BENCHMARK_TEMPLATE(BM_MeanSquareErrorLossForward, fetch::fixed_point::fp32_t)
+    ->Apply(MeanSquareErrorLossArguments)
+    ->Unit(::benchmark::kNanosecond);
+BENCHMARK_TEMPLATE(BM_MeanSquareErrorLossForward, fetch::fixed_point::fp128_t)
+    ->Apply(MeanSquareErrorLossArguments)
+    ->Unit(::benchmark::kNanosecond);
 
 template <class T, int N>
 void BM_SubtractForward(benchmark::State &state)
