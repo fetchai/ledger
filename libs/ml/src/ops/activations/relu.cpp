@@ -141,11 +141,9 @@ OperationsCount Relu<TensorType>::ChargeBackward() const
 {
   assert(!this->batch_input_shapes_.empty());
 
-  OperationsCount cost = 1100;
+  OperationsCount cost = 1100; // construction overhead
 
   auto padded_size = TensorType::PaddedSizeFromShape(this->batch_input_shapes_.front());
-
-//  cost += fetch::ml::charge_estimation::ops::TENSOR_CONSTRUCTION_OVERHEAD * padded_size;
 
   if (padded_size < fetch::ml::charge_estimation::ops::PIECEWISE_LOWER_THRESHOLD)
   {
