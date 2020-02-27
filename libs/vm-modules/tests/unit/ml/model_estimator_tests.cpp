@@ -25,10 +25,13 @@
 
 #include "gmock/gmock.h"
 
+#include <ml/ops/flatten.hpp>
+
 namespace {
 
 using SizeType     = fetch::math::SizeType;
 using DataType     = fetch::vm_modules::math::DataType;
+using TensorType   = fetch::math::Tensor<DataType>;
 using VmStringPtr  = fetch::vm::Ptr<fetch::vm::String>;
 using VmModel      = fetch::vm_modules::ml::model::VMModel;
 using VmModelPtr   = fetch::vm::Ptr<VmModel>;
@@ -1027,7 +1030,9 @@ TEST_F(VMModelEstimatorTests, charge_forward_one_dense)
 
   // n flattening operations (because Dense is not time-distributed in this test)
   // in this case we know that
-  expected_cost += fetch::ml::charge_estimation::ops::LOW_FLATTEN_PER_ELEMENT * inputs * batch_size;
+  expected_cost += batch_size * (fetch::ml::charge_estimation::ops::OP_OVERHEAD +
+                                 (fetch::ml::charge_estimation::ops::LOW_FLATTEN_PER_ELEMENT *
+                                  TensorType::ChargeIterate({inputs, 1})));
 
   // n*m*1 matmul operations
   expected_cost += (inputs * outputs) * MULTIPLICATION_PER_ELEMENT * batch_size;
