@@ -64,8 +64,11 @@ static constexpr OperationsCount TRANSPOSE_PER_ELEMENT           = 1;
 static constexpr OperationsCount BROADCAST_PER_ELEMENT           = 1;
 static constexpr OperationsCount SQUEEZE_PER_ELEMENT   = RESHAPE_PER_ELEMENT + COPY_PER_ELEMENT;
 static constexpr OperationsCount EMBEDDING_PER_ELEMENT = 2 * VIEW_PER_ELEMENT + ASSIGN_PER_ELEMENT;
-static constexpr OperationsCount CROSS_ENTROPY_PER_ELEMENT =
-    MAX_PER_ELEMENT + SUBTRACTION_PER_ELEMENT + LOG_PER_ELEMENT + DIVISION_PER_ELEMENT;
+
+static constexpr OperationsCount LOW_CROSS_ENTROPY_PER_ELEMENT  = 15;
+static constexpr OperationsCount HIGH_CROSS_ENTROPY_PER_ELEMENT = 75;
+static constexpr OperationsCount CEL_PIECEWISE_LOWER_THRESHOLD  = 16384;  // 2^14 * 32 (padded size)
+
 static constexpr OperationsCount CROSS_ENTROPY_BACKWARD_PER_ELEMENT =
     SUBTRACTION_PER_ELEMENT + DIVISION_PER_ELEMENT;
 
