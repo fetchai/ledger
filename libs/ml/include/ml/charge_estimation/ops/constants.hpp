@@ -69,7 +69,7 @@ static constexpr OperationsCount CROSS_ENTROPY_PER_ELEMENT =
 static constexpr OperationsCount CROSS_ENTROPY_BACKWARD_PER_ELEMENT =
     SUBTRACTION_PER_ELEMENT + DIVISION_PER_ELEMENT;
 
-static constexpr OperationsCount LOW_MEAN_SQ_ERROR_PER_ELEMENT = 15;
+static constexpr OperationsCount LOW_MEAN_SQ_ERROR_PER_ELEMENT  = 15;
 static constexpr OperationsCount HIGH_MEAN_SQ_ERROR_PER_ELEMENT = 75;
 static constexpr OperationsCount MSQE_PIECEWISE_LOWER_THRESHOLD = 16384;  // 2^14 * 32 (padded size)
 
