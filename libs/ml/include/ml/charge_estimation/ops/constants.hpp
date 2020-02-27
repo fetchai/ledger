@@ -65,9 +65,11 @@ static constexpr OperationsCount BROADCAST_PER_ELEMENT           = 1;
 static constexpr OperationsCount SQUEEZE_PER_ELEMENT   = RESHAPE_PER_ELEMENT + COPY_PER_ELEMENT;
 static constexpr OperationsCount EMBEDDING_PER_ELEMENT = 2 * VIEW_PER_ELEMENT + ASSIGN_PER_ELEMENT;
 
-static constexpr OperationsCount LOW_CROSS_ENTROPY_PER_ELEMENT  = 15;
-static constexpr OperationsCount HIGH_CROSS_ENTROPY_PER_ELEMENT = 75;
-static constexpr OperationsCount CEL_PIECEWISE_LOWER_THRESHOLD  = 16384;  // 2^14 * 32 (padded size)
+static constexpr OperationsCount CROSS_ENTROPY_ONE_HOT_PER_ELEMENT     = 210;
+static constexpr OperationsCount LOW_CROSS_ENTROPY_BINARY_PER_ELEMENT  = 32;
+static constexpr OperationsCount HIGH_CROSS_ENTROPY_BINARY_PER_ELEMENT = 75;
+static constexpr OperationsCount CEL_BINARY_PIECEWISE_LOWER_THRESHOLD =
+    16384;  // 2^14 * 32 (padded size)
 
 static constexpr OperationsCount CROSS_ENTROPY_BACKWARD_PER_ELEMENT =
     SUBTRACTION_PER_ELEMENT + DIVISION_PER_ELEMENT;
@@ -85,7 +87,7 @@ static constexpr OperationsCount SOFTMAX_BACKWARD_PER_ELEMENT =
     SOFTMAX_PER_ELEMENT + SUBTRACTION_PER_ELEMENT + 2 * LOW_MULTIPLICATION_PER_ELEMENT +
     LOW_ADDITION_PER_ELEMENT;
 static constexpr OperationsCount SOFTMAX_CROSS_ENTROPY_PER_ELEMENT =
-    CROSS_ENTROPY_PER_ELEMENT + SOFTMAX_PER_ELEMENT;
+    LOW_CROSS_ENTROPY_BINARY_PER_ELEMENT + SOFTMAX_PER_ELEMENT;
 static constexpr OperationsCount SOFTMAX_CROSS_ENTROPY_BACKWARD_PER_ELEMENT =
     SOFTMAX_PER_ELEMENT + SUBTRACTION_PER_ELEMENT;
 static constexpr OperationsCount POW_PER_ELEMENT =

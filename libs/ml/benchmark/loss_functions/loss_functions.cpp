@@ -116,7 +116,7 @@ static void MeanSquareErrorLossArguments(benchmark::internal::Benchmark *b)
 
   for (std::int64_t &j : combined_dim_size)
   {
-    b->Args({N_ELEMENTS, j, j});
+    b->Args({3, j, j, 1});
   }
 }
 
@@ -215,9 +215,9 @@ void BM_CrossEntropyLossForward(benchmark::State &state)
   fetch::math::Tensor<T> output(config.shape);
 
   // Fill tensors with random values
-  input_1.FillUniformRandom();
-  input_2.FillUniformRandom();
-  output.FillUniformRandom();
+  input_1.FillUniformRandomIntegers(0, 1);
+  input_2.FillUniformRandomIntegers(0, 1);
+  output.FillUniformRandomIntegers(0, 1);
 
   VecTensorType inputs;
   inputs.emplace_back(std::make_shared<TensorType>(input_1));
@@ -240,7 +240,7 @@ void BM_CrossEntropyLossForward(benchmark::State &state)
 static void CrossEntropyLossArguments(benchmark::internal::Benchmark *b)
 {
   using SizeType            = fetch::math::SizeType;
-  SizeType const N_ELEMENTS = 3;
+  SizeType const N_ELEMENTS = 2;
   //    std::int64_t   MAX_SIZE          = 2097152;
   std::int64_t MAX_SIZE          = 67108864;
   std::int64_t MAX_COMBINED_SIZE = 1024;
@@ -255,11 +255,11 @@ static void CrossEntropyLossArguments(benchmark::internal::Benchmark *b)
 
   for (std::int64_t &j : dim_size)
   {
-    b->Args({N_ELEMENTS, j, 1, 1});
+    b->Args({N_ELEMENTS, j, 1});
   }
   for (std::int64_t &j : dim_size)
   {
-    b->Args({N_ELEMENTS, 1, j, 1});
+    b->Args({N_ELEMENTS, 1, j});
   }
 
   std::vector<std::int64_t> combined_dim_size;

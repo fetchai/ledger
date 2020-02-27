@@ -119,30 +119,36 @@ std::pair<OperationsCount, math::SizeVector> CrossEntropyLoss<TensorType>::Charg
   auto output_shape = ComputeOutputShape(input_shapes);
   auto n_elements   = TensorType::SizeFromShape(input_shapes[0]);
   auto padded_size  = TensorType::PaddedSizeFromShape(input_shapes[0]);
+  auto n_dims       = input_shapes[0].at(0);
 
   OperationsCount cost{fetch::ml::charge_estimation::ops::OP_OVERHEAD};
+  OperationsCount iteration_ops = TensorType::ChargeIterate(output_shape);
+  cost += iteration_ops * 4;
 
-  if ((padded_size / 32) < fetch::ml::charge_estimation::ops::CEL_PIECEWISE_LOWER_THRESHOLD)
+  // if not a one-hot, must be binary logistic regression cost
+  if (n_dims == 1)
   {
-    // Addition cost
-    cost += fetch::ml::charge_estimation::ops::LOW_CROSS_ENTROPY_PER_ELEMENT * n_elements;
 
-    // Iteration over 3 tensors (input1, input2, ret)
-    OperationsCount iteration_ops = TensorType::ChargeIterate(output_shape);
-    cost += iteration_ops * 4;
-  }
-  else if ((padded_size / 32) < fetch::ml::charge_estimation::ops::PIECEWISE_HARD_CAP)
-  {
-    // Addition cost
-    cost += fetch::ml::charge_estimation::ops::HIGH_CROSS_ENTROPY_PER_ELEMENT * n_elements;
-
-    // Iteration over 3 tensors (input1, input2, ret)
-    OperationsCount iteration_ops = TensorType::ChargeIterate(output_shape);
-    cost += iteration_ops * 4;
+    if ((padded_size / 32) <
+        fetch::ml::charge_estimation::ops::CEL_BINARY_PIECEWISE_LOWER_THRESHOLD)
+    {
+      // Addition cost
+      cost += fetch::ml::charge_estimation::ops::LOW_CROSS_ENTROPY_BINARY_PER_ELEMENT * n_elements;
+    }
+    else if ((padded_size / 32) < fetch::ml::charge_estimation::ops::PIECEWISE_HARD_CAP)
+    {
+      // Addition cost
+      cost += fetch::ml::charge_estimation::ops::HIGH_CROSS_ENTROPY_BINARY_PER_ELEMENT * n_elements;
+    }
+    else
+    {
+      cost = math::numeric_max<OperationsCount>();
+    }
   }
   else
   {
-    cost = math::numeric_max<OperationsCount>();
+    // Addition cost
+    cost += fetch::ml::charge_estimation::ops::CROSS_ENTROPY_ONE_HOT_PER_ELEMENT * n_elements;
   }
 
   return std::make_pair(cost, output_shape);
