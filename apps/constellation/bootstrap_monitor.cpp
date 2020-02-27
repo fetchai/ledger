@@ -350,7 +350,8 @@ bool BootstrapMonitor::ParseDiscoveryV2(Variant const &obj, DiscoveryResult &res
   auto const &genesis = obj["genesis"];
   auto const &nodes   = obj["nodes"];
 
-  bool const genesis_is_object = genesis.IsObject() && genesis.Has("contents") && genesis.Has("parameters");
+  bool const genesis_is_object =
+      genesis.IsObject() && genesis.Has("contents") && genesis.Has("parameters");
   bool const all_sub_fields_present = nodes.IsArray() && (genesis.IsNull() || genesis_is_object);
   if (!all_sub_fields_present)
   {
