@@ -30,6 +30,8 @@
 #include <memory>
 #include <string>
 
+using SizeType = fetch::math::SizeType;
+
 struct BM_Tensor_config
 {
   using SizeType = fetch::math::SizeType;
@@ -48,10 +50,40 @@ struct BM_Tensor_config
   std::vector<SizeType> shape;  // layers input/output sizes
 };
 
+template <class TensorType>
+std::shared_ptr<fetch::ml::Graph<TensorType>> make_graph(SizeType input_size, SizeType n_hidden,
+                                                         SizeType hidden_size, SizeType output_size,
+                                                         std::string &input_name,
+                                                         std::string &label_name,
+                                                         std::string &error_name)
+{
+  auto g = std::make_shared<fetch::ml::Graph<TensorType>>();
+
+  // set up the neural net architecture
+  input_name = g->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("", {});
+  label_name = g->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("", {});
+
+  std::string h_1 = g->template AddNode<fetch::ml::layers::FullyConnected<TensorType>>(
+      "FC1", {input_name}, input_size, hidden_size);
+  std::string a_1 = g->template AddNode<fetch::ml::ops::Relu<TensorType>>("", {h_1});
+
+  for (SizeType i = 0; i < n_hidden; i++)
+  {
+    std::string h_2 = g->template AddNode<fetch::ml::layers::FullyConnected<TensorType>>(
+        "", {a_1}, hidden_size, hidden_size);
+  }
+  std::string h_2 = g->template AddNode<fetch::ml::layers::FullyConnected<TensorType>>(
+      "FC2", {a_1}, hidden_size, output_size);
+  std::string output_name = g->template AddNode<fetch::ml::ops::Relu<TensorType>>("", {h_2});
+
+  error_name = g->template AddNode<fetch::ml::ops::MeanSquareErrorLoss<TensorType>>(
+      "", {output_name, label_name});
+  return g;
+}
+
 template <class Optimiser>
 void BM_Optimiser_Construct(benchmark::State &state)
 {
-  using SizeType   = fetch::math::SizeType;
   using TensorType = typename Optimiser::TensorType;
   using DataType   = typename Optimiser::DataType;
 
@@ -64,6 +96,7 @@ void BM_Optimiser_Construct(benchmark::State &state)
   SizeType input_size  = config.shape[1];
   SizeType hidden_size = config.shape[2];
   SizeType output_size = config.shape[3];
+  SizeType n_hidden    = config.shape[4];
 
   auto learning_rate = fetch::math::Type<DataType>("0.001");
 
@@ -74,22 +107,9 @@ void BM_Optimiser_Construct(benchmark::State &state)
   gt.FillUniformRandom();
 
   // make a graph
-  auto g = std::make_shared<fetch::ml::Graph<TensorType>>();
-
-  // set up the neural net architecture
-  std::string input_name = g->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("", {});
-  std::string label_name = g->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("", {});
-
-  std::string h_1 = g->template AddNode<fetch::ml::layers::FullyConnected<TensorType>>(
-      "FC1", {input_name}, input_size, hidden_size);
-  std::string a_1 = g->template AddNode<fetch::ml::ops::Relu<TensorType>>("", {h_1});
-
-  std::string h_2 = g->template AddNode<fetch::ml::layers::FullyConnected<TensorType>>(
-      "FC2", {a_1}, hidden_size, output_size);
-  std::string output_name = g->template AddNode<fetch::ml::ops::Relu<TensorType>>("", {h_2});
-
-  std::string error_name = g->template AddNode<fetch::ml::ops::MeanSquareErrorLoss<TensorType>>(
-      "", {output_name, label_name});
+  std::string input_name, label_name, error_name;
+  auto        g = make_graph<TensorType>(input_size, n_hidden, hidden_size, output_size, input_name,
+                                  label_name, error_name);
 
   state.counters["charge"] = static_cast<double>(Optimiser::ChargeConstruct(g));
 
@@ -106,7 +126,7 @@ static void OptimiserChargeArguments(benchmark::internal::Benchmark *b)
 
   for (auto const &bs : batch_size)
   {
-    b->Args({5, bs, bs, bs, bs, 100});
+    b->Args({5, bs, bs, bs, bs, 2});
   }
 }
 
@@ -161,7 +181,6 @@ BENCHMARK_TEMPLATE(
 template <class Optimiser>
 void BM_Optimiser_Run(benchmark::State &state)
 {
-  using SizeType   = fetch::math::SizeType;
   using TensorType = typename Optimiser::TensorType;
   using DataType   = typename Optimiser::DataType;
 
@@ -175,6 +194,7 @@ void BM_Optimiser_Run(benchmark::State &state)
   SizeType hidden_size = config.shape[2];
   SizeType output_size = config.shape[3];
   SizeType n_epochs    = config.shape[4];
+  SizeType n_hidden    = config.shape[5];
 
   auto learning_rate = fetch::math::Type<DataType>("0.001");
 
@@ -185,22 +205,9 @@ void BM_Optimiser_Run(benchmark::State &state)
   gt.FillUniformRandom();
 
   // make a graph
-  auto g = std::make_shared<fetch::ml::Graph<TensorType>>();
-
-  // set up the neural net architecture
-  std::string input_name = g->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("", {});
-  std::string label_name = g->template AddNode<fetch::ml::ops::PlaceHolder<TensorType>>("", {});
-
-  std::string h_1 = g->template AddNode<fetch::ml::layers::FullyConnected<TensorType>>(
-      "FC1", {input_name}, input_size, hidden_size);
-  std::string a_1 = g->template AddNode<fetch::ml::ops::Relu<TensorType>>("", {h_1});
-
-  std::string h_2 = g->template AddNode<fetch::ml::layers::FullyConnected<TensorType>>(
-      "FC2", {a_1}, hidden_size, output_size);
-  std::string output_name = g->template AddNode<fetch::ml::ops::Relu<TensorType>>("", {h_2});
-
-  std::string error_name = g->template AddNode<fetch::ml::ops::MeanSquareErrorLoss<TensorType>>(
-      "", {output_name, label_name});
+  std::string input_name, label_name, error_name;
+  auto        g = make_graph<TensorType>(input_size, n_hidden, hidden_size, output_size, input_name,
+                                  label_name, error_name);
 
   // Initialise Optimiser
   Optimiser optimiser(g, {input_name}, label_name, error_name, learning_rate);
@@ -223,7 +230,7 @@ static void OptimiserRunArguments(benchmark::internal::Benchmark *b)
 
   for (auto const &bs : batch_size)
   {
-    b->Args({5, bs, bs, bs, bs, 100});
+    b->Args({5, bs, bs, bs, bs, 100, 0});
   }
 }
 
