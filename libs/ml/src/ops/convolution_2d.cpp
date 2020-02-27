@@ -472,7 +472,7 @@ OperationsCount Convolution2D<TensorType>::ChargeForward() const
 
   OperationsCount cost = horizontal_stride_width * horizontal_stride_height *
                          vertical_stride_width *
-                         fetch::ml::charge_estimation::ops::MULTIPLICATION_PER_ELEMENT;
+                         fetch::ml::charge_estimation::ops::LOW_MULTIPLICATION_PER_ELEMENT;
 
   return cost;
 }
@@ -501,7 +501,7 @@ OperationsCount Convolution2D<TensorType>::ChargeBackward() const
 
   OperationsCount cost =
       2 * (horizontal_stride_width * horizontal_stride_height * vertical_stride_width *
-           fetch::ml::charge_estimation::ops::MULTIPLICATION_PER_ELEMENT);
+           fetch::ml::charge_estimation::ops::LOW_MULTIPLICATION_PER_ELEMENT);
 
   return cost;
 }

@@ -302,7 +302,7 @@ OperationsCount MatrixMultiply<T>::ChargeForward() const
   OperationsCount const p = 1;
 
   OperationsCount const cost =
-      n * m * p * fetch::ml::charge_estimation::ops::MULTIPLICATION_PER_ELEMENT;
+      n * m * p * fetch::ml::charge_estimation::ops::LOW_MULTIPLICATION_PER_ELEMENT;
   return cost;
 }
 
@@ -318,7 +318,7 @@ OperationsCount MatrixMultiply<T>::ChargeBackward() const
   OperationsCount const p = 1;
 
   OperationsCount const cost =
-      n * m * p * fetch::ml::charge_estimation::ops::MULTIPLICATION_PER_ELEMENT +
+      n * m * p * fetch::ml::charge_estimation::ops::LOW_MULTIPLICATION_PER_ELEMENT +
       fetch::ml::charge_estimation::ops::LOW_ADDITION_PER_ELEMENT *
           this->TotalElementsIn({this->batch_input_shapes_});
   ;
