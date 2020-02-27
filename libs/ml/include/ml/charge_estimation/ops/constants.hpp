@@ -44,8 +44,8 @@ static constexpr OperationsCount LOW_FLATTEN_PER_ELEMENT         = ASSIGN_PER_EL
 static constexpr OperationsCount HIGH_FLATTEN_PER_ELEMENT        = 25;
 static constexpr OperationsCount EXP_PER_ELEMENT                 = 1;
 static constexpr OperationsCount LOG_PER_ELEMENT                 = 1;
-static constexpr OperationsCount MULTIPLICATION_PER_ELEMENT      = 3;
-static constexpr OperationsCount DIVISION_PER_ELEMENT            = 1;
+static constexpr OperationsCount MULTIPLICATION_PER_ELEMENT      = 7;
+static constexpr OperationsCount DIVISION_PER_ELEMENT            = 16;
 static constexpr OperationsCount ABS_PER_ELEMENT                 = 1;
 static constexpr OperationsCount CONCAT_PER_ELEMENT              = 1;
 static constexpr OperationsCount SPLIT_PER_ELEMENT               = 1;
@@ -67,8 +67,14 @@ static constexpr OperationsCount CROSS_ENTROPY_PER_ELEMENT =
     MAX_PER_ELEMENT + SUBTRACTION_PER_ELEMENT + LOG_PER_ELEMENT + DIVISION_PER_ELEMENT;
 static constexpr OperationsCount CROSS_ENTROPY_BACKWARD_PER_ELEMENT =
     SUBTRACTION_PER_ELEMENT + DIVISION_PER_ELEMENT;
-static constexpr OperationsCount MEAN_SQ_ERROR_PER_ELEMENT =
-    2 * MULTIPLICATION_PER_ELEMENT + LOW_ADDITION_PER_ELEMENT + SUBTRACTION_PER_ELEMENT;
+
+static constexpr OperationsCount LOW_MEAN_SQ_ERROR_PER_ELEMENT =
+    MULTIPLICATION_PER_ELEMENT + LOW_ADDITION_PER_ELEMENT + SUBTRACTION_PER_ELEMENT +
+    DIVISION_PER_ELEMENT;
+static constexpr OperationsCount HIGH_MEAN_SQ_ERROR_PER_ELEMENT = LOW_MEAN_SQ_ERROR_PER_ELEMENT * 4;
+
+static constexpr OperationsCount MSQE_PIECEWISE_LOWER_THRESHOLD = 16384;  // 2^14 * 32 (padded size)
+
 static constexpr OperationsCount MEAN_SQ_ERROR_BACKWARD_PER_ELEMENT =
     2 * MULTIPLICATION_PER_ELEMENT + SUBTRACTION_PER_ELEMENT + DIVISION_PER_ELEMENT;
 static constexpr OperationsCount SOFTMAX_PER_ELEMENT = MAX_PER_ELEMENT + SUBTRACTION_PER_ELEMENT +

@@ -21,10 +21,10 @@
 #include "ml/ops/add.hpp"
 #include "ml/ops/avg_pool_1d.hpp"
 #include "ml/ops/avg_pool_2d.hpp"
+#include "ml/ops/basic_math.hpp"
 #include "ml/ops/concatenate.hpp"
 #include "ml/ops/convolution_1d.hpp"
 #include "ml/ops/convolution_2d.hpp"
-#include "ml/ops/divide.hpp"
 #include "ml/ops/embeddings.hpp"
 #include "ml/ops/exp.hpp"
 #include "ml/ops/flatten.hpp"
@@ -5315,6 +5315,9 @@ void BM_MeanSquareErrorLossForward(benchmark::State &state)
       static_cast<double>(msqe1.ChargeForward({config.shape, config.shape}).first);
   state.counters["charge_iterate"] = static_cast<double>(TensorType::ChargeIterate(config.shape));
 
+  state.counters["PaddedSize"] =
+      static_cast<double>(fetch::math::Tensor<float>::PaddedSizeFromShape(config.shape));
+
   for (auto _ : state)
   {
     msqe1.Forward(inputs, output);
@@ -5323,24 +5326,42 @@ void BM_MeanSquareErrorLossForward(benchmark::State &state)
 
 static void MeanSquareErrorLossArguments(benchmark::internal::Benchmark *b)
 {
-  using SizeType                       = fetch::math::SizeType;
-  SizeType const            N_ELEMENTS = 3;
-  std::vector<std::int64_t> batch_size{1, 32, 128};
-  std::vector<std::int64_t> dim_size{2, 128, 8192, 65536, 524288};
-  for (std::int64_t &i : batch_size)
+  using SizeType            = fetch::math::SizeType;
+  SizeType const N_ELEMENTS = 3;
+  //    std::int64_t   MAX_SIZE          = 2097152;
+  std::int64_t MAX_SIZE          = 67108864;
+  std::int64_t MAX_COMBINED_SIZE = 1024;
+
+  std::vector<std::int64_t> dim_size;
+  std::int64_t              i{1};
+  while (i <= MAX_SIZE)
   {
-    for (std::int64_t &j : dim_size)
-    {
-      b->Args({N_ELEMENTS, j, 2, i});
-    }
-    for (std::int64_t &j : dim_size)
-    {
-      b->Args({N_ELEMENTS, 2, j, i});
-    }
+    dim_size.push_back(i);
+    i *= 2;
+  }
+
+  for (std::int64_t &j : dim_size)
+  {
+    b->Args({N_ELEMENTS, j, 1, 1});
+  }
+  for (std::int64_t &j : dim_size)
+  {
+    b->Args({N_ELEMENTS, 1, j, 1});
+  }
+
+  std::vector<std::int64_t> combined_dim_size;
+  i = 1;
+  while (i <= MAX_COMBINED_SIZE)
+  {
+    combined_dim_size.push_back(i);
+    i *= 2;
+  }
+
+  for (std::int64_t &j : combined_dim_size)
+  {
+    b->Args({N_ELEMENTS, j, j});
   }
 }
-// TODO - 2D data + 1D for batch size
-// TODO - sum input and output iteration charges
 
 BENCHMARK_TEMPLATE(BM_MeanSquareErrorLossForward, fetch::fixed_point::fp64_t)
     ->Apply(MeanSquareErrorLossArguments)

@@ -18,7 +18,7 @@
 
 #include "math/fundamental_operators.hpp"
 #include "ml/exceptions/exceptions.hpp"
-#include "ml/ops/divide.hpp"
+#include "ml/ops/basic_math.hpp"
 #include "ml/saveparams/saveable_params.hpp"
 
 namespace fetch {

@@ -21,7 +21,7 @@
 #include "ml/ops/activations/dropout.hpp"
 #include "ml/ops/activations/softmax.hpp"
 #include "ml/ops/add.hpp"
-#include "ml/ops/divide.hpp"
+#include "ml/ops/basic_math.hpp"
 #include "ml/ops/mask_fill.hpp"
 #include "ml/ops/matrix_multiply.hpp"
 #include "ml/ops/placeholder.hpp"
