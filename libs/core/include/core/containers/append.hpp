@@ -27,7 +27,8 @@ auto Append(Container &container, Value value) -> decltype(container.insert(std:
 }
 
 template <typename Container, typename... Args>
-auto Append(Container &container, Args &&...args) -> decltype(container.emplace(std::forward<Args>(args)...))
+auto Append(Container &container, Args &&... args)
+    -> decltype(container.emplace(std::forward<Args>(args)...))
 {
   return container.emplace(std::forward<Args>(args));
 }
@@ -39,7 +40,8 @@ auto Append(Container &container, Value value) -> decltype(container.push_back(s
 }
 
 template <typename Container, typename... Args>
-auto Append(Container &container, Args &&...args) -> decltype(container.emplace_back(std::forward<Args>(args)...))
+auto Append(Container &container, Args &&... args)
+    -> decltype(container.emplace_back(std::forward<Args>(args)...))
 {
   return container.emplace_back(std::forward<Args>(args));
 }
