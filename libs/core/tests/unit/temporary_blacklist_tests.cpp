@@ -27,11 +27,11 @@ namespace {
 
 using namespace std::chrono_literals;
 
-using TestedClass = fetch::core::TemporaryBlacklist<int, 1000>;
+using TestedClass = fetch::core::TemporaryBlacklist<int>;
 
 TEST(TemporaryBlacklistTests, Main)
 {
-  TestedClass blacklist;
+  TestedClass blacklist(1s);
 
   blacklist.Blacklist(10);
   std::this_thread::sleep_for(500ms);

@@ -20,7 +20,7 @@
 namespace fetch {
 namespace core {
 
-template <typename Value, typename Container>
+template <typename Container, typename Value>
 bool IsIn(Container const &container, Value const &value)
 {
   return container.find(value) != container.end();

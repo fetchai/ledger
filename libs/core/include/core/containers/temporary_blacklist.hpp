@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/containers/append.hpp"
 #include "core/containers/is_in.hpp"
 #include "core/mutex.hpp"
 
@@ -53,8 +54,8 @@ public:
   {
     auto now = Clock::now();
     Cleanup(now);
-    chronology_.emplace(now, t);
-    blacklisted_.insert(std::move(t));
+    Append(chronology_, now, t);
+    Append(blacklisted_, std::move(t));
   }
 
   bool IsBlacklisted(T const &t) const
