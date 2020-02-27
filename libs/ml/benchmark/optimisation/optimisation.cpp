@@ -32,24 +32,6 @@
 
 using SizeType = fetch::math::SizeType;
 
-struct BM_Tensor_config
-{
-  using SizeType = fetch::math::SizeType;
-
-  explicit BM_Tensor_config(::benchmark::State const &state)
-  {
-    auto size_len = static_cast<SizeType>(state.range(0));
-
-    shape.reserve(size_len);
-    for (SizeType i{0}; i < size_len; ++i)
-    {
-      shape.emplace_back(static_cast<SizeType>(state.range(1 + i)));
-    }
-  }
-
-  std::vector<SizeType> shape;  // layers input/output sizes
-};
-
 template <class TensorType>
 std::shared_ptr<fetch::ml::Graph<TensorType>> make_graph(SizeType input_size, SizeType n_hidden,
                                                          SizeType hidden_size, SizeType output_size,
@@ -89,14 +71,11 @@ void BM_Optimiser_Construct(benchmark::State &state)
 
   fetch::SetGlobalLogLevel(fetch::LogLevel::ERROR);
 
-  // Get args from state
-  BM_Tensor_config config{state};
-
-  SizeType batch_size  = config.shape[0];
-  SizeType input_size  = config.shape[1];
-  SizeType hidden_size = config.shape[2];
-  SizeType output_size = config.shape[3];
-  SizeType n_hidden    = config.shape[4];
+  SizeType batch_size  = static_cast<SizeType>(state.range(0));
+  SizeType input_size  = static_cast<SizeType>(state.range(1));
+  SizeType hidden_size = static_cast<SizeType>(state.range(2));
+  SizeType output_size = static_cast<SizeType>(state.range(3));
+  SizeType n_hidden    = static_cast<SizeType>(state.range(4));
 
   auto learning_rate = fetch::math::Type<DataType>("0.001");
 
@@ -119,63 +98,67 @@ void BM_Optimiser_Construct(benchmark::State &state)
     Optimiser optimiser(g, {input_name}, label_name, error_name, learning_rate);
   }
 }
-
-static void OptimiserChargeArguments(benchmark::internal::Benchmark *b)
+static void OptimiserConstructArguments(benchmark::internal::Benchmark *b)
 {
-  std::vector<std::int64_t> batch_size{1, 10, 100};
+  std::vector<std::int64_t> batch_sizes{1, 10, 100};
+  std::vector<std::int64_t> input_sizes{1, 10, 100};
+  std::vector<std::int64_t> hidden_sizes{1, 10, 100};
+  std::vector<std::int64_t> output_sizes{1, 10, 100};
+  std::int64_t              n_hidden = 10;
 
-  for (auto const &bs : batch_size)
+  SizeType n_benchmarks = batch_sizes.size();
+  for (SizeType i = 0; i < n_benchmarks; i++)
   {
-    b->Args({5, bs, bs, bs, bs, 2});
+    b->Args({batch_sizes[i], input_sizes[i], hidden_sizes[i], output_sizes[i], n_hidden});
   }
 }
 
 BENCHMARK_TEMPLATE(BM_Optimiser_Construct,
                    fetch::ml::optimisers::SGDOptimiser<fetch::math::Tensor<float>>)
-    ->Apply(OptimiserChargeArguments)
+    ->Apply(OptimiserConstructArguments)
     ->Unit(::benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_Optimiser_Construct,
                    fetch::ml::optimisers::SGDOptimiser<fetch::math::Tensor<double>>)
-    ->Apply(OptimiserChargeArguments)
+    ->Apply(OptimiserConstructArguments)
     ->Unit(::benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(
     BM_Optimiser_Construct,
     fetch::ml::optimisers::SGDOptimiser<fetch::math::Tensor<fetch::fixed_point::fp32_t>>)
-    ->Apply(OptimiserChargeArguments)
+    ->Apply(OptimiserConstructArguments)
     ->Unit(::benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(
     BM_Optimiser_Construct,
     fetch::ml::optimisers::SGDOptimiser<fetch::math::Tensor<fetch::fixed_point::fp64_t>>)
-    ->Apply(OptimiserChargeArguments)
+    ->Apply(OptimiserConstructArguments)
     ->Unit(::benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(
     BM_Optimiser_Construct,
     fetch::ml::optimisers::SGDOptimiser<fetch::math::Tensor<fetch::fixed_point::fp128_t>>)
-    ->Apply(OptimiserChargeArguments)
+    ->Apply(OptimiserConstructArguments)
     ->Unit(::benchmark::kMicrosecond);
 
 BENCHMARK_TEMPLATE(BM_Optimiser_Construct,
                    fetch::ml::optimisers::AdamOptimiser<fetch::math::Tensor<float>>)
-    ->Apply(OptimiserChargeArguments)
+    ->Apply(OptimiserConstructArguments)
     ->Unit(::benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_Optimiser_Construct,
                    fetch::ml::optimisers::AdamOptimiser<fetch::math::Tensor<double>>)
-    ->Apply(OptimiserChargeArguments)
+    ->Apply(OptimiserConstructArguments)
     ->Unit(::benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(
     BM_Optimiser_Construct,
     fetch::ml::optimisers::AdamOptimiser<fetch::math::Tensor<fetch::fixed_point::fp32_t>>)
-    ->Apply(OptimiserChargeArguments)
+    ->Apply(OptimiserConstructArguments)
     ->Unit(::benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(
     BM_Optimiser_Construct,
     fetch::ml::optimisers::AdamOptimiser<fetch::math::Tensor<fetch::fixed_point::fp64_t>>)
-    ->Apply(OptimiserChargeArguments)
+    ->Apply(OptimiserConstructArguments)
     ->Unit(::benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(
     BM_Optimiser_Construct,
     fetch::ml::optimisers::AdamOptimiser<fetch::math::Tensor<fetch::fixed_point::fp128_t>>)
-    ->Apply(OptimiserChargeArguments)
+    ->Apply(OptimiserConstructArguments)
     ->Unit(::benchmark::kMicrosecond);
 
 template <class Optimiser>
@@ -187,14 +170,12 @@ void BM_Optimiser_Run(benchmark::State &state)
   fetch::SetGlobalLogLevel(fetch::LogLevel::ERROR);
 
   // Get args from state
-  BM_Tensor_config config{state};
-
-  SizeType batch_size  = config.shape[0];
-  SizeType input_size  = config.shape[1];
-  SizeType hidden_size = config.shape[2];
-  SizeType output_size = config.shape[3];
-  SizeType n_epochs    = config.shape[4];
-  SizeType n_hidden    = config.shape[5];
+  SizeType batch_size  = static_cast<SizeType>(state.range(0));
+  SizeType input_size  = static_cast<SizeType>(state.range(1));
+  SizeType hidden_size = static_cast<SizeType>(state.range(2));
+  SizeType output_size = static_cast<SizeType>(state.range(3));
+  SizeType n_epochs    = static_cast<SizeType>(state.range(4));
+  SizeType n_hidden    = static_cast<SizeType>(state.range(5));
 
   auto learning_rate = fetch::math::Type<DataType>("0.001");
 
@@ -226,11 +207,17 @@ void BM_Optimiser_Run(benchmark::State &state)
 
 static void OptimiserRunArguments(benchmark::internal::Benchmark *b)
 {
-  std::vector<std::int64_t> batch_size{1, 10, 100};
+  std::vector<std::int64_t> batch_sizes{1, 10, 100};
+  std::vector<std::int64_t> input_sizes{1, 10, 100};
+  std::vector<std::int64_t> hidden_sizes{1, 10, 100};
+  std::vector<std::int64_t> output_sizes{1, 10, 100};
+  std::int64_t              n_epochs = 10;
+  std::int64_t              n_hidden = 0;
 
-  for (auto const &bs : batch_size)
+  SizeType n_benchmarks = batch_sizes.size();
+  for (SizeType i = 0; i < n_benchmarks; i++)
   {
-    b->Args({5, bs, bs, bs, bs, 100, 0});
+    b->Args({batch_sizes[i], input_sizes[i], hidden_sizes[i], output_sizes[i], n_epochs, n_hidden});
   }
 }
 
