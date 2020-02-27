@@ -78,7 +78,7 @@ private:
   void Cleanup(TimePoint t) const
   {
     t -= cooldown_period_;
-    auto crhono_it = chronology.begin();
+    auto chrono_it = chronology.begin();
     while (chrono_it != chronology_.end() && chrono_it->first <= t)
     {
       blacklisted_.erase(chrono_it->second);
