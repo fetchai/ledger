@@ -123,11 +123,13 @@ std::pair<OperationsCount, math::SizeVector> Flatten<TensorType>::ChargeForward(
 
   if (padded_size < fetch::ml::charge_estimation::ops::PIECEWISE_LOWER_THRESHOLD)
   {
-    cost += fetch::ml::charge_estimation::ops::LOW_FLATTEN_PER_ELEMENT * (padded_size / 32);
+    cost += fetch::ml::charge_estimation::ops::LOW_FLATTEN_PER_ELEMENT *
+            TensorType::ChargeIterate(this->batch_input_shapes_.front());
   }
   else if (padded_size < fetch::ml::charge_estimation::ops::PIECEWISE_HARD_CAP)
   {
-    cost += fetch::ml::charge_estimation::ops::HIGH_FLATTEN_PER_ELEMENT * (padded_size / 32);
+    cost += fetch::ml::charge_estimation::ops::HIGH_FLATTEN_PER_ELEMENT *
+            TensorType::ChargeIterate(this->batch_input_shapes_.front());
   }
   else
   {
