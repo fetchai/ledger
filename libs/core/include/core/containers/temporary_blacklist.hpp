@@ -21,19 +21,28 @@
 #include "core/mutex.hpp"
 
 #include <chrono>
-#include <map>
+#include <deque>
 #include <unordered_set>
+#include <utility>
 
 namespace fetch {
 namespace core {
 
-template <class T, std::size_t cooldown_ms = 5000>
+using namespace std::chrono_literals;
+
+template <class T>
 class TemporaryBlacklist
 {
 public:
-  using type = T;
+  using type     = T;
+  using Clock    = std::chrono::steady_clock;
+  using Duration = Clock::duration;
 
-  TemporaryBlacklist()                           = default;
+  TemporaryBlacklist() = default;
+  explicit TemporaryBlacklist(Duration cooldown_period)
+    : cooldown_period_(cooldown_period)
+  {}
+
   TemporaryBlacklist(TemporaryBlacklist const &) = delete;
   TemporaryBlacklist(TemporaryBlacklist &&)      = delete;
 
@@ -42,7 +51,6 @@ public:
 
   void Blacklist(T t)
   {
-    FETCH_LOCK(lock_);
     auto now = Clock::now();
     Cleanup(now);
     chronology_.emplace(now, t);
@@ -51,47 +59,37 @@ public:
 
   bool IsBlacklisted(T const &t) const
   {
-    FETCH_LOCK(lock_);
     Cleanup(Clock::now());
     return IsIn(blacklisted_, t);
   }
 
   std::size_t size() const
   {
-    FETCH_LOCK(lock_);
     Cleanup(Clock::now());
     return blacklisted_.size();
   }
 
 private:
-  using Clock     = std::chrono::steady_clock;
-  using TimePoint = Clock::time_point;
-  using Duration  = Clock::duration;
-
-  using Chronology  = std::map<TimePoint, type>;
+  using TimePoint   = Clock::time_point;
+  using Chronology  = std::deque<std::pair<TimePoint, type>>;
   using Blacklisted = std::unordered_set<type>;
-
-  static constexpr Duration COOLDOWN_PERIOD = std::chrono::milliseconds(cooldown_ms);
 
   void Cleanup(TimePoint t) const
   {
-    t -= COOLDOWN_PERIOD;
-    auto earliest_surviving_record = chronology_.upper_bound(t);
-    for (auto chrono_it = chronology_.begin(); chrono_it != earliest_surviving_record; ++chrono_it)
+    t -= cooldown_period_;
+    auto crhono_it = chronology.begin();
+    while (chrono_it != chronology_.end() && chrono_it->first <= t)
     {
       blacklisted_.erase(chrono_it->second);
+      ++chrono_it;
     }
-    chronology_.erase(chronology_.begin(), earliest_surviving_record);
+    chronology_.erase(chronology_.begin(), chrono_it);
   }
 
   mutable Chronology  chronology_;
   mutable Blacklisted blacklisted_;
-  mutable Mutex       lock_;
+  const Duration      cooldown_period_ = 5s;
 };
-
-template <class T, std::size_t cooldown_ms>
-constexpr typename TemporaryBlacklist<T, cooldown_ms>::Duration
-    TemporaryBlacklist<T, cooldown_ms>::COOLDOWN_PERIOD;
 
 }  // namespace core
 }  // namespace fetch
