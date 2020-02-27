@@ -1044,6 +1044,18 @@ typename Graph<TensorType>::NodePtrType Graph<TensorType>::GetNode(
   return graph_ptr->GetNode(node_name.substr(next_delimiter + 1, node_name.size() - 1));
 }
 
+template <typename TensorType>
+std::vector<typename Graph<TensorType>::NodePtrType> Graph<TensorType>::GetNodes() const
+{
+  std::vector<NodePtrType> node_vector{};
+  for (auto it = nodes_.begin(); it != nodes_.end(); ++it)
+  {
+    node_vector.push_back(it->second);
+  }
+  return node_vector;
+}
+
+
 /**
  * Recursively search graph and return list of all specific node names
  * @tparam TensorType
@@ -1193,7 +1205,7 @@ OperationsCount Graph<TensorType>::ChargeCompile()
     for (auto const &node_name_and_ptr : nodes_)
     {
       NodePtrType node = node_name_and_ptr.second;
-      op_cnt           += node->GetOp()->ChargeCompile();
+      op_cnt += node->GetOp()->ChargeCompile();
     }
 
     // graph_state_ = GraphState::COMPILED;

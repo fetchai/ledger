@@ -263,6 +263,8 @@ public:
 
   SequentialModelPtr GetMeAsSequentialIfPossible();
 
+  void Layers();
+
 private:
   ModelPtrType       model_;
   ModelConfigPtrType model_config_;

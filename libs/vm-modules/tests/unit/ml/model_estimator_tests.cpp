@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/serializers/main_serializer.hpp"
+#include "ml/charge_estimation/model/constants.hpp"
 #include "ml/layers/fully_connected.hpp"
 #include "vm_modules/ml/model/model.hpp"
 #include "vm_modules/vm_factory.hpp"
@@ -382,7 +383,25 @@ TEST_F(VMModelEstimatorTests, compile_sequential_test)
       padded_size += fetch::math::Tensor<DataType>::PaddedSizeFromShape({outputs, 10});
       padded_size += fetch::math::Tensor<DataType>::PaddedSizeFromShape({outputs, 1});
 
-      SizeType val = padded_size * 5 + 17;
+      auto layers = model.layers();
+
+      SizeType val = 0;
+      for (auto & layer : layers)
+      {
+        val += layer.ChargeForward();
+      }
+
+      std::cout << "val: " << val << std::endl;
+
+//      SizeType val = fetch::ml::charge_estimation::model::COMPILE_SEQUENTIAL_INIT;
+//      val += fetch::ml::charge_estimation::ops::OP_DEFAULT_CONSTRUCTION_COST;
+//      val += 3 * fetch::ml::charge_estimation::SET_FLAG;
+//      val += (padded_size * 5);
+//
+//      SizeType val = padded_size * 5 + 17;
+
+//      std::cout << "padded_size: " << padded_size << std::endl;
+      std::cout << "model.EstimateCompileSequential(vm_ptr_loss_type, vm_ptr_opt_type): " << model.EstimateCompileSequential(vm_ptr_loss_type, vm_ptr_opt_type) << std::endl;
 
       EXPECT_EQ(model.EstimateCompileSequential(vm_ptr_loss_type, vm_ptr_opt_type),
                 static_cast<ChargeAmount>(val));
