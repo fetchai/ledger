@@ -71,11 +71,11 @@ void BM_Optimiser_Construct(benchmark::State &state)
 
   fetch::SetGlobalLogLevel(fetch::LogLevel::ERROR);
 
-  SizeType batch_size  = static_cast<SizeType>(state.range(0));
-  SizeType input_size  = static_cast<SizeType>(state.range(1));
-  SizeType hidden_size = static_cast<SizeType>(state.range(2));
-  SizeType output_size = static_cast<SizeType>(state.range(3));
-  SizeType n_hidden    = static_cast<SizeType>(state.range(4));
+  auto batch_size  = static_cast<SizeType>(state.range(0));
+  auto input_size  = static_cast<SizeType>(state.range(1));
+  auto hidden_size = static_cast<SizeType>(state.range(2));
+  auto output_size = static_cast<SizeType>(state.range(3));
+  auto n_hidden    = static_cast<SizeType>(state.range(4));
 
   auto learning_rate = fetch::math::Type<DataType>("0.001");
 
@@ -170,12 +170,12 @@ void BM_Optimiser_Run(benchmark::State &state)
   fetch::SetGlobalLogLevel(fetch::LogLevel::ERROR);
 
   // Get args from state
-  SizeType batch_size  = static_cast<SizeType>(state.range(0));
-  SizeType input_size  = static_cast<SizeType>(state.range(1));
-  SizeType hidden_size = static_cast<SizeType>(state.range(2));
-  SizeType output_size = static_cast<SizeType>(state.range(3));
-  SizeType n_epochs    = static_cast<SizeType>(state.range(4));
-  SizeType n_hidden    = static_cast<SizeType>(state.range(5));
+  auto batch_size  = static_cast<SizeType>(state.range(0));
+  auto input_size  = static_cast<SizeType>(state.range(1));
+  auto hidden_size = static_cast<SizeType>(state.range(2));
+  auto output_size = static_cast<SizeType>(state.range(3));
+  auto n_epochs    = static_cast<SizeType>(state.range(4));
+  auto n_hidden    = static_cast<SizeType>(state.range(5));
 
   auto learning_rate = fetch::math::Type<DataType>("0.001");
 
