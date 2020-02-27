@@ -96,6 +96,12 @@ protected:
     fetch::chain::InitialiseTestConstants();
   }
 
+  void TearDown() override
+  {
+    rpc_service_ = std::make_shared<MainChainRpcService>(endpoint_, rpc_client_, chain_, trust_,
+                                                         CreateNonOwning(consensus_));
+  }
+
   void Tick(State current_state, State next_state, int line);
 
   template <class... States>
@@ -110,20 +116,19 @@ protected:
     }
   }
 
-  AdjustableClockPtr               clock_{fetch::moment::CreateAdjustableClock("MC_RPC:main")};
-  BlockGenerator                   block_generator_{NUM_LANES, NUM_SLICES};
-  ECDSASigner                      self_;
-  ECDSASigner                      other1_signer_;
-  MuddleAddress                    other1_{other1_signer_.identity().identifier()};
-  ECDSASigner                      other2_signer_;
-  MuddleAddress                    other2_{other1_signer_.identity().identifier()};
-  NiceMock<MockMainChainRpcClient> rpc_client_;
-  NiceMock<MockMuddleEndpoint>     endpoint_{self_.identity().identifier(), NetworkId{"TEST"}};
-  NiceMock<MockConsensus>          consensus_;
-  NiceMock<MockTrustSystem>        trust_;
-  MainChain                        chain_;
-  MainChainRpcService              rpc_service_{endpoint_, rpc_client_, chain_, trust_,
-                                   CreateNonOwning(consensus_)};
+  AdjustableClockPtr                   clock_{fetch::moment::CreateAdjustableClock("MC_RPC:main")};
+  BlockGenerator                       block_generator_{NUM_LANES, NUM_SLICES};
+  ECDSASigner                          self_;
+  ECDSASigner                          other1_signer_;
+  MuddleAddress                        other1_{other1_signer_.identity().identifier()};
+  ECDSASigner                          other2_signer_;
+  MuddleAddress                        other2_{other1_signer_.identity().identifier()};
+  NiceMock<MockMainChainRpcClient>     rpc_client_;
+  NiceMock<MockMuddleEndpoint>         endpoint_{self_.identity().identifier(), NetworkId{"TEST"}};
+  NiceMock<MockConsensus>              consensus_;
+  NiceMock<MockTrustSystem>            trust_;
+  MainChain                            chain_;
+  std::shared_ptr<MainChainRpcService> rpc_service_;
 };
 
 namespace {
@@ -146,10 +151,10 @@ MainChainProtocol::Travelogue TimeTravel(BlockGenerator::BlockPtr const &heavies
 
 void MainChainSyncTest::Tick(State current_state, State next_state, int line)
 {
-  AssertEq("pre", rpc_service_.state(), current_state, line);
-  auto sm = rpc_service_.GetWeakRunnable().lock();
+  AssertEq("pre", rpc_service_->state(), current_state, line);
+  auto sm = rpc_service_->GetWeakRunnable().lock();
   sm->Execute();
-  AssertEq("post", rpc_service_.state(), next_state, line);
+  AssertEq("post", rpc_service_->state(), next_state, line);
 }
 
 #define Tick(...) Tick(__VA_ARGS__, __LINE__)
@@ -298,14 +303,22 @@ TEST_F(MainChainSyncTest, GenesisMismatch)
   auto counter =
       fetch::telemetry::Registry::Instance().LookupMeasurement<fetch::telemetry::Counter>(
           "ledger_mainchain_service_network_mismatches_total");
+  std::cerr << "TST: " << counter.get() << '\n';
   ASSERT_TRUE(counter);
   ASSERT_EQ(counter->count(), 0);
+  std::cerr << counter->name() << '\n';
+  // counter->increment();
 
   FollowPath(State::SYNCHRONISING, State::START_SYNC_WITH_PEER, State::REQUEST_NEXT_BLOCKS,
              State::WAIT_FOR_NEXT_BLOCKS,
              // dropped just past the opening credits
              State::COMPLETE_SYNC_WITH_PEER);
 
+  for (int i{}; i < 3; ++i)
+  {
+    std::cerr << counter->count() << '\n';
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+  }
   ASSERT_EQ(counter->count(), 1);
 }
 

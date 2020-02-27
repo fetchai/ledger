@@ -600,6 +600,7 @@ bool MainChainRpcService::IsHealthy() const
  */
 void MainChainRpcService::NetworkMismatch()
 {
+  std::cerr << "RPC: " << network_mismatches_.get() << '\n';
   network_mismatches_->increment();
   FETCH_LOG_CRITICAL(LOGGING_NAME, " chain sync: the peer ", current_peer_address_.ToBase64(),
                      " wasn't able to identify our Genesis block 0x",

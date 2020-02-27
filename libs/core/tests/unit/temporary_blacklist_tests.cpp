@@ -31,23 +31,23 @@ using TestedClass = fetch::core::TemporaryBlacklist<int>;
 
 TEST(TemporaryBlacklistTests, Main)
 {
-  TestedClass blacklist(1s);
+  TestedClass blacklist(500ms);
 
   blacklist.Blacklist(10);
-  std::this_thread::sleep_for(500ms);
+  std::this_thread::sleep_for(250ms);
   blacklist.Blacklist(42);
 
   ASSERT_TRUE(blacklist.IsBlacklisted(10));
   ASSERT_TRUE(blacklist.IsBlacklisted(42));
   ASSERT_EQ(blacklist.size(), 2);
 
-  std::this_thread::sleep_for(600ms);
+  std::this_thread::sleep_for(300ms);
 
   ASSERT_FALSE(blacklist.IsBlacklisted(10));
   ASSERT_TRUE(blacklist.IsBlacklisted(42));
   ASSERT_EQ(blacklist.size(), 1);
 
-  std::this_thread::sleep_for(500ms);
+  std::this_thread::sleep_for(300ms);
 
   ASSERT_FALSE(blacklist.IsBlacklisted(10));
   ASSERT_FALSE(blacklist.IsBlacklisted(42));
