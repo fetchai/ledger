@@ -179,6 +179,7 @@ private:
   void HandleChainResponse(Address const &address, Blocks blocks);
   template <class Begin, class End>
   void HandleChainResponse(Address const &address, Begin begin, End end);
+  void NetworkMismatch();
   /// @}
 
   /// @name State Machine Handlers
@@ -246,6 +247,7 @@ private:
   telemetry::CounterPtr         state_complete_sync_with_peer_;
   telemetry::GaugePtr<uint32_t> state_current_;
   telemetry::HistogramPtr       new_block_duration_;
+  telemetry::CounterPtr         network_mismatches_;
   /// @}
 };
 
