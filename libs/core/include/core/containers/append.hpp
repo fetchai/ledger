@@ -32,7 +32,7 @@ template <typename Container, typename... Args>
 auto Append(Container &container, Args &&... args)
     -> decltype(container.emplace(std::forward<Args>(args)...))
 {
-  return container.emplace(std::forward<Args>(args));
+  return container.emplace(std::forward<Args>(args)...);
 }
 
 template <typename Container, typename Value>
@@ -45,7 +45,7 @@ template <typename Container, typename... Args>
 auto Append(Container &container, Args &&... args)
     -> decltype(container.emplace_back(std::forward<Args>(args)...))
 {
-  return container.emplace_back(std::forward<Args>(args));
+  return container.emplace_back(std::forward<Args>(args)...);
 }
 
 }  // namespace core
