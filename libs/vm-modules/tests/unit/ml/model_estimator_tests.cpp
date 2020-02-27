@@ -1028,9 +1028,9 @@ TEST_F(VMModelEstimatorTests, charge_forward_one_dense)
 
   // n flattening operations (because Dense is not time-distributed in this test)
   // in this case we know that
-  expected_cost += batch_size * (fetch::ml::charge_estimation::ops::OP_OVERHEAD +
-                                 (fetch::ml::charge_estimation::ops::LOW_FLATTEN_PER_ELEMENT *
-                                  TensorType::ChargeIterate({inputs, 1})));
+  expected_cost += (fetch::ml::charge_estimation::ops::OP_OVERHEAD +
+                    (fetch::ml::charge_estimation::ops::LOW_FLATTEN_PER_ELEMENT *
+                     TensorType::ChargeIterate({inputs, batch_size})));
 
   // n*m*1 matmul operations
   expected_cost += (inputs * outputs) * MULTIPLICATION_PER_ELEMENT * batch_size;
