@@ -1051,7 +1051,7 @@ std::ostream &operator<<(std::ostream &stream, Constellation::Config const &conf
   stream << "Num Lanes............: " << config.num_lanes() << '\n';
   stream << "Num Slices...........: " << config.num_slices << '\n';
   stream << "Num Executors........: " << config.num_executors << '\n';
-  stream << "DB Prefix............: " << config.num_executors << '\n';
+  stream << "DB Prefix............: " << config.db_prefix << '\n';
   stream << "Processor Threads....: " << config.processor_threads << '\n';
   stream << "Verification Threads.: " << config.verification_threads << '\n';
   stream << "Max Peers............: " << config.max_peers << '\n';

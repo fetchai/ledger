@@ -40,7 +40,7 @@ using byte_array::ConstByteArray;
 
 using StringSet = std::unordered_set<ConstByteArray>;
 
-char const *               BOOTSTRAP_HOST = "http://127.0.0.1:8000";
+char const *               BOOTSTRAP_HOST = "https://bootstrap.fetch.ai";
 const std::chrono::seconds UPDATE_INTERVAL{30};
 constexpr char const *     LOGGING_NAME = "bootstrap";
 
@@ -350,15 +350,26 @@ bool BootstrapMonitor::ParseDiscoveryV2(Variant const &obj, DiscoveryResult &res
   auto const &genesis = obj["genesis"];
   auto const &nodes   = obj["nodes"];
 
-  bool all_sub_fields_present =
-      nodes.IsArray() && genesis.IsObject() && genesis.Has("contents") && genesis.Has("parameters");
+  bool const genesis_is_object = genesis.IsObject() && genesis.Has("contents") && genesis.Has("parameters");
+  bool const all_sub_fields_present = nodes.IsArray() && (genesis.IsNull() || genesis_is_object);
   if (!all_sub_fields_present)
   {
     return false;
   }
 
-  return ParseNodeList(nodes, result.uris) &&
-         ParseGenesisConfiguration(genesis["contents"], result.genesis) &&
+  if (!ParseNodeList(nodes, result.uris))
+  {
+    return false;
+  }
+
+  // if no genesis configuration has been provided then use do not parse one
+  if (genesis.IsNull())
+  {
+    return true;
+  }
+
+  // default case parse the genesis configuration
+  return ParseGenesisConfiguration(genesis["contents"], result.genesis) &&
          ParseConfigurationUpdates(genesis["parameters"], result.config_updates);
 }
 
