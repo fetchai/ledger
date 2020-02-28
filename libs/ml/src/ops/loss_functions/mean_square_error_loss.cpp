@@ -293,8 +293,36 @@ template <typename TensorType>
 OperationsCount MeanSquareErrorLoss<TensorType>::ChargeBackward() const
 {
   assert(!this->batch_input_shapes_.empty());
-  OperationsCount cost = fetch::ml::charge_estimation::ops::MEAN_SQ_ERROR_BACKWARD_PER_ELEMENT *
-                         this->TotalElementsIn({this->batch_input_shapes_.at(0)});
+  assert(!this->batch_output_shape_.empty());
+
+  auto n_elements  = TensorType::SizeFromShape(this->batch_input_shapes_[0]);
+  auto padded_size = TensorType::PaddedSizeFromShape(this->batch_input_shapes_[0]);
+
+  OperationsCount cost{fetch::ml::charge_estimation::ops::MEAN_SQ_ERROR_BACKWARD_OVERHEAD};
+
+  if ((padded_size / 32) < fetch::ml::charge_estimation::ops::MSQE_PIECEWISE_LOWER_THRESHOLD)
+  {
+    // Addition cost
+    cost += fetch::ml::charge_estimation::ops::LOW_MEAN_SQ_ERROR_BACKWARD_PER_ELEMENT * n_elements;
+
+    // Iteration over 3 tensors (input1, input2, ret)
+    OperationsCount iteration_ops = TensorType::ChargeIterate(this->batch_output_shape_);
+    cost += iteration_ops * 4;
+  }
+  else if ((padded_size / 32) < fetch::ml::charge_estimation::ops::PIECEWISE_HARD_CAP)
+  {
+    // Addition cost
+    cost += fetch::ml::charge_estimation::ops::HIGH_MEAN_SQ_ERROR_BACKWARD_PER_ELEMENT * n_elements;
+
+    // Iteration over 3 tensors (input1, input2, ret)
+    OperationsCount iteration_ops = TensorType::ChargeIterate(this->batch_output_shape_);
+    cost += iteration_ops * 4;
+  }
+  else
+  {
+    cost = math::numeric_max<OperationsCount>();
+  }
+
   return cost;
 }
 

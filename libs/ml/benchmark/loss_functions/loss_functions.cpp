@@ -136,6 +136,52 @@ BENCHMARK_TEMPLATE(BM_MeanSquareErrorLossForward, fetch::fixed_point::fp128_t)
     ->Apply(MeanSquareErrorLossArguments)
     ->Unit(::benchmark::kNanosecond);
 
+template <class T>
+void BM_MeanSquareErrorLossBackward(benchmark::State &state)
+{
+  using TensorType = typename fetch::math::Tensor<T>;
+
+  // Get args form state
+  BM_Tensor_config config{state};
+
+  auto error_signal = TensorType(config.shape);
+
+  std::vector<std::shared_ptr<fetch::math::Tensor<T> const>> inputs;
+  inputs.emplace_back(std::make_shared<TensorType>(config.shape));
+  inputs.emplace_back(std::make_shared<TensorType>(config.shape));
+  fetch::ml::ops::MeanSquareErrorLoss<TensorType> msqe;
+
+  msqe.SetBatchInputShapes({config.shape, config.shape});
+  msqe.SetBatchOutputShape(config.shape);
+
+  state.counters["charge_total"]   = static_cast<double>(msqe.ChargeBackward());
+  state.counters["charge_iterate"] = static_cast<double>(TensorType::ChargeIterate(config.shape));
+
+  state.counters["PaddedSize"] =
+      static_cast<double>(fetch::math::Tensor<float>::PaddedSizeFromShape(config.shape));
+
+  for (auto _ : state)
+  {
+    msqe.Backward(inputs, error_signal);
+  }
+}
+
+BENCHMARK_TEMPLATE(BM_MeanSquareErrorLossBackward, fetch::fixed_point::fp64_t)
+    ->Apply(MeanSquareErrorLossArguments)
+    ->Unit(::benchmark::kNanosecond);
+BENCHMARK_TEMPLATE(BM_MeanSquareErrorLossBackward, float)
+    ->Apply(MeanSquareErrorLossArguments)
+    ->Unit(::benchmark::kNanosecond);
+BENCHMARK_TEMPLATE(BM_MeanSquareErrorLossBackward, double)
+    ->Apply(MeanSquareErrorLossArguments)
+    ->Unit(::benchmark::kNanosecond);
+BENCHMARK_TEMPLATE(BM_MeanSquareErrorLossBackward, fetch::fixed_point::fp32_t)
+    ->Apply(MeanSquareErrorLossArguments)
+    ->Unit(::benchmark::kNanosecond);
+BENCHMARK_TEMPLATE(BM_MeanSquareErrorLossBackward, fetch::fixed_point::fp128_t)
+    ->Apply(MeanSquareErrorLossArguments)
+    ->Unit(::benchmark::kNanosecond);
+
 template <class T, int I, int B>
 void BM_CrossEntropyBackward(benchmark::State &state)
 {
@@ -291,81 +337,6 @@ BENCHMARK_TEMPLATE(BM_CrossEntropyLossForward, fetch::fixed_point::fp32_t)
 BENCHMARK_TEMPLATE(BM_CrossEntropyLossForward, fetch::fixed_point::fp128_t)
     ->Apply(CrossEntropyLossArguments)
     ->Unit(::benchmark::kNanosecond);
-
-template <class T, int I, int B>
-void BM_MeanSquareErrorLossBackward(benchmark::State &state)
-{
-  using TensorType = typename fetch::math::Tensor<T>;
-
-  auto test_results = TensorType({I, B});
-  auto ground_truth = TensorType({I, B});
-  auto error_signal = TensorType({I, B});
-
-  std::vector<std::shared_ptr<fetch::math::Tensor<T> const>> inputs;
-  inputs.emplace_back(std::make_shared<TensorType>(test_results));
-  inputs.emplace_back(std::make_shared<TensorType>(ground_truth));
-  fetch::ml::ops::MeanSquareErrorLoss<TensorType> mse;
-
-  for (auto _ : state)
-  {
-    mse.Backward(inputs, error_signal);
-  }
-}
-
-BENCHMARK_TEMPLATE(BM_MeanSquareErrorLossBackward, float, 2, 2)->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_MeanSquareErrorLossBackward, float, 10, 10)->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_MeanSquareErrorLossBackward, float, 100, 100)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_MeanSquareErrorLossBackward, float, 1000, 1000)
-    ->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_MeanSquareErrorLossBackward, float, 2000, 2000)
-    ->Unit(benchmark::kMillisecond);
-
-BENCHMARK_TEMPLATE(BM_MeanSquareErrorLossBackward, double, 2, 2)->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_MeanSquareErrorLossBackward, double, 10, 10)->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_MeanSquareErrorLossBackward, double, 100, 100)->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_MeanSquareErrorLossBackward, double, 1000, 1000)
-    ->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_MeanSquareErrorLossBackward, double, 2000, 2000)
-    ->Unit(benchmark::kMillisecond);
-
-BENCHMARK_TEMPLATE(BM_MeanSquareErrorLossBackward, fetch::fixed_point::FixedPoint<16, 16>, 2, 2)
-    ->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_MeanSquareErrorLossBackward, fetch::fixed_point::FixedPoint<16, 16>, 10, 10)
-    ->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_MeanSquareErrorLossBackward, fetch::fixed_point::FixedPoint<16, 16>, 100, 100)
-    ->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_MeanSquareErrorLossBackward, fetch::fixed_point::FixedPoint<16, 16>, 1000,
-                   1000)
-    ->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_MeanSquareErrorLossBackward, fetch::fixed_point::FixedPoint<16, 16>, 2000,
-                   2000)
-    ->Unit(benchmark::kMillisecond);
-
-BENCHMARK_TEMPLATE(BM_MeanSquareErrorLossBackward, fetch::fixed_point::FixedPoint<32, 32>, 2, 2)
-    ->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_MeanSquareErrorLossBackward, fetch::fixed_point::FixedPoint<32, 32>, 10, 10)
-    ->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_MeanSquareErrorLossBackward, fetch::fixed_point::FixedPoint<32, 32>, 100, 100)
-    ->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_MeanSquareErrorLossBackward, fetch::fixed_point::FixedPoint<32, 32>, 1000,
-                   1000)
-    ->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_MeanSquareErrorLossBackward, fetch::fixed_point::FixedPoint<32, 32>, 2000,
-                   2000)
-    ->Unit(benchmark::kMillisecond);
-
-BENCHMARK_TEMPLATE(BM_MeanSquareErrorLossBackward, fetch::fixed_point::FixedPoint<64, 64>, 2, 2)
-    ->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_MeanSquareErrorLossBackward, fetch::fixed_point::FixedPoint<64, 64>, 10, 10)
-    ->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_MeanSquareErrorLossBackward, fetch::fixed_point::FixedPoint<64, 64>, 100, 100)
-    ->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_MeanSquareErrorLossBackward, fetch::fixed_point::FixedPoint<64, 64>, 1000,
-                   1000)
-    ->Unit(benchmark::kMillisecond);
-BENCHMARK_TEMPLATE(BM_MeanSquareErrorLossBackward, fetch::fixed_point::FixedPoint<64, 64>, 2000,
-                   2000)
-    ->Unit(benchmark::kMillisecond);
 
 template <class T, int I, int B>
 void BM_SoftmaxCrossEntropyLossForward(benchmark::State &state)
