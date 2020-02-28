@@ -46,6 +46,7 @@ class ValueType
 {
   template <class Container>
   static constexpr typename Container::mapped_type MappedType(Container &&) noexcept;
+
   template <class Container, class... ImaginaryArgs>
   static constexpr typename Container::value_type MappedType(Container &&,
                                                              ImaginaryArgs &&...) noexcept;
