@@ -32,8 +32,12 @@ struct ContractContext
   class Builder
   {
   public:
-    Builder()  = default;
-    ~Builder() = default;
+    Builder()                = default;
+    ~Builder()               = default;
+    Builder(Builder const &) = delete;
+    Builder(Builder &&)      = delete;
+    Builder &operator=(Builder const &) = delete;
+    Builder &operator=(Builder &&) = delete;
 
     Builder &       SetTokenContract(TokenContract *tc);
     Builder &       SetContractAddress(chain::Address ca);
