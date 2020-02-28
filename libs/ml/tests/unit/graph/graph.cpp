@@ -1316,7 +1316,7 @@ TYPED_TEST(GraphTest, graph_charge_forward_matmul)
   OperationsCount const batch_charge = g.ChargeForward(matmul);
 
   SizeType const        matmul_ops      = weight_width * input_height * batch_size;
-  OperationsCount const expected_charge = matmul_ops * MULTIPLICATION_PER_ELEMENT;
+  OperationsCount const expected_charge = matmul_ops * LOW_MULTIPLICATION_PER_ELEMENT;
 
   ASSERT_EQ(batch_charge, expected_charge);
 }
@@ -1357,7 +1357,7 @@ TYPED_TEST(GraphTest, graph_charge_forward_conv2d)
 
   OperationsCount const batch_charge = g.ChargeForward(conv2d);
 
-  OperationsCount const expected_charge = 161989632;  // TODO(VH): calc proper expected charge
+  OperationsCount const expected_charge = 377975808;  // TODO(VH): calc proper expected charge
 
   ASSERT_EQ(batch_charge, expected_charge);
 }
@@ -1437,7 +1437,7 @@ TYPED_TEST(GraphTest, graph_charge_backward_dropout)
 
   OperationsCount const charge = g.ChargeBackward(output);
   // Dropout backward operation is multiplication.
-  OperationsCount const expected_charge = MULTIPLICATION_PER_ELEMENT * data.shape()[0];
+  OperationsCount const expected_charge = LOW_MULTIPLICATION_PER_ELEMENT * data.shape()[0];
 
   ASSERT_EQ(charge, expected_charge);
 }
@@ -1483,7 +1483,7 @@ TYPED_TEST(GraphTest, graph_charge_backward_diamond)
   static const std::size_t expected_calls_to_dropout = (2 * (N - 1) + 1);
   OperationsCount const    charge                    = g.ChargeBackward(output);
   OperationsCount const    expected_charge =
-      MULTIPLICATION_PER_ELEMENT * total_data_elements * expected_calls_to_dropout +
+      LOW_MULTIPLICATION_PER_ELEMENT * total_data_elements * expected_calls_to_dropout +
       PLACEHOLDER_READING_PER_ELEMENT * total_data_elements;
 
   ASSERT_EQ(charge, expected_charge);
