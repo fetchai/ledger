@@ -158,8 +158,45 @@ template <typename TensorType>
 OperationsCount CrossEntropyLoss<TensorType>::ChargeBackward() const
 {
   assert(!this->batch_input_shapes_.empty());
-  OperationsCount cost = fetch::ml::charge_estimation::ops::CROSS_ENTROPY_BACKWARD_PER_ELEMENT *
-                         this->TotalElementsIn({this->batch_input_shapes_.at(0)});
+  assert(!this->batch_output_shape_.empty());
+
+  auto n_elements  = TensorType::SizeFromShape(this->batch_input_shapes_[0]);
+  auto padded_size = TensorType::PaddedSizeFromShape(this->batch_input_shapes_[0]);
+  auto n_dims      = this->batch_input_shapes_[0].at(0);
+
+  OperationsCount cost{fetch::ml::charge_estimation::ops::CROSS_ENTROPY_BACKWARD_OVERHEAD};
+  OperationsCount iteration_ops = TensorType::ChargeIterate(this->batch_output_shape_);
+  cost += iteration_ops * 4;
+
+  // if not a one-hot, must be binary logistic regression cost
+  if (n_dims == 1)
+  {
+
+    if ((padded_size / 32) <
+        fetch::ml::charge_estimation::ops::CEL_BINARY_PIECEWISE_BACKWARD_LOWER_THRESHOLD)
+    {
+      // Addition cost
+      cost += fetch::ml::charge_estimation::ops::LOW_CROSS_ENTROPY_BINARY_BACKWARD_PER_ELEMENT *
+              n_elements;
+    }
+    else if ((padded_size / 32) < fetch::ml::charge_estimation::ops::PIECEWISE_HARD_CAP)
+    {
+      // Addition cost
+      cost += fetch::ml::charge_estimation::ops::HIGH_CROSS_ENTROPY_BINARY_BACKWARD_PER_ELEMENT *
+              n_elements;
+    }
+    else
+    {
+      cost = math::numeric_max<OperationsCount>();
+    }
+  }
+  else
+  {
+    // Addition cost
+    cost +=
+        fetch::ml::charge_estimation::ops::CROSS_ENTROPY_ONE_HOT_BACKWARD_PER_ELEMENT * n_elements;
+  }
+
   return cost;
 }
 

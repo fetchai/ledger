@@ -72,8 +72,12 @@ static constexpr OperationsCount HIGH_CROSS_ENTROPY_BINARY_PER_ELEMENT = 75;
 static constexpr OperationsCount CEL_BINARY_PIECEWISE_LOWER_THRESHOLD =
     16384;  // 2^14 * 32 (padded size)
 
-static constexpr OperationsCount CROSS_ENTROPY_BACKWARD_PER_ELEMENT =
-    SUBTRACTION_PER_ELEMENT + DIVISION_PER_ELEMENT;
+static constexpr OperationsCount CROSS_ENTROPY_BACKWARD_OVERHEAD                = 730;
+static constexpr OperationsCount CROSS_ENTROPY_ONE_HOT_BACKWARD_PER_ELEMENT     = 27;
+static constexpr OperationsCount LOW_CROSS_ENTROPY_BINARY_BACKWARD_PER_ELEMENT  = 92;
+static constexpr OperationsCount HIGH_CROSS_ENTROPY_BINARY_BACKWARD_PER_ELEMENT = 340;
+static constexpr OperationsCount CEL_BINARY_PIECEWISE_BACKWARD_LOWER_THRESHOLD =
+    4096;  // 2^12 * 32 (padded size)
 
 static constexpr OperationsCount LOW_MEAN_SQ_ERROR_PER_ELEMENT  = 15;
 static constexpr OperationsCount HIGH_MEAN_SQ_ERROR_PER_ELEMENT = 75;
