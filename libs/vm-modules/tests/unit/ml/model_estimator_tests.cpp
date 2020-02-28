@@ -387,7 +387,7 @@ TEST_F(VMModelEstimatorTests, compile_sequential_test)
       padded_size += fetch::math::Tensor<DataType>::PaddedSizeFromShape({outputs, 10});
       padded_size += fetch::math::Tensor<DataType>::PaddedSizeFromShape({outputs, 1});
 
-      SizeType val = padded_size * 5 + 17;
+      SizeType val = padded_size * 5 + 19;
 
       EXPECT_EQ(model.EstimateCompileSequential(vm_ptr_loss_type, vm_ptr_opt_type),
                 static_cast<ChargeAmount>(val));
