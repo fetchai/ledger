@@ -54,9 +54,7 @@ bool Registry::ValidateName(std::string const &name)
 {
   for (char c : name)
   {
-    if (!(std::islower(c)
-	  || c == '_'
-	  || std::isdigit(c)))
+    if (!(std::islower(c) || c == '_' || std::isdigit(c)))
     {
       return false;
     }
@@ -115,7 +113,8 @@ HistogramPtr Registry::CreateHistogram(std::initializer_list<double> const &buck
   {
     return {};
   }
-  return Insert<Histogram>(name, std::move(buckets), std::move(name), std::move(description), std::move(labels));
+  return Insert<Histogram>(name, std::move(buckets), std::move(name), std::move(description),
+                           std::move(labels));
 }
 
 HistogramMapPtr Registry::CreateHistogramMap(std::vector<double> buckets, std::string name,
@@ -127,7 +126,7 @@ HistogramMapPtr Registry::CreateHistogramMap(std::vector<double> buckets, std::s
     return {};
   }
   return Insert<HistogramMap>(name, std::move(name), std::move(field), std::move(buckets),
-                                       std::move(description), std::move(labels));
+                              std::move(description), std::move(labels));
 }
 
 /**
@@ -142,7 +141,7 @@ void Registry::Collect(std::ostream &stream)
   FETCH_LOCK(lock_);
   for (auto const &named_cell : measurements_)
   {
-    for (auto const &measurement: named_cell.second)
+    for (auto const &measurement : named_cell.second)
     {
       measurement.second->ToStream(telemetry_stream);
     }

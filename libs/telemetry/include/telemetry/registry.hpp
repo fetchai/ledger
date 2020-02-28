@@ -87,7 +87,8 @@ public:
 
 private:
   using MeasurementPtr = std::shared_ptr<Measurement>;
-  using Measurements   = std::unordered_map<std::string, std::unordered_map<std::type_index, MeasurementPtr>>;
+  using Measurements =
+      std::unordered_map<std::string, std::unordered_map<std::type_index, MeasurementPtr>>;
 
   // Construction / Destruction
   Registry()  = default;
@@ -95,25 +96,26 @@ private:
 
   static bool ValidateName(std::string const &name);
 
-  template<class M, class... Args> std::shared_ptr<M> Insert(std::string const &name, Args &&...args)
+  template <class M, class... Args>
+  std::shared_ptr<M> Insert(std::string const &name, Args &&... args)
   {
-	  FETCH_LOCK(lock_);
+    FETCH_LOCK(lock_);
 
-	  auto &named_cell = measurements_[name];
-	  std::type_index type{typeid(M)};
-	  auto cell_it = named_cell.find(type);
-	  if (cell_it == named_cell.end())
-	  {
-		  cell_it = named_cell.emplace(type, std::make_shared<M>(std::forward<Args>(args)...)).first;
-	  }
+    auto &          named_cell = measurements_[name];
+    std::type_index type{typeid(M)};
+    auto            cell_it = named_cell.find(type);
+    if (cell_it == named_cell.end())
+    {
+      cell_it = named_cell.emplace(type, std::make_shared<M>(std::forward<Args>(args)...)).first;
+    }
 
-	  auto ret_val = std::dynamic_pointer_cast<M>(cell_it->second);
-	  assert(ret_val);
-	  return ret_val;
+    auto ret_val = std::dynamic_pointer_cast<M>(cell_it->second);
+    assert(ret_val);
+    return ret_val;
   }
 
   mutable Mutex lock_;
-  Measurements       measurements_;
+  Measurements  measurements_;
 };
 
 /**
@@ -151,7 +153,7 @@ std::shared_ptr<T> Registry::LookupMeasurement(std::string const &name) const
   auto named_cell = measurements_.find(name);
   if (named_cell == measurements_.end())
   {
-	  return {};
+    return {};
   }
 
   return core::Lookup(named_cell->second, std::type_index(typeid(T)));

@@ -16,15 +16,15 @@
 //
 //------------------------------------------------------------------------------
 
-#include "telemetry/registry.hpp"
 #include "telemetry/counter.hpp"
+#include "telemetry/registry.hpp"
 
 #include "gtest/gtest.h"
 
 namespace {
 
-using fetch::telemetry::Registry;
 using fetch::telemetry::OutputStream;
+using fetch::telemetry::Registry;
 
 TEST(RegistryTests, Uniqueness)
 {
@@ -42,4 +42,4 @@ TEST(RegistryTests, Uniqueness)
   }
 }
 
-}
+}  // namespace

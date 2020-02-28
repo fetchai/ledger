@@ -42,7 +42,7 @@ Value ValueFrom(Value const &element)
   return element;
 }
 
-}
+}  // namespace detail_
 
 template <typename Container, typename Key, typename Value = typename Container::mapped_type>
 Value Lookup(Container const &container, Key const &key, Value default_value = {})
