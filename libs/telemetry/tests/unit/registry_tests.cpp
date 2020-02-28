@@ -23,7 +23,6 @@
 
 namespace {
 
-using fetch::telemetry::OutputStream;
 using fetch::telemetry::Registry;
 
 TEST(RegistryTests, Uniqueness)

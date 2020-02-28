@@ -54,7 +54,7 @@ bool Registry::ValidateName(std::string const &name)
 {
   for (char c : name)
   {
-    if (!(std::islower(c) || c == '_' || std::isdigit(c)))
+    if (!std::islower(c) && c != '_' && !std::isdigit(c))
     {
       return false;
     }
@@ -113,7 +113,7 @@ HistogramPtr Registry::CreateHistogram(std::initializer_list<double> const &buck
   {
     return {};
   }
-  return Insert<Histogram>(name, std::move(buckets), std::move(name), std::move(description),
+  return Insert<Histogram>(name, buckets, std::move(name), std::move(description),
                            std::move(labels));
 }
 
