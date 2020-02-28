@@ -42,7 +42,8 @@ Value ValueFrom(Value const &element)
   return element;
 }
 
-class ValueType
+// clang has a serious bug in member visibility, so all the members of this struct are public
+struct ValueType
 {
   template <class Container>
   static constexpr typename Container::mapped_type MappedType(Container &&) noexcept;
@@ -51,7 +52,6 @@ class ValueType
   static constexpr typename Container::value_type MappedType(Container &&,
                                                              ImaginaryArgs &&...) noexcept;
 
-public:
   template <class Container>
   using type = decltype(MappedType(std::declval<Container>()));
 };
