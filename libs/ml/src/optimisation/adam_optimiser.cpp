@@ -163,6 +163,9 @@ template <class T>
 OperationsCount AdamOptimiser<T>::ChargeConstruct(std::shared_ptr<Graph<T>> graph)
 {
   OperationsCount op_cnt{charge_estimation::FUNCTION_CALL_COST};
+
+  op_cnt += graph->ChargeCompile();
+
   for (auto &train : graph->GetTrainables())
   {
     auto weight_shape = train->GetFutureDataShape();
