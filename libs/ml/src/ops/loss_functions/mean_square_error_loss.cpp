@@ -254,12 +254,14 @@ std::vector<math::SizeType> MeanSquareErrorLoss<TensorType>::ComputeOutputShape(
 }
 
 template <typename TensorType>
-OperationsCount MeanSquareErrorLoss<TensorType>::ChargeForward() const
+std::pair<OperationsCount, math::SizeVector> MeanSquareErrorLoss<TensorType>::ChargeForward(
+    std::vector<math::SizeVector> const &input_shapes)
 {
   assert(!this->batch_output_shape_.empty());
-  OperationsCount cost = fetch::ml::charge_estimation::ops::MEAN_SQ_ERROR_PER_ELEMENT *
-                         this->TotalElementsIn({this->batch_input_shapes_});
-  return cost;
+  OperationsCount op_cnt = fetch::ml::charge_estimation::ops::MEAN_SQ_ERROR_PER_ELEMENT *
+                           TensorType::SizeFromShape(input_shapes[0]);
+  auto output_shape = ComputeOutputShape(input_shapes);
+  return std::make_pair(op_cnt, output_shape);
 }
 
 template <typename TensorType>
