@@ -106,8 +106,8 @@ CounterMapPtr Registry::CreateCounterMap(std::string name, std::string descripti
  * @param labels The labels associated with the metric
  * @return The pointer to the created metric if successful, otherwise a nullptr
  */
-HistogramPtr Registry::CreateHistogram(std::initializer_list<double> const &buckets,
-                                       std::string name, std::string description, Labels labels)
+HistogramPtr Registry::CreateHistogram(std::initializer_list<double> buckets, std::string name,
+                                       std::string description, Labels labels)
 {
   if (!ValidateName(name))
   {
