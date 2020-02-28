@@ -54,7 +54,7 @@ bool Registry::ValidateName(std::string const &name)
 {
   for (char c : name)
   {
-    if (!std::islower(c) && c != '_' && !std::isdigit(c))
+    if (std::islower(c) == 0 && c != '_' && std::isdigit(c) == 0)
     {
       return false;
     }
