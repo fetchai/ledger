@@ -64,7 +64,7 @@ public:
   template <typename T>
   GaugePtr<T> CreateGauge(std::string name, std::string description, Labels labels = Labels{});
 
-  HistogramPtr CreateHistogram(std::initializer_list<double> const &buckets, std::string name,
+  HistogramPtr CreateHistogram(std::initializer_list<double> buckets, std::string name,
                                std::string description = "", Labels labels = Labels{});
 
   HistogramMapPtr CreateHistogramMap(std::vector<double> buckets, std::string name,
