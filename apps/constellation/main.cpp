@@ -211,8 +211,11 @@ BootstrapPtr CreateBootstrap(Settings &settings, Config &config, ProverPtr const
     BootstrapMonitor::DiscoveryResult result;
     if (bootstrap->DiscoverPeers(result, core_service_peer.address()))
     {
-      // updates the URIs
-      uris = std::move(result.uris);
+      // add any new URIS to the existing list
+      for (auto const &uri : result.uris)
+      {
+        uris.insert(uri);
+      }
 
       // if the user did not specify an explicit genesis file location, then we override the
       // genesis configuration
