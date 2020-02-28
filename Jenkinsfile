@@ -55,7 +55,6 @@ def run_full_build()
 def set_up_pipenv()
 {
   sh "pipenv install --dev --deploy"
-  sh "pipenv check"
 }
 
 def static_analysis(Configuration config)
