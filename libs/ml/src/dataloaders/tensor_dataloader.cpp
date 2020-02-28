@@ -27,6 +27,8 @@ namespace dataloaders {
 template <typename TensorType>
 typename TensorDataLoader<TensorType>::ReturnType TensorDataLoader<TensorType>::GetNext()
 {
+  assert(*this->current_cursor_ < this->current_max_);
+
   std::vector<TensorType> ret_data;
   TensorType ret_labels = labels_.View(*this->current_cursor_).Copy(one_sample_label_shape_);
 
