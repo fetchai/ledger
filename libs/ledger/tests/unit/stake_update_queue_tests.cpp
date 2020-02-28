@@ -18,10 +18,10 @@
 
 #include "random_address.hpp"
 
-#include "core/containers/is_in.hpp"
 #include "core/random/lcg.hpp"
 #include "ledger/consensus/stake_snapshot.hpp"
 #include "ledger/consensus/stake_update_queue.hpp"
+#include "meta/containers/set_element.hpp"
 
 #include "gtest/gtest.h"
 
@@ -29,9 +29,9 @@
 
 namespace {
 
-using fetch::core::IsIn;
 using fetch::ledger::StakeSnapshot;
 using fetch::ledger::StakeUpdateQueue;
+using fetch::meta::IsIn;
 
 using RNG                 = fetch::random::LinearCongruentialGenerator;
 using StakeUpdateQueuePtr = std::unique_ptr<StakeUpdateQueue>;

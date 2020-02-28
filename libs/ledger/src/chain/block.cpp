@@ -17,11 +17,11 @@
 //------------------------------------------------------------------------------
 
 #include "chain/constants.hpp"
-#include "core/containers/is_in.hpp"
 #include "core/serializers/main_serializer.hpp"
 #include "crypto/merkle_tree.hpp"
 #include "crypto/sha256.hpp"
 #include "ledger/chain/block.hpp"
+#include "meta/containers/set_element.hpp"
 #include "moment/clocks.hpp"
 
 #include <cstddef>
@@ -132,7 +132,7 @@ bool Block::IsValid() const
       auto const &digest = layout.digest();
 
       // Check 1: Duplicate txs
-      if (core::IsIn(txs, digest))
+      if (meta::IsIn(txs, digest))
       {
         return false;
       }

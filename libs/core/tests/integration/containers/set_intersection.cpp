@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/containers/is_in.hpp"
 #include "core/containers/set_intersection.hpp"
+#include "meta/containers/set_element.hpp"
 
 #include "gtest/gtest.h"
 
@@ -33,10 +33,10 @@ TEST(SetIntersection, BasicSetCheck)
   auto const c = a & b;
 
   EXPECT_EQ(c.size(), 4);
-  EXPECT_TRUE(core::IsIn(c, 3));
-  EXPECT_TRUE(core::IsIn(c, 4));
-  EXPECT_TRUE(core::IsIn(c, 5));
-  EXPECT_TRUE(core::IsIn(c, 6));
+  EXPECT_TRUE(meta::IsIn(c, 3));
+  EXPECT_TRUE(meta::IsIn(c, 4));
+  EXPECT_TRUE(meta::IsIn(c, 5));
+  EXPECT_TRUE(meta::IsIn(c, 6));
 }
 
 TEST(SetIntersection, BasicSetMapCheck1)
@@ -47,10 +47,10 @@ TEST(SetIntersection, BasicSetMapCheck1)
   auto const c = a & b;
 
   EXPECT_EQ(c.size(), 4);
-  EXPECT_TRUE(core::IsIn(c, 3));
-  EXPECT_TRUE(core::IsIn(c, 4));
-  EXPECT_TRUE(core::IsIn(c, 5));
-  EXPECT_TRUE(core::IsIn(c, 6));
+  EXPECT_TRUE(meta::IsIn(c, 3));
+  EXPECT_TRUE(meta::IsIn(c, 4));
+  EXPECT_TRUE(meta::IsIn(c, 5));
+  EXPECT_TRUE(meta::IsIn(c, 6));
 }
 
 TEST(SetIntersection, BasicSetMapCheck2)
@@ -61,10 +61,10 @@ TEST(SetIntersection, BasicSetMapCheck2)
   auto const c = a & b;
 
   EXPECT_EQ(c.size(), 4);
-  EXPECT_TRUE(core::IsIn(c, 3));
-  EXPECT_TRUE(core::IsIn(c, 4));
-  EXPECT_TRUE(core::IsIn(c, 5));
-  EXPECT_TRUE(core::IsIn(c, 6));
+  EXPECT_TRUE(meta::IsIn(c, 3));
+  EXPECT_TRUE(meta::IsIn(c, 4));
+  EXPECT_TRUE(meta::IsIn(c, 5));
+  EXPECT_TRUE(meta::IsIn(c, 6));
 }
 
 }  // namespace

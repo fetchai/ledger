@@ -17,10 +17,10 @@
 //------------------------------------------------------------------------------
 
 #include "chain/transaction.hpp"
-#include "core/containers/is_in.hpp"
 #include "ledger/storage_unit/recent_transaction_cache.hpp"
+#include "meta/containers/set_element.hpp"
 
-using fetch::core::IsIn;
+using fetch::meta::IsIn;
 
 namespace fetch {
 namespace ledger {

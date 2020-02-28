@@ -20,7 +20,7 @@
 #include <utility>
 
 namespace fetch {
-namespace core {
+namespace meta {
 
 template <typename Container, typename Value>
 bool IsIn(Container const &container, Value const &value)
@@ -56,5 +56,5 @@ Value Lookup(Container const &container, Key const &key, Value default_value = {
   return detail_::ValueFrom<Value>(*it);
 }
 
-}  // namespace core
+}  // namespace meta
 }  // namespace fetch
