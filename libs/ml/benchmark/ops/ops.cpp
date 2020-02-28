@@ -73,6 +73,33 @@ struct BM_Tensor_config
   std::vector<SizeType> shape;  // layers input/output sizes
 };
 
+struct BM_two_tensors_config
+{
+  using SizeType = fetch::math::SizeType;
+
+  explicit BM_two_tensors_config(::benchmark::State const &state)
+  {
+    auto size_len_one = static_cast<SizeType>(state.range(0));
+
+    shape_one.reserve(size_len_one);
+    for (SizeType i{0}; i < size_len_one; ++i)
+    {
+      shape_one.emplace_back(static_cast<SizeType>(state.range(1 + i)));
+    }
+
+    auto size_len_two = static_cast<SizeType>(state.range(0));
+
+    shape_two.reserve(size_len_two);
+    for (SizeType i{0}; i < size_len_two; ++i)
+    {
+      shape_two.emplace_back(static_cast<SizeType>(state.range(2 + size_len_one + i)));
+    }
+  }
+
+  std::vector<SizeType> shape_one;  // layers input/output sizes
+  std::vector<SizeType> shape_two;  // layers input/output sizes
+};
+
 template <class T, int N>
 void BM_AbsForward(benchmark::State &state)
 {
@@ -5121,6 +5148,27 @@ BENCHMARK_TEMPLATE(BM_MultiplyBackward, fetch::fixed_point::fp128_t, 2048)
 BENCHMARK_TEMPLATE(BM_MultiplyBackward, fetch::fixed_point::fp128_t, 4096)
     ->Unit(benchmark::kMicrosecond);
 
+static void AddArguments(benchmark::internal::Benchmark *b)
+{
+  using SizeType                       = fetch::math::SizeType;
+  SizeType const            N_ELEMENTS = 3;
+  std::vector<std::int64_t> batch_size{1, 32, 128};
+  std::vector<std::int64_t> dim_size{2, 128, 8192, 65536, 524288};
+  for (std::int64_t &i : batch_size)
+  {
+    for (std::int64_t &j : dim_size)
+    {
+      b->Args({N_ELEMENTS, j, 2, i});
+    }
+    for (std::int64_t &j : dim_size)
+    {
+      b->Args({N_ELEMENTS, 2, j, i});
+    }
+  }
+}
+// TODO - 2D data + 1D for batch size
+// TODO - sum input and output iteration charges
+
 template <class T>
 void BM_AddForward(benchmark::State &state)
 {
@@ -5154,27 +5202,6 @@ void BM_AddForward(benchmark::State &state)
   }
 }
 
-static void AddArguments(benchmark::internal::Benchmark *b)
-{
-  using SizeType                       = fetch::math::SizeType;
-  SizeType const            N_ELEMENTS = 3;
-  std::vector<std::int64_t> batch_size{1, 32, 128};
-  std::vector<std::int64_t> dim_size{2, 128, 8192, 65536, 524288};
-  for (std::int64_t &i : batch_size)
-  {
-    for (std::int64_t &j : dim_size)
-    {
-      b->Args({N_ELEMENTS, j, 2, i});
-    }
-    for (std::int64_t &j : dim_size)
-    {
-      b->Args({N_ELEMENTS, 2, j, i});
-    }
-  }
-}
-// TODO - 2D data + 1D for batch size
-// TODO - sum input and output iteration charges
-
 BENCHMARK_TEMPLATE(BM_AddForward, fetch::fixed_point::fp64_t)
     ->Apply(AddArguments)
     ->Unit(::benchmark::kNanosecond);
@@ -5187,15 +5214,18 @@ BENCHMARK_TEMPLATE(BM_AddForward, fetch::fixed_point::fp128_t)
     ->Apply(AddArguments)
     ->Unit(::benchmark::kNanosecond);
 
-template <class T, int N>
+template <class T>
 void BM_AddBackward(benchmark::State &state)
 {
   using TensorType    = typename fetch::math::Tensor<T>;
   using VecTensorType = typename fetch::ml::ops::Ops<TensorType>::VecTensorType;
 
-  fetch::math::Tensor<T> input_1({1, N});
-  fetch::math::Tensor<T> input_2({1, N});
-  fetch::math::Tensor<T> error_signal({1, N});
+  // Get args form state
+  BM_two_tensors_config config{state};
+
+  fetch::math::Tensor<T> input_1(config.shape_one);
+  fetch::math::Tensor<T> input_2(config.shape_two);
+  fetch::math::Tensor<T> error_signal(config.shape_one);
 
   // Fill tensors with random values
   input_1.FillUniformRandom();
@@ -5207,49 +5237,52 @@ void BM_AddBackward(benchmark::State &state)
   inputs.emplace_back(std::make_shared<TensorType>(input_2));
   fetch::ml::ops::Add<fetch::math::Tensor<T>> add1;
 
+  add1.SetBatchOutputShape(config.shape_one);
+  add1.SetBatchInputShapes({config.shape_one, config.shape_two});
+  state.counters["charge_total"] = static_cast<double>(add1.ChargeBackward());
+  state.counters["charge_iterate"] =
+      static_cast<double>(TensorType::ChargeIterate(config.shape_one));
+
   for (auto _ : state)
   {
     add1.Backward(inputs, error_signal);
   }
 }
 
-BENCHMARK_TEMPLATE(BM_AddBackward, float, 2)->Unit(benchmark::kNanosecond);
-BENCHMARK_TEMPLATE(BM_AddBackward, float, 256)->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_AddBackward, float, 512)->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_AddBackward, float, 1024)->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_AddBackward, float, 2048)->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_AddBackward, float, 4096)->Unit(benchmark::kMicrosecond);
+static void AddBackwardArguments(benchmark::internal::Benchmark *b)
+{
+  using SizeType                       = fetch::math::SizeType;
+  SizeType const            N_ELEMENTS = 3;
+  std::vector<std::int64_t> batch_size{1, 32, 128};
+  std::vector<std::int64_t> dim_size{2, 128, 8192, 65536, 524288};
+  for (std::int64_t &i : batch_size)
+  {
+    for (std::int64_t &j : dim_size)
+    {
+      b->Args({N_ELEMENTS, j / 2, 2, i, N_ELEMENTS, j, 2, i});
+    }
+    for (std::int64_t &j : dim_size)
+    {
+      b->Args({N_ELEMENTS, 2, j, i, N_ELEMENTS, 2, j / 2, i});
+    }
+  }
+}
 
-BENCHMARK_TEMPLATE(BM_AddBackward, double, 2)->Unit(benchmark::kNanosecond);
-BENCHMARK_TEMPLATE(BM_AddBackward, double, 256)->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_AddBackward, double, 512)->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_AddBackward, double, 1024)->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_AddBackward, double, 2048)->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_AddBackward, double, 4096)->Unit(benchmark::kMicrosecond);
-
-BENCHMARK_TEMPLATE(BM_AddBackward, fetch::fixed_point::fp32_t, 2)->Unit(benchmark::kNanosecond);
-BENCHMARK_TEMPLATE(BM_AddBackward, fetch::fixed_point::fp32_t, 256)->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_AddBackward, fetch::fixed_point::fp32_t, 512)->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_AddBackward, fetch::fixed_point::fp32_t, 1024)->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_AddBackward, fetch::fixed_point::fp32_t, 2048)->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_AddBackward, fetch::fixed_point::fp32_t, 4096)->Unit(benchmark::kMicrosecond);
-
-BENCHMARK_TEMPLATE(BM_AddBackward, fetch::fixed_point::fp64_t, 2)->Unit(benchmark::kNanosecond);
-BENCHMARK_TEMPLATE(BM_AddBackward, fetch::fixed_point::fp64_t, 256)->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_AddBackward, fetch::fixed_point::fp64_t, 512)->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_AddBackward, fetch::fixed_point::fp64_t, 1024)->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_AddBackward, fetch::fixed_point::fp64_t, 2048)->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_AddBackward, fetch::fixed_point::fp64_t, 4096)->Unit(benchmark::kMicrosecond);
-
-BENCHMARK_TEMPLATE(BM_AddBackward, fetch::fixed_point::fp128_t, 2)->Unit(benchmark::kNanosecond);
-BENCHMARK_TEMPLATE(BM_AddBackward, fetch::fixed_point::fp128_t, 256)->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_AddBackward, fetch::fixed_point::fp128_t, 512)->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_AddBackward, fetch::fixed_point::fp128_t, 1024)
-    ->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_AddBackward, fetch::fixed_point::fp128_t, 2048)
-    ->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_AddBackward, fetch::fixed_point::fp128_t, 4096)
-    ->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_AddBackward, fetch::fixed_point::fp64_t)
+    ->Apply(AddBackwardArguments)
+    ->Unit(::benchmark::kNanosecond);
+BENCHMARK_TEMPLATE(BM_AddBackward, float)
+    ->Apply(AddBackwardArguments)
+    ->Unit(::benchmark::kNanosecond);
+BENCHMARK_TEMPLATE(BM_AddBackward, double)
+    ->Apply(AddBackwardArguments)
+    ->Unit(::benchmark::kNanosecond);
+BENCHMARK_TEMPLATE(BM_AddBackward, fetch::fixed_point::fp32_t)
+    ->Apply(AddBackwardArguments)
+    ->Unit(::benchmark::kNanosecond);
+BENCHMARK_TEMPLATE(BM_AddBackward, fetch::fixed_point::fp128_t)
+    ->Apply(AddBackwardArguments)
+    ->Unit(::benchmark::kNanosecond);
 
 template <class T, int N>
 void BM_SubtractForward(benchmark::State &state)
