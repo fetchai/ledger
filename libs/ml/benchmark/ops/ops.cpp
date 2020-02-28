@@ -1791,7 +1791,7 @@ void BM_FlattenForward(benchmark::State &state)
   BM_Tensor_config config{state};
 
   fetch::math::Tensor<T> input(config.shape);
-  SizeType output_size = 1;
+  SizeType               output_size = 1;
   for (std::size_t i = 0; i < config.shape.size() - 1; ++i)
   {
     output_size *= config.shape.at(i);
@@ -1809,7 +1809,7 @@ void BM_FlattenForward(benchmark::State &state)
 
   flatten.SetBatchInputShapes({config.shape});
   flatten.SetBatchOutputShape(output_shape);
-  auto cost_and_shape = flatten.ChargeForward({config.shape});
+  auto cost_and_shape      = flatten.ChargeForward({config.shape});
   state.counters["charge"] = static_cast<double>(cost_and_shape.first);
   for (auto _ : state)
   {
@@ -2264,7 +2264,7 @@ void BM_MatrixMultiply_Forward(benchmark::State &state)
   inputs.emplace_back(std::make_shared<TensorType>(input_2));
   fetch::ml::ops::MatrixMultiply<fetch::math::Tensor<T>> matmul;
 
-  auto cost_and_shape = matmul.ChargeForward({config.shape, config.shape});
+  auto cost_and_shape      = matmul.ChargeForward({config.shape, config.shape});
   state.counters["charge"] = static_cast<double>(cost_and_shape.first);
 
   for (auto _ : state)
@@ -2272,7 +2272,6 @@ void BM_MatrixMultiply_Forward(benchmark::State &state)
     matmul.Forward(inputs, output);
   }
 }
-
 
 // 2D data + 1D for batch size
 static void MatMulArguments(benchmark::internal::Benchmark *b)
@@ -2333,7 +2332,7 @@ void BM_MatrixMultiply_Backward(benchmark::State &state)
   inputs.emplace_back(std::make_shared<TensorType>(input_2));
   fetch::ml::ops::MatrixMultiply<fetch::math::Tensor<T>> matmul;
 
-  auto cost = matmul.ChargeBackward();
+  auto cost                = matmul.ChargeBackward();
   state.counters["charge"] = static_cast<double>(cost);
 
   for (auto _ : state)

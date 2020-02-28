@@ -124,12 +124,12 @@ std::pair<OperationsCount, math::SizeVector> Flatten<TensorType>::ChargeForward(
   if (padded_size < fetch::ml::charge_estimation::ops::PIECEWISE_LOWER_THRESHOLD)
   {
     op_cnt += fetch::ml::charge_estimation::ops::LOW_FLATTEN_PER_ELEMENT *
-            TensorType::ChargeIterate(input_shapes.front());
+              TensorType::ChargeIterate(input_shapes.front());
   }
   else if (padded_size < fetch::ml::charge_estimation::ops::PIECEWISE_HARD_CAP)
   {
     op_cnt += fetch::ml::charge_estimation::ops::HIGH_FLATTEN_PER_ELEMENT *
-            TensorType::ChargeIterate(input_shapes.front());
+              TensorType::ChargeIterate(input_shapes.front());
   }
   else
   {

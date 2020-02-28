@@ -298,12 +298,14 @@ std::pair<OperationsCount, math::SizeVector> MatrixMultiply<T>::ChargeForward(
   // Assuming this is a matrix multiplication of weights * input_vector
   // e.g. [n; m] * [m; batch_size], then total operations cost is n * m * batch_size,
   // and default batch_size is 1.
-  OperationsCount const n          = input_shapes.front().at(0);
-  OperationsCount const m          = input_shapes.back().at(0);
+  OperationsCount const input_1_dim_1          = input_shapes.front().at(0);
+  OperationsCount const input_1_dim_2          = input_shapes.front().at(1);
+  OperationsCount const input_2_dim_1          = input_shapes.back().at(0);
+  OperationsCount const input_2_dim_2          = input_shapes.back().at(1);
   OperationsCount const batch_size = input_shapes.front().at(input_shapes.front().size() - 1);
 
-  OperationsCount const op_cnt =
-      n * m * batch_size * fetch::ml::charge_estimation::ops::MULTIPLICATION_PER_ELEMENT;
+  OperationsCount op_cnt = 420; // set up overhead
+  op_cnt += input_1_dim_1 * input_1_dim_2 * input_2_dim_1 * input_2_dim_2 * batch_size * fetch::ml::charge_estimation::ops::MULTIPLICATION_PER_ELEMENT;
 
   auto output_shape = ComputeOutputShape(input_shapes);
   return std::make_pair(op_cnt, output_shape);
