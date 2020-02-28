@@ -137,30 +137,30 @@ public:
 
 TEST_F(BloomFilterTests, empty_bloom_filter_reports_matches_no_items)
 {
-  EXPECT_FALSE(filter.Match("abc").match);
+  EXPECT_FALSE(filter.Match("abc").first);
 }
 
 TEST_F(BloomFilterTests, items_which_had_been_added_are_matched)
 {
   filter.Add("abc");
-  EXPECT_TRUE(filter.Match("abc").match);
+  EXPECT_TRUE(filter.Match("abc").first);
 }
 
 TEST_F(BloomFilterTests, items_which_had_not_been_added_are_not_matched)
 {
   filter.Add("abc");
-  EXPECT_FALSE(filter.Match("xyz").match);
+  EXPECT_FALSE(filter.Match("xyz").first);
 }
 
 TEST_F(BloomFilterTests, multiple_items_may_be_added_and_queried)
 {
   filter.Add("abc");
-  EXPECT_TRUE(filter.Match("abc").match);
+  EXPECT_TRUE(filter.Match("abc").first);
 
   filter.Add("xyz");
-  EXPECT_TRUE(filter.Match("xyz").match);
+  EXPECT_TRUE(filter.Match("xyz").first);
 
-  EXPECT_FALSE(filter.Match("klmnop").match);
+  EXPECT_FALSE(filter.Match("klmnop").first);
 }
 
 TEST_F(BloomFilterTests, false_positives_are_reported_if_all_hash_values_coincide)
@@ -174,7 +174,7 @@ TEST_F(BloomFilterTests, false_positives_are_reported_if_all_hash_values_coincid
   }
 
   filter_weak_hashing.Add(entry1);
-  EXPECT_TRUE(filter_weak_hashing.Match(entry2).match);
+  EXPECT_TRUE(filter_weak_hashing.Match(entry2).first);
 }
 
 TEST_F(BloomFilterTests, check_recovery_from_bitvector)
@@ -183,7 +183,7 @@ TEST_F(BloomFilterTests, check_recovery_from_bitvector)
   bloom1.Add("A");
 
   fetch::BasicBloomFilter bloom2(bloom1.underlying_bit_vector());
-  ASSERT_TRUE(bloom2.Match("A").match);
+  ASSERT_TRUE(bloom2.Match("A").first);
 }
 
 }  // namespace

@@ -22,6 +22,4 @@ target_link_libraries(fetch-bloomfilter
                              fetch-storage)
 
 add_test_target()
-
 add_subdirectory(benchmark)
-add_subdirectory(tools)

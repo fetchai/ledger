@@ -38,14 +38,14 @@ TEST_F(ProgressiveBloomFilterTests, match_elements_that_had_been_added)
 {
   filter.Add("a", 10, 1);
 
-  ASSERT_TRUE(filter.Match("a", 10).match);
+  ASSERT_TRUE(filter.Match("a", 10).first);
 }
 
 TEST_F(ProgressiveBloomFilterTests, do_not_match_elements_that_had_not_been_added)
 {
   filter.Add("a", 10, 1);
 
-  ASSERT_FALSE(filter.Match("b", 5).match);
+  ASSERT_FALSE(filter.Match("b", 5).first);
 }
 
 TEST_F(ProgressiveBloomFilterTests, filter_rolls_over_in_steps_of_overlap)
@@ -54,16 +54,16 @@ TEST_F(ProgressiveBloomFilterTests, filter_rolls_over_in_steps_of_overlap)
   filter.Add("b", 110, overlap + 1);
   filter.Add("c", 240, 2 * overlap + 1);
 
-  ASSERT_FALSE(filter.Match("a", 10).match);
-  ASSERT_TRUE(filter.Match("b", 110).match);
-  ASSERT_TRUE(filter.Match("c", 240).match);
+  ASSERT_FALSE(filter.Match("a", 10).first);
+  ASSERT_TRUE(filter.Match("b", 110).first);
+  ASSERT_TRUE(filter.Match("c", 240).first);
 
   filter.Add("d", 340, 3 * overlap + 1);
 
-  ASSERT_FALSE(filter.Match("a", 10).match);
-  ASSERT_FALSE(filter.Match("b", 110).match);
-  ASSERT_TRUE(filter.Match("c", 240).match);
-  ASSERT_TRUE(filter.Match("d", 340).match);
+  ASSERT_FALSE(filter.Match("a", 10).first);
+  ASSERT_FALSE(filter.Match("b", 110).first);
+  ASSERT_TRUE(filter.Match("c", 240).first);
+  ASSERT_TRUE(filter.Match("d", 340).first);
 }
 
 TEST_F(ProgressiveBloomFilterTests, do_not_add_elements_older_than_current_head)
@@ -71,15 +71,15 @@ TEST_F(ProgressiveBloomFilterTests, do_not_add_elements_older_than_current_head)
   filter.Add("a", 240, 2 * overlap + 1);
   filter.Add("b", 199, 2 * overlap + 1);
 
-  ASSERT_TRUE(filter.Match("a", 240).match);
-  ASSERT_FALSE(filter.Match("b", 20).match);
+  ASSERT_TRUE(filter.Match("a", 240).first);
+  ASSERT_FALSE(filter.Match("b", 20).first);
 }
 
 TEST_F(ProgressiveBloomFilterTests, do_not_add_elements_which_are_newer_than_double_the_overlap)
 {
   filter.Add("a", 250, 1);
 
-  ASSERT_FALSE(filter.Match("a", 250).match);
+  ASSERT_FALSE(filter.Match("a", 250).first);
 }
 
 }  // namespace

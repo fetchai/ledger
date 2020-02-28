@@ -28,7 +28,6 @@
 #include "network/generics/promise_of.hpp"
 #include "network/generics/requesting_queue.hpp"
 #include "storage/resource_mapper.hpp"
-#include "storage/seen_recently_cache.hpp"
 #include "telemetry/telemetry.hpp"
 #include "transaction_finder_protocol.hpp"
 #include "transaction_store_sync_protocol.hpp"
@@ -84,7 +83,6 @@ public:
   using LaneControllerPtr     = std::shared_ptr<LaneController>;
   using TxFinderProtocolPtr   = std::shared_ptr<TxFinderProtocol>;
   using MuddleEndpoint        = muddle::MuddleEndpoint;
-  using SeenRecentlyCache     = storage::SeenRecentlyCache<byte_array::ConstByteArray>;
 
   static constexpr char const *LOGGING_NAME = "TransactionStoreSyncService";
   static constexpr std::size_t MAX_OBJECT_COUNT_RESOLUTION_PER_CYCLE = 128;
@@ -94,8 +92,6 @@ public:
   static constexpr uint64_t TX_FINDER_PROTO_LIMIT = 1000;
   // Limit the amount a single rpc call will provide
   static constexpr uint64_t PULL_LIMIT = 10000;
-  // Maximum size the recently seen cache can become
-  static constexpr uint64_t RECENTLY_SEEN_CACHE_SIZE = 10000;
 
   struct Config
   {
@@ -149,11 +145,6 @@ private:
   State OnResolvingObjects();
   State OnTrimCache();
 
-  // Avoid processing transactions that have been recently
-  // seen or are already in storage
-  bool              AlreadySeen(chain::Transaction const &tx);
-  SeenRecentlyCache recently_seen_txs_;
-
   TrimCacheCallback                  trim_cache_callback_;
   std::shared_ptr<StateMachine>      state_machine_;
   TxFinderProtocol *                 tx_finder_protocol_;
@@ -184,7 +175,6 @@ private:
   telemetry::CounterPtr         subtree_requests_total_;
   telemetry::CounterPtr         subtree_response_total_;
   telemetry::CounterPtr         subtree_failure_total_;
-  telemetry::CounterPtr         tss_duplicates_dropped_;
   telemetry::GaugePtr<uint64_t> current_tss_state_;
   telemetry::GaugePtr<uint64_t> current_tss_peers_;
 };

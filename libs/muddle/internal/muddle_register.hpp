@@ -115,8 +115,6 @@ protected:
   /// @}
 
 private:
-  using CounterPtr = telemetry::CounterPtr;
-
   std::string const name_;
   char const *const logging_name_{name_.c_str()};
 
@@ -124,11 +122,6 @@ private:
   ConnectionLeftCallback left_callback_;
   HandleIndex            handle_index_;
   AddressIndex           address_index_;
-
-  // telemetry
-  CounterPtr connections_entered_total_;
-  CounterPtr connections_left_total_;
-  CounterPtr connections_callbacks_called_total_;
 };
 
 }  // namespace muddle

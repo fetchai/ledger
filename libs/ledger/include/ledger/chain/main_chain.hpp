@@ -139,8 +139,9 @@ public:
   using Travelogue           = TimeTravelogue<BlockPtr>;
   using DirtyMap = std::map<BlockHash, uint64_t>;  // Map of hash to the time until is becomes valid
 
-  static constexpr char const *LOGGING_NAME = "MainChain";
-  static constexpr uint64_t    UPPER_BOUND  = 5000ull;
+  static constexpr char const *LOGGING_NAME    = "MainChain";
+  static constexpr uint64_t    UPPER_BOUND     = 5000ull;
+  chain::BlockIndex MAXIMUM_TX_VALIDITY_PERIOD = chain::Transaction::MAXIMUM_TX_VALIDITY_PERIOD;
 
   enum class Mode
   {
@@ -210,8 +211,7 @@ public:
   /// @name Transaction Duplication Filtering
   /// @{
   DigestSet DetectDuplicateTransactions(BlockHash const &           starting_hash,
-                                        TransactionLayoutSet const &transactions,
-                                        bool suppress_telemetry = false) const;
+                                        TransactionLayoutSet const &transactions) const;
   /// @}
 
   // Operators
@@ -346,8 +346,6 @@ private:
   telemetry::CounterPtr            bloom_filter_query_count_;
   telemetry::CounterPtr            bloom_filter_positive_count_;
   telemetry::CounterPtr            bloom_filter_false_positive_count_;
-  telemetry::CounterPtr            bloom_filter_walk_count_;
-  telemetry::CounterPtr            duplicate_txs_in_recent_;
   telemetry::CounterPtr            dirty_blocks_attempt_add_;
   telemetry::CounterPtr            children_on_storage_checks_total_;
 };

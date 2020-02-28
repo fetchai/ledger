@@ -159,12 +159,6 @@ private:
 
 }  // namespace internal
 
-struct BloomFilterResult
-{
-  bool        match{false};
-  std::size_t bits_checked{0};
-};
-
 class BasicBloomFilter
 {
 public:
@@ -181,8 +175,6 @@ public:
    * Construct a Bloom filter with the given set of hash functions
    */
   explicit BasicBloomFilter(Functions const &functions);
-  explicit BasicBloomFilter(std::size_t bit_size);
-  BasicBloomFilter(Functions const &functions, std::size_t filter_size);
   BasicBloomFilter(BasicBloomFilter const &) = delete;
   BasicBloomFilter(BasicBloomFilter &&)      = delete;
   ~BasicBloomFilter()                        = default;
@@ -198,7 +190,7 @@ public:
    * returned. The latter number will increase as the filter's performance
    * degrades.
    */
-  BloomFilterResult Match(fetch::byte_array::ConstByteArray const &element) const;
+  std::pair<bool, std::size_t> Match(fetch::byte_array::ConstByteArray const &element) const;
 
   /*
    * Set the bits of the Bloom filter corresponding to the argument

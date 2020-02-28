@@ -1039,6 +1039,53 @@ TEST_P(MainChainTests, CheckResolveOnFork)
             chain_->AddBlock(*fork2));  // <-- now there is a duplicate in history
 }
 
+TEST(AltMainChainTests, CheckRecoveryAfterCrash)
+{
+  fetch::crypto::mcl::details::MCLInitialiser();
+  chain::InitialiseTestConstants();
+
+  MainChain::Config cfg{false, 4, 1};
+
+  // build a chain of blocks
+  BlockGenerator gen{1, 2};
+  auto const     genesis = gen.Generate();
+  auto const     branch{Generate(gen, genesis, 200, 1)};
+
+  Digest orig_heaviest_block_digest{};
+  {
+    MainChain chain1{MainChain::Mode::CREATE_PERSISTENT_DB, cfg};
+
+    // add the branch of blocks to the chain
+    for (auto const &blk : branch)
+    {
+      ASSERT_EQ(BlockStatus::ADDED, chain1.AddBlock(*blk));
+    }
+
+    // cache the heaviest
+    auto const heaviest        = chain1.GetHeaviestBlock();
+    orig_heaviest_block_digest = heaviest->hash;
+  }
+
+  MainChain chain2{MainChain::Mode::LOAD_PERSISTENT_DB, cfg};
+
+  auto const recovered_heaviest = chain2.GetHeaviestBlock();
+
+  // we expect that the heaviest block hashes do no match because the main chain has only
+  // recovered all of its contents.
+  EXPECT_NE(orig_heaviest_block_digest, recovered_heaviest->hash);
+  EXPECT_EQ(190, recovered_heaviest->block_number);
+
+  // should be able to add the remaining blocks again to the chain and have them being accepted.
+  // This is important because the bloom filter needs to be kept in sync with the main chain
+  for (std::size_t i = 190; i < branch.size(); ++i)
+  {
+    ASSERT_EQ(BlockStatus::ADDED, chain2.AddBlock(*branch.at(i)));
+  }
+
+  // finally we expect the two chains to be at the same end point
+  EXPECT_EQ(orig_heaviest_block_digest, chain2.GetHeaviestBlockHash());
+}
+
 INSTANTIATE_TEST_CASE_P(ParamBased, MainChainTests,
                         ::testing::Values(MainChain::Mode::CREATE_PERSISTENT_DB,
                                           MainChain::Mode::IN_MEMORY_DB), );

@@ -134,7 +134,6 @@ bool Block::IsValid() const
       // Check 1: Duplicate txs
       if (core::IsIn(txs, digest))
       {
-        FETCH_LOG_WARN(LOGGING_NAME, "Duplicate TXs within a block found!");
         return false;
       }
 
