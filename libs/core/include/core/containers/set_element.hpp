@@ -17,13 +17,43 @@
 //
 //------------------------------------------------------------------------------
 
+#include <utility>
+
 namespace fetch {
 namespace core {
 
-template <typename Value, typename Container>
+template <typename Container, typename Value>
 bool IsIn(Container const &container, Value const &value)
 {
   return container.find(value) != container.end();
+}
+
+namespace detail_ {
+
+template <class Value, class Key>
+Value ValueFrom(std::pair<Key, Value> const &element)
+{
+  return element.second;
+}
+
+template <class Value>
+Value ValueFrom(Value const &element)
+{
+  return element;
+}
+
+}
+
+template <typename Container, typename Key, typename Value = typename Container::mapped_type>
+Value Lookup(Container const &container, Key const &key, Value default_value = {})
+{
+  auto it = container.find(key);
+  if (it == container.end())
+  {
+    return default_value;
+  }
+
+  return detail_::ValueFrom<Value>(*it);
 }
 
 }  // namespace core

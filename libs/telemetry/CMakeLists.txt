@@ -15,6 +15,7 @@ setup_compiler()
 # ------------------------------------------------------------------------------
 
 setup_library(fetch-telemetry)
+target_link_libraries(fetch-telemetry PUBLIC fetch-core)
 
 # ------------------------------------------------------------------------------
 # Test Targets

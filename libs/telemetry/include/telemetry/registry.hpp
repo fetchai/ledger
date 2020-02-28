@@ -17,15 +17,21 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/containers/set_element.hpp"
+#include "core/mutex.hpp"
 #include "telemetry/measurement.hpp"
 #include "telemetry/telemetry.hpp"
 
 #include <algorithm>
+#include <cassert>
 #include <initializer_list>
 #include <memory>
 #include <mutex>
 #include <string>
+#include <typeindex>
+#include <typeinfo>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 namespace fetch {
@@ -81,7 +87,7 @@ public:
 
 private:
   using MeasurementPtr = std::shared_ptr<Measurement>;
-  using Measurements   = std::vector<MeasurementPtr>;
+  using Measurements   = std::unordered_map<std::string, std::unordered_map<std::type_index, MeasurementPtr>>;
 
   // Construction / Destruction
   Registry()  = default;
@@ -89,7 +95,24 @@ private:
 
   static bool ValidateName(std::string const &name);
 
-  mutable std::mutex lock_;
+  template<class M, class... Args> std::shared_ptr<M> Insert(std::string const &name, Args &&...args)
+  {
+	  FETCH_LOCK(lock_);
+
+	  auto &named_cell = measurements_[name];
+	  std::type_index type{typeid(M)};
+	  auto cell_it = named_cell.find(type);
+	  if (cell_it == named_cell.end())
+	  {
+		  cell_it = named_cell.emplace(type, std::make_shared<M>(std::forward<Args>(args)...)).first;
+	  }
+
+	  auto ret_val = std::dynamic_pointer_cast<M>(cell_it->second);
+	  assert(ret_val);
+	  return ret_val;
+  }
+
+  mutable Mutex lock_;
   Measurements       measurements_;
 };
 
@@ -106,20 +129,12 @@ template <typename T>
 Registry::GaugePtr<T> Registry::CreateGauge(std::string name, std::string description,
                                             Labels labels)
 {
-  GaugePtr<T> gauge{};
-
-  if (ValidateName(name))
+  if (!ValidateName(name))
   {
-    gauge = std::make_shared<Gauge<T>>(std::move(name), description, std::move(labels));
-
-    // add the gauge to the register
-    {
-      std::lock_guard<std::mutex> guard(lock_);
-      measurements_.push_back(gauge);
-    }
+    return {};
   }
 
-  return gauge;
+  return Insert<Gauge<T>>(name, std::move(name), std::move(description), std::move(labels));
 }
 
 /**
@@ -132,36 +147,14 @@ Registry::GaugePtr<T> Registry::CreateGauge(std::string name, std::string descri
 template <typename T>
 std::shared_ptr<T> Registry::LookupMeasurement(std::string const &name) const
 {
-  std::shared_ptr<T> measurement{};
-
-  auto const matcher = [&name](MeasurementPtr const &m) { return (m->name() == name); };
-
-  std::lock_guard<std::mutex> guard(lock_);
-
-  // attempt to find the first metric matching the name with the type
-  for (auto start = measurements_.begin(), end = measurements_.end(); start != end;)
+  FETCH_LOCK(lock_);
+  auto named_cell = measurements_.find(name);
+  if (named_cell == measurements_.end())
   {
-    // attempt to locate the next match
-    auto match = std::find_if(start, end, matcher);
-
-    if (match != measurements_.end())
-    {
-      // attempt to convert the measurement to the chosen type
-      measurement = std::dynamic_pointer_cast<T>(*match);
-      if (measurement)
-      {
-        break;
-      }
-
-      // otherwise advance the iterator to move to the next element (since the type mismatched)
-      ++match;
-    }
-
-    // move the next element
-    start = match;
+	  return {};
   }
 
-  return measurement;
+  return core::Lookup(named_cell->second, std::type_index(typeid(T)));
 }
 
 }  // namespace telemetry

@@ -23,6 +23,7 @@
 #include "telemetry/histogram_map.hpp"
 #include "telemetry/registry.hpp"
 
+#include <cctype>
 #include <initializer_list>
 #include <memory>
 #include <ostream>
@@ -51,20 +52,17 @@ Registry &Registry::Instance()
  */
 bool Registry::ValidateName(std::string const &name)
 {
-  bool valid{true};
-
   for (char c : name)
   {
-    valid = (c == '_') || ((c >= 'a') && (c <= 'z')) || ((c >= '0') && (c <= '9'));
-
-    // exit as soon as it it not valid
-    if (!valid)
+    if (!(std::islower(c)
+	  || c == '_'
+	  || std::isdigit(c)))
     {
-      break;
+      return false;
     }
   }
 
-  return valid;
+  return true;
 }
 
 /**
@@ -77,21 +75,11 @@ bool Registry::ValidateName(std::string const &name)
  */
 CounterPtr Registry::CreateCounter(std::string name, std::string description, Labels labels)
 {
-  CounterPtr counter{};
-
-  if (ValidateName(name))
+  if (!ValidateName(name))
   {
-    // create the new counter
-    counter = std::make_shared<Counter>(std::move(name), std::move(description), std::move(labels));
-
-    // add the counter to the register
-    {
-      std::lock_guard<std::mutex> guard(lock_);
-      measurements_.push_back(counter);
-    }
+    return {};
   }
-
-  return counter;
+  return Insert<Counter>(name, std::move(name), std::move(description), std::move(labels));
 }
 
 /**
@@ -104,21 +92,11 @@ CounterPtr Registry::CreateCounter(std::string name, std::string description, La
  */
 CounterMapPtr Registry::CreateCounterMap(std::string name, std::string description, Labels labels)
 {
-  CounterMapPtr map{};
-
-  if (ValidateName(name))
+  if (!ValidateName(name))
   {
-    // create the new counter
-    map = std::make_shared<CounterMap>(std::move(name), std::move(description), std::move(labels));
-
-    // add the counter to the register
-    {
-      std::lock_guard<std::mutex> guard(lock_);
-      measurements_.emplace_back(map);
-    }
+    return {};
   }
-
-  return map;
+  return Insert<CounterMap>(name, std::move(name), std::move(description), std::move(labels));
 }
 
 /**
@@ -133,44 +111,23 @@ CounterMapPtr Registry::CreateCounterMap(std::string name, std::string descripti
 HistogramPtr Registry::CreateHistogram(std::initializer_list<double> const &buckets,
                                        std::string name, std::string description, Labels labels)
 {
-  HistogramPtr histogram{};
-
-  if (ValidateName(name))
+  if (!ValidateName(name))
   {
-    // create the histogram
-    histogram = std::make_shared<Histogram>(buckets, name, description, labels);
-
-    // add the counter to the register
-    {
-      std::lock_guard<std::mutex> guard(lock_);
-      measurements_.push_back(histogram);
-    }
+    return {};
   }
-
-  return histogram;
+  return Insert<Histogram>(name, std::move(buckets), std::move(name), std::move(description), std::move(labels));
 }
 
 HistogramMapPtr Registry::CreateHistogramMap(std::vector<double> buckets, std::string name,
                                              std::string field, std::string description,
                                              Labels labels)
 {
-  HistogramMapPtr histogram_map{};
-
-  if (ValidateName(name))
+  if (!ValidateName(name))
   {
-    // create the histogram
-    histogram_map =
-        std::make_shared<HistogramMap>(std::move(name), std::move(field), std::move(buckets),
-                                       std::move(description), std::move(labels));
-
-    // add the counter to the register
-    {
-      std::lock_guard<std::mutex> guard(lock_);
-      measurements_.emplace_back(histogram_map);
-    }
+    return {};
   }
-
-  return histogram_map;
+  return Insert<HistogramMap>(name, std::move(name), std::move(field), std::move(buckets),
+                                       std::move(description), std::move(labels));
 }
 
 /**
@@ -182,10 +139,13 @@ void Registry::Collect(std::ostream &stream)
 {
   OutputStream telemetry_stream{stream};
 
-  std::lock_guard<std::mutex> guard(lock_);
-  for (auto const &measurement : measurements_)
+  FETCH_LOCK(lock_);
+  for (auto const &named_cell : measurements_)
   {
-    measurement->ToStream(telemetry_stream);
+    for (auto const &measurement: named_cell.second)
+    {
+      measurement.second->ToStream(telemetry_stream);
+    }
   }
 }
 
