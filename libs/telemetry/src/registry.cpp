@@ -90,6 +90,10 @@ CounterPtr Registry::CreateCounter(std::string name, std::string description, La
       measurements_.push_back(counter);
     }
   }
+  else
+  {
+    std::cout << LOGGING_NAME << ": Failed to validate telemetry name: " << name << std::endl;
+  }
 
   return counter;
 }

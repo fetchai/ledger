@@ -81,8 +81,8 @@ MainChain::MainChain(Mode mode, bool dirty_block_functionality)
 MainChain::MainChain(Mode mode, Config const &cfg)
   : mode_{mode}
   , dirty_block_functionality_{cfg.enable_dirty_blocks}
-  , bloom_filter_{SelectMode(mode),       "chain.hbloom.db",       "chain.hbloom.index.db",
-                  "chain.hbloom.meta.db", cfg.bloom_filter_window, cfg.bloom_filter_cached_buckets}
+  , bloom_filter_{SelectMode(mode), "chain.hbloom.v2.db", "chain.hbloom.meta.v2.db",
+                  cfg.bloom_filter_window, cfg.bloom_filter_cached_buckets}
   , bloom_filter_queried_bit_count_(telemetry::Registry::Instance().CreateGauge<std::size_t>(
         "ledger_main_chain_bloom_filter_queried_bit_number",
         "Total number of bits checked during each query to the Ledger Main Chain Bloom filter"))
@@ -95,6 +95,12 @@ MainChain::MainChain(Mode mode, Config const &cfg)
   , bloom_filter_false_positive_count_(telemetry::Registry::Instance().CreateCounter(
         "ledger_main_chain_bloom_filter_false_positive_total",
         "Total number of false positive queries to the Ledger Main Chain Bloom filter"))
+  , bloom_filter_walk_count_(telemetry::Registry::Instance().CreateCounter(
+        "ledger_main_chain_bloom_filter_walk_total",
+        "Total number of blocks walked attempting to detect duplicates"))
+  , duplicate_txs_in_recent_(telemetry::Registry::Instance().CreateCounter(
+        "ledger_main_chain_duplicate_txs_in_recent_total",
+        "Total number of transactions found in recent blocks of the chain"))
   , dirty_blocks_attempt_add_(telemetry::Registry::Instance().CreateCounter(
         "ledger_main_chain_dirty_blocks_attempt_add_total", "Total attempts to add a dirty block"))
   , children_on_storage_checks_total_(telemetry::Registry::Instance().CreateCounter(
@@ -350,6 +356,10 @@ void MainChain::KeepBlock(IntBlockPtr const &block) const
   ASSERT(static_cast<bool>(block));
   ASSERT(static_cast<bool>(block_store_));
 
+  // All blocks in the store must be added to the bloom filter.
+  // for performance this is only done on confirmation.
+  AddBlockToBloomFilter(*block);
+
   auto const &hash{block->hash};
 
   DbRecord record;
@@ -372,15 +382,13 @@ void MainChain::KeepBlock(IntBlockPtr const &block) const
   record.block = *block;
 
   // detect if any of this block's children has made it to the store already
-  //
-  //
   {
     MilliTimer tmr("ChildrenOnStore", 2000);
     children_on_storage_checks_total_->increment();
     auto forward_refs{forward_references_.equal_range(hash)};
     for (auto ref_it{forward_refs.first}; ref_it != forward_refs.second; ++ref_it)
     {
-      auto const &child{ref_it->second};
+      auto const child{ref_it->second};
       if (block_store_->Has(storage::ResourceID(child)))
       {
         record.next_hash = child;
@@ -1061,8 +1069,6 @@ void MainChain::RecoverFromFile(Mode mode)
         break;
       }
 
-      // repopulate the bloom filter
-      AddBlockToBloomFilter(*next);
       if ((block_index % bloom_filter_.window_size()) == 0)
       {
         bloom_filter_.TrimCache();
@@ -1591,8 +1597,6 @@ BlockStatus MainChain::InsertBlock(IntBlockPtr const &block, bool evaluate_loose
     CompleteLooseBlocks(block);
   }
 
-  AddBlockToBloomFilter(*block);
-
   return BlockStatus::ADDED;
 }
 
@@ -1987,8 +1991,23 @@ void MainChain::SetHeadHash(BlockHash const &hash)
                     static_cast<std::streamsize>(hash.size()));
 }
 
+// Convenience function
+DigestSet ToDigestSet(MainChain::TransactionLayoutSet const &transactions)
+{
+  DigestSet ret;
+
+  for (auto const &i : transactions)
+  {
+    ret.insert(i.digest());
+  }
+
+  return ret;
+}
+
 /**
- * Strip transactions in container that already exist in the blockchain
+ * Strip transactions in container that already exist in the blockchain. A bloom filter keeps
+ * track of all the transactions that have gone to disk, while blocks in memory (block_chain_)
+ * are simply walked to determine duplicates (this should be quick given a short validity period)
  *
  * @param: starting_hash Block to start looking downwards from
  * @tparam: transaction The set of transaction to be filtered
@@ -1996,7 +2015,8 @@ void MainChain::SetHeadHash(BlockHash const &hash)
  * @return: bool whether the starting hash referred to a valid block on a valid chain
  */
 DigestSet MainChain::DetectDuplicateTransactions(BlockHash const &           starting_hash,
-                                                 TransactionLayoutSet const &transactions) const
+                                                 TransactionLayoutSet const &transactions,
+                                                 bool suppress_telemetry) const
 {
   MilliTimer const timer{"DuplicateTransactionsCheck", 100};
 
@@ -2004,39 +2024,101 @@ DigestSet MainChain::DetectDuplicateTransactions(BlockHash const &           sta
 
   FETCH_LOCK(lock_);
 
-  IntBlockPtr block;
+  IntBlockPtr     block;
+  DigestSet const all_digests = ToDigestSet(transactions);
+
+  // For safety if there is a global block lookup failure indicate all TXs are duplicates
   if (!LookupBlock(starting_hash, block) || block->is_loose)
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "TX uniqueness verify on bad block hash");
-    return {};
+    FETCH_LOG_ERROR(LOGGING_NAME, "TX uniqueness verify on bad block hash.");
+    return all_digests;
   }
 
-  // evaluate the bloom filter and determine the potential duplicates
-  DigestSet potential_duplicates{};
-  for (auto const &tx_layout : transactions)
+  // Search for duplicates in the cache blocks since this is not held in the bloom
+  DigestSet duplicates{};       // All
+  DigestSet duplicates_disk{};  // Disk only
+
+  for (;;)
   {
-    auto const default_valid_from =
-        tx_layout.valid_until() - std::min(MAXIMUM_TX_VALIDITY_PERIOD, tx_layout.valid_until());
-    auto const from_calculated = std::max(tx_layout.valid_from(), default_valid_from);
-    if (bloom_filter_.Match(tx_layout.digest(), from_calculated, tx_layout.valid_until()))
+    // Genesis does not contain transactions since it is
+    // constructed
+    if (block->IsGenesis())
     {
-      potential_duplicates.insert(tx_layout.digest());
+      break;
     }
 
-    bloom_filter_query_count_->increment();
+    for (auto const &slice : block->slices)
+    {
+      for (auto const &tx : slice)
+      {
+        if (all_digests.find(tx.digest()) != all_digests.end())
+        {
+          duplicates.insert(tx.digest());
+        }
+      }
+    }
+
+    // termination condition
+    if (!LookupBlockFromCache(block->previous_hash, block))
+    {
+#ifndef NDEBUG
+      // Sanity check - there should be the continuation of this on disk
+      IntBlockPtr block_dummy;
+      assert(LookupBlock(block->previous_hash, block_dummy));
+#endif
+      break;
+    }
   }
 
-  // calculate the maximum search depth
-  uint64_t const last_block_num =
-      block->block_number - std::min(block->block_number, uint64_t{MAXIMUM_TX_VALIDITY_PERIOD});
+  if (!suppress_telemetry)
+  {
+    duplicate_txs_in_recent_->add(duplicates.size());
+  }
 
-  // filter the potential duplicates by traversing back down the chain
-  DigestSet duplicates{};
-  for (;;)
+  // evaluate the bloom filter and determine the potential duplicates on disk
+  DigestSet         potential_duplicates{};
+  chain::BlockIndex earliest_possible_block_with_duplicate =
+      std::numeric_limits<chain::BlockIndex>::max();
+
+  for (auto const &tx_layout : transactions)
+  {
+    auto const valid_until = tx_layout.valid_until();
+
+    auto const default_valid_from =
+        valid_until >= chain::Transaction::MAXIMUM_TX_VALIDITY_PERIOD
+            ? (valid_until - chain::Transaction::MAXIMUM_TX_VALIDITY_PERIOD)
+            : 0;
+
+    auto const from_calculated = std::max(tx_layout.valid_from(), default_valid_from);
+
+    if (bloom_filter_.Match(tx_layout.digest(), from_calculated, valid_until))
+    {
+      potential_duplicates.insert(tx_layout.digest());
+      earliest_possible_block_with_duplicate =
+          std::min(from_calculated, earliest_possible_block_with_duplicate);
+    }
+
+    if (!suppress_telemetry)
+    {
+      bloom_filter_query_count_->increment();
+    }
+  }
+
+  // filter the potential duplicates by traversing back down the chain (continue where left off)
+  uint64_t blocks_walked = 0;
+
+  // Need to start walk on the disk
+  if (!block->IsGenesis() && !LookupBlock(block->previous_hash, block))
+  {
+    FETCH_LOG_ERROR(LOGGING_NAME, "Failed to find block on disk when going from cache");
+    return all_digests;
+  }
+
+  for (;; blocks_walked++)
   {
     // Traversing the chain fully is costly: break out early if we know the transactions are all
     // duplicated (or both sets are empty)
-    if (potential_duplicates.size() == duplicates.size())
+    if (potential_duplicates.size() == duplicates_disk.size())
     {
       break;
     }
@@ -2048,26 +2130,45 @@ DigestSet MainChain::DetectDuplicateTransactions(BlockHash const &           sta
       {
         if (potential_duplicates.find(tx.digest()) != potential_duplicates.end())
         {
+          duplicates_disk.insert(tx.digest());
           duplicates.insert(tx.digest());
         }
       }
     }
 
     // exit the search loop if we have reached the last possible point to search back in time
-    if (last_block_num == block->block_number)
+    if (earliest_possible_block_with_duplicate == block->block_number)
     {
       break;
     }
 
-    // exit the loop once we can no longer find the block
-    if (!LookupBlock(block->previous_hash, block))
+    // exit if we hit genesis
+    if (block->IsGenesis())
     {
       break;
+    }
+
+    // If we cannot find a block this is an error
+    if (!LookupBlock(block->previous_hash, block))
+    {
+      FETCH_LOG_ERROR(LOGGING_NAME,
+                      "When doing a chain walk for duplicates, prev block is missing!");
+      return all_digests;
     }
   }
 
-  bloom_filter_false_positive_count_->add(potential_duplicates.size() - duplicates.size());
-  bloom_filter_positive_count_->add(duplicates.size());
+  if (duplicates_disk.size() > potential_duplicates.size())
+  {
+    FETCH_LOG_ERROR(LOGGING_NAME, "More duplicates found on disk than expected!");
+    return all_digests;
+  }
+
+  if (!suppress_telemetry)
+  {
+    bloom_filter_false_positive_count_->add(potential_duplicates.size() - duplicates_disk.size());
+    bloom_filter_walk_count_->add(blocks_walked);
+    bloom_filter_positive_count_->add(duplicates_disk.size());
+  }
 
   return duplicates;
 }

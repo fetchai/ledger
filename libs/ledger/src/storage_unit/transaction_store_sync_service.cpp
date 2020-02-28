@@ -76,7 +76,8 @@ TransactionStoreSyncService::TransactionStoreSyncService(Config const &cfg, Mudd
                                                          TransactionStorageEngineInterface &store,
                                                          TxFinderProtocol *tx_finder_protocol,
                                                          TrimCacheCallback trim_cache_callback)
-  : trim_cache_callback_(std::move(trim_cache_callback))
+  : recently_seen_txs_(RECENTLY_SEEN_CACHE_SIZE)
+  , trim_cache_callback_(std::move(trim_cache_callback))
   , state_machine_{std::make_shared<core::StateMachine<State>>("TransactionStoreSyncService",
                                                                State::INITIAL)}
   , tx_finder_protocol_(tx_finder_protocol)
@@ -101,6 +102,9 @@ TransactionStoreSyncService::TransactionStoreSyncService(Config const &cfg, Mudd
   , subtree_failure_total_{telemetry::Registry::Instance().CreateCounter(
         "ledger_tx_store_sync_service_subtree_failure_total",
         "The total number of subtree request failures observed")}
+  , tss_duplicates_dropped_{telemetry::Registry::Instance().CreateCounter(
+        "ledger_tx_store_sync_service_tss_duplicates_dropped_total",
+        "The total number of duplicate TXs dropped during syncing")}
   , current_tss_state_{telemetry::Registry::Instance().CreateGauge<uint64_t>(
         "current_tss_state", "The state in the state machine of the tx store")}
   , current_tss_peers_{telemetry::Registry::Instance().CreateGauge<uint64_t>(
@@ -438,8 +442,16 @@ TransactionStoreSyncService::State TransactionStoreSyncService::OnResolvingObjec
 
     for (auto &tx : result.promised)
     {
-      verifier_.AddTransaction(std::make_shared<chain::Transaction>(tx));
-      ++synced_tx;
+      if (AlreadySeen(tx))
+      {
+        FETCH_LOG_DEBUG(LOGGING_NAME, "Dropping already seen transaction");
+        tss_duplicates_dropped_->add(1);
+      }
+      else
+      {
+        verifier_.AddTransaction(std::make_shared<chain::Transaction>(tx));
+        ++synced_tx;
+      }
     }
   }
 
@@ -492,6 +504,28 @@ void TransactionStoreSyncService::OnTransaction(TransactionPtr const &tx)
     store_.Add(*tx, true);
     stored_transactions_->increment();
   }
+}
+
+bool TransactionStoreSyncService::AlreadySeen(chain::Transaction const &tx)
+{
+  auto const &digest = tx.digest();
+  bool        result{false};
+
+  if (store_.Has(digest))
+  {
+    result = true;
+  }
+
+  if (recently_seen_txs_.Seen(digest))
+  {
+    result = true;
+  }
+  else
+  {
+    recently_seen_txs_.Add(digest);
+  }
+
+  return result;
 }
 
 }  // namespace ledger

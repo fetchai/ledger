@@ -58,6 +58,7 @@ public:
 
   void Start()
   {
+    FETCH_LOCK(is_open_mutex_);
     is_open_ = true;
     ReadHeader();
   }
@@ -115,6 +116,7 @@ public:
       {
         if (request->ParseHeader(*buffer_ptr, len))
         {
+          FETCH_LOCK(is_open_mutex_);
           if (is_open_)
           {
             ReadBody(buffer_ptr, request);
@@ -142,6 +144,7 @@ public:
       // push the request to the main server
       manager_.PushRequest(handle_, *request);
 
+      FETCH_LOCK(is_open_mutex_);
       if (is_open_)
       {
         ReadHeader(buffer_ptr);
@@ -161,6 +164,7 @@ public:
         return;
       }
 
+      FETCH_LOCK(is_open_mutex_);
       if (is_open_)
       {
         ReadBody(buffer_ptr, request);
@@ -201,6 +205,7 @@ public:
           write_more = !write_queue_.empty();
         }
 
+        FETCH_LOCK(is_open_mutex_);
         if (is_open_ && write_more)
         {
           Write();
@@ -212,11 +217,18 @@ public:
       }
     };
 
-    asio::async_write(socket_, *buffer_ptr, cb);
+    FETCH_LOCK(is_open_mutex_);
+
+    if (is_open_)
+    {
+      asio::async_write(socket_, *buffer_ptr, cb);
+    }
   }
 
   void CloseConnnection() override
   {
+    FETCH_LOCK(is_open_mutex_);
+    is_open_ = false;
     std::error_code dummy;
     socket_.shutdown(asio::ip::tcp::socket::shutdown_both, dummy);
     socket_.close(dummy);
@@ -224,7 +236,6 @@ public:
 
   void Close()
   {
-    is_open_ = false;
     // CloseConnnection();
     manager_.Leave(handle_);
   }
@@ -235,12 +246,15 @@ public:
   }
 
 private:
+  using RMutex = std::recursive_mutex;
+
   asio::ip::tcp::tcp::socket socket_;
   HTTPConnectionManager &    manager_;
   ResponseQueueType          write_queue_;
-  Mutex                      write_mutex_;
+  RMutex                     write_mutex_;
 
   HandleType handle_{};
+  RMutex     is_open_mutex_;
   bool       is_open_ = false;
 };
 }  // namespace http
