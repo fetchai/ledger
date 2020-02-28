@@ -317,16 +317,15 @@ OperationsCount MatrixMultiply<T>::ChargeBackward() const
 
   assert(this->batch_input_shapes_.size() == 2);
 
-  OperationsCount const n = this->batch_input_shapes_.front().at(0);
-  OperationsCount const m = this->batch_input_shapes_.back().at(0);
-  OperationsCount const p = 1;
+  OperationsCount const input_1_dim_1 = this->batch_input_shapes_.front().at(0);
+  OperationsCount const input_1_dim_2 = this->batch_input_shapes_.front().at(1);
+  OperationsCount const input_2_dim_1 = this->batch_input_shapes_.back().at(0);
+  OperationsCount const input_2_dim_2 = this->batch_input_shapes_.back().at(1);
 
-  OperationsCount const cost =
-      n * m * p * fetch::ml::charge_estimation::ops::MULTIPLICATION_PER_ELEMENT +
-      fetch::ml::charge_estimation::ops::ADDITION_PER_ELEMENT *
-          this->TotalElementsIn({this->batch_input_shapes_});
-  ;
-  return cost;
+  OperationsCount op_cnt = 500;  // set up overhead
+  op_cnt += input_1_dim_1 * input_1_dim_2 * input_2_dim_1 * input_2_dim_2 * fetch::ml::charge_estimation::ops::MULTIPLICATION_PER_ELEMENT;
+
+  return op_cnt;
 }
 
 template <typename T>
