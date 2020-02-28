@@ -138,7 +138,7 @@ void Registry::Collect(std::ostream &stream)
 {
   OutputStream telemetry_stream{stream};
 
-  FETCH_LOCK(lock_);
+  std::lock_guard<std::mutex> guard(lock_);
   for (auto const &named_cell : measurements_)
   {
     for (auto const &measurement : named_cell.second)

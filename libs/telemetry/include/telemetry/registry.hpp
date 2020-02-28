@@ -17,7 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/mutex.hpp"
 #include "meta/containers/set_element.hpp"
 #include "telemetry/measurement.hpp"
 #include "telemetry/telemetry.hpp"
@@ -99,7 +98,7 @@ private:
   template <class M, class... Args>
   std::shared_ptr<M> Insert(std::string const &name, Args &&... args)
   {
-    FETCH_LOCK(lock_);
+    std::lock_guard<std::mutex> guard(lock_);
 
     auto &          named_cell = measurements_[name];
     std::type_index type{typeid(M)};
@@ -114,8 +113,8 @@ private:
     return ret_val;
   }
 
-  mutable Mutex lock_;
-  Measurements  measurements_;
+  mutable std::mutex lock_;
+  Measurements       measurements_;
 };
 
 /**
@@ -149,14 +148,14 @@ Registry::GaugePtr<T> Registry::CreateGauge(std::string name, std::string descri
 template <typename T>
 std::shared_ptr<T> Registry::LookupMeasurement(std::string const &name) const
 {
-  FETCH_LOCK(lock_);
-  auto named_cell = measurements_.find(name);
+  std::lock_guard<std::mutex> guard(lock_);
+  auto                        named_cell = measurements_.find(name);
   if (named_cell == measurements_.end())
   {
     return {};
   }
 
-  return core::Lookup(named_cell->second, std::type_index(typeid(T)));
+  return std::dynamic_pointer_cast<T>(meta::Lookup(named_cell->second, std::type_index(typeid(T))));
 }
 
 }  // namespace telemetry
