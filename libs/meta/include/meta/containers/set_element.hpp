@@ -42,15 +42,31 @@ Value ValueFrom(Value const &element)
   return element;
 }
 
+class ValueType
+{
+  template <class Container>
+  static constexpr typename Container::mapped_type MappedType(Container &&) noexcept;
+  template <class Container, class... ImaginaryArgs>
+  static constexpr typename Container::value_type MappedType(Container &&,
+                                                             ImaginaryArgs &&...) noexcept;
+
+public:
+  template <class Container>
+  using type = decltype(MappedType(std::declval<Container>()));
+};
+
+template <class Container>
+using ValueTypeT = ValueType::type<Container>;
+
 }  // namespace detail_
 
-template <typename Container, typename Key, typename Value = typename Container::mapped_type>
+template <typename Container, typename Key, typename Value = detail_::ValueTypeT<Container>>
 Value Lookup(Container const &container, Key const &key, Value default_value = {})
 {
   auto it = container.find(key);
   if (it == container.end())
   {
-    return default_value;
+    return std::move(default_value);
   }
 
   return detail_::ValueFrom<Value>(*it);
