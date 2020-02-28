@@ -112,36 +112,39 @@ const char *Flatten<TensorType>::Descriptor() const
 }
 
 template <class TensorType>
-OperationsCount Flatten<TensorType>::ChargeForward() const
+std::pair<OperationsCount, math::SizeVector> Flatten<TensorType>::ChargeForward(
+    std::vector<math::SizeVector> const &input_shapes)
 {
   assert(!this->batch_input_shapes_.empty());
 
-  OperationsCount cost = fetch::ml::charge_estimation::ops::OP_OVERHEAD;
+  OperationsCount op_cnt = fetch::ml::charge_estimation::ops::OP_OVERHEAD;
 
   auto padded_size = TensorType::PaddedSizeFromShape(this->batch_input_shapes_.front());
 
   if (padded_size < fetch::ml::charge_estimation::ops::PIECEWISE_LOWER_THRESHOLD)
   {
-    cost += fetch::ml::charge_estimation::ops::LOW_FLATTEN_PER_ELEMENT *
-            TensorType::ChargeIterate(this->batch_input_shapes_.front());
+    op_cnt += fetch::ml::charge_estimation::ops::LOW_FLATTEN_PER_ELEMENT *
+            TensorType::ChargeIterate(input_shapes.front());
   }
   else if (padded_size < fetch::ml::charge_estimation::ops::PIECEWISE_HARD_CAP)
   {
-    cost += fetch::ml::charge_estimation::ops::HIGH_FLATTEN_PER_ELEMENT *
-            TensorType::ChargeIterate(this->batch_input_shapes_.front());
+    op_cnt += fetch::ml::charge_estimation::ops::HIGH_FLATTEN_PER_ELEMENT *
+            TensorType::ChargeIterate(input_shapes.front());
   }
   else
   {
-    cost = math::numeric_max<OperationsCount>();
+    op_cnt = math::numeric_max<OperationsCount>();
   }
 
-  return cost;
+  auto output_shape = ComputeOutputShape(input_shapes);
+  return std::make_pair(op_cnt, output_shape);
 }
 
 template <class TensorType>
 OperationsCount Flatten<TensorType>::ChargeBackward() const
 {
   assert(!this->batch_input_shapes_.empty());
+
   OperationsCount cost = fetch::ml::charge_estimation::ops::RESHAPE_PER_ELEMENT *
                              this->TotalElementsIn(this->batch_input_shapes_) +
                          fetch::ml::charge_estimation::ops::ASSIGN_PER_ELEMENT *

@@ -180,17 +180,20 @@ std::vector<math::SizeType> AvgPool1D<TensorType>::ComputeOutputShape(
 }
 
 template <typename TensorType>
-OperationsCount AvgPool1D<TensorType>::ChargeForward() const
+std::pair<OperationsCount, math::SizeVector> AvgPool1D<TensorType>::ChargeForward(
+    std::vector<math::SizeVector> const &input_shapes)
 {
   assert(!this->batch_output_shape_.empty());
   OperationsCount num_output_shape_ops = this->batch_output_shape_.at(0) *
                                          this->batch_output_shape_.at(1) *
                                          this->batch_output_shape_.at(2);
-  OperationsCount cost =
+  OperationsCount op_cnt =
       fetch::ml::charge_estimation::ops::DIVISION_PER_ELEMENT * num_output_shape_ops +
       fetch::ml::charge_estimation::ops::ADDITION_PER_ELEMENT * num_output_shape_ops *
           this->kernel_size_;
-  return cost;
+
+  auto output_shape = ComputeOutputShape(input_shapes);
+  return std::make_pair(op_cnt, output_shape);
 }
 
 template <typename TensorType>

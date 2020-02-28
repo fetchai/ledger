@@ -108,12 +108,16 @@ std::vector<fetch::math::SizeType> OneHot<T>::ComputeOutputShape(
 }
 
 template <typename TensorType>
-OperationsCount OneHot<TensorType>::ChargeForward() const
+std::pair<OperationsCount, math::SizeVector> OneHot<TensorType>::ChargeForward(
+    std::vector<math::SizeVector> const &input_shapes)
 {
   assert(!this->batch_input_shapes_.empty());
-  OperationsCount cost = fetch::ml::charge_estimation::ops::ONE_HOT_PER_ELEMENT *
-                         this->TotalElementsIn({this->batch_input_shapes_});
-  return cost;
+
+  OperationsCount op_cnt = fetch::ml::charge_estimation::ops::ONE_HOT_PER_ELEMENT *
+                           TensorType::SizeFromShape(input_shapes[0]);
+
+  auto output_shape = ComputeOutputShape(input_shapes);
+  return std::make_pair(op_cnt, output_shape);
 }
 
 template <typename TensorType>

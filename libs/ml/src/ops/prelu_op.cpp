@@ -135,12 +135,16 @@ std::vector<math::SizeType> PReluOp<TensorType>::ComputeOutputShape(
 }
 
 template <typename TensorType>
-OperationsCount PReluOp<TensorType>::ChargeForward() const
+std::pair<OperationsCount, math::SizeVector> PReluOp<TensorType>::ChargeForward(
+    std::vector<math::SizeVector> const &input_shapes)
 {
   assert(!this->batch_input_shapes_.empty());
-  OperationsCount cost = fetch::ml::charge_estimation::ops::LEAKY_RELU_PER_ELEMENT *
-                         this->TotalElementsIn({this->batch_input_shapes_});
-  return cost;
+
+  OperationsCount op_cnt = fetch::ml::charge_estimation::ops::LEAKY_RELU_PER_ELEMENT *
+                           TensorType::SizeFromShape(input_shapes[0]);
+
+  auto output_shape = ComputeOutputShape(input_shapes);
+  return std::make_pair(op_cnt, output_shape);
 }
 
 template <typename TensorType>

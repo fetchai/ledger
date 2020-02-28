@@ -73,7 +73,8 @@ public:
 
   void Compile() override;
 
-  OperationsCount ChargeForward() const override;
+  std::pair<OperationsCount, math::SizeVector> ChargeForward(
+      std::vector<math::SizeVector> const &input_shapes) override;
   OperationsCount ChargeBackward() const override;
 
 private:

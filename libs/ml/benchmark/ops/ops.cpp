@@ -1791,8 +1791,12 @@ void BM_FlattenForward(benchmark::State &state)
   BM_Tensor_config config{state};
 
   fetch::math::Tensor<T> input(config.shape);
-  SizeType               output_size  = fetch::math::Product(config.shape);
-  std::vector<SizeType>  output_shape = {output_size, 1};
+  SizeType output_size = 1;
+  for (std::size_t i = 0; i < config.shape.size() - 1; ++i)
+  {
+    output_size *= config.shape.at(i);
+  }
+  std::vector<SizeType>  output_shape = {output_size, config.shape.at(config.shape.size() - 1)};
   fetch::math::Tensor<T> output(output_shape);
 
   // Fill tensors with random values
@@ -1805,7 +1809,8 @@ void BM_FlattenForward(benchmark::State &state)
 
   flatten.SetBatchInputShapes({config.shape});
   flatten.SetBatchOutputShape(output_shape);
-  state.counters["charge"] = static_cast<double>(flatten.ChargeForward());
+  auto cost_and_shape = flatten.ChargeForward({config.shape});
+  state.counters["charge"] = static_cast<double>(cost_and_shape.first);
   for (auto _ : state)
   {
     flatten.Forward(inputs, output);
@@ -2236,15 +2241,18 @@ BENCHMARK_TEMPLATE(BM_MaskFillBackward, fetch::fixed_point::fp128_t, 2048)
 BENCHMARK_TEMPLATE(BM_MaskFillBackward, fetch::fixed_point::fp128_t, 4096)
     ->Unit(benchmark::kMicrosecond);
 
-template <typename T, int F, int N, int B>
+template <typename T>
 void BM_MatrixMultiply_Forward(benchmark::State &state)
 {
   using TensorType    = typename fetch::math::Tensor<T>;
   using VecTensorType = typename fetch::ml::ops::Ops<TensorType>::VecTensorType;
 
-  fetch::math::Tensor<T> input_1({F, N, B});
-  fetch::math::Tensor<T> input_2({F, N, B});
-  fetch::math::Tensor<T> output({F, N, B});
+  // Get args form state
+  BM_Tensor_config config{state};
+
+  fetch::math::Tensor<T> input_1({config.shape.at(0), config.shape.at(1), config.shape.at(2)});
+  fetch::math::Tensor<T> input_2({config.shape.at(1), config.shape.at(0), config.shape.at(2)});
+  fetch::math::Tensor<T> output({config.shape.at(0), config.shape.at(0), config.shape.at(2)});
 
   // Fill tensors with random values
   input_1.FillUniformRandom();
@@ -2256,74 +2264,64 @@ void BM_MatrixMultiply_Forward(benchmark::State &state)
   inputs.emplace_back(std::make_shared<TensorType>(input_2));
   fetch::ml::ops::MatrixMultiply<fetch::math::Tensor<T>> matmul;
 
+  auto cost_and_shape = matmul.ChargeForward({config.shape, config.shape});
+  state.counters["charge"] = static_cast<double>(cost_and_shape.first);
+
   for (auto _ : state)
   {
     matmul.Forward(inputs, output);
   }
 }
 
-BENCHMARK_TEMPLATE(BM_MatrixMultiply_Forward, float, 16, 16, 1)->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_MatrixMultiply_Forward, float, 16, 16, 10)->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_MatrixMultiply_Forward, float, 16, 16, 100)->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_MatrixMultiply_Forward, float, 256, 256, 1)->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_MatrixMultiply_Forward, float, 256, 256, 10)->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_MatrixMultiply_Forward, float, 256, 256, 100)->Unit(benchmark::kMillisecond);
 
-BENCHMARK_TEMPLATE(BM_MatrixMultiply_Forward, double, 16, 16, 1)->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_MatrixMultiply_Forward, double, 16, 16, 10)->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_MatrixMultiply_Forward, double, 16, 16, 100)->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_MatrixMultiply_Forward, double, 256, 256, 1)->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_MatrixMultiply_Forward, double, 256, 256, 10)->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_MatrixMultiply_Forward, double, 256, 256, 100)->Unit(benchmark::kMillisecond);
+// 2D data + 1D for batch size
+static void MatMulArguments(benchmark::internal::Benchmark *b)
+{
+  using SizeType                       = fetch::math::SizeType;
+  SizeType const            N_ELEMENTS = 3;
+  std::vector<std::int64_t> batch_size{1, 32, 128};
+  std::vector<std::int64_t> dim_size{2, 16, 128, 1024};
+  for (std::int64_t &i : batch_size)
+  {
+    for (std::int64_t &j : dim_size)
+    {
+      b->Args({N_ELEMENTS, j, 2, i});
+    }
+    for (std::int64_t &j : dim_size)
+    {
+      b->Args({N_ELEMENTS, 2, j, i});
+    }
+  }
+}
 
-BENCHMARK_TEMPLATE(BM_MatrixMultiply_Forward, fetch::fixed_point::fp32_t, 16, 16, 1)
-    ->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_MatrixMultiply_Forward, fetch::fixed_point::fp32_t, 16, 16, 10)
-    ->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_MatrixMultiply_Forward, fetch::fixed_point::fp32_t, 16, 16, 100)
-    ->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_MatrixMultiply_Forward, fetch::fixed_point::fp32_t, 256, 256, 1)
-    ->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_MatrixMultiply_Forward, fetch::fixed_point::fp32_t, 256, 256, 10)
-    ->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_MatrixMultiply_Forward, fetch::fixed_point::fp32_t, 256, 256, 100)
-    ->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_MatrixMultiply_Forward, float)
+    ->Apply(MatMulArguments)
+    ->Unit(::benchmark::kNanosecond);
+BENCHMARK_TEMPLATE(BM_MatrixMultiply_Forward, double)
+    ->Apply(MatMulArguments)
+    ->Unit(::benchmark::kNanosecond);
+BENCHMARK_TEMPLATE(BM_MatrixMultiply_Forward, fetch::fixed_point::fp32_t)
+    ->Apply(MatMulArguments)
+    ->Unit(::benchmark::kNanosecond);
+BENCHMARK_TEMPLATE(BM_MatrixMultiply_Forward, fetch::fixed_point::fp64_t)
+    ->Apply(MatMulArguments)
+    ->Unit(::benchmark::kNanosecond);
+BENCHMARK_TEMPLATE(BM_MatrixMultiply_Forward, fetch::fixed_point::fp128_t)
+    ->Apply(MatMulArguments)
+    ->Unit(::benchmark::kNanosecond);
 
-BENCHMARK_TEMPLATE(BM_MatrixMultiply_Forward, fetch::fixed_point::fp64_t, 16, 16, 1)
-    ->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_MatrixMultiply_Forward, fetch::fixed_point::fp64_t, 16, 16, 10)
-    ->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_MatrixMultiply_Forward, fetch::fixed_point::fp64_t, 16, 16, 100)
-    ->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_MatrixMultiply_Forward, fetch::fixed_point::fp64_t, 256, 256, 1)
-    ->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_MatrixMultiply_Forward, fetch::fixed_point::fp64_t, 256, 256, 10)
-    ->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_MatrixMultiply_Forward, fetch::fixed_point::fp64_t, 256, 256, 100)
-    ->Unit(benchmark::kMillisecond);
-
-BENCHMARK_TEMPLATE(BM_MatrixMultiply_Forward, fetch::fixed_point::fp128_t, 16, 16, 1)
-    ->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_MatrixMultiply_Forward, fetch::fixed_point::fp128_t, 16, 16, 10)
-    ->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_MatrixMultiply_Forward, fetch::fixed_point::fp128_t, 16, 16, 100)
-    ->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_MatrixMultiply_Forward, fetch::fixed_point::fp128_t, 256, 256, 1)
-    ->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_MatrixMultiply_Forward, fetch::fixed_point::fp128_t, 256, 256, 10)
-    ->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_MatrixMultiply_Forward, fetch::fixed_point::fp128_t, 256, 256, 100)
-    ->Unit(benchmark::kMillisecond);
-
-template <class T, int F, int N, int B>
+template <typename T>
 void BM_MatrixMultiply_Backward(benchmark::State &state)
 {
   using TensorType    = typename fetch::math::Tensor<T>;
   using VecTensorType = typename fetch::ml::ops::Ops<TensorType>::VecTensorType;
 
-  fetch::math::Tensor<T> input_1({F, N, B});
-  fetch::math::Tensor<T> input_2({F, N, B});
-  fetch::math::Tensor<T> err_sig({F, N, B});
+  // Get args form state
+  BM_Tensor_config config{state};
+
+  fetch::math::Tensor<T> input_1({config.shape.at(0), config.shape.at(1), config.shape.at(2)});
+  fetch::math::Tensor<T> input_2({config.shape.at(1), config.shape.at(0), config.shape.at(2)});
+  fetch::math::Tensor<T> err_sig({config.shape.at(0), config.shape.at(0), config.shape.at(2)});
 
   // Fill tensors with random values
   input_1.FillUniformRandom();
@@ -2335,65 +2333,30 @@ void BM_MatrixMultiply_Backward(benchmark::State &state)
   inputs.emplace_back(std::make_shared<TensorType>(input_2));
   fetch::ml::ops::MatrixMultiply<fetch::math::Tensor<T>> matmul;
 
+  auto cost = matmul.ChargeBackward();
+  state.counters["charge"] = static_cast<double>(cost);
+
   for (auto _ : state)
   {
     matmul.Backward(inputs, err_sig);
   }
 }
 
-BENCHMARK_TEMPLATE(BM_MatrixMultiply_Backward, float, 16, 16, 1)->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_MatrixMultiply_Backward, float, 16, 16, 10)->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_MatrixMultiply_Backward, float, 16, 16, 100)->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_MatrixMultiply_Backward, float, 256, 256, 1)->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_MatrixMultiply_Backward, float, 256, 256, 10)->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_MatrixMultiply_Backward, float, 256, 256, 100)->Unit(benchmark::kMillisecond);
-
-BENCHMARK_TEMPLATE(BM_MatrixMultiply_Backward, double, 16, 16, 1)->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_MatrixMultiply_Backward, double, 16, 16, 10)->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_MatrixMultiply_Backward, double, 16, 16, 100)->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_MatrixMultiply_Backward, double, 256, 256, 1)->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_MatrixMultiply_Backward, double, 256, 256, 10)->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_MatrixMultiply_Backward, double, 256, 256, 100)
-    ->Unit(benchmark::kMillisecond);
-
-BENCHMARK_TEMPLATE(BM_MatrixMultiply_Backward, fetch::fixed_point::fp32_t, 16, 16, 1)
-    ->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_MatrixMultiply_Backward, fetch::fixed_point::fp32_t, 16, 16, 10)
-    ->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_MatrixMultiply_Backward, fetch::fixed_point::fp32_t, 16, 16, 100)
-    ->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_MatrixMultiply_Backward, fetch::fixed_point::fp32_t, 256, 256, 1)
-    ->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_MatrixMultiply_Backward, fetch::fixed_point::fp32_t, 256, 256, 10)
-    ->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_MatrixMultiply_Backward, fetch::fixed_point::fp32_t, 256, 256, 100)
-    ->Unit(benchmark::kMillisecond);
-
-BENCHMARK_TEMPLATE(BM_MatrixMultiply_Backward, fetch::fixed_point::fp64_t, 16, 16, 1)
-    ->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_MatrixMultiply_Backward, fetch::fixed_point::fp64_t, 16, 16, 10)
-    ->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_MatrixMultiply_Backward, fetch::fixed_point::fp64_t, 16, 16, 100)
-    ->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_MatrixMultiply_Backward, fetch::fixed_point::fp64_t, 256, 256, 1)
-    ->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_MatrixMultiply_Backward, fetch::fixed_point::fp64_t, 256, 256, 10)
-    ->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_MatrixMultiply_Backward, fetch::fixed_point::fp64_t, 256, 256, 100)
-    ->Unit(benchmark::kMillisecond);
-
-BENCHMARK_TEMPLATE(BM_MatrixMultiply_Backward, fetch::fixed_point::fp128_t, 16, 16, 1)
-    ->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_MatrixMultiply_Backward, fetch::fixed_point::fp128_t, 16, 16, 10)
-    ->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_MatrixMultiply_Backward, fetch::fixed_point::fp128_t, 16, 16, 100)
-    ->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_MatrixMultiply_Backward, fetch::fixed_point::fp128_t, 256, 256, 1)
-    ->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_MatrixMultiply_Backward, fetch::fixed_point::fp128_t, 256, 256, 10)
-    ->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_MatrixMultiply_Backward, fetch::fixed_point::fp128_t, 256, 256, 100)
-    ->Unit(benchmark::kMillisecond);
+BENCHMARK_TEMPLATE(BM_MatrixMultiply_Backward, float)
+    ->Apply(MatMulArguments)
+    ->Unit(::benchmark::kNanosecond);
+BENCHMARK_TEMPLATE(BM_MatrixMultiply_Backward, double)
+    ->Apply(MatMulArguments)
+    ->Unit(::benchmark::kNanosecond);
+BENCHMARK_TEMPLATE(BM_MatrixMultiply_Backward, fetch::fixed_point::fp32_t)
+    ->Apply(MatMulArguments)
+    ->Unit(::benchmark::kNanosecond);
+BENCHMARK_TEMPLATE(BM_MatrixMultiply_Backward, fetch::fixed_point::fp64_t)
+    ->Apply(MatMulArguments)
+    ->Unit(::benchmark::kNanosecond);
+BENCHMARK_TEMPLATE(BM_MatrixMultiply_Backward, fetch::fixed_point::fp128_t)
+    ->Apply(MatMulArguments)
+    ->Unit(::benchmark::kNanosecond);
 
 template <class T, int N, int K, int S>
 void BM_MaxPool1DForward(benchmark::State &state)
