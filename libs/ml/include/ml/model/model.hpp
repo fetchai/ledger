@@ -122,8 +122,6 @@ public:
       OptimiserType optimiser_type, ops::LossType loss_type,
       std::vector<ops::MetricType> const &metrics) const;
 
-  void Layers() const;
-
 protected:
   ModelConfig<DataType> model_config_;
   GraphPtrType          graph_ptr_ = std::make_shared<GraphType>();

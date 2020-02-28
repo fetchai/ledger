@@ -31,7 +31,6 @@ class Module;
 }
 
 namespace ml {
-
 namespace dataloaders {
 template <typename TensorType>
 class TensorDataLoader;
@@ -262,8 +261,6 @@ public:
                                                      math::SizeType const &data_points, bool stub);
 
   SequentialModelPtr GetMeAsSequentialIfPossible();
-
-  void Layers();
 
 private:
   ModelPtrType       model_;

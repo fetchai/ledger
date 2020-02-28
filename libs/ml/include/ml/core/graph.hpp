@@ -133,7 +133,6 @@ public:
   /// public setters and accessors ///
   ////////////////////////////////////
 
-  std::vector<NodePtrType>      GetNodes() const;
   NodePtrType                   GetNode(std::string const &node_name) const;
   std::vector<std::string>      GetNodeNames();
   std::vector<TensorType>       GetWeightsReferences() const;

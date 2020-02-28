@@ -590,14 +590,6 @@ OperationsCount Model<TensorType>::ChargeCompile(OptimiserType                  
   return op_cnt;
 }
 
-
-template <typename TensorType>
-std::vector<> Model<TensorType>::Layers() const
-{
-  return graph_ptr_->GetNode();
-}
-
-
 ///////////////////////////////
 /// EXPLICIT INSTANTIATIONS ///
 ///////////////////////////////

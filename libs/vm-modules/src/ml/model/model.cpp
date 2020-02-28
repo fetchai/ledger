@@ -545,12 +545,6 @@ VMModel::SequentialModelPtr VMModel::GetMeAsSequentialIfPossible()
   return sequential_ptr;
 }
 
-void VMModel::Layers()
-{
-  return model_->Layers();
-}
-
-
 void VMModel::LayerAddDense(fetch::vm::Ptr<fetch::vm::String> const &layer,
                             math::SizeType const &inputs, math::SizeType const &hidden_nodes)
 {
