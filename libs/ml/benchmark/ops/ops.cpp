@@ -1785,7 +1785,7 @@ void BM_FlattenForward(benchmark::State &state)
 {
   using TensorType    = typename fetch::math::Tensor<T>;
   using VecTensorType = typename fetch::ml::ops::Ops<TensorType>::VecTensorType;
-  using SizeType      = typename fetch::math::SizeType;
+  using SizeType      = fetch::math::SizeType;
 
   // Get args form state
   BM_Tensor_config config{state};
@@ -1815,7 +1815,7 @@ void BM_FlattenForward(benchmark::State &state)
 // 2D data + 1D for batch size
 static void FlattenArguments(benchmark::internal::Benchmark *b)
 {
-  using SizeType                       = typename fetch::math::SizeType;
+  using SizeType                       = fetch::math::SizeType;
   SizeType const            N_ELEMENTS = 3;
   std::vector<std::int64_t> batch_size{1, 32, 128};
   std::vector<std::int64_t> dim_size{2, 128, 8192, 65536, 524288};
