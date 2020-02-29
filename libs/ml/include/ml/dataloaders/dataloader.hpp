@@ -67,6 +67,9 @@ public:
 
   virtual LoaderType LoaderCode() = 0;
 
+  std::pair<math::SizeVector, std::vector<math::SizeVector>> GetDataSize(
+      SizeType const &batch_size = 0);
+
 protected:
   virtual void              UpdateCursor()  = 0;
   std::shared_ptr<SizeType> current_cursor_ = std::make_shared<SizeType>(0);

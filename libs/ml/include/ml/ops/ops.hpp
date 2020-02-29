@@ -23,6 +23,7 @@
 #include "ml/charge_estimation/ops/constants.hpp"
 #include "ml/exceptions/exceptions.hpp"
 #include "ml/saveparams/saveable_params.hpp"
+#include "ml/utilities/utils.hpp"
 
 #include <functional>
 #include <memory>
@@ -52,11 +53,9 @@ public:
   virtual void                    Forward(VecTensorType const &inputs, TensorType &output) = 0;
   virtual std::vector<TensorType> Backward(VecTensorType const &inputs,
                                            TensorType const &   error_signal)                 = 0;
-  /*
-   * ComputeOutputShape is usually expensive function and should be used only for initialisation or
-   * in ASSERT. On Forward you can use output.shape() and on Backward there is error_signal.shape()
-   */
-  virtual std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const = 0;
+
+  virtual std::vector<SizeType> ComputeOutputShape(
+      std::vector<math::SizeVector> const &inputs) const = 0;
 
   /**
    * @brief ComputeBatchOutputShape is expensive function and should be used only for
@@ -67,13 +66,7 @@ public:
    */
   virtual std::vector<SizeType> ComputeBatchOutputShape(ShapeVector const &input_shapes)
   {
-    VecTensorType dummies;
-    dummies.reserve(input_shapes.size());
-    for (auto &shape : input_shapes)
-    {
-      dummies.emplace_back(std::make_shared<TensorType>(shape));
-    }
-    SetBatchOutputShape(ComputeOutputShape(dummies));
+    SetBatchOutputShape(ComputeOutputShape(input_shapes));
     SetBatchInputShapes(input_shapes);
     return batch_output_shape_;
   }
@@ -118,7 +111,7 @@ public:
   }
 
   /**
-   * @brief BatchOutputShape returns an output shape of the layer, if a singluar slice of an input
+   * @brief BatchOutputShape returns an output shape of the layer, if a singular slice of an input
    * data is given (e.g. batch size == 1)
    */
   virtual Shape const &BatchOutputShape() const
@@ -167,15 +160,31 @@ public:
 
   /**
    * @brief ChargeForward
+   * This returns the cost *per-datapoint*, not the whole batch cost
    * @return estimated charge amount, necessary for performing a forward pass on data of given
    * shapes.
    */
   virtual OperationsCount ChargeForward() const
   {
-    // TODO(ML-483): make a pure virtual method after all Ops have their overrides;
+    // TODO(ML-526): Change all ChargeForward() to ChargeForward(input_shapes) and then remove this
+    // method
     FETCH_LOG_ERROR(Descriptor(),
                     " Error: call to unexisting ChargeForward() implementation! returned 0.");
-    return 0;
+
+    throw std::runtime_error("This shouldn't be called");
+  }
+
+  /**
+   * This returns the cost for the *whole* batch (not per-datapoint cost) and the shape of the Op
+   * output
+   */
+  virtual std::pair<OperationsCount, math::SizeVector> ChargeForward(
+      std::vector<math::SizeVector> const &input_shapes)
+  {
+    math::SizeVector output_shape = ComputeOutputShape(input_shapes);
+    // multiplying ChargeForward() by the batch dimension is correct for Ops that don't have
+    // a proper ChargeForward(input_size) implemented.
+    return std::make_pair(ChargeForward() * output_shape.back(), output_shape);
   }
 
   /**

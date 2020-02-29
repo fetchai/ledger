@@ -45,7 +45,7 @@ TYPED_TEST(LogTest, forward_all_positive_test)
 
   fetch::ml::ops::Log<TypeParam> op;
 
-  TypeParam prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
+  TypeParam prediction(op.ComputeOutputShape({data.shape()}));
   op.Forward({std::make_shared<const TensorType>(data)}, prediction);
 
   ASSERT_TRUE(prediction.AllClose(gt, fetch::math::function_tolerance<DataType>(),
@@ -61,7 +61,7 @@ TYPED_TEST(LogTest, forward_all_negative_test)
 
   fetch::ml::ops::Log<TypeParam> op;
 
-  TypeParam pred(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
+  TypeParam pred(op.ComputeOutputShape({data.shape()}));
   op.Forward({std::make_shared<const TensorType>(data)}, pred);
 
   // gives NaN because log of a negative number is undefined

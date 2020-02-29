@@ -62,7 +62,7 @@ template <typename TensorType>
 void Sqrt<TensorType>::Forward(VecTensorType const &inputs, TensorType &output)
 {
   assert(inputs.size() == 1);
-  assert(output.shape() == this->ComputeOutputShape(inputs));
+  assert(output.shape() == ComputeOutputShape(fetch::ml::utilities::TensorPtrsToSizes(inputs)));
 
   fetch::math::Sqrt((*inputs.at(0)), output);
 }
@@ -76,7 +76,8 @@ std::vector<TensorType> Sqrt<TensorType>::Backward(VecTensorType const &inputs,
                                                    TensorType const &   error_signal)
 {
   assert(inputs.size() == 1);
-  assert(error_signal.shape() == this->ComputeOutputShape(inputs));
+  assert(error_signal.shape() ==
+         ComputeOutputShape(fetch::ml::utilities::TensorPtrsToSizes(inputs)));
 
   TensorType ret_error_signal(inputs.at(0)->shape());
 
@@ -88,9 +89,10 @@ std::vector<TensorType> Sqrt<TensorType>::Backward(VecTensorType const &inputs,
 }
 
 template <typename TensorType>
-std::vector<math::SizeType> Sqrt<TensorType>::ComputeOutputShape(VecTensorType const &inputs) const
+std::vector<math::SizeType> Sqrt<TensorType>::ComputeOutputShape(
+    std::vector<math::SizeVector> const &inputs) const
 {
-  return inputs.front()->shape();
+  return inputs.front();
 }
 
 template <typename TensorType>

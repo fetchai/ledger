@@ -53,8 +53,7 @@ TYPED_TEST(AddTest, forward_test_NB_N1)
 
   fetch::ml::ops::Add<TensorType> op;
 
-  TypeParam prediction(op.ComputeOutputShape(
-      {std::make_shared<TensorType>(data_1), std::make_shared<TensorType>(data_2)}));
+  TypeParam prediction(op.ComputeOutputShape({data_1.shape(), data_2.shape()}));
   op.Forward({std::make_shared<TensorType>(data_1), std::make_shared<TensorType>(data_2)},
              prediction);
 
@@ -80,8 +79,7 @@ TYPED_TEST(AddTest, forward_test_NB_NB)
 
   fetch::ml::ops::Add<TensorType> op;
 
-  TypeParam prediction(op.ComputeOutputShape(
-      {std::make_shared<TensorType>(data_1), std::make_shared<TensorType>(data_2)}));
+  TypeParam prediction(op.ComputeOutputShape({data_1.shape(), data_2.shape()}));
   op.Forward({std::make_shared<TensorType>(data_1), std::make_shared<TensorType>(data_2)},
              prediction);
 
@@ -207,8 +205,7 @@ TYPED_TEST(AddTest, forward_2D_broadcast_test)
 
   fetch::ml::ops::Add<TensorType> op;
 
-  TypeParam prediction(op.ComputeOutputShape(
-      {std::make_shared<TensorType>(data_1), std::make_shared<TensorType>(data_2)}));
+  TypeParam prediction(op.ComputeOutputShape({data_1.shape(), data_2.shape()}));
   op.Forward({std::make_shared<TensorType>(data_1), std::make_shared<TensorType>(data_2)},
              prediction);
 

@@ -963,7 +963,7 @@ TEST_F(VMModelTests, model_with_metric)
 
   ASSERT_TRUE(toolkit.Compile(SRC_METRIC));
   Variant res;
-  EXPECT_TRUE(toolkit.Run(&res));
+  ASSERT_TRUE(toolkit.Run(&res));
 
   auto const metrics = res.Get<Ptr<Array<fetch::vm_modules::math::DataType>>>();
   EXPECT_EQ(metrics->elements.at(0), metrics->elements.at(1));

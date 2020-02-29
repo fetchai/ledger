@@ -49,7 +49,7 @@ TYPED_TEST(ReduceMeanTest, forward_2_2_2_test)
 
   fetch::ml::ops::ReduceMean<TypeParam> op(1);
 
-  TypeParam prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
+  TypeParam prediction(op.ComputeOutputShape({data.shape()}));
   op.Forward({std::make_shared<const TensorType>(data)}, prediction);
 
   ASSERT_EQ(prediction.shape().size(), 3);

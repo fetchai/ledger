@@ -407,9 +407,52 @@ bool Model<TensorType>::DataLoaderIsSet()
   return dataloader_ptr_->Size() != 0;
 }
 
+/**
+ * Calculates the cost for Forward when data is passed in (i.e. dataloader is not used)
+ * @tparam TensorType
+ * @param input_shape
+ * @return
+ */
 template <typename TensorType>
-OperationsCount Model<TensorType>::ChargeForward() const
+OperationsCount Model<TensorType>::ChargeForward(math::SizeVector const &input_shape) const
 {
+  auto input_node = graph_ptr_->GetNode(input_);
+  auto dataholder =
+      std::dynamic_pointer_cast<fetch::ml::ops::DataHolder<TensorType>>(input_node->GetOp());
+  dataholder->SetFutureDataShape(input_shape);
+  return this->graph_ptr_->ChargeForward(this->output_);
+}
+
+/**
+ * Calculates the cost for Forward when the dataloader is used and (optionally) a batch size is
+ * given
+ * @tparam TensorType
+ * @param batch_size
+ * @return
+ */
+template <typename TensorType>
+fetch::ml::OperationsCount Model<TensorType>::ChargeForward(Model::SizeType batch_size) const
+{
+  if (batch_size == 0)
+  {
+    batch_size = dataloader_ptr_->Size();
+  }
+
+  auto label_and_data_size = dataloader_ptr_->GetDataSize(batch_size);
+  auto label_size          = label_and_data_size.first;
+  auto data_size           = label_and_data_size.second.at(
+      0);  // there is assumed to be only one input for the graph in this model
+
+  auto input_node = graph_ptr_->GetNode(input_);
+  auto dataholder =
+      std::dynamic_pointer_cast<fetch::ml::ops::DataHolder<TensorType>>(input_node->GetOp());
+  dataholder->SetFutureDataShape(data_size);
+
+  auto label_node = graph_ptr_->GetNode(label_);
+  dataholder =
+      std::dynamic_pointer_cast<fetch::ml::ops::DataHolder<TensorType>>(label_node->GetOp());
+  dataholder->SetFutureDataShape(label_size);
+
   return this->graph_ptr_->ChargeForward(this->output_);
 }
 

@@ -74,8 +74,7 @@ TYPED_TEST(Convolution2DTest, set_input_and_evaluate_test)  // Use the class as 
   // Get ground truth
   auto                                      weights = conv.GetWeights();
   fetch::ml::ops::Convolution2D<TensorType> c;
-  TensorType                                gt(c.ComputeOutputShape(
-      {std::make_shared<TensorType>(input), std::make_shared<TensorType>(weights.at(0))}));
+  TensorType gt(c.ComputeOutputShape({input.shape(), weights.at(0).shape()}));
   c.Forward({std::make_shared<TensorType>(input), std::make_shared<TensorType>(weights.at(0))}, gt);
 
   // Test correct shape and values
@@ -110,14 +109,13 @@ TYPED_TEST(Convolution2DTest, ops_forward_test)  // Use the class as an Ops
   conv.CompleteShapeDeduction();                // necessary for out-of-Graph usage
   conv.Compile();                               // necessary for out-of-Graph usage
 
-  TensorType output(conv.ComputeOutputShape({std::make_shared<TensorType>(input)}));
+  TensorType output(conv.ComputeOutputShape({input.shape()}));
   conv.Forward({std::make_shared<TensorType>(input)}, output);
 
   // Get ground truth
   auto                                      weights = conv.GetWeights();
   fetch::ml::ops::Convolution2D<TensorType> c;
-  TensorType                                gt(c.ComputeOutputShape(
-      {std::make_shared<TensorType>(input), std::make_shared<TensorType>(weights.at(0))}));
+  TensorType gt(c.ComputeOutputShape({input.shape(), weights.at(0).shape()}));
   c.Forward({std::make_shared<TensorType>(input), std::make_shared<TensorType>(weights.at(0))}, gt);
 
   // Test correct shape and values
@@ -158,7 +156,7 @@ TYPED_TEST(Convolution2DTest, ops_backward_test)  // Use the class as an Ops
   conv.CompleteShapeDeduction();                // necessary for out-of-Graph usage
   conv.Compile();                               // necessary for out-of-Graph usage
 
-  TensorType output(conv.ComputeOutputShape({std::make_shared<TensorType>(input)}));
+  TensorType output(conv.ComputeOutputShape({input.shape()}));
   conv.Forward({std::make_shared<TensorType>(input)}, output);
 
   std::vector<TensorType> backprop_error =
@@ -221,8 +219,7 @@ TYPED_TEST(Convolution2DTest, conv2d_node_forward_test)  // Use the class as a N
       (std::dynamic_pointer_cast<fetch::ml::layers::Convolution2D<TensorType>>(conv.GetOp()))
           ->GetWeights();
   fetch::ml::ops::Convolution2D<TensorType> c;
-  TensorType                                gt(c.ComputeOutputShape(
-      {std::make_shared<TensorType>(input), std::make_shared<TensorType>(weights.at(0))}));
+  TensorType gt(c.ComputeOutputShape({input.shape(), weights.at(0).shape()}));
   c.Forward({std::make_shared<TensorType>(input), std::make_shared<TensorType>(weights.at(0))}, gt);
 
   // Test correct shape and values
@@ -325,8 +322,7 @@ TYPED_TEST(Convolution2DTest, graph_forward_test)  // Use the class as a Node
   // Get ground truth
   auto                                      weights = g.GetWeights();
   fetch::ml::ops::Convolution2D<TensorType> c;
-  TensorType                                gt(c.ComputeOutputShape(
-      {std::make_shared<TensorType>(input), std::make_shared<TensorType>(weights.at(0))}));
+  TensorType gt(c.ComputeOutputShape({input.shape(), weights.at(0).shape()}));
   c.Forward({std::make_shared<TensorType>(input), std::make_shared<TensorType>(weights.at(0))}, gt);
 
   EXPECT_EQ(prediction.shape(), gt.shape());

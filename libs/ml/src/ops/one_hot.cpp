@@ -69,7 +69,7 @@ template <typename T>
 void OneHot<T>::Forward(const VecTensorType &inputs, TensorType &output)
 {
   assert(inputs.size() == 1);
-  assert(output.shape() == this->ComputeOutputShape(inputs));
+  assert(output.shape() == ComputeOutputShape(fetch::ml::utilities::TensorPtrsToSizes(inputs)));
 
   fetch::math::OneHot(output, *(inputs.at(0)), depth_, axis_, on_value_, off_value_);
 }
@@ -80,7 +80,8 @@ std::vector<TensorType> OneHot<TensorType>::Backward(const VecTensorType &inputs
 {
   FETCH_UNUSED(error_signal);
   assert(inputs.size() == 1);
-  assert(error_signal.shape() == this->ComputeOutputShape(inputs));
+  assert(error_signal.shape() ==
+         ComputeOutputShape(fetch::ml::utilities::TensorPtrsToSizes(inputs)));
 
   // No derivative defined for OneHotOp
   return {TensorType{inputs.at(0)->shape()}};
@@ -88,11 +89,11 @@ std::vector<TensorType> OneHot<TensorType>::Backward(const VecTensorType &inputs
 
 template <typename T>
 std::vector<fetch::math::SizeType> OneHot<T>::ComputeOutputShape(
-    const OneHot::VecTensorType &inputs) const
+    const std::vector<math::SizeVector> &inputs) const
 {
   assert(inputs.size() == 1);
 
-  std::vector<SizeType> shape = inputs.at(0)->shape();
+  std::vector<SizeType> shape = inputs.at(0);
 
   if (axis_ == shape.size())
   {

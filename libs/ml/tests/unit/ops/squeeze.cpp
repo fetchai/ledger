@@ -46,7 +46,7 @@ TYPED_TEST(SqueezeTest, forward_1_6_1_test)
 
   fetch::ml::ops::Squeeze<TypeParam> op;
 
-  TypeParam prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
+  TypeParam prediction(op.ComputeOutputShape({data.shape()}));
   op.Forward({std::make_shared<const TensorType>(data)}, prediction);
 
   ASSERT_EQ(prediction.shape().size(), 2);
@@ -56,7 +56,7 @@ TYPED_TEST(SqueezeTest, forward_1_6_1_test)
   ASSERT_TRUE(prediction.AllClose(data, fetch::math::function_tolerance<DataType>(),
                                   fetch::math::function_tolerance<DataType>()));
 
-  TypeParam prediction2(op.ComputeOutputShape({std::make_shared<const TensorType>(prediction)}));
+  TypeParam prediction2(op.ComputeOutputShape({prediction.shape()}));
   op.Forward({std::make_shared<const TensorType>(prediction)}, prediction2);
 
   ASSERT_EQ(prediction2.shape().size(), 1);
@@ -75,7 +75,7 @@ TYPED_TEST(SqueezeTest, forward_throw_test)
 
   fetch::ml::ops::Squeeze<TypeParam> op;
 
-  EXPECT_ANY_THROW(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
+  EXPECT_ANY_THROW(op.ComputeOutputShape({data.shape()}));
   TypeParam prediction({6});
   EXPECT_ANY_THROW(op.Forward({std::make_shared<const TensorType>(data)}, prediction));
 }

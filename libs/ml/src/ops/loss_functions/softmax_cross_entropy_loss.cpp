@@ -92,9 +92,9 @@ std::vector<TensorType> SoftmaxCrossEntropyLoss<TensorType>::Backward(
 
 template <typename TensorType>
 std::vector<math::SizeType> SoftmaxCrossEntropyLoss<TensorType>::ComputeOutputShape(
-    VecTensorType const &inputs) const
+    std::vector<math::SizeVector> const &inputs) const
 {
-  (void)inputs;
+  FETCH_UNUSED(inputs);
   return {1, 1};
 }
 

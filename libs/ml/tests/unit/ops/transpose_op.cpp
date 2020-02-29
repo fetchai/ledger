@@ -43,7 +43,7 @@ TYPED_TEST(TransposeTest, forward_test)
 
   fetch::ml::ops::Transpose<TypeParam> op;
 
-  TypeParam prediction(op.ComputeOutputShape({std::make_shared<TypeParam>(a)}));
+  TypeParam prediction(op.ComputeOutputShape({a.shape()}));
   op.Forward({std::make_shared<TypeParam>(a)}, prediction);
 
   // test correct values
@@ -76,7 +76,7 @@ TYPED_TEST(TransposeTest, forward_batch_test)
 
   fetch::ml::ops::Transpose<TypeParam> op;
 
-  TypeParam prediction(op.ComputeOutputShape({std::make_shared<TypeParam>(a)}));
+  TypeParam prediction(op.ComputeOutputShape({a.shape()}));
   op.Forward({std::make_shared<TypeParam>(a)}, prediction);
 
   // test correct values
