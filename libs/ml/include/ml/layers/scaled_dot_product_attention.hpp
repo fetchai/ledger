@@ -42,9 +42,10 @@ public:
 
   void SetOpSaveableParams(SPType const &sp);
 
-  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
+  std::vector<SizeType> ComputeOutputShape(
+      std::vector<math::SizeVector> const &inputs) const override
   {
-    return {inputs.at(2)->shape(0), inputs.front()->shape(1), inputs.front()->shape(2)};
+    return {inputs.at(2).at(0), inputs.front().at(1), inputs.front().at(2)};
   }
 
   static constexpr OpType OpCode()
@@ -63,7 +64,6 @@ public:
     return DESCRIPTOR;
   }
 
-  OperationsCount ChargeForward() const override;
   OperationsCount ChargeBackward() const override;
 
 private:

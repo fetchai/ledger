@@ -53,6 +53,7 @@ public:
   using VecTensorType = typename Ops<T>::VecTensorType;
   using SPType        = OpVariableSaveableParams<TensorType>;
   using MyType        = Variable<TensorType>;
+  using ParentClass   = DataHolder<TensorType>;
 
   Variable() = default;
 

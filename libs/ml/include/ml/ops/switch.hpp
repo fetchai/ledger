@@ -73,7 +73,7 @@ public:
   void Forward(VecTensorType const &inputs, TensorType &output) override
   {
     assert(inputs.size() == 3);
-    assert(output.shape() == this->ComputeOutputShape(inputs));
+    assert(output.shape() == ComputeOutputShape(fetch::ml::utilities::TensorPtrsToSizes(inputs)));
     assert(inputs.at(1)->shape() == inputs.at(2)->shape());
 
     fetch::math::Switch(*(inputs.at(0)), *(inputs.at(1)), *(inputs.at(2)), output);
@@ -102,9 +102,10 @@ public:
     return {mask_return_signal, then_return_signal, else_return_signal};
   }
 
-  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
+  std::vector<SizeType> ComputeOutputShape(
+      std::vector<math::SizeVector> const &inputs) const override
   {
-    return inputs.at(1)->shape();
+    return inputs.at(1);
   }
 
   static constexpr OpType OpCode()
