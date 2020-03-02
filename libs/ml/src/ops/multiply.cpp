@@ -144,13 +144,15 @@ OperationsCount Multiply<TensorType>::ChargeForward() const
 }
 
 template <typename TensorType>
-OperationsCount Multiply<TensorType>::ChargeBackward() const
+std::pair<OperationsCount, math::SizeVector> Multiply<TensorType>::ChargeBackward(
+    std::vector<math::SizeVector> const &input_shapes)
 {
   assert(!this->batch_output_shape_.empty());
 
   OperationsCount cost = fetch::ml::charge_estimation::ops::MULTIPLICATION_BACKWARD_PER_ELEMENT *
                          this->TotalElementsIn({this->batch_output_shape_});
-  return cost;
+  math::SizeVector output_shape = ComputeOutputShape(input_shapes);
+  return std::make_pair(cost * output_shape.back(), output_shape);
 }
 
 ///////////////////////////////

@@ -194,7 +194,8 @@ OperationsCount AvgPool1D<TensorType>::ChargeForward() const
 }
 
 template <typename TensorType>
-OperationsCount AvgPool1D<TensorType>::ChargeBackward() const
+std::pair<OperationsCount, math::SizeVector> AvgPool1D<TensorType>::ChargeBackward(
+    std::vector<math::SizeVector> const &input_shapes)
 {
   assert(!this->batch_output_shape_.empty());
   OperationsCount num_output_shape_ops = this->batch_output_shape_.at(0) *
@@ -203,7 +204,8 @@ OperationsCount AvgPool1D<TensorType>::ChargeBackward() const
   OperationsCount cost = num_output_shape_ops *
                          fetch::ml::charge_estimation::ops::DIVISION_PER_ELEMENT *
                          fetch::ml::charge_estimation::ops::LOW_ADDITION_PER_ELEMENT;
-  return cost;
+  math::SizeVector output_shape = ComputeOutputShape(input_shapes);
+  return std::make_pair(cost * output_shape.back(), output_shape);
 }
 
 ///////////////////////////////

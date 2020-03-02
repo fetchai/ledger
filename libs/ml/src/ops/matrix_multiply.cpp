@@ -307,7 +307,8 @@ OperationsCount MatrixMultiply<T>::ChargeForward() const
 }
 
 template <typename T>
-OperationsCount MatrixMultiply<T>::ChargeBackward() const
+std::pair<OperationsCount, math::SizeVector> MatrixMultiply<T>::ChargeBackward(
+    std::vector<math::SizeVector> const &input_shapes)
 {
   assert(!this->batch_input_shapes_.empty());
 
@@ -322,7 +323,8 @@ OperationsCount MatrixMultiply<T>::ChargeBackward() const
       fetch::ml::charge_estimation::ops::LOW_ADDITION_PER_ELEMENT *
           this->TotalElementsIn({this->batch_input_shapes_});
   ;
-  return cost;
+  math::SizeVector output_shape = ComputeOutputShape(input_shapes);
+  return std::make_pair(cost * output_shape.back(), output_shape);
 }
 
 template <typename T>
