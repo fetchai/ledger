@@ -200,13 +200,15 @@ OperationsCount MaxPool1D<TensorType>::ChargeForward() const
 }
 
 template <typename TensorType>
-OperationsCount MaxPool1D<TensorType>::ChargeBackward() const
+std::pair<OperationsCount, math::SizeVector> MaxPool1D<TensorType>::ChargeBackward(
+    std::vector<math::SizeVector> const &input_shapes)
 {
   assert(!this->batch_output_shape_.empty());
   OperationsCount cost = fetch::ml::charge_estimation::ops::MAX_PER_ELEMENT *
                          this->batch_output_shape_.at(0) * this->batch_output_shape_.at(1) *
                          this->batch_output_shape_.at(2) * this->kernel_size_;
-  return cost;
+  math::SizeVector output_shape = ComputeOutputShape(input_shapes);
+  return std::make_pair(cost * output_shape.back(), output_shape);
 }
 
 ///////////////////////////////
