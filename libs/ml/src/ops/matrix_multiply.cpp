@@ -323,7 +323,8 @@ OperationsCount MatrixMultiply<T>::ChargeBackward() const
   OperationsCount const input_2_dim_2 = this->batch_input_shapes_.back().at(1);
 
   OperationsCount op_cnt = 500;  // set up overhead
-  op_cnt += input_1_dim_1 * input_1_dim_2 * input_2_dim_1 * input_2_dim_2 * fetch::ml::charge_estimation::ops::MULTIPLICATION_PER_ELEMENT;
+  op_cnt += input_1_dim_1 * input_1_dim_2 * input_2_dim_1 * input_2_dim_2 *
+            fetch::ml::charge_estimation::ops::MULTIPLICATION_PER_ELEMENT;
 
   return op_cnt;
 }
