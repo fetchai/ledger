@@ -194,10 +194,23 @@ public:
    */
   virtual OperationsCount ChargeBackward() const
   {
-    // TODO(ML-483): make a pure virtual method after all Ops have their overrides;
     FETCH_LOG_ERROR(Descriptor(),
                     " Error: call to unexisting ChargeBackward() implementation! returned 0.");
-    return 0;
+
+    throw std::runtime_error("This shouldn't be called");
+  }
+
+  /**
+   * This returns the cost for the *whole* batch (not per-datapoint cost) and the shape of the Op
+   * output
+   */
+  virtual std::pair<OperationsCount, math::SizeVector> ChargeBackward(
+      std::vector<math::SizeVector> const &input_shapes)
+  {
+    math::SizeVector output_shape = ComputeOutputShape(input_shapes);
+    // multiplying ChargeBackward() by the batch dimension is correct for Ops that don't have
+    // a proper ChargeBackward(input_size) implemented.
+    return std::make_pair(ChargeBackward() * output_shape.back(), output_shape);
   }
 
   /**
