@@ -62,12 +62,24 @@ using ValueTypeT = ValueType::type<Container>;
 }  // namespace detail_
 
 template <typename Container, typename Key, typename Value = detail_::ValueTypeT<Container>>
-Value Lookup(Container const &container, Key const &key, Value default_value = {})
+Value Lookup(Container const &container, Key const &key);
 {
   auto it = container.find(key);
   if (it == container.end())
   {
-    return std::move(default_value);
+    return {};
+  }
+
+  return detail_::ValueFrom<Value>(*it);
+}
+
+template <typename Container, typename Key, typename Value = detail_::ValueTypeT<Container>>
+Value Lookup(Container const &container, Key const &key, Value const &default_value)
+{
+  auto it = container.find(key);
+  if (it == container.end())
+  {
+    return default_value;
   }
 
   return detail_::ValueFrom<Value>(*it);
