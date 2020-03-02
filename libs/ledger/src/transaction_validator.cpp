@@ -55,9 +55,14 @@ ContractExecutionStatus TransactionValidator::operator()(chain::Transaction cons
   StateAdapter storage_adapter{storage_, "fetch.token"};
 
   {
-    ContractContext         ctx{&token_contract_, tx.contract_address(), nullptr, &storage_adapter,
-                        block_index};
-    ContractContextAttacher attacher{token_contract_, ctx};
+    auto context = ContractContext::Builder{}
+                       .SetTokenContract(&token_contract_)
+                       .SetContractAddress(tx.contract_address())
+                       .SetStateAdapter(&storage_adapter)
+                       .SetBlockIndex(block_index)
+                       .Build();
+
+    ContractContextAttacher raii_attacher{token_contract_, std::move(context)};
 
     // CHECK: Ensure there is permission from the originating address to perform the transaction
     //        (essentially take fees)

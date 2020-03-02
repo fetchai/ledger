@@ -113,9 +113,10 @@ void TransactionValidatorTests::AddFunds(uint64_t amount)
   shards.SetAllOne();
 
   // create storage infrastructure
-  StateSentinelAdapter    storage_adapter{storage_, "fetch.token", shards};
-  ContractContext         ctx{nullptr, Address{}, nullptr, &storage_adapter, 0};
-  ContractContextAttacher attacher{token_contract_, ctx};
+  StateSentinelAdapter storage_adapter{storage_, "fetch.token", shards};
+
+  auto context = ContractContext::Builder{}.SetStateAdapter(&storage_adapter).Build();
+  ContractContextAttacher raii_attacher{token_contract_, std::move(context)};
 
   // add the tokens to the account
   token_contract_.AddTokens(signer_address_, amount);
@@ -128,9 +129,11 @@ void TransactionValidatorTests::SetDeed(Deed const &deed)
   shards.SetAllOne();
 
   // create storage infrastructure
-  StateSentinelAdapter    storage_adapter{storage_, "fetch.token", shards};
-  ContractContext         ctx{nullptr, Address{}, nullptr, &storage_adapter, 0};
-  ContractContextAttacher attacher{token_contract_, ctx};
+  StateSentinelAdapter storage_adapter{storage_, "fetch.token", shards};
+
+  auto context = ContractContext::Builder{}.SetStateAdapter(&storage_adapter).Build();
+
+  ContractContextAttacher raii_attacher{token_contract_, std::move(context)};
 
   // add the tokens to the account
   token_contract_.SetDeed(signer_address_, std::make_shared<Deed>(deed));
