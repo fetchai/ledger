@@ -29,19 +29,47 @@ class StorageInterface;
 
 struct ContractContext
 {
+  class Builder
+  {
+  public:
+    Builder()                = default;
+    ~Builder()               = default;
+    Builder(Builder const &) = delete;
+    Builder(Builder &&)      = delete;
+    Builder &operator=(Builder const &) = delete;
+    Builder &operator=(Builder &&) = delete;
+
+    Builder &       SetTokenContract(TokenContract *tc);
+    Builder &       SetContractAddress(chain::Address ca);
+    Builder &       SetStorage(StorageInterface const *s);
+    Builder &       SetStateAdapter(StateAdapter *sa);
+    Builder &       SetBlockIndex(chain::TransactionLayout::BlockIndex bi);
+    ContractContext Build() const;
+
+  private:
+    class TokenContract *                token_contract_{nullptr};
+    chain::Address                       contract_address_{};
+    StorageInterface const *             storage_{nullptr};
+    class StateAdapter *                 state_adapter_{nullptr};
+    chain::TransactionLayout::BlockIndex block_index_{0};
+  };
+
   ContractContext()                        = default;
   ContractContext(ContractContext const &) = default;
   ContractContext(ContractContext &&)      = default;
-
-  ContractContext(TokenContract *token_contract_param, chain::Address address,
-                  StorageInterface const *storage_param, StateAdapter *state_adapter_param,
-                  chain::TransactionLayout::BlockIndex block_index_param);
 
   TokenContract *const                       token_contract{nullptr};
   chain::Address const                       contract_address{};
   StorageInterface const *const              storage{nullptr};
   StateAdapter *const                        state_adapter{nullptr};
   chain::TransactionLayout::BlockIndex const block_index{0};
+
+private:
+  ContractContext(TokenContract *token_contract_param, chain::Address address,
+                  StorageInterface const *storage_param, StateAdapter *state_adapter_param,
+                  chain::TransactionLayout::BlockIndex block_index_param);
+
+  friend class Builder;
 };
 
 }  // namespace ledger
