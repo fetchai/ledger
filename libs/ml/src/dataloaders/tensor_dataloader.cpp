@@ -106,8 +106,9 @@ template <typename TensorType>
 OperationsCount TensorDataLoader<TensorType>::ChargeAddData(const std::vector<TensorType> &data,
                                                             const TensorType &             labels)
 {
-  OperationsCount cost = 2;  // setting one_sample_label_shape
-  cost += 4;                 // resizing data vector
+  OperationsCount cost = 700;  // empirical adjustment to match times
+  cost += 2;                   // setting one_sample_label_shape
+  cost += 4;                   // resizing data vector
   OperationsCount label_copy_cost = TensorType::PaddedSizeFromShape(labels.shape());
   cost += label_copy_cost;
 
