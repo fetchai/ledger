@@ -80,8 +80,13 @@ void Executor_BasicBenchmark(benchmark::State &state)
 
     TokenContract tokens{};
 
-    fetch::ledger::ContractContext context{&tokens, tx->contract_address(), nullptr, &adapter, 0};
-    fetch::ledger::ContractContextAttacher raii(tokens, context);
+    auto context = fetch::ledger::ContractContext::Builder{}
+                       .SetTokenContract(&tokens)
+                       .SetContractAddress(tx->contract_address())
+                       .SetStateAdapter(&adapter)
+                       .Build();
+
+    fetch::ledger::ContractContextAttacher raii_attacher(tokens, std::move(context));
     tokens.AddTokens(tx->from(), 500000);
   }
 

@@ -168,8 +168,13 @@ WorkPtr NaiveSynergeticMiner::MineSolution(chain::Address const &contract_addres
 {
   StateAdapter storage_adapter{storage_, "fetch.token"};
 
-  ContractContext         context{&token_contract_, contract_address, nullptr, &storage_adapter, 0};
-  ContractContextAttacher raii(token_contract_, context);
+  auto context = ContractContext::Builder{}
+                     .SetTokenContract(&token_contract_)
+                     .SetContractAddress(contract_address)
+                     .SetStateAdapter(&storage_adapter)
+                     .Build();
+
+  ContractContextAttacher raii_attacher(token_contract_, std::move(context));
 
   uint64_t const balance = token_contract_.GetBalance(contract_address);
 

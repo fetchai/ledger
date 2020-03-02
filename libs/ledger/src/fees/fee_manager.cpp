@@ -112,8 +112,14 @@ void FeeManager::Execute(TransactionDetails &tx, Result &result, BlockIndex cons
 
   auto const &from = tx.from;
 
-  ContractContext context{&token_contract_, tx.contract_address, nullptr, &storage_adapter, block};
-  ContractContextAttacher raii(token_contract_, context);
+  auto context = ContractContext::Builder{}
+                     .SetTokenContract(&token_contract_)
+                     .SetContractAddress(tx.contract_address)
+                     .SetStateAdapter(&storage_adapter)
+                     .SetBlockIndex(block)
+                     .Build();
+
+  ContractContextAttacher raii_attacher(token_contract_, std::move(context));
   uint64_t const          balance = token_contract_.GetBalance(from);
 
   // calculate the fee to deduct
@@ -150,8 +156,14 @@ void FeeManager::SettleFees(chain::Address const &miner, TokenAmount amount,
   // attach the token contract to the storage engine
   StateSentinelAdapter storage_adapter{storage, "fetch.token", shard};
 
-  ContractContext context{&token_contract_, contract_address, nullptr, &storage_adapter, block};
-  ContractContextAttacher raii(token_contract_, context);
+  auto context = ContractContext::Builder{}
+                     .SetTokenContract(&token_contract_)
+                     .SetContractAddress(contract_address)
+                     .SetStateAdapter(&storage_adapter)
+                     .SetBlockIndex(block)
+                     .Build();
+
+  ContractContextAttacher raii_attacher(token_contract_, std::move(context));
   token_contract_.AddTokens(miner, amount);
 }
 
