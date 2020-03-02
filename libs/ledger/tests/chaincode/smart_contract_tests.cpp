@@ -20,12 +20,12 @@
 #include "mock_storage_unit.hpp"
 
 #include "chain/transaction_builder.hpp"
+#include "core/containers/is_in.hpp"
 #include "core/string/replace.hpp"
 #include "crypto/ecdsa.hpp"
 #include "crypto/sha256.hpp"
 #include "ledger/chaincode/smart_contract.hpp"
 #include "ledger/state_adapter.hpp"
-#include "meta/containers/set_element.hpp"
 
 #include "gmock/gmock.h"
 
@@ -39,8 +39,8 @@ using ::testing::Return;
 
 using fetch::byte_array::ConstByteArray;
 using fetch::chain::Address;
+using fetch::core::IsIn;
 using fetch::ledger::SmartContract;
-using fetch::meta::IsIn;
 using fetch::storage::ResourceAddress;
 using fetch::string::Replace;
 using fetch::variant::Variant;

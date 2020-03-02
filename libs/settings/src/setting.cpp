@@ -16,7 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "meta/containers/set_element.hpp"
+#include "core/containers/is_in.hpp"
 #include "settings/setting.hpp"
 
 #include <istream>
@@ -42,11 +42,11 @@ void Setting<bool>::FromStream(std::istream &stream)
 
   if (!stream.fail())
   {
-    if (meta::IsIn(TRUE_VALUES, value))
+    if (core::IsIn(TRUE_VALUES, value))
     {
       value_ = true;
     }
-    else if (meta::IsIn(FALSE_VALUES, value))
+    else if (core::IsIn(FALSE_VALUES, value))
     {
       value_ = false;
     }

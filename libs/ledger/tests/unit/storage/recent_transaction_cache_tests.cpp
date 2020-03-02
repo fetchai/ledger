@@ -18,17 +18,17 @@
 
 #include "transaction_generator.hpp"
 
+#include "core/containers/is_in.hpp"
 #include "core/digest.hpp"
 #include "ledger/storage_unit/recent_transaction_cache.hpp"
-#include "meta/containers/set_element.hpp"
 
 #include "gtest/gtest.h"
 
 namespace {
 
 using fetch::DigestSet;
+using fetch::core::IsIn;
 using fetch::ledger::RecentTransactionsCache;
-using fetch::meta::IsIn;
 
 constexpr std::size_t MAX_CACHE_SIZE = 5;
 constexpr uint32_t    LOG2_NUM_LANES = 1;

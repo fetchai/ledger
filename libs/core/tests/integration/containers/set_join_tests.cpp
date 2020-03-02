@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/containers/is_in.hpp"
 #include "core/containers/set_join.hpp"
-#include "meta/containers/set_element.hpp"
 
 #include "gtest/gtest.h"
 
@@ -33,14 +33,14 @@ TEST(SetJoinTests, BasicSetCheck)
   auto const c = a + b;
 
   EXPECT_EQ(c.size(), 8);
-  EXPECT_TRUE(meta::IsIn(c, 1));
-  EXPECT_TRUE(meta::IsIn(c, 2));
-  EXPECT_TRUE(meta::IsIn(c, 3));
-  EXPECT_TRUE(meta::IsIn(c, 4));
-  EXPECT_TRUE(meta::IsIn(c, 5));
-  EXPECT_TRUE(meta::IsIn(c, 6));
-  EXPECT_TRUE(meta::IsIn(c, 7));
-  EXPECT_TRUE(meta::IsIn(c, 8));
+  EXPECT_TRUE(core::IsIn(c, 1));
+  EXPECT_TRUE(core::IsIn(c, 2));
+  EXPECT_TRUE(core::IsIn(c, 3));
+  EXPECT_TRUE(core::IsIn(c, 4));
+  EXPECT_TRUE(core::IsIn(c, 5));
+  EXPECT_TRUE(core::IsIn(c, 6));
+  EXPECT_TRUE(core::IsIn(c, 7));
+  EXPECT_TRUE(core::IsIn(c, 8));
 }
 
 }  // namespace

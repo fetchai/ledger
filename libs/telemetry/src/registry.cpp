@@ -73,11 +73,7 @@ bool Registry::ValidateName(std::string const &name)
  */
 CounterPtr Registry::CreateCounter(std::string name, std::string description, Labels labels)
 {
-  if (!ValidateName(name))
-  {
-    return {};
-  }
-  return Insert<Counter>(name, std::move(name), std::move(description), std::move(labels));
+  return Create<Counter>(name, std::move(name), std::move(description), std::move(labels));
 }
 
 /**
@@ -90,11 +86,7 @@ CounterPtr Registry::CreateCounter(std::string name, std::string description, La
  */
 CounterMapPtr Registry::CreateCounterMap(std::string name, std::string description, Labels labels)
 {
-  if (!ValidateName(name))
-  {
-    return {};
-  }
-  return Insert<CounterMap>(name, std::move(name), std::move(description), std::move(labels));
+  return Create<CounterMap>(name, std::move(name), std::move(description), std::move(labels));
 }
 
 /**
@@ -109,11 +101,7 @@ CounterMapPtr Registry::CreateCounterMap(std::string name, std::string descripti
 HistogramPtr Registry::CreateHistogram(std::initializer_list<double> buckets, std::string name,
                                        std::string description, Labels labels)
 {
-  if (!ValidateName(name))
-  {
-    return {};
-  }
-  return Insert<Histogram>(name, buckets, std::move(name), std::move(description),
+  return Create<Histogram>(name, buckets, std::move(name), std::move(description),
                            std::move(labels));
 }
 
@@ -121,11 +109,7 @@ HistogramMapPtr Registry::CreateHistogramMap(std::vector<double> buckets, std::s
                                              std::string field, std::string description,
                                              Labels labels)
 {
-  if (!ValidateName(name))
-  {
-    return {};
-  }
-  return Insert<HistogramMap>(name, std::move(name), std::move(field), std::move(buckets),
+  return Create<HistogramMap>(name, std::move(name), std::move(field), std::move(buckets),
                               std::move(description), std::move(labels));
 }
 
@@ -143,9 +127,31 @@ void Registry::Collect(std::ostream &stream)
   {
     for (auto const &measurement : named_cell.second)
     {
-      measurement.second->ToStream(telemetry_stream);
+      measurement->ToStream(telemetry_stream);
     }
   }
+}
+
+std::size_t Registry::FastMeasurementHash::operator()(MeasurementPtr const &measurement) const
+{
+  assert(measurement);
+
+  auto const &labels = measurement->labels();
+
+  std::string flattened = std::accumulate(
+      begin(labels), end(labels), std::string(), [](std::string accum, auto &&element) {
+        return std::move(accum) + element.first + KEY + element.second + VALUE;
+      });
+  auto ret_val = std::hash<std::string>{}(flattened);
+  return ret_val;
+}
+
+bool Registry::LabelsEqual::operator()(MeasurementPtr const &left,
+                                       MeasurementPtr const &right) const
+{
+  assert(left);
+  assert(right);
+  return left->labels() == right->labels();
 }
 
 }  // namespace telemetry
