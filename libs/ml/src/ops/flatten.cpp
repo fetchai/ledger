@@ -115,8 +115,26 @@ template <class TensorType>
 OperationsCount Flatten<TensorType>::ChargeForward() const
 {
   assert(!this->batch_input_shapes_.empty());
-  OperationsCount cost = fetch::ml::charge_estimation::ops::FLATTEN_PER_ELEMENT *
-                         this->TotalElementsIn(this->batch_input_shapes_);
+
+  OperationsCount cost = fetch::ml::charge_estimation::ops::OP_OVERHEAD;
+
+  auto padded_size = TensorType::PaddedSizeFromShape(this->batch_input_shapes_.front());
+
+  if (padded_size < fetch::ml::charge_estimation::ops::PIECEWISE_LOWER_THRESHOLD)
+  {
+    cost += fetch::ml::charge_estimation::ops::LOW_FLATTEN_PER_ELEMENT *
+            TensorType::ChargeIterate(this->batch_input_shapes_.front());
+  }
+  else if (padded_size < fetch::ml::charge_estimation::ops::PIECEWISE_HARD_CAP)
+  {
+    cost += fetch::ml::charge_estimation::ops::HIGH_FLATTEN_PER_ELEMENT *
+            TensorType::ChargeIterate(this->batch_input_shapes_.front());
+  }
+  else
+  {
+    cost = math::numeric_max<OperationsCount>();
+  }
+
   return cost;
 }
 
