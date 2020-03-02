@@ -1440,8 +1440,8 @@ ExpressionNodePtr Parser::ParseExpressionStatement()
 bool Parser::IsStatementKeyword(Token::Kind kind) const
 {
   return (kind == Token::Kind::Persistent) || (kind == Token::Kind::Contract) ||
-         (kind == Token::Kind::EndContract) || /* (kind == Token::Kind::Struct) || */
-         /* (kind == Token::Kind::EndStruct) || */ (kind == Token::Kind::Function) ||
+         (kind == Token::Kind::EndContract) || (kind == Token::Kind::Struct) ||
+         (kind == Token::Kind::EndStruct) || (kind == Token::Kind::Function) ||
          (kind == Token::Kind::EndFunction) || (kind == Token::Kind::While) ||
          (kind == Token::Kind::EndWhile) || (kind == Token::Kind::For) ||
          (kind == Token::Kind::EndFor) || (kind == Token::Kind::If) ||
