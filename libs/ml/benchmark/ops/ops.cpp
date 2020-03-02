@@ -5237,9 +5237,8 @@ void BM_AddBackward(benchmark::State &state)
   inputs.emplace_back(std::make_shared<TensorType>(input_2));
   fetch::ml::ops::Add<fetch::math::Tensor<T>> add1;
 
-  add1.SetBatchOutputShape(config.shape_one);
-  add1.SetBatchInputShapes({config.shape_one, config.shape_two});
-  state.counters["charge_total"] = static_cast<double>(add1.ChargeBackward());
+  state.counters["charge_total"] =
+      static_cast<double>(add1.ChargeBackward({config.shape_one, config.shape_two}).first);
   state.counters["charge_iterate"] =
       static_cast<double>(TensorType::ChargeIterate(config.shape_one));
 
