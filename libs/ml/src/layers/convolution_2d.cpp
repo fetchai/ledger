@@ -145,12 +145,6 @@ void Convolution2D<TensorType>::Compile()
   this->SetInput(weights_, weights_data);
 }
 
-template <class TensorType>
-OperationsCount Convolution2D<TensorType>::ChargeBackward() const
-{
-  return Graph<TensorType>::ChargeBackward(this->output_node_name_);
-}
-
 template <typename TensorType>
 OperationsCount Convolution2D<TensorType>::ChargeCompile()
 {
