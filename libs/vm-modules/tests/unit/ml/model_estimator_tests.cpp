@@ -17,6 +17,8 @@
 //------------------------------------------------------------------------------
 
 #include "core/serializers/main_serializer.hpp"
+#include "math/base_types.hpp"
+#include "ml/charge_estimation/types.hpp"
 #include "ml/layers/fully_connected.hpp"
 #include "vm_modules/ml/model/model.hpp"
 #include "vm_modules/vm_factory.hpp"
