@@ -146,6 +146,14 @@ std::vector<math::SizeType> CategoricalAccuracy<TensorType>::ComputeOutputShape(
   return {1, 1};
 }
 
+template <class T>
+std::pair<OperationsCount, math::SizeVector> CategoricalAccuracy<T>::ChargeBackward(
+    std::vector<math::SizeVector> const &input_shapes)
+{
+  math::SizeVector output_shape = ComputeOutputShape(input_shapes);
+  return std::make_pair(0, output_shape);
+}
+
 ///////////////////////////////
 /// EXPLICIT INSTANTIATIONS ///
 ///////////////////////////////
