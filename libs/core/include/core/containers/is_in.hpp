@@ -17,15 +17,13 @@
 //
 //------------------------------------------------------------------------------
 
-#include "meta/containers/set_element.hpp"
-
 namespace fetch {
 namespace core {
 
 template <typename Value, typename Container>
 bool IsIn(Container const &container, Value const &value)
 {
-  return meta::IsIn(container, value);
+  return container.find(value) != container.end();
 }
 
 }  // namespace core

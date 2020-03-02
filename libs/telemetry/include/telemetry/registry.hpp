@@ -17,7 +17,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "meta/containers/set_element.hpp"
 #include "telemetry/measurement.hpp"
 #include "telemetry/telemetry.hpp"
 
