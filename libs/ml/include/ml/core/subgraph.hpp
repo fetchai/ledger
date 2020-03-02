@@ -58,6 +58,9 @@ public:
   std::pair<OperationsCount, math::SizeVector> ChargeForward(
       std::vector<math::SizeVector> const &input_shapes) override;
 
+  std::pair<OperationsCount, math::SizeVector> ChargeBackward(
+      const std::vector<math::SizeVector> &input_shapes) override;
+
 protected:
   void InsertSharedCopy(std::shared_ptr<fetch::ml::ops::Ops<TensorType>> output_ptr);
   SubGraph() = default;
