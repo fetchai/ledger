@@ -72,8 +72,6 @@ public:
     return DESCRIPTOR;
   }
 
-  OperationsCount ChargeBackward() const override;
-
 private:
   SizeType key_dim_{};
   SizeType value_dim_{};
