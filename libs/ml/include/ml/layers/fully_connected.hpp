@@ -77,8 +77,6 @@ public:
 
   void CompleteShapeDeduction() override;
 
-  OperationsCount ChargeBackward() const override;
-
   void Compile() override;
 
   static OperationsCount ChargeCompleteShapeDeduction(bool is_initialised, WeightsInit init_mode,
