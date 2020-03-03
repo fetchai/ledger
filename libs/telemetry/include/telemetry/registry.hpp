@@ -171,7 +171,7 @@ std::shared_ptr<M> Registry::Insert(std::string name, std::shared_ptr<M> m)
 {
   std::lock_guard<std::mutex> guard(lock_);
 
-  auto  measurements_it = measurements_.emplace(std::move(name), {}).first;
+  auto  measurements_it = measurements_.emplace(std::move(name), SameNameMeasurements{}).first;
   auto &named_cell      = measurements_it->second;
 
   try
