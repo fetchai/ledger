@@ -26,6 +26,7 @@
 #include <cctype>
 #include <initializer_list>
 #include <memory>
+#include <numeric>
 #include <ostream>
 #include <string>
 #include <utility>
