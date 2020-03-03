@@ -224,7 +224,8 @@ std::pair<OperationsCount, math::SizeVector> MaxPool2D<TensorType>::ChargeForwar
 }
 
 template <typename TensorType>
-OperationsCount MaxPool2D<TensorType>::ChargeBackward() const
+std::pair<OperationsCount, math::SizeVector> MaxPool2D<TensorType>::ChargeBackward(
+    std::vector<math::SizeVector> const &input_shapes)
 {
   assert(!this->batch_output_shape_.empty());
   auto cost = static_cast<OperationsCount>(
@@ -232,7 +233,8 @@ OperationsCount MaxPool2D<TensorType>::ChargeBackward() const
       this->batch_output_shape_.at(1) * this->batch_output_shape_.at(2) *
       this->batch_output_shape_.at(3) *
       static_cast<OperationsCount>(this->kernel_size_ * this->kernel_size_));
-  return cost;
+  math::SizeVector output_shape = ComputeOutputShape(input_shapes);
+  return std::make_pair(cost * output_shape.back(), output_shape);
 }
 
 ///////////////////////////////

@@ -113,11 +113,13 @@ std::pair<OperationsCount, math::SizeVector> DataHolder<TensorType>::ChargeForwa
 }
 
 template <typename TensorType>
-OperationsCount DataHolder<TensorType>::ChargeBackward() const
+std::pair<OperationsCount, math::SizeVector> DataHolder<TensorType>::ChargeBackward(
+    std::vector<math::SizeVector> const &input_shapes)
 {
   OperationsCount cost = 0;
 
-  return cost;
+  math::SizeVector output_shape = ComputeOutputShape(input_shapes);
+  return std::make_pair(cost * output_shape.back(), output_shape);
 }
 
 template <typename TensorType>

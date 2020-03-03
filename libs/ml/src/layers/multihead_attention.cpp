@@ -153,12 +153,6 @@ std::vector<math::SizeType> MultiheadAttention<TensorType>::ComputeOutputShape(
   return inputs.front();
 }
 
-template <class TensorType>
-OperationsCount MultiheadAttention<TensorType>::ChargeBackward() const
-{
-  return Graph<TensorType>::ChargeBackward(this->output_node_name_);
-}
-
 ///////////////////////////////
 /// EXPLICIT INSTANTIATIONS ///
 ///////////////////////////////
