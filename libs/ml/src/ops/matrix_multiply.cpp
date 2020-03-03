@@ -323,7 +323,7 @@ std::pair<OperationsCount, math::SizeVector> MatrixMultiply<T>::ChargeBackward(
 
   OperationsCount const cost =
       n * m * p * fetch::ml::charge_estimation::ops::MULTIPLICATION_PER_ELEMENT +
-      fetch::ml::charge_estimation::ops::ADDITION_PER_ELEMENT *
+      fetch::ml::charge_estimation::ops::LOW_ADDITION_PER_ELEMENT *
           this->TotalElementsIn({this->batch_input_shapes_});
   ;
   math::SizeVector output_shape = ComputeOutputShape(input_shapes);

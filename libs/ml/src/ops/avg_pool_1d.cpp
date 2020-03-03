@@ -187,7 +187,7 @@ std::pair<OperationsCount, math::SizeVector> AvgPool1D<TensorType>::ChargeForwar
       input_shapes.at(0).at(0) * input_shapes.at(0).at(1) * input_shapes.at(0).at(2);
   OperationsCount op_cnt =
       fetch::ml::charge_estimation::ops::DIVISION_PER_ELEMENT * num_output_shape_ops +
-      fetch::ml::charge_estimation::ops::ADDITION_PER_ELEMENT * num_output_shape_ops *
+      fetch::ml::charge_estimation::ops::LOW_ADDITION_PER_ELEMENT * num_output_shape_ops *
           this->kernel_size_;
 
   auto output_shape = ComputeOutputShape(input_shapes);
@@ -204,7 +204,7 @@ std::pair<OperationsCount, math::SizeVector> AvgPool1D<TensorType>::ChargeBackwa
                                          this->batch_output_shape_.at(2) * this->kernel_size_;
   OperationsCount cost = num_output_shape_ops *
                          fetch::ml::charge_estimation::ops::DIVISION_PER_ELEMENT *
-                         fetch::ml::charge_estimation::ops::ADDITION_PER_ELEMENT;
+                         fetch::ml::charge_estimation::ops::LOW_ADDITION_PER_ELEMENT;
   math::SizeVector output_shape = ComputeOutputShape(input_shapes);
   return std::make_pair(cost * output_shape.back(), output_shape);
 }
