@@ -171,11 +171,22 @@ std::shared_ptr<M> Registry::Insert(std::string name, std::shared_ptr<M> m)
 {
   std::lock_guard<std::mutex> guard(lock_);
 
-  auto &named_cell = measurements_[std::move(name)];
+  auto  measurements_it = measurements_.emplace(std::move(name), {}).first;
+  auto &named_cell      = measurements_it->second;
 
-  auto cell_it = named_cell.insert(std::move(m)).first;
-
-  return std::dynamic_pointer_cast<M>(*cell_it);
+  try
+  {
+    auto cell_it = named_cell.insert(std::move(m)).first;
+    return std::dynamic_pointer_cast<M>(*cell_it);
+  }
+  catch (...)
+  {
+    if (named_cell.empty())
+    {
+      measurements_.erase(measurements_it);
+    }
+    throw;
+  }
 }
 
 }  // namespace telemetry
