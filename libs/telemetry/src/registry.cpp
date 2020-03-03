@@ -137,18 +137,24 @@ std::size_t Registry::FastMeasurementHash::operator()(MeasurementPtr const &meas
 {
   assert(measurement);
 
-  auto const &labels = measurement->labels();
+  using OrderedLabels = std::map<Measurement::Labels::key_type, Measurement::Lables::mapped_type>;
 
-  std::string flattened = std::accumulate(
-      begin(labels), end(labels), std::string(), [](std::string accum, auto &&element) {
-        return std::move(accum) + element.first + KEY + element.second + VALUE;
-      });
+  auto const &original_labels = measurement->labels();
+  using std::begin;
+  using std::end;
+  OrderedLables ordered_labels(begin(original_labels), end(original_lables));
+
+  std::string flattened =
+      std::accumulate(begin(ordered_labels), end(ordered_labels), std::string{},
+                      [](std::string accum, auto &&element) {
+                        return std::move(accum) + element.first + KEY + element.second + VALUE;
+                      });
+
   auto ret_val = std::hash<std::string>{}(flattened);
   return ret_val;
 }
 
-bool Registry::LabelsEqual::operator()(MeasurementPtr const &left,
-                                       MeasurementPtr const &right) const
+bool Registry::LabelsEqual::operator()(MeasurementPtr const &left, easurementPtr const &right) const
 {
   assert(left);
   assert(right);

@@ -47,18 +47,17 @@ using serializers::MsgPackSerializer;
 using TokenAmount  = Transaction::TokenAmount;
 using ContractMode = Transaction::ContractMode;
 
-constexpr uint8_t MAGIC              = 0xA1;
-constexpr uint8_t VERSION            = 3u;
-constexpr int8_t  UNIT_MEGA          = -2;
-constexpr int8_t  UNIT_KILO          = -1;
-constexpr int8_t  UNIT_DEFAULT       = 0;
-constexpr int8_t  UNIT_MILLI         = 1;
-constexpr int8_t  UNIT_MICRO         = 2;
-constexpr int8_t  UNIT_NANO          = 3;
-constexpr int8_t  CONTRACT_PRESENT   = 1;
-constexpr int8_t  CHAIN_CODE_PRESENT = 2;
-constexpr int8_t  SYNERGETIC_PRESENT = 3;
-constexpr uint8_t IDENTITY_KEY       = 0x4;
+const uint8_t MAGIC              = 0xA1;
+const uint8_t VERSION            = 3u;
+const int8_t  UNIT_MEGA          = -2;
+const int8_t  UNIT_KILO          = -1;
+const int8_t  UNIT_DEFAULT       = 0;
+const int8_t  UNIT_MILLI         = 1;
+const int8_t  UNIT_MICRO         = 2;
+const int8_t  UNIT_NANO          = 3;
+const int8_t  CONTRACT_PRESENT   = 1;
+const int8_t  CHAIN_CODE_PRESENT = 2;
+const int8_t  SYNERGETIC_PRESENT = 3;
 
 uint8_t Map(ContractMode mode)
 {
@@ -129,7 +128,7 @@ ConstByteArray Encode(BitVector const &bits)
 ConstByteArray Encode(Identity const &identity)
 {
   ByteArray buffer;
-  buffer.Append(IDENTITY_KEY, identity.identifier());
+  buffer.Append(uint8_t{0x04}, identity.identifier());
 
   return {buffer};
 }
