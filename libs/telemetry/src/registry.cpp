@@ -142,7 +142,7 @@ std::size_t Registry::FastMeasurementHash::operator()(MeasurementPtr const &meas
   auto const &original_labels = measurement->labels();
   using std::begin;
   using std::end;
-  OrderedLabels ordered_labels(begin(original_labels), end(original_lables));
+  OrderedLabels ordered_labels(begin(original_labels), end(original_labels));
 
   std::string flattened =
       std::accumulate(begin(ordered_labels), end(ordered_labels), std::string{},
