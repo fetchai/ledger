@@ -154,7 +154,8 @@ std::size_t Registry::FastMeasurementHash::operator()(MeasurementPtr const &meas
   return ret_val;
 }
 
-bool Registry::LabelsEqual::operator()(MeasurementPtr const &left, easurementPtr const &right) const
+bool Registry::LabelsEqual::operator()(MeasurementPtr const &left,
+                                       MeasurementPtr const &right) const
 {
   assert(left);
   assert(right);
