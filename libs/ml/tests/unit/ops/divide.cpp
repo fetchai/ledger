@@ -19,7 +19,7 @@
 #include "test_types.hpp"
 
 #include "math/base_types.hpp"
-#include "ml/ops/basic_math.hpp"
+#include "ml/ops/divide.hpp"
 
 #include "gtest/gtest.h"
 
