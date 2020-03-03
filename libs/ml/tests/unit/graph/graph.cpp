@@ -1401,11 +1401,11 @@ TYPED_TEST(GraphTest, graph_charge_forward_diamond)
   static const std::size_t expected_calls_to_add = N;
   OperationsCount const    charge                = g.ChargeForward(output);
 
-  OperationsCount add_charge{1};
+  OperationsCount add_charge{fetch::ml::charge_estimation::ops::OP_OVERHEAD};
 
   // Addition cost
   math::SizeType num_elements = TensorType::SizeFromShape(data.shape());
-  add_charge += num_elements;
+  add_charge += num_elements * fetch::ml::charge_estimation::ops::LOW_ADDITION_PER_ELEMENT;
 
   // Iteration over 3 tensors (input1, input2, ret)
   OperationsCount iteration_ops = TensorType::ChargeIterate(data.shape());
@@ -1523,7 +1523,7 @@ TYPED_TEST(GraphTest, graph_charge_backward_conv_dense)
 
   OperationsCount const charge = g.ChargeBackward(dense);
   OperationsCount const expected_charge =
-      4325392;  // Pre-calculated backward charge for give shape.
+      7471334;  // Pre-calculated backward charge for give shape.
 
   EXPECT_EQ(charge, expected_charge);
 

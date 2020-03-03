@@ -1030,22 +1030,22 @@ TEST_F(VMModelEstimatorTests, charge_forward_one_dense)
 
   // n flattening operations (because Dense is not time-distributed in this test)
   // in this case we know that
-  expected_cost += batch_size * (fetch::ml::charge_estimation::ops::OP_OVERHEAD +
-                                 (fetch::ml::charge_estimation::ops::LOW_FLATTEN_PER_ELEMENT *
-                                  TensorType::ChargeIterate({inputs, 1})));
+  expected_cost += (fetch::ml::charge_estimation::ops::OP_OVERHEAD +
+                    (fetch::ml::charge_estimation::ops::LOW_FLATTEN_PER_ELEMENT *
+                     TensorType::ChargeIterate({inputs, batch_size})));
 
   // n*m*1 matmul operations
   expected_cost += (inputs * outputs) * MULTIPLICATION_PER_ELEMENT * batch_size;
   // m bias weights reading
   expected_cost += outputs * WEIGHTS_READING_PER_ELEMENT * batch_size;
 
-  fetch::ml::OperationsCount add_charge{1};
+  fetch::ml::OperationsCount add_charge{OP_OVERHEAD};
 
   // Addition cost
   // Type of tensor is not important for SizeFromShape
   fetch::math::SizeType num_elements =
       fetch::math::Tensor<float>::SizeFromShape({outputs, batch_size});
-  add_charge += num_elements;
+  add_charge += num_elements * LOW_ADDITION_PER_ELEMENT;
 
   // Iteration over 3 tensors (input1, input2, ret)
   // Type of tensor is not important for ChargeIterate

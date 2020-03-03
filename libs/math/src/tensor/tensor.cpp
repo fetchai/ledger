@@ -965,17 +965,22 @@ typename Tensor<T, C>::SizeType Tensor<T, C>::PaddedSizeFromShape(SizeVector con
 template <typename T, typename C>
 typename Tensor<T, C>::SizeType Tensor<T, C>::ChargeIterate(SizeVector const &shape)
 {
-  SizeType op_cnt{1};
+  SizeType op_overhead{charge_estimation::TENSOR_ITERATION_OVERHEAD};
 
   SizeType num_elements = Tensor<T, C>::SizeFromShape(shape);
   SizeType height       = shape[0];
 
   // Iterations at the end of each row are more expensive
   SizeType end_of_row_cnt = num_elements / height;
-  op_cnt += charge_estimation::TENSOR_ITERATION_END_OF_ROW * (end_of_row_cnt) +
-            charge_estimation::TENSOR_ITERATION_DEFAULT * (num_elements - end_of_row_cnt);
 
-  return op_cnt;
+  SizeType default_it_cost =
+      (charge_estimation::TENSOR_ITERATION_END_OF_ROW_MULTIPLY * (end_of_row_cnt)) /
+      charge_estimation::TENSOR_ITERATION_END_OF_ROW_DIVIDE;
+  SizeType end_row_it_cost =
+      (charge_estimation::TENSOR_ITERATION_DEFAULT_MULTIPLY * (num_elements - end_of_row_cnt)) /
+      charge_estimation::TENSOR_ITERATION_DEFAULT_DIVIDE;
+
+  return op_overhead + default_it_cost + end_row_it_cost;
 }
 
 /**
