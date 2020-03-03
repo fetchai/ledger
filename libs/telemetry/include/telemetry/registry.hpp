@@ -20,17 +20,13 @@
 #include "telemetry/measurement.hpp"
 #include "telemetry/telemetry.hpp"
 
-#include <algorithm>
 #include <cassert>
-#include <functional>
 #include <initializer_list>
 #include <memory>
 #include <mutex>
-#include <numeric>
 #include <string>
-#include <typeindex>
-#include <typeinfo>
 #include <unordered_map>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 
