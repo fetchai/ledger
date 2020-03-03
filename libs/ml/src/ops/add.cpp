@@ -61,7 +61,7 @@ template <typename TensorType>
 void Add<TensorType>::Forward(VecTensorType const &inputs, TensorType &output)
 {
   assert(inputs.size() == 2);
-  assert(output.shape() == this->ComputeOutputShape(inputs));
+  assert(output.shape() == ComputeOutputShape(fetch::ml::utilities::TensorPtrsToSizes(inputs)));
   fetch::math::Add((*inputs.at(0)), (*inputs.at(1)), output);
 }
 
@@ -72,7 +72,8 @@ std::vector<TensorType> Add<TensorType>::Backward(VecTensorType const &inputs,
   assert(inputs.size() == 2);
   assert(inputs.at(0)->shape().size() == inputs.at(1)->shape().size());
   assert(inputs.at(0)->shape() == error_signal.shape());
-  assert(error_signal.shape() == ComputeOutputShape(inputs));
+  assert(error_signal.shape() ==
+         ComputeOutputShape(fetch::ml::utilities::TensorPtrsToSizes(inputs)));
 
   if (inputs.at(0)->shape() == inputs.at(1)->shape())
   {
@@ -86,9 +87,10 @@ std::vector<TensorType> Add<TensorType>::Backward(VecTensorType const &inputs,
 }
 
 template <typename TensorType>
-std::vector<math::SizeType> Add<TensorType>::ComputeOutputShape(VecTensorType const &inputs) const
+std::vector<math::SizeType> Add<TensorType>::ComputeOutputShape(
+    std::vector<math::SizeVector> const &inputs) const
 {
-  return inputs.at(0)->shape();
+  return inputs.at(0);
 }
 
 template <typename TensorType>
@@ -104,21 +106,35 @@ const char *Add<TensorType>::Descriptor() const
 }
 
 template <typename TensorType>
-OperationsCount Add<TensorType>::ChargeForward() const
+std::pair<OperationsCount, math::SizeVector> Add<TensorType>::ChargeForward(
+    std::vector<math::SizeVector> const &input_shapes)
 {
   assert(!this->batch_output_shape_.empty());
-  OperationsCount cost = fetch::ml::charge_estimation::ops::ADDITION_PER_ELEMENT *
-                         this->TotalElementsIn({this->batch_output_shape_});
-  return cost;
+
+  OperationsCount op_cnt{1};
+
+  auto output_shape = ComputeOutputShape(input_shapes);
+
+  // Addition cost
+  SizeType num_elements = TensorType::SizeFromShape(output_shape);
+  op_cnt += num_elements;
+
+  // Iteration over 3 tensors (input1, input2, ret)
+  OperationsCount iteration_ops = TensorType::ChargeIterate(output_shape);
+  op_cnt += iteration_ops * 3;
+
+  return std::make_pair(op_cnt, output_shape);
 }
 
 template <typename TensorType>
-OperationsCount Add<TensorType>::ChargeBackward() const
+std::pair<OperationsCount, math::SizeVector> Add<TensorType>::ChargeBackward(
+    std::vector<math::SizeVector> const &input_shapes)
 {
   assert(!this->batch_output_shape_.empty());
   OperationsCount cost = fetch::ml::charge_estimation::ops::ADDITION_PER_ELEMENT *
                          this->TotalElementsIn({this->batch_output_shape_});
-  return cost;
+  math::SizeVector output_shape = ComputeOutputShape(input_shapes);
+  return std::make_pair(cost * output_shape.back(), output_shape);
 }
 
 /**

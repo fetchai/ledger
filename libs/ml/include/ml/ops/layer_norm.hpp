@@ -62,12 +62,15 @@ public:
   std::vector<TensorType> Backward(VecTensorType const &inputs,
                                    TensorType const &   error_signal) override;
 
-  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override;
+  std::vector<SizeType> ComputeOutputShape(
+      std::vector<math::SizeVector> const &inputs) const override;
 
   static constexpr OpType OpCode()
   {
     return OpType::OP_LAYER_NORM;
   }
+
+  void Compile() override;
 
   static constexpr char const *DESCRIPTOR = "LayerNormalization";
 
@@ -80,8 +83,9 @@ public:
     return DESCRIPTOR;
   }
 
-  OperationsCount ChargeForward() const override;
-  OperationsCount ChargeBackward() const override;
+  OperationsCount                              ChargeForward() const override;
+  std::pair<OperationsCount, math::SizeVector> ChargeBackward(
+      std::vector<math::SizeVector> const &input_shapes) override;
 
 private:
   SizeType axis_;

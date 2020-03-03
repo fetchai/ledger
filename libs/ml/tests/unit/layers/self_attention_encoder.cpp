@@ -56,6 +56,7 @@ TYPED_TEST(SelfAttentionEncoder, input_output_dimension_test)  // Use the class 
   mask_data.Fill(DataType{1});
   g.SetInput(input, input_data);
   g.SetInput(mask, mask_data);
+  g.Compile();
 
   TypeParam prediction = g.Evaluate(output, false);
   ASSERT_EQ(prediction.shape().size(), 3);
@@ -75,7 +76,7 @@ TYPED_TEST(SelfAttentionEncoder, backward_dimension_test)  // Use the class as a
   TypeParam mask_data = TypeParam({20, 20, 5});
   mask_data.Fill(DataType{1});
 
-  TypeParam output(encoder.ComputeOutputShape({std::make_shared<TypeParam>(input_data)}));
+  TypeParam output(encoder.ComputeOutputShape({input_data.shape()}));
   encoder.Forward({std::make_shared<TypeParam>(input_data), std::make_shared<TypeParam>(mask_data)},
                   output);
 

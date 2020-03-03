@@ -64,7 +64,7 @@ def run(options, benefactor):
 
     try:
         api.sync(contract.action(api, 'c2c_call',
-                                 400, [entity1], str(contract.address)))
+                                 400, entity1, str(contract.address)))
         assert False, \
             'Expected transaction to fail'
     except RuntimeError:

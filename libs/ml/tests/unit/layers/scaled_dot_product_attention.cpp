@@ -65,6 +65,7 @@ TYPED_TEST(ScaledDotProductAttention, input_output_dimension_check)  // Use the 
   g.SetInput(key, key_data);
   g.SetInput(value, value_data);
   g.SetInput(mask, mask_data);
+  g.Compile();
 
   TypeParam prediction = g.Evaluate("ScaledDotProductAttention", false);
   ASSERT_EQ(prediction.shape()[0], 3);
@@ -98,6 +99,7 @@ TYPED_TEST(ScaledDotProductAttention,
   g.SetInput(key, query_data);
   g.SetInput(value, query_data);
   g.SetInput(mask, mask_data);
+  g.Compile();
 
   TypeParam gt = TypeParam::FromString(
       "1.8496745531, 1.9944926680, 0.3201387782, 0.2406420371; 1.1503254469, 1.0055073320, "
@@ -141,10 +143,11 @@ TYPED_TEST(ScaledDotProductAttention,
   gt_value_grad.Reshape({3, 2, 2});
   TypeParam gt_mask_grad({1, 2, 2});
 
+  att.Compile();
+
   // do the forward
   TypeParam output(att.ComputeOutputShape(
-      {std::make_shared<TypeParam>(query_data), std::make_shared<TypeParam>(query_data),
-       std::make_shared<TypeParam>(query_data), std::make_shared<TypeParam>(mask_data)}));
+      {query_data.shape(), query_data.shape(), query_data.shape(), mask_data.shape()}));
   att.Forward({std::make_shared<TypeParam>(query_data), std::make_shared<TypeParam>(query_data),
                std::make_shared<TypeParam>(query_data), std::make_shared<TypeParam>(mask_data)},
               output);
@@ -200,6 +203,7 @@ TYPED_TEST(ScaledDotProductAttention,
   g.SetInput(key, query_data);
   g.SetInput(value, query_data);
   g.SetInput(mask, mask_data);
+  g.Compile();
 
   TypeParam gt = TypeParam::FromString(
       "1.8496745531,  1.9944926680,  1.5288354812,  0.1000000000, 0.1000000000,  0.1000000000; "
@@ -256,8 +260,7 @@ TYPED_TEST(ScaledDotProductAttention,
 
   // do the forward
   TypeParam output(att.ComputeOutputShape(
-      {std::make_shared<TypeParam>(query_data), std::make_shared<TypeParam>(query_data),
-       std::make_shared<TypeParam>(query_data), std::make_shared<TypeParam>(mask_data)}));
+      {query_data.shape(), query_data.shape(), query_data.shape(), mask_data.shape()}));
   att.Forward({std::make_shared<TypeParam>(query_data), std::make_shared<TypeParam>(query_data),
                std::make_shared<TypeParam>(query_data), std::make_shared<TypeParam>(mask_data)},
               output);

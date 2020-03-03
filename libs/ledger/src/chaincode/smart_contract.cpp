@@ -585,9 +585,15 @@ Contract::Result SmartContract::InvokeAction(std::string const &name, chain::Tra
 
     vm::ParameterPack param_pack{vm2.registered_types(), std::move(parameters)};
 
-    ContractContext ctx{c.token_contract, called_contract_address, c.storage, c.state_adapter,
-                        c.block_index};
-    ContractContextAttacher raii{*loaded_contract, ctx};
+    auto context = ContractContext::Builder{}
+                       .SetTokenContract(c.token_contract)
+                       .SetContractAddress(called_contract_address)
+                       .SetStorage(c.storage)
+                       .SetStateAdapter(c.state_adapter)
+                       .SetBlockIndex(c.block_index)
+                       .Build();
+
+    ContractContextAttacher raii_attacher{*loaded_contract, std::move(context)};
     c.state_adapter->PushContext(identity);
 
     bool const success =

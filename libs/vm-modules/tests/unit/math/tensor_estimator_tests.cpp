@@ -16,11 +16,10 @@
 //
 //------------------------------------------------------------------------------
 
-#include "vm_test_toolkit.hpp"
-
 #include "vm/array.hpp"
 #include "vm_modules/math/tensor/tensor.hpp"
 #include "vm_modules/math/tensor/tensor_estimator.hpp"
+#include "vm_modules/test_utilities/vm_test_toolkit.hpp"
 
 #include "gmock/gmock.h"
 

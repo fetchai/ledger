@@ -26,6 +26,12 @@ namespace ml {
 /// PUBLIC METHODS ///
 //////////////////////
 
+template <typename TensorType>
+void SubGraph<TensorType>::Compile()
+{
+  Graph<TensorType>::Compile();
+}
+
 /**
  *
  * @tparam T
@@ -143,6 +149,46 @@ void SubGraph<TensorType>::InsertSharedCopy(
   copyshare->output_node_name_ = output_node_name_;
 
   Graph<TensorType>::InsertSharedCopy(copyshare);
+}
+
+template <class T>
+std::pair<OperationsCount, math::SizeVector> SubGraph<T>::ChargeForward(
+    std::vector<math::SizeVector> const &input_shapes)
+{
+  math::SizeType i = 0;
+  for (auto const &in_node_name : input_node_names_)
+  {
+    auto input_node = this->GetNode(in_node_name);
+    auto dataholder = std::dynamic_pointer_cast<ops::DataHolder<TensorType>>(input_node->GetOp());
+    dataholder->SetFutureDataShape(input_shapes.at(i));
+    i++;
+  }
+
+  NodePtrType                     last_node = Graph<TensorType>::GetNode(this->output_node_name_);
+  std::unordered_set<std::string> visited_nodes;
+  auto                            cost_and_outputshape = last_node->ChargeForward(visited_nodes);
+
+  return cost_and_outputshape;
+}
+
+template <class T>
+std::pair<OperationsCount, math::SizeVector> SubGraph<T>::ChargeBackward(
+    std::vector<math::SizeVector> const &input_shapes)
+{
+  math::SizeType i = 0;
+  for (auto const &in_node_name : input_node_names_)
+  {
+    auto input_node = this->GetNode(in_node_name);
+    auto dataholder = std::dynamic_pointer_cast<ops::DataHolder<TensorType>>(input_node->GetOp());
+    dataholder->SetFutureDataShape(input_shapes.at(i));
+    i++;
+  }
+
+  NodePtrType                     last_node = Graph<TensorType>::GetNode(this->output_node_name_);
+  std::unordered_set<std::string> visited_nodes;
+  auto                            cost_and_outputshape = last_node->ChargeBackward(visited_nodes);
+
+  return cost_and_outputshape;
 }
 
 ///////////////////////////////

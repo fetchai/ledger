@@ -46,7 +46,7 @@ TYPED_TEST(SliceTest, multi_axes_forward_shape_test)
 
   fetch::ml::ops::Slice<TypeParam> op(indices, axes);
 
-  TypeParam prediction(op.ComputeOutputShape({std::make_shared<TypeParam>(a)}));
+  TypeParam prediction(op.ComputeOutputShape({a.shape()}));
   op.Forward({std::make_shared<TypeParam>(a)}, prediction);
 
   // test correct values
@@ -65,7 +65,7 @@ TYPED_TEST(SliceTest, single_axis_forward_shape_test)
 
   fetch::ml::ops::Slice<TypeParam> op(indices, axes);
 
-  TypeParam prediction(op.ComputeOutputShape({std::make_shared<TypeParam>(a)}));
+  TypeParam prediction(op.ComputeOutputShape({a.shape()}));
   op.Forward({std::make_shared<TypeParam>(a)}, prediction);
 
   // test correct values
@@ -85,7 +85,7 @@ TYPED_TEST(SliceTest, single_axis_forward_2D_value_test)
 
   fetch::ml::ops::Slice<TypeParam> op(index, axis);
 
-  TypeParam prediction(op.ComputeOutputShape({std::make_shared<TypeParam>(a)}));
+  TypeParam prediction(op.ComputeOutputShape({a.shape()}));
   op.Forward({std::make_shared<TypeParam>(a)}, prediction);
 
   // test correct values
@@ -106,7 +106,7 @@ TYPED_TEST(SliceTest, single_axis_forward_3D_value_test)
 
   fetch::ml::ops::Slice<TypeParam> op(index, axis);
 
-  TypeParam prediction(op.ComputeOutputShape({std::make_shared<TypeParam>(a)}));
+  TypeParam prediction(op.ComputeOutputShape({a.shape()}));
   op.Forward({std::make_shared<TypeParam>(a)}, prediction);
 
   // test correct values
@@ -127,7 +127,7 @@ TYPED_TEST(SliceTest, multi_axes_forward_3D_value_test)
 
   fetch::ml::ops::Slice<TypeParam> op(indices, axes);
 
-  TypeParam prediction(op.ComputeOutputShape({std::make_shared<TypeParam>(a)}));
+  TypeParam prediction(op.ComputeOutputShape({a.shape()}));
   op.Forward({std::make_shared<TypeParam>(a)}, prediction);
 
   // test correct values
@@ -175,7 +175,7 @@ TYPED_TEST(SliceTest, ranged_forward_shape_test)
 
   fetch::ml::ops::Slice<TypeParam> op(start_end_slice, axis);
 
-  TypeParam prediction(op.ComputeOutputShape({std::make_shared<TypeParam>(a)}));
+  TypeParam prediction(op.ComputeOutputShape({a.shape()}));
   op.Forward({std::make_shared<TypeParam>(a)}, prediction);
 
   // test correct values
@@ -199,7 +199,7 @@ TYPED_TEST(SliceTest, ranged_forward_3D_value_test)
 
   fetch::ml::ops::Slice<TypeParam> op(start_end_slice, axis);
 
-  TypeParam prediction(op.ComputeOutputShape({std::make_shared<TypeParam>(a)}));
+  TypeParam prediction(op.ComputeOutputShape({a.shape()}));
 
   op.Forward({std::make_shared<TypeParam>(a)}, prediction);
 

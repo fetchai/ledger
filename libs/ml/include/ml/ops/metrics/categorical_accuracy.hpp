@@ -55,13 +55,17 @@ public:
   std::vector<TensorType> Backward(VecTensorType const &inputs,
                                    TensorType const &   error_signal) override;
 
-  std::vector<math::SizeType> ComputeOutputShape(VecTensorType const &inputs) const override;
+  std::vector<math::SizeType> ComputeOutputShape(
+      std::vector<math::SizeVector> const &inputs) const override;
 
   static constexpr OpType OpCode()
   {
     return OpType::METRIC_CATEGORICAL_ACCURACY;
   }
   static constexpr char const *DESCRIPTOR = "Categorical Accuracy";
+
+  std::pair<OperationsCount, math::SizeVector> ChargeBackward(
+      std::vector<math::SizeVector> const &input_shapes) override;
 
 private:
   TensorType weightings_;

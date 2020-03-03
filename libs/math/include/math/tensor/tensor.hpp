@@ -175,6 +175,7 @@ public:
 
   static SizeType SizeFromShape(SizeVector const &shape);
   static SizeType PaddedSizeFromShape(SizeVector const &shape);
+  static SizeType ChargeIterate(SizeVector const &shape);
 
   void    Flatten();
   Tensor  Transpose() const;  // TODO (private 867)

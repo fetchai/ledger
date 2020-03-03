@@ -140,10 +140,18 @@ std::vector<TensorType> CategoricalAccuracy<TensorType>::Backward(VecTensorType 
 
 template <typename TensorType>
 std::vector<math::SizeType> CategoricalAccuracy<TensorType>::ComputeOutputShape(
-    VecTensorType const &inputs) const
+    std::vector<math::SizeVector> const &inputs) const
 {
   FETCH_UNUSED(inputs);
   return {1, 1};
+}
+
+template <class T>
+std::pair<OperationsCount, math::SizeVector> CategoricalAccuracy<T>::ChargeBackward(
+    std::vector<math::SizeVector> const &input_shapes)
+{
+  math::SizeVector output_shape = ComputeOutputShape(input_shapes);
+  return std::make_pair(0, output_shape);
 }
 
 ///////////////////////////////

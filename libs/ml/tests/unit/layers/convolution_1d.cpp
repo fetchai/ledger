@@ -58,13 +58,14 @@ TYPED_TEST(Convolution1DTest, set_input_and_evaluate_test)  // Use the class as 
   fetch::ml::layers::Convolution1D<TensorType> conv(output_channels, input_channels, kernel_height,
                                                     stride_size);
   conv.SetInput("Conv1D_Input", input);
+  conv.Compile();
+
   TensorType output = conv.Evaluate("Conv1D_Conv1D", true);
 
   // Get ground truth
   auto                                      weights = conv.GetWeights();
   fetch::ml::ops::Convolution1D<TensorType> c;
-  TensorType                                gt(c.ComputeOutputShape(
-      {std::make_shared<TensorType>(input), std::make_shared<TensorType>(weights.at(0))}));
+  TensorType gt(c.ComputeOutputShape({input.shape(), weights.at(0).shape()}));
   c.Forward({std::make_shared<TensorType>(input), std::make_shared<TensorType>(weights.at(0))}, gt);
 
   EXPECT_EQ(output.shape(), gt.shape());
@@ -95,16 +96,16 @@ TYPED_TEST(Convolution1DTest, ops_forward_test)  // Use the class as an Ops
                                                     stride_size);
 
   conv.ComputeBatchOutputShape({input_shape});  // necessary for out-of-Graph usage
-  conv.CompleteConstruction();                  // necessary for out-of-Graph usage
+  conv.CompleteShapeDeduction();                // necessary for out-of-Graph usage
+  conv.Compile();                               // necessary for out-of-Graph usage
 
-  TensorType output(conv.ComputeOutputShape({std::make_shared<TensorType>(input)}));
+  TensorType output(conv.ComputeOutputShape({input.shape()}));
   conv.Forward({std::make_shared<TensorType>(input)}, output);
 
   // Get ground truth
   auto                                      weights = conv.GetWeights();
   fetch::ml::ops::Convolution1D<TensorType> c;
-  TensorType                                gt(c.ComputeOutputShape(
-      {std::make_shared<TensorType>(input), std::make_shared<TensorType>(weights.at(0))}));
+  TensorType gt(c.ComputeOutputShape({input.shape(), weights.at(0).shape()}));
   c.Forward({std::make_shared<TensorType>(input), std::make_shared<TensorType>(weights.at(0))}, gt);
 
   // Test correct shape and values
@@ -140,9 +141,10 @@ TYPED_TEST(Convolution1DTest, ops_backward_test)  // Use the class as an Ops
                                                     stride_size);
 
   conv.ComputeBatchOutputShape({input_shape});  // necessary for out-of-Graph usage
-  conv.CompleteConstruction();                  // necessary for out-of-Graph usage
+  conv.CompleteShapeDeduction();                // necessary for out-of-Graph usage
+  conv.Compile();                               // necessary for out-of-Graph usage
 
-  TensorType output(conv.ComputeOutputShape({std::make_shared<TensorType>(input)}));
+  TensorType output(conv.ComputeOutputShape({input.shape()}));
   conv.Forward({std::make_shared<TensorType>(input)}, output);
 
   std::vector<TensorType> backprop_error =
@@ -194,7 +196,8 @@ TYPED_TEST(Convolution1DTest, node_forward_test)  // Use the class as a Node
       });
   conv.AddInput(placeholder_node);
   conv.GetOp()->ComputeBatchOutputShape({input_shape});  // necessary for out-of-Graph usage
-  conv.GetOp()->CompleteConstruction();                  // necessary for out-of-Graph usage
+  conv.GetOp()->CompleteShapeDeduction();                // necessary for out-of-Graph usage
+  conv.GetOp()->Compile();                               // necessary for out-of-Graph usage
 
   TensorType prediction = *conv.Evaluate(true);
 
@@ -203,8 +206,7 @@ TYPED_TEST(Convolution1DTest, node_forward_test)  // Use the class as a Node
       (std::dynamic_pointer_cast<fetch::ml::layers::Convolution1D<TensorType>>(conv.GetOp()))
           ->GetWeights();
   fetch::ml::ops::Convolution1D<TensorType> c;
-  TensorType                                gt(c.ComputeOutputShape(
-      {std::make_shared<TensorType>(input), std::make_shared<TensorType>(weights.at(0))}));
+  TensorType gt(c.ComputeOutputShape({input.shape(), weights.at(0).shape()}));
   c.Forward({std::make_shared<TensorType>(input), std::make_shared<TensorType>(weights.at(0))}, gt);
 
   // Test correct shape and values
@@ -250,7 +252,8 @@ TYPED_TEST(Convolution1DTest, node_backward_test)  // Use the class as a Node
       });
   conv.AddInput(placeholder_node);
   conv.GetOp()->ComputeBatchOutputShape({input_shape});  // necessary for out-of-Graph usage
-  conv.GetOp()->CompleteConstruction();                  // necessary for out-of-Graph usage
+  conv.GetOp()->CompleteShapeDeduction();                // necessary for out-of-Graph usage
+  conv.GetOp()->Compile();                               // necessary for out-of-Graph usage
 
   TensorType prediction     = *conv.Evaluate(true);
   auto       backprop_error = conv.BackPropagate(error_signal);
@@ -294,14 +297,14 @@ TYPED_TEST(Convolution1DTest, graph_forward_test)  // Use the class as a Node
   g.template AddNode<fetch::ml::layers::Convolution1D<TensorType>>(
       "Convolution1D", {"Input"}, output_channels, input_channels, kernel_height, stride_size);
   g.SetInput("Input", input);
+  g.Compile();
 
   TensorType prediction = g.Evaluate("Convolution1D", true);
 
   // Get ground truth
   auto                                      weights = g.GetWeights();
   fetch::ml::ops::Convolution1D<TensorType> c;
-  TensorType                                gt(c.ComputeOutputShape(
-      {std::make_shared<TensorType>(input), std::make_shared<TensorType>(weights.at(0))}));
+  TensorType gt(c.ComputeOutputShape({input.shape(), weights.at(0).shape()}));
   c.Forward({std::make_shared<TensorType>(input), std::make_shared<TensorType>(weights.at(0))}, gt);
 
   EXPECT_EQ(prediction.shape(), gt.shape());

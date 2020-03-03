@@ -58,7 +58,10 @@ public:
   std::vector<TensorType> Backward(VecTensorType const &inputs,
                                    TensorType const &   error_signal) override;
 
-  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override;
+  std::vector<SizeType> ComputeOutputShape(
+      std::vector<math::SizeVector> const &inputs) const override;
+
+  void Compile() override;
 
   std::pair<SizeType, SizeType> start_end_slice_;
   std::vector<SizeType>         axes_;
@@ -74,8 +77,9 @@ public:
     return OpType::OP_SLICE;
   }
 
-  OperationsCount ChargeForward() const override;
-  OperationsCount ChargeBackward() const override;
+  OperationsCount                              ChargeForward() const override;
+  std::pair<OperationsCount, math::SizeVector> ChargeBackward(
+      std::vector<math::SizeVector> const &input_shapes) override;
 
   static constexpr char const *DESCRIPTOR = "Slice";
 };

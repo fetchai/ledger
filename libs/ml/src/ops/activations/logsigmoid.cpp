@@ -60,7 +60,7 @@ template <typename TensorType>
 void LogSigmoid<TensorType>::Forward(VecTensorType const &inputs, TensorType &output)
 {
   assert(inputs.size() == 1);
-  assert(output.shape() == this->ComputeOutputShape(inputs));
+  assert(output.shape() == ComputeOutputShape(fetch::ml::utilities::TensorPtrsToSizes(inputs)));
 
   fetch::math::Sigmoid((*inputs.front()), output);
   fetch::math::Log(output, output);
@@ -92,9 +92,9 @@ std::vector<TensorType> LogSigmoid<TensorType>::Backward(VecTensorType const &in
 
 template <typename TensorType>
 std::vector<math::SizeType> LogSigmoid<TensorType>::ComputeOutputShape(
-    VecTensorType const &inputs) const
+    std::vector<math::SizeVector> const &inputs) const
 {
-  return inputs.front()->shape();
+  return inputs.front();
 }
 
 template <typename TensorType>
@@ -107,12 +107,14 @@ OperationsCount LogSigmoid<TensorType>::ChargeForward() const
 }
 
 template <typename TensorType>
-OperationsCount LogSigmoid<TensorType>::ChargeBackward() const
+std::pair<OperationsCount, math::SizeVector> LogSigmoid<TensorType>::ChargeBackward(
+    std::vector<math::SizeVector> const &input_shapes)
 {
   assert(!this->batch_input_shapes_.empty());
   OperationsCount cost = fetch::ml::charge_estimation::ops::LOG_SIGMOID_BACKWARD_PER_ELEMENT *
                          this->TotalElementsIn({this->batch_input_shapes_});
-  return cost;
+  math::SizeVector output_shape = ComputeOutputShape(input_shapes);
+  return std::make_pair(cost * output_shape.back(), output_shape);
 }
 
 ///////////////////////////////

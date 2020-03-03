@@ -80,10 +80,10 @@ def run(options, benefactor):
     api.sync(api.contracts.create(entity1, contract, 20000))
     api.sync(api.contracts.create(entity1, contract2, 20000))
 
-    current_block = api.tokens._current_block_number()
+    current_block = api.tokens.current_block_number()
 
     api.sync(contract.action(api, 'c2c_call',
-                             40000, [entity1], str(contract2.address)))
+                             40000, entity1, str(contract2.address)))
 
     time.sleep(2)
 

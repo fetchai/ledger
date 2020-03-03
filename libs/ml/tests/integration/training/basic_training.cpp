@@ -95,6 +95,7 @@ void PlusOneTest()
   std::string label_name = g.template AddNode<fetch::ml::ops::PlaceHolder<TypeParam>>("", {});
 
   std::string error_name = g.template AddNode<CriterionType>("Error", {output_name, label_name});
+  g.Compile();
 
   ////////////////////////////////////////
   /// DEFINING DATA AND LABELS FOR XOR ///
@@ -206,6 +207,7 @@ void CategoricalPlusOneTest(bool add_softmax = false)
   std::string label_name = g.template AddNode<fetch::ml::ops::PlaceHolder<TypeParam>>("", {});
 
   std::string error_name = g.template AddNode<CriterionType>("Error", {output_name, label_name});
+  g.Compile();
 
   ////////////////////////////////////////
   /// DEFINING DATA AND LABELS FOR XOR ///
@@ -317,6 +319,7 @@ void CategoricalXorTest(bool add_softmax = false)
   std::string label_name = g.template AddNode<fetch::ml::ops::PlaceHolder<TypeParam>>("", {});
 
   std::string error_name = g.template AddNode<CriterionType>("Error", {output_name, label_name});
+  g.Compile();
 
   ////////////////////////////////////////
   /// DEFINING DATA AND LABELS FOR XOR ///

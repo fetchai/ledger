@@ -44,16 +44,12 @@ Embeddings<TensorType>::Embeddings(SPType const &sp)
 template <typename TensorType>
 std::shared_ptr<OpsSaveableParams> Embeddings<TensorType>::GetOpSaveableParams()
 {
-  auto sp   = std::make_shared<SPType>();
-  auto w_sp = Weights<TensorType>::GetOpSaveableParams();
-
-  auto cast_sp = std::static_pointer_cast<OpWeightsSaveableParams<TensorType>>(sp);
-  *cast_sp     = *(std::static_pointer_cast<OpWeightsSaveableParams<TensorType>>(w_sp));
+  auto sp = std::make_shared<SPType>();
 
   // Add base class savable params
-  auto ops_sp      = Ops<TensorType>::GetOpSaveableParams();
-  auto cast_ops_sp = std::static_pointer_cast<OpsSaveableParams>(sp);
-  *cast_ops_sp     = *(std::static_pointer_cast<OpsSaveableParams>(ops_sp));
+  auto ops_sp  = ParentClass::GetOpSaveableParams();
+  auto cast_sp = std::static_pointer_cast<typename ParentClass::SPType>(sp);
+  *cast_sp     = *(std::static_pointer_cast<typename ParentClass::SPType>(ops_sp));
 
   return sp;
 }
@@ -129,11 +125,10 @@ std::vector<TensorType> Embeddings<TensorType>::Backward(VecTensorType const &in
 
 template <class TensorType>
 std::vector<math::SizeType> Embeddings<TensorType>::ComputeOutputShape(
-    VecTensorType const &inputs) const
+    std::vector<math::SizeVector> const &inputs) const
 {
   auto                  feature_size = this->data_->shape().at(0);
-  std::vector<SizeType> output_shape{feature_size, inputs.front()->shape().at(0),
-                                     inputs.front()->shape().at(1)};
+  std::vector<SizeType> output_shape{feature_size, inputs.front().at(0), inputs.front().at(1)};
   return output_shape;
 }
 
@@ -149,15 +144,16 @@ OperationsCount Embeddings<TensorType>::ChargeForward() const
 }
 
 template <typename TensorType>
-OperationsCount Embeddings<TensorType>::ChargeBackward() const
+std::pair<OperationsCount, math::SizeVector> Embeddings<TensorType>::ChargeBackward(
+    std::vector<math::SizeVector> const &input_shapes)
 {
   assert(!this->batch_input_shapes_.empty());
 
   OperationsCount cost = fetch::ml::charge_estimation::ops::ADDITION_PER_ELEMENT *
                          this->TotalElementsIn({this->batch_input_shapes_});
-  ;
 
-  return cost;
+  math::SizeVector output_shape = ComputeOutputShape(input_shapes);
+  return std::make_pair(cost * output_shape.back(), output_shape);
 }
 
 ///////////////////////////////

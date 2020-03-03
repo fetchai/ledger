@@ -62,7 +62,7 @@ TYPED_TEST(FlattenTest, forward_test)
 
   fetch::ml::ops::Flatten<TypeParam> op;
 
-  TypeParam prediction(op.ComputeOutputShape({std::make_shared<const TypeParam>(data)}));
+  TypeParam prediction(op.ComputeOutputShape({data.shape()}));
   op.Forward({std::make_shared<const TypeParam>(data)}, prediction);
 
   // test correct values
@@ -98,7 +98,7 @@ TYPED_TEST(FlattenTest, backward_test)
 
   fetch::ml::ops::Flatten<TypeParam> op;
 
-  TypeParam prediction(op.ComputeOutputShape({std::make_shared<const TypeParam>(data)}));
+  TypeParam prediction(op.ComputeOutputShape({data.shape()}));
   op.Forward({std::make_shared<const TypeParam>(data)}, prediction);
 
   std::vector<TypeParam> gradients =

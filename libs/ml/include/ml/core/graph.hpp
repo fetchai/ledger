@@ -95,9 +95,9 @@ public:
   std::string AddNode(std::string const &node_name, std::vector<std::string> const &inputs,
                       Params... params);
 
-  void ResetCompile();
-  void Compile();
-  void ComputeAllNodeShapes();
+  void         ResetCompile();
+  virtual void Compile();
+  void         ComputeAllNodeShapes();
 
   void AddTrainable(NodePtrType node_ptr, std::string const &node_name);
   void AddTrainable(NodePtrType node_ptr, std::string const &node_name,
@@ -154,6 +154,7 @@ public:
 
   fetch::ml::OperationsCount ChargeForward(std::string const &node_name) const;
   fetch::ml::OperationsCount ChargeBackward(std::string const &node_name) const;
+  fetch::ml::OperationsCount ChargeCompile();
 
 protected:
   std::map<std::string, NodePtrType>                            nodes_;
