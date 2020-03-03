@@ -23,8 +23,13 @@ namespace fetch {
 namespace math {
 namespace charge_estimation {
 
-static constexpr OperationsCount TENSOR_ITERATION_DEFAULT    = 3;
-static constexpr OperationsCount TENSOR_ITERATION_END_OF_ROW = 6;
+static constexpr OperationsCount TENSOR_ITERATION_OVERHEAD = 7;
+
+static constexpr OperationsCount TENSOR_ITERATION_DEFAULT_MULTIPLY = 1;
+static constexpr OperationsCount TENSOR_ITERATION_DEFAULT_DIVIDE   = 2;
+
+static constexpr OperationsCount TENSOR_ITERATION_END_OF_ROW_MULTIPLY = 1;
+static constexpr OperationsCount TENSOR_ITERATION_END_OF_ROW_DIVIDE   = 1;
 
 }  // namespace charge_estimation
 }  // namespace math
