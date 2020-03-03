@@ -47,7 +47,7 @@ void BM_Divide_Tensors(benchmark::State &state)
 {
   using TensorType = typename fetch::math::Tensor<T>;
 
-  // Get args form state
+  // Get args from state
   BM_Tensor_config config{state};
 
   TensorType input_1(config.shape);
@@ -57,8 +57,6 @@ void BM_Divide_Tensors(benchmark::State &state)
   // Fill tensors with random values
   input_1.FillUniformRandom();
   input_2.FillUniformRandom();
-
-  // state.counters["charge"] = static_cast<double>(TensorType::ChargeIterate(config.shape));
 
   for (auto _ : state)
   {
@@ -126,7 +124,7 @@ void BM_Divide_Scalar(benchmark::State &state)
   using TensorType = typename fetch::math::Tensor<T>;
   using DataType   = typename TensorType::Type;
 
-  // Get args form state
+  // Get args from state
   BM_Tensor_config config{state};
 
   TensorType input_1(config.shape);
@@ -135,8 +133,6 @@ void BM_Divide_Scalar(benchmark::State &state)
 
   // Fill tensors with random values
   input_1.FillUniformRandom();
-
-  // state.counters["charge"] = static_cast<double>(TensorType::ChargeIterate(config.shape));
 
   for (auto _ : state)
   {
@@ -203,7 +199,7 @@ void BM_Multiply_Tensors(benchmark::State &state)
 {
   using TensorType = typename fetch::math::Tensor<T>;
 
-  // Get args form state
+  // Get args from state
   BM_Tensor_config config{state};
 
   TensorType input_1(config.shape);
@@ -213,8 +209,6 @@ void BM_Multiply_Tensors(benchmark::State &state)
   // Fill tensors with random values
   input_1.FillUniformRandom();
   input_2.FillUniformRandom();
-
-  // state.counters["charge"] = static_cast<double>(TensorType::ChargeIterate(config.shape));
 
   for (auto _ : state)
   {
@@ -282,7 +276,7 @@ void BM_Multiply_Scalar(benchmark::State &state)
   using TensorType = typename fetch::math::Tensor<T>;
   using DataType   = typename TensorType::Type;
 
-  // Get args form state
+  // Get args from state
   BM_Tensor_config config{state};
 
   TensorType input_1(config.shape);
@@ -291,8 +285,6 @@ void BM_Multiply_Scalar(benchmark::State &state)
 
   // Fill tensors with random values
   input_1.FillUniformRandom();
-
-  // state.counters["charge"] = static_cast<double>(TensorType::ChargeIterate(config.shape));
 
   for (auto _ : state)
   {

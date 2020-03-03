@@ -1357,7 +1357,7 @@ TYPED_TEST(GraphTest, graph_charge_forward_conv2d)
 
   OperationsCount const batch_charge = g.ChargeForward(conv2d);
 
-  OperationsCount const expected_charge = 377975808;  // TODO(VH): calc proper expected charge
+  OperationsCount const expected_charge = 377975808;  // TODO(ML-532): calc proper expected charge
 
   ASSERT_EQ(batch_charge, expected_charge);
 }
