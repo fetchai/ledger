@@ -436,7 +436,8 @@ OperationsCount Convolution1D<TensorType>::ChargeForward() const
 }
 
 template <typename TensorType>
-OperationsCount Convolution1D<TensorType>::ChargeBackward() const
+std::pair<OperationsCount, math::SizeVector> Convolution1D<TensorType>::ChargeBackward(
+    std::vector<math::SizeVector> const &input_shapes)
 {
   assert(!this->batch_output_shape_.empty());
   assert(this->batch_input_shapes_.size() == 2);
@@ -457,7 +458,8 @@ OperationsCount Convolution1D<TensorType>::ChargeBackward() const
       2 * (horizontal_stride_width * horizontal_stride_height * vertical_stride_width *
            fetch::ml::charge_estimation::ops::MULTIPLICATION_PER_ELEMENT);
 
-  return cost;
+  math::SizeVector output_shape = ComputeOutputShape(input_shapes);
+  return std::make_pair(cost * output_shape.back(), output_shape);
 }
 
 ///////////////////////////////

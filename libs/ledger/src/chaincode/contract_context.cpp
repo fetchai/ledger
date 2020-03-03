@@ -19,6 +19,8 @@
 #include "chain/address.hpp"
 #include "ledger/chaincode/contract_context.hpp"
 
+#include <utility>
+
 namespace fetch {
 namespace ledger {
 
@@ -32,6 +34,48 @@ ContractContext::ContractContext(TokenContract *token_contract_param, chain::Add
   , state_adapter{state_adapter_param}
   , block_index{block_index_param}
 {}
+
+ContractContext::Builder &ContractContext::Builder::SetTokenContract(TokenContract *const tc)
+{
+  token_contract_ = tc;
+
+  return *this;
+}
+
+ContractContext::Builder &ContractContext::Builder::SetContractAddress(chain::Address ca)
+{
+  contract_address_ = std::move(ca);
+
+  return *this;
+}
+
+ContractContext::Builder &ContractContext::Builder::SetStorage(StorageInterface const *const s)
+{
+  storage_ = s;
+
+  return *this;
+}
+
+ContractContext::Builder &ContractContext::Builder::SetStateAdapter(StateAdapter *const sa)
+{
+  state_adapter_ = sa;
+
+  return *this;
+}
+
+ContractContext::Builder &ContractContext::Builder::SetBlockIndex(
+    chain::TransactionLayout::BlockIndex const bi)
+{
+  block_index_ = bi;
+
+  return *this;
+}
+
+ContractContext ContractContext::Builder::Build() const
+{
+  return ContractContext{token_contract_, contract_address_, storage_, state_adapter_,
+                         block_index_};
+}
 
 }  // namespace ledger
 }  // namespace fetch
