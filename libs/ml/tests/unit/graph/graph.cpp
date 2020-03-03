@@ -1524,7 +1524,7 @@ TYPED_TEST(GraphTest, graph_charge_backward_conv_dense)
 
   OperationsCount const charge = g.ChargeBackward(dense);
   OperationsCount const expected_charge =
-      7471334;  // Pre-calculated backward charge for give shape.
+      9044198;  // Pre-calculated backward charge for give shape.
 
   EXPECT_EQ(charge, expected_charge);
 

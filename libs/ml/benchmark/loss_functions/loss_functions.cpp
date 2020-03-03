@@ -153,7 +153,8 @@ void BM_MeanSquareErrorLossBackward(benchmark::State &state)
   msqe.SetBatchInputShapes({config.shape, config.shape});
   msqe.SetBatchOutputShape(config.shape);
 
-  state.counters["charge_total"]   = static_cast<double>(msqe.ChargeBackward());
+  state.counters["charge_total"] =
+      static_cast<double>(msqe.ChargeBackward({config.shape, config.shape}).first);
   state.counters["charge_iterate"] = static_cast<double>(TensorType::ChargeIterate(config.shape));
 
   state.counters["PaddedSize"] =
@@ -286,10 +287,8 @@ void BM_CrossEntropyBackward(benchmark::State &state)
   inputs.emplace_back(std::make_shared<TensorType>(config.shape));
   fetch::ml::ops::CrossEntropyLoss<TensorType> ce;
 
-  ce.SetBatchInputShapes({config.shape, config.shape});
-  ce.SetBatchOutputShape(config.shape);
-
-  state.counters["charge_total"]   = static_cast<double>(ce.ChargeBackward());
+  state.counters["charge_total"] =
+      static_cast<double>(ce.ChargeBackward({config.shape, config.shape}).first);
   state.counters["charge_iterate"] = static_cast<double>(TensorType::ChargeIterate(config.shape));
 
   state.counters["PaddedSize"] =
