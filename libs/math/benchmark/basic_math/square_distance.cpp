@@ -23,8 +23,6 @@
 
 #include "benchmark/benchmark.h"
 
-namespace {
-
 struct BM_Tensor_config
 {
   using SizeType = fetch::math::SizeType;
@@ -120,5 +118,3 @@ BENCHMARK_TEMPLATE(BM_Square_Distance, fetch::fixed_point::fp32_t)
 BENCHMARK_TEMPLATE(BM_Square_Distance, fetch::fixed_point::fp128_t)
     ->Apply(SquareDistanceArguments)
     ->Unit(::benchmark::kNanosecond);
-
-}  // namespace
