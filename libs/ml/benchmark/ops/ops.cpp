@@ -5166,8 +5166,6 @@ static void AddArguments(benchmark::internal::Benchmark *b)
     }
   }
 }
-// TODO - 2D data + 1D for batch size
-// TODO - sum input and output iteration charges
 
 template <class T>
 void BM_AddForward(benchmark::State &state)
