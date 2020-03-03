@@ -30,7 +30,8 @@ static constexpr OperationsCount PIECEWISE_LOWER_THRESHOLD = 16384;    // 2^14
 static constexpr OperationsCount PIECEWISE_HARD_CAP        = 1048576;  // 2^20
 
 static constexpr OperationsCount OP_OVERHEAD = 60;
-static constexpr OperationsCount TENSOR_CONSTRUCTION_OVERHEAD = 20;  // should be multiplied by tensor size
+static constexpr OperationsCount TENSOR_CONSTRUCTION_OVERHEAD =
+    20;  // should be multiplied by tensor size
 
 static constexpr OperationsCount FIBONNACI_GENERATOR_PER_ELEMENT = 1;
 static constexpr OperationsCount TANH_PER_ELEMENT                = 1;
