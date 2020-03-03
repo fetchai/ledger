@@ -107,20 +107,15 @@ OperationsCount TensorDataLoader<TensorType>::ChargeAddData(const std::vector<Te
                                                             const TensorType &             labels)
 {
   OperationsCount cost = 700;  // empirical adjustment to match times
-  cost += 2;                   // setting one_sample_label_shape
-  cost += 4;                   // resizing data vector
-  OperationsCount label_copy_cost = TensorType::PaddedSizeFromShape(labels.shape());
+  OperationsCount label_copy_cost = 8 * TensorType::PaddedSizeFromShape(labels.shape());
   cost += label_copy_cost;
 
-  cost += data.size();  // loop cost
   for (SizeType i{0}; i < data.size(); i++)
   {
-    cost += TensorType::PaddedSizeFromShape(data.at(i).shape());  // copying data cost
+    cost += 8 * TensorType::PaddedSizeFromShape(data.at(i).shape());  // copying data cost
     cost += data.at(i).shape().size();                            // copying data shape cost
   }
-  cost += 7;  // n_samples cost
 
-  cost += 32;  // count of operations in UpdateRanges and UpdateCursor
   return cost;
 }
 

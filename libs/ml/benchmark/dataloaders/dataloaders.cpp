@@ -65,8 +65,8 @@ void BM_TensorDataLoader_AddData(benchmark::State &state)
 static void TensorDataLoaderAddDataArguments(benchmark::internal::Benchmark *b)
 {
   std::vector<std::int64_t> data_sizes{1, 10, 100, 1000, 10000};
-  std::vector<std::int64_t> input_sizes{1, 10, 100, 1000, 10000};
-  std::vector<std::int64_t> output_sizes{1, 10, 100, 1000, 10000};
+  std::vector<std::int64_t> input_sizes{1, 100, 10000};
+  std::vector<std::int64_t> output_sizes{1, 100, 10000};
   std::vector<std::int64_t> n_inputs{1, 10, 100, 1000, 10000};
 
   for (auto const &ds : data_sizes)
@@ -84,21 +84,21 @@ static void TensorDataLoaderAddDataArguments(benchmark::internal::Benchmark *b)
   }
 }
 
-BENCHMARK_TEMPLATE(BM_TensorDataLoader_AddData, float)
-    ->Apply(TensorDataLoaderAddDataArguments)
-    ->Unit(::benchmark::kNanosecond);
-BENCHMARK_TEMPLATE(BM_TensorDataLoader_AddData, double)
-    ->Apply(TensorDataLoaderAddDataArguments)
-    ->Unit(::benchmark::kNanosecond);
+//BENCHMARK_TEMPLATE(BM_TensorDataLoader_AddData, float)
+//    ->Apply(TensorDataLoaderAddDataArguments)
+//    ->Unit(::benchmark::kNanosecond);
+//BENCHMARK_TEMPLATE(BM_TensorDataLoader_AddData, double)
+//    ->Apply(TensorDataLoaderAddDataArguments)
+//    ->Unit(::benchmark::kNanosecond);
 BENCHMARK_TEMPLATE(BM_TensorDataLoader_AddData, fetch::fixed_point::fp32_t)
     ->Apply(TensorDataLoaderAddDataArguments)
     ->Unit(::benchmark::kNanosecond);
-BENCHMARK_TEMPLATE(BM_TensorDataLoader_AddData, fetch::fixed_point::fp64_t)
-    ->Apply(TensorDataLoaderAddDataArguments)
-    ->Unit(::benchmark::kNanosecond);
-BENCHMARK_TEMPLATE(BM_TensorDataLoader_AddData, fetch::fixed_point::fp128_t)
-    ->Apply(TensorDataLoaderAddDataArguments)
-    ->Unit(::benchmark::kNanosecond);
+//BENCHMARK_TEMPLATE(BM_TensorDataLoader_AddData, fetch::fixed_point::fp64_t)
+//    ->Apply(TensorDataLoaderAddDataArguments)
+//    ->Unit(::benchmark::kNanosecond);
+//BENCHMARK_TEMPLATE(BM_TensorDataLoader_AddData, fetch::fixed_point::fp128_t)
+//    ->Apply(TensorDataLoaderAddDataArguments)
+//    ->Unit(::benchmark::kNanosecond);
 
 template <class DataType>
 void BM_TensorDataLoader_GetNext(benchmark::State &state)
@@ -147,20 +147,20 @@ static void TensorDataLoaderGetNextArguments(benchmark::internal::Benchmark *b)
   }
 }
 
-BENCHMARK_TEMPLATE(BM_TensorDataLoader_GetNext, float)
-    ->Apply(TensorDataLoaderGetNextArguments)
-    ->Unit(::benchmark::kNanosecond);
-BENCHMARK_TEMPLATE(BM_TensorDataLoader_GetNext, double)
-    ->Apply(TensorDataLoaderGetNextArguments)
-    ->Unit(::benchmark::kNanosecond);
-BENCHMARK_TEMPLATE(BM_TensorDataLoader_GetNext, fetch::fixed_point::fp32_t)
-    ->Apply(TensorDataLoaderGetNextArguments)
-    ->Unit(::benchmark::kNanosecond);
+//BENCHMARK_TEMPLATE(BM_TensorDataLoader_GetNext, float)
+//    ->Apply(TensorDataLoaderGetNextArguments)
+//    ->Unit(::benchmark::kNanosecond);
+//BENCHMARK_TEMPLATE(BM_TensorDataLoader_GetNext, double)
+//    ->Apply(TensorDataLoaderGetNextArguments)
+//    ->Unit(::benchmark::kNanosecond);
+//BENCHMARK_TEMPLATE(BM_TensorDataLoader_GetNext, fetch::fixed_point::fp32_t)
+//    ->Apply(TensorDataLoaderGetNextArguments)
+//    ->Unit(::benchmark::kNanosecond);
 BENCHMARK_TEMPLATE(BM_TensorDataLoader_GetNext, fetch::fixed_point::fp64_t)
     ->Apply(TensorDataLoaderGetNextArguments)
     ->Unit(::benchmark::kNanosecond);
-BENCHMARK_TEMPLATE(BM_TensorDataLoader_GetNext, fetch::fixed_point::fp128_t)
-    ->Apply(TensorDataLoaderGetNextArguments)
-    ->Unit(::benchmark::kNanosecond);
+//BENCHMARK_TEMPLATE(BM_TensorDataLoader_GetNext, fetch::fixed_point::fp128_t)
+//    ->Apply(TensorDataLoaderGetNextArguments)
+//    ->Unit(::benchmark::kNanosecond);
 
 BENCHMARK_MAIN();
