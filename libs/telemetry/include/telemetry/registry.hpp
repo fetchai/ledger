@@ -111,7 +111,7 @@ private:
   static bool ValidateName(std::string const &name);
 
   template <class M>
-  std::shared_ptr<M> Insert(std::string const &name, std::shared_ptr<M> m);
+  std::shared_ptr<M> Insert(std::string name, std::shared_ptr<M> m);
 
   mutable std::mutex lock_;
   Measurements       measurements_;
@@ -163,15 +163,15 @@ std::shared_ptr<M> Registry::Create(std::string name, Args &&... args)
     return {};
   }
 
-  return Insert(name, std::make_shared<M>(std::forward<Args>(args)...));
+  return Insert(std::move(name), std::make_shared<M>(std::forward<Args>(args)...));
 }
 
 template <class M>
-std::shared_ptr<M> Registry::Insert(std::string const &name, std::shared_ptr<M> m)
+std::shared_ptr<M> Registry::Insert(std::string name, std::shared_ptr<M> m)
 {
   std::lock_guard<std::mutex> guard(lock_);
 
-  auto &named_cell = measurements_[name];
+  auto &named_cell = measurements_[std::move(name)];
 
   auto cell_it = named_cell.insert(std::move(m)).first;
 
