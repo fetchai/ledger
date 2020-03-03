@@ -272,9 +272,15 @@ bool Executor::ExecuteTransactionContract(Result &result)
 
     Contract::Result contract_status;
     {
-      ContractContext context{&token_contract_, current_tx_->contract_address(), storage_.get(),
-                              &storage_adapter, block_};
-      ContractContextAttacher raii(*contract, context);
+      auto context = ContractContext::Builder{}
+                         .SetTokenContract(&token_contract_)
+                         .SetContractAddress(current_tx_->contract_address())
+                         .SetStorage(storage_.get())
+                         .SetStateAdapter(&storage_adapter)
+                         .SetBlockIndex(block_)
+                         .Build();
+
+      ContractContextAttacher raii_attacher(*contract, std::move(context));
       contract_status = contract->DispatchTransaction(*current_tx_);
     }
 
@@ -343,9 +349,14 @@ bool Executor::ProcessTransfers(Result &result)
     // attach the token contract to the storage engine
     StateSentinelAdapter storage_adapter{*storage_cache_, "fetch.token", allowed_shards_};
 
-    ContractContext         context{&token_contract_, current_tx_->contract_address(), nullptr,
-                            &storage_adapter, block_};
-    ContractContextAttacher raii(token_contract_, context);
+    auto context = ContractContext::Builder{}
+                       .SetTokenContract(&token_contract_)
+                       .SetContractAddress(current_tx_->contract_address())
+                       .SetStateAdapter(&storage_adapter)
+                       .SetBlockIndex(block_)
+                       .Build();
+
+    ContractContextAttacher raii_attacher(token_contract_, std::move(context));
 
     // only process transfers if the previous steps have been successful
     if (Status::SUCCESS == result.status)

@@ -114,6 +114,16 @@ public:
   }
 
   static constexpr char const *DESCRIPTOR = "Switch";
+
+  std::pair<OperationsCount, math::SizeVector> ChargeBackward(
+      std::vector<math::SizeVector> const &input_shapes) override
+  {
+    assert(!this->batch_input_shapes_.empty());
+    OperationsCount cost = fetch::ml::charge_estimation::ops::SWITCH_BACKWARD_PER_ELEMENT *
+                           this->TotalElementsIn({this->batch_input_shapes_.at(0)});
+    math::SizeVector output_shape = ComputeOutputShape(input_shapes);
+    return std::make_pair(cost * output_shape.back(), output_shape);
+  }
 };
 
 }  // namespace ops

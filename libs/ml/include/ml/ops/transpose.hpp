@@ -72,8 +72,9 @@ public:
     return DESCRIPTOR;
   }
 
-  OperationsCount ChargeForward() const override;
-  OperationsCount ChargeBackward() const override;
+  OperationsCount                              ChargeForward() const override;
+  std::pair<OperationsCount, math::SizeVector> ChargeBackward(
+      std::vector<math::SizeVector> const &input_shapes) override;
 
 private:
   std::vector<SizeType> transpose_vector_;

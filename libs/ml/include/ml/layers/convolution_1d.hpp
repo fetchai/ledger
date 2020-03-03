@@ -80,9 +80,7 @@ public:
     return DESCRIPTOR;
   }
 
-  void Compile() override;
-
-  OperationsCount ChargeBackward() const override;
+  void            Compile() override;
   OperationsCount ChargeCompile() override;
 
 private:

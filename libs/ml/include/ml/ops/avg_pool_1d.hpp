@@ -64,8 +64,9 @@ public:
   }
   static constexpr char const *DESCRIPTOR = "AvgPool1D";
 
-  OperationsCount ChargeForward() const override;
-  OperationsCount ChargeBackward() const override;
+  OperationsCount                              ChargeForward() const override;
+  std::pair<OperationsCount, math::SizeVector> ChargeBackward(
+      std::vector<math::SizeVector> const &input_shapes) override;
 
 private:
   SizeType kernel_size_;

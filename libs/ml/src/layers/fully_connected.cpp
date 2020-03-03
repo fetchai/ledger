@@ -165,12 +165,6 @@ void FullyConnected<TensorType>::Compile()
 }
 
 template <typename TensorType>
-OperationsCount FullyConnected<TensorType>::ChargeBackward() const
-{
-  return Graph<TensorType>::ChargeBackward(this->output_node_name_);
-}
-
-template <typename TensorType>
 OperationsCount FullyConnected<TensorType>::ChargeCompleteShapeDeduction(bool        is_initialised,
                                                                          WeightsInit init_mode,
                                                                          bool     time_distributed,
