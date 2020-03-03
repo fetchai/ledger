@@ -23,6 +23,8 @@
 #include <iostream>
 #include <sstream>
 
+using namespace std::chrono_literals;
+
 namespace fetch {
 
 #ifdef FETCH_DEBUG_MUTEX
