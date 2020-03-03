@@ -82,12 +82,12 @@ private:
   static std::atomic<bool> throw_on_deadlock_;
 };
 
-class SimpleDeadlock
+class SimpleLockAttempt
 {
 protected:
   using Mutex = SimpleDebugMutex;
 
-  struct OwnerId
+  struct LockDetails
   {
     std::thread::id id = std::this_thread::get_id();
   };
@@ -110,12 +110,12 @@ protected:
   static bool IsDeadlocked(OwnerId const &owner) noexcept;
 };
 
-class RecursiveDeadlock
+class RecursiveLockAttempt
 {
 protected:
   using Mutex = RecursiveDebugMutex;
 
-  struct OwnerId
+  struct LockDetails
   {
     moment::ClockInterface::Timestamp taken_at;
     std::thread::id                   id              = std::this_thread::get_id();
@@ -156,7 +156,6 @@ public:
     auto &         instance = Instance();
     GuardOfMutexes non_fetch_lock_to_avoid_recursion(instance.mutex_);
 
-    // Registering the matrix diagonal
     auto lock_owners_it = instance.lock_owners_.emplace(mutex, OwnerId{}).first;
     try
     {
@@ -334,8 +333,8 @@ private:
   std::unordered_map<std::thread::id, LockLocation> waiting_location_;
 };
 
-using SimpleMutexRegister    = MutexRegister<SimpleDeadlock>;
-using RecursiveMutexRegister = MutexRegister<RecursiveDeadlock>;
+using SimpleMutexRegister    = MutexRegister<SimpleLockAttempt>;
+using RecursiveMutexRegister = MutexRegister<RecursiveLockAttempt>;
 
 template <class UnderlyingMutex, class MutexRegister>
 class DebugMutex : UnderlyingMutex

@@ -31,12 +31,12 @@ namespace {
 
 moment::ClockInterface::Timestamp Now()
 {
-  static auto clock = moment::GetClock("RecursiveDeadlock");
+  static auto clock = moment::GetClock("RecursiveLockAttempt");
 
   return clock->Now();
 }
 
-static constexpr std::chrono::seconds DEADLOCK_TIMEOUT{2};
+static constexpr moment::ClockInterface::Duration DEADLOCK_TIMEOUT = 2s;
 
 }  // namespace
 
@@ -76,7 +76,7 @@ void DeadlockHandler::AbortOnDeadlock()
  * @param owner Thread id of mutex's current owner
  * @return true iff attempting to lock() this mutex would result in a deadlock
  */
-bool SimpleDeadlock::IsDeadlocked(OwnerId const &owner) noexcept
+bool SimpleLockAttempt::IsDeadlocked(OwnerId const &owner) noexcept
 {
   return owner.id == std::this_thread::get_id();
 }
@@ -91,7 +91,7 @@ bool SimpleDeadlock::IsDeadlocked(OwnerId const &owner) noexcept
  * @param owner A record, either fresh or already known, of a thread that owns a recursive mutex.
  * @return true iff it's the very first, depthwise, acquisition of this mutex by this thread
  */
-bool RecursiveDeadlock::Populate(OwnerId &owner) noexcept
+bool RecursiveLockAttempt::Populate(OwnerId &owner) noexcept
 {
   if (owner.recursion_depth++ == 0)
   {
@@ -107,7 +107,7 @@ bool RecursiveDeadlock::Populate(OwnerId &owner) noexcept
  * @param owner A record of a thread that owns a recursive mutex.
  * @return true iff this thread has just fully released this mutex.
  */
-bool RecursiveDeadlock::Depopulate(OwnerId &owner) noexcept
+bool RecursiveLockAttempt::Depopulate(OwnerId &owner) noexcept
 {
   return --owner.recursion_depth == 0;
 }
@@ -119,7 +119,7 @@ bool RecursiveDeadlock::Depopulate(OwnerId &owner) noexcept
  * @param owner A record of a thread that is to lock a recursive mutex.
  * @return true iff this thread already has this mutex locked.
  */
-bool RecursiveDeadlock::SafeToLock(OwnerId const &owner) noexcept
+bool RecursiveLockAttempt::SafeToLock(OwnerId const &owner) noexcept
 {
   return owner.id == std::this_thread::get_id();
 }
@@ -131,7 +131,7 @@ bool RecursiveDeadlock::SafeToLock(OwnerId const &owner) noexcept
  * @param owner A record of a thread that owns a recursive mutex.
  * @return true iff this takes suspiciously long.
  */
-bool RecursiveDeadlock::IsDeadlocked(OwnerId const &owner)
+bool RecursiveLockAttempt::IsDeadlocked(OwnerId const &owner)
 {
   return owner.id != std::this_thread::get_id() && Now() >= owner.taken_at + DEADLOCK_TIMEOUT;
 }

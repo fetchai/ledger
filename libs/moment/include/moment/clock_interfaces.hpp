@@ -20,6 +20,8 @@
 #include <chrono>
 #include <memory>
 
+using namespace std::chrono_literals;
+
 namespace fetch {
 namespace moment {
 
