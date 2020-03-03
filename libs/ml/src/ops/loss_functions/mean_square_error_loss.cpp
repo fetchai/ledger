@@ -290,13 +290,12 @@ std::pair<OperationsCount, math::SizeVector> MeanSquareErrorLoss<TensorType>::Ch
 }
 
 template <typename TensorType>
-OperationsCount MeanSquareErrorLoss<TensorType>::ChargeBackward() const
+std::pair<OperationsCount, math::SizeVector> MeanSquareErrorLoss<TensorType>::ChargeBackward(
+    std::vector<math::SizeVector> const &input_shapes)
 {
-  assert(!this->batch_input_shapes_.empty());
-  assert(!this->batch_output_shape_.empty());
-
-  auto n_elements  = TensorType::SizeFromShape(this->batch_input_shapes_[0]);
-  auto padded_size = TensorType::PaddedSizeFromShape(this->batch_input_shapes_[0]);
+  auto             n_elements   = TensorType::SizeFromShape(input_shapes.at(0));
+  auto             padded_size  = TensorType::PaddedSizeFromShape(input_shapes.at(0));
+  math::SizeVector output_shape = ComputeOutputShape(input_shapes);
 
   OperationsCount cost{fetch::ml::charge_estimation::ops::MEAN_SQ_ERROR_BACKWARD_OVERHEAD};
 
@@ -323,7 +322,7 @@ OperationsCount MeanSquareErrorLoss<TensorType>::ChargeBackward() const
     cost = math::numeric_max<OperationsCount>();
   }
 
-  return cost;
+  return std::make_pair(cost, output_shape);
 }
 
 ///////////////////////////////

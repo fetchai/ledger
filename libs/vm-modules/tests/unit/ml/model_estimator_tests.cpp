@@ -17,6 +17,8 @@
 //------------------------------------------------------------------------------
 
 #include "core/serializers/main_serializer.hpp"
+#include "math/base_types.hpp"
+#include "ml/charge_estimation/types.hpp"
 #include "ml/layers/fully_connected.hpp"
 #include "vm_modules/ml/model/model.hpp"
 #include "vm_modules/vm_factory.hpp"
@@ -385,7 +387,7 @@ TEST_F(VMModelEstimatorTests, compile_sequential_test)
       padded_size += fetch::math::Tensor<DataType>::PaddedSizeFromShape({outputs, 10});
       padded_size += fetch::math::Tensor<DataType>::PaddedSizeFromShape({outputs, 1});
 
-      SizeType val = padded_size * 5 + 17;
+      SizeType val = padded_size * 5 + 19;
 
       EXPECT_EQ(model.EstimateCompileSequential(vm_ptr_loss_type, vm_ptr_opt_type),
                 static_cast<ChargeAmount>(val));

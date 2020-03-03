@@ -140,14 +140,16 @@ std::pair<OperationsCount, math::SizeVector> Flatten<TensorType>::ChargeForward(
 }
 
 template <class TensorType>
-OperationsCount Flatten<TensorType>::ChargeBackward() const
+std::pair<OperationsCount, math::SizeVector> Flatten<TensorType>::ChargeBackward(
+    std::vector<math::SizeVector> const &input_shapes)
 {
   assert(!this->batch_input_shapes_.empty());
   OperationsCount cost = fetch::ml::charge_estimation::ops::RESHAPE_PER_ELEMENT *
                              this->TotalElementsIn(this->batch_input_shapes_) +
                          fetch::ml::charge_estimation::ops::ASSIGN_PER_ELEMENT *
                              this->TotalElementsIn(this->batch_input_shapes_);
-  return cost;
+  math::SizeVector output_shape = ComputeOutputShape(input_shapes);
+  return std::make_pair(cost * output_shape.back(), output_shape);
 }
 
 template <class TensorType>

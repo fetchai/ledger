@@ -64,8 +64,6 @@ public:
     return DESCRIPTOR;
   }
 
-  OperationsCount ChargeBackward() const override;
-
 private:
   SizeType key_dim_{};
   DataType dropout_{};

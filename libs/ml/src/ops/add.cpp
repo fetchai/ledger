@@ -143,21 +143,20 @@ std::pair<OperationsCount, math::SizeVector> Add<TensorType>::ChargeForward(
 }
 
 template <typename TensorType>
-OperationsCount Add<TensorType>::ChargeBackward() const
+std::pair<OperationsCount, math::SizeVector> Add<TensorType>::ChargeBackward(
+    std::vector<math::SizeVector> const &input_shapes)
 {
-  assert(!this->batch_output_shape_.empty());
-  assert(!this->batch_input_shapes_.empty());
-
   OperationsCount cost = fetch::ml::charge_estimation::ops::OP_ADD_BACKWARD_OVERHEAD;
 
-  auto output_shape = this->batch_output_shape_;
-  auto n_elements   = TensorType::SizeFromShape(output_shape);
-  auto padded_size  = TensorType::PaddedSizeFromShape(output_shape);
+  math::SizeVector output_shape = ComputeOutputShape(input_shapes);
+
+  auto n_elements  = TensorType::SizeFromShape(output_shape);
+  auto padded_size = TensorType::PaddedSizeFromShape(output_shape);
 
   if (this->batch_input_shapes_.at(0) == this->batch_input_shapes_.at(1))
   {
     // Just return error
-    return cost;
+    return std::make_pair(cost, output_shape);
   }
 
   // Perform ReduceSum
@@ -183,7 +182,7 @@ OperationsCount Add<TensorType>::ChargeBackward() const
   {
     cost = math::numeric_max<OperationsCount>();
   }
-  return cost;
+  return std::make_pair(cost, output_shape);
 }
 
 /**

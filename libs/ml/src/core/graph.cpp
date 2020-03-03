@@ -1153,7 +1153,7 @@ OperationsCount Graph<TensorType>::ChargeBackward(const std::string &node_name) 
 
   NodePtrType                     node = nodes_.at(node_name);
   std::unordered_set<std::string> visited_nodes;
-  return node->ChargeBackward(visited_nodes);
+  return node->ChargeBackward(visited_nodes).first;
 }
 
 template <typename TensorType>

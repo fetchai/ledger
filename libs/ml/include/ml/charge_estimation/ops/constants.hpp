@@ -35,11 +35,13 @@ static constexpr OperationsCount FIBONNACI_GENERATOR_PER_ELEMENT = 1;
 static constexpr OperationsCount TANH_PER_ELEMENT                = 1;
 static constexpr OperationsCount COSH_PER_ELEMENT                = 1;
 static constexpr OperationsCount MAX_PER_ELEMENT                 = 1;
-static constexpr OperationsCount LOW_ADDITION_PER_ELEMENT        = 5;
-static constexpr OperationsCount HIGH_ADDITION_PER_ELEMENT       = 20;
-static constexpr OperationsCount OP_ADD_BACKWARD_OVERHEAD        = 230;
 
-static constexpr OperationsCount SUBTRACTION_PER_ELEMENT         = LOW_ADDITION_PER_ELEMENT;
+static constexpr OperationsCount LOW_ADDITION_PER_ELEMENT  = 5;
+static constexpr OperationsCount HIGH_ADDITION_PER_ELEMENT = 20;
+static constexpr OperationsCount OP_ADD_BACKWARD_OVERHEAD  = 230;
+
+static constexpr OperationsCount SUBTRACTION_PER_ELEMENT = LOW_ADDITION_PER_ELEMENT;
+
 static constexpr OperationsCount ASSIGN_PER_ELEMENT              = 5;
 static constexpr OperationsCount LOW_FLATTEN_PER_ELEMENT         = 1;
 static constexpr OperationsCount HIGH_FLATTEN_PER_ELEMENT        = 1;
@@ -149,6 +151,8 @@ static constexpr OperationsCount SQRT_BACKWARD_PER_ELEMENT =
     SQRT_PER_ELEMENT + DIVISION_PER_ELEMENT + LOW_MULTIPLICATION_PER_ELEMENT;
 static constexpr OperationsCount TANH_BACKWARD_PER_ELEMENT =
     TANH_PER_ELEMENT + 2 * LOW_MULTIPLICATION_PER_ELEMENT + SUBTRACTION_PER_ELEMENT;
+static constexpr OperationsCount SWITCH_BACKWARD_PER_ELEMENT =
+    LOW_MULTIPLICATION_PER_ELEMENT + SUBTRACTION_PER_ELEMENT;
 
 static constexpr OperationsCount OP_DEFAULT_CONSTRUCTION_COST         = 1;
 static constexpr OperationsCount OP_MATRIX_MULTIPLY_CONSTRUCTION_COST = 3;

@@ -125,12 +125,14 @@ OperationsCount Elu<TensorType>::ChargeForward() const
 }
 
 template <typename TensorType>
-OperationsCount Elu<TensorType>::ChargeBackward() const
+std::pair<OperationsCount, math::SizeVector> Elu<TensorType>::ChargeBackward(
+    std::vector<math::SizeVector> const &input_shapes)
 {
   assert(!this->batch_input_shapes_.empty());
   OperationsCount cost = fetch::ml::charge_estimation::ops::ELU_BACKWARD_PER_ELEMENT *
                          this->TotalElementsIn({this->batch_input_shapes_.at(0)});
-  return cost;
+  math::SizeVector output_shape = ComputeOutputShape(input_shapes);
+  return std::make_pair(cost * output_shape.back(), output_shape);
 }
 
 ///////////////////////////////

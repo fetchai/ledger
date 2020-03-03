@@ -1436,8 +1436,9 @@ TYPED_TEST(GraphTest, graph_charge_backward_dropout)
   g.Compile();
 
   OperationsCount const charge = g.ChargeBackward(output);
+
   // Dropout backward operation is multiplication.
-  OperationsCount const expected_charge = LOW_MULTIPLICATION_PER_ELEMENT * data.shape()[0];
+  OperationsCount const expected_charge = LOW_MULTIPLICATION_PER_ELEMENT * data.size();
 
   ASSERT_EQ(charge, expected_charge);
 }
@@ -1480,7 +1481,7 @@ TYPED_TEST(GraphTest, graph_charge_backward_diamond)
   g.SetInput(input, data);
   g.Compile();
 
-  static const std::size_t expected_calls_to_dropout = (2 * (N - 1) + 1);
+  static const std::size_t expected_calls_to_dropout = N;
   OperationsCount const    charge                    = g.ChargeBackward(output);
   OperationsCount const    expected_charge =
       LOW_MULTIPLICATION_PER_ELEMENT * total_data_elements * expected_calls_to_dropout +
@@ -1489,8 +1490,7 @@ TYPED_TEST(GraphTest, graph_charge_backward_diamond)
   ASSERT_EQ(charge, expected_charge);
 }
 
-// ML-517 : disabled until implementation of CHargeBackward for Add, MatMul and others
-TYPED_TEST(GraphTest, DISABLED_graph_charge_backward_conv_dense)
+TYPED_TEST(GraphTest, graph_charge_backward_conv_dense)
 {
   using namespace fetch::ml::ops;
   using namespace fetch::ml::layers;
@@ -1522,10 +1522,11 @@ TYPED_TEST(GraphTest, DISABLED_graph_charge_backward_conv_dense)
   g.SetInput(input, data);
   g.Compile();
 
-  OperationsCount const charge          = g.ChargeBackward(dense);
-  OperationsCount const expected_charge = 98305;  // Pre-calculated backward charge for give shape.
+  OperationsCount const charge = g.ChargeBackward(dense);
+  OperationsCount const expected_charge =
+      7471334;  // Pre-calculated backward charge for give shape.
 
-  ASSERT_EQ(charge, expected_charge);
+  EXPECT_EQ(charge, expected_charge);
 
   OperationsCount const foward_charge = g.ChargeForward(dense);
   ASSERT_NE(foward_charge, expected_charge);  // A smoke test to prevent calling Forward instead.

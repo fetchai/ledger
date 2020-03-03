@@ -155,17 +155,16 @@ std::pair<OperationsCount, math::SizeVector> CrossEntropyLoss<TensorType>::Charg
 }
 
 template <typename TensorType>
-OperationsCount CrossEntropyLoss<TensorType>::ChargeBackward() const
+std::pair<OperationsCount, math::SizeVector> CrossEntropyLoss<TensorType>::ChargeBackward(
+    std::vector<math::SizeVector> const &input_shapes)
 {
-  assert(!this->batch_input_shapes_.empty());
-  assert(!this->batch_output_shape_.empty());
-
-  auto n_elements  = TensorType::SizeFromShape(this->batch_input_shapes_[0]);
-  auto padded_size = TensorType::PaddedSizeFromShape(this->batch_input_shapes_[0]);
-  auto n_dims      = this->batch_input_shapes_[0].at(0);
+  auto             n_elements   = TensorType::SizeFromShape(input_shapes.at(0));
+  auto             padded_size  = TensorType::PaddedSizeFromShape(input_shapes.at(0));
+  auto             n_dims       = input_shapes.at(0).at(0);
+  math::SizeVector output_shape = ComputeOutputShape(input_shapes);
 
   OperationsCount cost{fetch::ml::charge_estimation::ops::CROSS_ENTROPY_BACKWARD_OVERHEAD};
-  OperationsCount iteration_ops = TensorType::ChargeIterate(this->batch_output_shape_);
+  OperationsCount iteration_ops = TensorType::ChargeIterate(input_shapes.at(0));
   cost += iteration_ops * 4;
 
   // if not a one-hot, must be binary logistic regression cost
@@ -197,7 +196,7 @@ OperationsCount CrossEntropyLoss<TensorType>::ChargeBackward() const
         fetch::ml::charge_estimation::ops::CROSS_ENTROPY_ONE_HOT_BACKWARD_PER_ELEMENT * n_elements;
   }
 
-  return cost;
+  return std::make_pair(cost * output_shape.back(), output_shape);
 }
 
 ///////////////////////////////
