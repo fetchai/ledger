@@ -132,16 +132,12 @@ std::pair<OperationsCount, math::SizeVector> Node<TensorType>::ChargeForward(
 }
 
 template <typename TensorType>
-OperationsCount Node<TensorType>::ChargeBackward(
+std::pair<OperationsCount, math::SizeVector> Node<TensorType>::ChargeBackward(
     std::unordered_set<std::string> &visited_nodes) const
 {
-  OperationsCount cost = op_ptr_->ChargeBackward();
-  if (visited_nodes.find(this->name_) != visited_nodes.cend())
-  {
-    // If this node has already been visited, there is no need for recursive calls to its
-    // inputs and only cost of this particular node forward run is returned.
-    return cost;
-  }
+  OperationsCount cost = 0;
+  // Go through inputs to this node getting their costs and output shapes
+  std::vector<math::SizeVector> input_shapes{};
 
   for (auto const &i : input_nodes_)
   {
@@ -151,10 +147,26 @@ OperationsCount Node<TensorType>::ChargeBackward(
       throw std::runtime_error("Unable to lock weak pointer.");
     }
 
-    cost += input_node_ptr->ChargeBackward(visited_nodes);
+    auto cost_and_outputshape = input_node_ptr->ChargeBackward(visited_nodes);
+    cost += cost_and_outputshape.first;
+    input_shapes.push_back(cost_and_outputshape.second);
   }
-  visited_nodes.insert(this->name_);
-  return cost;
+
+  // Get cost and output_shape of this node's Op
+  auto op_cost_and_outputshape = op_ptr_->ChargeBackward(input_shapes);
+
+  if (visited_nodes.find(this->name_) == visited_nodes.cend())
+  {
+    visited_nodes.insert(this->name_);
+    cost += op_cost_and_outputshape.first;
+  }
+  else
+  {
+    // If this node has already been visited then the cost is zero. But we still need to do the
+    // recursion above in order to get the correct output shape.
+    cost = 0;
+  }
+  return std::make_pair(cost, op_cost_and_outputshape.second);
 }
 
 template <typename TensorType>

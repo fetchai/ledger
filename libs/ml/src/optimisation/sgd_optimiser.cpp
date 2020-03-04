@@ -119,9 +119,12 @@ void SGDOptimiser<T>::ApplyGradients(SizeType batch_size)
 template <class T>
 OperationsCount SGDOptimiser<T>::ChargeConstruct(std::shared_ptr<Graph<T>> graph)
 {
+  OperationsCount op_cnt{charge_estimation::FUNCTION_CALL_COST};
+
+  op_cnt += graph->ChargeCompile();
+
   auto trainables = graph->GetTrainables();
 
-  OperationsCount op_cnt{charge_estimation::FUNCTION_CALL_COST};
   for (auto &train : trainables)
   {
     auto weight_shape = train->GetFutureDataShape();

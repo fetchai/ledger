@@ -1044,7 +1044,6 @@ typename Graph<TensorType>::NodePtrType Graph<TensorType>::GetNode(
   return graph_ptr->GetNode(node_name.substr(next_delimiter + 1, node_name.size() - 1));
 }
 
-
 /**
  * Recursively search graph and return list of all specific node names
  * @tparam TensorType
@@ -1154,7 +1153,7 @@ OperationsCount Graph<TensorType>::ChargeBackward(const std::string &node_name) 
 
   NodePtrType                     node = nodes_.at(node_name);
   std::unordered_set<std::string> visited_nodes;
-  return node->ChargeBackward(visited_nodes);
+  return node->ChargeBackward(visited_nodes).first;
 }
 
 template <typename TensorType>

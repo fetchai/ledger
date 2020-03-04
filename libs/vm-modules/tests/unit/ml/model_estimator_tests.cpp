@@ -17,17 +17,22 @@
 //------------------------------------------------------------------------------
 
 #include "core/serializers/main_serializer.hpp"
+#include "math/base_types.hpp"
 #include "ml/charge_estimation/model/constants.hpp"
+#include "ml/charge_estimation/types.hpp"
 #include "ml/layers/fully_connected.hpp"
 #include "vm_modules/ml/model/model.hpp"
 #include "vm_modules/vm_factory.hpp"
 
 #include "gmock/gmock.h"
 
+#include <ml/ops/flatten.hpp>
+
 namespace {
 
 using SizeType     = fetch::math::SizeType;
 using DataType     = fetch::vm_modules::math::DataType;
+using TensorType   = fetch::math::Tensor<DataType>;
 using VmStringPtr  = fetch::vm::Ptr<fetch::vm::String>;
 using VmModel      = fetch::vm_modules::ml::model::VMModel;
 using VmModelPtr   = fetch::vm::Ptr<VmModel>;
@@ -383,39 +388,50 @@ TEST_F(VMModelEstimatorTests, compile_sequential_test)
       padded_size += fetch::math::Tensor<DataType>::PaddedSizeFromShape({outputs, 10});
       padded_size += fetch::math::Tensor<DataType>::PaddedSizeFromShape({outputs, 1});
 
-//      SizeType val = 0;
-//      std::unordered_set<std::string> visited_nodes;
-//      for (auto & layer : layers)
-//      {
-//        auto cost_and_outputshape = layer->ChargeBackward(visited_nodes);
-//        val += cost_and_outputshape.first();
-//      }
-//
-//      std::cout << "val: " << val << std::endl;
-//      ChargeConstruct
-//      SizeType val = fetch::ml::charge_estimation::model::COMPILE_SEQUENTIAL_INIT;
-//      val += fetch::ml::charge_estimation::ops::OP_DEFAULT_CONSTRUCTION_COST;
-//      val += 3 * fetch::ml::charge_estimation::SET_FLAG;
-//      val += (padded_size * 5);
-//
+<<<<<<< HEAD
+      //      SizeType val = 0;
+      //      std::unordered_set<std::string> visited_nodes;
+      //      for (auto & layer : layers)
+      //      {
+      //        auto cost_and_outputshape = layer->ChargeBackward(visited_nodes);
+      //        val += cost_and_outputshape.first();
+      //      }
+      //
+      //      std::cout << "val: " << val << std::endl;
+      //      ChargeConstruct
+      //      SizeType val = fetch::ml::charge_estimation::model::COMPILE_SEQUENTIAL_INIT;
+      //      val += fetch::ml::charge_estimation::ops::OP_DEFAULT_CONSTRUCTION_COST;
+      //      val += 3 * fetch::ml::charge_estimation::SET_FLAG;
+      //      val += (padded_size * 5);
+      //
 
       // step 1 correct - (padded_size * 6) + 129;
       // step 2 correct - (padded_size * 6) + (10 * output_step) + 129;
       // step 3 correct - (padded_size * 6) + (10 * output_step) + 129;
-      SizeType val = (padded_size * 6) + (10 * output_step) + 129;
-      auto estimation_val = model.EstimateCompileSequential(vm_ptr_loss_type, vm_ptr_opt_type);
+      SizeType val            = (padded_size * 6) + (10 * output_step) + 129;
+      auto     estimation_val = model.EstimateCompileSequential(vm_ptr_loss_type, vm_ptr_opt_type);
 
       std::cout << "val: " << val << std::endl;
       std::cout << "padded_size: " << padded_size << std::endl;
       std::cout << "estimation_val: " << estimation_val << std::endl;
 
-      std::cout << "estimation_val - (padded_size * 7): " << estimation_val - (padded_size * 7) << std::endl;
-      std::cout << "estimation_val - (padded_size * 6): " << estimation_val - (padded_size * 6) << std::endl;
-      std::cout << "estimation_val - (padded_size * 5): " << estimation_val - (padded_size * 5) << std::endl;
-      std::cout << "estimation_val - (padded_size * 4): " << estimation_val - (padded_size * 4) << std::endl;
-      std::cout << "estimation_val - (padded_size * 3): " << estimation_val - (padded_size * 3) << std::endl;
-      std::cout << "estimation_val - (padded_size * 2): " << estimation_val - (padded_size * 2) << std::endl;
-      std::cout << "estimation_val - (padded_size * 1): " << estimation_val - (padded_size * 1) << std::endl;
+      std::cout << "estimation_val - (padded_size * 7): " << estimation_val - (padded_size * 7)
+                << std::endl;
+      std::cout << "estimation_val - (padded_size * 6): " << estimation_val - (padded_size * 6)
+                << std::endl;
+      std::cout << "estimation_val - (padded_size * 5): " << estimation_val - (padded_size * 5)
+                << std::endl;
+      std::cout << "estimation_val - (padded_size * 4): " << estimation_val - (padded_size * 4)
+                << std::endl;
+      std::cout << "estimation_val - (padded_size * 3): " << estimation_val - (padded_size * 3)
+                << std::endl;
+      std::cout << "estimation_val - (padded_size * 2): " << estimation_val - (padded_size * 2)
+                << std::endl;
+      std::cout << "estimation_val - (padded_size * 1): " << estimation_val - (padded_size * 1)
+                << std::endl;
+=======
+      SizeType val = padded_size * 5 + 19;
+>>>>>>> 6011796f869d239f0f519579bcb1f6bf9d85581c
 
       EXPECT_EQ(model.EstimateCompileSequential(vm_ptr_loss_type, vm_ptr_opt_type),
                 static_cast<ChargeAmount>(val));
@@ -1048,25 +1064,32 @@ TEST_F(VMModelEstimatorTests, charge_forward_one_dense)
   ChargeAmount expected_cost = 0;
   // For a Dense layer with n inputs and m outputs and empty activation there is expected
   // n placeholder readings
+
   expected_cost += inputs * PLACEHOLDER_READING_PER_ELEMENT * batch_size;
+
   // n*m Weights reading (100 weights total)
   expected_cost += (inputs * outputs) * WEIGHTS_READING_PER_ELEMENT * batch_size;
   // There is a second placeholder - one is in the graph and the other in the FC layer
   expected_cost += inputs * PLACEHOLDER_READING_PER_ELEMENT * batch_size;
+
   // n flattening operations (because Dense is not time-distributed in this test)
-  expected_cost += inputs * FLATTEN_PER_ELEMENT * batch_size;
+  // in this case we know that
+  expected_cost += (fetch::ml::charge_estimation::ops::OP_OVERHEAD +
+                    (fetch::ml::charge_estimation::ops::LOW_FLATTEN_PER_ELEMENT *
+                     TensorType::ChargeIterate({inputs, batch_size})));
+
   // n*m*1 matmul operations
-  expected_cost += (inputs * outputs) * MULTIPLICATION_PER_ELEMENT * batch_size;
+  expected_cost += (inputs * outputs) * LOW_MULTIPLICATION_PER_ELEMENT * batch_size;
   // m bias weights reading
   expected_cost += outputs * WEIGHTS_READING_PER_ELEMENT * batch_size;
 
-  fetch::ml::OperationsCount add_charge{1};
+  fetch::ml::OperationsCount add_charge{OP_OVERHEAD};
 
   // Addition cost
   // Type of tensor is not important for SizeFromShape
   fetch::math::SizeType num_elements =
       fetch::math::Tensor<float>::SizeFromShape({outputs, batch_size});
-  add_charge += num_elements;
+  add_charge += num_elements * LOW_ADDITION_PER_ELEMENT;
 
   // Iteration over 3 tensors (input1, input2, ret)
   // Type of tensor is not important for ChargeIterate
