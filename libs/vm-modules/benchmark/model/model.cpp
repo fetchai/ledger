@@ -422,7 +422,7 @@ void BM_Predict(::benchmark::State &state)
 {
   fetch::SetGlobalLogLevel(fetch::LogLevel::ERROR);
 
-  // Get args form state
+  // Get args from state
   BM_Predict_config config{state};
 
   for (auto _ : state)
@@ -634,7 +634,7 @@ void BM_Compile(::benchmark::State &state)
   {
     state.PauseTiming();
 
-    // Get args form state
+    // Get args from state
     BM_Compile_config config{state};
 
     // set up model
@@ -735,7 +735,7 @@ void BM_Fit(::benchmark::State &state)
 {
   fetch::SetGlobalLogLevel(fetch::LogLevel::ERROR);
 
-  // Get args form state
+  // Get args from state
   BM_Fit_config config{state};
 
   for (auto _ : state)
@@ -1061,7 +1061,7 @@ void BM_SerializeToString(::benchmark::State &state)
 {
   fetch::SetGlobalLogLevel(fetch::LogLevel::ERROR);
 
-  // Get args form state
+  // Get args from state
   BM_SerializeToString_config config{state};
 
   for (auto _ : state)
@@ -1141,7 +1141,7 @@ void BM_DeserializeFromString(::benchmark::State &state)
 {
   fetch::SetGlobalLogLevel(fetch::LogLevel::ERROR);
 
-  // Get args form state
+  // Get args from state
   BM_SerializeToString_config config{state};
 
   // set up a compiled model

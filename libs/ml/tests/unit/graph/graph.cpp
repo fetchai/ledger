@@ -1316,7 +1316,7 @@ TYPED_TEST(GraphTest, graph_charge_forward_matmul)
   OperationsCount const batch_charge = g.ChargeForward(matmul);
 
   SizeType const        matmul_ops      = weight_width * input_height * batch_size;
-  OperationsCount const expected_charge = matmul_ops * MULTIPLICATION_PER_ELEMENT;
+  OperationsCount const expected_charge = matmul_ops * LOW_MULTIPLICATION_PER_ELEMENT;
 
   ASSERT_EQ(batch_charge, expected_charge);
 }
@@ -1357,7 +1357,7 @@ TYPED_TEST(GraphTest, graph_charge_forward_conv2d)
 
   OperationsCount const batch_charge = g.ChargeForward(conv2d);
 
-  OperationsCount const expected_charge = 161989632;  // TODO(VH): calc proper expected charge
+  OperationsCount const expected_charge = 377975808;  // TODO(ML-532): calc proper expected charge
 
   ASSERT_EQ(batch_charge, expected_charge);
 }
@@ -1401,11 +1401,11 @@ TYPED_TEST(GraphTest, graph_charge_forward_diamond)
   static const std::size_t expected_calls_to_add = N;
   OperationsCount const    charge                = g.ChargeForward(output);
 
-  OperationsCount add_charge{1};
+  OperationsCount add_charge{fetch::ml::charge_estimation::ops::OP_OVERHEAD};
 
   // Addition cost
   math::SizeType num_elements = TensorType::SizeFromShape(data.shape());
-  add_charge += num_elements;
+  add_charge += num_elements * fetch::ml::charge_estimation::ops::LOW_ADDITION_PER_ELEMENT;
 
   // Iteration over 3 tensors (input1, input2, ret)
   OperationsCount iteration_ops = TensorType::ChargeIterate(data.shape());
@@ -1436,8 +1436,9 @@ TYPED_TEST(GraphTest, graph_charge_backward_dropout)
   g.Compile();
 
   OperationsCount const charge = g.ChargeBackward(output);
+
   // Dropout backward operation is multiplication.
-  OperationsCount const expected_charge = MULTIPLICATION_PER_ELEMENT * data.size();
+  OperationsCount const expected_charge = LOW_MULTIPLICATION_PER_ELEMENT * data.size();
 
   ASSERT_EQ(charge, expected_charge);
 }
@@ -1483,7 +1484,7 @@ TYPED_TEST(GraphTest, graph_charge_backward_diamond)
   static const std::size_t expected_calls_to_dropout = N;
   OperationsCount const    charge                    = g.ChargeBackward(output);
   OperationsCount const    expected_charge =
-      MULTIPLICATION_PER_ELEMENT * total_data_elements * expected_calls_to_dropout +
+      LOW_MULTIPLICATION_PER_ELEMENT * total_data_elements * expected_calls_to_dropout +
       PLACEHOLDER_READING_PER_ELEMENT * total_data_elements;
 
   ASSERT_EQ(charge, expected_charge);
@@ -1523,7 +1524,7 @@ TYPED_TEST(GraphTest, graph_charge_backward_conv_dense)
 
   OperationsCount const charge = g.ChargeBackward(dense);
   OperationsCount const expected_charge =
-      2752528;  // Pre-calculated backward charge for give shape.
+      9044198;  // Pre-calculated backward charge for give shape.
 
   EXPECT_EQ(charge, expected_charge);
 
