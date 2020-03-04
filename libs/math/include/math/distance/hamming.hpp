@@ -39,7 +39,7 @@ typename ArrayType::Type Hamming(ArrayType const &a, ArrayType const &b)
     if (val != b.At(count))
     {
       result += Type(1);
-    };
+    }
     count++;
   }
 

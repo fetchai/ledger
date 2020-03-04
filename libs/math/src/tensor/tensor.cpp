@@ -19,6 +19,7 @@
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/byte_array/consumers.hpp"
 #include "math/base_types.hpp"
+#include "math/charge_estimation/constants.hpp"
 #include "math/matrix_operations.hpp"
 #include "math/standard_functions/abs.hpp"
 #include "math/tensor/tensor.hpp"
@@ -959,6 +960,27 @@ typename Tensor<T, C>::SizeType Tensor<T, C>::PaddedSizeFromShape(SizeVector con
   }
   return PadValue(shape[0]) *
          std::accumulate(std::begin(shape) + 1, std::end(shape), SizeType{1}, std::multiplies<>());
+}
+
+template <typename T, typename C>
+typename Tensor<T, C>::SizeType Tensor<T, C>::ChargeIterate(SizeVector const &shape)
+{
+  SizeType op_overhead{charge_estimation::TENSOR_ITERATION_OVERHEAD};
+
+  SizeType num_elements = Tensor<T, C>::SizeFromShape(shape);
+  SizeType height       = shape[0];
+
+  // Iterations at the end of each row are more expensive
+  SizeType end_of_row_cnt = num_elements / height;
+
+  SizeType default_it_cost =
+      (charge_estimation::TENSOR_ITERATION_END_OF_ROW_MULTIPLY * (end_of_row_cnt)) /
+      charge_estimation::TENSOR_ITERATION_END_OF_ROW_DIVIDE;
+  SizeType end_row_it_cost =
+      (charge_estimation::TENSOR_ITERATION_DEFAULT_MULTIPLY * (num_elements - end_of_row_cnt)) /
+      charge_estimation::TENSOR_ITERATION_DEFAULT_DIVIDE;
+
+  return op_overhead + default_it_cost + end_row_it_cost;
 }
 
 /**

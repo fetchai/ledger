@@ -37,7 +37,7 @@ namespace {
 
 using fetch::byte_array::ConstByteArray;
 
-using ContractPtr     = std::shared_ptr<Contract>;
+using ContractPtr     = std::unique_ptr<Contract>;
 using ContractNameSet = std::unordered_set<ConstByteArray>;
 using FactoryCallable = std::function<ContractPtr()>;
 using FactoryRegistry = std::unordered_map<ConstByteArray, FactoryCallable>;
@@ -48,8 +48,8 @@ FactoryRegistry CreateRegistry()
 {
   FactoryRegistry registry;
 
-  registry[TokenContract::NAME]        = []() { return std::make_shared<TokenContract>(); };
-  registry[SmartContractManager::NAME] = []() { return std::make_shared<SmartContractManager>(); };
+  registry[TokenContract::NAME]        = []() { return std::make_unique<TokenContract>(); };
+  registry[SmartContractManager::NAME] = []() { return std::make_unique<SmartContractManager>(); };
 
   return registry;
 }

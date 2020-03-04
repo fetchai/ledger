@@ -47,7 +47,7 @@ TYPED_TEST(LogSoftmaxTest, forward_test)
       R"(-6.14520134, -9.14520134, -4.14520134, -11.14520134, -2.14520134, -13.14520134, -0.14520134, -15.14520134)");
 
   fetch::ml::ops::LogSoftmax<TensorType> op;
-  TensorType prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
+  TensorType                             prediction(op.ComputeOutputShape({data.shape()}));
   op.Forward({std::make_shared<const TensorType>(data)}, prediction);
 
   // test correct values
@@ -77,7 +77,7 @@ TYPED_TEST(LogSoftmaxTest, forward_3d_tensor_axis_0_test)
   }
 
   fetch::ml::ops::LogSoftmax<TensorType> op{1};
-  TensorType prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
+  TensorType                             prediction(op.ComputeOutputShape({data.shape()}));
   op.Forward({std::make_shared<const TensorType>(data)}, prediction);
 
   // test correct values
@@ -152,8 +152,8 @@ TYPED_TEST(LogSoftmaxTest, saveparams_test)
       "-0.14520134, -15.14520134");
 
   fetch::ml::ops::LogSoftmax<TensorType> op;
-  TensorType    prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
-  VecTensorType vec_data({std::make_shared<const TensorType>(data)});
+  TensorType                             prediction(op.ComputeOutputShape({data.shape()}));
+  VecTensorType                          vec_data({std::make_shared<const TensorType>(data)});
 
   op.Forward(vec_data, prediction);
   // extract saveparams
@@ -175,7 +175,7 @@ TYPED_TEST(LogSoftmaxTest, saveparams_test)
   OpType new_op(*dsp2);
 
   // check that new predictions match the old
-  TensorType new_prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
+  TensorType new_prediction(op.ComputeOutputShape({data.shape()}));
   new_op.Forward(vec_data, new_prediction);
 
   // test correct values

@@ -147,8 +147,7 @@ TYPED_TEST(ScaledDotProductAttention,
 
   // do the forward
   TypeParam output(att.ComputeOutputShape(
-      {std::make_shared<TypeParam>(query_data), std::make_shared<TypeParam>(query_data),
-       std::make_shared<TypeParam>(query_data), std::make_shared<TypeParam>(mask_data)}));
+      {query_data.shape(), query_data.shape(), query_data.shape(), mask_data.shape()}));
   att.Forward({std::make_shared<TypeParam>(query_data), std::make_shared<TypeParam>(query_data),
                std::make_shared<TypeParam>(query_data), std::make_shared<TypeParam>(mask_data)},
               output);
@@ -261,8 +260,7 @@ TYPED_TEST(ScaledDotProductAttention,
 
   // do the forward
   TypeParam output(att.ComputeOutputShape(
-      {std::make_shared<TypeParam>(query_data), std::make_shared<TypeParam>(query_data),
-       std::make_shared<TypeParam>(query_data), std::make_shared<TypeParam>(mask_data)}));
+      {query_data.shape(), query_data.shape(), query_data.shape(), mask_data.shape()}));
   att.Forward({std::make_shared<TypeParam>(query_data), std::make_shared<TypeParam>(query_data),
                std::make_shared<TypeParam>(query_data), std::make_shared<TypeParam>(mask_data)},
               output);

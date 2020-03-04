@@ -31,6 +31,8 @@
 #include "ledger/testing/block_generator.hpp"
 #include "moment/clocks.hpp"
 #include "muddle/network_id.hpp"
+#include "telemetry/counter.hpp"
+#include "telemetry/registry.hpp"
 
 #include "gtest/gtest.h"
 
@@ -283,6 +285,28 @@ TEST_F(MainChainSyncTest, CheckExponentialBackStep)
 
     EXPECT_EQ(chain_.GetHeaviestBlockHash(), genuine_heaviest->hash);
   }
+}
+
+TEST_F(MainChainSyncTest, GenesisMismatch)
+{
+  MainChain::Travelogue rejected{{}, {}, TravelogueStatus::NOT_FOUND};
+
+  EXPECT_CALL(endpoint_, GetDirectlyConnectedPeers()).WillRepeatedly(Return(AddressList{other1_}));
+  EXPECT_CALL(rpc_client_, TimeTravel(other1_, ExpectedHash(GetGenesisDigest())))
+      .WillOnce(Return(CreatePromise(rejected)));
+
+  auto counter =
+      fetch::telemetry::Registry::Instance().LookupMeasurement<fetch::telemetry::Counter>(
+          "ledger_mainchain_service_network_mismatches_total");
+  ASSERT_TRUE(counter);
+  ASSERT_EQ(counter->count(), 0);
+
+  FollowPath(State::SYNCHRONISING, State::START_SYNC_WITH_PEER, State::REQUEST_NEXT_BLOCKS,
+             State::WAIT_FOR_NEXT_BLOCKS,
+             // dropped just past the opening credits
+             State::COMPLETE_SYNC_WITH_PEER);
+
+  ASSERT_EQ(counter->count(), 1);
 }
 
 }  // namespace

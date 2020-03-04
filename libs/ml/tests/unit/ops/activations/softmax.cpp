@@ -48,7 +48,7 @@ TYPED_TEST(SoftmaxTest, forward_test)
       "0.00000026456");
 
   fetch::ml::ops::Softmax<TensorType> op(0);
-  TensorType prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
+  TensorType                          prediction(op.ComputeOutputShape({data.shape()}));
   op.Forward({std::make_shared<const TensorType>(data)}, prediction);
 
   // test correct values
@@ -77,7 +77,7 @@ TYPED_TEST(SoftmaxTest, forward_2d_tensor_axis_1_test)
   }
 
   fetch::ml::ops::Softmax<TensorType> op{1};
-  TensorType prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
+  TensorType                          prediction(op.ComputeOutputShape({data.shape()}));
   op.Forward({std::make_shared<const TensorType>(data)}, prediction);
 
   // test correct values
@@ -164,7 +164,7 @@ TYPED_TEST(SoftmaxTest, forward_3d_tensor_axis_1_test)
   }
 
   fetch::ml::ops::Softmax<TensorType> op{1};
-  TensorType prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
+  TensorType                          prediction(op.ComputeOutputShape({data.shape()}));
   op.Forward({std::make_shared<const TensorType>(data)}, prediction);
 
   // test correct values
@@ -239,7 +239,7 @@ TYPED_TEST(SoftmaxTest, forward_3d_tensor_axis_0_test)
   }
 
   fetch::ml::ops::Softmax<TensorType> op{0};
-  TensorType prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
+  TensorType                          prediction(op.ComputeOutputShape({data.shape()}));
   op.Forward({std::make_shared<const TensorType>(data)}, prediction);
 
   // test correct values
@@ -314,7 +314,7 @@ TYPED_TEST(SoftmaxTest, forward_3d_tensor_axes_0_2_test)
   }
 
   fetch::ml::ops::Softmax<TensorType> op({0, 2});
-  TensorType prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
+  TensorType                          prediction(op.ComputeOutputShape({data.shape()}));
   op.Forward({std::make_shared<const TensorType>(data)}, prediction);
 
   // test correct values
@@ -375,8 +375,8 @@ TYPED_TEST(SoftmaxTest, saveparams_test)
       "0.00000026456");
 
   fetch::ml::ops::Softmax<TensorType> op(0);
-  TensorType    prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
-  VecTensorType vec_data({std::make_shared<const TensorType>(data)});
+  TensorType                          prediction(op.ComputeOutputShape({data.shape()}));
+  VecTensorType                       vec_data({std::make_shared<const TensorType>(data)});
 
   op.Forward(vec_data, prediction);
 
@@ -399,7 +399,7 @@ TYPED_TEST(SoftmaxTest, saveparams_test)
   OpType new_op(*dsp2);
 
   // check that new predictions match the old
-  TensorType new_prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
+  TensorType new_prediction(op.ComputeOutputShape({data.shape()}));
   new_op.Forward(vec_data, new_prediction);
 
   // test correct values

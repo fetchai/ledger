@@ -22,10 +22,10 @@
 #include "vm_modules/math/read_csv.hpp"
 #include "vm_modules/math/tensor/tensor.hpp"
 #include "vm_modules/ml/ml.hpp"
+#include "vm_modules/scripts/ml/boston_house_prices.hpp"
 
 #include <iostream>
 #include <memory>
-#include <string>
 #include <vector>
 
 using System     = fetch::vm_modules::System;
@@ -40,31 +40,20 @@ int main(int argc, char **argv)
   fetch::commandline::ParamsParser const &pp = System::GetParamsParser();
 
   // ensure the program has the correct number of args
-  if (2u != pp.arg_size())
+  if (1u != pp.arg_size())
   {
-    std::cerr << "Usage: " << pp.GetArg(0) << " [options] <filename> -- [script args]..."
-              << std::endl;
+    std::cerr << "Usage: " << pp.GetArg(0) << " [options] -- [script args]..." << std::endl;
     return 1;
   }
 
   // Reading file
-  std::ifstream file(pp.GetArg(1), std::ios::binary);
-  if (file.fail())
-  {
-    std::cout << "Cannot open file " << std::string(pp.GetArg(1)) << std::endl;
-    return -1;
-  }
-  std::ostringstream ss;
-  ss << file.rdbuf();
-  const std::string source = ss.str();
-  file.close();
+  std::string batch_size = "32u64";
+  auto        src        = vm_modules::scripts::ml::BostonHousingScript(batch_size, true);
 
   auto module = std::make_shared<fetch::vm::Module>();
 
   fetch::vm_modules::System::Bind(*module);
-
   fetch::vm_modules::ml::BindML(*module, true);
-
   fetch::vm_modules::CreatePrint(*module);
   fetch::vm_modules::math::BindReadCSV(*module, true);
 
@@ -75,7 +64,7 @@ int main(int argc, char **argv)
   std::vector<std::string> errors;
 
   // Compiling
-  fetch::vm::SourceFiles files    = {{"default.etch", source}};
+  fetch::vm::SourceFiles files    = {{"default.etch", src}};
   bool                   compiled = compiler->Compile(files, "default_ir", ir, errors);
 
   if (!compiled)

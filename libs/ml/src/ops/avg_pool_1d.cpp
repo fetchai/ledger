@@ -82,7 +82,7 @@ void AvgPool1D<TensorType>::Forward(VecTensorType const &inputs, TensorType &out
   assert(inputs.size() == 1);
   // Input must be a 3D tensor [C x W x N]
   assert(inputs.at(0)->shape().size() == 3);
-  assert(output.shape() == ComputeOutputShape(inputs));
+  assert(output.shape() == ComputeOutputShape(fetch::ml::utilities::TensorPtrsToSizes(inputs)));
 
   SizeType iter;
   DataType sum;
@@ -129,7 +129,8 @@ std::vector<TensorType> AvgPool1D<TensorType>::Backward(VecTensorType const &inp
                                                         TensorType const &   error_signal)
 {
   assert(inputs.size() == 1);
-  assert(error_signal.shape() == ComputeOutputShape(inputs));
+  assert(error_signal.shape() ==
+         ComputeOutputShape(fetch::ml::utilities::TensorPtrsToSizes(inputs)));
 
   TensorType return_signal{inputs.at(0)->shape()};
 
@@ -165,17 +166,16 @@ std::vector<TensorType> AvgPool1D<TensorType>::Backward(VecTensorType const &inp
 
 template <typename TensorType>
 std::vector<math::SizeType> AvgPool1D<TensorType>::ComputeOutputShape(
-    VecTensorType const &inputs) const
+    std::vector<math::SizeVector> const &inputs) const
 {
   std::vector<SizeType> output_shape;
 
   // output_shape_[0]=number of output channels
-  output_shape.emplace_back(inputs.at(0)->shape().at(0));
+  output_shape.emplace_back(inputs.at(0).at(0));
   // output_shape_[1]=number of stride_size steps over input size
-  output_shape.emplace_back((inputs.at(0)->shape().at(1) - (kernel_size_ - stride_size_)) /
-                            stride_size_);
+  output_shape.emplace_back((inputs.at(0).at(1) - (kernel_size_ - stride_size_)) / stride_size_);
   // output_shape_[2]=batch dimension
-  output_shape.emplace_back(inputs.at(0)->shape().at(2));
+  output_shape.emplace_back(inputs.at(0).at(2));
   return output_shape;
 }
 
@@ -188,13 +188,14 @@ OperationsCount AvgPool1D<TensorType>::ChargeForward() const
                                          this->batch_output_shape_.at(2);
   OperationsCount cost =
       fetch::ml::charge_estimation::ops::DIVISION_PER_ELEMENT * num_output_shape_ops +
-      fetch::ml::charge_estimation::ops::ADDITION_PER_ELEMENT * num_output_shape_ops *
+      fetch::ml::charge_estimation::ops::LOW_ADDITION_PER_ELEMENT * num_output_shape_ops *
           this->kernel_size_;
   return cost;
 }
 
 template <typename TensorType>
-OperationsCount AvgPool1D<TensorType>::ChargeBackward() const
+std::pair<OperationsCount, math::SizeVector> AvgPool1D<TensorType>::ChargeBackward(
+    std::vector<math::SizeVector> const &input_shapes)
 {
   assert(!this->batch_output_shape_.empty());
   OperationsCount num_output_shape_ops = this->batch_output_shape_.at(0) *
@@ -202,8 +203,9 @@ OperationsCount AvgPool1D<TensorType>::ChargeBackward() const
                                          this->batch_output_shape_.at(2) * this->kernel_size_;
   OperationsCount cost = num_output_shape_ops *
                          fetch::ml::charge_estimation::ops::DIVISION_PER_ELEMENT *
-                         fetch::ml::charge_estimation::ops::ADDITION_PER_ELEMENT;
-  return cost;
+                         fetch::ml::charge_estimation::ops::LOW_ADDITION_PER_ELEMENT;
+  math::SizeVector output_shape = ComputeOutputShape(input_shapes);
+  return std::make_pair(cost * output_shape.back(), output_shape);
 }
 
 ///////////////////////////////

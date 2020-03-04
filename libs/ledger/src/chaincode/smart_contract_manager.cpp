@@ -39,6 +39,7 @@
 #include <memory>
 #include <string>
 #include <unordered_set>
+#include <utility>
 #include <vector>
 
 using fetch::byte_array::ConstByteArray;
@@ -174,9 +175,14 @@ Contract::Result SmartContractManager::OnCreate(chain::Transaction const &tx)
     state().PushContext(contract_address.display());
 
     {
-      ContractContext ctx{context().token_contract, tx.contract_address(), nullptr, &state(),
-                          context().block_index};
-      ContractContextAttacher raii(smart_contract, ctx);
+      auto ctx = ContractContext::Builder{}
+                     .SetTokenContract(context().token_contract)
+                     .SetContractAddress(tx.contract_address())
+                     .SetStateAdapter(&state())
+                     .SetBlockIndex(context().block_index)
+                     .Build();
+
+      ContractContextAttacher raii_attacher(smart_contract, std::move(ctx));
       init_status = smart_contract.DispatchInitialise(tx.from(), tx);
     }
     state().PopContext();

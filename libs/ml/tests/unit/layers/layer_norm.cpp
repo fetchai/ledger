@@ -58,7 +58,7 @@ TYPED_TEST(LayerNormTest, forward_test_1D)  // Use the class as a subgraph
 {
   fetch::ml::layers::LayerNorm<TypeParam> ln({100u});
   TypeParam input_data(std::vector<typename TypeParam::SizeType>({100, 2}));
-  TypeParam output(ln.ComputeOutputShape({std::make_shared<TypeParam>(input_data)}));
+  TypeParam output(ln.ComputeOutputShape({input_data.shape()}));
   ln.Forward({std::make_shared<TypeParam>(input_data)}, output);
 
   ASSERT_EQ(output.shape().size(), 2);
@@ -71,7 +71,7 @@ TYPED_TEST(LayerNormTest, ops_backward_test)  // Use the class as an Ops
   fetch::ml::layers::LayerNorm<TypeParam> ln({50, 10});
   TypeParam input_data(std::vector<typename TypeParam::SizeType>({50, 10, 2}));
 
-  TypeParam output(ln.ComputeOutputShape({std::make_shared<TypeParam>(input_data)}));
+  TypeParam output(ln.ComputeOutputShape({input_data.shape()}));
   ln.Forward({std::make_shared<TypeParam>(input_data)}, output);
 
   TypeParam error_signal(std::vector<typename TypeParam::SizeType>({50, 10, 2}));

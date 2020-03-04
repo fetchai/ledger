@@ -55,7 +55,7 @@ public:
   std::vector<TensorType> Backward(VecTensorType const &inputs,
                                    TensorType const &   error_signal) override;
 
-  SizeVector ComputeOutputShape(VecTensorType const &inputs) const override;
+  SizeVector ComputeOutputShape(std::vector<math::SizeVector> const &inputs) const override;
 
   SizeVector begins_;
   SizeVector ends_;
@@ -66,8 +66,9 @@ public:
     return OpType::OP_STRIDED_SLICE;
   }
 
-  OperationsCount ChargeForward() const override;
-  OperationsCount ChargeBackward() const override;
+  OperationsCount                              ChargeForward() const override;
+  std::pair<OperationsCount, math::SizeVector> ChargeBackward(
+      std::vector<math::SizeVector> const &input_shapes) override;
 
   static constexpr char const *DESCRIPTOR = "StridedSlice";
 };

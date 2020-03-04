@@ -24,10 +24,11 @@
 #include "vm/module.hpp"
 #include "vm/pair.hpp"
 #include "vm_modules/ml/dataloaders/dataloader.hpp"
+#include "vm_modules/ml/utilities/conversion_utilities.hpp"
+#include "vm_modules/use_estimator.hpp"
 
 #include <memory>
 #include <stdexcept>
-#include <utility>
 
 using namespace fetch::vm;
 
@@ -81,14 +82,21 @@ void VMDataLoader::Bind(Module &module, bool const enable_experimental)
 {
   if (enable_experimental)
   {
+    // dataloader construction always requires initialising some strings, ptrs etc. but is very
+    // cheap
+    static const ChargeAmount FIXED_CONSTRUCTION_CHARGE{100};
+
     module.CreateClassType<VMDataLoader>("DataLoader")
-        .CreateConstructor(&VMDataLoader::Constructor, vm::MAXIMUM_CHARGE)
+        .CreateConstructor(&VMDataLoader::Constructor, FIXED_CONSTRUCTION_CHARGE)
         .CreateSerializeDefaultConstructor([](VM *vm, TypeId type_id) -> Ptr<VMDataLoader> {
           return Ptr<VMDataLoader>{new VMDataLoader(vm, type_id)};
         })
-        .CreateMemberFunction("addData", &VMDataLoader::AddDataByData, vm::MAXIMUM_CHARGE)
-        .CreateMemberFunction("getNext", &VMDataLoader::GetNext, vm::MAXIMUM_CHARGE)
-        .CreateMemberFunction("isDone", &VMDataLoader::IsDone, vm::MAXIMUM_CHARGE);
+        .CreateMemberFunction("addData", &VMDataLoader::AddDataByData,
+                              UseMemberEstimator(&VMDataLoader::EstimateAddDataByData))
+        .CreateMemberFunction("getNext", &VMDataLoader::GetNext,
+                              UseMemberEstimator(&VMDataLoader::EstimateGetNext))
+        .CreateMemberFunction("isDone", &VMDataLoader::IsDone,
+                              UseMemberEstimator(&VMDataLoader::EstimateIsDone));
   }
 }
 
@@ -100,9 +108,19 @@ void VMDataLoader::AddDataByData(
   {
   case DataLoaderMode::TENSOR:
   {
-    AddTensorData(data, labels);
+    auto                    n_elements = data->elements.size();
+    std::vector<TensorType> c_data(n_elements);
+
+    for (fetch::math::SizeType i{0}; i < n_elements; i++)
+    {
+      Ptr<VMTensorType> ptr_tensor = data->elements.at(i);
+      c_data.at(i)                 = (ptr_tensor)->GetTensor();
+    }
+
+    std::static_pointer_cast<TensorLoaderType>(loader_)->AddData(c_data, labels->GetTensor());
     break;
   }
+  case DataLoaderMode::NONE:
   default:
   {
     RuntimeError("Current dataloader mode does not support AddDataByData");
@@ -111,26 +129,39 @@ void VMDataLoader::AddDataByData(
   }
 }
 
-void VMDataLoader::AddTensorData(
+ChargeAmount VMDataLoader::EstimateAddDataByData(
     fetch::vm::Ptr<fetch::vm::Array<fetch::vm::Ptr<VMTensorType>>> const &data,
     Ptr<VMTensorType> const &                                             labels)
 {
-  auto                    n_elements = data->elements.size();
-  std::vector<TensorType> c_data(n_elements);
-
-  for (fetch::math::SizeType i{0}; i < n_elements; i++)
+  ChargeAmount cost;
+  switch (mode_)
   {
-    Ptr<VMTensorType> ptr_tensor = data->elements.at(i);
-    c_data.at(i)                 = (ptr_tensor)->GetTensor();
-  }
+  case DataLoaderMode::TENSOR:
+  {
+    auto                    n_elements = data->elements.size();
+    std::vector<TensorType> c_data(n_elements);
 
-  std::static_pointer_cast<TensorLoaderType>(loader_)->AddData(c_data, labels->GetTensor());
+    for (fetch::math::SizeType i{0}; i < n_elements; i++)
+    {
+      Ptr<VMTensorType> ptr_tensor = data->elements.at(i);
+      c_data.at(i)                 = (ptr_tensor)->GetTensor();
+    }
+
+    cost = std::static_pointer_cast<TensorLoaderType>(loader_)->ChargeAddData(c_data,
+                                                                              labels->GetTensor());
+    break;
+  }
+  case DataLoaderMode::NONE:
+  default:
+  {
+    cost = MAXIMUM_CHARGE;
+  }
+  }
+  return cost;
 }
 
-// TODO(issue 1692): Simplify Array<Tensor> construction
 VMTrainingPairPtrType VMDataLoader::GetNext()
 {
-
   // Get pair from loader
   auto next = loader_->GetNext();
 
@@ -138,42 +169,36 @@ VMTrainingPairPtrType VMDataLoader::GetNext()
   auto dataHolder = this->vm_->CreateNewObject<VMTrainingPairType>();
 
   // Create and set VMPair.first
-  auto first = this->vm_->CreateNewObject<VMTensorType>(next.first);
+  auto first = fetch::vm_modules::ml::utilities::VMTensorConverter(this->vm_, next.first);
   // Convert VMTensor to TemplateParameter1
   TemplateParameter1 t_first(first, first->GetTypeId());
   dataHolder->SetFirst(t_first);
 
   // Create and set VMPair.second
-  auto second = this->vm_->CreateNewObject<VMTensorType>(next.second.at(0));
-
-  // Add all elements to VMArray<VMTensor>
-  auto second_vector = this->vm_->CreateNewObject<VMTensorArrayType>(
-      second->GetTypeId(), static_cast<int32_t>(next.second.size()));
-
-  TemplateParameter1 first_element(second, second->GetTypeId());
-
-  AnyInteger first_index(0, TypeIds::UInt16);
-  second_vector->SetIndexedValue(first_index, first_element);
-
-  for (fetch::math::SizeType i{1}; i < next.second.size(); i++)
-  {
-    second = this->vm_->CreateNewObject<math::VMTensor>(next.second.at(i));
-    TemplateParameter1 element(second, second->GetTypeId());
-
-    AnyInteger index = AnyInteger(i, TypeIds::UInt16);
-    second_vector->SetIndexedValue(index, element);
-  }
+  auto second = fetch::vm_modules::ml::utilities::VMArrayConverter(this->vm_, next.second);
 
   // Convert VMArray<VMTensor> to TemplateParameter2
-  TemplateParameter2 t_second(second_vector, second_vector->GetTypeId());
+  TemplateParameter2 t_second(second, second->GetTypeId());
   dataHolder->SetSecond(t_second);
 
   return dataHolder;
 }
 
+ChargeAmount VMDataLoader::EstimateGetNext()
+{
+  ChargeAmount const cost = std::static_pointer_cast<TensorLoaderType>(loader_)->ChargeGetNext();
+  return cost;
+}
+
 bool VMDataLoader::IsDone()
 {
   return loader_->IsDone();
+}
+
+ChargeAmount VMDataLoader::EstimateIsDone()
+{
+  ChargeAmount const cost = std::static_pointer_cast<TensorLoaderType>(loader_)->ChargeIsDone();
+  return cost;
 }
 
 VMDataLoader::DataLoaderPtrType &VMDataLoader::GetDataLoader()

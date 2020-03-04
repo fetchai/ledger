@@ -18,6 +18,8 @@
 
 #include "math/standard_functions/pow.hpp"
 #include "math/standard_functions/sqrt.hpp"
+#include "ml/charge_estimation/constants.hpp"
+#include "ml/charge_estimation/optimisation/constants.hpp"
 #include "ml/core/graph.hpp"
 #include "ml/ops/trainable.hpp"
 #include "ml/optimisation/adam_optimiser.hpp"
@@ -155,6 +157,52 @@ void AdamOptimiser<T>::ResetCache()
   }
   beta1_t_ = beta1_;
   beta2_t_ = beta2_;
+}
+
+template <class T>
+OperationsCount AdamOptimiser<T>::ChargeConstruct(std::shared_ptr<Graph<T>> graph)
+{
+  OperationsCount op_cnt{charge_estimation::FUNCTION_CALL_COST};
+
+  op_cnt += graph->ChargeCompile();
+
+  for (auto &train : graph->GetTrainables())
+  {
+    auto weight_shape = train->GetFutureDataShape();
+    if (weight_shape.empty())
+    {
+      throw std::runtime_error("Shape deduction failed");
+    }
+
+    SizeType data_size = TensorType::PaddedSizeFromShape(weight_shape);
+    op_cnt += data_size * charge_estimation::optimisers::ADAM_N_CACHES;
+  }
+
+  return op_cnt;
+}
+
+template <class T>
+fetch::ml::OperationsCount AdamOptimiser<T>::ChargeStep() const
+{
+  auto gradient_it  = this->gradients_.begin();
+  auto trainable_it = this->graph_trainables_.begin();
+
+  // Update betas, initialise
+  OperationsCount ops_count = charge_estimation::optimisers::ADAM_STEP_INIT;
+
+  OperationsCount loop_count{0};
+  while (gradient_it != this->gradients_.end())
+  {
+    // Skip frozen trainables
+    if (!(*trainable_it)->GetFrozenState())
+    {
+      loop_count += T::SizeFromShape((*trainable_it)->GetWeights().shape());
+    }
+    ++gradient_it;
+    ++trainable_it;
+  }
+
+  return ops_count + loop_count * charge_estimation::optimisers::ADAM_PER_TRAINABLE;
 }
 
 ///////////////////////////////

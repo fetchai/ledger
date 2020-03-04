@@ -48,7 +48,7 @@ TYPED_TEST(SigmoidTest, forward_test)
       R"(0.73106, 0.1192029, 0.952574, 0.01798620996, 0.993307149, 0.002472623156635, 0.999088948806, 0.000335350130466)");
 
   fetch::ml::ops::Sigmoid<TensorType> op;
-  TensorType prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
+  TensorType                          prediction(op.ComputeOutputShape({data.shape()}));
   op.Forward({std::make_shared<const TensorType>(data)}, prediction);
 
   // test correct values
@@ -81,7 +81,7 @@ TYPED_TEST(SigmoidTest, forward_3d_tensor_test)
   }
 
   fetch::ml::ops::Sigmoid<TensorType> op;
-  TensorType prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
+  TensorType                          prediction(op.ComputeOutputShape({data.shape()}));
   op.Forward({std::make_shared<const TensorType>(data)}, prediction);
 
   // test correct values
@@ -156,8 +156,8 @@ TYPED_TEST(SigmoidTest, saveparams_test)
       "0.999088948806, 0.000335350130466");
 
   fetch::ml::ops::Sigmoid<TensorType> op;
-  TensorType    prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
-  VecTensorType vec_data({std::make_shared<const TensorType>(data)});
+  TensorType                          prediction(op.ComputeOutputShape({data.shape()}));
+  VecTensorType                       vec_data({std::make_shared<const TensorType>(data)});
 
   op.Forward(vec_data, prediction);
 
@@ -180,7 +180,7 @@ TYPED_TEST(SigmoidTest, saveparams_test)
   OpType new_op(*dsp2);
 
   // check that new predictions match the old
-  TensorType new_prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
+  TensorType new_prediction(op.ComputeOutputShape({data.shape()}));
   new_op.Forward(vec_data, new_prediction);
 
   // test correct values

@@ -16,6 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ml/charge_estimation/constants.hpp"
 #include "ml/model/model.hpp"
 #include "ml/ops/loss_functions/cross_entropy_loss.hpp"
 #include "ml/ops/loss_functions/mean_square_error_loss.hpp"
@@ -406,9 +407,52 @@ bool Model<TensorType>::DataLoaderIsSet()
   return dataloader_ptr_->Size() != 0;
 }
 
+/**
+ * Calculates the cost for Forward when data is passed in (i.e. dataloader is not used)
+ * @tparam TensorType
+ * @param input_shape
+ * @return
+ */
 template <typename TensorType>
-OperationsCount Model<TensorType>::ChargeForward() const
+OperationsCount Model<TensorType>::ChargeForward(math::SizeVector const &input_shape) const
 {
+  auto input_node = graph_ptr_->GetNode(input_);
+  auto dataholder =
+      std::dynamic_pointer_cast<fetch::ml::ops::DataHolder<TensorType>>(input_node->GetOp());
+  dataholder->SetFutureDataShape(input_shape);
+  return this->graph_ptr_->ChargeForward(this->output_);
+}
+
+/**
+ * Calculates the cost for Forward when the dataloader is used and (optionally) a batch size is
+ * given
+ * @tparam TensorType
+ * @param batch_size
+ * @return
+ */
+template <typename TensorType>
+fetch::ml::OperationsCount Model<TensorType>::ChargeForward(Model::SizeType batch_size) const
+{
+  if (batch_size == 0)
+  {
+    batch_size = dataloader_ptr_->Size();
+  }
+
+  auto label_and_data_size = dataloader_ptr_->GetDataSize(batch_size);
+  auto label_size          = label_and_data_size.first;
+  auto data_size           = label_and_data_size.second.at(
+      0);  // there is assumed to be only one input for the graph in this model
+
+  auto input_node = graph_ptr_->GetNode(input_);
+  auto dataholder =
+      std::dynamic_pointer_cast<fetch::ml::ops::DataHolder<TensorType>>(input_node->GetOp());
+  dataholder->SetFutureDataShape(data_size);
+
+  auto label_node = graph_ptr_->GetNode(label_);
+  dataholder =
+      std::dynamic_pointer_cast<fetch::ml::ops::DataHolder<TensorType>>(label_node->GetOp());
+  dataholder->SetFutureDataShape(label_size);
+
   return this->graph_ptr_->ChargeForward(this->output_);
 }
 
@@ -416,6 +460,134 @@ template <typename TensorType>
 OperationsCount Model<TensorType>::ChargeBackward() const
 {
   return this->graph_ptr_->ChargeBackward(this->output_);
+}
+
+template <typename TensorType>
+OperationsCount Model<TensorType>::ChargeCompile(OptimiserType                       optimiser_type,
+                                                 ops::LossType                       loss_type,
+                                                 std::vector<ops::MetricType> const &metrics) const
+{
+  OperationsCount op_cnt{charge_estimation::FUNCTION_CALL_COST};
+
+  // add loss to graph
+  if (!loss_set_)
+  {
+    switch (loss_type)
+    {
+    case (ops::LossType::CROSS_ENTROPY):
+    {
+      op_cnt += ops::CrossEntropyLoss<TensorType>::ChargeConstruct();
+      break;
+    }
+    case (ops::LossType::MEAN_SQUARE_ERROR):
+    {
+      op_cnt += ops::MeanSquareErrorLoss<TensorType>::ChargeConstruct();
+      break;
+    }
+    case (ops::LossType::SOFTMAX_CROSS_ENTROPY):
+    {
+      op_cnt += ops::SoftmaxCrossEntropyLoss<TensorType>::ChargeConstruct();
+      break;
+    }
+    case (ops::LossType::NONE):
+    {
+      throw ml::exceptions::InvalidMode(
+          "must set loss function on model compile for this model type");
+    }
+    default:
+    {
+      throw ml::exceptions::InvalidMode("unrecognised loss type in model compilation");
+    }
+    }
+  }
+  else
+  {
+    if (loss_type != ops::LossType::NONE)
+    {
+      throw ml::exceptions::InvalidMode(
+          "attempted to set loss function on compile but loss function already previously set! "
+          "maybe using wrong type of model?");
+    }
+  }
+
+  // Add all the metric nodes to the graph and store the names in metrics_ for future reference
+  for (auto const &met : metrics)
+  {
+    switch (met)
+    {
+    case (ops::MetricType::CATEGORICAL_ACCURACY):
+    {
+      op_cnt += ops::CategoricalAccuracy<TensorType>::ChargeConstruct();
+      break;
+    }
+    case ops::MetricType::CROSS_ENTROPY:
+    {
+      op_cnt += ops::CrossEntropyLoss<TensorType>::ChargeConstruct();
+      break;
+    }
+    case ops::MetricType::MEAN_SQUARE_ERROR:
+    {
+      op_cnt += ops::MeanSquareErrorLoss<TensorType>::ChargeConstruct();
+      break;
+    }
+    case ops::MetricType::SOFTMAX_CROSS_ENTROPY:
+    {
+      op_cnt += ops::SoftmaxCrossEntropyLoss<TensorType>::ChargeConstruct();
+      break;
+    }
+    default:
+    {
+      throw ml::exceptions::InvalidMode("unrecognised metric type in model compilation");
+    }
+    }
+  }
+
+  // Graph compile
+  op_cnt += graph_ptr_->ChargeCompile();
+
+  // set the optimiser
+  if (!optimiser_set_)
+  {
+    switch (optimiser_type)
+    {
+    case OptimiserType::ADAGRAD:
+    {
+      op_cnt += fetch::ml::optimisers::AdaGradOptimiser<TensorType>::ChargeConstruct(graph_ptr_);
+      break;
+    }
+    case OptimiserType::ADAM:
+    {
+      op_cnt += fetch::ml::optimisers::AdamOptimiser<TensorType>::ChargeConstruct(graph_ptr_);
+      break;
+    }
+    case OptimiserType::MOMENTUM:
+    {
+      op_cnt += fetch::ml::optimisers::MomentumOptimiser<TensorType>::ChargeConstruct(graph_ptr_);
+      break;
+    }
+    case OptimiserType::RMSPROP:
+    {
+      op_cnt += fetch::ml::optimisers::RMSPropOptimiser<TensorType>::ChargeConstruct(graph_ptr_);
+      break;
+    }
+    case OptimiserType::SGD:
+    {
+      op_cnt += fetch::ml::optimisers::SGDOptimiser<TensorType>::ChargeConstruct(graph_ptr_);
+      break;
+    }
+    default:
+    {
+      throw ml::exceptions::InvalidMode("DNNClassifier initialised with unrecognised optimiser");
+    }
+    }
+    // set optimiser flag
+    op_cnt += charge_estimation::SET_FLAG;
+  }
+
+  // set compiled flag
+  op_cnt += charge_estimation::SET_FLAG;
+
+  return op_cnt;
 }
 
 ///////////////////////////////

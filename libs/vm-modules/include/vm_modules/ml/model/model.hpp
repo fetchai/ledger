@@ -23,7 +23,6 @@
 #include "vm/object.hpp"
 #include "vm_modules/math/tensor/tensor.hpp"
 #include "vm_modules/math/type.hpp"
-#include "vm_modules/ml/model/model_estimator.hpp"
 
 namespace fetch {
 
@@ -75,8 +74,6 @@ enum class SupportedLayerType : uint8_t
 
 class VMModel : public fetch::vm::Object
 {
-  friend class fetch::vm_modules::ml::model::ModelEstimator;
-
 public:
   using DataType            = fetch::vm_modules::math::DataType;
   using TensorType          = fetch::math::Tensor<DataType>;
@@ -88,7 +85,6 @@ public:
   using TensorDataloader    = fetch::ml::dataloaders::TensorDataLoader<TensorType>;
   using TensorDataloaderPtr = std::shared_ptr<TensorDataloader>;
   using VMTensor            = fetch::vm_modules::math::VMTensor;
-  using ModelEstimator      = fetch::vm_modules::ml::model::ModelEstimator;
   using SequentialModelPtr  = std::shared_ptr<fetch::ml::model::Sequential<TensorType>>;
 
   VMModel(VMModel const &other) = delete;
@@ -124,11 +120,7 @@ public:
 
   vm::Ptr<vm::Array<math::DataType>> Evaluate();
 
-  fetch::vm::ChargeAmount EstimateEvaluate();
-
   vm::Ptr<VMTensor> Predict(vm::Ptr<VMTensor> const &data);
-
-  fetch::vm::ChargeAmount EstimatePredict(vm::Ptr<vm_modules::math::VMTensor> const &data);
 
   static void Bind(fetch::vm::Module &module, bool experimental_enabled);
 
@@ -143,10 +135,9 @@ public:
   fetch::vm::Ptr<VMModel> DeserializeFromString(
       fetch::vm::Ptr<fetch::vm::String> const &model_string);
 
-  ModelEstimator &Estimator();
-
   void LayerAddDense(fetch::vm::Ptr<fetch::vm::String> const &layer, math::SizeType const &inputs,
                      math::SizeType const &hidden_nodes);
+
   void LayerAddDenseAutoInputs(fetch::vm::Ptr<fetch::vm::String> const &layer,
                                math::SizeType const &                   hidden_nodes);
   void LayerAddDenseActivation(fetch::vm::Ptr<fetch::vm::String> const &layer,
@@ -184,9 +175,9 @@ public:
                           math::SizeType const &dimensions, math::SizeType const &data_points,
                           bool stub);
 
-  fetch::ml::OperationsCount ChargeForward() const
+  fetch::ml::OperationsCount ChargeForward(math::SizeVector const &input_shape) const
   {
-    return model_->ChargeForward();
+    return model_->ChargeForward(input_shape);
   }
 
   fetch::ml::OperationsCount ChargeBackward() const
@@ -194,12 +185,89 @@ public:
     return model_->ChargeBackward();
   }
 
+  static fetch::vm::ChargeAmount MaximumCharge(std::string const &log_msg);
+
+  fetch::vm::ChargeAmount EstimateLayerAddDense(fetch::vm::Ptr<fetch::vm::String> const &layer,
+                                                math::SizeType const &                   inputs,
+                                                math::SizeType const &hidden_nodes);
+
+  fetch::vm::ChargeAmount EstimateLayerAddDenseActivation(
+      fetch::vm::Ptr<fetch::vm::String> const &layer, math::SizeType const &inputs,
+      math::SizeType const &hidden_nodes, fetch::vm::Ptr<fetch::vm::String> const &activation);
+
+  fetch::vm::ChargeAmount EstimateLayerAddDenseActivationExperimental(
+      fetch::vm::Ptr<fetch::vm::String> const &layer, math::SizeType const &inputs,
+      math::SizeType const &hidden_nodes, fetch::vm::Ptr<fetch::vm::String> const &activation);
+
+  fetch::vm::ChargeAmount EstimateLayerAddDenseAutoInputs(
+      fetch::vm::Ptr<fetch::vm::String> const &layer, math::SizeType const &hidden_nodes);
+
+  fetch::vm::ChargeAmount EstimateCompileSequential(
+      fetch::vm::Ptr<fetch::vm::String> const &loss,
+      fetch::vm::Ptr<fetch::vm::String> const &optimiser);
+
+  fetch::vm::ChargeAmount EstimateCompileSequentialImplementation(
+      fetch::vm::Ptr<fetch::vm::String> const &      loss,
+      fetch::vm::Ptr<fetch::vm::String> const &      optimiser,
+      std::vector<fetch::ml::ops::MetricType> const &metrics);
+
+  fetch::vm::ChargeAmount EstimateCompileSequentialWithMetrics(
+      fetch::vm::Ptr<fetch::vm::String> const &                    loss,
+      fetch::vm::Ptr<fetch::vm::String> const &                    optimiser,
+      fetch::vm::Ptr<vm::Array<vm::Ptr<fetch::vm::String>>> const &metrics);
+
+  fetch::vm::ChargeAmount EstimateEvaluate();
+
+  fetch::vm::ChargeAmount EstimatePredict(vm::Ptr<vm_modules::math::VMTensor> const &data);
+
+  fetch::vm::ChargeAmount EstimateSerializeToString();
+
+  fetch::vm::ChargeAmount EstimateDeserializeFromString(
+      vm::Ptr<fetch::vm::String> const &model_string);
+
+  fetch::vm::ChargeAmount EstimateFit(vm::Ptr<VMTensor> const &      data,
+                                      vm::Ptr<VMTensor> const &      labels,
+                                      ::fetch::math::SizeType const &batch_size);
+
+  fetch::vm::ChargeAmount EstimateLayerAddConv(fetch::vm::Ptr<fetch::vm::String> const &layer,
+                                               math::SizeType const &output_channels,
+                                               math::SizeType const &input_channels,
+                                               math::SizeType const &kernel_size,
+                                               math::SizeType const &stride_size);
+  fetch::vm::ChargeAmount EstimateLayerAddConvActivation(
+      fetch::vm::Ptr<fetch::vm::String> const &layer, math::SizeType const &output_channels,
+      math::SizeType const &input_channels, math::SizeType const &kernel_size,
+      math::SizeType const &stride_size, fetch::vm::Ptr<fetch::vm::String> const &activation);
+
+  fetch::vm::ChargeAmount EstimateLayerAddFlatten(fetch::vm::Ptr<fetch::vm::String> const &layer);
+
+  fetch::vm::ChargeAmount EstimateLayerAddDropout(fetch::vm::Ptr<fetch::vm::String> const &layer,
+                                                  math::DataType const &probability);
+
+  fetch::vm::ChargeAmount EstimateLayerAddActivation(
+      fetch::vm::Ptr<fetch::vm::String> const &layer,
+      fetch::vm::Ptr<fetch::vm::String> const &activation_name);
+  fetch::vm::ChargeAmount EstimateLayerAddReshape(
+      fetch::vm::Ptr<fetch::vm::String> const &                     layer,
+      fetch::vm::Ptr<fetch::vm::Array<TensorType::SizeType>> const &shape);
+
+  fetch::vm::ChargeAmount EstimateLayerAddInput(
+      fetch::vm::Ptr<fetch::vm::String> const &        layer,
+      fetch::vm::Ptr<vm::Array<math::SizeType>> const &shape);
+  fetch::vm::ChargeAmount EstimateLayerAddPool(fetch::vm::Ptr<fetch::vm::String> const &layer,
+                                               math::SizeType const &                   kernel_size,
+                                               math::SizeType const &stride_size);
+  fetch::vm::ChargeAmount EstimateLayerAddEmbeddings(fetch::vm::Ptr<fetch::vm::String> const &layer,
+                                                     math::SizeType const &dimensions,
+                                                     math::SizeType const &data_points, bool stub);
+
+  SequentialModelPtr GetMeAsSequentialIfPossible();
+
 private:
   ModelPtrType       model_;
   ModelConfigPtrType model_config_;
   ModelCategory      model_category_ = ModelCategory::NONE;
-  ModelEstimator     estimator_;
-  bool               compiled_ = false;
+  bool               compiled_       = false;
 
   // First for input layer shape, second for output layer shape.
   static constexpr std::size_t min_total_layer_shapes = 2;
@@ -233,8 +301,6 @@ private:
   template <typename T>
   T ParseName(std::string const &name, std::map<std::string, T> const &dict,
               std::string const &errmsg) const;
-
-  SequentialModelPtr GetMeAsSequentialIfPossible();
 };
 
 /**

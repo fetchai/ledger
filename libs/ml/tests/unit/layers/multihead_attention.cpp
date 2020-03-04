@@ -81,7 +81,7 @@ TYPED_TEST(MultiheadAttention, backward_test)  // Use the class as an Ops
 
   TypeParam mask_data = TypeParam({20, 20, 5});
   mask_data.Fill(DataType{1});
-  TypeParam output(m_att.ComputeOutputShape({std::make_shared<TypeParam>(input_data)}));
+  TypeParam output(m_att.ComputeOutputShape({input_data.shape()}));
   m_att.Forward({std::make_shared<TypeParam>(input_data), std::make_shared<TypeParam>(input_data),
                  std::make_shared<TypeParam>(input_data), std::make_shared<TypeParam>(mask_data)},
                 output);

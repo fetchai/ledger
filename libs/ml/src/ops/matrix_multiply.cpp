@@ -18,6 +18,7 @@
 
 #include "math/matrix_operations.hpp"
 #include "math/tensor/tensor.hpp"
+#include "ml/charge_estimation/ops/constants.hpp"
 #include "ml/exceptions/exceptions.hpp"
 #include "ml/ops/matrix_multiply.hpp"
 
@@ -54,7 +55,7 @@ template <typename T>
 void MatrixMultiply<T>::Forward(VecTensorType const &inputs, TensorType &output)
 {
   assert(inputs.size() == 2);
-  assert(output.shape() == ComputeOutputShape(inputs));
+  assert(output.shape() == ComputeOutputShape(fetch::ml::utilities::TensorPtrsToSizes(inputs)));
 
   UpdateContainersForward(inputs);
 
@@ -224,7 +225,7 @@ std::vector<T> MatrixMultiply<T>::Backward(VecTensorType const &inputs,
 
 template <typename T>
 std::vector<typename fetch::math::SizeType> MatrixMultiply<T>::ComputeOutputShape(
-    VecTensorType const &inputs) const
+    std::vector<math::SizeVector> const &inputs) const
 {
   if (transpose_a_ && transpose_b_)
   {
@@ -234,38 +235,35 @@ std::vector<typename fetch::math::SizeType> MatrixMultiply<T>::ComputeOutputShap
   std::vector<fetch::math::SizeType> output_shape;
 
   // Normal Matmul
-  if (inputs.at(0)->shape().size() == 2 && inputs.at(1)->shape().size() == 2)
+  if (inputs.at(0).size() == 2 && inputs.at(1).size() == 2)
   {
     if (!transpose_a_ && !transpose_b_)
     {
-      output_shape = {inputs.at(0)->shape().at(0), inputs.at(1)->shape().at(1)};
+      output_shape = {inputs.at(0).at(0), inputs.at(1).at(1)};
     }
     else if (transpose_a_ & !transpose_b_)
     {
-      output_shape = {inputs.at(0)->shape().at(1), inputs.at(1)->shape().at(1)};
+      output_shape = {inputs.at(0).at(1), inputs.at(1).at(1)};
     }
     else
     {
-      output_shape = {inputs.at(0)->shape().at(0), inputs.at(1)->shape().at(0)};
+      output_shape = {inputs.at(0).at(0), inputs.at(1).at(0)};
     }
   }
   // Batchwise matmul or 3D @ 2D broadcast matmul
-  else if (inputs.at(0)->shape().size() == 3)
+  else if (inputs.at(0).size() == 3)
   {
     if (!transpose_a_ && !transpose_b_)
     {
-      output_shape = {inputs.at(0)->shape().at(0), inputs.at(1)->shape().at(1),
-                      inputs.at(0)->shape().at(2)};
+      output_shape = {inputs.at(0).at(0), inputs.at(1).at(1), inputs.at(0).at(2)};
     }
     else if (transpose_a_ & !transpose_b_)
     {
-      output_shape = {inputs.at(0)->shape().at(1), inputs.at(1)->shape().at(1),
-                      inputs.at(0)->shape().at(2)};
+      output_shape = {inputs.at(0).at(1), inputs.at(1).at(1), inputs.at(0).at(2)};
     }
     else
     {
-      output_shape = {inputs.at(0)->shape().at(0), inputs.at(1)->shape().at(0),
-                      inputs.at(0)->shape().at(2)};
+      output_shape = {inputs.at(0).at(0), inputs.at(1).at(0), inputs.at(0).at(2)};
     }
   }
   else
@@ -273,18 +271,15 @@ std::vector<typename fetch::math::SizeType> MatrixMultiply<T>::ComputeOutputShap
     // 2D @ 3D broadcast matmul
     if (!transpose_a_ && !transpose_b_)
     {
-      output_shape = {inputs.at(0)->shape().at(0), inputs.at(1)->shape().at(1),
-                      inputs.at(1)->shape().at(2)};
+      output_shape = {inputs.at(0).at(0), inputs.at(1).at(1), inputs.at(1).at(2)};
     }
     else if (transpose_a_ & !transpose_b_)
     {
-      output_shape = {inputs.at(0)->shape().at(1), inputs.at(1)->shape().at(1),
-                      inputs.at(1)->shape().at(2)};
+      output_shape = {inputs.at(0).at(1), inputs.at(1).at(1), inputs.at(1).at(2)};
     }
     else
     {
-      output_shape = {inputs.at(0)->shape().at(0), inputs.at(1)->shape().at(0),
-                      inputs.at(1)->shape().at(2)};
+      output_shape = {inputs.at(0).at(0), inputs.at(1).at(0), inputs.at(1).at(2)};
     }
   }
 
@@ -312,7 +307,8 @@ OperationsCount MatrixMultiply<T>::ChargeForward() const
 }
 
 template <typename T>
-OperationsCount MatrixMultiply<T>::ChargeBackward() const
+std::pair<OperationsCount, math::SizeVector> MatrixMultiply<T>::ChargeBackward(
+    std::vector<math::SizeVector> const &input_shapes)
 {
   assert(!this->batch_input_shapes_.empty());
 
@@ -324,10 +320,17 @@ OperationsCount MatrixMultiply<T>::ChargeBackward() const
 
   OperationsCount const cost =
       n * m * p * fetch::ml::charge_estimation::ops::MULTIPLICATION_PER_ELEMENT +
-      fetch::ml::charge_estimation::ops::ADDITION_PER_ELEMENT *
+      fetch::ml::charge_estimation::ops::LOW_ADDITION_PER_ELEMENT *
           this->TotalElementsIn({this->batch_input_shapes_});
   ;
-  return cost;
+  math::SizeVector output_shape = ComputeOutputShape(input_shapes);
+  return std::make_pair(cost * output_shape.back(), output_shape);
+}
+
+template <typename T>
+OperationsCount MatrixMultiply<T>::ChargeConstruct()
+{
+  return charge_estimation::ops::OP_MATRIX_MULTIPLY_CONSTRUCTION_COST;
 }
 
 /**

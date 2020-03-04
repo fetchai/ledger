@@ -47,6 +47,11 @@ public:
 
   void SetBatchInputShape(std::vector<math::SizeType> const &shape);
 
+  ModelType ModelCode() override
+  {
+    return ModelType::SEQUENTIAL;
+  }
+
   template <typename X, typename D>
   friend struct serializers::MapSerializer;
 

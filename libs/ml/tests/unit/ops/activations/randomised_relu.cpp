@@ -93,15 +93,14 @@ TYPED_TEST(RandomisedReluTest, forward_test)
 
   fetch::ml::ops::RandomisedRelu<TensorType> op(fetch::math::Type<DataType>("0.03"),
                                                 fetch::math::Type<DataType>("0.08"), 12345);
-  TensorType prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
+  TensorType                                 prediction(op.ComputeOutputShape({data.shape()}));
   op.Forward({std::make_shared<const TensorType>(data)}, prediction);
 
   // test if values are within ranges
   CheckForwardValues(data, prediction, lower_bound, upper_bound);
 
   // Test after generating new random alpha value
-  TensorType prediction_2 =
-      TensorType(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
+  TensorType prediction_2 = TensorType(op.ComputeOutputShape({data.shape()}));
   op.Forward({std::make_shared<const TensorType>(data)}, prediction_2);
 
   // test if values changed
@@ -116,8 +115,7 @@ TYPED_TEST(RandomisedReluTest, forward_test)
 
   TensorType gt = TensorType::FromString("1, -0.11, 3, -0.22, 5, -0.33, 7, -0.44");
 
-  TensorType prediction_3 =
-      TensorType(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
+  TensorType prediction_3 = TensorType(op.ComputeOutputShape({data.shape()}));
   op.Forward({std::make_shared<const TensorType>(data)}, prediction);
 
   // test correct values
@@ -137,7 +135,7 @@ TYPED_TEST(RandomisedReluTest, forward_3d_tensor_test)
   data.Reshape({2, 2, 2});
 
   fetch::ml::ops::RandomisedRelu<TensorType> op(lower_bound, upper_bound, 12345);
-  TensorType prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
+  TensorType                                 prediction(op.ComputeOutputShape({data.shape()}));
   op.Forward({std::make_shared<const TensorType>(data)}, prediction);
 
   // test if values are within ranges
@@ -171,7 +169,7 @@ TYPED_TEST(RandomisedReluTest, backward_test)
 
   // Test after generating new random alpha value
   // Forward pass will update random value
-  TensorType output(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
+  TensorType output(op.ComputeOutputShape({data.shape()}));
   op.Forward({std::make_shared<const TensorType>(data)}, output);
 
   std::vector<TensorType> prediction_2 =
@@ -244,8 +242,8 @@ TYPED_TEST(RandomisedReluTest, saveparams_test)
   TensorType data = TensorType::FromString("1, -2, 3, -4, 5, -6, 7, -8");
 
   fetch::ml::ops::RandomisedRelu<TensorType> op(lower_bound, upper_bound, 12345);
-  TensorType    prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
-  VecTensorType vec_data({std::make_shared<const TensorType>(data)});
+  TensorType                                 prediction(op.ComputeOutputShape({data.shape()}));
+  VecTensorType                              vec_data({std::make_shared<const TensorType>(data)});
 
   op.Forward(vec_data, prediction);
 
@@ -271,7 +269,7 @@ TYPED_TEST(RandomisedReluTest, saveparams_test)
   OpType new_op(*dsp2);
 
   // check that new predictions match the old
-  TensorType new_prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
+  TensorType new_prediction(op.ComputeOutputShape({data.shape()}));
   new_op.Forward(vec_data, new_prediction);
 
   // test correct values

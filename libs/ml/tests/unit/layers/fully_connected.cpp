@@ -115,7 +115,7 @@ TYPED_TEST(FullyConnectedTest, ops_forward_test)  // Use the class as an Ops
   fetch::ml::layers::FullyConnected<TypeParam> fc(50, 10);
   TypeParam input_data(std::vector<typename TypeParam::SizeType>({5, 10, 2}));
 
-  TypeParam output(fc.ComputeOutputShape({std::make_shared<TypeParam>(input_data)}));
+  TypeParam output(fc.ComputeOutputShape({input_data.shape()}));
   fc.Compile();
   fc.Forward({std::make_shared<TypeParam>(input_data)}, output);
 
@@ -130,7 +130,7 @@ TYPED_TEST(FullyConnectedTest, ops_backward_test)  // Use the class as an Ops
   fetch::ml::layers::FullyConnected<TypeParam> fc(50, 10);
   TypeParam input_data(std::vector<typename TypeParam::SizeType>({5, 10, 2}));
 
-  TypeParam output(fc.ComputeOutputShape({std::make_shared<TypeParam>(input_data)}));
+  TypeParam output(fc.ComputeOutputShape({input_data.shape()}));
   fc.Compile();
   fc.Forward({std::make_shared<TypeParam>(input_data)}, output);
 
@@ -159,7 +159,7 @@ TYPED_TEST(FullyConnectedTest, ops_backward_test_time_distributed)  // Use the c
                                                   true);
   TypeParam input_data(std::vector<typename TypeParam::SizeType>({50, 10, 2}));
 
-  TypeParam output(fc.ComputeOutputShape({std::make_shared<TypeParam>(input_data)}));
+  TypeParam output(fc.ComputeOutputShape({input_data.shape()}));
   fc.Compile();
   fc.Forward({std::make_shared<TypeParam>(input_data)}, output);
 
@@ -560,11 +560,7 @@ TYPED_TEST(FullyConnectedTest, training_should_change_output)
     grad *= fetch::math::Type<DataType>("-0.1");
   }
 
-  std::cout << "grads[0].ToString(): " << grads[0].ToString() << std::endl;
-  std::cout << "grads[1].ToString(): " << grads[1].ToString() << std::endl;
-
   layer.ApplyGradients(grads);
-
   TypeParam prediction3 = layer.Evaluate(output_name);
 
   std::cout << "prediction.ToString(): " << prediction.ToString() << std::endl;

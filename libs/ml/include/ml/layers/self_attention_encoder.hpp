@@ -49,9 +49,10 @@ public:
                        DataType       epsilon         = fetch::math::function_tolerance<DataType>(),
                        ActivationType activation_type = ActivationType::GELU);
 
-  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
+  std::vector<SizeType> ComputeOutputShape(
+      std::vector<math::SizeVector> const &inputs) const override
   {
-    return inputs.front()->shape();
+    return inputs.front();
   }
 
   std::shared_ptr<OpsSaveableParams> GetOpSaveableParams() override;
@@ -88,9 +89,6 @@ private:
 
   std::string residual_connection(std::string const &name, std::string const &prev_layer_input,
                                   std::string const &prev_layer_output);
-
-  OperationsCount ChargeForward() const override;
-  OperationsCount ChargeBackward() const override;
 };
 
 }  // namespace layers

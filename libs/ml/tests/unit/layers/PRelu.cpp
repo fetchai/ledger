@@ -60,7 +60,7 @@ TYPED_TEST(PReluTest, ops_forward_test)  // Use the class as an Ops
   fetch::ml::layers::PRelu<TypeParam> pr(50);
   TypeParam input_data(std::vector<typename TypeParam::SizeType>({5, 10, 2}));
 
-  TypeParam output(pr.ComputeOutputShape({std::make_shared<TypeParam>(input_data)}));
+  TypeParam output(pr.ComputeOutputShape({input_data.shape()}));
   pr.Forward({std::make_shared<TypeParam>(input_data)}, output);
 
   ASSERT_EQ(output.shape().size(), 3);
@@ -74,7 +74,8 @@ TYPED_TEST(PReluTest, ops_backward_test)  // Use the class as an Ops
 {
   fetch::ml::layers::PRelu<TypeParam> fc(50);
   TypeParam input_data(std::vector<typename TypeParam::SizeType>({5, 10, 2}));
-  TypeParam output(fc.ComputeOutputShape({std::make_shared<TypeParam>(input_data)}));
+  TypeParam output(fc.ComputeOutputShape({input_data.shape()}));
+
   fc.Forward({std::make_shared<TypeParam>(input_data)}, output);
   TypeParam error_signal(std::vector<typename TypeParam::SizeType>({50, 2}));
 
