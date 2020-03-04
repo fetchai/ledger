@@ -395,7 +395,7 @@ void BM_ReluForward(benchmark::State &state)
 
 static void ReluArguments(benchmark::internal::Benchmark *b)
 {
-  using SizeType                       = typename fetch::math::SizeType;
+  using SizeType                       = fetch::math::SizeType;
   SizeType const            N_ELEMENTS = 2;
   std::vector<std::int64_t> batch_size{1, 32, 128};
 
@@ -439,7 +439,7 @@ void BM_ReluBackward(benchmark::State &state)
   fetch::ml::ops::Relu<fetch::math::Tensor<T>> relu;
 
   relu.SetBatchInputShapes({config.shape});
-  state.counters["charge"] = static_cast<double>(relu.ChargeBackward());
+  state.counters["charge"] = static_cast<double>(relu.ChargeBackward({config.shape}).first);
 
   for (auto _ : state)
   {
