@@ -36,12 +36,13 @@ public:
     using ::testing::_;
     using ::testing::Invoke;
 
-    ON_CALL(*this, Execute(_, _, _, _)).WillByDefault(Invoke(&fake_, &FakeExecutor::Execute));
+    ON_CALL(*this, Execute(_, _, _, _, _, _)).WillByDefault(Invoke(&fake_, &FakeExecutor::Execute));
     ON_CALL(*this, SettleFees(_, _, _, _, _))
         .WillByDefault(Invoke(&fake_, &FakeExecutor::SettleFees));
   }
 
-  MOCK_METHOD4(Execute, Result(Digest const &, BlockIndex, SliceIndex, BitVector const &));
+  MOCK_METHOD6(Execute, Result(Digest const &, BlockIndex, SliceIndex, BitVector const &, uint64_t,
+                               std::unordered_set<fetch::crypto::Identity>));
   MOCK_METHOD5(SettleFees,
                void(Address const &, BlockIndex, TokenAmount, uint32_t, StakeUpdateEvents const &));
 

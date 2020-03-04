@@ -47,6 +47,8 @@ public:
   void           SetLastProcessedBlock(Digest hash) override;
   State          GetState() override;
   bool           Abort() override;
+  void           SetChargeConfiguration(uint64_t) override;
+  void           SetCabinet(std::unordered_set<fetch::crypto::Identity>) override;
   /// @}
 
 private:

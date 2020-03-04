@@ -34,7 +34,13 @@
 
 #include "gtest/gtest.h"
 
-#include <utility>
+struct Entity
+{
+  fetch::crypto::ECDSASigner signer{};
+  fetch::chain::Address      address{signer.identity()};
+};
+
+using Entities = std::vector<Entity>;
 
 inline auto FullShards(std::size_t lane_count)
 {
@@ -63,13 +69,17 @@ protected:
   using CachedStorageAdapter  = fetch::ledger::CachedStorageAdapter;
   using TransactionPtr        = fetch::chain::TransactionPtr;
 
-  void SetUp() override
+  static void SetUpTestCase()
   {
-    block_number_  = 0u;
-    certificate_   = std::make_unique<fetch::crypto::ECDSASigner>();
-    owner_address_ = std::make_unique<fetch::chain::Address>(certificate_->identity());
-    storage_       = std::make_unique<StrictMockStorageUnit>();
+    fetch::chain::InitialiseTestConstants();
   }
+
+  ContractTest()
+    : block_number_{0u}
+    , certificate_{std::make_unique<fetch::crypto::ECDSASigner>()}
+    , owner_address_{std::make_unique<fetch::chain::Address>(certificate_->identity())}
+    , storage_{std::make_unique<StrictMockStorageUnit>()}
+  {}
 
   class PayloadPacker
   {
@@ -204,9 +214,10 @@ protected:
     // adapt the storage engine for queries
     StateAdapter storage_adapter{*storage_, *contract_name_};
 
+    // Current block index does not apply to queries - set to 0
     auto context =
         fetch::ledger::ContractContext::Builder{}.SetStateAdapter(&storage_adapter).Build();
-    fetch::ledger::ContractContextAttacher raii_attacher(*contract_, context);
+    fetch::ledger::ContractContextAttacher raii_attacher(*contract_, std::move(context));
     auto const status = contract_->DispatchQuery(query, request, response);
 
     return status;

@@ -51,8 +51,9 @@ public:
   using HistoryElementCache = std::vector<HistoryElement>;
   using StorageInterface    = fetch::ledger::StorageInterface;
 
-  Result Execute(Digest const &digest, BlockIndex block, SliceIndex slice,
-                 BitVector const &shards) override
+  Result Execute(Digest const &digest, BlockIndex block, SliceIndex slice, BitVector const &shards,
+                 uint64_t /*charge_multiplier*/,
+                 std::unordered_set<fetch::crypto::Identity>) override
   {
     history_.emplace_back(HistoryElement{digest, block, slice, shards, Clock::now()});
 

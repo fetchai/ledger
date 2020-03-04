@@ -17,7 +17,11 @@
 //
 //------------------------------------------------------------------------------
 
+#include "crypto/identity.hpp"
+
 #include <cstddef>
+#include <cstdint>
+#include <unordered_set>
 
 namespace fetch {
 namespace ledger {
@@ -46,6 +50,9 @@ public:
   virtual ExecStatus PrepareWorkQueue(Block const &current, Block const &previous) = 0;
   virtual bool       ValidateWorkAndUpdateState(std::size_t num_lanes)             = 0;
   /// @}
+
+  virtual void SetChargeConfiguration(uint64_t)                 = 0;
+  virtual void SetCabinet(std::unordered_set<crypto::Identity>) = 0;
 };
 
 char const *ToString(SynergeticExecutionManagerInterface::ExecStatus status);

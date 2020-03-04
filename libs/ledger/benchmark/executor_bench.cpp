@@ -92,7 +92,7 @@ void Executor_BasicBenchmark(benchmark::State &state)
 
   for (auto _ : state)
   {
-    executor.Execute(tx->digest(), 1, 1, shards);
+    executor.Execute(tx->digest(), 1, 1, shards, 0, {});
   }
 }
 

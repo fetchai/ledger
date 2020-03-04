@@ -180,6 +180,8 @@ Contract::Result SmartContractManager::OnCreate(chain::Transaction const &tx)
                      .SetContractAddress(tx.contract_address())
                      .SetStateAdapter(&state())
                      .SetBlockIndex(context().block_index)
+                     .SetVmChargeMultiplier(context().vm_charge_multiplier)
+                     .SetCabinet(context().cabinet)
                      .Build();
 
       ContractContextAttacher raii_attacher(smart_contract, std::move(ctx));
@@ -216,6 +218,12 @@ storage::ResourceAddress SmartContractManager::CreateAddressForContract(
 {
   // create the resource address in the form fetch.contract.state.<digest of contract>
   return StateAdapter::CreateAddress(NAME, contract_id.display());
+}
+
+uint64_t SmartContractManager::CalculateFee() const
+{
+  // TODO(WK): Compute smart contract manager charges using this function
+  return 0;
 }
 
 }  // namespace ledger

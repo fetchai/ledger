@@ -82,11 +82,11 @@ public:
   // TODO (LGDR-698): the only reason this function is public is it's used in a single POS test.
   uint64_t GetBlockGenerationWeight(Block const &current, Identity const &identity) const;
 
+  UnorderedCabinet GetCabinet() const override;
+
 private:
   static constexpr std::size_t HISTORY_LENGTH = 1000;
 
-  using Cabinet            = StakeManager::Cabinet;
-  using CabinetPtr         = std::shared_ptr<Cabinet const>;
   using BlockIndex         = uint64_t;
   using CabinetHistory     = std::map<BlockIndex, CabinetPtr>;
   using AeonBeginningCache = std::map<BlockIndex, Block>;
@@ -105,9 +105,9 @@ private:
   double   threshold_        = 0.51;
 
   // Consensus' view on the heaviest block etc.
-  Block  current_block_;
-  Block  previous_block_;
-  Digest last_triggered_cabinet_;
+  Block  current_block_{};
+  Block  previous_block_{};
+  Digest last_triggered_cabinet_{};
 
   uint64_t       default_start_time_ = 0;
   CabinetHistory cabinet_history_{};  ///< Cache of historical cabinets
@@ -118,8 +118,6 @@ private:
 
   NotarisationPtr notarisation_;
   mutable Mutex   mutex_;
-
-  CabinetPtr GetCabinet(Block const &previous) const;
 
   bool     ValidBlockTiming(Block const &previous, Block const &proposed) const;
   bool     ShouldTriggerNewCabinet(Block const &block);

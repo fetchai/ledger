@@ -32,9 +32,12 @@ class StorageInterface;
 class ConsensusInterface
 {
 public:
-  using NextBlockPtr   = std::unique_ptr<Block>;
-  using StakeSnapshot  = ledger::StakeSnapshot;
-  using Minerwhitelist = beacon::BlockEntropy::Cabinet;
+  using UnorderedCabinet = std::unordered_set<crypto::Identity>;
+  using Cabinet          = std::vector<crypto::Identity>;
+  using CabinetPtr       = std::shared_ptr<Cabinet const>;
+  using NextBlockPtr     = std::unique_ptr<Block>;
+  using StakeSnapshot    = ledger::StakeSnapshot;
+  using Minerwhitelist   = beacon::BlockEntropy::Cabinet;
 
   enum class Status
   {
@@ -56,6 +59,8 @@ public:
 
   // Verify a block according to consensus requirements. It must not be loose.
   virtual Status ValidBlock(Block const &current) const = 0;
+
+  virtual UnorderedCabinet GetCabinet() const = 0;
 
   // Set system parameters
   virtual void SetMaxCabinetSize(uint16_t max_cabinet_size)                    = 0;

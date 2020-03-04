@@ -74,6 +74,16 @@ public:
   void Start();
   void Stop();
 
+  void SetChargeConfiguration(uint64_t multiplier) override
+  {
+    charge_multiplier_ = multiplier;
+  }
+
+  void SetCabinet(std::unordered_set<crypto::Identity> cabinet) override
+  {
+    cabinet_ = std::move(cabinet);
+  }
+
   // statistics
   std::size_t completed_executions() const
   {
@@ -113,7 +123,9 @@ private:
     chain::Address last_block_miner{};
   };
 
-  uint32_t const log2_num_lanes_;
+  uint32_t const                       log2_num_lanes_;
+  uint64_t                             charge_multiplier_{0};
+  std::unordered_set<crypto::Identity> cabinet_{};
 
   Flag running_{false};
   Flag monitor_ready_{false};

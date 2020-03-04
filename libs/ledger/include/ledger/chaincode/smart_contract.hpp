@@ -63,6 +63,8 @@ public:
     return executable_;
   }
 
+  uint64_t CalculateFee() const override;
+
 private:
   using ModulePtr = std::shared_ptr<vm::Module>;
 
@@ -71,6 +73,7 @@ private:
   Status InvokeQuery(std::string const &name, Query const &request, Query &response);
   Result InvokeInit(chain::Address const &owner, chain::Transaction const &tx);
 
+  uint64_t                       charge_{0};   ///< Charge reported by the VM
   std::string                    source_;      ///< The source of the current contract
   ConstByteArray                 digest_;      ///< The digest of the current contract
   ExecutablePtr                  executable_;  ///< The internal script object of the parsed source

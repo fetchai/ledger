@@ -24,15 +24,19 @@
 namespace fetch {
 namespace ledger {
 
-ContractContext::ContractContext(TokenContract *token_contract_param, chain::Address address,
-                                 StorageInterface const *                   storage_param,
-                                 StateAdapter *                             state_adapter_param,
-                                 chain::TransactionLayout::BlockIndex const block_index_param)
+ContractContext::ContractContext(TokenContract *const token_contract_param, chain::Address address,
+                                 StorageInterface const *const              storage_param,
+                                 StateAdapter *const                        state_adapter_param,
+                                 chain::TransactionLayout::BlockIndex const block_index_param,
+                                 uint64_t const                             charge_multiplier_param,
+                                 std::unordered_set<crypto::Identity>       cabinet_param)
   : token_contract{token_contract_param}
   , contract_address{std::move(address)}
   , storage{storage_param}
   , state_adapter{state_adapter_param}
   , block_index{block_index_param}
+  , vm_charge_multiplier{charge_multiplier_param}
+  , cabinet{std::move(cabinet_param)}
 {}
 
 ContractContext::Builder &ContractContext::Builder::SetTokenContract(TokenContract *const tc)
@@ -71,10 +75,25 @@ ContractContext::Builder &ContractContext::Builder::SetBlockIndex(
   return *this;
 }
 
+ContractContext::Builder &ContractContext::Builder::SetVmChargeMultiplier(uint64_t const cm)
+{
+  vm_charge_multiplier_ = cm;
+
+  return *this;
+}
+
+ContractContext::Builder &ContractContext::Builder::SetCabinet(
+    std::unordered_set<crypto::Identity> c)
+{
+  cabinet_ = std::move(c);
+
+  return *this;
+}
+
 ContractContext ContractContext::Builder::Build() const
 {
-  return ContractContext{token_contract_, contract_address_, storage_, state_adapter_,
-                         block_index_};
+  return ContractContext{token_contract_, contract_address_,     storage_, state_adapter_,
+                         block_index_,    vm_charge_multiplier_, cabinet_};
 }
 
 }  // namespace ledger

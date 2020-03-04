@@ -255,7 +255,7 @@ void SynergeticExecutionManager::ExecuteItem(WorkQueue &queue, ProblemData const
   }
 
   assert(static_cast<bool>(executor));
-  executor->Verify(queue, problem_data, num_lanes, miner);
+  executor->Verify(queue, problem_data, num_lanes, miner, charge_multiplier_);
 
   // return the executor to the stack
   FETCH_LOCK(lock_);

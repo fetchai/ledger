@@ -114,7 +114,6 @@ void TransactionValidatorTests::AddFunds(uint64_t amount)
 
   // create storage infrastructure
   StateSentinelAdapter storage_adapter{storage_, "fetch.token", shards};
-
   auto context = ContractContext::Builder{}.SetStateAdapter(&storage_adapter).Build();
   ContractContextAttacher raii_attacher{token_contract_, std::move(context)};
 
@@ -132,7 +131,6 @@ void TransactionValidatorTests::SetDeed(Deed const &deed)
   StateSentinelAdapter storage_adapter{storage_, "fetch.token", shards};
 
   auto context = ContractContext::Builder{}.SetStateAdapter(&storage_adapter).Build();
-
   ContractContextAttacher raii_attacher{token_contract_, std::move(context)};
 
   // add the tokens to the account

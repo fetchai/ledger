@@ -32,6 +32,8 @@ public:
   MOCK_METHOD0(GenerateNextBlock, NextBlockPtr());
   MOCK_CONST_METHOD1(ValidBlock, Status(Block const &));
 
+  MOCK_CONST_METHOD0(GetCabinet, UnorderedCabinet());
+
   MOCK_METHOD1(SetMaxCabinetSize, void(uint16_t));
   MOCK_METHOD1(SetBlockInterval, void(uint64_t));
   MOCK_METHOD1(SetAeonPeriod, void(uint16_t));

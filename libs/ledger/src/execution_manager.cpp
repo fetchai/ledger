@@ -220,8 +220,8 @@ bool ExecutionManager::PlanExecution(Block const &block)
       assert((1u << log2_num_lanes_) == tx.mask().size());
 
       // insert the item into the execution plan
-      slice_plan.emplace_back(
-          std::make_unique<ExecutionItem>(tx.digest(), block.block_number, slice_index, tx.mask()));
+      slice_plan.emplace_back(std::make_unique<ExecutionItem>(
+          tx.digest(), block.block_number, slice_index, tx.mask(), charge_multiplier_, cabinet_));
     }
 
     ++slice_index;
@@ -528,7 +528,6 @@ void ExecutionManager::MonitorThreadEntrypoint()
             break;
 
           case ExecutionStatusCategory::BLOCK_INVALIDATING_ERROR:
-          default:
             ++num_fatal_errors;
             break;
           }

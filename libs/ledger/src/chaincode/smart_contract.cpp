@@ -591,6 +591,7 @@ Contract::Result SmartContract::InvokeAction(std::string const &name, chain::Tra
                        .SetStorage(c.storage)
                        .SetStateAdapter(c.state_adapter)
                        .SetBlockIndex(c.block_index)
+                       .SetVmChargeMultiplier(c.vm_charge_multiplier)
                        .Build();
 
     ContractContextAttacher raii_attacher{*loaded_contract, std::move(context)};
@@ -661,12 +662,15 @@ Contract::Result SmartContract::InvokeAction(std::string const &name, chain::Tra
     status = Status::FAILED;
   }
 
+  charge_ = context().vm_charge_multiplier * vm->GetChargeTotal();
+
   using ResponseType = int64_t;
   Result result{status};
   if (output.type_id == vm::TypeIds::Int64)
   {
     result.return_value = output.Get<ResponseType>();
   }
+
   return result;
 }
 
@@ -725,6 +729,8 @@ Contract::Result SmartContract::InvokeInit(chain::Address const &    owner,
     FETCH_LOG_WARN(LOGGING_NAME, "Runtime error: ", error);
     status = Status::FAILED;
   }
+
+  charge_ = context().vm_charge_multiplier * vm->GetChargeTotal();
 
   using ResponseType = int64_t;
   int64_t return_value{-1};
@@ -810,6 +816,7 @@ SmartContract::Status SmartContract::InvokeQuery(std::string const &name, Query 
     response["msg"]     = error;
     response["console"] = console.str();
     response["result"]  = variant::Variant::Null();
+
     return Status::FAILED;
   }
 
@@ -901,6 +908,11 @@ SmartContract::Status SmartContract::InvokeQuery(std::string const &name, Query 
   response["status"] = "success";
 
   return Status::OK;
+}
+
+uint64_t SmartContract::CalculateFee() const
+{
+  return charge_;
 }
 
 }  // namespace ledger

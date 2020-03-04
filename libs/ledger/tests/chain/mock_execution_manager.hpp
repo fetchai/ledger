@@ -47,6 +47,8 @@ public:
 
   MOCK_METHOD1(Execute, ScheduleStatus(Block const &));
   MOCK_METHOD1(SetLastProcessedBlock, void(Digest));
+  MOCK_METHOD1(SetChargeConfiguration, void(uint64_t));
+  MOCK_METHOD1(SetCabinet, void(std::unordered_set<fetch::crypto::Identity>));
   MOCK_CONST_METHOD0(LastProcessedBlock, Digest());
   MOCK_METHOD0(GetState, State());
   MOCK_METHOD0(Abort, bool());

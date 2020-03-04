@@ -42,7 +42,8 @@ public:
   static constexpr char const *LOGGING_NAME = "ExecutionItem";
 
   // Construction / Destruction
-  ExecutionItem(Digest digest, BlockIndex block, SliceIndex slice, BitVector const &shards);
+  ExecutionItem(Digest digest, BlockIndex block, SliceIndex slice, BitVector const &shards,
+                uint64_t charge_multiplier, std::unordered_set<crypto::Identity> cabinet);
   ExecutionItem(ExecutionItem const &) = delete;
   ExecutionItem(ExecutionItem &&)      = delete;
   ~ExecutionItem()                     = default;
@@ -65,20 +66,25 @@ public:
 private:
   using AtomicFee = std::atomic<uint64_t>;
 
-  Digest      digest_;
-  BlockIndex  block_{0};
-  SliceIndex  slice_{0};
-  BitVector   shards_;
-  Result      result_;
-  TokenAmount fee_{0};
+  Digest                               digest_;
+  BlockIndex                           block_{0};
+  SliceIndex                           slice_{0};
+  BitVector                            shards_;
+  Result                               result_;
+  TokenAmount                          fee_{0};
+  uint64_t                             charge_multiplier_{0};
+  std::unordered_set<crypto::Identity> cabinet_{};
 };
 
 inline ExecutionItem::ExecutionItem(Digest digest, BlockIndex block, SliceIndex slice,
-                                    BitVector const &shards)
+                                    BitVector const &shards, uint64_t charge_multiplier,
+                                    std::unordered_set<crypto::Identity> cabinet)
   : digest_(std::move(digest))
   , block_{block}
   , slice_{slice}
   , shards_(shards)
+  , charge_multiplier_(charge_multiplier)
+  , cabinet_(std::move(cabinet))
 {}
 
 inline Digest const &ExecutionItem::digest() const
@@ -105,7 +111,8 @@ inline void ExecutionItem::Execute(ExecutorInterface &executor)
 {
   try
   {
-    result_ = executor.Execute(digest_, block_, slice_, shards_);
+    result_ =
+        executor.Execute(digest_, block_, slice_, shards_, charge_multiplier_, std::move(cabinet_));
     fee_ += result_.fee;
   }
   catch (std::exception const &ex)

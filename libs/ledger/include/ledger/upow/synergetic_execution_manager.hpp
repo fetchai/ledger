@@ -77,6 +77,19 @@ private:
   void ExecuteItem(WorkQueue &queue, ProblemData const &problem_data, std::size_t num_lanes,
                    chain::Address const &miner);
 
+  void SetChargeConfiguration(uint64_t charge_multiplier) override
+  {
+    charge_multiplier_ = charge_multiplier;
+  }
+
+  void SetCabinet(std::unordered_set<crypto::Identity> cabinet) override
+  {
+    cabinet_ = std::move(cabinet);
+  }
+
+  uint64_t                             charge_multiplier_{0};
+  std::unordered_set<crypto::Identity> cabinet_{};
+
   // System Components
   DAGPtr dag_;
 

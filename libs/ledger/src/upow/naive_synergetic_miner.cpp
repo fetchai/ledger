@@ -172,6 +172,7 @@ WorkPtr NaiveSynergeticMiner::MineSolution(chain::Address const &contract_addres
                      .SetTokenContract(&token_contract_)
                      .SetContractAddress(contract_address)
                      .SetStateAdapter(&storage_adapter)
+                     .SetVmChargeMultiplier(governance_contract_.GetCurrentChargeConfiguration())
                      .Build();
 
   ContractContextAttacher raii_attacher(token_contract_, std::move(context));

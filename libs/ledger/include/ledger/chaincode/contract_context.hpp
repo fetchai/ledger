@@ -19,6 +19,7 @@
 
 #include "chain/address.hpp"
 #include "chain/transaction_layout.hpp"
+#include "ledger/consensus/consensus.hpp"
 
 namespace fetch {
 namespace ledger {
@@ -39,11 +40,14 @@ struct ContractContext
     Builder &operator=(Builder const &) = delete;
     Builder &operator=(Builder &&) = delete;
 
-    Builder &       SetTokenContract(TokenContract *tc);
-    Builder &       SetContractAddress(chain::Address ca);
-    Builder &       SetStorage(StorageInterface const *s);
-    Builder &       SetStateAdapter(StateAdapter *sa);
-    Builder &       SetBlockIndex(chain::TransactionLayout::BlockIndex bi);
+    Builder &SetTokenContract(TokenContract *);
+    Builder &SetContractAddress(chain::Address);
+    Builder &SetStorage(StorageInterface const *);
+    Builder &SetStateAdapter(StateAdapter *);
+    Builder &SetBlockIndex(chain::TransactionLayout::BlockIndex);
+    Builder &SetVmChargeMultiplier(uint64_t);
+    Builder &SetCabinet(std::unordered_set<crypto::Identity>);
+
     ContractContext Build() const;
 
   private:
@@ -52,6 +56,8 @@ struct ContractContext
     StorageInterface const *             storage_{nullptr};
     class StateAdapter *                 state_adapter_{nullptr};
     chain::TransactionLayout::BlockIndex block_index_{0};
+    uint64_t                             vm_charge_multiplier_{0};
+    std::unordered_set<crypto::Identity> cabinet_{};
   };
 
   ContractContext()                        = default;
@@ -63,11 +69,15 @@ struct ContractContext
   StorageInterface const *const              storage{nullptr};
   StateAdapter *const                        state_adapter{nullptr};
   chain::TransactionLayout::BlockIndex const block_index{0};
+  uint64_t const                             vm_charge_multiplier{0};
+  std::unordered_set<crypto::Identity> const cabinet{};
 
 private:
   ContractContext(TokenContract *token_contract_param, chain::Address address,
                   StorageInterface const *storage_param, StateAdapter *state_adapter_param,
-                  chain::TransactionLayout::BlockIndex block_index_param);
+                  chain::TransactionLayout::BlockIndex block_index_param,
+                  uint64_t                             charge_multiplier_param,
+                  std::unordered_set<crypto::Identity> cabinet_param);
 
   friend class Builder;
 };

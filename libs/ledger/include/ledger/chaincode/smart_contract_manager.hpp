@@ -40,6 +40,8 @@ public:
   SmartContractManager();
   ~SmartContractManager() override = default;
 
+  uint64_t CalculateFee() const override;
+
 private:
   /// @name Transaction Handlers
   /// @{

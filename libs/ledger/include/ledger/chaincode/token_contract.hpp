@@ -71,6 +71,8 @@ public:
   void ExtractStakeUpdates(StakeUpdateEvents &updates);
   void ClearStakeUpdates();
 
+  uint64_t CalculateFee() const override;
+
 private:
   StakeUpdateEvents stake_updates_;
 };

@@ -28,6 +28,7 @@
 #include "ledger/chain/block_coordinator.hpp"
 #include "ledger/chain/main_chain.hpp"
 #include "ledger/chaincode/contract_context.hpp"
+#include "ledger/chaincode/contract_context_attacher.hpp"
 #include "ledger/dag/dag_interface.hpp"
 #include "ledger/execution_manager_interface.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
@@ -59,7 +60,6 @@ using fetch::byte_array::ToBase64;
 using ScheduleStatus       = fetch::ledger::ExecutionManagerInterface::ScheduleStatus;
 using ExecutionState       = fetch::ledger::ExecutionManagerInterface::State;
 using SynergeticExecMgrPtr = std::unique_ptr<SynergeticExecutionManagerInterface>;
-using SynergeticMinerPtr   = std::unique_ptr<SynergeticMinerInterface>;
 using ProverPtr            = BlockCoordinator::ProverPtr;
 using DAGPtr               = std::shared_ptr<ledger::DAGInterface>;
 
@@ -230,13 +230,39 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr dag,
     FETCH_UNUSED(previous);
     if (periodic_print_.Poll())
     {
-      FETCH_LOG_DEBUG(LOGGING_NAME, "Current state: ", ToString(current),
-                      " (previous: ", ToString(previous), ")");
+      FETCH_LOG_INFO(LOGGING_NAME, "Current state: ", ToString(current),
+                     " (previous: ", ToString(previous), ")");
     }
   });
 
   // TODO(private issue 792): this shouldn't be here, but if it is, it locks the whole system on
   // startup. RecoverFromStartup();
+}
+
+void BlockCoordinator::CheckChainConfig()
+{
+  uint64_t charge_config{};
+  {
+    StateAdapter adapter{storage_unit_, GovernanceContract::NAME};
+
+    auto context = ContractContext::Builder{}.SetStateAdapter(&adapter).Build();
+
+    ContractContextAttacher raii_attacher(governance_contract_, std::move(context));
+    charge_config = governance_contract_.GetCurrentChargeConfiguration();
+  }
+
+  execution_manager_.SetChargeConfiguration(charge_config);
+  if (synergetic_exec_mgr_)
+  {
+    synergetic_exec_mgr_->SetChargeConfiguration(charge_config);
+  }
+
+  auto const cabinet = consensus_->GetCabinet();
+  execution_manager_.SetCabinet(cabinet);
+  if (synergetic_exec_mgr_)
+  {
+    synergetic_exec_mgr_->SetCabinet(cabinet);
+  }
 }
 
 // Reload state ONCE on first start up of the block coordinator. Attempt to set
@@ -550,6 +576,8 @@ BlockCoordinator::State BlockCoordinator::OnPreExecBlockValidation()
   pre_valid_state_count_->increment();
 
   bool const is_genesis = current_block_->IsGenesis();
+
+  CheckChainConfig();
 
   if (!is_genesis)
   {
@@ -1078,6 +1106,8 @@ BlockCoordinator::State BlockCoordinator::OnNewSynergeticExecution()
   current_block_coord_state_->set(static_cast<uint64_t>(state_machine_->state()));
   new_syn_state_count_->increment();
 
+  CheckChainConfig();
+
   if (synergetic_exec_mgr_ && dag_)
   {
     assert(!next_block_->IsGenesis());
@@ -1095,7 +1125,7 @@ BlockCoordinator::State BlockCoordinator::OnNewSynergeticExecution()
 
     if (!synergetic_exec_mgr_->ValidateWorkAndUpdateState(num_lanes_))
     {
-      FETCH_LOG_WARN(LOGGING_NAME, "Failed to valid work queue");
+      FETCH_LOG_WARN(LOGGING_NAME, "Failed to validate work queue");
 
       return State::RESET;
     }
