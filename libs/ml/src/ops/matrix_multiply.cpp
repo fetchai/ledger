@@ -300,7 +300,7 @@ std::pair<OperationsCount, math::SizeVector> MatrixMultiply<T>::ChargeForward(
   // and default batch_size is 1.
   OperationsCount const n          = input_shapes.front().at(0);
   OperationsCount const m          = input_shapes.back().at(0);
-  OperationsCount const batch_size = input_shapes.front().at(input_shapes.front().size() - 1);
+  OperationsCount const batch_size = input_shapes.back().at(input_shapes.front().size() - 1);
 
   OperationsCount const op_cnt =
       n * m * batch_size * fetch::ml::charge_estimation::ops::MULTIPLICATION_PER_ELEMENT;
