@@ -472,7 +472,7 @@ OperationsCount Convolution2D<TensorType>::ChargeForward() const
 
   OperationsCount cost = horizontal_stride_width * horizontal_stride_height *
                          vertical_stride_width *
-                         fetch::ml::charge_estimation::ops::MULTIPLICATION_PER_ELEMENT;
+                         fetch::ml::charge_estimation::ops::LOW_MULTIPLICATION_PER_ELEMENT;
 
   return cost;
 }
@@ -502,7 +502,7 @@ std::pair<OperationsCount, math::SizeVector> Convolution2D<TensorType>::ChargeBa
 
   OperationsCount cost =
       2 * (horizontal_stride_width * horizontal_stride_height * vertical_stride_width *
-           fetch::ml::charge_estimation::ops::MULTIPLICATION_PER_ELEMENT);
+           fetch::ml::charge_estimation::ops::LOW_MULTIPLICATION_PER_ELEMENT);
 
   math::SizeVector output_shape = ComputeOutputShape(input_shapes);
   return std::make_pair(cost * output_shape.back(), output_shape);
