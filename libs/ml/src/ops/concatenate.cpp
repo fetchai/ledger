@@ -114,13 +114,15 @@ std::pair<OperationsCount, math::SizeVector> Concatenate<TensorType>::ChargeForw
 }
 
 template <typename TensorType>
-OperationsCount Concatenate<TensorType>::ChargeBackward() const
+std::pair<OperationsCount, math::SizeVector> Concatenate<TensorType>::ChargeBackward(
+    std::vector<math::SizeVector> const &input_shapes)
 {
   assert(!this->batch_input_shapes_.empty());
   OperationsCount cost =
       fetch::ml::charge_estimation::ops::SPLIT_PER_ELEMENT * this->batch_input_shapes_.size();
 
-  return cost;
+  math::SizeVector output_shape = ComputeOutputShape(input_shapes);
+  return std::make_pair(cost * output_shape.back(), output_shape);
 }
 
 ///////////////////////////////

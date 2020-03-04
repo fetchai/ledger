@@ -121,12 +121,6 @@ void ScaledDotProductAttention<TensorType>::SetOpSaveableParams(SPType const &sp
   dropout_ = sp.dropout;
 }
 
-template <class TensorType>
-OperationsCount ScaledDotProductAttention<TensorType>::ChargeBackward() const
-{
-  return Graph<TensorType>::ChargeBackward(this->output_node_name_);
-}
-
 ///////////////////////////////
 /// EXPLICIT INSTANTIATIONS ///
 ///////////////////////////////

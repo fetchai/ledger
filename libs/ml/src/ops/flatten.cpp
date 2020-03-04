@@ -115,33 +115,33 @@ template <class TensorType>
 std::pair<OperationsCount, math::SizeVector> Flatten<TensorType>::ChargeForward(
     std::vector<math::SizeVector> const &input_shapes)
 {
-  assert(!this->batch_input_shapes_.empty());
+  auto output_shape = ComputeOutputShape(input_shapes);
 
-  OperationsCount op_cnt = fetch::ml::charge_estimation::ops::OP_OVERHEAD;
+  OperationsCount cost = fetch::ml::charge_estimation::ops::OP_OVERHEAD;
 
-  auto padded_size = TensorType::PaddedSizeFromShape(this->batch_input_shapes_.front());
+  auto padded_size = TensorType::PaddedSizeFromShape(input_shapes.front());
 
   if (padded_size < fetch::ml::charge_estimation::ops::PIECEWISE_LOWER_THRESHOLD)
   {
-    op_cnt += fetch::ml::charge_estimation::ops::LOW_FLATTEN_PER_ELEMENT *
-              TensorType::ChargeIterate(input_shapes.front());
+    cost += fetch::ml::charge_estimation::ops::LOW_FLATTEN_PER_ELEMENT *
+            TensorType::ChargeIterate(input_shapes.front());
   }
   else if (padded_size < fetch::ml::charge_estimation::ops::PIECEWISE_HARD_CAP)
   {
-    op_cnt += fetch::ml::charge_estimation::ops::HIGH_FLATTEN_PER_ELEMENT *
-              TensorType::ChargeIterate(input_shapes.front());
+    cost += fetch::ml::charge_estimation::ops::HIGH_FLATTEN_PER_ELEMENT *
+            TensorType::ChargeIterate(input_shapes.front());
   }
   else
   {
-    op_cnt = math::numeric_max<OperationsCount>();
+    cost = math::numeric_max<OperationsCount>();
   }
 
-  auto output_shape = ComputeOutputShape(input_shapes);
-  return std::make_pair(op_cnt, output_shape);
+  return std::make_pair(cost, output_shape);
 }
 
 template <class TensorType>
-OperationsCount Flatten<TensorType>::ChargeBackward() const
+std::pair<OperationsCount, math::SizeVector> Flatten<TensorType>::ChargeBackward(
+    std::vector<math::SizeVector> const &input_shapes)
 {
   assert(!this->batch_input_shapes_.empty());
 
@@ -149,7 +149,8 @@ OperationsCount Flatten<TensorType>::ChargeBackward() const
                              this->TotalElementsIn(this->batch_input_shapes_) +
                          fetch::ml::charge_estimation::ops::ASSIGN_PER_ELEMENT *
                              this->TotalElementsIn(this->batch_input_shapes_);
-  return cost;
+  math::SizeVector output_shape = ComputeOutputShape(input_shapes);
+  return std::make_pair(cost * output_shape.back(), output_shape);
 }
 
 template <class TensorType>

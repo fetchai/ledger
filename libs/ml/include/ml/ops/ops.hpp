@@ -175,17 +175,11 @@ public:
   }
 
   /**
-   * @brief ChargeBackward
-   * @return estimated charge amount, necessary for performing a backward pass on data of given
-   * shapes.
+   * This returns the cost for the *whole* batch (not per-datapoint cost) and the shape of the Op
+   * output
    */
-  virtual OperationsCount ChargeBackward() const
-  {
-    // TODO(ML-483): make a pure virtual method after all Ops have their overrides;
-    FETCH_LOG_ERROR(Descriptor(),
-                    " Error: call to unexisting ChargeBackward() implementation! returned 0.");
-    return 0;
-  }
+  virtual std::pair<OperationsCount, math::SizeVector> ChargeBackward(
+      std::vector<math::SizeVector> const &input_shapes) = 0;
 
   /**
    * @brief TotalElementsIn calculated a sum of total elements in all given tensors

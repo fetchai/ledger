@@ -63,7 +63,8 @@ public:
 
   std::pair<OperationsCount, math::SizeVector> ChargeForward(
       std::vector<math::SizeVector> const &input_shapes) override;
-  OperationsCount ChargeBackward() const override;
+  std::pair<OperationsCount, math::SizeVector> ChargeBackward(
+      std::vector<math::SizeVector> const &input_shapes) override;
 
 private:
   DataType a_;
