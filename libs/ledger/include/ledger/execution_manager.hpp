@@ -74,9 +74,9 @@ public:
   void Start();
   void Stop();
 
-  void SetChargeConfiguration(uint64_t multiplier) override
+  void SetChargeConfiguration(ChargeConfiguration config) override
   {
-    charge_multiplier_ = multiplier;
+    charge_config_ = std::move(config);
   }
 
   void SetCabinet(std::unordered_set<crypto::Identity> cabinet) override
@@ -124,7 +124,7 @@ private:
   };
 
   uint32_t const                       log2_num_lanes_;
-  uint64_t                             charge_multiplier_{0};
+  ChargeConfiguration                  charge_config_{};
   std::unordered_set<crypto::Identity> cabinet_{};
 
   Flag running_{false};

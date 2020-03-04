@@ -43,7 +43,8 @@ public:
 
   // Construction / Destruction
   ExecutionItem(Digest digest, BlockIndex block, SliceIndex slice, BitVector const &shards,
-                uint64_t charge_multiplier, std::unordered_set<crypto::Identity> cabinet);
+                ChargeConfiguration const &          charge_config,
+                std::unordered_set<crypto::Identity> cabinet);
   ExecutionItem(ExecutionItem const &) = delete;
   ExecutionItem(ExecutionItem &&)      = delete;
   ~ExecutionItem()                     = default;
@@ -72,18 +73,19 @@ private:
   BitVector                            shards_;
   Result                               result_;
   TokenAmount                          fee_{0};
-  uint64_t                             charge_multiplier_{0};
+  ChargeConfiguration                  charge_config_{};
   std::unordered_set<crypto::Identity> cabinet_{};
 };
 
 inline ExecutionItem::ExecutionItem(Digest digest, BlockIndex block, SliceIndex slice,
-                                    BitVector const &shards, uint64_t charge_multiplier,
+                                    BitVector const &                    shards,
+                                    ChargeConfiguration const &          charge_config,
                                     std::unordered_set<crypto::Identity> cabinet)
   : digest_(std::move(digest))
   , block_{block}
   , slice_{slice}
   , shards_(shards)
-  , charge_multiplier_(charge_multiplier)
+  , charge_config_(charge_config)
   , cabinet_(std::move(cabinet))
 {}
 
@@ -112,7 +114,7 @@ inline void ExecutionItem::Execute(ExecutorInterface &executor)
   try
   {
     result_ =
-        executor.Execute(digest_, block_, slice_, shards_, charge_multiplier_, std::move(cabinet_));
+        executor.Execute(digest_, block_, slice_, shards_, charge_config_, std::move(cabinet_));
     fee_ += result_.fee;
   }
   catch (std::exception const &ex)

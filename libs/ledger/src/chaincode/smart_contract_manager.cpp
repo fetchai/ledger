@@ -180,7 +180,7 @@ Contract::Result SmartContractManager::OnCreate(chain::Transaction const &tx)
                      .SetContractAddress(tx.contract_address())
                      .SetStateAdapter(&state())
                      .SetBlockIndex(context().block_index)
-                     .SetVmChargeMultiplier(context().vm_charge_multiplier)
+                     .SetChargeConfig(context().charge_config)
                      .SetCabinet(context().cabinet)
                      .Build();
 

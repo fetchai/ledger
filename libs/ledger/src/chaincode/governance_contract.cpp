@@ -123,13 +123,15 @@ SubmittedGovernanceProposalQueue GovernanceContract::Load()
   return proposals;
 }
 
-uint64_t GovernanceContract::GetCurrentChargeConfiguration()
+ChargeConfiguration GovernanceContract::GetCurrentChargeConfiguration()
 {
   SubmittedGovernanceProposalQueue proposals = Load();
 
   auto const current_accepted_proposal = proposals.front();
 
-  return ToChargeMultiplier(current_accepted_proposal.proposal);
+  return ChargeConfiguration::Builder{}
+      .SetVmChargeMultiplier(ToChargeMultiplier(current_accepted_proposal.proposal))
+      .Build();
 }
 
 bool GovernanceContract::SignedAndIssuedBySameCabinetMember(chain::Transaction const &tx) const
@@ -333,6 +335,23 @@ Contract::Status GovernanceContract::GetProposals(Query const & /*query*/, Query
 
   return Contract::Status::OK;
 }
+
+ChargeConfiguration::Builder &ChargeConfiguration::Builder::SetVmChargeMultiplier(
+    uint64_t multiplier)
+{
+  vm_charge_multiplier_ = multiplier;
+
+  return *this;
+}
+
+ChargeConfiguration ChargeConfiguration::Builder::Build() const
+{
+  return ChargeConfiguration{vm_charge_multiplier_};
+}
+
+ChargeConfiguration::ChargeConfiguration(uint64_t multiplier)
+  : charge_multiplier{multiplier}
+{}
 
 }  // namespace ledger
 }  // namespace fetch

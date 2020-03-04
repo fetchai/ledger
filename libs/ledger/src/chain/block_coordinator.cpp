@@ -241,7 +241,7 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr dag,
 
 void BlockCoordinator::CheckChainConfig()
 {
-  uint64_t charge_config{};
+  ChargeConfiguration charge_config{};
   {
     StateAdapter adapter{storage_unit_, GovernanceContract::NAME};
 

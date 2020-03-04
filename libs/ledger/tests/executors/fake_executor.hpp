@@ -19,6 +19,7 @@
 
 #include "core/digest.hpp"
 #include "core/macros.hpp"
+#include "ledger/chaincode/charge_configuration.hpp"
 #include "ledger/executor_interface.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 #include "storage/resource_mapper.hpp"
@@ -52,7 +53,7 @@ public:
   using StorageInterface    = fetch::ledger::StorageInterface;
 
   Result Execute(Digest const &digest, BlockIndex block, SliceIndex slice, BitVector const &shards,
-                 uint64_t /*charge_multiplier*/,
+                 fetch::ledger::ChargeConfiguration const & /*charge_config*/,
                  std::unordered_set<fetch::crypto::Identity>) override
   {
     history_.emplace_back(HistoryElement{digest, block, slice, shards, Clock::now()});

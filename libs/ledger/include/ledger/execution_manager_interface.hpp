@@ -65,7 +65,7 @@ public:
   virtual bool           Abort()                                    = 0;
   /// @}
 
-  virtual void SetChargeConfiguration(uint64_t multiplier)      = 0;
+  virtual void SetChargeConfiguration(ChargeConfiguration)      = 0;
   virtual void SetCabinet(std::unordered_set<crypto::Identity>) = 0;
 };
 

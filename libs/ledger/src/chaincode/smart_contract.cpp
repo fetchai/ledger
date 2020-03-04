@@ -591,7 +591,7 @@ Contract::Result SmartContract::InvokeAction(std::string const &name, chain::Tra
                        .SetStorage(c.storage)
                        .SetStateAdapter(c.state_adapter)
                        .SetBlockIndex(c.block_index)
-                       .SetVmChargeMultiplier(c.vm_charge_multiplier)
+                       .SetChargeConfig(c.charge_config)
                        .Build();
 
     ContractContextAttacher raii_attacher{*loaded_contract, std::move(context)};
@@ -662,7 +662,7 @@ Contract::Result SmartContract::InvokeAction(std::string const &name, chain::Tra
     status = Status::FAILED;
   }
 
-  charge_ = context().vm_charge_multiplier * vm->GetChargeTotal();
+  charge_ = context().charge_config.charge_multiplier * vm->GetChargeTotal();
 
   using ResponseType = int64_t;
   Result result{status};
@@ -730,7 +730,7 @@ Contract::Result SmartContract::InvokeInit(chain::Address const &    owner,
     status = Status::FAILED;
   }
 
-  charge_ = context().vm_charge_multiplier * vm->GetChargeTotal();
+  charge_ = context().charge_config.charge_multiplier * vm->GetChargeTotal();
 
   using ResponseType = int64_t;
   int64_t return_value{-1};

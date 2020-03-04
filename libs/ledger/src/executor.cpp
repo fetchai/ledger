@@ -80,7 +80,8 @@ Executor::Executor(StorageUnitPtr storage)
  * @return The status code for the operation
  */
 Executor::Result Executor::Execute(Digest const &digest, BlockIndex block, SliceIndex slice,
-                                   BitVector const &shards, uint64_t charge_multiplier,
+                                   BitVector const &                    shards,
+                                   ChargeConfiguration const &          charge_config,
                                    std::unordered_set<crypto::Identity> cabinet)
 {
   telemetry::FunctionTimer const timer{*overall_duration_};
@@ -89,8 +90,8 @@ Executor::Result Executor::Execute(Digest const &digest, BlockIndex block, Slice
 
   Result result{Status::INEXPLICABLE_FAILURE};
 
-  charge_multiplier_ = charge_multiplier;
-  cabinet_           = std::move(cabinet);
+  charge_configuration_ = charge_config;
+  cabinet_              = std::move(cabinet);
 
   // cache the state for the current transaction
   block_          = block;
@@ -282,7 +283,7 @@ bool Executor::ExecuteTransactionContract(Result &result)
                          .SetStorage(storage_.get())
                          .SetStateAdapter(&storage_adapter)
                          .SetBlockIndex(block_)
-                         .SetVmChargeMultiplier(charge_multiplier_)
+                         .SetChargeConfig(charge_configuration_)
                          .SetCabinet(cabinet_)
                          .Build();
 

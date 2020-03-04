@@ -221,7 +221,7 @@ bool ExecutionManager::PlanExecution(Block const &block)
 
       // insert the item into the execution plan
       slice_plan.emplace_back(std::make_unique<ExecutionItem>(
-          tx.digest(), block.block_number, slice_index, tx.mask(), charge_multiplier_, cabinet_));
+          tx.digest(), block.block_number, slice_index, tx.mask(), charge_config_, cabinet_));
     }
 
     ++slice_index;

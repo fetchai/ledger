@@ -89,7 +89,7 @@ void FakeExecutionManager::SetLastProcessedBlock(Digest hash)
   last_processed_ = hash;
 }
 
-void FakeExecutionManager::SetChargeConfiguration(uint64_t)
+void FakeExecutionManager::SetChargeConfiguration(fetch::ledger::ChargeConfiguration)
 {}
 
 void FakeExecutionManager::SetCabinet(std::unordered_set<fetch::crypto::Identity>)

@@ -77,9 +77,9 @@ private:
   void ExecuteItem(WorkQueue &queue, ProblemData const &problem_data, std::size_t num_lanes,
                    chain::Address const &miner);
 
-  void SetChargeConfiguration(uint64_t charge_multiplier) override
+  void SetChargeConfiguration(ChargeConfiguration charge_config) override
   {
-    charge_multiplier_ = charge_multiplier;
+    charge_config_ = charge_config;
   }
 
   void SetCabinet(std::unordered_set<crypto::Identity> cabinet) override
@@ -87,7 +87,7 @@ private:
     cabinet_ = std::move(cabinet);
   }
 
-  uint64_t                             charge_multiplier_{0};
+  ChargeConfiguration                  charge_config_{};
   std::unordered_set<crypto::Identity> cabinet_{};
 
   // System Components

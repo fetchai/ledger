@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "crypto/identity.hpp"
+#include "ledger/chaincode/charge_configuration.hpp"
 
 #include <cstddef>
 #include <cstdint>
@@ -51,7 +52,7 @@ public:
   virtual bool       ValidateWorkAndUpdateState(std::size_t num_lanes)             = 0;
   /// @}
 
-  virtual void SetChargeConfiguration(uint64_t)                 = 0;
+  virtual void SetChargeConfiguration(ChargeConfiguration)      = 0;
   virtual void SetCabinet(std::unordered_set<crypto::Identity>) = 0;
 };
 

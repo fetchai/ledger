@@ -28,14 +28,14 @@ ContractContext::ContractContext(TokenContract *const token_contract_param, chai
                                  StorageInterface const *const              storage_param,
                                  StateAdapter *const                        state_adapter_param,
                                  chain::TransactionLayout::BlockIndex const block_index_param,
-                                 uint64_t const                             charge_multiplier_param,
+                                 ChargeConfiguration                        charge_config_param,
                                  std::unordered_set<crypto::Identity>       cabinet_param)
   : token_contract{token_contract_param}
   , contract_address{std::move(address)}
   , storage{storage_param}
   , state_adapter{state_adapter_param}
   , block_index{block_index_param}
-  , vm_charge_multiplier{charge_multiplier_param}
+  , charge_config{std::move(charge_config_param)}
   , cabinet{std::move(cabinet_param)}
 {}
 
@@ -75,9 +75,9 @@ ContractContext::Builder &ContractContext::Builder::SetBlockIndex(
   return *this;
 }
 
-ContractContext::Builder &ContractContext::Builder::SetVmChargeMultiplier(uint64_t const cm)
+ContractContext::Builder &ContractContext::Builder::SetChargeConfig(ChargeConfiguration config)
 {
-  vm_charge_multiplier_ = cm;
+  charge_config_ = std::move(config);
 
   return *this;
 }
@@ -92,8 +92,8 @@ ContractContext::Builder &ContractContext::Builder::SetCabinet(
 
 ContractContext ContractContext::Builder::Build() const
 {
-  return ContractContext{token_contract_, contract_address_,     storage_, state_adapter_,
-                         block_index_,    vm_charge_multiplier_, cabinet_};
+  return ContractContext{token_contract_, contract_address_, storage_, state_adapter_,
+                         block_index_,    charge_config_,    cabinet_};
 }
 
 }  // namespace ledger

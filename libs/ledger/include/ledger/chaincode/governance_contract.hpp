@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "ledger/chaincode/charge_configuration.hpp"
 #include "ledger/chaincode/contract.hpp"
 
 #include <cstdint>
@@ -37,7 +38,7 @@ public:
   GovernanceContract();
   ~GovernanceContract() override = default;
 
-  uint64_t GetCurrentChargeConfiguration();
+  ChargeConfiguration GetCurrentChargeConfiguration();
 
   Contract::Result Propose(chain::Transaction const &tx);
   Contract::Result Accept(chain::Transaction const &tx);

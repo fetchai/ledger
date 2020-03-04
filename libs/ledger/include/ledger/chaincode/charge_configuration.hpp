@@ -17,26 +17,40 @@
 //
 //------------------------------------------------------------------------------
 
-#include "ledger/upow/work_queue.hpp"
+#include <cstdint>
 
 namespace fetch {
 namespace ledger {
 
-class SynergeticExecutorInterface
+class ChargeConfiguration
 {
 public:
-  using ConstByteArray = byte_array::ConstByteArray;
-  using ProblemData    = std::vector<ConstByteArray>;
+  class Builder
+  {
+  public:
+    Builder()                = default;
+    ~Builder()               = default;
+    Builder(Builder const &) = delete;
+    Builder(Builder &&)      = delete;
+    Builder &operator=(Builder const &) = delete;
+    Builder &operator=(Builder &&) = delete;
 
-  // Construction / Destruction
-  SynergeticExecutorInterface()          = default;
-  virtual ~SynergeticExecutorInterface() = default;
+    Builder &SetVmChargeMultiplier(uint64_t multiplier);
 
-  /// @name Executor Interface
-  /// @{
-  virtual void Verify(WorkQueue &solutions, ProblemData const &problem_data, std::size_t num_lanes,
-                      chain::Address const &miner, ChargeConfiguration charge_config) = 0;
-  /// @}
+    ChargeConfiguration Build() const;
+
+  private:
+    uint64_t vm_charge_multiplier_{};
+  };
+
+  ChargeConfiguration() = default;
+
+  uint64_t charge_multiplier{};
+
+private:
+  explicit ChargeConfiguration(uint64_t vm__charge_multiplier);
+
+  friend class Builder;
 };
 
 }  // namespace ledger
