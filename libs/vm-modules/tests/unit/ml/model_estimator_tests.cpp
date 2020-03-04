@@ -1035,7 +1035,7 @@ TEST_F(VMModelEstimatorTests, charge_forward_one_dense)
                      TensorType::ChargeIterate({inputs, batch_size})));
 
   // n*m*1 matmul operations
-  expected_cost += (inputs * outputs) * MULTIPLICATION_PER_ELEMENT * batch_size;
+  expected_cost += (inputs * outputs) * LOW_MULTIPLICATION_PER_ELEMENT * batch_size;
   // m bias weights reading
   expected_cost += outputs * WEIGHTS_READING_PER_ELEMENT * batch_size;
 
