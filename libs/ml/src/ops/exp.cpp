@@ -112,7 +112,7 @@ std::pair<OperationsCount, math::SizeVector> Exp<TensorType>::ChargeBackward(
   assert(!this->batch_output_shape_.empty());
   OperationsCount cost = fetch::ml::charge_estimation::ops::EXP_PER_ELEMENT *
                              this->TotalElementsIn({this->batch_output_shape_}) +
-                         fetch::ml::charge_estimation::ops::MULTIPLICATION_PER_ELEMENT *
+                         fetch::ml::charge_estimation::ops::LOW_MULTIPLICATION_PER_ELEMENT *
                              this->TotalElementsIn({this->batch_output_shape_});
   math::SizeVector output_shape = ComputeOutputShape(input_shapes);
   return std::make_pair(cost * output_shape.back(), output_shape);

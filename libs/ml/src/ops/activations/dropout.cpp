@@ -166,7 +166,7 @@ std::pair<OperationsCount, math::SizeVector> Dropout<TensorType>::ChargeBackward
     std::vector<math::SizeVector> const &input_shapes)
 {
   assert(!this->batch_input_shapes_.empty());
-  OperationsCount cost = fetch::ml::charge_estimation::ops::MULTIPLICATION_PER_ELEMENT *
+  OperationsCount cost = fetch::ml::charge_estimation::ops::LOW_MULTIPLICATION_PER_ELEMENT *
                          this->TotalElementsIn({this->batch_input_shapes_.at(0)});
   math::SizeVector output_shape = ComputeOutputShape(input_shapes);
   return std::make_pair(cost * output_shape.back(), output_shape);

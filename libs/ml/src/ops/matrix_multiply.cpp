@@ -302,11 +302,11 @@ std::pair<OperationsCount, math::SizeVector> MatrixMultiply<T>::ChargeForward(
   OperationsCount const m          = input_shapes.back().at(0);
   OperationsCount const batch_size = input_shapes.back().at(input_shapes.front().size() - 1);
 
-  OperationsCount const op_cnt =
-      n * m * batch_size * fetch::ml::charge_estimation::ops::MULTIPLICATION_PER_ELEMENT;
+  OperationsCount const cost =
+      n * m * batch_size * fetch::ml::charge_estimation::ops::LOW_MULTIPLICATION_PER_ELEMENT;
 
   auto output_shape = ComputeOutputShape(input_shapes);
-  return std::make_pair(op_cnt, output_shape);
+  return std::make_pair(cost, output_shape);
 }
 
 template <typename T>
@@ -322,7 +322,7 @@ std::pair<OperationsCount, math::SizeVector> MatrixMultiply<T>::ChargeBackward(
   OperationsCount const p = 1;
 
   OperationsCount const cost =
-      n * m * p * fetch::ml::charge_estimation::ops::MULTIPLICATION_PER_ELEMENT +
+      n * m * p * fetch::ml::charge_estimation::ops::LOW_MULTIPLICATION_PER_ELEMENT +
       fetch::ml::charge_estimation::ops::LOW_ADDITION_PER_ELEMENT *
           this->TotalElementsIn({this->batch_input_shapes_});
   ;
