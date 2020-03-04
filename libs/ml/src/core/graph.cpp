@@ -1193,7 +1193,7 @@ OperationsCount Graph<TensorType>::ChargeCompile()
     for (auto const &node_name_and_ptr : nodes_)
     {
       NodePtrType node = node_name_and_ptr.second;
-      op_cnt           = node->GetOp()->ChargeCompile();
+      op_cnt += node->GetOp()->ChargeCompile();
     }
 
     // graph_state_ = GraphState::COMPILED;
