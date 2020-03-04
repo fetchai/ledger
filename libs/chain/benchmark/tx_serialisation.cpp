@@ -19,11 +19,8 @@
 #include "tx_generation.hpp"
 
 #include "chain/transaction_serializer.hpp"
-#include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/const_byte_array.hpp"
-#include "core/random/lcg.hpp"
 #include "crypto/ecdsa.hpp"
-#include "ledger/storage_unit/lane_service.hpp"
 
 #include "benchmark/benchmark.h"
 
