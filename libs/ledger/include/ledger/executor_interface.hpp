@@ -36,12 +36,13 @@ namespace ledger {
 class ExecutorInterface
 {
 public:
-  using BlockIndex  = uint64_t;
-  using SliceIndex  = uint64_t;
-  using LaneIndex   = uint32_t;
-  using TokenAmount = uint64_t;
-  using Status      = ContractExecutionStatus;
-  using Result      = ContractExecutionResult;
+  using BlockIndex       = uint64_t;
+  using SliceIndex       = uint64_t;
+  using LaneIndex        = uint32_t;
+  using TokenAmount      = uint64_t;
+  using Status           = ContractExecutionStatus;
+  using Result           = ContractExecutionResult;
+  using UnorderedCabinet = std::unordered_set<crypto::Identity>;
 
   // Construction / Destruction
   ExecutorInterface()          = default;
@@ -51,7 +52,7 @@ public:
   /// @{
   virtual Result Execute(Digest const &digest, BlockIndex block, SliceIndex slice,
                          BitVector const &shards, ChargeConfiguration const &charge_config,
-                         std::unordered_set<crypto::Identity>)                               = 0;
+                         UnorderedCabinet const &)                                           = 0;
   virtual void   SettleFees(chain::Address const &miner, BlockIndex block, TokenAmount amount,
                             uint32_t log2_num_lanes, StakeUpdateEvents const &stake_updates) = 0;
   /// @}

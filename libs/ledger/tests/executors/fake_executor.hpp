@@ -53,8 +53,8 @@ public:
   using StorageInterface    = fetch::ledger::StorageInterface;
 
   Result Execute(Digest const &digest, BlockIndex block, SliceIndex slice, BitVector const &shards,
-                 fetch::ledger::ChargeConfiguration const & /*charge_config*/,
-                 std::unordered_set<fetch::crypto::Identity>) override
+                 fetch::ledger::ChargeConfiguration const &,
+                 std::unordered_set<fetch::crypto::Identity> const &) override
   {
     history_.emplace_back(HistoryElement{digest, block, slice, shards, Clock::now()});
 

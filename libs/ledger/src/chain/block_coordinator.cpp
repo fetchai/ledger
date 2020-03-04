@@ -230,8 +230,8 @@ BlockCoordinator::BlockCoordinator(MainChain &chain, DAGPtr dag,
     FETCH_UNUSED(previous);
     if (periodic_print_.Poll())
     {
-      FETCH_LOG_INFO(LOGGING_NAME, "Current state: ", ToString(current),
-                     " (previous: ", ToString(previous), ")");
+      FETCH_LOG_DEBUG(LOGGING_NAME, "Current state: ", ToString(current),
+                      " (previous: ", ToString(previous), ")");
     }
   });
 

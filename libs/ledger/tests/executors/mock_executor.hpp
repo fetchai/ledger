@@ -41,9 +41,9 @@ public:
         .WillByDefault(Invoke(&fake_, &FakeExecutor::SettleFees));
   }
 
-  MOCK_METHOD6(Execute, Result(Digest const &, BlockIndex, SliceIndex, BitVector const &,
-                               fetch::ledger::ChargeConfiguration const &,
-                               std::unordered_set<fetch::crypto::Identity>));
+  MOCK_METHOD6(Execute,
+               Result(Digest const &, BlockIndex, SliceIndex, BitVector const &,
+                      fetch::ledger::ChargeConfiguration const &, UnorderedCabinet const &));
   MOCK_METHOD5(SettleFees,
                void(Address const &, BlockIndex, TokenAmount, uint32_t, StakeUpdateEvents const &));
 

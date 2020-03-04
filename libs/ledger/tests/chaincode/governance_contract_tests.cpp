@@ -22,10 +22,10 @@
 #include "json/document.hpp"
 #include "ledger/chaincode/deed.hpp"
 #include "ledger/chaincode/governance_contract.hpp"
-#include "ledger/chaincode/token_contract.hpp"
 
 #include "gmock/gmock.h"
 
+#include <initializer_list>
 #include <memory>
 #include <string>
 
@@ -64,7 +64,9 @@ public:
     auto const tx = builder.From(issuing_miner.address)
                         .TargetChainCode(*contract_name_, BitVector(FullShards(1)))
                         .Action("propose")
+                        .Counter(counter_++)
                         .Data(data.ToBase64())
+                        .ValidUntil(block_number_ + 10)
                         .Signer(issuing_miner.signer.identity())
                         .Seal()
                         .Sign(issuing_miner.signer)
@@ -101,7 +103,9 @@ public:
     auto const tx = builder.From(issuing_miner.address)
                         .TargetChainCode(*contract_name_, BitVector(FullShards(1)))
                         .Action(action)
+                        .Counter(counter_++)
                         .Data(data.ToBase64())
+                        .ValidUntil(block_number_ + 10)
                         .Signer(issuing_miner.signer.identity())
                         .Seal()
                         .Sign(issuing_miner.signer)
@@ -164,7 +168,8 @@ public:
     return response;
   }
 
-  void SendRejectVotes(ConstByteArray const &data, std::vector<Entity const *> const &entities)
+  void SendRejectVotes(ConstByteArray const &                       data,
+                       std::initializer_list<Entity const *> const &entities)
   {
     for (auto const entity : entities)
     {
@@ -172,7 +177,8 @@ public:
     }
   }
 
-  void SendAcceptVotes(ConstByteArray const &data, std::vector<Entity const *> const &entities)
+  void SendAcceptVotes(ConstByteArray const &                       data,
+                       std::initializer_list<Entity const *> const &entities)
   {
     for (auto const entity : entities)
     {
@@ -180,9 +186,9 @@ public:
     }
   }
 
-  TokenContract               token_contract{};
   Entities const              cabinet_entities{5};
   Consensus::UnorderedCabinet cabinet_addresses{};
+  uint64_t                    counter_{};
 
   ConstByteArray valid_v0_proposal1{R"(
     {
@@ -251,7 +257,7 @@ TEST_F(GovernanceContractTests, submit_proposal_with_incorrect_version)
 {
   auto const data = ConstByteArray{R"(
     {
-      "version": 7,
+      "version": 700000,
       "accept_by": 1000,
       "data": {
         "charge_multiplier": 2
@@ -284,6 +290,8 @@ TEST_F(GovernanceContractTests, submit_proposal_with_too_long_voting_period)
 TEST_F(GovernanceContractTests, submit_valid_proposal_with_queue_empty)
 {
   auto const result = SendPropose(valid_v0_proposal1, true);
+
+  //  auto const status???verify rthe default proposal is in place
 
   ASSERT_EQ(result.status, Contract::Status::OK);
 }
@@ -346,8 +354,8 @@ TEST_F(GovernanceContractTests, submit_then_reject_proposal)
   ASSERT_TRUE(response1["voting_queue"][0]["data"]["charge_multiplier"].As<uint64_t>() == 17);
   ASSERT_TRUE(response1["voting_queue"][0]["accept_by"].As<uint64_t>() == 1200);
 
-  SendRejectVotes(valid_v0_proposal1,
-                  {&cabinet_entities[0], &cabinet_entities[1], &cabinet_entities[2]});
+  SendRejectVotes(valid_v0_proposal1, {&cabinet_entities[0], &cabinet_entities[1],
+                                       &cabinet_entities[2]});  //???try doing refs instead of ptrs
 
   auto const response2 = SendGetProposals();
 
@@ -469,3 +477,4 @@ TEST_F(GovernanceContractTests, after_a_miner_rejects_a_proposal_they_cannot_vot
 
 }  // namespace ledger
 }  // namespace fetch
+//???forbid submitting duplicate props

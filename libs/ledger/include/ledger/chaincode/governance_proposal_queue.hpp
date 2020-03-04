@@ -108,7 +108,7 @@ public:
     deserializer.ExpectKeyGetValue(ACCEPT_BY, x.accept_by);
   }
 };
-
+//???file jira ticket - investigate which serializers may be dumped in cpp files
 template <typename D>
 struct MapSerializer<ledger::SubmittedGovernanceProposal, D>
 {

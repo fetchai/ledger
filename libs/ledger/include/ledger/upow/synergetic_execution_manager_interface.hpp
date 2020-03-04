@@ -32,6 +32,8 @@ class Block;
 class SynergeticExecutionManagerInterface
 {
 public:
+  using UnorderedCabinet = std::unordered_set<crypto::Identity>;
+
   // Construction / Destruction
   SynergeticExecutionManagerInterface()          = default;
   virtual ~SynergeticExecutionManagerInterface() = default;
@@ -52,8 +54,8 @@ public:
   virtual bool       ValidateWorkAndUpdateState(std::size_t num_lanes)             = 0;
   /// @}
 
-  virtual void SetChargeConfiguration(ChargeConfiguration)      = 0;
-  virtual void SetCabinet(std::unordered_set<crypto::Identity>) = 0;
+  virtual void SetChargeConfiguration(ChargeConfiguration) = 0;
+  virtual void SetCabinet(UnorderedCabinet)                = 0;
 };
 
 char const *ToString(SynergeticExecutionManagerInterface::ExecStatus status);

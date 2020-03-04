@@ -556,7 +556,6 @@ private:
   CPPCopyConstructorMap cpp_copy_constructors_;
 
   bool test_annotations_{false};
-  bool charges_enabled_{true};
   friend class Compiler;
   friend class VM;
 };

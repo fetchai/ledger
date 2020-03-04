@@ -34,7 +34,7 @@ bool ValidateDataForVersion<0>(variant::Variant const &data)
          data[GOVERNANCE_CHARGE_MULTIPLIER_PROPERTY_NAME].IsInteger();
 }
 
-void validate_data(variant::Variant const &data, uint64_t const version)
+void ValidateData(variant::Variant const &data, uint64_t const version)
 {
   if (data.IsObject())
   {
@@ -61,7 +61,7 @@ GovernanceProposal::GovernanceProposal(uint64_t version_param, variant::Variant 
   , data{std::move(data_param)}
   , accept_by{accept_by_param}
 {
-  validate_data(data, version);
+  ValidateData(data, version);
 }
 
 GovernanceProposal::GovernanceProposal(variant::Variant const &v)
@@ -71,7 +71,7 @@ GovernanceProposal::GovernanceProposal(variant::Variant const &v)
       v.Has(GOVERNANCE_DATA_PROPERTY_NAME))
   {
     data = v[GOVERNANCE_DATA_PROPERTY_NAME];
-    validate_data(data, version);
+    ValidateData(data, version);
 
     return;
   }
@@ -86,7 +86,7 @@ SubmittedGovernanceProposal::SubmittedGovernanceProposal(
   , votes_for{std::move(votes_for_param)}
   , votes_against{std::move(votes_against_param)}
 {
-  validate_data(proposal.data, proposal.version);
+  ValidateData(proposal.data, proposal.version);
 }
 
 SubmittedGovernanceProposal SubmittedGovernanceProposal::CreateDefaultProposal()
@@ -98,7 +98,7 @@ SubmittedGovernanceProposal SubmittedGovernanceProposal::CreateDefaultProposal()
   return SubmittedGovernanceProposal(GovernanceProposal{0u, std::move(data), 0u},
                                      std::vector<chain::Address>{}, std::vector<chain::Address>{});
 }
-
+//???identifying proposals, hash of what data? adress of submitter+counter?
 bool GovernanceProposal::operator==(GovernanceProposal const &x) const
 {
   return version == x.version && data == x.data && accept_by == x.accept_by;

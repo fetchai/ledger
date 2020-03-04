@@ -220,8 +220,8 @@ bool ExecutionManager::PlanExecution(Block const &block)
       assert((1u << log2_num_lanes_) == tx.mask().size());
 
       // insert the item into the execution plan
-      slice_plan.emplace_back(std::make_unique<ExecutionItem>(
-          tx.digest(), block.block_number, slice_index, tx.mask(), charge_config_, cabinet_));
+      slice_plan.emplace_back(
+          std::make_unique<ExecutionItem>(tx.digest(), block.block_number, slice_index, tx.mask()));
     }
 
     ++slice_index;
@@ -261,7 +261,7 @@ void ExecutionManager::DispatchExecution(ExecutionItem &item)
     counters_.ApplyVoid([](auto &counters) { ++counters.active; });
 
     // execute the item
-    item.Execute(*executor);
+    item.Execute(*executor, charge_config_, cabinet_);
     auto const &result{item.result()};
 
     // determine what the status is

@@ -214,7 +214,6 @@ protected:
     // adapt the storage engine for queries
     StateAdapter storage_adapter{*storage_, *contract_name_};
 
-    // Current block index does not apply to queries - set to 0
     auto context =
         fetch::ledger::ContractContext::Builder{}.SetStateAdapter(&storage_adapter).Build();
     fetch::ledger::ContractContextAttacher raii_attacher(*contract_, std::move(context));

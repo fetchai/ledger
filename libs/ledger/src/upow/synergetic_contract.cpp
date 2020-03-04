@@ -471,3 +471,4 @@ ContractContext const &SynergeticContract::context() const
 
 }  // namespace ledger
 }  // namespace fetch
+//???use charge multiplier for synergetic executions

@@ -50,10 +50,9 @@ private:
   uint64_t CalculateFee() const override;
 
   using SubmittedGovernanceProposalQueue = std::vector<SubmittedGovernanceProposal>;
-  using VotesFromQueueIterFn =
-      GovernanceVotes &(*)(SubmittedGovernanceProposalQueue::iterator const &);
 
-  Contract::Result CastVote(chain::Transaction const &tx, VotesFromQueueIterFn);
+  template <typename GetVotesFn>
+  Contract::Result CastVote(chain::Transaction const &tx, GetVotesFn &&);
 
   bool GovernanceTxPreCheck(chain::Transaction const &tx) const;
 

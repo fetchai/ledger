@@ -80,7 +80,7 @@ private:
   ContractContext(TokenContract *token_contract_param, chain::Address address,
                   StorageInterface const *storage_param, StateAdapter *state_adapter_param,
                   chain::TransactionLayout::BlockIndex block_index_param,
-                  ChargeConfiguration                  charge_multiplier_param,
+                  ChargeConfiguration                  charge_config_param,
                   std::unordered_set<crypto::Identity> cabinet_param);
 
   friend class Builder;

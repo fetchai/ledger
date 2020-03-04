@@ -57,7 +57,7 @@ std::unique_ptr<GovernanceProposal> ProposalFromTx(chain::Transaction const &tx)
 {
   try
   {
-    decltype(auto)     data      = tx.data();
+    auto const &       data      = tx.data();
     auto const         json_text = data.FromBase64();
     json::JSONDocument doc{json_text};
 
@@ -120,6 +120,8 @@ SubmittedGovernanceProposalQueue GovernanceContract::Load()
     return {SubmittedGovernanceProposal::CreateDefaultProposal()};
   }
 
+  assert(!proposals.empty());
+
   return proposals;
 }
 
@@ -130,7 +132,7 @@ ChargeConfiguration GovernanceContract::GetCurrentChargeConfiguration()
   auto const current_accepted_proposal = proposals.front();
 
   return ChargeConfiguration::Builder{}
-      .SetVmChargeMultiplier(ToChargeMultiplier(current_accepted_proposal.proposal))
+      .SetChargeMultiplier(ToChargeMultiplier(current_accepted_proposal.proposal))
       .Build();
 }
 
@@ -216,6 +218,7 @@ Contract::Result GovernanceContract::Propose(chain::Transaction const &tx)
   if (proposals.size() == MAX_NUMBER_OF_PROPOSALS)
   {
     // Add one, as first entry is the active proposal
+    //???use remove if https://en.cppreference.com/w/cpp/algorithm/remove
     auto expired_proposal =
         std::find_if(proposals.begin() + 1, proposals.end(),
                      [this](auto const &proposal) { return IsExpired(proposal.proposal); });
@@ -257,8 +260,8 @@ Contract::Result GovernanceContract::Reject(chain::Transaction const &tx)
       tx, [](auto const &selected_proposal) -> auto & { return selected_proposal->votes_against; });
 }
 
-Contract::Result GovernanceContract::CastVote(chain::Transaction const &tx,
-                                              VotesFromQueueIterFn      get_votes)
+template <typename GetVotesFn>
+Contract::Result GovernanceContract::CastVote(chain::Transaction const &tx, GetVotesFn &&get_votes)
 {
   charge_ += GOVERNANCE_VOTE_CHARGE;
 
@@ -271,28 +274,29 @@ Contract::Result GovernanceContract::CastVote(chain::Transaction const &tx,
 
   // Do not consider the first position in queue, as that
   // implicitly contains the currently active proposal
-  auto selected_proposal = find_if(proposals.begin() + 1, proposals.end(), [tx](auto const &x) {
-    auto const prop = ProposalFromTx(tx);
-    if (prop)
-    {
-      return x.proposal == *prop;
-    }
+  auto selected_proposal =
+      std::find_if(proposals.begin() + 1, proposals.end(), [tx](auto const &x) {
+        auto const prop = ProposalFromTx(tx);
+        if (prop)
+        {
+          return x.proposal == *prop;
+        }
 
-    return false;
-  });
+        return false;
+      });
   if (selected_proposal == proposals.end())
   {
     return {Contract::Status::FAILED};
   }
 
-  auto &         votes_for              = selected_proposal->votes_for;
-  auto &         votes_against          = selected_proposal->votes_against;
-  decltype(auto) cabinet_member_address = tx.from();
+  auto const &votes_for              = selected_proposal->votes_for;
+  auto const &votes_against          = selected_proposal->votes_against;
+  auto const &cabinet_member_address = tx.from();
 
   // Prevent double-voting
-  auto const vote_for = find(votes_for.begin(), votes_for.end(), cabinet_member_address);
+  auto const vote_for = std::find(votes_for.begin(), votes_for.end(), cabinet_member_address);
   auto const vote_against =
-      find(votes_against.begin(), votes_against.end(), cabinet_member_address);
+      std::find(votes_against.begin(), votes_against.end(), cabinet_member_address);
   if (vote_for != votes_for.end() || vote_against != votes_against.end())
   {
     return {Contract::Status::FAILED};
@@ -303,11 +307,9 @@ Contract::Result GovernanceContract::CastVote(chain::Transaction const &tx,
   if (IsAccepted(*selected_proposal) && !IsRejected(*selected_proposal) &&
       !IsExpired(selected_proposal->proposal))
   {
-    using std::swap;
-
     // Copy accepted vote to front of queue - it will come into force
     // once written to the state DB
-    swap(*proposals.begin(), *selected_proposal);
+    std::swap(*proposals.begin(), *selected_proposal);
   }
   if (IsAccepted(*selected_proposal) || IsRejected(*selected_proposal) ||
       IsExpired(selected_proposal->proposal))
@@ -335,23 +337,6 @@ Contract::Status GovernanceContract::GetProposals(Query const & /*query*/, Query
 
   return Contract::Status::OK;
 }
-
-ChargeConfiguration::Builder &ChargeConfiguration::Builder::SetVmChargeMultiplier(
-    uint64_t multiplier)
-{
-  vm_charge_multiplier_ = multiplier;
-
-  return *this;
-}
-
-ChargeConfiguration ChargeConfiguration::Builder::Build() const
-{
-  return ChargeConfiguration{vm_charge_multiplier_};
-}
-
-ChargeConfiguration::ChargeConfiguration(uint64_t multiplier)
-  : charge_multiplier{multiplier}
-{}
 
 }  // namespace ledger
 }  // namespace fetch

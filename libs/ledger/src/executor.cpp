@@ -80,9 +80,9 @@ Executor::Executor(StorageUnitPtr storage)
  * @return The status code for the operation
  */
 Executor::Result Executor::Execute(Digest const &digest, BlockIndex block, SliceIndex slice,
-                                   BitVector const &                    shards,
-                                   ChargeConfiguration const &          charge_config,
-                                   std::unordered_set<crypto::Identity> cabinet)
+                                   BitVector const &          shards,
+                                   ChargeConfiguration const &charge_config,
+                                   UnorderedCabinet const &   cabinet)
 {
   telemetry::FunctionTimer const timer{*overall_duration_};
 

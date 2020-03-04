@@ -33,18 +33,17 @@ namespace ledger {
 class ExecutionItem
 {
 public:
-  using LaneIndex  = uint32_t;
-  using BlockIndex = ExecutorInterface::BlockIndex;
-  using SliceIndex = ExecutorInterface::SliceIndex;
-  using Status     = ExecutorInterface::Status;
-  using Result     = ExecutorInterface::Result;
+  using LaneIndex        = uint32_t;
+  using BlockIndex       = ExecutorInterface::BlockIndex;
+  using SliceIndex       = ExecutorInterface::SliceIndex;
+  using Status           = ExecutorInterface::Status;
+  using Result           = ExecutorInterface::Result;
+  using UnorderedCabinet = ExecutorInterface::UnorderedCabinet;
 
   static constexpr char const *LOGGING_NAME = "ExecutionItem";
 
   // Construction / Destruction
-  ExecutionItem(Digest digest, BlockIndex block, SliceIndex slice, BitVector const &shards,
-                ChargeConfiguration const &          charge_config,
-                std::unordered_set<crypto::Identity> cabinet);
+  ExecutionItem(Digest digest, BlockIndex block, SliceIndex slice, BitVector const &shards);
   ExecutionItem(ExecutionItem const &) = delete;
   ExecutionItem(ExecutionItem &&)      = delete;
   ~ExecutionItem()                     = default;
@@ -57,7 +56,8 @@ public:
   TokenAmount      fee() const;
   /// @}
 
-  void Execute(ExecutorInterface &executor);
+  void Execute(ExecutorInterface &executor, ChargeConfiguration const &charge_config,
+               ExecutorInterface::UnorderedCabinet const &cabinet);
   void AggregateStakeUpdates(StakeUpdateEvents &events);
 
   // Operators
@@ -67,26 +67,20 @@ public:
 private:
   using AtomicFee = std::atomic<uint64_t>;
 
-  Digest                               digest_;
-  BlockIndex                           block_{0};
-  SliceIndex                           slice_{0};
-  BitVector                            shards_;
-  Result                               result_;
-  TokenAmount                          fee_{0};
-  ChargeConfiguration                  charge_config_{};
-  std::unordered_set<crypto::Identity> cabinet_{};
+  Digest      digest_;
+  BlockIndex  block_{0};
+  SliceIndex  slice_{0};
+  BitVector   shards_;
+  Result      result_;
+  TokenAmount fee_{0};
 };
 
 inline ExecutionItem::ExecutionItem(Digest digest, BlockIndex block, SliceIndex slice,
-                                    BitVector const &                    shards,
-                                    ChargeConfiguration const &          charge_config,
-                                    std::unordered_set<crypto::Identity> cabinet)
+                                    BitVector const &shards)
   : digest_(std::move(digest))
   , block_{block}
   , slice_{slice}
   , shards_(shards)
-  , charge_config_(charge_config)
-  , cabinet_(std::move(cabinet))
 {}
 
 inline Digest const &ExecutionItem::digest() const
@@ -109,12 +103,13 @@ inline uint64_t ExecutionItem::fee() const
   return fee_;
 }
 
-inline void ExecutionItem::Execute(ExecutorInterface &executor)
+inline void ExecutionItem::Execute(ExecutorInterface &                        executor,
+                                   ChargeConfiguration const &                charge_config,
+                                   ExecutorInterface::UnorderedCabinet const &cabinet)
 {
   try
   {
-    result_ =
-        executor.Execute(digest_, block_, slice_, shards_, charge_config_, std::move(cabinet_));
+    result_ = executor.Execute(digest_, block_, slice_, shards_, charge_config, cabinet);
     fee_ += result_.fee;
   }
   catch (std::exception const &ex)

@@ -79,7 +79,7 @@ public:
     charge_config_ = std::move(config);
   }
 
-  void SetCabinet(std::unordered_set<crypto::Identity> cabinet) override
+  void SetCabinet(ExecutorInterface::UnorderedCabinet cabinet) override
   {
     cabinet_ = std::move(cabinet);
   }
@@ -123,9 +123,9 @@ private:
     chain::Address last_block_miner{};
   };
 
-  uint32_t const                       log2_num_lanes_;
-  ChargeConfiguration                  charge_config_{};
-  std::unordered_set<crypto::Identity> cabinet_{};
+  uint32_t const      log2_num_lanes_;
+  ChargeConfiguration charge_config_{};
+  UnorderedCabinet    cabinet_{};
 
   Flag running_{false};
   Flag monitor_ready_{false};

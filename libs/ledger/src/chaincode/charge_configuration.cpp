@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2020 Fetch.AI Limited
@@ -17,41 +16,26 @@
 //
 //------------------------------------------------------------------------------
 
-#include <cstdint>
+#include "ledger/chaincode/charge_configuration.hpp"
 
 namespace fetch {
 namespace ledger {
 
-class ChargeConfiguration
+ChargeConfiguration::Builder &ChargeConfiguration::Builder::SetChargeMultiplier(uint64_t multiplier)
 {
-public:
-  class Builder
-  {
-  public:
-    Builder()                = default;
-    ~Builder()               = default;
-    Builder(Builder const &) = delete;
-    Builder(Builder &&)      = delete;
-    Builder &operator=(Builder const &) = delete;
-    Builder &operator=(Builder &&) = delete;
+  charge_multiplier_ = multiplier;
 
-    Builder &SetChargeMultiplier(uint64_t multiplier);
+  return *this;
+}
 
-    ChargeConfiguration Build() const;
+ChargeConfiguration ChargeConfiguration::Builder::Build() const
+{
+  return ChargeConfiguration{charge_multiplier_};
+}
 
-  private:
-    uint64_t charge_multiplier_{};
-  };
-
-  ChargeConfiguration() = default;
-
-  uint64_t charge_multiplier{};
-
-private:
-  explicit ChargeConfiguration(uint64_t vm__charge_multiplier);
-
-  friend class Builder;
-};
+ChargeConfiguration::ChargeConfiguration(uint64_t multiplier)
+  : charge_multiplier{multiplier}
+{}
 
 }  // namespace ledger
 }  // namespace fetch

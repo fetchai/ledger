@@ -60,8 +60,7 @@ public:
   /// @name Executor Interface
   /// @{
   Result Execute(Digest const &digest, BlockIndex block, SliceIndex slice, BitVector const &shards,
-                 ChargeConfiguration const &charge_config,
-                 std::unordered_set<crypto::Identity>) override;
+                 ChargeConfiguration const &charge_config, UnorderedCabinet const &) override;
   void   SettleFees(chain::Address const &miner, BlockIndex block, TokenAmount amount,
                     uint32_t log2_num_lanes, StakeUpdateEvents const &stake_updates) override;
   /// @}
@@ -84,15 +83,15 @@ private:
 
   /// @name Per Execution State
   /// @{
-  ChargeConfiguration                  charge_configuration_{};
-  std::unordered_set<crypto::Identity> cabinet_{};
-  BlockIndex                           block_{};
-  SliceIndex                           slice_{};
-  BitVector                            allowed_shards_{};
-  LaneIndex                            log2_num_lanes_{0};
-  TransactionPtr                       current_tx_{};
-  CachedStorageAdapterPtr              storage_cache_;
-  TransactionValidator                 tx_validator_;
+  ChargeConfiguration     charge_configuration_{};
+  UnorderedCabinet        cabinet_{};
+  BlockIndex              block_{};
+  SliceIndex              slice_{};
+  BitVector               allowed_shards_{};
+  LaneIndex               log2_num_lanes_{0};
+  TransactionPtr          current_tx_{};
+  CachedStorageAdapterPtr storage_cache_;
+  TransactionValidator    tx_validator_;
   /// @}
 
   FeeManager fee_manager_;

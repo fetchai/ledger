@@ -49,7 +49,7 @@ public:
   State          GetState() override;
   bool           Abort() override;
   void           SetChargeConfiguration(fetch::ledger::ChargeConfiguration) override;
-  void           SetCabinet(std::unordered_set<fetch::crypto::Identity>) override;
+  void           SetCabinet(UnorderedCabinet) override;
   /// @}
 
 private:

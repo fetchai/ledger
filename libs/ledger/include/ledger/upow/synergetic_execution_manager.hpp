@@ -82,13 +82,13 @@ private:
     charge_config_ = charge_config;
   }
 
-  void SetCabinet(std::unordered_set<crypto::Identity> cabinet) override
+  void SetCabinet(UnorderedCabinet cabinet) override
   {
     cabinet_ = std::move(cabinet);
   }
 
-  ChargeConfiguration                  charge_config_{};
-  std::unordered_set<crypto::Identity> cabinet_{};
+  ChargeConfiguration charge_config_{};
+  UnorderedCabinet    cabinet_{};
 
   // System Components
   DAGPtr dag_;
