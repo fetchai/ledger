@@ -66,7 +66,8 @@ TransactionStoreSyncService::TransactionStoreSyncService(Config const &cfg, Mudd
                                                          TransactionStorageEngineInterface &store,
                                                          TxFinderProtocol *tx_finder_protocol,
                                                          TrimCacheCallback trim_cache_callback)
-  : trim_cache_callback_(std::move(trim_cache_callback))
+  : recently_seen_txs_(RECENTLY_SEEN_CACHE_SIZE)
+  , trim_cache_callback_(std::move(trim_cache_callback))
   , state_machine_{std::make_shared<core::StateMachine<State>>("TransactionStoreSyncService",
                                                                State::INITIAL)}
   , tx_finder_protocol_(tx_finder_protocol)
@@ -503,21 +504,13 @@ bool TransactionStoreSyncService::AlreadySeen(chain::Transaction const &tx)
     result = true;
   }
 
-  if (recently_seen_txs_.find(digest) == recently_seen_txs_.end())
+  if (recently_seen_txs_.Seen(digest))
   {
-    // TX not recently seen, add it and trim
-    recently_seen_txs_.insert(digest);
-    recently_seen_txs_ordered_.push_front(digest);
-
-    while (recently_seen_txs_.size() > RECENTLY_SEEN_CACHE_SIZE)
-    {
-      recently_seen_txs_.erase(recently_seen_txs_ordered_.back());
-      recently_seen_txs_ordered_.pop_back();
-    }
+    result = true;
   }
   else
   {
-    result = true;
+    recently_seen_txs_.Add(digest);
   }
 
   return result;

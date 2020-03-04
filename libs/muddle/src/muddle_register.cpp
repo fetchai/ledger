@@ -28,6 +28,41 @@
 namespace fetch {
 namespace muddle {
 
+namespace {
+
+using telemetry::Registry;
+
+std::string CreateMetricName(std::string const &prefix, std::string const &name)
+{
+  // build up the basic name
+  std::string metric_name = "muddle_register_" + prefix + '_' + name;
+
+  // ensure there are no invalid characterss
+  std::transform(metric_name.begin(), metric_name.end(), metric_name.begin(), [](char c) -> char {
+    if (c == '-')
+    {
+      return '_';
+    }
+
+    return static_cast<char>(std::tolower(c));
+  });
+
+  return metric_name;
+}
+
+telemetry::CounterPtr CreateCounter(std::string prefix, std::string const &name,
+                                    std::string const &description)
+{
+  // Telemetry requires lowercase, no special characters other than underscore
+  std::transform(prefix.begin(), prefix.end(), prefix.begin(),
+                 [](unsigned char c) { return c == ':' ? '_' : std::tolower(c); });
+
+  std::string metric_name = CreateMetricName(prefix, name);
+  return Registry::Instance().CreateCounter(std::move(metric_name), description);
+}
+
+}  // namespace
+
 static constexpr char const *BASE_NAME = "MuddleReg";
 
 MuddleRegister::Entry::Entry(WeakConnectionPtr c)
@@ -43,6 +78,13 @@ MuddleRegister::Entry::Entry(WeakConnectionPtr c)
 
 MuddleRegister::MuddleRegister(NetworkId const &network)
   : name_{GenerateLoggingName(BASE_NAME, network)}
+  , connections_entered_total_(CreateCounter(name_, "connections_entered_total",
+                                             "The total number of connections entered"))
+  , connections_left_total_(
+        CreateCounter(name_, "connections_left_total", "The total number of connections left"))
+  , connections_callbacks_called_total_(
+        CreateCounter(name_, "connections_callbacks_called_total",
+                      "The total number of connections handlers called"))
 {}
 
 void MuddleRegister::OnConnectionLeft(ConnectionLeftCallback cb)
@@ -301,6 +343,7 @@ Address MuddleRegister::GetAddress(ConnectionHandle handle) const
  */
 void MuddleRegister::Enter(WeakConnectionPtr const &ptr)
 {
+  connections_entered_total_->increment();
   FETCH_LOCK(lock_);
 
   auto strong_conn = ptr.lock();
@@ -333,6 +376,8 @@ void MuddleRegister::Enter(WeakConnectionPtr const &ptr)
  */
 void MuddleRegister::Leave(ConnectionHandle handle)
 {
+  connections_left_total_->increment();
+
   ConnectionLeftCallback callback_copy;
   {
     FETCH_LOCK(lock_);
@@ -370,6 +415,7 @@ void MuddleRegister::Leave(ConnectionHandle handle)
   // signal the router
   if (callback_copy)
   {
+    connections_callbacks_called_total_->increment();
     callback_copy(handle);
   }
   else
