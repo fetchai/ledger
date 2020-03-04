@@ -385,7 +385,7 @@ void BM_ReluForward(benchmark::State &state)
 
   relu.SetBatchInputShapes({config.shape});
 
-  state.counters["charge"] = static_cast<double>(relu.ChargeForward());
+  state.counters["charge"] = static_cast<double>(relu.ChargeForward({config.shape}).first);
 
   for (auto _ : state)
   {
