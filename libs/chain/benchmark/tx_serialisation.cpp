@@ -28,7 +28,8 @@
 
 using fetch::chain::TransactionSerializer;
 using fetch::crypto::ECDSASigner;
-using Storage = std::vector<fetch::core::byte_array::ConstByteArray>;
+using Storage      = std::vector<fetch::byte_array::ConstByteArray>;
+using Transactions = std::vector<fetch::chain::Transaction>;
 
 void TxSerialisation(benchmark::State &state)
 {
@@ -66,7 +67,7 @@ void TxSerialisation(benchmark::State &state)
     Transactions          output(num_txs);
     Storage               cells(num_txs);
     TransactionSerializer sr;
-    std::size_t           in_errors{}, out_errros{}, mismatches{};
+    std::size_t           in_errors{}, out_errors{};
 
     state.ResumeTiming();
     for (std::size_t i{}; i < num_txs; ++i)
