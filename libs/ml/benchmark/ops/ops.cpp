@@ -1832,8 +1832,8 @@ void BM_FlattenForward(benchmark::State &state)
   fetch::ml::ops::Flatten<fetch::math::Tensor<T>> flatten;
 
   flatten.SetBatchInputShapes({config.shape});
+  flatten.SetBatchOutputShape(output_shape);
   state.counters["charge"] = static_cast<double>(flatten.ChargeForward({config.shape}).first);
-
   for (auto _ : state)
   {
     flatten.Forward(inputs, output);

@@ -308,12 +308,16 @@ std::vector<math::SizeType> Weights<TensorType>::GetFutureDataShape() const
 }
 
 template <typename TensorType>
-OperationsCount Weights<TensorType>::ChargeForward() const
+std::pair<OperationsCount, math::SizeVector> Weights<TensorType>::ChargeForward(
+    std::vector<math::SizeVector> const &input_shapes)
 {
-  assert(!this->batch_output_shape_.empty());
-  OperationsCount cost = fetch::ml::charge_estimation::ops::WEIGHTS_READING_PER_ELEMENT *
-                         this->TotalElementsIn({this->batch_output_shape_});
-  return cost;
+  FETCH_UNUSED(input_shapes);
+  assert(!this->future_data_shape_.empty());
+
+  OperationsCount op_cnt = fetch::ml::charge_estimation::ops::WEIGHTS_READING_PER_ELEMENT *
+                           fetch::math::Product(this->future_data_shape_);
+
+  return std::make_pair(op_cnt, this->future_data_shape_);
 }
 
 template <class T>
