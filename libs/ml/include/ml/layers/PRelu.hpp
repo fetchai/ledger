@@ -68,8 +68,6 @@ public:
   {
     return DESCRIPTOR;
   }
-
-  OperationsCount ChargeBackward() const override;
 };
 
 }  // namespace layers

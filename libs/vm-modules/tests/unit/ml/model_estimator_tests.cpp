@@ -17,16 +17,21 @@
 //------------------------------------------------------------------------------
 
 #include "core/serializers/main_serializer.hpp"
+#include "math/base_types.hpp"
+#include "ml/charge_estimation/types.hpp"
 #include "ml/layers/fully_connected.hpp"
 #include "vm_modules/ml/model/model.hpp"
 #include "vm_modules/vm_factory.hpp"
 
 #include "gmock/gmock.h"
 
+#include <ml/ops/flatten.hpp>
+
 namespace {
 
 using SizeType     = fetch::math::SizeType;
 using DataType     = fetch::vm_modules::math::DataType;
+using TensorType   = fetch::math::Tensor<DataType>;
 using VmStringPtr  = fetch::vm::Ptr<fetch::vm::String>;
 using VmModel      = fetch::vm_modules::ml::model::VMModel;
 using VmModelPtr   = fetch::vm::Ptr<VmModel>;
@@ -1015,25 +1020,32 @@ TEST_F(VMModelEstimatorTests, charge_forward_one_dense)
   ChargeAmount expected_cost = 0;
   // For a Dense layer with n inputs and m outputs and empty activation there is expected
   // n placeholder readings
+
   expected_cost += inputs * PLACEHOLDER_READING_PER_ELEMENT * batch_size;
+
   // n*m Weights reading (100 weights total)
   expected_cost += (inputs * outputs) * WEIGHTS_READING_PER_ELEMENT * batch_size;
   // There is a second placeholder - one is in the graph and the other in the FC layer
   expected_cost += inputs * PLACEHOLDER_READING_PER_ELEMENT * batch_size;
+
   // n flattening operations (because Dense is not time-distributed in this test)
-  expected_cost += inputs * FLATTEN_PER_ELEMENT * batch_size;
+  // in this case we know that
+  expected_cost += (fetch::ml::charge_estimation::ops::OP_OVERHEAD +
+                    (fetch::ml::charge_estimation::ops::LOW_FLATTEN_PER_ELEMENT *
+                     TensorType::ChargeIterate({inputs, batch_size})));
+
   // n*m*1 matmul operations
   expected_cost += (inputs * outputs) * MULTIPLICATION_PER_ELEMENT * batch_size;
   // m bias weights reading
   expected_cost += outputs * WEIGHTS_READING_PER_ELEMENT * batch_size;
 
-  fetch::ml::OperationsCount add_charge{1};
+  fetch::ml::OperationsCount add_charge{OP_OVERHEAD};
 
   // Addition cost
   // Type of tensor is not important for SizeFromShape
   fetch::math::SizeType num_elements =
       fetch::math::Tensor<float>::SizeFromShape({outputs, batch_size});
-  add_charge += num_elements;
+  add_charge += num_elements * LOW_ADDITION_PER_ELEMENT;
 
   // Iteration over 3 tensors (input1, input2, ret)
   // Type of tensor is not important for ChargeIterate
