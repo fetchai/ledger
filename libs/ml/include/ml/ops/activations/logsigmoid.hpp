@@ -66,7 +66,8 @@ private:
   // maximum possible output value of the log-sigmoid should not be zero, but actually epsilon
   DataType epsilon_ = fetch::math::numeric_min<DataType>();
 
-  OperationsCount                              ChargeForward() const override;
+  std::pair<OperationsCount, math::SizeVector> ChargeForward(
+      std::vector<math::SizeVector> const &input_shapes) override;
   std::pair<OperationsCount, math::SizeVector> ChargeBackward(
       std::vector<math::SizeVector> const &input_shapes) override;
 };

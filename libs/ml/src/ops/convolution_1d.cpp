@@ -411,18 +411,16 @@ void Convolution1D<TensorType>::ReverseFillOutput(TensorType &gemm_output, Tenso
 }
 
 template <typename TensorType>
-OperationsCount Convolution1D<TensorType>::ChargeForward() const
+std::pair<OperationsCount, math::SizeVector> Convolution1D<TensorType>::ChargeForward(
+    std::vector<math::SizeVector> const &input_shapes)
 {
-  assert(!this->batch_output_shape_.empty());
-  assert(this->batch_input_shapes_.size() == 2);
+  SizeType input_channels  = input_shapes.front().at(0);
+  SizeType batch_size      = input_shapes.front().at(2);
+  SizeType output_channels = input_shapes.back().at(0);
+  SizeType kernel_height   = input_shapes.back().at(2);
 
-  SizeType input_channels  = this->batch_input_shapes_.front().at(0);
-  SizeType batch_size      = this->batch_input_shapes_.front().at(2);
-  SizeType output_channels = this->batch_input_shapes_.back().at(0);
-  SizeType kernel_height   = this->batch_input_shapes_.back().at(2);
-
-  SizeType output_height = ComputeOutputHeight(this->batch_input_shapes_.front().at(1),
-                                               this->batch_input_shapes_.back().at(2));
+  SizeType output_height =
+      ComputeOutputHeight(input_shapes.front().at(1), input_shapes.back().at(2));
 
   SizeType horizontal_stride_width  = kernel_height * input_channels;
   SizeType horizontal_stride_height = output_height * batch_size;
@@ -432,7 +430,8 @@ OperationsCount Convolution1D<TensorType>::ChargeForward() const
                          vertical_stride_width *
                          fetch::ml::charge_estimation::ops::LOW_MULTIPLICATION_PER_ELEMENT;
 
-  return cost;
+  auto output_shape = ComputeOutputShape(input_shapes);
+  return std::make_pair(cost, output_shape);
 }
 
 template <typename TensorType>
