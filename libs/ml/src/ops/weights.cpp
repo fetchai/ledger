@@ -311,12 +311,13 @@ template <typename TensorType>
 std::pair<OperationsCount, math::SizeVector> Weights<TensorType>::ChargeForward(
     std::vector<math::SizeVector> const &input_shapes)
 {
-  assert(!this->batch_input_shapes_.empty());
+  FETCH_UNUSED(input_shapes);
+  assert(!this->future_data_shape_.empty());
 
   OperationsCount op_cnt = fetch::ml::charge_estimation::ops::WEIGHTS_READING_PER_ELEMENT *
-                           TensorType::SizeFromShape(input_shapes[0]);
+                           fetch::math::Product(this->future_data_shape_);
 
-  return std::make_pair(op_cnt, input_shapes.at(0));
+  return std::make_pair(op_cnt, this->future_data_shape_);
 }
 
 template <class T>

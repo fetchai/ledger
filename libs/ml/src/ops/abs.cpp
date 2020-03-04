@@ -114,7 +114,6 @@ template <typename TensorType>
 std::pair<OperationsCount, math::SizeVector> Abs<TensorType>::ChargeForward(
     std::vector<math::SizeVector> const &input_shapes)
 {
-  assert(!this->batch_input_shapes_.empty());
   OperationsCount op_cnt = fetch::ml::charge_estimation::ops::ABS_PER_ELEMENT *
                            TensorType::SizeFromShape(input_shapes[0]);
   auto output_shape = ComputeOutputShape(input_shapes);

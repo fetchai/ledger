@@ -170,8 +170,7 @@ public:
     FETCH_UNUSED(input_shapes);
     throw ml::exceptions::NotImplemented(
         "ChargeForward Not Yet Implemented for one or more Ops. Check logging for details.");
-    return std::make_pair<OperationsCount, math::SizeVector>(OperationsCount{0},
-                                                             math::SizeVector{});
+    return std::make_pair(OperationsCount{0}, math::SizeVector{});
   }
 
   /**

@@ -452,7 +452,6 @@ template <typename TensorType>
 std::pair<OperationsCount, math::SizeVector> Convolution2D<TensorType>::ChargeForward(
     std::vector<math::SizeVector> const &input_shapes)
 {
-  assert(!this->batch_output_shape_.empty());
   assert(input_shapes.size() == 2);
 
   SizeType input_channels  = input_shapes.front().at(0);

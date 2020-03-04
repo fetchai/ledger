@@ -129,8 +129,8 @@ std::pair<OperationsCount, math::SizeVector> Reshape<TensorType>::ChargeForward(
 {
   assert(!this->batch_input_shapes_.empty());
 
-  OperationsCount op_cnt = (fetch::ml::charge_estimation::ops::RESHAPE_PER_ELEMENT +
-                            fetch::ml::charge_estimation::ops::RESHAPE_PER_ELEMENT) *
+  OperationsCount op_cnt = (fetch::ml::charge_estimation::ops::ASSIGN_PER_ELEMENT +
+                            fetch::ml::charge_estimation::ops::ASSIGN_PER_ELEMENT) *
                            TensorType::SizeFromShape(input_shapes[0]);
 
   auto output_shape = ComputeOutputShape(input_shapes);

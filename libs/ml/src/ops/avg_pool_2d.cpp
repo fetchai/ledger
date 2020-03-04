@@ -203,9 +203,8 @@ std::pair<OperationsCount, math::SizeVector> AvgPool2D<TensorType>::ChargeForwar
     std::vector<math::SizeVector> const &input_shapes)
 {
   assert(!this->batch_output_shape_.empty());
-  OperationsCount num_output_shape_ops =
-      this->batch_output_shape_.at(0) * this->batch_output_shape_.at(1) *
-      this->batch_output_shape_.at(2) * this->batch_output_shape_.at(3);
+  OperationsCount num_output_shape_ops = input_shapes.at(0).at(0) * input_shapes.at(0).at(1) *
+                                         input_shapes.at(0).at(2) * input_shapes.at(0).at(3);
   auto op_cnt = static_cast<OperationsCount>(
       fetch::ml::charge_estimation::ops::DIVISION_PER_ELEMENT * num_output_shape_ops +
       fetch::ml::charge_estimation::ops::LOW_ADDITION_PER_ELEMENT * num_output_shape_ops *
