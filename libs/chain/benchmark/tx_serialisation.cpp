@@ -29,16 +29,16 @@
 
 #include <vector>
 
-using fetch::crypto::ECDSASigner;
 using fetch::chain::TransactionSerializer;
+using fetch::crypto::ECDSASigner;
 using Storage = std::vector<fetch::core::byte_array::ConstByteArray>;
 
 void TxSerialisation(benchmark::State &state)
 {
+  state.PauseTiming();
+
   ECDSASigner const signer;
-
-  // create the store
-
+  // create the testing set
   bool small_tx = state.range(0) == 0;
 
   std::string number_of_tx;
@@ -62,39 +62,38 @@ void TxSerialisation(benchmark::State &state)
   for (auto _ : state)
   {
     // create X new unique transactions to write per test
-    state.PauseTiming();
 
-    TransactionList input =
-        GenerateTransactions(std::size_t(state.range(1)), signer, small_tx);
+    TransactionList input = GenerateTransactions(std::size_t(state.range(1)), signer, small_tx);
 
-    const auto num_txs = input.size();
-    Transactions output(num_txs);
-    Storage cells(num_txs);
+    const auto            num_txs = input.size();
+    Transactions          output(num_txs);
+    Storage               cells(num_txs);
     TransactionSerializer sr;
-    std::size_t in_errors{}, out_errros{}, mismatches{};
+    std::size_t           in_errors{}, out_errros{}, mismatches{};
 
     state.ResumeTiming();
     for (std::size_t i{}; i < num_txs; ++i)
     {
-      if(sr.Serialize(input[i]))
+      if (sr.Serialize(input[i]))
       {
-	      cells[i] = sr.data();
+        cells[i] = sr.data();
       }
       else
       {
-	      ++in_errors;
+        ++in_errors;
       }
     }
     for (std::size_t i{}; i < num_txs; ++i)
     {
       if (!cells[i].empty())
       {
-	  if (!sr.Deserialize(output[i]))
-	  {
-		  ++out_errors;
-	  }
+        if (!sr.Deserialize(output[i]))
+        {
+          ++out_errors;
+        }
       }
     }
+    state.PauseTiming();
     // TODO (nobody): we've got a good randomized test to check that transactions match
   }
 }
