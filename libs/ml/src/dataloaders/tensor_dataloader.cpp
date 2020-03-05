@@ -27,7 +27,10 @@ namespace dataloaders {
 template <typename TensorType>
 typename TensorDataLoader<TensorType>::ReturnType TensorDataLoader<TensorType>::GetNext()
 {
+  assert(*this->current_cursor_ < this->current_max_);
+
   std::vector<TensorType> ret_data;
+  ret_data.reserve(data_.size());
   TensorType ret_labels = labels_.View(*this->current_cursor_).Copy(one_sample_label_shape_);
 
   for (SizeType i{0}; i < data_.size(); i++)
@@ -52,21 +55,21 @@ typename TensorDataLoader<TensorType>::ReturnType TensorDataLoader<TensorType>::
 template <typename TensorType>
 OperationsCount TensorDataLoader<TensorType>::ChargeGetNext()
 {
-  OperationsCount cost = 0;
+  // all constants are empirically determined
+  OperationsCount cost = 600;
   // cost for copying the labels array
-  OperationsCount labels_copy_cost = math::Product(one_sample_label_shape_);
+  OperationsCount labels_copy_cost = 2 * math::Product(one_sample_label_shape_);
   cost += labels_copy_cost;
 
   // cost for copying the data array
   OperationsCount data_copy_cost = 0;
   for (auto const &it : one_sample_data_shapes_)
   {
-    data_copy_cost += math::Product(it);
+    data_copy_cost += 3 * math::Product(it);
+    data_copy_cost += 400;
   }
   cost += data_copy_cost;
 
-  // cost for updating cursor
-  cost += 5;
   return cost;
 }
 
@@ -104,20 +107,17 @@ template <typename TensorType>
 OperationsCount TensorDataLoader<TensorType>::ChargeAddData(const std::vector<TensorType> &data,
                                                             const TensorType &             labels)
 {
-  OperationsCount cost = 2;  // setting one_sample_label_shape
-  cost += 4;                 // resizing data vector
-  OperationsCount label_copy_cost = TensorType::PaddedSizeFromShape(labels.shape());
+  // all constants are empirically determined
+  OperationsCount cost            = 400;
+  OperationsCount label_copy_cost = 2 * TensorType::PaddedSizeFromShape(labels.shape());
   cost += label_copy_cost;
 
-  cost += data.size();  // loop cost
   for (SizeType i{0}; i < data.size(); i++)
   {
-    cost += TensorType::PaddedSizeFromShape(data.at(i).shape());  // copying data cost
-    cost += data.at(i).shape().size();                            // copying data shape cost
+    cost += 2 * TensorType::PaddedSizeFromShape(data.at(i).shape());
+    cost += 300;
   }
-  cost += 7;  // n_samples cost
 
-  cost += 32;  // count of operations in UpdateRanges and UpdateCursor
   return cost;
 }
 
