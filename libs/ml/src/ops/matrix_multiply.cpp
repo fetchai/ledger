@@ -287,23 +287,26 @@ std::vector<typename fetch::math::SizeType> MatrixMultiply<T>::ComputeOutputShap
 }
 
 template <typename T>
-OperationsCount MatrixMultiply<T>::ChargeForward() const
+std::pair<OperationsCount, math::SizeVector> MatrixMultiply<T>::ChargeForward(
+    std::vector<math::SizeVector> const &input_shapes)
 {
-  assert(!this->batch_input_shapes_.empty());
+  assert(!input_shapes.empty());
 
   // TODO(ML-482): impl. for n-dimensional case, not only for 2D.
-  assert(this->batch_input_shapes_.size() == 2);
+  assert(input_shapes.size() == 2);
 
   // Assuming this is a matrix multiplication of weights * input_vector
   // e.g. [n; m] * [m; batch_size], then total operations cost is n * m * batch_size,
   // and default batch_size is 1.
-  OperationsCount const n = this->batch_input_shapes_.front().at(0);
-  OperationsCount const m = this->batch_input_shapes_.back().at(0);
-  OperationsCount const p = 1;
+  OperationsCount const n          = input_shapes.front().at(0);
+  OperationsCount const m          = input_shapes.back().at(0);
+  OperationsCount const batch_size = input_shapes.back().at(input_shapes.front().size() - 1);
 
   OperationsCount const cost =
-      n * m * p * fetch::ml::charge_estimation::ops::LOW_MULTIPLICATION_PER_ELEMENT;
-  return cost;
+      n * m * batch_size * fetch::ml::charge_estimation::ops::LOW_MULTIPLICATION_PER_ELEMENT;
+
+  auto output_shape = ComputeOutputShape(input_shapes);
+  return std::make_pair(cost, output_shape);
 }
 
 template <typename T>

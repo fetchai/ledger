@@ -61,7 +61,8 @@ public:
   }
   static constexpr char const *DESCRIPTOR = "Elu";
 
-  OperationsCount                              ChargeForward() const override;
+  std::pair<OperationsCount, math::SizeVector> ChargeForward(
+      std::vector<math::SizeVector> const &input_shapes) override;
   std::pair<OperationsCount, math::SizeVector> ChargeBackward(
       std::vector<math::SizeVector> const &input_shapes) override;
 
