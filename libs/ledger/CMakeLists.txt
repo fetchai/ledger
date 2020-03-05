@@ -17,7 +17,7 @@ setup_compiler()
 setup_library(fetch-ledger)
 target_link_libraries(fetch-ledger
                       PUBLIC fetch-beacon
-                             fetch-bloomfilter
+                             fetch-bloom-filter
                              fetch-core
                              fetch-crypto
                              fetch-entropy

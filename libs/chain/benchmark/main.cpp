@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2020 Fetch.AI Limited
@@ -17,20 +16,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "math/charge_estimation/types.hpp"
+#include "benchmark/benchmark.h"
 
-namespace fetch {
-namespace math {
-namespace charge_estimation {
-
-static constexpr OperationsCount TENSOR_ITERATION_OVERHEAD = 7;
-
-static constexpr OperationsCount TENSOR_ITERATION_DEFAULT_MULTIPLY = 1;
-static constexpr OperationsCount TENSOR_ITERATION_DEFAULT_DIVIDE   = 2;
-
-static constexpr OperationsCount TENSOR_ITERATION_END_OF_ROW_MULTIPLY = 1;
-static constexpr OperationsCount TENSOR_ITERATION_END_OF_ROW_DIVIDE   = 1;
-
-}  // namespace charge_estimation
-}  // namespace math
-}  // namespace fetch
+BENCHMARK_MAIN();

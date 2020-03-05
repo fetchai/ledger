@@ -101,12 +101,15 @@ std::vector<math::SizeType> DataHolder<TensorType>::ComputeOutputShape(
 }
 
 template <typename TensorType>
-OperationsCount DataHolder<TensorType>::ChargeForward() const
+std::pair<OperationsCount, math::SizeVector> DataHolder<TensorType>::ChargeForward(
+    std::vector<math::SizeVector> const &input_shapes)
 {
   assert(!this->batch_input_shapes_.empty());
-  OperationsCount cost = fetch::ml::charge_estimation::ops::ASSIGN_PER_ELEMENT;
+  OperationsCount op_cnt = fetch::ml::charge_estimation::ops::ASSIGN_PER_ELEMENT *
+                           TensorType::SizeFromShape(input_shapes[0]);
 
-  return cost;
+  auto output_shape = ComputeOutputShape(input_shapes);
+  return std::make_pair(op_cnt, output_shape);
 }
 
 template <typename TensorType>
