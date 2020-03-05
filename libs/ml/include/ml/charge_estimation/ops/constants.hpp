@@ -24,6 +24,9 @@ namespace ml {
 namespace charge_estimation {
 namespace ops {
 
+static constexpr OperationsCount OP_MATRIX_MULTIPLY_OVERHEAD = 1700;
+static constexpr OperationsCount OP_MATRIX_MULTIPLY_FORWARD  = 14;
+
 // ML OP Charge estimations allow for none piecewise discontinuity to match benchmarked performance
 // better An upper cap is also implemented to prevent especially expensive operations
 static constexpr OperationsCount PIECEWISE_LOWER_THRESHOLD = 16384;    // 2^14

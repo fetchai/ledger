@@ -298,13 +298,12 @@ std::pair<OperationsCount, math::SizeVector> MatrixMultiply<T>::ChargeForward(
   // Assuming this is a matrix multiplication of weights * input_vector
   OperationsCount const input_1_dim_1 = input_shapes.front().at(0);
   OperationsCount const input_1_dim_2 = input_shapes.front().at(1);
-  OperationsCount const input_2_dim_1 = input_shapes.back().at(0);
+  // OperationsCount const input_2_dim_1 = input_shapes.back().at(0);
   OperationsCount const input_2_dim_2 = input_shapes.back().at(1);
-  OperationsCount const batch_size    = input_shapes.front().at(input_shapes.front().size() - 1);
 
-  OperationsCount op_cnt = batch_size * 500;  // set up overhead
-  op_cnt += input_1_dim_1 * input_1_dim_2 * input_2_dim_1 * input_2_dim_2 * batch_size *
-            fetch::ml::charge_estimation::ops::LOW_MULTIPLICATION_PER_ELEMENT;
+  OperationsCount op_cnt = charge_estimation::ops::OP_MATRIX_MULTIPLY_OVERHEAD;  // set up overhead
+  op_cnt += input_1_dim_1 * input_1_dim_2 * input_2_dim_2 *
+            fetch::ml::charge_estimation::ops::OP_MATRIX_MULTIPLY_FORWARD;
 
   auto output_shape = ComputeOutputShape(input_shapes);
   return std::make_pair(op_cnt, output_shape);
@@ -328,7 +327,7 @@ std::pair<OperationsCount, math::SizeVector> MatrixMultiply<T>::ChargeBackward(
             fetch::ml::charge_estimation::ops::LOW_MULTIPLICATION_PER_ELEMENT;
 
   math::SizeVector output_shape = ComputeOutputShape(input_shapes);
-  return std::make_pair(op_cnt * output_shape.back(), output_shape);
+  return std::make_pair(op_cnt, output_shape);
 }
 
 template <typename T>

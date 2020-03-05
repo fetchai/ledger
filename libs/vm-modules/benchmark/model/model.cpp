@@ -441,6 +441,8 @@ void BM_Predict(::benchmark::State &state)
   }
 }
 
+BENCHMARK(BM_Predict)->Args({1, 2, 13, 10, 0})->Unit(::benchmark::kNanosecond);
+
 // (BM_Predict_config) batch_size, number_of_layers, input_size, hidden_1_size, ...., output_size,
 // activation_3,....
 
