@@ -137,6 +137,7 @@ std::pair<OperationsCount, math::SizeVector> Relu<TensorType>::ChargeForward(
   }
 
   return std::make_pair(cost, output_shape);
+
 }
 
 template <typename TensorType>

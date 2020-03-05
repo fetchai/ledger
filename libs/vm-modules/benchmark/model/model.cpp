@@ -425,9 +425,6 @@ void BM_Predict(::benchmark::State &state)
   // Get args from state
   BM_Predict_config config{state};
 
-  for (auto _ : state)
-  {
-    state.PauseTiming();
     // set up a compiled model
     auto vm    = NewVM();
     auto model = vmSequentialModel(vm, config.sizes, config.activations, "mse", "adam");
@@ -438,7 +435,8 @@ void BM_Predict(::benchmark::State &state)
     state.counters["charge"]      = static_cast<double>(model->EstimatePredict(data));
     state.counters["ForwardCost"] = static_cast<double>(model->ChargeForward(data_shape));
 
-    state.ResumeTiming();
+  for (auto _ : state)
+  {
     auto res = model->Predict(data);
   }
 }
@@ -447,159 +445,159 @@ void BM_Predict(::benchmark::State &state)
 // activation_3,....
 
 // BOSTON
-BENCHMARK(BM_Predict)->Args({1, 4, 13, 10, 10, 1, 1, 1, 0})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Predict)->Args({10, 4, 13, 10, 10, 1, 1, 1, 0})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Predict)->Args({32, 4, 13, 10, 10, 1, 1, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Predict)->Args({1, 4, 13, 10, 10, 1, 1, 1, 0})->Unit(::benchmark::kNanosecond);
+BENCHMARK(BM_Predict)->Args({10, 4, 13, 10, 10, 1, 1, 1, 0})->Unit(::benchmark::kNanosecond);
+BENCHMARK(BM_Predict)->Args({32, 4, 13, 10, 10, 1, 1, 1, 0})->Unit(::benchmark::kNanosecond);
 
 // MNIST
-BENCHMARK(BM_Predict)->Args({1, 3, 784, 10, 10, 1, 0})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Predict)->Args({10, 3, 784, 10, 10, 1, 0})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Predict)->Args({32, 3, 784, 10, 10, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Predict)->Args({1, 3, 784, 10, 10, 1, 0})->Unit(::benchmark::kNanosecond);
+BENCHMARK(BM_Predict)->Args({10, 3, 784, 10, 10, 1, 0})->Unit(::benchmark::kNanosecond);
+BENCHMARK(BM_Predict)->Args({32, 3, 784, 10, 10, 1, 0})->Unit(::benchmark::kNanosecond);
 
 BENCHMARK(BM_Predict)
     ->Args({1, 6, 1, 10, 100, 1000, 10000, 1, 0, 0, 0, 0, 0})
-    ->Unit(::benchmark::kMicrosecond);
+    ->Unit(::benchmark::kNanosecond);
 BENCHMARK(BM_Predict)
     ->Args({2, 6, 1, 10, 100, 1000, 10000, 1, 0, 0, 0, 0, 0})
-    ->Unit(::benchmark::kMicrosecond);
+    ->Unit(::benchmark::kNanosecond);
 BENCHMARK(BM_Predict)
     ->Args({4, 6, 1, 10, 100, 1000, 10000, 1, 0, 0, 0, 0, 0})
-    ->Unit(::benchmark::kMicrosecond);
+    ->Unit(::benchmark::kNanosecond);
 BENCHMARK(BM_Predict)
     ->Args({8, 6, 1, 10, 100, 1000, 10000, 1, 0, 0, 0, 0, 0})
-    ->Unit(::benchmark::kMicrosecond);
+    ->Unit(::benchmark::kNanosecond);
 BENCHMARK(BM_Predict)
     ->Args({16, 6, 1, 10, 100, 1000, 10000, 1, 0, 0, 0, 0, 0})
-    ->Unit(::benchmark::kMicrosecond);
+    ->Unit(::benchmark::kNanosecond);
 BENCHMARK(BM_Predict)
     ->Args({32, 6, 1, 10, 100, 1000, 10000, 1, 0, 0, 0, 0, 0})
-    ->Unit(::benchmark::kMicrosecond);
+    ->Unit(::benchmark::kNanosecond);
 BENCHMARK(BM_Predict)
     ->Args({64, 6, 1, 10, 100, 1000, 10000, 1, 0, 0, 0, 0, 0})
-    ->Unit(::benchmark::kMicrosecond);
+    ->Unit(::benchmark::kNanosecond);
 BENCHMARK(BM_Predict)
     ->Args({128, 6, 1, 10, 100, 1000, 10000, 1, 0, 0, 0, 0, 0})
-    ->Unit(::benchmark::kMicrosecond);
+    ->Unit(::benchmark::kNanosecond);
 BENCHMARK(BM_Predict)
     ->Args({256, 6, 1, 10, 100, 1000, 10000, 1, 0, 0, 0, 0, 0})
-    ->Unit(::benchmark::kMicrosecond);
+    ->Unit(::benchmark::kNanosecond);
 
 BENCHMARK(BM_Predict)
     ->Args({1, 5, 10000, 1000, 100, 10, 1, 0, 0, 0, 0})
-    ->Unit(::benchmark::kMicrosecond);
+    ->Unit(::benchmark::kNanosecond);
 BENCHMARK(BM_Predict)
     ->Args({2, 5, 10000, 1000, 100, 10, 1, 0, 0, 0, 0})
-    ->Unit(::benchmark::kMicrosecond);
+    ->Unit(::benchmark::kNanosecond);
 BENCHMARK(BM_Predict)
     ->Args({4, 5, 10000, 1000, 100, 10, 1, 0, 0, 0, 0})
-    ->Unit(::benchmark::kMicrosecond);
+    ->Unit(::benchmark::kNanosecond);
 BENCHMARK(BM_Predict)
     ->Args({8, 5, 10000, 1000, 100, 10, 1, 0, 0, 0, 0})
-    ->Unit(::benchmark::kMicrosecond);
+    ->Unit(::benchmark::kNanosecond);
 BENCHMARK(BM_Predict)
     ->Args({16, 5, 10000, 1000, 100, 10, 1, 0, 0, 0, 0})
-    ->Unit(::benchmark::kMicrosecond);
+    ->Unit(::benchmark::kNanosecond);
 BENCHMARK(BM_Predict)
     ->Args({32, 5, 10000, 1000, 100, 10, 1, 0, 0, 0, 0})
-    ->Unit(::benchmark::kMicrosecond);
+    ->Unit(::benchmark::kNanosecond);
 BENCHMARK(BM_Predict)
     ->Args({64, 5, 10000, 1000, 100, 10, 1, 0, 0, 0, 0})
-    ->Unit(::benchmark::kMicrosecond);
+    ->Unit(::benchmark::kNanosecond);
 BENCHMARK(BM_Predict)
     ->Args({128, 5, 10000, 1000, 100, 10, 1, 0, 0, 0, 0})
-    ->Unit(::benchmark::kMicrosecond);
+    ->Unit(::benchmark::kNanosecond);
 BENCHMARK(BM_Predict)
     ->Args({256, 5, 10000, 1000, 100, 10, 1, 0, 0, 0, 0})
-    ->Unit(::benchmark::kMicrosecond);
+    ->Unit(::benchmark::kNanosecond);
 
-BENCHMARK(BM_Predict)->Args({128, 4, 1, 1, 1, 1, 0, 0, 0})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Predict)->Args({256, 4, 1, 1, 1, 1, 0, 0, 0})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Predict)->Args({512, 4, 1, 1, 1, 1, 0, 0, 0})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Predict)->Args({1024, 4, 1, 1, 1, 1, 0, 0, 0})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Predict)->Args({2048, 4, 1, 1, 1, 1, 0, 0, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Predict)->Args({128, 4, 1, 1, 1, 1, 0, 0, 0})->Unit(::benchmark::kNanosecond);
+BENCHMARK(BM_Predict)->Args({256, 4, 1, 1, 1, 1, 0, 0, 0})->Unit(::benchmark::kNanosecond);
+BENCHMARK(BM_Predict)->Args({512, 4, 1, 1, 1, 1, 0, 0, 0})->Unit(::benchmark::kNanosecond);
+BENCHMARK(BM_Predict)->Args({1024, 4, 1, 1, 1, 1, 0, 0, 0})->Unit(::benchmark::kNanosecond);
+BENCHMARK(BM_Predict)->Args({2048, 4, 1, 1, 1, 1, 0, 0, 0})->Unit(::benchmark::kNanosecond);
 
 BENCHMARK(BM_Predict)
     ->Args({128, 8, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0})
-    ->Unit(::benchmark::kMicrosecond);
+    ->Unit(::benchmark::kNanosecond);
 BENCHMARK(BM_Predict)
     ->Args({256, 8, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0})
-    ->Unit(::benchmark::kMicrosecond);
+    ->Unit(::benchmark::kNanosecond);
 BENCHMARK(BM_Predict)
     ->Args({512, 8, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0})
-    ->Unit(::benchmark::kMicrosecond);
+    ->Unit(::benchmark::kNanosecond);
 BENCHMARK(BM_Predict)
     ->Args({1024, 8, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0})
-    ->Unit(::benchmark::kMicrosecond);
+    ->Unit(::benchmark::kNanosecond);
 BENCHMARK(BM_Predict)
     ->Args({2048, 8, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0})
-    ->Unit(::benchmark::kMicrosecond);
+    ->Unit(::benchmark::kNanosecond);
 
 BENCHMARK(BM_Predict)
     ->Args({128, 5, 10000, 1, 1, 1, 1, 0, 0, 0, 0})
-    ->Unit(::benchmark::kMicrosecond);
+    ->Unit(::benchmark::kNanosecond);
 BENCHMARK(BM_Predict)
     ->Args({128, 5, 1, 10000, 1, 1, 1, 0, 0, 0, 0})
-    ->Unit(::benchmark::kMicrosecond);
+    ->Unit(::benchmark::kNanosecond);
 BENCHMARK(BM_Predict)
     ->Args({128, 5, 1, 1, 10000, 1, 1, 0, 0, 0, 0})
-    ->Unit(::benchmark::kMicrosecond);
+    ->Unit(::benchmark::kNanosecond);
 BENCHMARK(BM_Predict)
     ->Args({128, 5, 1, 1, 1, 10000, 1, 0, 0, 0, 0})
-    ->Unit(::benchmark::kMicrosecond);
+    ->Unit(::benchmark::kNanosecond);
 BENCHMARK(BM_Predict)
     ->Args({128, 5, 1, 1, 1, 1, 10000, 0, 0, 0, 0})
-    ->Unit(::benchmark::kMicrosecond);
+    ->Unit(::benchmark::kNanosecond);
 
 BENCHMARK(BM_Predict)
     ->Args({512, 5, 10000, 1, 1, 1, 1, 0, 0, 0, 0})
-    ->Unit(::benchmark::kMicrosecond);
+    ->Unit(::benchmark::kNanosecond);
 BENCHMARK(BM_Predict)
     ->Args({512, 5, 1, 10000, 1, 1, 1, 0, 0, 0, 0})
-    ->Unit(::benchmark::kMicrosecond);
+    ->Unit(::benchmark::kNanosecond);
 BENCHMARK(BM_Predict)
     ->Args({512, 5, 1, 1, 10000, 1, 1, 0, 0, 0, 0})
-    ->Unit(::benchmark::kMicrosecond);
+    ->Unit(::benchmark::kNanosecond);
 BENCHMARK(BM_Predict)
     ->Args({512, 5, 1, 1, 1, 10000, 1, 0, 0, 0, 0})
-    ->Unit(::benchmark::kMicrosecond);
+    ->Unit(::benchmark::kNanosecond);
 BENCHMARK(BM_Predict)
     ->Args({512, 5, 1, 1, 1, 1, 10000, 0, 0, 0, 0})
-    ->Unit(::benchmark::kMicrosecond);
+    ->Unit(::benchmark::kNanosecond);
 
-BENCHMARK(BM_Predict)->Args({1, 2, 1, 1, 0})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Predict)->Args({1, 2, 1, 10, 0})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Predict)->Args({1, 2, 1, 100, 0})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Predict)->Args({1, 2, 1, 1000, 0})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Predict)->Args({1, 2, 1, 10000, 0})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Predict)->Args({1, 2, 1, 100000, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Predict)->Args({1, 2, 1, 1, 0})->Unit(::benchmark::kNanosecond);
+BENCHMARK(BM_Predict)->Args({1, 2, 1, 10, 0})->Unit(::benchmark::kNanosecond);
+BENCHMARK(BM_Predict)->Args({1, 2, 1, 100, 0})->Unit(::benchmark::kNanosecond);
+BENCHMARK(BM_Predict)->Args({1, 2, 1, 1000, 0})->Unit(::benchmark::kNanosecond);
+BENCHMARK(BM_Predict)->Args({1, 2, 1, 10000, 0})->Unit(::benchmark::kNanosecond);
+BENCHMARK(BM_Predict)->Args({1, 2, 1, 100000, 0})->Unit(::benchmark::kNanosecond);
 
-BENCHMARK(BM_Predict)->Args({1, 3, 1, 1, 1, 0, 0})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Predict)->Args({1, 3, 1, 10, 1, 0, 0})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Predict)->Args({1, 3, 1, 100, 1, 0, 0})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Predict)->Args({1, 3, 1, 1000, 1, 0, 0})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Predict)->Args({1, 3, 1, 10000, 1, 0, 0})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Predict)->Args({1, 3, 1, 100000, 1, 0, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Predict)->Args({1, 3, 1, 1, 1, 0, 0})->Unit(::benchmark::kNanosecond);
+BENCHMARK(BM_Predict)->Args({1, 3, 1, 10, 1, 0, 0})->Unit(::benchmark::kNanosecond);
+BENCHMARK(BM_Predict)->Args({1, 3, 1, 100, 1, 0, 0})->Unit(::benchmark::kNanosecond);
+BENCHMARK(BM_Predict)->Args({1, 3, 1, 1000, 1, 0, 0})->Unit(::benchmark::kNanosecond);
+BENCHMARK(BM_Predict)->Args({1, 3, 1, 10000, 1, 0, 0})->Unit(::benchmark::kNanosecond);
+BENCHMARK(BM_Predict)->Args({1, 3, 1, 100000, 1, 0, 0})->Unit(::benchmark::kNanosecond);
 
-BENCHMARK(BM_Predict)->Args({1, 2, 10, 1, 0})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Predict)->Args({1, 2, 100, 1, 0})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Predict)->Args({1, 2, 1000, 1, 0})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Predict)->Args({1, 2, 10000, 1, 0})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Predict)->Args({1, 2, 100000, 1, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Predict)->Args({1, 2, 10, 1, 0})->Unit(::benchmark::kNanosecond);
+BENCHMARK(BM_Predict)->Args({1, 2, 100, 1, 0})->Unit(::benchmark::kNanosecond);
+BENCHMARK(BM_Predict)->Args({1, 2, 1000, 1, 0})->Unit(::benchmark::kNanosecond);
+BENCHMARK(BM_Predict)->Args({1, 2, 10000, 1, 0})->Unit(::benchmark::kNanosecond);
+BENCHMARK(BM_Predict)->Args({1, 2, 100000, 1, 0})->Unit(::benchmark::kNanosecond);
 
-BENCHMARK(BM_Predict)->Args({1, 2, 10000, 10000, 0})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Predict)->Args({1, 2, 1000, 1000, 0})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Predict)->Args({1, 2, 100, 100, 0})->Unit(::benchmark::kMicrosecond);
-BENCHMARK(BM_Predict)->Args({1, 2, 10, 10, 0})->Unit(::benchmark::kMicrosecond);
+BENCHMARK(BM_Predict)->Args({1, 2, 10000, 10000, 0})->Unit(::benchmark::kNanosecond);
+BENCHMARK(BM_Predict)->Args({1, 2, 1000, 1000, 0})->Unit(::benchmark::kNanosecond);
+BENCHMARK(BM_Predict)->Args({1, 2, 100, 100, 0})->Unit(::benchmark::kNanosecond);
+BENCHMARK(BM_Predict)->Args({1, 2, 10, 10, 0})->Unit(::benchmark::kNanosecond);
 
 BENCHMARK(BM_Predict)
     ->Args({128, 5, 1000, 1000, 1000, 1000, 1000, 0, 0, 0, 0})
-    ->Unit(::benchmark::kMicrosecond);
+    ->Unit(::benchmark::kNanosecond);
 BENCHMARK(BM_Predict)
     ->Args({256, 5, 1000, 1000, 1000, 1000, 1000, 0, 0, 0, 0})
-    ->Unit(::benchmark::kMicrosecond);
+    ->Unit(::benchmark::kNanosecond);
 BENCHMARK(BM_Predict)
     ->Args({512, 5, 1000, 1000, 1000, 1000, 1000, 0, 0, 0, 0})
-    ->Unit(::benchmark::kMicrosecond);
+    ->Unit(::benchmark::kNanosecond);
 //*/
 
 ///*
