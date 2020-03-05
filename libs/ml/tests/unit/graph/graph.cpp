@@ -1293,10 +1293,9 @@ TYPED_TEST(GraphTest, graph_charge_forward_matmul)
   SizeType const weight_width  = weights_data.shape().front();
   SizeType const weight_height = weights_data.shape().back();
   SizeType const input_height  = input_data.shape().front();
+  SizeType const batch_size    = input_data.shape().back();
 
   ASSERT_EQ(weight_height, input_height);  // else MatMul is not possible
-
-  SizeType const batch_size = input_data.shape().back();
 
   fetch::ml::Graph<TensorType> g;
 
@@ -1315,8 +1314,10 @@ TYPED_TEST(GraphTest, graph_charge_forward_matmul)
 
   OperationsCount const batch_charge = g.ChargeForward(matmul);
 
-  SizeType const        matmul_ops      = weight_width * input_height * batch_size;
-  OperationsCount const expected_charge = matmul_ops * LOW_MULTIPLICATION_PER_ELEMENT;
+  OperationsCount expected_charge =
+      batch_size * charge_estimation::ops::OP_MATRIX_MULTIPLY_OVERHEAD;
+  expected_charge += weight_width * weight_height * input_height * batch_size *
+                     fetch::ml::charge_estimation::ops::LOW_MULTIPLICATION_PER_ELEMENT;
 
   ASSERT_EQ(batch_charge, expected_charge);
 }
@@ -1524,7 +1525,7 @@ TYPED_TEST(GraphTest, graph_charge_backward_conv_dense)
 
   OperationsCount const charge = g.ChargeBackward(dense);
   OperationsCount const expected_charge =
-      9044198;  // Pre-calculated backward charge for give shape.
+      67648102438;  // Pre-calculated backward charge for give shape.
 
   EXPECT_EQ(charge, expected_charge);
 
