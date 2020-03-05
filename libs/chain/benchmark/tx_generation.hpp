@@ -28,9 +28,8 @@
 using fetch::byte_array::ByteArray;
 using fetch::chain::Transaction;
 using fetch::chain::TransactionBuilder;
-using fetch::chain::TransactionPtr;
 using fetch::crypto::ECDSASigner;
-using TransactionList = std::vector<TransactionPtr>;
+using TransactionList = std::vector<Transaction>;
 
 template <typename Word = uint64_t>
 fetch::meta::IfIsUnsignedInteger<Word, ByteArray> GenerateRandomArray(
@@ -74,7 +73,7 @@ inline TransactionList GenerateTransactions(std::size_t count, ECDSASigner const
                   .Sign(signer)
                   .Build();
 
-    list.emplace_back(std::move(tx));
+    list.emplace_back(std::move(*tx));
   }
 
   return list;

@@ -235,7 +235,7 @@ void BM_Iterate(benchmark::State &state)
 {
   using TensorType = typename fetch::math::Tensor<T>;
 
-  // Get args form state
+  // Get args from state
   BM_Tensor_config config{state};
 
   fetch::math::Tensor<T> input(config.shape);

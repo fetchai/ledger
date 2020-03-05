@@ -1814,7 +1814,7 @@ void BM_FlattenForward(benchmark::State &state)
   using VecTensorType = typename fetch::ml::ops::Ops<TensorType>::VecTensorType;
   using SizeType      = fetch::math::SizeType;
 
-  // Get args form state
+  // Get args from state
   BM_Tensor_config config{state};
 
   fetch::math::Tensor<T> input(config.shape);
@@ -1831,8 +1831,8 @@ void BM_FlattenForward(benchmark::State &state)
   fetch::ml::ops::Flatten<fetch::math::Tensor<T>> flatten;
 
   flatten.SetBatchInputShapes({config.shape});
+  flatten.SetBatchOutputShape(output_shape);
   state.counters["charge"] = static_cast<double>(flatten.ChargeForward({config.shape}).first);
-
   for (auto _ : state)
   {
     flatten.Forward(inputs, output);
@@ -5173,7 +5173,7 @@ void BM_AddForward(benchmark::State &state)
   using TensorType    = typename fetch::math::Tensor<T>;
   using VecTensorType = typename fetch::ml::ops::Ops<TensorType>::VecTensorType;
 
-  // Get args form state
+  // Get args from state
   BM_Tensor_config config{state};
 
   fetch::math::Tensor<T> input_1(config.shape);
@@ -5218,7 +5218,7 @@ void BM_AddBackward(benchmark::State &state)
   using TensorType    = typename fetch::math::Tensor<T>;
   using VecTensorType = typename fetch::ml::ops::Ops<TensorType>::VecTensorType;
 
-  // Get args form state
+  // Get args from state
   BM_two_tensors_config config{state};
 
   fetch::math::Tensor<T> input_1(config.shape_one);
