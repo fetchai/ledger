@@ -298,11 +298,11 @@ std::pair<OperationsCount, math::SizeVector> MatrixMultiply<T>::ChargeForward(
   // Assuming this is a matrix multiplication of weights * input_vector
   OperationsCount const input_1_dim_1 = input_shapes.front().at(0);
   OperationsCount const input_1_dim_2 = input_shapes.front().at(1);
-  // OperationsCount const input_2_dim_1 = input_shapes.back().at(0);
-  OperationsCount const input_2_dim_2 = input_shapes.back().at(1);
+  OperationsCount const input_2_dim_1 = input_shapes.back().at(0);
+  // OperationsCount const input_2_dim_2 = input_shapes.back().at(1);
 
   OperationsCount op_cnt = charge_estimation::ops::OP_MATRIX_MULTIPLY_OVERHEAD;  // set up overhead
-  op_cnt += input_1_dim_1 * input_1_dim_2 * input_2_dim_2 *
+  op_cnt += input_1_dim_1 * input_1_dim_2 * input_2_dim_1 *
             fetch::ml::charge_estimation::ops::OP_MATRIX_MULTIPLY_FORWARD;
 
   auto output_shape = ComputeOutputShape(input_shapes);

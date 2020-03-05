@@ -2273,9 +2273,9 @@ void BM_MatrixMultiply_Forward(benchmark::State &state)
   // Get args form state
   BM_Tensor_config config{state};
 
-  fetch::math::Tensor<T> input_1({config.shape.at(0), config.shape.at(1), config.shape.at(2)});
-  fetch::math::Tensor<T> input_2({config.shape.at(1), config.shape.at(0), config.shape.at(2)});
-  fetch::math::Tensor<T> output({config.shape.at(0), config.shape.at(0), config.shape.at(2)});
+  fetch::math::Tensor<T> input_1({config.shape.at(0), config.shape.at(1)});
+  fetch::math::Tensor<T> input_2({config.shape.at(1), config.shape.at(0)});
+  fetch::math::Tensor<T> output({config.shape.at(0), config.shape.at(0)});
 
   // Fill tensors with random values
   input_1.FillUniformRandom();
@@ -2300,22 +2300,25 @@ void BM_MatrixMultiply_Forward(benchmark::State &state)
 static void MatMulArguments(benchmark::internal::Benchmark *b)
 {
   using SizeType                       = fetch::math::SizeType;
-  SizeType const            N_ELEMENTS = 3;
-  std::vector<std::int64_t> batch_size{1, 32, 128};
-  std::vector<std::int64_t> dim_size{2, 16, 128, 1024};
+  SizeType const            N_ELEMENTS = 2;
+  std::vector<std::int64_t> batch_size{1, 2, 16, 64, 128, 1024};
+  std::vector<std::int64_t> dim_size{1, 2, 16, 64, 128, 1024};
   for (std::int64_t &i : batch_size)
   {
     for (std::int64_t &j : dim_size)
     {
-      b->Args({N_ELEMENTS, j, 2, i});
+      b->Args({N_ELEMENTS, j, i});
     }
     for (std::int64_t &j : dim_size)
     {
-      b->Args({N_ELEMENTS, 2, j, i});
+      b->Args({N_ELEMENTS, j, i});
     }
   }
 }
 
+BENCHMARK_TEMPLATE(BM_MatrixMultiply_Forward, fetch::fixed_point::fp64_t)
+    ->Apply(MatMulArguments)
+    ->Unit(::benchmark::kNanosecond);
 BENCHMARK_TEMPLATE(BM_MatrixMultiply_Forward, float)
     ->Apply(MatMulArguments)
     ->Unit(::benchmark::kNanosecond);
@@ -2323,9 +2326,6 @@ BENCHMARK_TEMPLATE(BM_MatrixMultiply_Forward, double)
     ->Apply(MatMulArguments)
     ->Unit(::benchmark::kNanosecond);
 BENCHMARK_TEMPLATE(BM_MatrixMultiply_Forward, fetch::fixed_point::fp32_t)
-    ->Apply(MatMulArguments)
-    ->Unit(::benchmark::kNanosecond);
-BENCHMARK_TEMPLATE(BM_MatrixMultiply_Forward, fetch::fixed_point::fp64_t)
     ->Apply(MatMulArguments)
     ->Unit(::benchmark::kNanosecond);
 BENCHMARK_TEMPLATE(BM_MatrixMultiply_Forward, fetch::fixed_point::fp128_t)
@@ -2341,12 +2341,12 @@ void BM_MatrixMultiply_Backward(benchmark::State &state)
   // Get args form state
   BM_Tensor_config config{state};
 
-  auto input_shape_1 = {config.shape.at(0), config.shape.at(1), config.shape.at(2)};
-  auto input_shape_2 = {config.shape.at(1), config.shape.at(0), config.shape.at(2)};
+  auto input_shape_1 = {config.shape.at(0), config.shape.at(1)};
+  auto input_shape_2 = {config.shape.at(1), config.shape.at(0)};
 
   fetch::math::Tensor<T> input_1(input_shape_1);
   fetch::math::Tensor<T> input_2(input_shape_2);
-  fetch::math::Tensor<T> err_sig({config.shape.at(0), config.shape.at(0), config.shape.at(2)});
+  fetch::math::Tensor<T> err_sig({config.shape.at(0), config.shape.at(0)});
 
   // Fill tensors with random values
   input_1.FillUniformRandom();
