@@ -18,6 +18,7 @@
 
 #include "core/serialisers/main_serialiser.hpp"
 #include "math/base_types.hpp"
+#include "ml/charge_estimation/model/constants.hpp"
 #include "ml/charge_estimation/types.hpp"
 #include "ml/layers/fully_connected.hpp"
 #include "vm_modules/ml/model/model.hpp"
@@ -345,52 +346,6 @@ TEST_F(VMModelEstimatorTests, add_conv_layer_activation_test)
                       static_cast<ChargeAmount>(fetch::vm::MAXIMUM_CHARGE));
         }
       }
-    }
-  }
-}
-
-TEST_F(VMModelEstimatorTests, compile_sequential_test)
-{
-  std::string model_type = "sequential";
-  std::string layer_type = "dense";
-  std::string loss_type  = "mse";
-  std::string opt_type   = "adam";
-
-  SizeType min_input_size  = 1;
-  SizeType max_input_size  = 1001;
-  SizeType input_step      = 100;
-  SizeType min_output_size = 1;
-  SizeType max_output_size = 1001;
-  SizeType output_step     = 100;
-
-  fetch::vm::TypeId type_id = 0;
-
-  VmStringPtr vm_ptr_layer_type{new fetch::vm::String(vm.get(), layer_type)};
-  VmStringPtr vm_ptr_loss_type{new fetch::vm::String(vm.get(), loss_type)};
-  VmStringPtr vm_ptr_opt_type{new fetch::vm::String(vm.get(), opt_type)};
-
-  for (SizeType inputs = min_input_size; inputs <= max_input_size; inputs += input_step)
-  {
-    for (SizeType outputs = min_output_size; outputs <= max_output_size; outputs += output_step)
-    {
-      VmModel model(vm.get(), type_id, model_type);
-
-      // add some layers
-      model.LayerAddDense(vm_ptr_layer_type, inputs, 10);
-      model.LayerAddDense(vm_ptr_layer_type, 10, outputs);
-
-      // FullyConnected1
-      SizeType padded_size = fetch::math::Tensor<DataType>::PaddedSizeFromShape({10, inputs});
-      padded_size += fetch::math::Tensor<DataType>::PaddedSizeFromShape({10, 1});
-
-      // FullyConnected2
-      padded_size += fetch::math::Tensor<DataType>::PaddedSizeFromShape({outputs, 10});
-      padded_size += fetch::math::Tensor<DataType>::PaddedSizeFromShape({outputs, 1});
-
-      SizeType val = padded_size * 5 + 19;
-
-      EXPECT_EQ(model.EstimateCompileSequential(vm_ptr_loss_type, vm_ptr_opt_type),
-                static_cast<ChargeAmount>(val));
     }
   }
 }
@@ -1035,7 +990,7 @@ TEST_F(VMModelEstimatorTests, charge_forward_one_dense)
                      TensorType::ChargeIterate({inputs, batch_size})));
 
   // n*m*1 matmul operations
-  expected_cost += (inputs * outputs) * MULTIPLICATION_PER_ELEMENT * batch_size;
+  expected_cost += (inputs * outputs) * LOW_MULTIPLICATION_PER_ELEMENT * batch_size;
   // m bias weights reading
   expected_cost += outputs * WEIGHTS_READING_PER_ELEMENT * batch_size;
 
