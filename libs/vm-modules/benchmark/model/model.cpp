@@ -425,15 +425,15 @@ void BM_Predict(::benchmark::State &state)
   // Get args from state
   BM_Predict_config config{state};
 
-    // set up a compiled model
-    auto vm    = NewVM();
-    auto model = vmSequentialModel(vm, config.sizes, config.activations, "mse", "adam");
+  // set up a compiled model
+  auto vm    = NewVM();
+  auto model = vmSequentialModel(vm, config.sizes, config.activations, "mse", "adam");
 
-    // predict
-    std::vector<SizeType> data_shape{config.sizes[0], config.batch_size};
-    auto                  data    = vmTensor(vm, data_shape);
-    state.counters["charge"]      = static_cast<double>(model->EstimatePredict(data));
-    state.counters["ForwardCost"] = static_cast<double>(model->ChargeForward(data_shape));
+  // predict
+  std::vector<SizeType> data_shape{config.sizes[0], config.batch_size};
+  auto                  data    = vmTensor(vm, data_shape);
+  state.counters["charge"]      = static_cast<double>(model->EstimatePredict(data));
+  state.counters["ForwardCost"] = static_cast<double>(model->ChargeForward(data_shape));
 
   for (auto _ : state)
   {

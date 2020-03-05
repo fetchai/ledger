@@ -296,17 +296,18 @@ std::pair<OperationsCount, math::SizeVector> MatrixMultiply<T>::ChargeForward(
   assert(input_shapes.size() == 2);
 
   // Assuming this is a matrix multiplication of weights * input_vector
-  // e.g. [n; m] * [m; batch_size], then total operations cost is n * m * batch_size,
-  // and default batch_size is 1.
-  OperationsCount const n          = input_shapes.front().at(0);
-  OperationsCount const m          = input_shapes.back().at(0);
-  OperationsCount const batch_size = input_shapes.back().at(input_shapes.front().size() - 1);
+  OperationsCount const input_1_dim_1 = input_shapes.front().at(0);
+  OperationsCount const input_1_dim_2 = input_shapes.front().at(1);
+  OperationsCount const input_2_dim_1 = input_shapes.back().at(0);
+  OperationsCount const input_2_dim_2 = input_shapes.back().at(1);
+  OperationsCount const batch_size    = input_shapes.front().at(input_shapes.front().size() - 1);
 
-  OperationsCount const cost =
-      n * m * batch_size * fetch::ml::charge_estimation::ops::LOW_MULTIPLICATION_PER_ELEMENT;
+  OperationsCount op_cnt = batch_size * 500;  // set up overhead
+  op_cnt += input_1_dim_1 * input_1_dim_2 * input_2_dim_1 * input_2_dim_2 * batch_size *
+            fetch::ml::charge_estimation::ops::LOW_MULTIPLICATION_PER_ELEMENT;
 
   auto output_shape = ComputeOutputShape(input_shapes);
-  return std::make_pair(cost, output_shape);
+  return std::make_pair(op_cnt, output_shape);
 }
 
 template <typename T>
@@ -317,17 +318,17 @@ std::pair<OperationsCount, math::SizeVector> MatrixMultiply<T>::ChargeBackward(
 
   assert(this->batch_input_shapes_.size() == 2);
 
-  OperationsCount const n = this->batch_input_shapes_.front().at(0);
-  OperationsCount const m = this->batch_input_shapes_.back().at(0);
-  OperationsCount const p = 1;
+  OperationsCount const input_1_dim_1 = this->batch_input_shapes_.front().at(0);
+  OperationsCount const input_1_dim_2 = this->batch_input_shapes_.front().at(1);
+  OperationsCount const input_2_dim_1 = this->batch_input_shapes_.back().at(0);
+  OperationsCount const input_2_dim_2 = this->batch_input_shapes_.back().at(1);
 
-  OperationsCount const cost =
-      n * m * p * fetch::ml::charge_estimation::ops::LOW_MULTIPLICATION_PER_ELEMENT +
-      fetch::ml::charge_estimation::ops::LOW_ADDITION_PER_ELEMENT *
-          this->TotalElementsIn({this->batch_input_shapes_});
-  ;
+  OperationsCount op_cnt = 500;  // set up overhead
+  op_cnt += input_1_dim_1 * input_1_dim_2 * input_2_dim_1 * input_2_dim_2 *
+            fetch::ml::charge_estimation::ops::LOW_MULTIPLICATION_PER_ELEMENT;
+
   math::SizeVector output_shape = ComputeOutputShape(input_shapes);
-  return std::make_pair(cost * output_shape.back(), output_shape);
+  return std::make_pair(op_cnt * output_shape.back(), output_shape);
 }
 
 template <typename T>

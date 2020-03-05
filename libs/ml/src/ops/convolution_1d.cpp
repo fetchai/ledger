@@ -426,12 +426,12 @@ std::pair<OperationsCount, math::SizeVector> Convolution1D<TensorType>::ChargeFo
   SizeType horizontal_stride_height = output_height * batch_size;
   SizeType vertical_stride_width    = output_channels;
 
-  OperationsCount cost = horizontal_stride_width * horizontal_stride_height *
-                         vertical_stride_width *
-                         fetch::ml::charge_estimation::ops::LOW_MULTIPLICATION_PER_ELEMENT;
+  OperationsCount op_cnt = horizontal_stride_width * horizontal_stride_height *
+                           vertical_stride_width *
+                           fetch::ml::charge_estimation::ops::LOW_MULTIPLICATION_PER_ELEMENT;
 
   auto output_shape = ComputeOutputShape(input_shapes);
-  return std::make_pair(cost, output_shape);
+  return std::make_pair(op_cnt, output_shape);
 }
 
 template <typename TensorType>
