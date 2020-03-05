@@ -144,7 +144,8 @@ std::pair<OperationsCount, math::SizeVector> Relu<TensorType>::ChargeBackward(
     std::vector<math::SizeVector> const &input_shapes)
 {
   assert(!this->batch_input_shapes_.empty());
-  OperationsCount cost = 1100;  // construction overhead
+  OperationsCount cost =
+      fetch::ml::charge_estimation::ops::RELU_BACKWARD_OVERHEAD;  // construction overhead
 
   auto padded_size = TensorType::PaddedSizeFromShape(this->batch_input_shapes_.front());
 
