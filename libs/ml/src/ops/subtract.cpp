@@ -101,12 +101,16 @@ const char *Subtract<TensorType>::Descriptor() const
 }
 
 template <typename TensorType>
-OperationsCount Subtract<TensorType>::ChargeForward() const
+std::pair<OperationsCount, math::SizeVector> Subtract<TensorType>::ChargeForward(
+    std::vector<math::SizeVector> const &input_shapes)
 {
-  assert(!this->batch_output_shape_.empty());
-  OperationsCount cost = fetch::ml::charge_estimation::ops::SUBTRACTION_PER_ELEMENT *
-                         this->TotalElementsIn({this->batch_output_shape_});
-  return cost;
+  assert(!this->batch_input_shapes_.empty());
+
+  OperationsCount op_cnt = fetch::ml::charge_estimation::ops::SUBTRACTION_PER_ELEMENT *
+                           TensorType::SizeFromShape(input_shapes[0]);
+
+  auto output_shape = ComputeOutputShape(input_shapes);
+  return std::make_pair(op_cnt, output_shape);
 }
 
 template <typename TensorType>
