@@ -159,6 +159,7 @@ static constexpr OperationsCount OP_DEFAULT_CONSTRUCTION_COST         = 1;
 static constexpr OperationsCount OP_MATRIX_MULTIPLY_CONSTRUCTION_COST = 3;
 static constexpr OperationsCount OP_MATRIX_MULTIPLY_OVERHEAD          = 500;
 static constexpr OperationsCount OP_MATRIX_MULTIPLY_FORWARD           = 15;
+static constexpr OperationsCount OP_MATRIX_MULTIPLY_BACKWARD          = 15;
 
 }  // namespace ops
 }  // namespace charge_estimation
