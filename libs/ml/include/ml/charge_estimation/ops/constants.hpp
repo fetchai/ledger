@@ -111,6 +111,7 @@ static constexpr OperationsCount SIGMOID_BACKWARD_PER_ELEMENT =
 static constexpr OperationsCount LOG_SIGMOID_PER_ELEMENT = SIGMOID_PER_ELEMENT + LOG_PER_ELEMENT;
 static constexpr OperationsCount LOG_SIGMOID_BACKWARD_PER_ELEMENT =
     LOW_ADDITION_PER_ELEMENT + DIVISION_PER_ELEMENT + LOW_MULTIPLICATION_PER_ELEMENT;
+static constexpr OperationsCount RELU_BACKWARD_OVERHEAD    = 1100;
 static constexpr OperationsCount RELU_PER_ELEMENT          = MAX_PER_ELEMENT;
 static constexpr OperationsCount RELU_BACKWARD_PER_ELEMENT = ASSIGN_PER_ELEMENT;
 static constexpr OperationsCount DROPOUT_PER_ELEMENT =
