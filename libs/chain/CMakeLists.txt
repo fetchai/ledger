@@ -2,7 +2,7 @@
 # F E T C H   C H A I N   L I B R A R Y
 #
 cmake_minimum_required(VERSION 3.10 FATAL_ERROR)
-project(fetch-address)
+project(fetch-chain)
 
 # CMake Configuration
 include(${FETCH_ROOT_CMAKE_DIR}/BuildTools.cmake)
@@ -18,3 +18,4 @@ setup_library(fetch-chain)
 target_link_libraries(fetch-chain PUBLIC fetch-core fetch-variant fetch-storage)
 
 add_test_target()
+add_subdirectory(benchmark)
