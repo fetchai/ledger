@@ -2296,8 +2296,24 @@ void BM_MatrixMultiply_Forward(benchmark::State &state)
   }
 }
 
+// 1D data + 1D for batch size
+static void MatMul2DArguments(benchmark::internal::Benchmark *b)
+{
+  using SizeType                       = fetch::math::SizeType;
+  SizeType const            N_ELEMENTS = 2;
+  std::vector<std::int64_t> batch_size{1, 32, 128};
+  std::vector<std::int64_t> dim_size{2, 16, 128, 1024};
+  for (std::int64_t &i : batch_size)
+  {
+    for (std::int64_t &j : dim_size)
+    {
+      b->Args({N_ELEMENTS, j, i});
+    }
+  }
+}
+
 // 2D data + 1D for batch size
-static void MatMulArguments(benchmark::internal::Benchmark *b)
+static void MatMul3DArguments(benchmark::internal::Benchmark *b)
 {
   using SizeType                       = fetch::math::SizeType;
   SizeType const            N_ELEMENTS = 2;
@@ -2320,16 +2336,32 @@ BENCHMARK_TEMPLATE(BM_MatrixMultiply_Forward, fetch::fixed_point::fp64_t)
     ->Apply(MatMulArguments)
     ->Unit(::benchmark::kNanosecond);
 BENCHMARK_TEMPLATE(BM_MatrixMultiply_Forward, float)
-    ->Apply(MatMulArguments)
+    ->Apply(MatMul2DArguments)
     ->Unit(::benchmark::kNanosecond);
 BENCHMARK_TEMPLATE(BM_MatrixMultiply_Forward, double)
-    ->Apply(MatMulArguments)
+    ->Apply(MatMul2DArguments)
     ->Unit(::benchmark::kNanosecond);
 BENCHMARK_TEMPLATE(BM_MatrixMultiply_Forward, fetch::fixed_point::fp32_t)
-    ->Apply(MatMulArguments)
+    ->Apply(MatMul2DArguments)
     ->Unit(::benchmark::kNanosecond);
 BENCHMARK_TEMPLATE(BM_MatrixMultiply_Forward, fetch::fixed_point::fp128_t)
-    ->Apply(MatMulArguments)
+    ->Apply(MatMul2DArguments)
+    ->Unit(::benchmark::kNanosecond);
+
+BENCHMARK_TEMPLATE(BM_MatrixMultiply_Forward, float)
+    ->Apply(MatMul3DArguments)
+    ->Unit(::benchmark::kNanosecond);
+BENCHMARK_TEMPLATE(BM_MatrixMultiply_Forward, double)
+    ->Apply(MatMul3DArguments)
+    ->Unit(::benchmark::kNanosecond);
+BENCHMARK_TEMPLATE(BM_MatrixMultiply_Forward, fetch::fixed_point::fp32_t)
+    ->Apply(MatMul3DArguments)
+    ->Unit(::benchmark::kNanosecond);
+BENCHMARK_TEMPLATE(BM_MatrixMultiply_Forward, fetch::fixed_point::fp64_t)
+    ->Apply(MatMul3DArguments)
+    ->Unit(::benchmark::kNanosecond);
+BENCHMARK_TEMPLATE(BM_MatrixMultiply_Forward, fetch::fixed_point::fp128_t)
+    ->Apply(MatMul3DArguments)
     ->Unit(::benchmark::kNanosecond);
 
 template <typename T>
@@ -2367,21 +2399,37 @@ void BM_MatrixMultiply_Backward(benchmark::State &state)
   }
 }
 
-BENCHMARK_TEMPLATE(BM_MatrixMultiply_Backward, float)
-    ->Apply(MatMulArguments)
-    ->Unit(::benchmark::kNanosecond);
-BENCHMARK_TEMPLATE(BM_MatrixMultiply_Backward, double)
-    ->Apply(MatMulArguments)
-    ->Unit(::benchmark::kNanosecond);
-BENCHMARK_TEMPLATE(BM_MatrixMultiply_Backward, fetch::fixed_point::fp32_t)
-    ->Apply(MatMulArguments)
-    ->Unit(::benchmark::kNanosecond);
+// BENCHMARK_TEMPLATE(BM_MatrixMultiply_Backward, float)
+//    ->Apply(MatMul2DArguments)
+//    ->Unit(::benchmark::kNanosecond);
+// BENCHMARK_TEMPLATE(BM_MatrixMultiply_Backward, double)
+//    ->Apply(MatMul2DArguments)
+//    ->Unit(::benchmark::kNanosecond);
+// BENCHMARK_TEMPLATE(BM_MatrixMultiply_Backward, fetch::fixed_point::fp32_t)
+//    ->Apply(MatMul2DArguments)
+//    ->Unit(::benchmark::kNanosecond);
 BENCHMARK_TEMPLATE(BM_MatrixMultiply_Backward, fetch::fixed_point::fp64_t)
-    ->Apply(MatMulArguments)
+    ->Apply(MatMul2DArguments)
     ->Unit(::benchmark::kNanosecond);
-BENCHMARK_TEMPLATE(BM_MatrixMultiply_Backward, fetch::fixed_point::fp128_t)
-    ->Apply(MatMulArguments)
+// BENCHMARK_TEMPLATE(BM_MatrixMultiply_Backward, fetch::fixed_point::fp128_t)
+//    ->Apply(MatMul2DArguments)
+//    ->Unit(::benchmark::kNanosecond);
+
+// BENCHMARK_TEMPLATE(BM_MatrixMultiply_Backward, float)
+//    ->Apply(MatMul3DArguments)
+//    ->Unit(::benchmark::kNanosecond);
+// BENCHMARK_TEMPLATE(BM_MatrixMultiply_Backward, double)
+//    ->Apply(MatMul3DArguments)
+//    ->Unit(::benchmark::kNanosecond);
+// BENCHMARK_TEMPLATE(BM_MatrixMultiply_Backward, fetch::fixed_point::fp32_t)
+//    ->Apply(MatMul3DArguments)
+//    ->Unit(::benchmark::kNanosecond);
+BENCHMARK_TEMPLATE(BM_MatrixMultiply_Backward, fetch::fixed_point::fp64_t)
+    ->Apply(MatMul3DArguments)
     ->Unit(::benchmark::kNanosecond);
+// BENCHMARK_TEMPLATE(BM_MatrixMultiply_Backward, fetch::fixed_point::fp128_t)
+//    ->Apply(MatMul3DArguments)
+//    ->Unit(::benchmark::kNanosecond);
 
 template <class T, int N, int K, int S>
 void BM_MaxPool1DForward(benchmark::State &state)

@@ -291,19 +291,28 @@ std::pair<OperationsCount, math::SizeVector> MatrixMultiply<T>::ChargeForward(
     std::vector<math::SizeVector> const &input_shapes)
 {
   assert(!input_shapes.empty());
-
-  // TODO(ML-482): impl. for n-dimensional case, not only for 2D.
   assert(input_shapes.size() == 2);
+  assert((input_shapes.at(0).size() == 2) || (input_shapes.at(0).size() == 3));
 
   // Assuming this is a matrix multiplication of weights * input_vector
   OperationsCount const input_1_dim_1 = input_shapes.front().at(0);
   OperationsCount const input_1_dim_2 = input_shapes.front().at(1);
   OperationsCount const input_2_dim_1 = input_shapes.back().at(0);
-  // OperationsCount const input_2_dim_2 = input_shapes.back().at(1);
+  OperationsCount const input_2_dim_2 = input_shapes.back().at(1);
+  OperationsCount const batch_size    = input_shapes.back().at(input_shapes.back().size() - 1);
 
-  OperationsCount op_cnt = charge_estimation::ops::OP_MATRIX_MULTIPLY_OVERHEAD;  // set up overhead
-  op_cnt += input_1_dim_1 * input_1_dim_2 * input_2_dim_1 *
-            fetch::ml::charge_estimation::ops::OP_MATRIX_MULTIPLY_FORWARD;
+  OperationsCount op_cnt;
+  if ((input_shapes.front().size() == 2) || ((input_shapes.back().size() == 2)))
+  {
+    op_cnt = 500;  // set up overhead
+    op_cnt += input_1_dim_1 * input_1_dim_2 * input_2_dim_2 * 25;
+  }
+  else
+  {
+    op_cnt = batch_size * charge_estimation::ops::OP_MATRIX_MULTIPLY_OVERHEAD;  // set up overhead
+    op_cnt += (input_1_dim_1 * input_1_dim_2 * input_2_dim_1 * batch_size *
+               fetch::ml::charge_estimation::ops::OP_MATRIX_MULTIPLY_FORWARD);
+  }
 
   auto output_shape = ComputeOutputShape(input_shapes);
   return std::make_pair(op_cnt, output_shape);
@@ -313,18 +322,26 @@ template <typename T>
 std::pair<OperationsCount, math::SizeVector> MatrixMultiply<T>::ChargeBackward(
     std::vector<math::SizeVector> const &input_shapes)
 {
-  assert(!this->batch_input_shapes_.empty());
+  assert(!input_shapes.empty());
+  assert(input_shapes.size() == 2);
 
-  assert(this->batch_input_shapes_.size() == 2);
+  OperationsCount const input_1_dim_1 = input_shapes.front().at(0);
+  OperationsCount const input_1_dim_2 = input_shapes.front().at(1);
+  OperationsCount const input_2_dim_1 = input_shapes.back().at(0);
+  //  OperationsCount const input_2_dim_2 = input_shapes.back().at(1);
+  OperationsCount const batch_size = input_shapes.back().at(input_shapes.back().size() - 1);
 
-  OperationsCount const input_1_dim_1 = this->batch_input_shapes_.front().at(0);
-  OperationsCount const input_1_dim_2 = this->batch_input_shapes_.front().at(1);
-  OperationsCount const input_2_dim_1 = this->batch_input_shapes_.back().at(0);
-  OperationsCount const input_2_dim_2 = this->batch_input_shapes_.back().at(1);
+  OperationsCount op_cnt =
+      batch_size * charge_estimation::ops::OP_MATRIX_MULTIPLY_OVERHEAD;  // set up overhead
 
-  OperationsCount op_cnt = 500;  // set up overhead
-  op_cnt += input_1_dim_1 * input_1_dim_2 * input_2_dim_1 * input_2_dim_2 *
-            fetch::ml::charge_estimation::ops::LOW_MULTIPLICATION_PER_ELEMENT;
+  // DotTranspose (err_sig . input2)
+
+  //  op_cnt += (this->batch_output_shape_)
+
+  op_cnt += (input_1_dim_1 * input_1_dim_2 * input_2_dim_1 * batch_size *
+             fetch::ml::charge_estimation::ops::OP_MATRIX_MULTIPLY_BACKWARD);
+
+  // TransposeDot
 
   math::SizeVector output_shape = ComputeOutputShape(input_shapes);
   return std::make_pair(op_cnt, output_shape);
