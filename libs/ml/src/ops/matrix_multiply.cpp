@@ -304,14 +304,14 @@ std::pair<OperationsCount, math::SizeVector> MatrixMultiply<T>::ChargeForward(
   OperationsCount op_cnt;
   if ((input_shapes.front().size() == 2) || ((input_shapes.back().size() == 2)))
   {
-    op_cnt = 500;  // set up overhead
-    op_cnt += input_1_dim_1 * input_1_dim_2 * input_2_dim_2 * 25;
+    op_cnt = fetch::ml::charge_estimation::ops::OP_MATRIX_MULTIPLY_OVERHEAD;  // set up overhead
+    op_cnt += input_1_dim_1 * input_1_dim_2 * input_2_dim_2 * fetch::ml::charge_estimation::ops::OP_MATRIX_MULTIPLY_FORWARD_2D;
   }
   else
   {
     op_cnt = batch_size * charge_estimation::ops::OP_MATRIX_MULTIPLY_OVERHEAD;  // set up overhead
     op_cnt += (input_1_dim_1 * input_1_dim_2 * input_2_dim_1 * batch_size *
-               fetch::ml::charge_estimation::ops::OP_MATRIX_MULTIPLY_FORWARD);
+               fetch::ml::charge_estimation::ops::OP_MATRIX_MULTIPLY_FORWARD_3D);
   }
 
   auto output_shape = ComputeOutputShape(input_shapes);
