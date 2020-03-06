@@ -2386,7 +2386,7 @@ void BM_MatrixMultiply_Backward(benchmark::State &state)
   using TensorType    = typename fetch::math::Tensor<T>;
   using VecTensorType = typename fetch::ml::ops::Ops<TensorType>::VecTensorType;
 
-  // Get args form state
+  // Get args from state
   BM_Tensor_config config{state};
 
   auto input_shape_1 = {config.shape.at(0), config.shape.at(1), config.shape.at(2)};
