@@ -11,6 +11,7 @@ include(${FETCH_ROOT_CMAKE_DIR}/BuildTools.cmake)
 setup_compiler()
 
 add_fetch_gbench(benchmark_ml_activations fetch-ml activations)
+add_fetch_gbench(benchmark_ml_dataloaders fetch-ml dataloaders)
 add_fetch_gbench(benchmark_ml_embeddings fetch-ml embeddings)
 add_fetch_gbench(benchmark_ml_loss_functions fetch-ml loss_functions)
 add_fetch_gbench(benchmark_ml_metrics fetch-ml metrics)
