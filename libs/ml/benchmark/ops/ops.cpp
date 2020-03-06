@@ -2269,13 +2269,30 @@ void BM_MatrixMultiply_Forward(benchmark::State &state)
 {
   using TensorType    = typename fetch::math::Tensor<T>;
   using VecTensorType = typename fetch::ml::ops::Ops<TensorType>::VecTensorType;
+  using SizeType      = fetch::math::SizeType;
 
   // Get args form state
   BM_Tensor_config config{state};
 
-  fetch::math::Tensor<T> input_1({config.shape.at(0), config.shape.at(1)});
-  fetch::math::Tensor<T> input_2({config.shape.at(1), config.shape.at(0)});
-  fetch::math::Tensor<T> output({config.shape.at(0), config.shape.at(0)});
+  std::vector<SizeType> in1_shape;
+  std::vector<SizeType> in2_shape;
+  std::vector<SizeType> out_shape;
+  if (config.shape.size() == 3)
+  {
+    in1_shape = {config.shape.at(0), config.shape.at(1), config.shape.at(2)};
+    in2_shape = {config.shape.at(1), config.shape.at(0), config.shape.at(2)};
+    out_shape = {config.shape.at(0), config.shape.at(0), config.shape.at(2)};
+  }
+  else
+  {
+    in1_shape = {config.shape.at(0), config.shape.at(0)};
+    in2_shape = {config.shape.at(0), config.shape.at(1)};
+    out_shape = {config.shape.at(0), config.shape.at(1)};
+  }
+
+  fetch::math::Tensor<T> input_1(in1_shape);
+  fetch::math::Tensor<T> input_2(in2_shape);
+  fetch::math::Tensor<T> output(out_shape);
 
   // Fill tensors with random values
   input_1.FillUniformRandom();
@@ -2287,7 +2304,7 @@ void BM_MatrixMultiply_Forward(benchmark::State &state)
   inputs.emplace_back(std::make_shared<TensorType>(input_2));
   fetch::ml::ops::MatrixMultiply<fetch::math::Tensor<T>> matmul;
 
-  auto cost_and_shape      = matmul.ChargeForward({config.shape, config.shape});
+  auto cost_and_shape      = matmul.ChargeForward({in1_shape, in2_shape});
   state.counters["charge"] = static_cast<double>(cost_and_shape.first);
 
   for (auto _ : state)
@@ -2369,16 +2386,30 @@ void BM_MatrixMultiply_Backward(benchmark::State &state)
 {
   using TensorType    = typename fetch::math::Tensor<T>;
   using VecTensorType = typename fetch::ml::ops::Ops<TensorType>::VecTensorType;
+  using SizeType      = fetch::math::SizeType;
 
-  // Get args form state
+  // Get args from state
   BM_Tensor_config config{state};
 
-  auto input_shape_1 = {config.shape.at(0), config.shape.at(1)};
-  auto input_shape_2 = {config.shape.at(1), config.shape.at(0)};
+  std::vector<SizeType> input_shape_1;
+  std::vector<SizeType> input_shape_2;
+  std::vector<SizeType> err_sig_shape;
+  if (config.shape.size() == 3)
+  {
+    input_shape_1 = {config.shape.at(0), config.shape.at(1), config.shape.at(2)};
+    input_shape_2 = {config.shape.at(1), config.shape.at(0), config.shape.at(2)};
+    err_sig_shape = {config.shape.at(0), config.shape.at(0), config.shape.at(2)};
+  }
+  else
+  {
+    input_shape_1 = {config.shape.at(0), config.shape.at(0)};
+    input_shape_2 = {config.shape.at(1), config.shape.at(1)};
+    err_sig_shape = {config.shape.at(0), config.shape.at(1)};
+  }
 
   fetch::math::Tensor<T> input_1(input_shape_1);
   fetch::math::Tensor<T> input_2(input_shape_2);
-  fetch::math::Tensor<T> err_sig({config.shape.at(0), config.shape.at(0)});
+  fetch::math::Tensor<T> err_sig(err_sig_shape);
 
   // Fill tensors with random values
   input_1.FillUniformRandom();

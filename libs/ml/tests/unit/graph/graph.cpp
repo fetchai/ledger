@@ -1315,9 +1315,8 @@ TYPED_TEST(GraphTest, graph_charge_forward_matmul)
   OperationsCount const batch_charge = g.ChargeForward(matmul);
 
   OperationsCount expected_charge =
-      batch_size * charge_estimation::ops::OP_MATRIX_MULTIPLY_OVERHEAD;
-  expected_charge += weight_width * weight_height * input_height * batch_size *
-                     fetch::ml::charge_estimation::ops::LOW_MULTIPLICATION_PER_ELEMENT;
+      fetch::ml::charge_estimation::ops::OP_MATRIX_MULTIPLY_OVERHEAD;  // set up overhead
+  expected_charge += weight_width * weight_height * batch_size * OP_MATRIX_MULTIPLY_FORWARD_2D;
 
   ASSERT_EQ(batch_charge, expected_charge);
 }
@@ -1525,7 +1524,7 @@ TYPED_TEST(GraphTest, graph_charge_backward_conv_dense)
 
   OperationsCount const charge = g.ChargeBackward(dense);
   OperationsCount const expected_charge =
-      67648102438;  // Pre-calculated backward charge for give shape.
+      2319284827366;  // Pre-calculated backward charge for give shape.
 
   EXPECT_EQ(charge, expected_charge);
 
