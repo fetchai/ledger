@@ -27,8 +27,6 @@ using namespace std::chrono_literals;
 
 namespace fetch {
 
-#ifdef FETCH_DEBUG_MUTEX
-
 namespace {
 
 moment::ClockInterface::Timestamp Now()
@@ -38,11 +36,11 @@ moment::ClockInterface::Timestamp Now()
   return clock->Now();
 }
 
-static constexpr moment::ClockInterface::Duration DEADLOCK_TIMEOUT = 2s;
-
 }  // namespace
 
 std::atomic<bool> DeadlockHandler::throw_on_deadlock_{false};
+
+std::atomic<uint64_t> RecursiveLockAttempt::timeout_ms_{2'400'000ull};
 
 /**
  * Either throws a runtime error with a message,
@@ -78,22 +76,27 @@ void DeadlockHandler::AbortOnDeadlock()
  * @param owner Thread id of mutex's current owner
  * @return true iff attempting to lock() this mutex would result in a deadlock
  */
-bool SimpleLockAttempt::IsDeadlocked(OwnerId const &owner) noexcept
+bool SimpleLockAttempt::IsDeadlocked(LockDetails const &owner) noexcept
 {
   return owner.id == std::this_thread::get_id();
+}
+
+void RecursiveLockAttempt::SetTimeoutMs(uint64_t timeout_ms)
+{
+  timeout_ms_ = timeout_ms;
 }
 
 /**
  * At the moment of mutex acquisition, update owner id record.
  * The moment of time is recorded, when a thread locks a recursive mutex for the first time,
- * and if after DEADLOCK_TIMEOUT that thread has not fully released this mutex yetr,
+ * and if after recursive_deadlock_timeout_ that thread has not fully released this mutex yetr,
  * a deadlock is assumed.
  * If this owner has already acquired this mutex, recursion depth is incremented.
  *
  * @param owner A record, either fresh or already known, of a thread that owns a recursive mutex.
  * @return true iff it's the very first, depthwise, acquisition of this mutex by this thread
  */
-bool RecursiveLockAttempt::Populate(OwnerId &owner) noexcept
+bool RecursiveLockAttempt::Populate(LockDetails &owner) noexcept
 {
   if (owner.recursion_depth++ == 0)
   {
@@ -109,7 +112,7 @@ bool RecursiveLockAttempt::Populate(OwnerId &owner) noexcept
  * @param owner A record of a thread that owns a recursive mutex.
  * @return true iff this thread has just fully released this mutex.
  */
-bool RecursiveLockAttempt::Depopulate(OwnerId &owner) noexcept
+bool RecursiveLockAttempt::Depopulate(LockDetails &owner) noexcept
 {
   return --owner.recursion_depth == 0;
 }
@@ -121,7 +124,7 @@ bool RecursiveLockAttempt::Depopulate(OwnerId &owner) noexcept
  * @param owner A record of a thread that is to lock a recursive mutex.
  * @return true iff this thread already has this mutex locked.
  */
-bool RecursiveLockAttempt::SafeToLock(OwnerId const &owner) noexcept
+bool RecursiveLockAttempt::SafeToLock(LockDetails const &owner) noexcept
 {
   return owner.id == std::this_thread::get_id();
 }
@@ -133,11 +136,10 @@ bool RecursiveLockAttempt::SafeToLock(OwnerId const &owner) noexcept
  * @param owner A record of a thread that owns a recursive mutex.
  * @return true iff this takes suspiciously long.
  */
-bool RecursiveLockAttempt::IsDeadlocked(OwnerId const &owner)
+bool RecursiveLockAttempt::IsDeadlocked(LockDetails const &owner)
 {
-  return owner.id != std::this_thread::get_id() && Now() >= owner.taken_at + DEADLOCK_TIMEOUT;
+  return owner.id != std::this_thread::get_id() &&
+         Now() >= owner.taken_at + std::chrono::milliseconds(timeout_ms_);
 }
-
-#endif  // FETCH_DEBUG_MUTEX
 
 }  // namespace fetch

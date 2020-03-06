@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/macros.hpp"
 #include "meta/type_util.hpp"
 #include "moment/clock_interfaces.hpp"
 
@@ -34,31 +35,24 @@
 #include <unordered_map>
 #include <vector>
 
+using namespace std::chrono_literals;
+
 namespace fetch {
 
-#define FETCH_JOIN_IMPL(x, y) x##y
-#define FETCH_JOIN(x, y) FETCH_JOIN_IMPL(x, y)
+class SimpleLockAttempt;
+class RecursiveLockAttempt;
 
-#ifdef FETCH_DEBUG_MUTEX
-
-#define FETCH_LOCK(lockable)                                          \
-  fetch::DebugLockGuard<std::decay_t<decltype(lockable)>> FETCH_JOIN( \
-      mutex_locked_on_line, __LINE__)(lockable, __FILE__, __LINE__)
-
-class SimpleDeadlock;
-class RecursiveDeadlock;
-
-template <class DeadlockPolicy>
+template <class LockPolicy>
 class MutexRegister;
 
-using SimpleMutexRegister    = MutexRegister<SimpleDeadlock>;
-using RecursiveMutexRegister = MutexRegister<RecursiveDeadlock>;
+using SimpleMutexRegister    = MutexRegister<SimpleLockAttempt>;
+using RecursiveMutexRegister = MutexRegister<RecursiveLockAttempt>;
 
 template <class UnderlyingMutex, class MutexRegister>
 class DebugMutex;
 
-using SimpleDebugMutex    = DebugMutex<std::mutex, SimpleMutexRegister>;
-using RecursiveDebugMutex = DebugMutex<std::recursive_mutex, RecursiveMutexRegister>;
+using SimpleDebugMutex    = DebugMutex<std::mutex, SimpleLockAttempt>;
+using RecursiveDebugMutex = DebugMutex<std::recursive_timed_mutex, RecursiveLockAttempt>;
 
 template <typename Mutex>
 class DebugLockGuard;
@@ -92,28 +86,38 @@ protected:
     std::thread::id id = std::this_thread::get_id();
   };
 
-  static constexpr bool Populate(OwnerId & /*owner*/) noexcept
+  static constexpr bool Populate(LockDetails & /*owner*/) noexcept
   {
     return true;
   }
 
-  static constexpr bool Depopulate(OwnerId & /*owner*/) noexcept
+  static constexpr bool Depopulate(LockDetails & /*owner*/) noexcept
   {
     return true;
   }
 
-  static constexpr bool SafeToLock(OwnerId const & /*owner*/) noexcept
+  static constexpr bool SafeToLock(LockDetails const & /*owner*/) noexcept
   {
     return false;
   }
 
-  static bool IsDeadlocked(OwnerId const &owner) noexcept;
+  static bool IsDeadlocked(LockDetails const &owner) noexcept;
+
+  template <class M>
+  static void Lock(M &m, LockLocation const & /*location*/)
+  {
+    m.lock();
+  }
 };
 
 class RecursiveLockAttempt
 {
+public:
+  static void SetTimeoutMs(uint64_t timeout_ms);
+
 protected:
-  using Mutex = RecursiveDebugMutex;
+  using Mutex    = RecursiveDebugMutex;
+  using Duration = moment::ClockInterface::Duration;
 
   struct LockDetails
   {
@@ -122,23 +126,45 @@ protected:
     uint64_t                          recursion_depth = 0;
   };
 
-  static bool Populate(OwnerId &owner) noexcept;
+  static bool Populate(LockDetails &owner) noexcept;
 
-  static bool Depopulate(OwnerId &owner) noexcept;
+  static bool Depopulate(LockDetails &owner) noexcept;
 
-  static bool SafeToLock(OwnerId const &owner) noexcept;
+  static bool SafeToLock(LockDetails const &owner) noexcept;
 
-  static bool IsDeadlocked(OwnerId const &owner);
+  static bool IsDeadlocked(LockDetails const &owner);
+
+  template <class M>
+  void Lock(M &m, LockLocation const &location)
+  {
+    uint64_t current_score = locked_times_;
+    while (!m.try_lock_for(std::chrono::milliseconds(timeout_ms_)))
+    {
+      if (locked_times_ == current_score)
+      {
+        std::stringstream ss{""};
+        ss << "Deadlock occured when acquiring lock at " << location.filename << ":"
+           << location.line << std::endl;
+        DeadlockHandler::DeadlockDetected(ss.str());
+      }
+      current_score = locked_times_;
+    }
+    ++locked_times_;
+  }
+
+private:
+  static std::atomic<uint64_t> timeout_ms_;
+  std::atomic<uint64_t>        locked_times_{0};
 };
 
-template <class DeadlockPolicy>
-class MutexRegister : public DeadlockHandler, DeadlockPolicy
+template <class LockPolicy>
+class MutexRegister : public DeadlockHandler, LockPolicy
 {
-  static_assert(type_util::IsAnyOfV<DeadlockPolicy, SimpleDeadlock, RecursiveDeadlock>,
-                "Only DebugMutex and DebugRecursiveMutex can be tracked as of now");
+  static_assert(type_util::IsAnyOfV<LockPolicy, SimpleLockAttempt, RecursiveLockAttempt>,
+                "Only DebugMutex and RecursiveDebugMutex can be tracked as of now");
 
-  using Parent = DeadlockPolicy;
-  using typename Parent::OwnerId;
+  using Parent = LockPolicy;
+  using typename Parent::LockDetails;
   using MutexPtr = typename Parent::Mutex *;
 
   using Parent::Depopulate;
@@ -156,7 +182,7 @@ public:
     auto &         instance = Instance();
     GuardOfMutexes non_fetch_lock_to_avoid_recursion(instance.mutex_);
 
-    auto lock_owners_it = instance.lock_owners_.emplace(mutex, OwnerId{}).first;
+    auto lock_owners_it = instance.lock_owners_.emplace(mutex, LockDetails{}).first;
     try
     {
       if (Populate(lock_owners_it->second))
@@ -326,7 +352,7 @@ private:
 
   MutexOfMutexes mutex_;
 
-  std::unordered_map<MutexPtr, OwnerId>         lock_owners_;
+  std::unordered_map<MutexPtr, LockDetails>     lock_owners_;
   std::unordered_map<std::thread::id, MutexPtr> waiting_for_;
 
   std::unordered_map<MutexPtr, LockLocation>        lock_location_;
@@ -336,18 +362,20 @@ private:
 using SimpleMutexRegister    = MutexRegister<SimpleLockAttempt>;
 using RecursiveMutexRegister = MutexRegister<RecursiveLockAttempt>;
 
-template <class UnderlyingMutex, class MutexRegister>
-class DebugMutex : UnderlyingMutex
+template <class UnderlyingMutex, class LockAttempt>
+class DebugMutex : UnderlyingMutex, LockAttempt
 {
+  using Register = MutexRegister<LockAttempt>;
+
 public:
   DebugMutex()  = default;
   ~DebugMutex() = default;
 
   void lock(LockLocation loc)
   {
-    MutexRegister::QueueUpFor(this, loc);
-    UnderlyingMutex::lock();
-    MutexRegister::RegisterMutexAcquisition(this, std::move(loc));
+    Register::QueueUpFor(this, loc);
+    LockAttempt::Lock(static_cast<UnderlyingMutex &>(*this), loc);
+    Register::RegisterMutexAcquisition(this, std::move(loc));
   }
 
   void lock()
@@ -357,7 +385,7 @@ public:
 
   void unlock()
   {
-    MutexRegister::UnregisterMutexAcquisition(this);
+    Register::UnregisterMutexAcquisition(this);
     UnderlyingMutex::unlock();
   }
 
@@ -365,16 +393,18 @@ public:
   {
     if (UnderlyingMutex::try_lock())
     {
-      MutexRegister::RegisterMutexAcquisition(this);
+      Register::RegisterMutexAcquisition(this);
       return true;
     }
 
     return false;
   }
-};
 
-using SimpleDebugMutex    = DebugMutex<std::mutex, SimpleMutexRegister>;
-using RecursiveDebugMutex = DebugMutex<std::recursive_mutex, RecursiveMutexRegister>;
+  UnderlyingMutex &Unsafe()
+  {
+    return *this;
+  }
+};
 
 template <typename T>
 class DebugLockGuard
@@ -418,9 +448,15 @@ private:
   Lockable &lockable_;
 };
 
+#ifdef FETCH_DEBUG_MUTEX
+
 using Mutex             = SimpleDebugMutex;
 using RMutex            = RecursiveDebugMutex;
 using ConditionVariable = std::condition_variable_any;
+
+#define FETCH_LOCK(lockable)                                          \
+  fetch::DebugLockGuard<std::decay_t<decltype(lockable)>> FETCH_JOIN( \
+      mutex_locked_on_line, __LINE__)(lockable, __FILE__, __LINE__)
 
 #else  // !FETCH_DEBUG_MUTEX
 

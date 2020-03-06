@@ -22,13 +22,14 @@
 
 #include <chrono>
 #include <cstdint>
+#include <functional>
 #include <thread>
 #include <vector>
 
-#ifdef FETCH_DEBUG_MUTEX
+using Mutex  = fetch::SimpleDebugMutex;
+using RMutex = fetch::RecursiveDebugMutex;
 
-using fetch::Mutex;
-using fetch::RMutex;
+using namespace std::chrono_literals;
 
 TEST(DebugMutex, SimpleProblem)
 {
@@ -39,14 +40,38 @@ TEST(DebugMutex, SimpleProblem)
     EXPECT_THROW(std::lock_guard<Mutex> guard2(mutex), std::runtime_error);
   }
 
-  {
-    Mutex                  mutex1;
-    Mutex                  mutex2;
-    std::lock_guard<Mutex> guard1(mutex1);
-    std::lock_guard<Mutex> guard2(mutex2);
+  static constexpr std::size_t TABLE_SIZE = 7;
 
-    EXPECT_THROW(std::lock_guard<Mutex> guard3(mutex2), std::runtime_error);
+  std::vector<Mutex>       forks(TABLE_SIZE);
+  std::vector<std::thread> dining_philosophers;
+  std::atomic<std::size_t> hungry_philosophers{0};
+
+  auto runnable = [&hungry_philosophers](auto left_fork, auto right_fork) {
+    FETCH_LOCK(left_fork.get());  // everybody, get your forks
+    std::this_thread::sleep_for(100ms);
+    try
+    {
+      FETCH_LOCK(right_fork.get());
+    }
+    catch (...)
+    {
+      ++hungry_philosophers;
+    }
+  };
+
+  for (std::size_t fork = 0; fork < TABLE_SIZE; ++fork)
+  {
+    Mutex &left_fork  = forks[fork];
+    Mutex &right_fork = forks[(fork + 1) % TABLE_SIZE];
+    dining_philosophers.emplace_back(runnable, std::ref(left_fork), std::ref(right_fork));
   }
+
+  for (auto &philosopher : dining_philosophers)
+  {
+    philosopher.join();
+  }
+
+  ASSERT_EQ(hungry_philosophers, 1);
 }
 
 TEST(DebugMutex, MultiThreadDeadlock)
@@ -170,26 +195,78 @@ TEST(DebugMutex, CorrectRecursive)
 
 TEST(DebugMutex, IncorrectRecursive)
 {
-  fetch::DeadlockHandler::ThrowOnDeadlock();
-  RMutex m;
-
-  std::vector<std::thread> threads;
-
-  threads.emplace_back([&m] {
-    FETCH_LOCK(m);
-    FETCH_LOCK(m);
-    std::this_thread::sleep_for(std::chrono::seconds(4));
-  });
-
-  threads.emplace_back([&m] {
-    std::this_thread::sleep_for(std::chrono::seconds(3));
-    EXPECT_THROW(std::lock_guard<RMutex> failed_guard(m), std::runtime_error);
-  });
-
-  for (auto &t : threads)
   {
-    t.join();
+    fetch::DeadlockHandler::ThrowOnDeadlock();
+    fetch::RecursiveLockAttempt::SetTimeoutMs(100);
+    RMutex m;
+
+    std::vector<std::thread> threads;
+
+    threads.emplace_back([&m] {
+      FETCH_LOCK(m);
+      FETCH_LOCK(m);
+      std::this_thread::sleep_for(300ms);
+    });
+
+    threads.emplace_back([&m] {
+      std::this_thread::sleep_for(200ms);
+      EXPECT_THROW(std::lock_guard<RMutex> failed_guard(m), std::runtime_error);
+    });
+
+    for (auto &t : threads)
+    {
+      t.join();
+    }
+  }
+
+  {
+    fetch::DeadlockHandler::ThrowOnDeadlock();
+    fetch::RecursiveLockAttempt::SetTimeoutMs(200);
+    RMutex m;
+
+    std::vector<std::thread> threads;
+
+    threads.emplace_back([&m] {
+      FETCH_LOCK(m);
+      std::this_thread::sleep_for(400ms);
+    });
+
+    threads.emplace_back([&m] {
+      std::this_thread::sleep_for(100ms);
+      EXPECT_THROW(std::lock_guard<RMutex> failed_guard(m), std::runtime_error);
+    });
+
+    for (auto &t : threads)
+    {
+      t.join();
+    }
+  }
+
+  {
+    fetch::DeadlockHandler::ThrowOnDeadlock();
+    fetch::RecursiveLockAttempt::SetTimeoutMs(300);
+    RMutex m;
+
+    std::vector<std::thread> threads;
+
+    std::atomic<std::size_t> visited{0};
+
+    threads.emplace_back([&m] {
+      FETCH_LOCK(m);
+      std::this_thread::sleep_for(200ms);
+    });
+
+    threads.emplace_back([&m, &visited] {
+      std::this_thread::sleep_for(100ms);
+      FETCH_LOCK(m);
+      ++visited;
+    });
+
+    for (auto &t : threads)
+    {
+      t.join();
+    }
+
+    EXPECT_EQ(visited, 1);
   }
 }
-
-#endif  // FETCH_DEBUG_MUTEX
