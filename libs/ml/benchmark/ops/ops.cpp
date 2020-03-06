@@ -2333,7 +2333,7 @@ static void MatMul3DArguments(benchmark::internal::Benchmark *b)
 }
 
 BENCHMARK_TEMPLATE(BM_MatrixMultiply_Forward, fetch::fixed_point::fp64_t)
-    ->Apply(MatMulArguments)
+    ->Apply(MatMul2DArguments)
     ->Unit(::benchmark::kNanosecond);
 BENCHMARK_TEMPLATE(BM_MatrixMultiply_Forward, float)
     ->Apply(MatMul2DArguments)

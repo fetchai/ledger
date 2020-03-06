@@ -383,8 +383,6 @@ void BM_ReluForward(benchmark::State &state)
   inputs.emplace_back(std::make_shared<TensorType>(input));
   fetch::ml::ops::Relu<fetch::math::Tensor<T>> relu;
 
-  relu.SetBatchInputShapes({config.shape});
-
   state.counters["charge"] = static_cast<double>(relu.ChargeForward({config.shape}).first);
 
   for (auto _ : state)
@@ -409,12 +407,12 @@ static void ReluArguments(benchmark::internal::Benchmark *b)
   }
 }
 
+BENCHMARK_TEMPLATE(BM_ReluForward, fetch::fixed_point::fp64_t)
+    ->Apply(ReluArguments)
+    ->Unit(benchmark::kNanosecond);
 BENCHMARK_TEMPLATE(BM_ReluForward, float)->Apply(ReluArguments)->Unit(benchmark::kNanosecond);
 BENCHMARK_TEMPLATE(BM_ReluForward, double)->Apply(ReluArguments)->Unit(benchmark::kNanosecond);
 BENCHMARK_TEMPLATE(BM_ReluForward, fetch::fixed_point::fp32_t)
-    ->Apply(ReluArguments)
-    ->Unit(benchmark::kNanosecond);
-BENCHMARK_TEMPLATE(BM_ReluForward, fetch::fixed_point::fp64_t)
     ->Apply(ReluArguments)
     ->Unit(benchmark::kNanosecond);
 BENCHMARK_TEMPLATE(BM_ReluForward, fetch::fixed_point::fp128_t)
@@ -438,7 +436,6 @@ void BM_ReluBackward(benchmark::State &state)
   inputs.emplace_back(std::make_shared<TensorType>(input));
   fetch::ml::ops::Relu<fetch::math::Tensor<T>> relu;
 
-  relu.SetBatchInputShapes({config.shape});
   state.counters["charge"] = static_cast<double>(relu.ChargeBackward({config.shape}).first);
 
   for (auto _ : state)
