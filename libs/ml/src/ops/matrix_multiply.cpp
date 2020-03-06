@@ -329,20 +329,17 @@ std::pair<OperationsCount, math::SizeVector> MatrixMultiply<T>::ChargeBackward(
   OperationsCount const input_1_dim_1 = input_shapes.front().at(0);
   OperationsCount const input_1_dim_2 = input_shapes.front().at(1);
   OperationsCount const input_2_dim_1 = input_shapes.back().at(0);
-  //  OperationsCount const input_2_dim_2 = input_shapes.back().at(1);
-  OperationsCount const batch_size = input_shapes.back().at(input_shapes.back().size() - 1);
+  OperationsCount const batch_size    = input_shapes.back().at(input_shapes.back().size() - 1);
 
   OperationsCount op_cnt =
       batch_size * charge_estimation::ops::OP_MATRIX_MULTIPLY_OVERHEAD;  // set up overhead
 
   // DotTranspose (err_sig . input2)
-
-  //  op_cnt += (this->batch_output_shape_)
-
   op_cnt += (input_1_dim_1 * input_1_dim_2 * input_2_dim_1 * batch_size *
              fetch::ml::charge_estimation::ops::OP_MATRIX_MULTIPLY_BACKWARD);
 
   // TransposeDot
+  // TODO - sort this!!!
 
   math::SizeVector output_shape = ComputeOutputShape(input_shapes);
   return std::make_pair(op_cnt * output_shape.back(), output_shape);
