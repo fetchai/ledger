@@ -41,4 +41,19 @@ TEST(RegistryTests, Uniqueness)
   }
 }
 
+using fetch::telemetry::Counter;
+
+TEST(RegistryTests, MultipleLabels)
+{
+  {
+    auto ctr1 = Registry::Instance().CreateCounter("with_labels_total", "This should not",
+                                                   Registry::Labels{{"Hello", "world"}});
+    auto ctr2 = Registry::Instance().CreateCounter("with_labels_total", "This should not",
+                                                   Registry::Labels{{"Answer", "42"}});
+    ASSERT_NE(ctr1, ctr2);
+    auto ctr = Registry::Instance().LookupMeasurement<Counter>("with_labels_total");
+    ASSERT_TRUE(ctr == ctr1 || ctr == ctr2);
+  }
+}
+
 }  // namespace
