@@ -53,7 +53,7 @@ void DeadlockHandler::DeadlockDetected(std::string message)
 {
   if (static_cast<bool>(throw_on_deadlock_))
   {
-    throw std::runtime_error(std::move(message));
+    throw std::runtime_error(message);
   }
 
   std::cerr << message << std::endl;
