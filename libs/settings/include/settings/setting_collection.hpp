@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "settings/detail/environment_wrapper.hpp"
+#include "settings/help.hpp"
 
 #include <vector>
 
@@ -45,12 +46,15 @@ public:
   Settings const &settings() const;
 
   void Add(SettingBase &setting);
-  void UpdateFromArgs(int argc, char **argv);
+  bool UpdateFromArgs(int argc, char **argv);
   void UpdateFromEnv(char const *                        prefix,
                      detail::EnvironmentInterface const &env = detail::Environment{});
 
+  void DisplayHelp() const;
+
 private:
   Settings settings_;
+  Help     help_{*this};
 };
 
 }  // namespace settings
