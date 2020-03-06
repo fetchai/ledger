@@ -23,8 +23,10 @@
 #include "telemetry/histogram_map.hpp"
 #include "telemetry/registry.hpp"
 
+#include <cctype>
 #include <initializer_list>
 #include <memory>
+#include <numeric>
 #include <ostream>
 #include <string>
 #include <utility>
@@ -51,20 +53,15 @@ Registry &Registry::Instance()
  */
 bool Registry::ValidateName(std::string const &name)
 {
-  bool valid{true};
-
   for (char c : name)
   {
-    valid = (c == '_') || ((c >= 'a') && (c <= 'z')) || ((c >= '0') && (c <= '9'));
-
-    // exit as soon as it it not valid
-    if (!valid)
+    if (std::islower(c) == 0 && c != '_' && std::isdigit(c) == 0)
     {
-      break;
+      return false;
     }
   }
 
-  return valid;
+  return true;
 }
 
 /**
@@ -77,21 +74,7 @@ bool Registry::ValidateName(std::string const &name)
  */
 CounterPtr Registry::CreateCounter(std::string name, std::string description, Labels labels)
 {
-  CounterPtr counter{};
-
-  if (ValidateName(name))
-  {
-    // create the new counter
-    counter = std::make_shared<Counter>(std::move(name), std::move(description), std::move(labels));
-
-    // add the counter to the register
-    {
-      std::lock_guard<std::mutex> guard(lock_);
-      measurements_.push_back(counter);
-    }
-  }
-
-  return counter;
+  return Create<Counter>(name, std::move(name), std::move(description), std::move(labels));
 }
 
 /**
@@ -104,21 +87,7 @@ CounterPtr Registry::CreateCounter(std::string name, std::string description, La
  */
 CounterMapPtr Registry::CreateCounterMap(std::string name, std::string description, Labels labels)
 {
-  CounterMapPtr map{};
-
-  if (ValidateName(name))
-  {
-    // create the new counter
-    map = std::make_shared<CounterMap>(std::move(name), std::move(description), std::move(labels));
-
-    // add the counter to the register
-    {
-      std::lock_guard<std::mutex> guard(lock_);
-      measurements_.emplace_back(map);
-    }
-  }
-
-  return map;
+  return Create<CounterMap>(name, std::move(name), std::move(description), std::move(labels));
 }
 
 /**
@@ -130,47 +99,19 @@ CounterMapPtr Registry::CreateCounterMap(std::string name, std::string descripti
  * @param labels The labels associated with the metric
  * @return The pointer to the created metric if successful, otherwise a nullptr
  */
-HistogramPtr Registry::CreateHistogram(std::initializer_list<double> const &buckets,
-                                       std::string name, std::string description, Labels labels)
+HistogramPtr Registry::CreateHistogram(std::initializer_list<double> buckets, std::string name,
+                                       std::string description, Labels labels)
 {
-  HistogramPtr histogram{};
-
-  if (ValidateName(name))
-  {
-    // create the histogram
-    histogram = std::make_shared<Histogram>(buckets, name, description, labels);
-
-    // add the counter to the register
-    {
-      std::lock_guard<std::mutex> guard(lock_);
-      measurements_.push_back(histogram);
-    }
-  }
-
-  return histogram;
+  return Create<Histogram>(name, buckets, std::move(name), std::move(description),
+                           std::move(labels));
 }
 
 HistogramMapPtr Registry::CreateHistogramMap(std::vector<double> buckets, std::string name,
                                              std::string field, std::string description,
                                              Labels labels)
 {
-  HistogramMapPtr histogram_map{};
-
-  if (ValidateName(name))
-  {
-    // create the histogram
-    histogram_map =
-        std::make_shared<HistogramMap>(std::move(name), std::move(field), std::move(buckets),
-                                       std::move(description), std::move(labels));
-
-    // add the counter to the register
-    {
-      std::lock_guard<std::mutex> guard(lock_);
-      measurements_.emplace_back(histogram_map);
-    }
-  }
-
-  return histogram_map;
+  return Create<HistogramMap>(name, std::move(name), std::move(field), std::move(buckets),
+                              std::move(description), std::move(labels));
 }
 
 /**
@@ -183,10 +124,42 @@ void Registry::Collect(std::ostream &stream)
   OutputStream telemetry_stream{stream};
 
   std::lock_guard<std::mutex> guard(lock_);
-  for (auto const &measurement : measurements_)
+  for (auto const &named_cell : measurements_)
   {
-    measurement->ToStream(telemetry_stream);
+    for (auto const &measurement : named_cell.second)
+    {
+      measurement->ToStream(telemetry_stream);
+    }
   }
+}
+
+std::size_t Registry::FastMeasurementHash::operator()(MeasurementPtr const &measurement) const
+{
+  assert(measurement);
+
+  using OrderedLabels = std::map<Measurement::Labels::key_type, Measurement::Labels::mapped_type>;
+
+  auto const &original_labels = measurement->labels();
+  using std::begin;
+  using std::end;
+  OrderedLabels ordered_labels(begin(original_labels), end(original_labels));
+
+  std::string flattened =
+      std::accumulate(begin(ordered_labels), end(ordered_labels), std::string{},
+                      [](std::string accum, auto &&element) {
+                        return std::move(accum) + element.first + KEY + element.second + VALUE;
+                      });
+
+  auto ret_val = std::hash<std::string>{}(flattened);
+  return ret_val;
+}
+
+bool Registry::LabelsEqual::operator()(MeasurementPtr const &left,
+                                       MeasurementPtr const &right) const
+{
+  assert(left);
+  assert(right);
+  return left->labels() == right->labels();
 }
 
 }  // namespace telemetry
