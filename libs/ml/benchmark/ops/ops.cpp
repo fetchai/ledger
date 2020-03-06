@@ -49,6 +49,7 @@
 #include "ml/ops/tanh.hpp"
 #include "ml/ops/top_k.hpp"
 #include "ml/ops/transpose.hpp"
+#include "ml/utilities/utils.hpp"
 #include "vectorise/fixed_point/fixed_point.hpp"
 
 #include "benchmark/benchmark.h"
