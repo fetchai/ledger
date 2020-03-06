@@ -30,6 +30,8 @@ static constexpr OperationsCount PIECEWISE_LOWER_THRESHOLD = 16384;    // 2^14
 static constexpr OperationsCount PIECEWISE_HARD_CAP        = 1048576;  // 2^20
 
 static constexpr OperationsCount OP_OVERHEAD = 60;
+static constexpr OperationsCount TENSOR_CONSTRUCTION_OVERHEAD =
+    20;  // should be multiplied by tensor size
 
 static constexpr OperationsCount FIBONNACI_GENERATOR_PER_ELEMENT = 1;
 static constexpr OperationsCount TANH_PER_ELEMENT                = 1;
@@ -109,6 +111,7 @@ static constexpr OperationsCount SIGMOID_BACKWARD_PER_ELEMENT =
 static constexpr OperationsCount LOG_SIGMOID_PER_ELEMENT = SIGMOID_PER_ELEMENT + LOG_PER_ELEMENT;
 static constexpr OperationsCount LOG_SIGMOID_BACKWARD_PER_ELEMENT =
     LOW_ADDITION_PER_ELEMENT + DIVISION_PER_ELEMENT + LOW_MULTIPLICATION_PER_ELEMENT;
+static constexpr OperationsCount RELU_BACKWARD_OVERHEAD    = 1100;
 static constexpr OperationsCount RELU_PER_ELEMENT          = MAX_PER_ELEMENT;
 static constexpr OperationsCount RELU_BACKWARD_PER_ELEMENT = ASSIGN_PER_ELEMENT;
 static constexpr OperationsCount DROPOUT_PER_ELEMENT =

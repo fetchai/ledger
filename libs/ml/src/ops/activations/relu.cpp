@@ -113,13 +113,30 @@ template <typename TensorType>
 std::pair<OperationsCount, math::SizeVector> Relu<TensorType>::ChargeForward(
     std::vector<math::SizeVector> const &input_shapes)
 {
-  assert(!this->batch_input_shapes_.empty());
-
-  OperationsCount op_cnt = fetch::ml::charge_estimation::ops::RELU_PER_ELEMENT *
-                           TensorType::SizeFromShape(input_shapes[0]);
+  assert(input_shapes.size() == 1);
 
   auto output_shape = ComputeOutputShape(input_shapes);
-  return std::make_pair(op_cnt, output_shape);
+
+  OperationsCount cost = fetch::ml::charge_estimation::ops::OP_OVERHEAD;
+
+  auto padded_size = TensorType::PaddedSizeFromShape(input_shapes.front());
+
+  if (padded_size < fetch::ml::charge_estimation::ops::PIECEWISE_LOWER_THRESHOLD)
+  {
+    cost += fetch::ml::charge_estimation::ops::RELU_PER_ELEMENT *
+            TensorType::ChargeIterate(input_shapes.front());
+  }
+  else if (padded_size < fetch::ml::charge_estimation::ops::PIECEWISE_HARD_CAP)
+  {
+    cost += fetch::ml::charge_estimation::ops::RELU_PER_ELEMENT *
+            TensorType::ChargeIterate(input_shapes.front());
+  }
+  else
+  {
+    cost = math::numeric_max<OperationsCount>();
+  }
+
+  return std::make_pair(cost, output_shape);
 }
 
 template <typename TensorType>
@@ -127,10 +144,28 @@ std::pair<OperationsCount, math::SizeVector> Relu<TensorType>::ChargeBackward(
     std::vector<math::SizeVector> const &input_shapes)
 {
   assert(!this->batch_input_shapes_.empty());
-  OperationsCount cost = fetch::ml::charge_estimation::ops::RELU_BACKWARD_PER_ELEMENT *
-                         this->TotalElementsIn({this->batch_input_shapes_});
+  OperationsCount cost =
+      fetch::ml::charge_estimation::ops::RELU_BACKWARD_OVERHEAD;  // construction overhead
+
+  auto padded_size = TensorType::PaddedSizeFromShape(this->batch_input_shapes_.front());
+
+  if (padded_size < fetch::ml::charge_estimation::ops::PIECEWISE_LOWER_THRESHOLD)
+  {
+    cost += fetch::ml::charge_estimation::ops::RELU_BACKWARD_PER_ELEMENT *
+            TensorType::ChargeIterate(this->batch_input_shapes_.front());
+  }
+  else if (padded_size < fetch::ml::charge_estimation::ops::PIECEWISE_HARD_CAP)
+  {
+    cost += fetch::ml::charge_estimation::ops::RELU_BACKWARD_PER_ELEMENT *
+            TensorType::ChargeIterate(this->batch_input_shapes_.front());
+  }
+  else
+  {
+    cost = math::numeric_max<OperationsCount>();
+  }
+
   math::SizeVector output_shape = ComputeOutputShape(input_shapes);
-  return std::make_pair(cost * output_shape.back(), output_shape);
+  return std::make_pair(cost, output_shape);
 }
 
 ///////////////////////////////
