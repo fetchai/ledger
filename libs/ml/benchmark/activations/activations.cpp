@@ -26,6 +26,7 @@
 #include "ml/ops/activations/relu.hpp"
 #include "ml/ops/activations/sigmoid.hpp"
 #include "ml/ops/activations/softmax.hpp"
+#include "ml/utilities/utils.hpp"
 
 #include "benchmark/benchmark.h"
 
@@ -366,59 +367,94 @@ BENCHMARK_TEMPLATE(BM_RandomisedReluBackward, double, 1024)->Unit(benchmark::kMi
 BENCHMARK_TEMPLATE(BM_RandomisedReluBackward, double, 2048)->Unit(benchmark::kMicrosecond);
 BENCHMARK_TEMPLATE(BM_RandomisedReluBackward, double, 4096)->Unit(benchmark::kMicrosecond);
 
-template <class T, int N>
+template <class T>
 void BM_ReluForward(benchmark::State &state)
 {
   using TensorType = typename fetch::math::Tensor<T>;
-  TensorType input({1, N});
-  TensorType output({1, N});
+
+  fetch::ml::utilities::BM_Tensor_config<::benchmark::State> config{state};
+
+  TensorType input(config.shape);
+  TensorType output(config.shape);
+
+  input.FillUniformRandom();
 
   std::vector<std::shared_ptr<fetch::math::Tensor<T> const>> inputs;
   inputs.emplace_back(std::make_shared<TensorType>(input));
-  fetch::ml::ops::Relu<fetch::math::Tensor<T>> rm;
+  fetch::ml::ops::Relu<fetch::math::Tensor<T>> relu;
+
+  state.counters["charge"] = static_cast<double>(relu.ChargeForward({config.shape}).first);
 
   for (auto _ : state)
   {
-    rm.Forward(inputs, output);
+    relu.Forward(inputs, output);
   }
 }
 
-BENCHMARK_TEMPLATE(BM_ReluForward, double, 2)->Unit(benchmark::kNanosecond);
-BENCHMARK_TEMPLATE(BM_ReluForward, double, 256)->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_ReluForward, double, 512)->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_ReluForward, double, 1024)->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_ReluForward, double, 2048)->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_ReluForward, double, 4096)->Unit(benchmark::kMicrosecond);
+static void ReluArguments(benchmark::internal::Benchmark *b)
+{
+  using SizeType                       = fetch::math::SizeType;
+  SizeType const            N_ELEMENTS = 2;
+  std::vector<std::int64_t> batch_size{1, 32, 128};
 
-template <class T, int N>
+  std::vector<std::int64_t> dim_size{2, 256, 512, 1024, 2048, 4096};
+  for (std::int64_t &i : batch_size)
+  {
+    for (std::int64_t &j : dim_size)
+    {
+      b->Args({N_ELEMENTS, j, i});
+    }
+  }
+}
+
+BENCHMARK_TEMPLATE(BM_ReluForward, float)->Apply(ReluArguments)->Unit(benchmark::kNanosecond);
+BENCHMARK_TEMPLATE(BM_ReluForward, double)->Apply(ReluArguments)->Unit(benchmark::kNanosecond);
+BENCHMARK_TEMPLATE(BM_ReluForward, fetch::fixed_point::fp32_t)
+    ->Apply(ReluArguments)
+    ->Unit(benchmark::kNanosecond);
+BENCHMARK_TEMPLATE(BM_ReluForward, fetch::fixed_point::fp64_t)
+    ->Apply(ReluArguments)
+    ->Unit(benchmark::kNanosecond);
+BENCHMARK_TEMPLATE(BM_ReluForward, fetch::fixed_point::fp128_t)
+    ->Apply(ReluArguments)
+    ->Unit(benchmark::kNanosecond);
+
+template <class T>
 void BM_ReluBackward(benchmark::State &state)
 {
-  using TensorType  = typename fetch::math::Tensor<T>;
-  auto input        = TensorType({1, N});
-  auto error_signal = TensorType({1, N});
+  using TensorType = typename fetch::math::Tensor<T>;
 
-  // Fill tensors with random values
+  fetch::ml::utilities::BM_Tensor_config<::benchmark::State> config{state};
+
+  TensorType input(config.shape);
+  TensorType error_signal(config.shape);
+
   input.FillUniformRandom();
   error_signal.FillUniformRandom();
 
   std::vector<std::shared_ptr<fetch::math::Tensor<T> const>> inputs;
-
   inputs.emplace_back(std::make_shared<TensorType>(input));
+  fetch::ml::ops::Relu<fetch::math::Tensor<T>> relu;
 
-  fetch::ml::ops::Relu<fetch::math::Tensor<T>> rm;
+  state.counters["charge"] = static_cast<double>(relu.ChargeBackward({config.shape}).first);
 
   for (auto _ : state)
   {
-    rm.Backward(inputs, error_signal);
+    relu.Backward(inputs, error_signal);
   }
 }
 
-BENCHMARK_TEMPLATE(BM_ReluBackward, double, 2)->Unit(benchmark::kNanosecond);
-BENCHMARK_TEMPLATE(BM_ReluBackward, double, 256)->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_ReluBackward, double, 512)->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_ReluBackward, double, 1024)->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_ReluBackward, double, 2048)->Unit(benchmark::kMicrosecond);
-BENCHMARK_TEMPLATE(BM_ReluBackward, double, 4096)->Unit(benchmark::kMicrosecond);
+BENCHMARK_TEMPLATE(BM_ReluBackward, float)->Apply(ReluArguments)->Unit(benchmark::kNanosecond);
+BENCHMARK_TEMPLATE(BM_ReluBackward, double)->Apply(ReluArguments)->Unit(benchmark::kNanosecond);
+BENCHMARK_TEMPLATE(BM_ReluBackward, fetch::fixed_point::fp32_t)
+    ->Apply(ReluArguments)
+    ->Unit(benchmark::kNanosecond);
+BENCHMARK_TEMPLATE(BM_ReluBackward, fetch::fixed_point::fp64_t)
+    ->Apply(ReluArguments)
+    ->Unit(benchmark::kNanosecond);
+BENCHMARK_TEMPLATE(BM_ReluBackward, fetch::fixed_point::fp128_t)
+    ->Apply(ReluArguments)
+    ->Unit(benchmark::kNanosecond);
 
 template <class T, int N>
 void BM_SigmoidForward(benchmark::State &state)
