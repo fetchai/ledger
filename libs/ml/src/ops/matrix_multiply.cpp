@@ -331,18 +331,29 @@ std::pair<OperationsCount, math::SizeVector> MatrixMultiply<T>::ChargeBackward(
   OperationsCount const input_2_dim_1 = input_shapes.back().at(0);
   OperationsCount const batch_size    = input_shapes.back().at(input_shapes.back().size() - 1);
 
-  OperationsCount op_cnt =
-      batch_size * charge_estimation::ops::OP_MATRIX_MULTIPLY_OVERHEAD;  // set up overhead
+  OperationsCount op_cnt;
+  if ((input_shapes.front().size() == 2) || ((input_shapes.back().size() == 2)))
+  {
+    op_cnt = charge_estimation::ops::OP_MATRIX_MULTIPLY_BACKWARD_OVERHEAD;  // set up overhead
 
-  // DotTranspose (err_sig . input2)
-  op_cnt += (input_1_dim_1 * input_1_dim_2 * input_2_dim_1 * batch_size *
-             fetch::ml::charge_estimation::ops::OP_MATRIX_MULTIPLY_BACKWARD);
+    // DotTranspose (err_sig . input2) & TransposeDot (input1 & err_sig)
+    op_cnt += 2 * (input_1_dim_1 * input_1_dim_2 * input_2_dim_1 * charge_estimation::ops::OP_MATRIX_MULTIPLY_BACKWARD) * batch_size;
+  }
+  else
+  {
+    op_cnt = batch_size *
+             charge_estimation::ops::OP_MATRIX_MULTIPLY_BACKWARD_OVERHEAD;  // set up overhead
 
-  // TransposeDot
-  // TODO - sort this!!!
+    // DotTranspose (err_sig . input2) & TransposeDot (input1 & err_sig)
+    op_cnt += 2 * (input_1_dim_1 * input_1_dim_2 * input_2_dim_1 * charge_estimation::ops::OP_MATRIX_MULTIPLY_BACKWARD) * batch_size;
+
+    // assignment costs
+    op_cnt += (2 * batch_size * charge_estimation::ops::ASSIGN_PER_ELEMENT);
+  }
+
 
   math::SizeVector output_shape = ComputeOutputShape(input_shapes);
-  return std::make_pair(op_cnt * output_shape.back(), output_shape);
+  return std::make_pair(op_cnt, output_shape);
 }
 
 template <typename T>

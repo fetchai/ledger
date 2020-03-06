@@ -2385,16 +2385,30 @@ void BM_MatrixMultiply_Backward(benchmark::State &state)
 {
   using TensorType    = typename fetch::math::Tensor<T>;
   using VecTensorType = typename fetch::ml::ops::Ops<TensorType>::VecTensorType;
+  using SizeType      = fetch::math::SizeType;
 
   // Get args from state
   BM_Tensor_config config{state};
 
-  auto input_shape_1 = {config.shape.at(0), config.shape.at(1), config.shape.at(2)};
-  auto input_shape_2 = {config.shape.at(1), config.shape.at(0), config.shape.at(2)};
+  std::vector<SizeType> input_shape_1;
+  std::vector<SizeType> input_shape_2;
+  std::vector<SizeType> err_sig_shape;
+  if (config.shape.size() == 3)
+  {
+    input_shape_1 = {config.shape.at(0), config.shape.at(1), config.shape.at(2)};
+    input_shape_2 = {config.shape.at(1), config.shape.at(0), config.shape.at(2)};
+    err_sig_shape = {config.shape.at(0), config.shape.at(0), config.shape.at(2)};
+  }
+  else
+  {
+    input_shape_1 = {config.shape.at(0), config.shape.at(0)};
+    input_shape_2 = {config.shape.at(1), config.shape.at(1)};
+    err_sig_shape = {config.shape.at(0), config.shape.at(1)};
+  }
 
   fetch::math::Tensor<T> input_1(input_shape_1);
   fetch::math::Tensor<T> input_2(input_shape_2);
-  fetch::math::Tensor<T> err_sig({config.shape.at(0), config.shape.at(0), config.shape.at(2)});
+  fetch::math::Tensor<T> err_sig(err_sig_shape);
 
   // Fill tensors with random values
   input_1.FillUniformRandom();
@@ -2415,37 +2429,37 @@ void BM_MatrixMultiply_Backward(benchmark::State &state)
   }
 }
 
-BENCHMARK_TEMPLATE(BM_MatrixMultiply_Backward, float)
-    ->Apply(MatMul2DArguments)
-    ->Unit(::benchmark::kNanosecond);
-BENCHMARK_TEMPLATE(BM_MatrixMultiply_Backward, double)
-    ->Apply(MatMul2DArguments)
-    ->Unit(::benchmark::kNanosecond);
-BENCHMARK_TEMPLATE(BM_MatrixMultiply_Backward, fetch::fixed_point::fp32_t)
-    ->Apply(MatMul2DArguments)
-    ->Unit(::benchmark::kNanosecond);
+// BENCHMARK_TEMPLATE(BM_MatrixMultiply_Backward, float)
+//    ->Apply(MatMul2DArguments)
+//    ->Unit(::benchmark::kNanosecond);
+// BENCHMARK_TEMPLATE(BM_MatrixMultiply_Backward, double)
+//    ->Apply(MatMul2DArguments)
+//    ->Unit(::benchmark::kNanosecond);
+// BENCHMARK_TEMPLATE(BM_MatrixMultiply_Backward, fetch::fixed_point::fp32_t)
+//    ->Apply(MatMul2DArguments)
+//    ->Unit(::benchmark::kNanosecond);
 BENCHMARK_TEMPLATE(BM_MatrixMultiply_Backward, fetch::fixed_point::fp64_t)
     ->Apply(MatMul2DArguments)
     ->Unit(::benchmark::kNanosecond);
-BENCHMARK_TEMPLATE(BM_MatrixMultiply_Backward, fetch::fixed_point::fp128_t)
-    ->Apply(MatMul2DArguments)
-    ->Unit(::benchmark::kNanosecond);
+// BENCHMARK_TEMPLATE(BM_MatrixMultiply_Backward, fetch::fixed_point::fp128_t)
+//    ->Apply(MatMul2DArguments)
+//    ->Unit(::benchmark::kNanosecond);
 
-BENCHMARK_TEMPLATE(BM_MatrixMultiply_Backward, float)
-    ->Apply(MatMul3DArguments)
-    ->Unit(::benchmark::kNanosecond);
-BENCHMARK_TEMPLATE(BM_MatrixMultiply_Backward, double)
-    ->Apply(MatMul3DArguments)
-    ->Unit(::benchmark::kNanosecond);
-BENCHMARK_TEMPLATE(BM_MatrixMultiply_Backward, fetch::fixed_point::fp32_t)
-    ->Apply(MatMul3DArguments)
-    ->Unit(::benchmark::kNanosecond);
+// BENCHMARK_TEMPLATE(BM_MatrixMultiply_Backward, float)
+//    ->Apply(MatMul3DArguments)
+//    ->Unit(::benchmark::kNanosecond);
+// BENCHMARK_TEMPLATE(BM_MatrixMultiply_Backward, double)
+//    ->Apply(MatMul3DArguments)
+//    ->Unit(::benchmark::kNanosecond);
+// BENCHMARK_TEMPLATE(BM_MatrixMultiply_Backward, fetch::fixed_point::fp32_t)
+//    ->Apply(MatMul3DArguments)
+//    ->Unit(::benchmark::kNanosecond);
 BENCHMARK_TEMPLATE(BM_MatrixMultiply_Backward, fetch::fixed_point::fp64_t)
     ->Apply(MatMul3DArguments)
     ->Unit(::benchmark::kNanosecond);
-BENCHMARK_TEMPLATE(BM_MatrixMultiply_Backward, fetch::fixed_point::fp128_t)
-    ->Apply(MatMul3DArguments)
-    ->Unit(::benchmark::kNanosecond);
+// BENCHMARK_TEMPLATE(BM_MatrixMultiply_Backward, fetch::fixed_point::fp128_t)
+//    ->Apply(MatMul3DArguments)
+//    ->Unit(::benchmark::kNanosecond);
 
 template <class T, int N, int K, int S>
 void BM_MaxPool1DForward(benchmark::State &state)
