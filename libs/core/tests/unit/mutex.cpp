@@ -47,7 +47,7 @@ TEST(DebugMutex, SimpleProblem)
   std::atomic<std::size_t> hungry_philosophers{0};
 
   auto runnable = [&hungry_philosophers](auto left_fork, auto right_fork) {
-    FETCH_LOCK(left_fork.get());  // everybody, get your forks
+    FETCH_LOCK(left_fork.get());  // everybody, get and lock your forks
     std::this_thread::sleep_for(100ms);
     try
     {
