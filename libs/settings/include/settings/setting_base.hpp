@@ -35,8 +35,9 @@ public:
 
   /// @name Accessors
   /// @{
-  std::string const &name() const;
-  std::string const &description() const;
+  std::string const & name() const;
+  std::string const & description() const;
+  virtual std::string envname() const;
   /// @}
 
   /// @name Stream operations
@@ -48,6 +49,8 @@ public:
   // Operators
   SettingBase &operator=(SettingBase const &) = delete;
   SettingBase &operator=(SettingBase &&) = delete;
+
+  virtual bool TerminateNow() const;
 
 protected:
   SettingBase(SettingCollection &reg, std::string &&name, std::string &&description);
