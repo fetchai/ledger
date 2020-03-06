@@ -16,54 +16,39 @@
 //
 //------------------------------------------------------------------------------
 
-#include "settings/setting_base.hpp"
+#include "settings/help.hpp"
 #include "settings/setting_collection.hpp"
 
-#include <istream>
-#include <ostream>
-#include <string>
-#include <utility>
+namespace {
+
+constexpr char const *NAME        = "help";
+constexpr char const *DESCRIPTION = "Print this help and exit";
+
+}  // namespace
 
 namespace fetch {
 namespace settings {
 
-SettingBase::SettingBase(SettingCollection &reg, std::string &&name, std::string &&description)
-  : name_{std::move(name)}
-  , description_{std::move(description)}
+Help::Help(SettingCollection &reg)
+  : SettingBase(reg, NAME, DESCRIPTION)
+  , reg_(reg)
+{}
+
+void Help::FromStream(std::istream & /*stream*/)
+{}
+
+void Help::ToStream(std::ostream & /*stream*/) const
+{}
+
+bool Help::TerminateNow() const
 {
-  reg.Add(*this);
+  reg_.DisplayHelp();
+  return true;
 }
 
-std::string const &SettingBase::name() const
+std::string Help::envname() const
 {
-  return name_;
-}
-
-std::string const &SettingBase::description() const
-{
-  return description_;
-}
-
-std::istream &operator>>(std::istream &stream, SettingBase &setting)
-{
-  setting.FromStream(stream);
-  return stream;
-}
-
-std::ostream &operator<<(std::ostream &stream, SettingBase const &setting)
-{
-  setting.ToStream(stream);
-  return stream;
-}
-
-bool SettingBase::TerminateNow() const
-{
-  return false;
-}
-
-std::string SettingBase::envname() const
-{
-  return name();
+  return {};
 }
 
 }  // namespace settings
