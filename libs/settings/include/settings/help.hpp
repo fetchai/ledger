@@ -1,3 +1,4 @@
+#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2020 Fetch.AI Limited
@@ -16,55 +17,40 @@
 //
 //------------------------------------------------------------------------------
 
+#include "settings/detail/csv_string_helpers.hpp"
 #include "settings/setting_base.hpp"
-#include "settings/setting_collection.hpp"
 
-#include <istream>
-#include <ostream>
+#include <iostream>
 #include <string>
-#include <utility>
+#include <vector>
 
 namespace fetch {
 namespace settings {
 
-SettingBase::SettingBase(SettingCollection &reg, std::string &&name, std::string &&description)
-  : name_{std::move(name)}
-  , description_{std::move(description)}
-{
-  reg.Add(*this);
-}
+class SettingCollection;
 
-std::string const &SettingBase::name() const
+class Help : public SettingBase
 {
-  return name_;
-}
+public:
+  // Construction / Destruction
+  explicit Help(SettingCollection &reg);
 
-std::string const &SettingBase::description() const
-{
-  return description_;
-}
+  Help(Help const &) = delete;
+  Help(Help &&)      = delete;
+  ~Help() override   = default;
 
-std::istream &operator>>(std::istream &stream, SettingBase &setting)
-{
-  setting.FromStream(stream);
-  return stream;
-}
+  Help &operator=(Help const &) = delete;
+  Help &operator=(Help &&) = delete;
 
-std::ostream &operator<<(std::ostream &stream, SettingBase const &setting)
-{
-  setting.ToStream(stream);
-  return stream;
-}
+  void FromStream(std::istream &stream) override;
+  void ToStream(std::ostream &stream) const override;
 
-bool SettingBase::TerminateNow() const
-{
-  return false;
-}
+  bool        TerminateNow() const override;
+  std::string envname() const override;
 
-std::string SettingBase::envname() const
-{
-  return name();
-}
+private:
+  SettingCollection &reg_;
+};
 
 }  // namespace settings
 }  // namespace fetch
