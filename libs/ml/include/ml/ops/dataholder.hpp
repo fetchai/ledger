@@ -85,8 +85,11 @@ public:
     return DESCRIPTOR;
   }
 
-  OperationsCount        ChargeForward() const override;
-  OperationsCount        ChargeBackward() const override;
+  std::pair<OperationsCount, math::SizeVector> ChargeForward(
+      std::vector<math::SizeVector> const &input_shapes) override;
+  std::pair<OperationsCount, math::SizeVector> ChargeBackward(
+      std::vector<math::SizeVector> const &input_shapes) override;
+
   static OperationsCount ChargeConstruct();
 
   OperationsCount ChargeSetData(std::vector<SizeType> const &data);

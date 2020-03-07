@@ -112,23 +112,44 @@ const char *Flatten<TensorType>::Descriptor() const
 }
 
 template <class TensorType>
-OperationsCount Flatten<TensorType>::ChargeForward() const
+std::pair<OperationsCount, math::SizeVector> Flatten<TensorType>::ChargeForward(
+    std::vector<math::SizeVector> const &input_shapes)
 {
-  assert(!this->batch_input_shapes_.empty());
-  OperationsCount cost = fetch::ml::charge_estimation::ops::FLATTEN_PER_ELEMENT *
-                         this->TotalElementsIn(this->batch_input_shapes_);
-  return cost;
+  auto output_shape = ComputeOutputShape(input_shapes);
+
+  OperationsCount cost = fetch::ml::charge_estimation::ops::OP_OVERHEAD;
+
+  auto padded_size = TensorType::PaddedSizeFromShape(input_shapes.front());
+
+  if (padded_size < fetch::ml::charge_estimation::ops::PIECEWISE_LOWER_THRESHOLD)
+  {
+    cost += fetch::ml::charge_estimation::ops::LOW_FLATTEN_PER_ELEMENT *
+            TensorType::ChargeIterate(input_shapes.front());
+  }
+  else if (padded_size < fetch::ml::charge_estimation::ops::PIECEWISE_HARD_CAP)
+  {
+    cost += fetch::ml::charge_estimation::ops::HIGH_FLATTEN_PER_ELEMENT *
+            TensorType::ChargeIterate(input_shapes.front());
+  }
+  else
+  {
+    cost = math::numeric_max<OperationsCount>();
+  }
+
+  return std::make_pair(cost, output_shape);
 }
 
 template <class TensorType>
-OperationsCount Flatten<TensorType>::ChargeBackward() const
+std::pair<OperationsCount, math::SizeVector> Flatten<TensorType>::ChargeBackward(
+    std::vector<math::SizeVector> const &input_shapes)
 {
   assert(!this->batch_input_shapes_.empty());
   OperationsCount cost = fetch::ml::charge_estimation::ops::RESHAPE_PER_ELEMENT *
                              this->TotalElementsIn(this->batch_input_shapes_) +
                          fetch::ml::charge_estimation::ops::ASSIGN_PER_ELEMENT *
                              this->TotalElementsIn(this->batch_input_shapes_);
-  return cost;
+  math::SizeVector output_shape = ComputeOutputShape(input_shapes);
+  return std::make_pair(cost * output_shape.back(), output_shape);
 }
 
 template <class TensorType>

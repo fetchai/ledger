@@ -159,46 +159,26 @@ public:
   {}
 
   /**
-   * @brief ChargeForward
-   * This returns the cost *per-datapoint*, not the whole batch cost
-   * @return estimated charge amount, necessary for performing a forward pass on data of given
-   * shapes.
-   */
-  virtual OperationsCount ChargeForward() const
-  {
-    // TODO(ML-526): Change all ChargeForward() to ChargeForward(input_shapes) and then remove this
-    // method
-    FETCH_LOG_ERROR(Descriptor(),
-                    " Error: call to unexisting ChargeForward() implementation! returned 0.");
-
-    throw std::runtime_error("This shouldn't be called");
-  }
-
-  /**
    * This returns the cost for the *whole* batch (not per-datapoint cost) and the shape of the Op
    * output
    */
   virtual std::pair<OperationsCount, math::SizeVector> ChargeForward(
       std::vector<math::SizeVector> const &input_shapes)
   {
-    math::SizeVector output_shape = ComputeOutputShape(input_shapes);
-    // multiplying ChargeForward() by the batch dimension is correct for Ops that don't have
-    // a proper ChargeForward(input_size) implemented.
-    return std::make_pair(ChargeForward() * output_shape.back(), output_shape);
+    FETCH_LOG_ERROR(Descriptor(),
+                    " Error: call to unexisting ChargeForward() implementation! returned 0.");
+    FETCH_UNUSED(input_shapes);
+    throw ml::exceptions::NotImplemented(
+        "ChargeForward Not Yet Implemented for one or more Ops. Check logging for details.");
+    return std::make_pair(OperationsCount{0}, math::SizeVector{});
   }
 
   /**
-   * @brief ChargeBackward
-   * @return estimated charge amount, necessary for performing a backward pass on data of given
-   * shapes.
+   * This returns the cost for the *whole* batch (not per-datapoint cost) and the shape of the Op
+   * output
    */
-  virtual OperationsCount ChargeBackward() const
-  {
-    // TODO(ML-483): make a pure virtual method after all Ops have their overrides;
-    FETCH_LOG_ERROR(Descriptor(),
-                    " Error: call to unexisting ChargeBackward() implementation! returned 0.");
-    return 0;
-  }
+  virtual std::pair<OperationsCount, math::SizeVector> ChargeBackward(
+      std::vector<math::SizeVector> const &input_shapes) = 0;
 
   /**
    * @brief TotalElementsIn calculated a sum of total elements in all given tensors

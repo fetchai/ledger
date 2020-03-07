@@ -115,21 +115,27 @@ std::vector<math::SizeType> LeakyRelu<TensorType>::ComputeOutputShape(
 }
 
 template <typename TensorType>
-OperationsCount LeakyRelu<TensorType>::ChargeForward() const
+std::pair<OperationsCount, math::SizeVector> LeakyRelu<TensorType>::ChargeForward(
+    std::vector<math::SizeVector> const &input_shapes)
 {
   assert(!this->batch_input_shapes_.empty());
-  OperationsCount cost = fetch::ml::charge_estimation::ops::LEAKY_RELU_PER_ELEMENT *
-                         this->TotalElementsIn({this->batch_input_shapes_});
-  return cost;
+
+  OperationsCount op_cnt = fetch::ml::charge_estimation::ops::LEAKY_RELU_PER_ELEMENT *
+                           TensorType::SizeFromShape(input_shapes[0]);
+
+  auto output_shape = ComputeOutputShape(input_shapes);
+  return std::make_pair(op_cnt, output_shape);
 }
 
 template <typename TensorType>
-OperationsCount LeakyRelu<TensorType>::ChargeBackward() const
+std::pair<OperationsCount, math::SizeVector> LeakyRelu<TensorType>::ChargeBackward(
+    std::vector<math::SizeVector> const &input_shapes)
 {
   assert(!this->batch_input_shapes_.empty());
   OperationsCount cost = fetch::ml::charge_estimation::ops::LEAKY_RELU_BACKWARD_PER_ELEMENT *
                          this->TotalElementsIn({this->batch_input_shapes_});
-  return cost;
+  math::SizeVector output_shape = ComputeOutputShape(input_shapes);
+  return std::make_pair(cost * output_shape.back(), output_shape);
 }
 
 ///////////////////////////////

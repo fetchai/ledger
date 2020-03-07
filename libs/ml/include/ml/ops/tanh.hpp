@@ -63,8 +63,10 @@ public:
 
   static constexpr char const *DESCRIPTOR = "TanH";
 
-  OperationsCount ChargeForward() const override;
-  OperationsCount ChargeBackward() const override;
+  std::pair<OperationsCount, math::SizeVector> ChargeForward(
+      std::vector<math::SizeVector> const &input_shapes) override;
+  std::pair<OperationsCount, math::SizeVector> ChargeBackward(
+      std::vector<math::SizeVector> const &input_shapes) override;
 
 private:
   // minimum possible output value of the tanh should not be -1, but actually (-1 + epsilon)
