@@ -30,27 +30,25 @@ void ParamsParser::Parse(int argc, char const *const argv[])
   for (std::size_t i = 0; i < sargs; ++i)
   {
     std::string name(argv[i]);
-    if (name.find('-') == 0)
+    if (!name.empty() && name.front() == '-')
     {
-      name = name.substr(1);
+      name.erase(name.cbegin());
       ++i;
       if (i == sargs)
       {
         params_[name] = "1";
-        continue;
+        return;
       }
 
       std::string value(argv[i]);
 
-      if (value.find('-') == 0)
+      if (!value.empty() && value.front() == '-')
       {
-        params_[name] = "1";
+        // value is probably the next CLI flag, and this one is parameterless
+        value = "1";
         --i;
       }
-      else
-      {
-        params_[name] = value;
-      }
+      params_[name] = value;
     }
     else
     {

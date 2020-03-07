@@ -24,6 +24,7 @@
 #include "telemetry/gauge.hpp"
 #include "telemetry/registry.hpp"
 
+#include <algorithm>
 #include <atomic>
 #include <chrono>
 #include <functional>
