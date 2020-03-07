@@ -66,7 +66,7 @@ struct LockLocation
 class DeadlockHandler
 {
 public:
-  static void DeadlockDetected(std::string message);
+  static void DeadlockDetected(std::string const &message);
 
   static void ThrowOnDeadlock();
 

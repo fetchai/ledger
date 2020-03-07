@@ -49,7 +49,7 @@ std::atomic<uint64_t> RecursiveLockAttempt::timeout_ms_{2'400'000ull};
  *
  * @param message Error message for the exception raised/to be printed before abort()
  */
-void DeadlockHandler::DeadlockDetected(std::string message)
+void DeadlockHandler::DeadlockDetected(std::string const &message)
 {
   if (static_cast<bool>(throw_on_deadlock_))
   {
