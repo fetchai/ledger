@@ -18,10 +18,10 @@
 
 #include "test_types.hpp"
 
-#include "core/serializers/main_serializer_definition.hpp"
+#include "core/serialisers/main_serialiser_definition.hpp"
 #include "math/base_types.hpp"
 #include "ml/ops/activations/sigmoid.hpp"
-#include "ml/serializers/ml_types.hpp"
+#include "ml/serialisers/ml_types.hpp"
 
 #include "gtest/gtest.h"
 

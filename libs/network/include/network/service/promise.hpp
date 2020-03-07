@@ -19,7 +19,7 @@
 
 #include "core/byte_array/byte_array.hpp"
 #include "core/mutex.hpp"
-#include "core/serializers/exception.hpp"
+#include "core/serialisers/exception.hpp"
 #include "logging/logging.hpp"
 #include "network/service/types.hpp"
 

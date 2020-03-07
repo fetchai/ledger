@@ -16,8 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/serializers/base_types.hpp"
-#include "core/serializers/main_serializer.hpp"
+#include "core/serialisers/base_types.hpp"
+#include "core/serialisers/main_serialiser.hpp"
 #include "math/tensor/tensor.hpp"
 #include "ml/core/graph.hpp"
 #include "ml/layers/fully_connected.hpp"
@@ -25,7 +25,7 @@
 #include "ml/ops/loss_functions/mean_square_error_loss.hpp"
 #include "ml/ops/placeholder.hpp"
 #include "ml/optimisation/sgd_optimiser.hpp"
-#include "ml/serializers/ml_types.hpp"
+#include "ml/serialisers/ml_types.hpp"
 #include "ml/utilities/graph_builder.hpp"
 
 #include "benchmark/benchmark.h"

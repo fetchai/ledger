@@ -17,7 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/byte_array/decoders.hpp"
-#include "core/serializers/counter.hpp"
+#include "core/serialisers/counter.hpp"
 #include "ml/charge_estimation/constants.hpp"
 #include "ml/charge_estimation/model/constants.hpp"
 #include "ml/dataloaders/tensor_dataloader.hpp"
@@ -43,7 +43,7 @@
 #include "ml/ops/max_pool_2d.hpp"
 #include "ml/ops/metrics/types.hpp"
 #include "ml/ops/reshape.hpp"
-#include "ml/serializers/ml_types.hpp"
+#include "ml/serialisers/ml_types.hpp"
 #include "vm/module.hpp"
 #include "vm_modules/ml/model/model.hpp"
 #include "vm_modules/use_estimator.hpp"

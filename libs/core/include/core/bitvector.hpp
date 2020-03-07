@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/serializers/group_definitions.hpp"
+#include "core/serialisers/group_definitions.hpp"
 #include "vectorise/memory/shared_array.hpp"
 #include "vectorise/platform.hpp"
 

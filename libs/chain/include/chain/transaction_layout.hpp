@@ -19,7 +19,7 @@
 
 #include "core/bitvector.hpp"
 #include "core/byte_array/const_byte_array.hpp"
-#include "core/serializers/group_definitions.hpp"
+#include "core/serialisers/group_definitions.hpp"
 
 namespace fetch {
 namespace chain {

@@ -19,7 +19,7 @@
 
 #include "core/macros.hpp"
 #include "core/random.hpp"
-#include "core/serializers/group_definitions.hpp"
+#include "core/serialisers/group_definitions.hpp"
 #include "math/exceptions/exceptions.hpp"
 #include "math/fundamental_operators.hpp"
 #include "math/matrix_operations.hpp"

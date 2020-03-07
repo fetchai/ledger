@@ -22,7 +22,7 @@
 #include "chain/constants.hpp"
 #include "chain/transaction_builder.hpp"
 #include "core/byte_array/encoders.hpp"
-#include "core/serializers/main_serializer.hpp"
+#include "core/serialisers/main_serialiser.hpp"
 #include "json/document.hpp"
 #include "ledger/chaincode/deed.hpp"
 #include "ledger/chaincode/token_contract.hpp"

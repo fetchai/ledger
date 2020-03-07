@@ -16,7 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/serializers/main_serializer.hpp"
+#include "core/serialisers/main_serialiser.hpp"
 #include "ledger/chaincode/chain_code_factory.hpp"
 #include "ledger/chaincode/contract_context.hpp"
 #include "ledger/chaincode/smart_contract.hpp"

@@ -18,7 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "chain/address.hpp"
-#include "core/serializers/main_serializer.hpp"
+#include "core/serialisers/main_serialiser.hpp"
 #include "crypto/identity.hpp"
 #include "ledger/chaincode/contract_context.hpp"
 #include "ledger/fees/chargeable.hpp"

@@ -20,7 +20,7 @@
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/byte_array/consumers.hpp"
-#include "core/byte_array/tokenizer/tokenizer.hpp"
+#include "core/byte_array/tokeniser/tokeniser.hpp"
 #include "semanticsearch/query/query_instruction.hpp"
 
 #include <vector>

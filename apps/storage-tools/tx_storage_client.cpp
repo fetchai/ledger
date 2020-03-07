@@ -19,7 +19,7 @@
 #include "tx_storage_client.hpp"
 
 #include "chain/transaction.hpp"
-#include "chain/transaction_rpc_serializers.hpp"
+#include "chain/transaction_rpc_serialisers.hpp"
 #include "core/digest.hpp"
 #include "core/service_ids.hpp"
 #include "ledger/storage_unit/transaction_finder_protocol.hpp"
