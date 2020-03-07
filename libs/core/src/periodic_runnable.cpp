@@ -20,6 +20,8 @@
 #include "telemetry/gauge.hpp"
 #include "telemetry/registry.hpp"
 
+#include <algorithm>
+
 namespace {
 std::string ToLowerCase(std::string data)
 {

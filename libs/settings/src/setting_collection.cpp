@@ -40,10 +40,8 @@ namespace {
  * @param name The command line argument name
  * @return The environment variable name
  */
-std::string GetEnvironmentVariableName(char const *prefix, std::string const &name)
+std::string GetEnvironmentVariableName(char const *prefix, std::string env_name)
 {
-  std::string env_name{name};
-
   std::transform(env_name.begin(), env_name.end(), env_name.begin(), [](char c) {
     if (std::isalnum(c) != 0)
     {
@@ -56,7 +54,7 @@ std::string GetEnvironmentVariableName(char const *prefix, std::string const &na
     return c;
   });
 
-  return prefix + env_name;
+  return prefix + std::move(env_name);
 }
 
 /**
@@ -64,11 +62,11 @@ std::string GetEnvironmentVariableName(char const *prefix, std::string const &na
  * @param name
  * @return
  */
-char const *GetEnvironmentVariable(char const *prefix, std::string const &name,
+char const *GetEnvironmentVariable(char const *prefix, std::string name,
                                    detail::EnvironmentInterface const &env)
 {
   // determine the environment variable name
-  std::string env_name = GetEnvironmentVariableName(prefix, name);
+  std::string env_name = GetEnvironmentVariableName(prefix, std::move(name));
 
   return env.GetEnvironmentVariable(env_name.c_str());
 }
@@ -93,7 +91,7 @@ void SettingCollection::Add(SettingBase &setting)
  * @param argc
  * @param argv
  */
-void SettingCollection::UpdateFromArgs(int argc, char **argv)
+bool SettingCollection::UpdateFromArgs(int argc, char **argv)
 {
   ParamsParser parser;
   parser.Parse(argc, argv);
@@ -109,6 +107,10 @@ void SettingCollection::UpdateFromArgs(int argc, char **argv)
       // update the setting
       std::istringstream iss{cmd_value};
       iss >> *setting;
+      if (setting->TerminateNow())
+      {
+        return false;
+      }
       settings_changed.insert(setting->name());
     }
   }
@@ -125,18 +127,25 @@ void SettingCollection::UpdateFromArgs(int argc, char **argv)
         FETCH_LOG_ERROR(LOGGING_NAME, "Unrecognised parameter: -", parameter_name);
       }
     }
-
-    std::ostringstream oss;
-    oss << "\nValid parameters:";
-
-    for (auto const &setting : settings_)
-    {
-      oss << "\n-" << setting->name() << std::setw(int(30 - setting->name().size())) << " \""
-          << setting->description() << "\"";
-    }
-
-    FETCH_LOG_INFO(LOGGING_NAME, oss.str());
+    DisplayHelp();
+    return false;
   }
+
+  return true;
+}
+
+void SettingCollection::DisplayHelp() const
+{
+  std::ostringstream oss;
+  oss << "\nKnown options are:";
+
+  for (auto const &setting : settings_)
+  {
+    oss << "\n-" << setting->name() << std::setw(int(31 - setting->name().size())) << ' '
+        << setting->description();
+  }
+
+  FETCH_LOG_INFO(LOGGING_NAME, oss.str());
 }
 
 void SettingCollection::UpdateFromEnv(char const *prefix, detail::EnvironmentInterface const &env)
@@ -145,7 +154,13 @@ void SettingCollection::UpdateFromEnv(char const *prefix, detail::EnvironmentInt
   {
     assert(setting);
 
-    auto const *env_value = GetEnvironmentVariable(prefix, setting->name(), env);
+    std::string envname{setting->envname()};
+    if (envname.empty())
+    {
+      continue;
+    }
+
+    auto const *env_value = GetEnvironmentVariable(prefix, std::move(envname), env);
     if (env_value != nullptr)
     {
       std::istringstream iss{env_value};
