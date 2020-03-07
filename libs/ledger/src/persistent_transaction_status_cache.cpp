@@ -18,7 +18,7 @@
 
 #include "persistent_transaction_status_cache.hpp"
 
-#include "core/serialisers/main_serializer.hpp"
+#include "core/serialisers/main_serialiser.hpp"
 #include "logging/logging.hpp"
 
 namespace fetch {
