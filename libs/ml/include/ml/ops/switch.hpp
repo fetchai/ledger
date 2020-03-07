@@ -73,7 +73,7 @@ public:
   void Forward(VecTensorType const &inputs, TensorType &output) override
   {
     assert(inputs.size() == 3);
-    assert(output.shape() == this->ComputeOutputShape(inputs));
+    assert(output.shape() == ComputeOutputShape(fetch::ml::utilities::TensorPtrsToSizes(inputs)));
     assert(inputs.at(1)->shape() == inputs.at(2)->shape());
 
     fetch::math::Switch(*(inputs.at(0)), *(inputs.at(1)), *(inputs.at(2)), output);
@@ -102,9 +102,10 @@ public:
     return {mask_return_signal, then_return_signal, else_return_signal};
   }
 
-  std::vector<SizeType> ComputeOutputShape(VecTensorType const &inputs) const override
+  std::vector<SizeType> ComputeOutputShape(
+      std::vector<math::SizeVector> const &inputs) const override
   {
-    return inputs.at(1)->shape();
+    return inputs.at(1);
   }
 
   static constexpr OpType OpCode()
@@ -113,6 +114,16 @@ public:
   }
 
   static constexpr char const *DESCRIPTOR = "Switch";
+
+  std::pair<OperationsCount, math::SizeVector> ChargeBackward(
+      std::vector<math::SizeVector> const &input_shapes) override
+  {
+    assert(!this->batch_input_shapes_.empty());
+    OperationsCount cost = fetch::ml::charge_estimation::ops::SWITCH_BACKWARD_PER_ELEMENT *
+                           this->TotalElementsIn({this->batch_input_shapes_.at(0)});
+    math::SizeVector output_shape = ComputeOutputShape(input_shapes);
+    return std::make_pair(cost * output_shape.back(), output_shape);
+  }
 };
 
 }  // namespace ops

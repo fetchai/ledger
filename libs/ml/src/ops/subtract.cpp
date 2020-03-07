@@ -58,7 +58,7 @@ void Subtract<TensorType>::Forward(VecTensorType const &inputs, TensorType &outp
 {
   assert(inputs.size() == 2);
   assert(inputs.at(0)->size() == inputs.at(1)->size());
-  assert(output.shape() == this->ComputeOutputShape(inputs));
+  assert(output.shape() == ComputeOutputShape(fetch::ml::utilities::TensorPtrsToSizes(inputs)));
 
   fetch::math::Subtract((*inputs.at(0)), (*inputs.at(1)), output);
 }
@@ -77,9 +77,9 @@ std::vector<TensorType> Subtract<TensorType>::Backward(VecTensorType const &inpu
 
 template <class TensorType>
 std::vector<math::SizeType> Subtract<TensorType>::ComputeOutputShape(
-    VecTensorType const &inputs) const
+    std::vector<math::SizeVector> const &inputs) const
 {
-  return inputs.front()->shape();
+  return inputs.front();
 }
 
 /**
@@ -101,21 +101,27 @@ const char *Subtract<TensorType>::Descriptor() const
 }
 
 template <typename TensorType>
-OperationsCount Subtract<TensorType>::ChargeForward() const
+std::pair<OperationsCount, math::SizeVector> Subtract<TensorType>::ChargeForward(
+    std::vector<math::SizeVector> const &input_shapes)
 {
-  assert(!this->batch_output_shape_.empty());
-  OperationsCount cost = fetch::ml::charge_estimation::ops::SUBTRACTION_PER_ELEMENT *
-                         this->TotalElementsIn({this->batch_output_shape_});
-  return cost;
+  assert(!this->batch_input_shapes_.empty());
+
+  OperationsCount op_cnt = fetch::ml::charge_estimation::ops::SUBTRACTION_PER_ELEMENT *
+                           TensorType::SizeFromShape(input_shapes[0]);
+
+  auto output_shape = ComputeOutputShape(input_shapes);
+  return std::make_pair(op_cnt, output_shape);
 }
 
 template <typename TensorType>
-OperationsCount Subtract<TensorType>::ChargeBackward() const
+std::pair<OperationsCount, math::SizeVector> Subtract<TensorType>::ChargeBackward(
+    std::vector<math::SizeVector> const &input_shapes)
 {
   assert(!this->batch_output_shape_.empty());
-  OperationsCount cost = fetch::ml::charge_estimation::ops::MULTIPLICATION_PER_ELEMENT *
+  OperationsCount cost = fetch::ml::charge_estimation::ops::LOW_MULTIPLICATION_PER_ELEMENT *
                          this->TotalElementsIn({this->batch_output_shape_});
-  return cost;
+  math::SizeVector output_shape = ComputeOutputShape(input_shapes);
+  return std::make_pair(cost * output_shape.back(), output_shape);
 }
 
 ///////////////////////////////

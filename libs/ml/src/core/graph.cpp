@@ -1132,7 +1132,8 @@ fetch::ml::OperationsCount Graph<TensorType>::ChargeForward(const std::string &n
 
   NodePtrType                     node = nodes_.at(node_name);
   std::unordered_set<std::string> visited_nodes;
-  return node->ChargeForward(visited_nodes);
+  auto                            cost_and_outputshape = node->ChargeForward(visited_nodes);
+  return cost_and_outputshape.first;
 }
 
 template <typename TensorType>
@@ -1152,7 +1153,7 @@ OperationsCount Graph<TensorType>::ChargeBackward(const std::string &node_name) 
 
   NodePtrType                     node = nodes_.at(node_name);
   std::unordered_set<std::string> visited_nodes;
-  return node->ChargeBackward(visited_nodes);
+  return node->ChargeBackward(visited_nodes).first;
 }
 
 template <typename TensorType>
@@ -1192,7 +1193,7 @@ OperationsCount Graph<TensorType>::ChargeCompile()
     for (auto const &node_name_and_ptr : nodes_)
     {
       NodePtrType node = node_name_and_ptr.second;
-      op_cnt           = node->GetOp()->ChargeCompile();
+      op_cnt += node->GetOp()->ChargeCompile();
     }
 
     // graph_state_ = GraphState::COMPILED;

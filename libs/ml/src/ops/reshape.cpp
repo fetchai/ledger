@@ -67,7 +67,7 @@ template <typename TensorType>
 void Reshape<TensorType>::Forward(VecTensorType const &inputs, TensorType &output)
 {
   assert(inputs.size() == 1);
-  assert(output.shape() == ComputeOutputShape(inputs));
+  assert(output.shape() == ComputeOutputShape(fetch::ml::utilities::TensorPtrsToSizes(inputs)));
 
   // if batch sizes don't agree - update specified new_shape
   SizeType input_batch_size = inputs.at(0)->shape(inputs.at(0)->shape().size() - 1);
@@ -109,39 +109,43 @@ std::vector<TensorType> Reshape<TensorType>::Backward(VecTensorType const &input
 
 template <typename TensorType>
 std::vector<math::SizeType> Reshape<TensorType>::ComputeOutputShape(
-    VecTensorType const &inputs) const
+    std::vector<math::SizeVector> const &inputs) const
 {
   assert(inputs.size() == 1);
-  assert(inputs.at(0)->shape().size() > 1);
+  assert(inputs.at(0).size() > 1);
 
   // output shape prespecified (except batch dimension)
   std::vector<SizeType> output_shape = new_shape_;
 
   // overwrite the batch dimension
-  output_shape.at(output_shape.size() - 1) =
-      inputs.at(0)->shape().at(inputs.at(0)->shape().size() - 1);
+  output_shape.at(output_shape.size() - 1) = inputs.at(0).at(inputs.at(0).size() - 1);
 
   return output_shape;
 }
 
 template <typename TensorType>
-OperationsCount Reshape<TensorType>::ChargeForward() const
+std::pair<OperationsCount, math::SizeVector> Reshape<TensorType>::ChargeForward(
+    std::vector<math::SizeVector> const &input_shapes)
 {
-  assert(!this->batch_output_shape_.empty());
-  OperationsCount cost = fetch::ml::charge_estimation::ops::RESHAPE_PER_ELEMENT *
-                             this->TotalElementsIn({this->batch_output_shape_}) +
-                         fetch::ml::charge_estimation::ops::ASSIGN_PER_ELEMENT *
-                             this->TotalElementsIn({this->batch_output_shape_});
-  return cost;
+  assert(!this->batch_input_shapes_.empty());
+
+  OperationsCount op_cnt = (fetch::ml::charge_estimation::ops::ASSIGN_PER_ELEMENT +
+                            fetch::ml::charge_estimation::ops::ASSIGN_PER_ELEMENT) *
+                           TensorType::SizeFromShape(input_shapes[0]);
+
+  auto output_shape = ComputeOutputShape(input_shapes);
+  return std::make_pair(op_cnt, output_shape);
 }
 
 template <typename TensorType>
-OperationsCount Reshape<TensorType>::ChargeBackward() const
+std::pair<OperationsCount, math::SizeVector> Reshape<TensorType>::ChargeBackward(
+    std::vector<math::SizeVector> const &input_shapes)
 {
   assert(!this->batch_output_shape_.empty());
   OperationsCount cost = fetch::ml::charge_estimation::ops::ASSIGN_PER_ELEMENT *
                          this->TotalElementsIn({this->batch_output_shape_});
-  return cost;
+  math::SizeVector output_shape = ComputeOutputShape(input_shapes);
+  return std::make_pair(cost * output_shape.back(), output_shape);
 }
 
 ///////////////////////////////

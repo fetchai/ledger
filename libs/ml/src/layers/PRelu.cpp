@@ -64,18 +64,6 @@ std::shared_ptr<OpsSaveableParams> PRelu<TensorType>::GetOpSaveableParams()
   return ret;
 }
 
-template <class TensorType>
-OperationsCount PRelu<TensorType>::ChargeForward() const
-{
-  return Graph<TensorType>::ChargeForward(this->output_node_name_);
-}
-
-template <class TensorType>
-OperationsCount PRelu<TensorType>::ChargeBackward() const
-{
-  return Graph<TensorType>::ChargeBackward(this->output_node_name_);
-}
-
 ///////////////////////////////
 /// EXPLICIT INSTANTIATIONS ///
 ///////////////////////////////

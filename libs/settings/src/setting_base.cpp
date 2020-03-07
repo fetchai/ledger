@@ -56,5 +56,15 @@ std::ostream &operator<<(std::ostream &stream, SettingBase const &setting)
   return stream;
 }
 
+bool SettingBase::TerminateNow() const
+{
+  return false;
+}
+
+std::string SettingBase::envname() const
+{
+  return name();
+}
+
 }  // namespace settings
 }  // namespace fetch

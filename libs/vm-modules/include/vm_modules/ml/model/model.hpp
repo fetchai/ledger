@@ -31,7 +31,6 @@ class Module;
 }
 
 namespace ml {
-
 namespace dataloaders {
 template <typename TensorType>
 class TensorDataLoader;
@@ -175,9 +174,9 @@ public:
                           math::SizeType const &dimensions, math::SizeType const &data_points,
                           bool stub);
 
-  fetch::ml::OperationsCount ChargeForward() const
+  fetch::ml::OperationsCount ChargeForward(math::SizeVector const &input_shape) const
   {
-    return model_->ChargeForward();
+    return model_->ChargeForward(input_shape);
   }
 
   fetch::ml::OperationsCount ChargeBackward() const

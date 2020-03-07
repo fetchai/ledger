@@ -32,16 +32,12 @@ Weights<TensorType>::Weights(SPType const &sp)
 template <typename TensorType>
 std::shared_ptr<OpsSaveableParams> Weights<TensorType>::GetOpSaveableParams()
 {
-  auto sp   = std::make_shared<SPType>();
-  auto p_sp = Variable<TensorType>::GetOpSaveableParams();
-
-  auto cast_sp = std::static_pointer_cast<OpVariableSaveableParams<TensorType>>(sp);
-  *cast_sp     = *(std::static_pointer_cast<OpVariableSaveableParams<TensorType>>(p_sp));
+  auto sp = std::make_shared<SPType>();
 
   // Add base class savable params
-  auto ops_sp      = Ops<TensorType>::GetOpSaveableParams();
-  auto cast_ops_sp = std::static_pointer_cast<OpsSaveableParams>(sp);
-  *cast_ops_sp     = *(std::static_pointer_cast<OpsSaveableParams>(ops_sp));
+  auto ops_sp  = ParentClass::GetOpSaveableParams();
+  auto cast_sp = std::static_pointer_cast<typename ParentClass::SPType>(sp);
+  *cast_sp     = *(std::static_pointer_cast<typename ParentClass::SPType>(ops_sp));
 
   return sp;
 }
@@ -312,12 +308,16 @@ std::vector<math::SizeType> Weights<TensorType>::GetFutureDataShape() const
 }
 
 template <typename TensorType>
-OperationsCount Weights<TensorType>::ChargeForward() const
+std::pair<OperationsCount, math::SizeVector> Weights<TensorType>::ChargeForward(
+    std::vector<math::SizeVector> const &input_shapes)
 {
-  assert(!this->batch_output_shape_.empty());
-  OperationsCount cost = fetch::ml::charge_estimation::ops::WEIGHTS_READING_PER_ELEMENT *
-                         this->TotalElementsIn({this->batch_output_shape_});
-  return cost;
+  FETCH_UNUSED(input_shapes);
+  assert(!this->future_data_shape_.empty());
+
+  OperationsCount op_cnt = fetch::ml::charge_estimation::ops::WEIGHTS_READING_PER_ELEMENT *
+                           fetch::math::Product(this->future_data_shape_);
+
+  return std::make_pair(op_cnt, this->future_data_shape_);
 }
 
 template <class T>

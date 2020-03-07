@@ -63,7 +63,7 @@ template <class TensorType>
 void Log<TensorType>::Forward(VecTensorType const &inputs, TensorType &output)
 {
   assert(inputs.size() == 1);
-  assert(output.shape() == this->ComputeOutputShape(inputs));
+  assert(output.shape() == ComputeOutputShape(fetch::ml::utilities::TensorPtrsToSizes(inputs)));
 
   fetch::math::Log((*inputs.at(0)), output);
 }
@@ -77,7 +77,8 @@ std::vector<TensorType> Log<TensorType>::Backward(VecTensorType const &inputs,
                                                   TensorType const &   error_signal)
 {
   assert(inputs.size() == 1);
-  assert(error_signal.shape() == this->ComputeOutputShape(inputs));
+  assert(error_signal.shape() ==
+         ComputeOutputShape(fetch::ml::utilities::TensorPtrsToSizes(inputs)));
 
   TensorType ret_error_signal(inputs.at(0)->shape());
   fetch::math::Divide(error_signal, (*inputs.at(0)), ret_error_signal);
@@ -86,29 +87,35 @@ std::vector<TensorType> Log<TensorType>::Backward(VecTensorType const &inputs,
 }
 
 template <class TensorType>
-std::vector<math::SizeType> Log<TensorType>::ComputeOutputShape(VecTensorType const &inputs) const
+std::vector<math::SizeType> Log<TensorType>::ComputeOutputShape(
+    std::vector<math::SizeVector> const &inputs) const
 {
-  return inputs.front()->shape();
+  return inputs.front();
 }
 
 template <typename TensorType>
-OperationsCount Log<TensorType>::ChargeForward() const
+std::pair<OperationsCount, math::SizeVector> Log<TensorType>::ChargeForward(
+    std::vector<math::SizeVector> const &input_shapes)
 {
   assert(!this->batch_input_shapes_.empty());
 
-  OperationsCount cost = fetch::ml::charge_estimation::ops::LOG_PER_ELEMENT *
-                         this->TotalElementsIn({this->batch_input_shapes_});
-  return cost;
+  OperationsCount op_cnt = fetch::ml::charge_estimation::ops::LOG_PER_ELEMENT *
+                           TensorType::SizeFromShape(input_shapes[0]);
+
+  auto output_shape = ComputeOutputShape(input_shapes);
+  return std::make_pair(op_cnt, output_shape);
 }
 
 template <typename TensorType>
-OperationsCount Log<TensorType>::ChargeBackward() const
+std::pair<OperationsCount, math::SizeVector> Log<TensorType>::ChargeBackward(
+    std::vector<math::SizeVector> const &input_shapes)
 {
   assert(!this->batch_output_shape_.empty());
 
   OperationsCount cost = fetch::ml::charge_estimation::ops::DIVISION_PER_ELEMENT *
                          this->TotalElementsIn({this->batch_output_shape_});
-  return cost;
+  math::SizeVector output_shape = ComputeOutputShape(input_shapes);
+  return std::make_pair(cost * output_shape.back(), output_shape);
 }
 
 ///////////////////////////////

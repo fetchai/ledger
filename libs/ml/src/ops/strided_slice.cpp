@@ -93,7 +93,7 @@ template <typename TensorType>
 void StridedSlice<TensorType>::Forward(VecTensorType const &inputs, TensorType &output)
 {
   assert(inputs.size() == 1);
-  assert(output.shape() == this->ComputeOutputShape(inputs));
+  assert(output.shape() == ComputeOutputShape(fetch::ml::utilities::TensorPtrsToSizes(inputs)));
 
   auto slice = inputs.at(0)->Slice(begins_, ends_, strides_);
   output.Assign(slice);
@@ -110,7 +110,8 @@ std::vector<TensorType> StridedSlice<TensorType>::Backward(VecTensorType const &
                                                            TensorType const &   error_signal)
 {
   assert(inputs.size() == 1);
-  assert(error_signal.shape() == this->ComputeOutputShape(inputs));
+  assert(error_signal.shape() ==
+         ComputeOutputShape(fetch::ml::utilities::TensorPtrsToSizes(inputs)));
 
   TensorType ret_error_signal_{inputs.at(0)->shape()};
 
@@ -122,10 +123,10 @@ std::vector<TensorType> StridedSlice<TensorType>::Backward(VecTensorType const &
 
 template <typename TensorType>
 std::vector<math::SizeType> StridedSlice<TensorType>::ComputeOutputShape(
-    VecTensorType const &inputs) const
+    std::vector<math::SizeVector> const &inputs) const
 {
 
-  SizeVector output_shape = inputs.front()->shape();
+  SizeVector output_shape = inputs.front();
 
   // Calculate number of stride size steps from specified begin to specified end for each
   // dimension
@@ -140,19 +141,22 @@ std::vector<math::SizeType> StridedSlice<TensorType>::ComputeOutputShape(
 }
 
 template <typename TensorType>
-OperationsCount StridedSlice<TensorType>::ChargeForward() const
+std::pair<OperationsCount, math::SizeVector> StridedSlice<TensorType>::ChargeForward(
+    std::vector<math::SizeVector> const &input_shapes)
 {
   assert(!this->batch_input_shapes_.empty());
-  OperationsCount cost = fetch::ml::charge_estimation::ops::SLICE_PER_ELEMENT *
-                             this->TotalElementsIn({this->batch_input_shapes_}) +
-                         fetch::ml::charge_estimation::ops::ASSIGN_PER_ELEMENT *
-                             this->TotalElementsIn({this->batch_input_shapes_});
 
-  return cost;
+  OperationsCount op_cnt = (fetch::ml::charge_estimation::ops::SLICE_PER_ELEMENT +
+                            fetch::ml::charge_estimation::ops::ASSIGN_PER_ELEMENT) *
+                           TensorType::SizeFromShape(input_shapes[0]);
+
+  auto output_shape = ComputeOutputShape(input_shapes);
+  return std::make_pair(op_cnt, output_shape);
 }
 
 template <typename TensorType>
-OperationsCount StridedSlice<TensorType>::ChargeBackward() const
+std::pair<OperationsCount, math::SizeVector> StridedSlice<TensorType>::ChargeBackward(
+    std::vector<math::SizeVector> const &input_shapes)
 {
   assert(!this->batch_output_shape_.empty());
   OperationsCount cost = fetch::ml::charge_estimation::ops::SLICE_PER_ELEMENT *
@@ -160,7 +164,8 @@ OperationsCount StridedSlice<TensorType>::ChargeBackward() const
                          fetch::ml::charge_estimation::ops::ASSIGN_PER_ELEMENT *
                              this->TotalElementsIn({this->batch_output_shape_});
 
-  return cost;
+  math::SizeVector output_shape = ComputeOutputShape(input_shapes);
+  return std::make_pair(cost * output_shape.back(), output_shape);
 }
 ///////////////////////////////
 /// EXPLICIT INSTANTIATIONS ///

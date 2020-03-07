@@ -62,7 +62,7 @@ template <class TensorType>
 void TanH<TensorType>::Forward(VecTensorType const &inputs, TensorType &output)
 {
   assert(inputs.size() == 1);
-  assert(output.shape() == this->ComputeOutputShape(inputs));
+  assert(output.shape() == ComputeOutputShape(fetch::ml::utilities::TensorPtrsToSizes(inputs)));
   fetch::math::TanH(*(inputs.front()), output);
   // ensures numerical stability
   for (auto &val : output)
@@ -85,7 +85,7 @@ std::vector<TensorType> TanH<TensorType>::Backward(VecTensorType const &inputs,
 
   TensorType return_signal = error_signal.Copy();
 
-  TensorType t(this->ComputeOutputShape(inputs));
+  TensorType t(ComputeOutputShape(fetch::ml::utilities::TensorPtrsToSizes(inputs)));
   Forward(inputs, t);
 
   // gradient of tanh: 1 - tanh(x)^2
@@ -99,27 +99,34 @@ std::vector<TensorType> TanH<TensorType>::Backward(VecTensorType const &inputs,
 }
 
 template <class TensorType>
-std::vector<math::SizeType> TanH<TensorType>::ComputeOutputShape(VecTensorType const &inputs) const
+std::vector<math::SizeType> TanH<TensorType>::ComputeOutputShape(
+    std::vector<math::SizeVector> const &inputs) const
 {
-  return inputs.front()->shape();
+  return inputs.front();
 }
 
 template <typename TensorType>
-OperationsCount TanH<TensorType>::ChargeForward() const
+std::pair<OperationsCount, math::SizeVector> TanH<TensorType>::ChargeForward(
+    std::vector<math::SizeVector> const &input_shapes)
 {
   assert(!this->batch_input_shapes_.empty());
-  OperationsCount cost = fetch::ml::charge_estimation::ops::TANH_PER_ELEMENT *
-                         this->TotalElementsIn({this->batch_input_shapes_});
-  return cost;
+
+  OperationsCount op_cnt = fetch::ml::charge_estimation::ops::TANH_PER_ELEMENT *
+                           TensorType::SizeFromShape(input_shapes[0]);
+
+  auto output_shape = ComputeOutputShape(input_shapes);
+  return std::make_pair(op_cnt, output_shape);
 }
 
 template <typename TensorType>
-OperationsCount TanH<TensorType>::ChargeBackward() const
+std::pair<OperationsCount, math::SizeVector> TanH<TensorType>::ChargeBackward(
+    std::vector<math::SizeVector> const &input_shapes)
 {
   assert(!this->batch_output_shape_.empty());
   OperationsCount cost = fetch::ml::charge_estimation::ops::TANH_BACKWARD_PER_ELEMENT *
                          this->TotalElementsIn({this->batch_output_shape_});
-  return cost;
+  math::SizeVector output_shape = ComputeOutputShape(input_shapes);
+  return std::make_pair(cost * output_shape.back(), output_shape);
 }
 
 ///////////////////////////////

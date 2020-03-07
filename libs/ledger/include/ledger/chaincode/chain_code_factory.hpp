@@ -30,7 +30,7 @@ namespace ledger {
 
 class Contract;
 
-std::shared_ptr<Contract> CreateChainCode(byte_array::ConstByteArray const &contract_name);
+std::unique_ptr<Contract> CreateChainCode(byte_array::ConstByteArray const &contract_name);
 std::unordered_set<byte_array::ConstByteArray> const &GetChainCodeContracts();
 
 }  // namespace ledger

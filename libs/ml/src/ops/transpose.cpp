@@ -64,7 +64,7 @@ template <class TensorType>
 void Transpose<TensorType>::Forward(VecTensorType const &inputs, TensorType &output)
 {
   assert(inputs.size() == 1);
-  assert(output.shape() == this->ComputeOutputShape(inputs));
+  assert(output.shape() == ComputeOutputShape(fetch::ml::utilities::TensorPtrsToSizes(inputs)));
 
   if (inputs.front()->shape().size() == 2)
   {
@@ -82,7 +82,8 @@ std::vector<TensorType> Transpose<TensorType>::Backward(VecTensorType const &inp
 {
   FETCH_UNUSED(inputs);
   assert(inputs.size() == 1);
-  assert(error_signal.shape() == this->ComputeOutputShape(inputs));
+  assert(error_signal.shape() ==
+         ComputeOutputShape(fetch::ml::utilities::TensorPtrsToSizes(inputs)));
 
   if (error_signal.shape().size() == 2)
   {
@@ -94,16 +95,16 @@ std::vector<TensorType> Transpose<TensorType>::Backward(VecTensorType const &inp
 
 template <class TensorType>
 std::vector<math::SizeType> Transpose<TensorType>::ComputeOutputShape(
-    VecTensorType const &inputs) const
+    std::vector<math::SizeVector> const &inputs) const
 {
   // 2D transpose
-  if (inputs.at(0)->shape().size() == 2)
+  if (inputs.at(0).size() == 2)
   {
-    return {inputs.front()->shape().at(1), inputs.front()->shape().at(0)};
+    return {inputs.front().at(1), inputs.front().at(0)};
   }
   // Transpose by given vector
 
-  std::vector<SizeType> input_shape = inputs.front()->shape();
+  std::vector<SizeType> input_shape = inputs.front();
   std::vector<SizeType> shape;
 
   shape.reserve(shape.size());
@@ -116,21 +117,27 @@ std::vector<math::SizeType> Transpose<TensorType>::ComputeOutputShape(
 }
 
 template <typename TensorType>
-OperationsCount Transpose<TensorType>::ChargeForward() const
+std::pair<OperationsCount, math::SizeVector> Transpose<TensorType>::ChargeForward(
+    std::vector<math::SizeVector> const &input_shapes)
 {
   assert(!this->batch_input_shapes_.empty());
-  OperationsCount cost = fetch::ml::charge_estimation::ops::TRANSPOSE_PER_ELEMENT *
-                         this->TotalElementsIn({this->batch_input_shapes_});
-  return cost;
+
+  OperationsCount op_cnt = fetch::ml::charge_estimation::ops::TRANSPOSE_PER_ELEMENT *
+                           TensorType::SizeFromShape(input_shapes[0]);
+
+  auto output_shape = ComputeOutputShape(input_shapes);
+  return std::make_pair(op_cnt, output_shape);
 }
 
 template <typename TensorType>
-OperationsCount Transpose<TensorType>::ChargeBackward() const
+std::pair<OperationsCount, math::SizeVector> Transpose<TensorType>::ChargeBackward(
+    std::vector<math::SizeVector> const &input_shapes)
 {
   assert(!this->batch_output_shape_.empty());
   OperationsCount cost = fetch::ml::charge_estimation::ops::TRANSPOSE_PER_ELEMENT *
                          this->TotalElementsIn({this->batch_output_shape_});
-  return cost;
+  math::SizeVector output_shape = ComputeOutputShape(input_shapes);
+  return std::make_pair(cost * output_shape.back(), output_shape);
 }
 
 ///////////////////////////////

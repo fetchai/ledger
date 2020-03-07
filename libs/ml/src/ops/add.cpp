@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "math/matrix_operations.hpp"
+#include "ml/charge_estimation/ops/constants.hpp"
 #include "ml/ops/add.hpp"
 #include "ml/saveparams/saveable_params.hpp"
 
@@ -61,7 +62,7 @@ template <typename TensorType>
 void Add<TensorType>::Forward(VecTensorType const &inputs, TensorType &output)
 {
   assert(inputs.size() == 2);
-  assert(output.shape() == this->ComputeOutputShape(inputs));
+  assert(output.shape() == ComputeOutputShape(fetch::ml::utilities::TensorPtrsToSizes(inputs)));
   fetch::math::Add((*inputs.at(0)), (*inputs.at(1)), output);
 }
 
@@ -72,7 +73,8 @@ std::vector<TensorType> Add<TensorType>::Backward(VecTensorType const &inputs,
   assert(inputs.size() == 2);
   assert(inputs.at(0)->shape().size() == inputs.at(1)->shape().size());
   assert(inputs.at(0)->shape() == error_signal.shape());
-  assert(error_signal.shape() == ComputeOutputShape(inputs));
+  assert(error_signal.shape() ==
+         ComputeOutputShape(fetch::ml::utilities::TensorPtrsToSizes(inputs)));
 
   if (inputs.at(0)->shape() == inputs.at(1)->shape())
   {
@@ -86,9 +88,10 @@ std::vector<TensorType> Add<TensorType>::Backward(VecTensorType const &inputs,
 }
 
 template <typename TensorType>
-std::vector<math::SizeType> Add<TensorType>::ComputeOutputShape(VecTensorType const &inputs) const
+std::vector<math::SizeType> Add<TensorType>::ComputeOutputShape(
+    std::vector<math::SizeVector> const &inputs) const
 {
-  return inputs.at(0)->shape();
+  return inputs.at(0);
 }
 
 template <typename TensorType>
@@ -104,30 +107,82 @@ const char *Add<TensorType>::Descriptor() const
 }
 
 template <typename TensorType>
-OperationsCount Add<TensorType>::ChargeForward() const
+std::pair<OperationsCount, math::SizeVector> Add<TensorType>::ChargeForward(
+    std::vector<math::SizeVector> const &input_shapes)
 {
-  assert(!this->batch_output_shape_.empty());
+  OperationsCount cost = fetch::ml::charge_estimation::ops::OP_OVERHEAD;
 
-  OperationsCount op_cnt{1};
+  auto output_shape = ComputeOutputShape(input_shapes);
+  auto n_elements   = TensorType::SizeFromShape(output_shape);
+  auto padded_size  = TensorType::PaddedSizeFromShape(output_shape);
 
-  // Addition cost
-  SizeType num_elements = TensorType::SizeFromShape(this->batch_output_shape_);
-  op_cnt += num_elements;
+  if ((padded_size / 32) < fetch::ml::charge_estimation::ops::PIECEWISE_LOWER_THRESHOLD)
+  {
+    // Addition cost
+    cost += fetch::ml::charge_estimation::ops::LOW_ADDITION_PER_ELEMENT * n_elements;
 
-  // Iteration over 3 tensors (input1, input2, ret)
-  OperationsCount iteration_ops = TensorType::ChargeIterate(this->batch_output_shape_);
-  op_cnt += iteration_ops * 3;
+    // Iteration over 3 tensors (input1, input2, ret)
+    OperationsCount iteration_ops = TensorType::ChargeIterate(output_shape);
+    cost += iteration_ops * 3;
+  }
+  else if ((padded_size / 32) < fetch::ml::charge_estimation::ops::PIECEWISE_HARD_CAP)
+  {
+    // Addition cost
+    cost += fetch::ml::charge_estimation::ops::HIGH_ADDITION_PER_ELEMENT * n_elements;
 
-  return op_cnt;
+    // Iteration over 3 tensors (input1, input2, ret)
+    OperationsCount iteration_ops = TensorType::ChargeIterate(output_shape);
+    cost += iteration_ops * 3;
+  }
+  else
+  {
+    cost = math::numeric_max<OperationsCount>();
+  }
+
+  return std::make_pair(cost, output_shape);
 }
 
 template <typename TensorType>
-OperationsCount Add<TensorType>::ChargeBackward() const
+std::pair<OperationsCount, math::SizeVector> Add<TensorType>::ChargeBackward(
+    std::vector<math::SizeVector> const &input_shapes)
 {
-  assert(!this->batch_output_shape_.empty());
-  OperationsCount cost = fetch::ml::charge_estimation::ops::ADDITION_PER_ELEMENT *
-                         this->TotalElementsIn({this->batch_output_shape_});
-  return cost;
+  OperationsCount cost = fetch::ml::charge_estimation::ops::OP_ADD_BACKWARD_OVERHEAD;
+
+  math::SizeVector output_shape = ComputeOutputShape(input_shapes);
+
+  auto n_elements  = TensorType::SizeFromShape(output_shape);
+  auto padded_size = TensorType::PaddedSizeFromShape(output_shape);
+
+  if (this->batch_input_shapes_.at(0) == this->batch_input_shapes_.at(1))
+  {
+    // Just return error
+    return std::make_pair(cost, output_shape);
+  }
+
+  // Perform ReduceSum
+  if ((padded_size / 32) < fetch::ml::charge_estimation::ops::PIECEWISE_LOWER_THRESHOLD)
+  {
+    // Addition cost
+    cost += fetch::ml::charge_estimation::ops::LOW_ADDITION_PER_ELEMENT * n_elements;
+
+    // Iteration over 3 tensors (input1, input2, ret)
+    OperationsCount iteration_ops = TensorType::ChargeIterate(output_shape);
+    cost += iteration_ops * 3;
+  }
+  else if ((padded_size / 32) < fetch::ml::charge_estimation::ops::PIECEWISE_HARD_CAP)
+  {
+    // Addition cost
+    cost += fetch::ml::charge_estimation::ops::HIGH_ADDITION_PER_ELEMENT * n_elements;
+
+    // Iteration over 3 tensors (input1, input2, ret)
+    OperationsCount iteration_ops = TensorType::ChargeIterate(output_shape);
+    cost += iteration_ops * 3;
+  }
+  else
+  {
+    cost = math::numeric_max<OperationsCount>();
+  }
+  return std::make_pair(cost, output_shape);
 }
 
 /**

@@ -50,7 +50,7 @@ TYPED_TEST(LayerNormTest, forward_test_2d)
 
   fetch::ml::ops::LayerNorm<TensorType> op(static_cast<typename TypeParam::SizeType>(0));
 
-  TensorType prediction(op.ComputeOutputShape({std::make_shared<TensorType>(data)}));
+  TensorType prediction(op.ComputeOutputShape({data.shape()}));
   op.Forward({std::make_shared<TensorType>(data)}, prediction);
 
   // test correct values
@@ -79,7 +79,7 @@ TYPED_TEST(LayerNormTest, forward_test_3d)
 
   fetch::ml::ops::LayerNorm<TensorType> op(static_cast<typename TypeParam::SizeType>(0));
 
-  TensorType prediction(op.ComputeOutputShape({std::make_shared<TensorType>(data)}));
+  TensorType prediction(op.ComputeOutputShape({data.shape()}));
   op.Forward({std::make_shared<TensorType>(data)}, prediction);
 
   // test correct values
@@ -142,7 +142,7 @@ TYPED_TEST(LayerNormTest, backward_test_3d)
 
   fetch::ml::ops::LayerNorm<TensorType> op(static_cast<typename TypeParam::SizeType>(0));
 
-  TensorType prediction(op.ComputeOutputShape({std::make_shared<TensorType>(data)}));
+  TensorType prediction(op.ComputeOutputShape({data.shape()}));
   auto backward_errors = op.Backward({std::make_shared<TensorType>(data)}, error_signal).at(0);
 
   // test correct values

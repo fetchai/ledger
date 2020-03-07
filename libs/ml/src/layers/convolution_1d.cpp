@@ -120,12 +120,11 @@ std::shared_ptr<OpsSaveableParams> Convolution1D<TensorType>::GetOpSaveableParam
 
 template <class TensorType>
 std::vector<fetch::math::SizeType> Convolution1D<TensorType>::ComputeOutputShape(
-    VecTensorType const &inputs) const
+    std::vector<math::SizeVector> const &inputs) const
 {
-  TensorType weights_data(
-      std::vector<SizeType>{{output_channels_, input_channels_, kernel_size_, 1}});
+  std::vector<SizeType> weights_data{output_channels_, input_channels_, kernel_size_, 1};
   return fetch::ml::ops::Convolution1D<TensorType>(stride_size_)
-      .ComputeOutputShape({inputs.at(0), std::make_shared<TensorType>(weights_data)});
+      .ComputeOutputShape({inputs.at(0), weights_data});
 }
 
 template <typename TensorType>
@@ -137,18 +136,6 @@ void Convolution1D<TensorType>::Compile()
       std::vector<SizeType>{{output_channels_, input_channels_, kernel_size_, 1}});
   fetch::ml::ops::Weights<TensorType>::Initialise(weights_data, 1, 1, init_mode_, seed_);
   this->SetInput(weights_, weights_data);
-}
-
-template <class TensorType>
-OperationsCount Convolution1D<TensorType>::ChargeForward() const
-{
-  return Graph<TensorType>::ChargeForward(this->output_node_name_);
-}
-
-template <class TensorType>
-OperationsCount Convolution1D<TensorType>::ChargeBackward() const
-{
-  return Graph<TensorType>::ChargeBackward(this->output_node_name_);
 }
 
 template <typename TensorType>
