@@ -43,10 +43,6 @@ struct No
 class BinaryTraits
 {
   template <class T>
-  static constexpr auto HasSize(T &&t) noexcept -> decltype(t.BinarySize(), Yes{});
-  static constexpr No   HasSize(...) noexcept;
-
-  template <class T>
   static constexpr auto HasRead(T &&t) noexcept -> decltype(t.BinaryRead(nullptr), Yes{});
   static constexpr No   HasRead(...) noexcept;
 
@@ -56,49 +52,20 @@ class BinaryTraits
 
 public:
   template <class T>
-  static constexpr bool HasBinarySize =
-      std::is_same<decltype(HasSize(std::declval<T>())), Yes>::value;
-  template <class T>
   static constexpr bool HasBinaryRead =
       std::is_same<decltype(HasRead(std::declval<T>())), Yes>::value;
+
   template <class T>
   static constexpr bool HasBinaryWrite =
       std::is_same<decltype(HasWrite(std::declval<T>())), Yes>::value;
 };
 
 template <class T>
-static constexpr bool IsSizePOD = meta::IsPOD<std::decay_t<T>> && !BinaryTraits::HasBinarySize<T>;
+static constexpr bool                HasBinaryIO =
+    BinaryTraits::HasBinaryRead<T> &&BinaryTraits::HasBinaryWrite<T>;
 
-template <class T, class U = void>
-using IfIsSizePOD = meta::EnableIf<IsSizePOD<T>, U>;
-
-template <class T>
-static constexpr bool IsReadPOD = meta::IsPOD<std::decay_t<T>> && !BinaryTraits::HasBinaryRead<T>;
-
-template <class T, class U = void>
-using IfIsReadPOD = meta::EnableIf<IsReadPOD<T>, U>;
-
-template <class T>
-static constexpr bool IsWritePOD = meta::IsPOD<std::decay_t<T>> && !BinaryTraits::HasBinaryWrite<T>;
-
-template <class T, class U = void>
-using IfIsWritePOD = meta::EnableIf<IsWritePOD<T>, U>;
-
-struct BinarySize
-{
-  template <class T>
-  constexpr auto operator()(std::size_t accum, T &&t) const noexcept
-      -> decltype(accum + t.BinarySize())
-  {
-    return accum + t.BinarySize();
-  }
-
-  template <class T>
-  constexpr IfIsSizePOD<T, std::size_t> operator()(std::size_t accum, T /*t*/) const noexcept
-  {
-    return accum + sizeof(T);
-  }
-};
+template <class T, class U>
+using IfHasBinaryIO = meta::EnableIf<HasBinaryIO<T>, U>;
 
 struct BufferIStream
 {
