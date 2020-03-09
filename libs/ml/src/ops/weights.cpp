@@ -32,16 +32,12 @@ Weights<TensorType>::Weights(SPType const &sp)
 template <typename TensorType>
 std::shared_ptr<OpsSaveableParams> Weights<TensorType>::GetOpSaveableParams()
 {
-  auto sp   = std::make_shared<SPType>();
-  auto p_sp = Variable<TensorType>::GetOpSaveableParams();
-
-  auto cast_sp = std::static_pointer_cast<OpVariableSaveableParams<TensorType>>(sp);
-  *cast_sp     = *(std::static_pointer_cast<OpVariableSaveableParams<TensorType>>(p_sp));
+  auto sp = std::make_shared<SPType>();
 
   // Add base class savable params
-  auto ops_sp      = Ops<TensorType>::GetOpSaveableParams();
-  auto cast_ops_sp = std::static_pointer_cast<OpsSaveableParams>(sp);
-  *cast_ops_sp     = *(std::static_pointer_cast<OpsSaveableParams>(ops_sp));
+  auto ops_sp  = ParentClass::GetOpSaveableParams();
+  auto cast_sp = std::static_pointer_cast<typename ParentClass::SPType>(sp);
+  *cast_sp     = *(std::static_pointer_cast<typename ParentClass::SPType>(ops_sp));
 
   return sp;
 }
@@ -130,6 +126,13 @@ void Weights<TensorType>::Initialise(TensorType &array, uint64_t in_size, uint64
   }
 }
 
+template <typename TensorType>
+OperationsCount Weights<TensorType>::ChargeInitialise(std::vector<SizeType> const &shape)
+{
+  // Cost of filling tensor data_ which doesn't exist yet.
+  return TensorType::SizeFromShape(shape);
+}
+
 /**
  * interface to call standard weights initialisation routines. defaults to xavier.
  * Fan in and fan out xavier not permitted with input and output sizes not known independently
@@ -175,6 +178,16 @@ TensorType const &Weights<TensorType>::GetWeights() const
   return *this->data_;
 }
 
+/**
+ * @tparam TensorType
+ * @return bool TRUE if weights are initialised - data_ aren't NULL pointer
+ */
+template <typename TensorType>
+bool Weights<TensorType>::IsInit() const
+{
+  return this->data_ != nullptr;
+}
+
 template <typename TensorType>
 void Weights<TensorType>::SetWeights(TensorType const &new_value)
 {
@@ -190,7 +203,7 @@ template <typename TensorType>
 std::pair<TensorType const, typename Weights<TensorType>::SizeSet const>
 Weights<TensorType>::GetSparseGradientsReferences() const
 {
-  return std::move(std::make_pair(*this->gradient_accumulation_, this->updated_rows_));
+  return std::make_pair(*this->gradient_accumulation_, this->updated_rows_);
 }
 
 /**
@@ -288,13 +301,23 @@ const char *ops::Weights<TensorType>::Descriptor() const
   return DESCRIPTOR;
 }
 
-template <typename TensorType>
-OperationsCount Weights<TensorType>::ChargeForward() const
+template <class TensorType>
+std::vector<math::SizeType> Weights<TensorType>::GetFutureDataShape() const
 {
-  assert(!this->batch_output_shape_.empty());
-  OperationsCount cost = fetch::ml::charge_estimation::ops::WEIGHTS_READING_PER_ELEMENT *
-                         this->TotalElementsIn({this->batch_output_shape_});
-  return cost;
+  return this->future_data_shape_;
+}
+
+template <typename TensorType>
+std::pair<OperationsCount, math::SizeVector> Weights<TensorType>::ChargeForward(
+    std::vector<math::SizeVector> const &input_shapes)
+{
+  FETCH_UNUSED(input_shapes);
+  assert(!this->future_data_shape_.empty());
+
+  OperationsCount op_cnt = fetch::ml::charge_estimation::ops::WEIGHTS_READING_PER_ELEMENT *
+                           fetch::math::Product(this->future_data_shape_);
+
+  return std::make_pair(op_cnt, this->future_data_shape_);
 }
 
 template <class T>

@@ -20,7 +20,6 @@
 #include "vectorise/fixed_point/fixed_point.hpp"
 #include "vm_modules/math/tensor/tensor.hpp"
 #include "vm_modules/ml/model/model.hpp"
-#include "vm_modules/ml/model/model_estimator.hpp"
 #include "vm_modules/vm_factory.hpp"
 
 #include "benchmark/benchmark.h"
@@ -92,7 +91,7 @@ void BM_Construct(::benchmark::State &state)
 {
   using VMPtr = std::shared_ptr<VM>;
 
-  // Get args form state
+  // Get args from state
   BM_Tensor_config config{state};
 
   state.counters["PaddedSize"] =
@@ -210,7 +209,7 @@ void BM_String_Construct(::benchmark::State &state)
   using VMPtr    = std::shared_ptr<VM>;
   using SizeType = fetch::math::SizeType;
 
-  // Get args form state
+  // Get args from state
   BM_Tensor_String_config config{state};
   state.counters["Size"] = static_cast<double>(config.size);
 
@@ -246,7 +245,7 @@ void BM_Fill(::benchmark::State &state)
   using VMPtr    = std::shared_ptr<VM>;
   using DataType = fetch::vm_modules::math::DataType;
 
-  // Get args form state
+  // Get args from state
   BM_Tensor_config config{state};
 
   state.counters["PaddedSize"] =
@@ -346,7 +345,7 @@ void BM_FillRandom(::benchmark::State &state)
 {
   using VMPtr = std::shared_ptr<VM>;
 
-  // Get args form state
+  // Get args from state
   BM_Tensor_config config{state};
 
   state.counters["PaddedSize"] =
@@ -469,7 +468,7 @@ void BM_Reshape(::benchmark::State &state)
 {
   using VMPtr = std::shared_ptr<VM>;
 
-  // Get args form state
+  // Get args from state
   BM_Reshape_config config{state};
 
   state.counters["PaddedSizeFrom"] =
@@ -540,7 +539,7 @@ void BM_Transpose(::benchmark::State &state)
 {
   using VMPtr = std::shared_ptr<VM>;
 
-  // Get args form state
+  // Get args from state
   BM_Tensor_config config{state};
 
   state.counters["Size"] =
@@ -621,7 +620,7 @@ void BM_At(::benchmark::State &state)
 {
   using VMPtr = std::shared_ptr<VM>;
 
-  // Get args form state
+  // Get args from state
   BM_At_config config{state};
 
   state.counters["PaddedSizeFrom"] =
@@ -720,7 +719,7 @@ void BM_SetAt(::benchmark::State &state)
   using VMPtr    = std::shared_ptr<VM>;
   using DataType = fetch::vm_modules::math::DataType;
 
-  // Get args form state
+  // Get args from state
   BM_SetAt_config config{state};
 
   state.counters["PaddedSizeFrom"] =
@@ -797,7 +796,7 @@ void BM_ToString(::benchmark::State &state)
 {
   using VMPtr = std::shared_ptr<VM>;
 
-  // Get args form state
+  // Get args from state
   BM_Tensor_config config{state};
 
   state.counters["PaddedSize"] =
@@ -840,7 +839,7 @@ void BM_FromString(::benchmark::State &state)
 {
   using VMPtr = std::shared_ptr<VM>;
 
-  // Get args form state
+  // Get args from state
   BM_Tensor_config config{state};
 
   VMPtr vm;
@@ -879,7 +878,7 @@ void BM_Min(::benchmark::State &state)
 {
   using VMPtr = std::shared_ptr<VM>;
 
-  // Get args form state
+  // Get args from state
   BM_Tensor_config config{state};
 
   state.counters["PaddedSize"] =
@@ -977,7 +976,7 @@ void BM_Max(::benchmark::State &state)
 {
   using VMPtr = std::shared_ptr<VM>;
 
-  // Get args form state
+  // Get args from state
   BM_Tensor_config config{state};
 
   state.counters["PaddedSize"] =
@@ -1075,7 +1074,7 @@ void BM_Sum(::benchmark::State &state)
 {
   using VMPtr = std::shared_ptr<VM>;
 
-  // Get args form state
+  // Get args from state
   BM_Tensor_config config{state};
 
   state.counters["PaddedSize"] =
@@ -1195,7 +1194,7 @@ void BM_ArgMax(::benchmark::State &state)
   using VMPtr    = std::shared_ptr<VM>;
   using SizeType = fetch::math::SizeType;
 
-  // Get args form state
+  // Get args from state
   BM_ArgMax_config config{state};
 
   state.counters["PaddedSize"] =
@@ -1303,7 +1302,7 @@ void BM_ArgMaxNoIndices(::benchmark::State &state)
   using VMPtr    = std::shared_ptr<VM>;
   using SizeType = fetch::math::SizeType;
 
-  // Get args form state
+  // Get args from state
   BM_Tensor_config config{state};
 
   state.counters["PaddedSize"] =
@@ -1428,7 +1427,7 @@ void BM_Dot(::benchmark::State &state)
 {
   using VMPtr = std::shared_ptr<VM>;
 
-  // Get args form state
+  // Get args from state
   BM_Dot_config config{state};
 
   state.counters["PaddedSizeA"] =
@@ -1504,7 +1503,7 @@ void BM_IsEqual(::benchmark::State &state)
 {
   using VMPtr = std::shared_ptr<VM>;
 
-  // Get args form state
+  // Get args from state
   BM_Tensor_config config{state};
 
   state.counters["PaddedSize"] =
@@ -1604,7 +1603,7 @@ void BM_IsNotEqual(::benchmark::State &state)
 {
   using VMPtr = std::shared_ptr<VM>;
 
-  // Get args form state
+  // Get args from state
   BM_Tensor_config config{state};
 
   state.counters["PaddedSize"] =
@@ -1704,7 +1703,7 @@ void BM_Negate(::benchmark::State &state)
 {
   using VMPtr = std::shared_ptr<VM>;
 
-  // Get args form state
+  // Get args from state
   BM_Tensor_config config{state};
 
   state.counters["PaddedSize"] =
@@ -1803,7 +1802,7 @@ void BM_Add(::benchmark::State &state)
 {
   using VMPtr = std::shared_ptr<VM>;
 
-  // Get args form state
+  // Get args from state
   BM_Tensor_config config{state};
 
   state.counters["PaddedSize"] =
@@ -1906,7 +1905,7 @@ void BM_Multiply(::benchmark::State &state)
 {
   using VMPtr = std::shared_ptr<VM>;
 
-  // Get args form state
+  // Get args from state
   BM_Tensor_config config{state};
 
   state.counters["PaddedSize"] =
@@ -2009,7 +2008,7 @@ void BM_Divide(::benchmark::State &state)
 {
   using VMPtr = std::shared_ptr<VM>;
 
-  // Get args form state
+  // Get args from state
   BM_Tensor_config config{state};
 
   state.counters["PaddedSize"] =
@@ -2112,7 +2111,7 @@ void BM_InplaceAdd(::benchmark::State &state)
 {
   using VMPtr = std::shared_ptr<VM>;
 
-  // Get args form state
+  // Get args from state
   BM_Tensor_config config{state};
 
   state.counters["PaddedSize"] =
@@ -2215,7 +2214,7 @@ void BM_InplaceSubtract(::benchmark::State &state)
 {
   using VMPtr = std::shared_ptr<VM>;
 
-  // Get args form state
+  // Get args from state
   BM_Tensor_config config{state};
 
   state.counters["PaddedSize"] =
@@ -2320,7 +2319,7 @@ void BM_InplaceMultiply(::benchmark::State &state)
 {
   using VMPtr = std::shared_ptr<VM>;
 
-  // Get args form state
+  // Get args from state
   BM_Tensor_config config{state};
 
   state.counters["PaddedSize"] =
@@ -2425,7 +2424,7 @@ void BM_InplaceDivide(::benchmark::State &state)
 {
   using VMPtr = std::shared_ptr<VM>;
 
-  // Get args form state
+  // Get args from state
   BM_Tensor_config config{state};
 
   state.counters["PaddedSize"] =
@@ -2530,7 +2529,7 @@ void BM_Copy(::benchmark::State &state)
 {
   using VMPtr = std::shared_ptr<VM>;
 
-  // Get args form state
+  // Get args from state
   BM_Tensor_config config{state};
 
   state.counters["PaddedSize"] =

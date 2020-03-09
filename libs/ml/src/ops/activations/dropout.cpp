@@ -38,7 +38,6 @@ Dropout<TensorType>::Dropout(DataType const probability, SizeType const &random_
     throw std::runtime_error("Dropout probability " + ss.str() + " is out of allowed range [0..1]");
   }
   rng_.Seed(random_seed);
-  drop_values_ = TensorType{0};
 }
 
 template <typename TensorType>
@@ -81,7 +80,7 @@ template <typename TensorType>
 void Dropout<TensorType>::Forward(VecTensorType const &inputs, TensorType &output)
 {
   assert(inputs.size() == 1);
-  assert(output.shape() == this->ComputeOutputShape(inputs));
+  assert(output.shape() == ComputeOutputShape(fetch::ml::utilities::TensorPtrsToSizes(inputs)));
 
   if (!this->is_training_)
   {
@@ -91,7 +90,7 @@ void Dropout<TensorType>::Forward(VecTensorType const &inputs, TensorType &outpu
   {
     if (drop_values_.shape() != output.shape())
     {
-      drop_values_ = TensorType(output.shape());
+      drop_values_.Reshape(output.shape());
     }
 
     auto out_it = output.begin();
@@ -138,27 +137,39 @@ std::vector<TensorType> Dropout<TensorType>::Backward(VecTensorType const &input
 
 template <typename TensorType>
 std::vector<math::SizeType> Dropout<TensorType>::ComputeOutputShape(
-    VecTensorType const &inputs) const
+    std::vector<math::SizeVector> const &inputs) const
 {
-  return inputs.front()->shape();
+  return inputs.front();
 }
 
 template <typename TensorType>
-OperationsCount Dropout<TensorType>::ChargeForward() const
+void Dropout<TensorType>::Compile()
 {
-  assert(!this->batch_input_shapes_.empty());
-  OperationsCount cost = fetch::ml::charge_estimation::ops::DROPOUT_PER_ELEMENT *
-                         this->TotalElementsIn({this->batch_input_shapes_});
-  return cost;
+  drop_values_ = TensorType{};
 }
 
 template <typename TensorType>
-OperationsCount Dropout<TensorType>::ChargeBackward() const
+std::pair<OperationsCount, math::SizeVector> Dropout<TensorType>::ChargeForward(
+    std::vector<math::SizeVector> const &input_shapes)
 {
   assert(!this->batch_input_shapes_.empty());
-  OperationsCount cost = fetch::ml::charge_estimation::ops::MULTIPLICATION_PER_ELEMENT *
+
+  OperationsCount op_cnt = fetch::ml::charge_estimation::ops::DROPOUT_PER_ELEMENT *
+                           TensorType::SizeFromShape(input_shapes[0]);
+
+  auto output_shape = ComputeOutputShape(input_shapes);
+  return std::make_pair(op_cnt, output_shape);
+}
+
+template <typename TensorType>
+std::pair<OperationsCount, math::SizeVector> Dropout<TensorType>::ChargeBackward(
+    std::vector<math::SizeVector> const &input_shapes)
+{
+  assert(!this->batch_input_shapes_.empty());
+  OperationsCount cost = fetch::ml::charge_estimation::ops::LOW_MULTIPLICATION_PER_ELEMENT *
                          this->TotalElementsIn({this->batch_input_shapes_.at(0)});
-  return cost;
+  math::SizeVector output_shape = ComputeOutputShape(input_shapes);
+  return std::make_pair(cost * output_shape.back(), output_shape);
 }
 
 ///////////////////////////////

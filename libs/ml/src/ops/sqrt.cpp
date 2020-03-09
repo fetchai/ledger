@@ -62,7 +62,7 @@ template <typename TensorType>
 void Sqrt<TensorType>::Forward(VecTensorType const &inputs, TensorType &output)
 {
   assert(inputs.size() == 1);
-  assert(output.shape() == this->ComputeOutputShape(inputs));
+  assert(output.shape() == ComputeOutputShape(fetch::ml::utilities::TensorPtrsToSizes(inputs)));
 
   fetch::math::Sqrt((*inputs.at(0)), output);
 }
@@ -76,7 +76,8 @@ std::vector<TensorType> Sqrt<TensorType>::Backward(VecTensorType const &inputs,
                                                    TensorType const &   error_signal)
 {
   assert(inputs.size() == 1);
-  assert(error_signal.shape() == this->ComputeOutputShape(inputs));
+  assert(error_signal.shape() ==
+         ComputeOutputShape(fetch::ml::utilities::TensorPtrsToSizes(inputs)));
 
   TensorType ret_error_signal(inputs.at(0)->shape());
 
@@ -88,27 +89,34 @@ std::vector<TensorType> Sqrt<TensorType>::Backward(VecTensorType const &inputs,
 }
 
 template <typename TensorType>
-std::vector<math::SizeType> Sqrt<TensorType>::ComputeOutputShape(VecTensorType const &inputs) const
+std::vector<math::SizeType> Sqrt<TensorType>::ComputeOutputShape(
+    std::vector<math::SizeVector> const &inputs) const
 {
-  return inputs.front()->shape();
+  return inputs.front();
 }
 
 template <typename TensorType>
-OperationsCount Sqrt<TensorType>::ChargeForward() const
+std::pair<OperationsCount, math::SizeVector> Sqrt<TensorType>::ChargeForward(
+    std::vector<math::SizeVector> const &input_shapes)
 {
   assert(!this->batch_input_shapes_.empty());
-  OperationsCount cost = fetch::ml::charge_estimation::ops::SQRT_PER_ELEMENT *
-                         this->TotalElementsIn({this->batch_input_shapes_});
-  return cost;
+
+  OperationsCount op_cnt = fetch::ml::charge_estimation::ops::SQRT_PER_ELEMENT *
+                           TensorType::SizeFromShape(input_shapes[0]);
+
+  auto output_shape = ComputeOutputShape(input_shapes);
+  return std::make_pair(op_cnt, output_shape);
 }
 
 template <typename TensorType>
-OperationsCount Sqrt<TensorType>::ChargeBackward() const
+std::pair<OperationsCount, math::SizeVector> Sqrt<TensorType>::ChargeBackward(
+    std::vector<math::SizeVector> const &input_shapes)
 {
   assert(!this->batch_output_shape_.empty());
   OperationsCount cost = fetch::ml::charge_estimation::ops::SQRT_BACKWARD_PER_ELEMENT *
                          this->TotalElementsIn({this->batch_output_shape_});
-  return cost;
+  math::SizeVector output_shape = ComputeOutputShape(input_shapes);
+  return std::make_pair(cost * output_shape.back(), output_shape);
 }
 
 ///////////////////////////////

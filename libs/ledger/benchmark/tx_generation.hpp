@@ -69,6 +69,7 @@ inline TransactionList GenerateTransactions(std::size_t count, ECDSASigner const
                   .TargetChainCode("fetch.token", BitVector{})
                   .Data(GenerateRandomArray<Word>(large_packets ? TX_SIZE_IN_WORDS : 1ull, rng))
                   .Signer(signer.identity())
+                  .Action(GenerateRandomArray<Word>(large_packets ? TX_SIZE_IN_WORDS : 1ull, rng))
                   .Seal()
                   .Sign(signer)
                   .Build();

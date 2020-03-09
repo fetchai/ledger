@@ -46,7 +46,7 @@ TYPED_TEST(ReluTest, forward_all_positive_test)
   TensorType gt   = TensorType::FromString(R"(1, 2, 3, 4, 5, 6, 7, 8)");
 
   fetch::ml::ops::Relu<TensorType> op;
-  TensorType prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
+  TensorType                       prediction(op.ComputeOutputShape({data.shape()}));
   op.Forward({std::make_shared<const TensorType>(data)}, prediction);
 
   // test correct values
@@ -77,7 +77,7 @@ TYPED_TEST(ReluTest, forward_3d_tensor_test)
   }
 
   fetch::ml::ops::Relu<TensorType> op;
-  TensorType prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
+  TensorType                       prediction(op.ComputeOutputShape({data.shape()}));
   op.Forward({std::make_shared<const TensorType>(data)}, prediction);
 
   // test correct values
@@ -93,7 +93,7 @@ TYPED_TEST(ReluTest, forward_all_negative_integer_test)
   TensorType gt   = TensorType::FromString(R"(0, 0, 0, 0, 0, 0, 0, 0)");
 
   fetch::ml::ops::Relu<TensorType> op;
-  TensorType prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
+  TensorType                       prediction(op.ComputeOutputShape({data.shape()}));
   op.Forward({std::make_shared<const TensorType>(data)}, prediction);
 
   // test correct values
@@ -108,7 +108,7 @@ TYPED_TEST(ReluTest, forward_mixed_test)
   TensorType gt   = TensorType::FromString(R"(1, 0, 3, 0, 5, 0, 7, 0)");
 
   fetch::ml::ops::Relu<TensorType> op;
-  TensorType prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
+  TensorType                       prediction(op.ComputeOutputShape({data.shape()}));
   op.Forward({std::make_shared<const TensorType>(data)}, prediction);
 
   // test correct values
@@ -178,8 +178,8 @@ TYPED_TEST(ReluTest, saveparams_test)
   TensorType gt   = TensorType::FromString("1, 2, 3, 4, 5, 6, 7, 8");
 
   fetch::ml::ops::Relu<TensorType> op;
-  TensorType    prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
-  VecTensorType vec_data({std::make_shared<const TensorType>(data)});
+  TensorType                       prediction(op.ComputeOutputShape({data.shape()}));
+  VecTensorType                    vec_data({std::make_shared<const TensorType>(data)});
 
   op.Forward(vec_data, prediction);
 
@@ -202,7 +202,7 @@ TYPED_TEST(ReluTest, saveparams_test)
   OpType new_op(*dsp2);
 
   // check that new predictions match the old
-  TensorType new_prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
+  TensorType new_prediction(op.ComputeOutputShape({data.shape()}));
   new_op.Forward(vec_data, new_prediction);
 
   // test correct values

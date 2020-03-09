@@ -35,9 +35,9 @@ std::shared_ptr<OpsSaveableParams> PlaceHolder<TensorType>::GetOpSaveableParams(
   auto sp = std::make_shared<SPType>();
 
   // Add base class savable params
-  auto ops_sp  = Ops<TensorType>::GetOpSaveableParams();
-  auto cast_sp = std::static_pointer_cast<OpsSaveableParams>(sp);
-  *cast_sp     = *(std::static_pointer_cast<OpsSaveableParams>(ops_sp));
+  auto ops_sp  = DataHolder<TensorType>::GetOpSaveableParams();
+  auto cast_sp = std::static_pointer_cast<OpDataHolderSaveableParams<TensorType>>(sp);
+  *cast_sp     = *(std::static_pointer_cast<OpDataHolderSaveableParams<TensorType>>(ops_sp));
 
   return sp;
 }
@@ -92,12 +92,16 @@ const char *PlaceHolder<TensorType>::Descriptor() const
 }
 
 template <typename TensorType>
-OperationsCount PlaceHolder<TensorType>::ChargeForward() const
+std::pair<OperationsCount, math::SizeVector> PlaceHolder<TensorType>::ChargeForward(
+    std::vector<math::SizeVector> const &input_shapes)
 {
-  assert(!this->batch_output_shape_.empty());
-  OperationsCount cost = fetch::ml::charge_estimation::ops::PLACEHOLDER_READING_PER_ELEMENT *
-                         this->TotalElementsIn({this->batch_output_shape_});
-  return cost;
+  FETCH_UNUSED(input_shapes);
+  assert(!this->batch_input_shapes_.empty());
+
+  OperationsCount op_cnt = fetch::ml::charge_estimation::ops::PLACEHOLDER_READING_PER_ELEMENT *
+                           fetch::math::Product(this->future_data_shape_);
+
+  return std::make_pair(op_cnt, this->future_data_shape_);
 }
 
 ///////////////////////////////

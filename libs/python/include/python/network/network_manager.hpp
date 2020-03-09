@@ -38,5 +38,6 @@ void BuildNetworkManager(pybind11::module &module)
       .def("Start", &NetworkManager::Start)
       .def("Off", &NetworkManager::Off);
 }
-};  // namespace network
-};  // namespace fetch
+
+}  // namespace network
+}  // namespace fetch

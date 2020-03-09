@@ -37,5 +37,5 @@ void BuildJSONDocument(pybind11::module &module)
                &JSONDocument::operator[]));
 }
 
-};  // namespace json
-};  // namespace fetch
+}  // namespace json
+}  // namespace fetch

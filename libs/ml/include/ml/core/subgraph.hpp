@@ -43,6 +43,8 @@ public:
 
   static constexpr char const *DESCRIPTOR = "SubGraph";
 
+  void Compile() override;
+
   void                    Forward(VecTensorType const &inputs, TensorType &output) override;
   std::vector<TensorType> Backward(VecTensorType const &inputs,
                                    TensorType const &   error_signal) override;
@@ -52,6 +54,12 @@ public:
   std::shared_ptr<OpsSaveableParams>               GetOpSaveableParams() override;
   std::shared_ptr<fetch::ml::ops::Ops<TensorType>> MakeSharedCopy(
       std::shared_ptr<fetch::ml::ops::Ops<TensorType>> me) override;
+
+  std::pair<OperationsCount, math::SizeVector> ChargeForward(
+      std::vector<math::SizeVector> const &input_shapes) override;
+
+  std::pair<OperationsCount, math::SizeVector> ChargeBackward(
+      const std::vector<math::SizeVector> &input_shapes) override;
 
 protected:
   void InsertSharedCopy(std::shared_ptr<fetch::ml::ops::Ops<TensorType>> output_ptr);

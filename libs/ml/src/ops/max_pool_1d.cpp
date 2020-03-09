@@ -73,7 +73,7 @@ void MaxPool1D<T>::Forward(const VecTensorType &inputs, TensorType &output)
   assert(inputs.size() == 1);
   // Input must be a 3D tensor [C x W x N]
   assert(inputs.at(0)->shape().size() == 3);
-  assert(output.shape() == ComputeOutputShape(inputs));
+  assert(output.shape() == ComputeOutputShape(fetch::ml::utilities::TensorPtrsToSizes(inputs)));
 
   SizeType iter;
   DataType max;
@@ -124,7 +124,8 @@ std::vector<TensorType> MaxPool1D<TensorType>::Backward(const VecTensorType &inp
                                                         const TensorType &   error_signal)
 {
   assert(inputs.size() == 1);
-  assert(error_signal.shape() == ComputeOutputShape(inputs));
+  assert(error_signal.shape() ==
+         ComputeOutputShape(fetch::ml::utilities::TensorPtrsToSizes(inputs)));
 
   TensorType return_signal{inputs.at(0)->shape()};
 
@@ -169,14 +170,14 @@ std::vector<TensorType> MaxPool1D<TensorType>::Backward(const VecTensorType &inp
 
 template <typename T>
 std::vector<fetch::math::SizeType> MaxPool1D<T>::ComputeOutputShape(
-    const VecTensorType &inputs) const
+    const std::vector<math::SizeVector> &inputs) const
 {
   std::vector<SizeType> output_shape;
 
   // output_shape_[0]=number of output channels
-  output_shape.emplace_back(inputs.at(0)->shape().at(0));
+  output_shape.emplace_back(inputs.at(0).at(0));
   // output_shape_[1]=number of stride_size steps over input size
-  SizeType output_height = ((inputs.at(0)->shape().at(1) - kernel_size_) / stride_size_) + 1;
+  SizeType output_height = ((inputs.at(0).at(1) - kernel_size_) / stride_size_) + 1;
   if (output_height == 0 || output_height == std::numeric_limits<SizeType>::max())
   {
     throw fetch::math::exceptions::WrongShape(
@@ -184,28 +185,33 @@ std::vector<fetch::math::SizeType> MaxPool1D<T>::ComputeOutputShape(
   }
   output_shape.emplace_back(output_height);
   // output_shape_[2]=batch dimension
-  output_shape.emplace_back(inputs.at(0)->shape().at(2));
+  output_shape.emplace_back(inputs.at(0).at(2));
   return output_shape;
 }
 
 template <typename TensorType>
-OperationsCount MaxPool1D<TensorType>::ChargeForward() const
+std::pair<OperationsCount, math::SizeVector> MaxPool1D<TensorType>::ChargeForward(
+    std::vector<math::SizeVector> const &input_shapes)
 {
   assert(!this->batch_output_shape_.empty());
-  OperationsCount cost = fetch::ml::charge_estimation::ops::MAX_PER_ELEMENT *
-                         this->batch_output_shape_.at(0) * this->batch_output_shape_.at(1) *
-                         this->batch_output_shape_.at(2) * this->kernel_size_;
-  return cost;
+  OperationsCount op_cnt = fetch::ml::charge_estimation::ops::MAX_PER_ELEMENT *
+                           input_shapes.at(0).at(0) * input_shapes.at(0).at(1) *
+                           input_shapes.at(0).at(2) * this->kernel_size_;
+
+  auto output_shape = ComputeOutputShape(input_shapes);
+  return std::make_pair(op_cnt, output_shape);
 }
 
 template <typename TensorType>
-OperationsCount MaxPool1D<TensorType>::ChargeBackward() const
+std::pair<OperationsCount, math::SizeVector> MaxPool1D<TensorType>::ChargeBackward(
+    std::vector<math::SizeVector> const &input_shapes)
 {
   assert(!this->batch_output_shape_.empty());
   OperationsCount cost = fetch::ml::charge_estimation::ops::MAX_PER_ELEMENT *
                          this->batch_output_shape_.at(0) * this->batch_output_shape_.at(1) *
                          this->batch_output_shape_.at(2) * this->kernel_size_;
-  return cost;
+  math::SizeVector output_shape = ComputeOutputShape(input_shapes);
+  return std::make_pair(cost * output_shape.back(), output_shape);
 }
 
 ///////////////////////////////

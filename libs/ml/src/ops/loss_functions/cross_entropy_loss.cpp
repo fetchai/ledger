@@ -106,28 +106,97 @@ std::vector<TensorType> CrossEntropyLoss<TensorType>::Backward(VecTensorType con
 
 template <typename TensorType>
 std::vector<math::SizeType> CrossEntropyLoss<TensorType>::ComputeOutputShape(
-    VecTensorType const &inputs) const
+    std::vector<math::SizeVector> const &inputs) const
 {
-  (void)inputs;
+  FETCH_UNUSED(inputs);
   return {1, 1};
 }
 
 template <typename TensorType>
-OperationsCount CrossEntropyLoss<TensorType>::ChargeForward() const
+std::pair<OperationsCount, math::SizeVector> CrossEntropyLoss<TensorType>::ChargeForward(
+    std::vector<math::SizeVector> const &input_shapes)
 {
-  assert(!this->batch_output_shape_.empty());
-  OperationsCount cost = fetch::ml::charge_estimation::ops::CROSS_ENTROPY_PER_ELEMENT *
-                         this->TotalElementsIn({this->batch_input_shapes_});
-  return cost;
+  auto output_shape = ComputeOutputShape(input_shapes);
+  auto n_elements   = TensorType::SizeFromShape(input_shapes[0]);
+  auto padded_size  = TensorType::PaddedSizeFromShape(input_shapes[0]);
+  auto n_dims       = input_shapes[0].at(0);
+
+  OperationsCount cost{fetch::ml::charge_estimation::ops::OP_OVERHEAD};
+  OperationsCount iteration_ops = TensorType::ChargeIterate(output_shape);
+  cost += iteration_ops * 4;
+
+  // if not a one-hot, must be binary logistic regression cost
+  if (n_dims == 1)
+  {
+
+    if ((padded_size / 32) <
+        fetch::ml::charge_estimation::ops::CEL_BINARY_PIECEWISE_LOWER_THRESHOLD)
+    {
+      // Addition cost
+      cost += fetch::ml::charge_estimation::ops::LOW_CROSS_ENTROPY_BINARY_PER_ELEMENT * n_elements;
+    }
+    else if ((padded_size / 32) < fetch::ml::charge_estimation::ops::PIECEWISE_HARD_CAP)
+    {
+      // Addition cost
+      cost += fetch::ml::charge_estimation::ops::HIGH_CROSS_ENTROPY_BINARY_PER_ELEMENT * n_elements;
+    }
+    else
+    {
+      cost = math::numeric_max<OperationsCount>();
+    }
+  }
+  else
+  {
+    // Addition cost
+    cost += fetch::ml::charge_estimation::ops::CROSS_ENTROPY_ONE_HOT_PER_ELEMENT * n_elements;
+  }
+
+  return std::make_pair(cost, output_shape);
 }
 
 template <typename TensorType>
-OperationsCount CrossEntropyLoss<TensorType>::ChargeBackward() const
+std::pair<OperationsCount, math::SizeVector> CrossEntropyLoss<TensorType>::ChargeBackward(
+    std::vector<math::SizeVector> const &input_shapes)
 {
-  assert(!this->batch_input_shapes_.empty());
-  OperationsCount cost = fetch::ml::charge_estimation::ops::CROSS_ENTROPY_BACKWARD_PER_ELEMENT *
-                         this->TotalElementsIn({this->batch_input_shapes_.at(0)});
-  return cost;
+  auto             n_elements   = TensorType::SizeFromShape(input_shapes.at(0));
+  auto             padded_size  = TensorType::PaddedSizeFromShape(input_shapes.at(0));
+  auto             n_dims       = input_shapes.at(0).at(0);
+  math::SizeVector output_shape = ComputeOutputShape(input_shapes);
+
+  OperationsCount cost{fetch::ml::charge_estimation::ops::CROSS_ENTROPY_BACKWARD_OVERHEAD};
+  OperationsCount iteration_ops = TensorType::ChargeIterate(input_shapes.at(0));
+  cost += iteration_ops * 4;
+
+  // if not a one-hot, must be binary logistic regression cost
+  if (n_dims == 1)
+  {
+
+    if ((padded_size / 32) <
+        fetch::ml::charge_estimation::ops::CEL_BINARY_PIECEWISE_BACKWARD_LOWER_THRESHOLD)
+    {
+      // Addition cost
+      cost += fetch::ml::charge_estimation::ops::LOW_CROSS_ENTROPY_BINARY_BACKWARD_PER_ELEMENT *
+              n_elements;
+    }
+    else if ((padded_size / 32) < fetch::ml::charge_estimation::ops::PIECEWISE_HARD_CAP)
+    {
+      // Addition cost
+      cost += fetch::ml::charge_estimation::ops::HIGH_CROSS_ENTROPY_BINARY_BACKWARD_PER_ELEMENT *
+              n_elements;
+    }
+    else
+    {
+      cost = math::numeric_max<OperationsCount>();
+    }
+  }
+  else
+  {
+    // Addition cost
+    cost +=
+        fetch::ml::charge_estimation::ops::CROSS_ENTROPY_ONE_HOT_BACKWARD_PER_ELEMENT * n_elements;
+  }
+
+  return std::make_pair(cost * output_shape.back(), output_shape);
 }
 
 ///////////////////////////////

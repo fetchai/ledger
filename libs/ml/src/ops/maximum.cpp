@@ -60,7 +60,7 @@ void Maximum<T>::Forward(const VecTensorType &inputs, TensorType &output)
 {
   assert(inputs.size() == 2);
   assert(inputs.at(0)->size() == inputs.at(1)->size());
-  assert(output.shape() == this->ComputeOutputShape(inputs));
+  assert(output.shape() == ComputeOutputShape(fetch::ml::utilities::TensorPtrsToSizes(inputs)));
 
   fetch::math::Maximum((*inputs.at(0)), (*inputs.at(1)), output);
 }
@@ -108,29 +108,35 @@ std::vector<TensorType> Maximum<TensorType>::Backward(const VecTensorType &input
 }
 
 template <typename T>
-std::vector<fetch::math::SizeType> Maximum<T>::ComputeOutputShape(const VecTensorType &inputs) const
+std::vector<fetch::math::SizeType> Maximum<T>::ComputeOutputShape(
+    const std::vector<math::SizeVector> &inputs) const
 {
-  return inputs.front()->shape();
+  return inputs.front();
 }
 
 template <typename TensorType>
-OperationsCount Maximum<TensorType>::ChargeForward() const
+std::pair<OperationsCount, math::SizeVector> Maximum<TensorType>::ChargeForward(
+    std::vector<math::SizeVector> const &input_shapes)
 {
   assert(!this->batch_input_shapes_.empty());
 
-  OperationsCount cost = fetch::ml::charge_estimation::ops::MAX_PER_ELEMENT *
-                         this->TotalElementsIn({this->batch_input_shapes_});
-  return cost;
+  OperationsCount op_cnt = fetch::ml::charge_estimation::ops::MAX_PER_ELEMENT *
+                           TensorType::SizeFromShape(input_shapes[0]);
+
+  auto output_shape = ComputeOutputShape(input_shapes);
+  return std::make_pair(op_cnt, output_shape);
 }
 
 template <typename TensorType>
-OperationsCount Maximum<TensorType>::ChargeBackward() const
+std::pair<OperationsCount, math::SizeVector> Maximum<TensorType>::ChargeBackward(
+    std::vector<math::SizeVector> const &input_shapes)
 {
   assert(!this->batch_input_shapes_.empty());
 
   OperationsCount cost = fetch::ml::charge_estimation::ops::ASSIGN_PER_ELEMENT *
                          this->TotalElementsIn({this->batch_input_shapes_});
-  return cost;
+  math::SizeVector output_shape = ComputeOutputShape(input_shapes);
+  return std::make_pair(cost * output_shape.back(), output_shape);
 }
 
 ///////////////////////////////

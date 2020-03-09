@@ -67,7 +67,7 @@ void Convolution1D<TensorType>::Forward(VecTensorType const &inputs, TensorType 
   assert(inputs.at(0)->shape().size() == 3);
   // Kernels should be a 4D tensor [oC x iC x H x N]
   assert(inputs.at(1)->shape().size() == 4);
-  assert(output.shape() == ComputeOutputShape(inputs));
+  assert(output.shape() == ComputeOutputShape(fetch::ml::utilities::TensorPtrsToSizes(inputs)));
 
   // input data channels = kernel input channels
   assert(inputs.at(0)->shape().at(0) == inputs.at(1)->shape().at(1));
@@ -124,7 +124,8 @@ std::vector<TensorType> Convolution1D<TensorType>::Backward(VecTensorType const 
   assert(inputs.at(0)->shape().size() == 3);
   // Kernels should be a 3D tensor [oC x iC x H x N]
   assert(inputs.at(1)->shape().size() == 4);
-  assert(error_signal.shape() == ComputeOutputShape(inputs));
+  assert(error_signal.shape() ==
+         ComputeOutputShape(fetch::ml::utilities::TensorPtrsToSizes(inputs)));
 
   SizeType output_height = error_signal.shape().at(1);
 
@@ -174,17 +175,16 @@ std::vector<TensorType> Convolution1D<TensorType>::Backward(VecTensorType const 
 
 template <class TensorType>
 std::vector<typename TensorType::SizeType> Convolution1D<TensorType>::ComputeOutputShape(
-    VecTensorType const &inputs) const
+    std::vector<math::SizeVector> const &inputs) const
 {
   std::vector<SizeType> output_shape;
 
   // output_shape_[0]=number of output channels
-  output_shape.emplace_back(inputs.at(1)->shape().at(0));
+  output_shape.emplace_back(inputs.at(1).at(0));
   // output_shape_[1]=number of stride_size steps over input size
-  output_shape.emplace_back(
-      ComputeOutputHeight(inputs.at(0)->shape().at(1), inputs.at(1)->shape().at(2)));
+  output_shape.emplace_back(ComputeOutputHeight(inputs.at(0).at(1), inputs.at(1).at(2)));
   // output_shape_[2]=batch dimension
-  output_shape.emplace_back(inputs.at(0)->shape().at(2));
+  output_shape.emplace_back(inputs.at(0).at(2));
 
   return output_shape;
 }
@@ -411,18 +411,16 @@ void Convolution1D<TensorType>::ReverseFillOutput(TensorType &gemm_output, Tenso
 }
 
 template <typename TensorType>
-OperationsCount Convolution1D<TensorType>::ChargeForward() const
+std::pair<OperationsCount, math::SizeVector> Convolution1D<TensorType>::ChargeForward(
+    std::vector<math::SizeVector> const &input_shapes)
 {
-  assert(!this->batch_output_shape_.empty());
-  assert(this->batch_input_shapes_.size() == 2);
+  SizeType input_channels  = input_shapes.front().at(0);
+  SizeType batch_size      = input_shapes.front().at(2);
+  SizeType output_channels = input_shapes.back().at(0);
+  SizeType kernel_height   = input_shapes.back().at(2);
 
-  SizeType input_channels  = this->batch_input_shapes_.front().at(0);
-  SizeType batch_size      = this->batch_input_shapes_.front().at(2);
-  SizeType output_channels = this->batch_input_shapes_.back().at(0);
-  SizeType kernel_height   = this->batch_input_shapes_.back().at(2);
-
-  SizeType output_height = ComputeOutputHeight(this->batch_input_shapes_.front().at(1),
-                                               this->batch_input_shapes_.back().at(2));
+  SizeType output_height =
+      ComputeOutputHeight(input_shapes.front().at(1), input_shapes.back().at(2));
 
   SizeType horizontal_stride_width  = kernel_height * input_channels;
   SizeType horizontal_stride_height = output_height * batch_size;
@@ -430,13 +428,15 @@ OperationsCount Convolution1D<TensorType>::ChargeForward() const
 
   OperationsCount cost = horizontal_stride_width * horizontal_stride_height *
                          vertical_stride_width *
-                         fetch::ml::charge_estimation::ops::MULTIPLICATION_PER_ELEMENT;
+                         fetch::ml::charge_estimation::ops::LOW_MULTIPLICATION_PER_ELEMENT;
 
-  return cost;
+  auto output_shape = ComputeOutputShape(input_shapes);
+  return std::make_pair(cost, output_shape);
 }
 
 template <typename TensorType>
-OperationsCount Convolution1D<TensorType>::ChargeBackward() const
+std::pair<OperationsCount, math::SizeVector> Convolution1D<TensorType>::ChargeBackward(
+    std::vector<math::SizeVector> const &input_shapes)
 {
   assert(!this->batch_output_shape_.empty());
   assert(this->batch_input_shapes_.size() == 2);
@@ -455,9 +455,10 @@ OperationsCount Convolution1D<TensorType>::ChargeBackward() const
 
   OperationsCount cost =
       2 * (horizontal_stride_width * horizontal_stride_height * vertical_stride_width *
-           fetch::ml::charge_estimation::ops::MULTIPLICATION_PER_ELEMENT);
+           fetch::ml::charge_estimation::ops::LOW_MULTIPLICATION_PER_ELEMENT);
 
-  return cost;
+  math::SizeVector output_shape = ComputeOutputShape(input_shapes);
+  return std::make_pair(cost * output_shape.back(), output_shape);
 }
 
 ///////////////////////////////

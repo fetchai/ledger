@@ -64,7 +64,7 @@ TYPED_TEST(MaxPoolTest, forward_test_1d_3_2_2)
 
   fetch::ml::ops::MaxPool1D<TensorType> op(3, 2);
 
-  TensorType prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
+  TensorType prediction(op.ComputeOutputShape({data.shape()}));
   op.Forward({std::make_shared<const TensorType>(data)}, prediction);
 
   // test correct values
@@ -178,7 +178,7 @@ TYPED_TEST(MaxPoolTest, forward_test_1d_4_2)
 
   fetch::ml::ops::MaxPool1D<TensorType> op(4, 2);
 
-  TensorType prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
+  TensorType prediction(op.ComputeOutputShape({data.shape()}));
   op.Forward({std::make_shared<const TensorType>(data)}, prediction);
 
   // test correct values
@@ -220,7 +220,7 @@ TYPED_TEST(MaxPoolTest, forward_test_1d_2_channels_4_1_2)
 
   fetch::ml::ops::MaxPool1D<TensorType> op(4, 1);
 
-  TensorType prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
+  TensorType prediction(op.ComputeOutputShape({data.shape()}));
   op.Forward({std::make_shared<const TensorType>(data)}, prediction);
 
   // test correct values
@@ -250,7 +250,7 @@ TYPED_TEST(MaxPoolTest, forward_test_1d_2_4_2)
 
   fetch::ml::ops::MaxPool1D<TensorType> op(2, 4);
 
-  TensorType prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
+  TensorType prediction(op.ComputeOutputShape({data.shape()}));
   op.Forward({std::make_shared<const TensorType>(data)}, prediction);
 
   // test correct values
@@ -293,7 +293,7 @@ TYPED_TEST(MaxPoolTest, forward_test_2d_3_2)
 
   fetch::ml::ops::MaxPool2D<TensorType> op(3, 2);
 
-  TensorType prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
+  TensorType prediction(op.ComputeOutputShape({data.shape()}));
   op.Forward({std::make_shared<const TensorType>(data)}, prediction);
 
   // test correct values
@@ -344,7 +344,7 @@ TYPED_TEST(MaxPoolTest, forward_2_channels_test_2d_3_2)
   }
 
   fetch::ml::ops::MaxPool2D<TensorType> op(3, 2);
-  TensorType prediction(op.ComputeOutputShape({std::make_shared<const TensorType>(data)}));
+  TensorType                            prediction(op.ComputeOutputShape({data.shape()}));
   op.Forward({std::make_shared<const TensorType>(data)}, prediction);
 
   // test correct values

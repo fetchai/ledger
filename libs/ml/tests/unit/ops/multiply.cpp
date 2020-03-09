@@ -56,8 +56,7 @@ TYPED_TEST(MultiplyTest, forward_test)
 
   fetch::ml::ops::Multiply<TensorType> op;
 
-  TypeParam prediction(op.ComputeOutputShape(
-      {std::make_shared<TensorType>(data_1), std::make_shared<TensorType>(data_2)}));
+  TypeParam prediction(op.ComputeOutputShape({data_1.shape(), data_2.shape()}));
   op.Forward({std::make_shared<TensorType>(data_1), std::make_shared<TensorType>(data_2)},
              prediction);
 

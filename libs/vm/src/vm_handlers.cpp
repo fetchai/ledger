@@ -279,14 +279,13 @@ void VM::Handler__Return()
       stack_[i].Reset();
     }
     // Store the constructed object
-    if (bsp_ < STACK_SIZE)
+    if (bsp_ >= STACK_SIZE)
     {
-      stack_[bsp_] = std::move(self_);
-      sp_          = bsp_;
+      RuntimeError("stack overflow");
       return;
     }
-    RuntimeError("stack overflow");
-    return;
+    stack_[bsp_] = std::move(self_);
+    sp_          = bsp_;
   }
 
   if (frame_sp_ != -1)

@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "math/tensor/tensor.hpp"
+#include "ml/charge_estimation/dataloaders/constants.hpp"
 #include "ml/dataloaders/tensor_dataloader.hpp"
 #include "ml/exceptions/exceptions.hpp"
 
@@ -27,7 +28,10 @@ namespace dataloaders {
 template <typename TensorType>
 typename TensorDataLoader<TensorType>::ReturnType TensorDataLoader<TensorType>::GetNext()
 {
+  assert(*this->current_cursor_ < this->current_max_);
+
   std::vector<TensorType> ret_data;
+  ret_data.reserve(data_.size());
   TensorType ret_labels = labels_.View(*this->current_cursor_).Copy(one_sample_label_shape_);
 
   for (SizeType i{0}; i < data_.size(); i++)
@@ -47,6 +51,28 @@ typename TensorDataLoader<TensorType>::ReturnType TensorDataLoader<TensorType>::
   }
 
   return ReturnType(ret_labels, ret_data);
+}
+
+template <typename TensorType>
+OperationsCount TensorDataLoader<TensorType>::ChargeGetNext()
+{
+  // all constants are empirically determined
+  OperationsCount cost = charge_estimation::dataloaders::TENSOR_GETNEXT_SETUP;
+  // cost for copying the labels array
+  OperationsCount labels_copy_cost = charge_estimation::dataloaders::TENSOR_GETNEXT_LABEL_COPY *
+                                     math::Product(one_sample_label_shape_);
+  cost += labels_copy_cost;
+
+  // cost for copying the data array
+  OperationsCount data_copy_cost = 0;
+  for (auto const &it : one_sample_data_shapes_)
+  {
+    data_copy_cost += charge_estimation::dataloaders::TENSOR_GETNEXT_DATA_COPY * math::Product(it);
+    data_copy_cost += charge_estimation::dataloaders::TENSOR_GETNEXT_DATA_PER_INPUT;
+  }
+  cost += data_copy_cost;
+
+  return cost;
 }
 
 template <typename TensorType>
@@ -80,6 +106,26 @@ bool TensorDataLoader<TensorType>::AddData(std::vector<TensorType> const &data,
 }
 
 template <typename TensorType>
+OperationsCount TensorDataLoader<TensorType>::ChargeAddData(const std::vector<TensorType> &data,
+                                                            const TensorType &             labels)
+{
+  // all constants are empirically determined
+  OperationsCount cost            = charge_estimation::dataloaders::TENSOR_ADDDATA_SETUP;
+  OperationsCount label_copy_cost = charge_estimation::dataloaders::TENSOR_ADDDATA_LABEL_COPY *
+                                    TensorType::PaddedSizeFromShape(labels.shape());
+  cost += label_copy_cost;
+
+  for (SizeType i{0}; i < data.size(); i++)
+  {
+    cost += charge_estimation::dataloaders::TENSOR_ADDDATA_DATA_COPY *
+            TensorType::PaddedSizeFromShape(data.at(i).shape());
+    cost += charge_estimation::dataloaders::TENSOR_ADDDATA_DATA_PER_INPUT;
+  }
+
+  return cost;
+}
+
+template <typename TensorType>
 typename TensorDataLoader<TensorType>::SizeType TensorDataLoader<TensorType>::Size() const
 {
   return this->current_size_;
@@ -94,6 +140,13 @@ bool TensorDataLoader<TensorType>::IsDone() const
   }
 
   return *(this->current_cursor_) >= this->current_max_;
+}
+
+template <typename TensorType>
+OperationsCount TensorDataLoader<TensorType>::ChargeIsDone() const
+{
+  // cost for checking count_ is estimated as 3
+  return 3;
 }
 
 template <typename TensorType>

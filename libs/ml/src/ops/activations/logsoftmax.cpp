@@ -65,7 +65,7 @@ std::shared_ptr<fetch::ml::ops::Ops<TensorType>> LogSoftmax<TensorType>::MakeSha
 template <typename TensorType>
 void LogSoftmax<TensorType>::Forward(VecTensorType const &inputs, TensorType &output)
 {
-  assert(output.shape() == ComputeOutputShape(inputs));
+  assert(output.shape() == ComputeOutputShape(fetch::ml::utilities::TensorPtrsToSizes(inputs)));
   assert(inputs.size() == 1);
   fetch::math::Softmax((*inputs.front()), output, axis_);
   fetch::math::Log(output, output);
@@ -95,27 +95,33 @@ std::vector<TensorType> LogSoftmax<TensorType>::Backward(VecTensorType const &in
 
 template <typename TensorType>
 std::vector<math::SizeType> LogSoftmax<TensorType>::ComputeOutputShape(
-    VecTensorType const &inputs) const
+    std::vector<math::SizeVector> const &inputs) const
 {
-  return inputs.front()->shape();
+  return inputs.front();
 }
 
 template <typename TensorType>
-OperationsCount LogSoftmax<TensorType>::ChargeForward() const
+std::pair<OperationsCount, math::SizeVector> LogSoftmax<TensorType>::ChargeForward(
+    std::vector<math::SizeVector> const &input_shapes)
 {
   assert(!this->batch_input_shapes_.empty());
-  OperationsCount cost = fetch::ml::charge_estimation::ops::LOG_SOFTMAX_PER_ELEMENT *
-                         this->TotalElementsIn({this->batch_input_shapes_});
-  return cost;
+
+  OperationsCount op_cnt = fetch::ml::charge_estimation::ops::LOG_SOFTMAX_PER_ELEMENT *
+                           TensorType::SizeFromShape(input_shapes[0]);
+
+  auto output_shape = ComputeOutputShape(input_shapes);
+  return std::make_pair(op_cnt, output_shape);
 }
 
 template <typename TensorType>
-OperationsCount LogSoftmax<TensorType>::ChargeBackward() const
+std::pair<OperationsCount, math::SizeVector> LogSoftmax<TensorType>::ChargeBackward(
+    std::vector<math::SizeVector> const &input_shapes)
 {
   assert(!this->batch_input_shapes_.empty());
   OperationsCount cost = fetch::ml::charge_estimation::ops::LOG_SOFTMAX_BACKWARD_PER_ELEMENT *
                          this->TotalElementsIn({this->batch_input_shapes_});
-  return cost;
+  math::SizeVector output_shape = ComputeOutputShape(input_shapes);
+  return std::make_pair(cost * output_shape.back(), output_shape);
 }
 
 ///////////////////////////////

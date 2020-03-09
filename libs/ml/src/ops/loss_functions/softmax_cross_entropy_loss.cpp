@@ -92,29 +92,33 @@ std::vector<TensorType> SoftmaxCrossEntropyLoss<TensorType>::Backward(
 
 template <typename TensorType>
 std::vector<math::SizeType> SoftmaxCrossEntropyLoss<TensorType>::ComputeOutputShape(
-    VecTensorType const &inputs) const
+    std::vector<math::SizeVector> const &inputs) const
 {
-  (void)inputs;
+  FETCH_UNUSED(inputs);
   return {1, 1};
 }
 
 template <typename TensorType>
-OperationsCount SoftmaxCrossEntropyLoss<TensorType>::ChargeForward() const
+std::pair<OperationsCount, math::SizeVector> SoftmaxCrossEntropyLoss<TensorType>::ChargeForward(
+    std::vector<math::SizeVector> const &input_shapes)
 {
   assert(!this->batch_input_shapes_.empty());
-  OperationsCount cost = fetch::ml::charge_estimation::ops::SOFTMAX_CROSS_ENTROPY_PER_ELEMENT *
-                         this->TotalElementsIn({this->batch_input_shapes_});
-  return cost;
+  OperationsCount op_cnt = fetch::ml::charge_estimation::ops::SOFTMAX_CROSS_ENTROPY_PER_ELEMENT *
+                           TensorType::SizeFromShape(input_shapes[0]);
+  auto output_shape = ComputeOutputShape(input_shapes);
+  return std::make_pair(op_cnt, output_shape);
 }
 
 template <typename TensorType>
-OperationsCount SoftmaxCrossEntropyLoss<TensorType>::ChargeBackward() const
+std::pair<OperationsCount, math::SizeVector> SoftmaxCrossEntropyLoss<TensorType>::ChargeBackward(
+    std::vector<math::SizeVector> const &input_shapes)
 {
   assert(!this->batch_input_shapes_.empty());
   OperationsCount cost =
       fetch::ml::charge_estimation::ops::SOFTMAX_CROSS_ENTROPY_BACKWARD_PER_ELEMENT *
       this->TotalElementsIn({this->batch_input_shapes_.at(0)});
-  return cost;
+  math::SizeVector output_shape = ComputeOutputShape(input_shapes);
+  return std::make_pair(cost * output_shape.back(), output_shape);
 }
 
 ///////////////////////////////

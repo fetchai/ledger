@@ -64,6 +64,8 @@ std::shared_ptr<fetch::ml::Graph<TensorType>> MakeGraph()
   std::string output = g->template AddNode<layers::FullyConnected<TensorType>>(
       "FC3", {layer_2}, 10u, 10u, fetch::ml::details::ActivationType::SOFTMAX);
 
+  g->Compile();
+
   return g;
 }
 
@@ -78,6 +80,8 @@ TYPED_TEST(GraphTest, node_placeholder)
   TensorType gt   = TensorType::FromString(R"(1, 2, 3, 4, 5, 6, 7, 8)");
 
   g.SetInput("Input", data);
+  g.Compile();
+
   TensorType prediction = g.Evaluate("Input");
 
   // test correct values
@@ -98,6 +102,8 @@ TYPED_TEST(GraphTest, node_relu)
       TensorType::FromString(R"(0, 0, 2, 0, 4, 0, 6, 0, 8, 0, 10, 0, 12, 0, 14, 0, 16)");
 
   g.SetInput("Input", data);
+  g.Compile();
+
   TensorType prediction = g.Evaluate("Relu");
 
   // test correct values
@@ -115,8 +121,10 @@ TYPED_TEST(GraphTest, no_such_node_test)  // Use the class as a Node
   g.template AddNode<fetch::ml::layers::Convolution1D<TensorType>>("Convolution1D", {"Input"}, 3u,
                                                                    3u, 3u, 3u);
 
-  TensorType data(std::vector<SizeType>({5, 10}));
+  TensorType data(std::vector<SizeType>({5, 10, 1}));
+
   g.SetInput("Input", data);
+  g.Compile();
 
   ASSERT_ANY_THROW(g.Evaluate("FullyConnected"));
 }
@@ -135,6 +143,7 @@ TYPED_TEST(GraphTest, node_add_wrong_order_test)
 
   TensorType data(std::vector<SizeType>({3, 10}));
   g.SetInput("Input", data);
+  g.Compile();
 
   auto result = g.Evaluate("FC3");
 
@@ -147,6 +156,7 @@ TYPED_TEST(GraphTest, node_add_wrong_order_test)
 
   TensorType data2(std::vector<SizeType>({3, 10}));
   g2.SetInput("Input", data);
+  g2.Compile();
 
   auto result2 = g2.Evaluate("FC3");
 
@@ -366,11 +376,10 @@ TYPED_TEST(GraphTest, variable_freezing_subgraph)
   std::string error_output = g.template AddNode<fetch::ml::ops::MeanSquareErrorLoss<TypeParam>>(
       "num_error", {layer_3, label});
 
-  g.Compile();
-
   // Calculate Gradient
   g.SetInput(input, data);
   g.SetInput(label, gt);
+  g.Compile();
   TypeParam output = g.Evaluate(error_output);
   g.BackPropagate(error_output);
 
@@ -446,11 +455,10 @@ TYPED_TEST(GraphTest, variable_freezing_shared_layer)
   std::string error_output = g.template AddNode<fetch::ml::ops::MeanSquareErrorLoss<TypeParam>>(
       "num_error", {layer_3, label});
 
-  g.Compile();
-
   // Calculate Gradient
   g.SetInput(input, data);
   g.SetInput(label, gt);
+  g.Compile();
   TypeParam output = g.Evaluate(error_output);
   g.BackPropagate(error_output);
 
@@ -531,9 +539,10 @@ TYPED_TEST(GraphTest,
       g.template AddNode<fetch::ml::ops::Subtract<TensorType>>(name + "_Op3", {op2_name, op1_name});
 
   // Evaluate
-
   g.SetInput(input_name1, data1);
   g.SetInput(input_name2, data2);
+  g.Compile();
+
   TypeParam output = g.Evaluate("Diamond_Op3");
 
   // Test correct values
@@ -588,6 +597,8 @@ TYPED_TEST(GraphTest, diamond_graph_backward)  // output=(input1*input2)-(input1
   // Forward
   g.SetInput(input_name1, data1);
   g.SetInput(input_name2, data2);
+  g.Compile();
+
   TypeParam output = g.Evaluate(output_name);
 
   // Calculate Gradient
@@ -847,7 +858,6 @@ TYPED_TEST(GraphTest, compute_shapes_two_inputs_two_outputs)
   EXPECT_EQ(right_result.shape(), expected_right_out_shape);
 }
 
-// (VH): Disabled because shared Dense layers do not work if created with auto-detected inputs.
 TYPED_TEST(GraphTest, compute_shapes_sequential_denses_with_shared_ops)
 {
   using TensorType = TypeParam;
@@ -890,7 +900,6 @@ TYPED_TEST(GraphTest, compute_shapes_sequential_denses_with_shared_ops)
   EXPECT_EQ(result.shape(), expected_out_shape);
 }
 
-// (VH): Disabled because shared Dense layers do not work if created with auto-detected inputs.
 TYPED_TEST(GraphTest, compute_shapes_two_diamonds_with_shared_ops)
 {
   using TensorType = TypeParam;
@@ -1108,6 +1117,8 @@ TYPED_TEST(GraphTest, graph_getWeightsOrder_1)
   std::string output = g->template AddNode<layers::FullyConnected<TensorType>>(
       "A", {layer_2}, 10u, 5u, fetch::ml::details::ActivationType::SOFTMAX);
 
+  g->Compile();
+
   TensorType gt_a_bias({5, 1});
   gt_a_bias.Fill(DataType{1});
   TensorType gt_a_weight({10, 5});
@@ -1172,6 +1183,8 @@ TYPED_TEST(GraphTest, graph_getWeightsOrder_2)
       "A", {layer_1}, 10u, 10u, fetch::ml::details::ActivationType::RELU);
   std::string output = g->template AddNode<layers::FullyConnected<TensorType>>(
       "B", {layer_2}, 10u, 5u, fetch::ml::details::ActivationType::SOFTMAX);
+
+  g->Compile();
 
   TensorType gt_a_bias({10, 1});
   gt_a_bias.Fill(DataType{5});
@@ -1253,10 +1266,10 @@ TYPED_TEST(GraphTest, graph_charge_forward_subtraction)
       g.template AddNode<Subtract<TensorType>>("Subtract", {left_input, right_input});
   g.SetInput(left_input, data);
   g.SetInput(right_input, data);
+
   g.Compile();
 
-  OperationsCount const charge       = g.ChargeForward(subtract);
-  OperationsCount const batch_charge = charge * data.shape().back();
+  OperationsCount const batch_charge = g.ChargeForward(subtract);
 
   std::size_t const     total_elements_in_output = 4 * 4;
   OperationsCount const expected_charge = total_elements_in_output * SUBTRACTION_PER_ELEMENT;
@@ -1300,11 +1313,10 @@ TYPED_TEST(GraphTest, graph_charge_forward_matmul)
   ASSERT_EQ(out_shape.size(), 2);
   ASSERT_EQ(out_shape.front(), 2);
 
-  OperationsCount const charge       = g.ChargeForward(matmul);
-  OperationsCount const batch_charge = charge * batch_size;
+  OperationsCount const batch_charge = g.ChargeForward(matmul);
 
   SizeType const        matmul_ops      = weight_width * input_height * batch_size;
-  OperationsCount const expected_charge = matmul_ops * MULTIPLICATION_PER_ELEMENT;
+  OperationsCount const expected_charge = matmul_ops * LOW_MULTIPLICATION_PER_ELEMENT;
 
   ASSERT_EQ(batch_charge, expected_charge);
 }
@@ -1343,10 +1355,9 @@ TYPED_TEST(GraphTest, graph_charge_forward_conv2d)
   ASSERT_EQ(out_shape.size(), shape.size());
   ASSERT_EQ(out_shape.front(), outputs);
 
-  OperationsCount const charge       = g.ChargeForward(conv2d);
-  OperationsCount const batch_charge = charge * batch_size;
+  OperationsCount const batch_charge = g.ChargeForward(conv2d);
 
-  OperationsCount const expected_charge = 161989632;  // TODO(VH): calc proper expected charge
+  OperationsCount const expected_charge = 377975808;  // TODO(ML-532): calc proper expected charge
 
   ASSERT_EQ(batch_charge, expected_charge);
 }
@@ -1384,15 +1395,24 @@ TYPED_TEST(GraphTest, graph_charge_forward_diamond)
         g.template AddNode<Add<TensorType>>("Add" + std::to_string(i), {prev_node, prev_node});
   }
   std::string const output = prev_node;
-
   g.SetInput(input, data);
   g.Compile();
 
-  static const std::size_t expected_calls_to_add = (2 * (N - 1) + 1);
+  static const std::size_t expected_calls_to_add = N;
   OperationsCount const    charge                = g.ChargeForward(output);
-  OperationsCount const    expected_charge =
-      ADDITION_PER_ELEMENT * total_data_elements * expected_calls_to_add +
-      PLACEHOLDER_READING_PER_ELEMENT * total_data_elements;
+
+  OperationsCount add_charge{fetch::ml::charge_estimation::ops::OP_OVERHEAD};
+
+  // Addition cost
+  math::SizeType num_elements = TensorType::SizeFromShape(data.shape());
+  add_charge += num_elements * fetch::ml::charge_estimation::ops::LOW_ADDITION_PER_ELEMENT;
+
+  // Iteration over 3 tensors (input1, input2, ret)
+  OperationsCount iteration_ops = TensorType::ChargeIterate(data.shape());
+  add_charge += iteration_ops * 3;
+
+  OperationsCount const expected_charge =
+      add_charge * expected_calls_to_add + PLACEHOLDER_READING_PER_ELEMENT * total_data_elements;
 
   ASSERT_EQ(charge, expected_charge);
 }
@@ -1412,13 +1432,13 @@ TYPED_TEST(GraphTest, graph_charge_backward_dropout)
   std::string const input = g.template AddNode<PlaceHolder<TensorType>>("Input", {});
   std::string const output =
       g.template AddNode<Dropout<TensorType>>("Dropout", {input}, DataType{1});
-
   g.SetInput(input, data);
   g.Compile();
 
   OperationsCount const charge = g.ChargeBackward(output);
+
   // Dropout backward operation is multiplication.
-  OperationsCount const expected_charge = MULTIPLICATION_PER_ELEMENT * data.shape()[0];
+  OperationsCount const expected_charge = LOW_MULTIPLICATION_PER_ELEMENT * data.size();
 
   ASSERT_EQ(charge, expected_charge);
 }
@@ -1458,21 +1478,19 @@ TYPED_TEST(GraphTest, graph_charge_backward_diamond)
                                                         {prev_node, prev_node}, DataType{1});
   }
   std::string const output = prev_node;
-
   g.SetInput(input, data);
   g.Compile();
 
-  static const std::size_t expected_calls_to_dropout = (2 * (N - 1) + 1);
+  static const std::size_t expected_calls_to_dropout = N;
   OperationsCount const    charge                    = g.ChargeBackward(output);
   OperationsCount const    expected_charge =
-      MULTIPLICATION_PER_ELEMENT * total_data_elements * expected_calls_to_dropout +
+      LOW_MULTIPLICATION_PER_ELEMENT * total_data_elements * expected_calls_to_dropout +
       PLACEHOLDER_READING_PER_ELEMENT * total_data_elements;
 
   ASSERT_EQ(charge, expected_charge);
 }
 
-// ML-517 : disabled until implementation of CHargeBackward for Add, MatMul and others
-TYPED_TEST(GraphTest, DISABLED_graph_charge_backward_conv_dense)
+TYPED_TEST(GraphTest, graph_charge_backward_conv_dense)
 {
   using namespace fetch::ml::ops;
   using namespace fetch::ml::layers;
@@ -1501,14 +1519,14 @@ TYPED_TEST(GraphTest, DISABLED_graph_charge_backward_conv_dense)
       "Conv2d", {"Input"}, outputs, num_channels, kernel_size, stride_size);
   std::string dense =
       g.template AddNode<Dense>("FC1", {"Input"}, Dense::AUTODETECT_INPUTS_COUNT, 1);
-
   g.SetInput(input, data);
   g.Compile();
 
-  OperationsCount const charge          = g.ChargeBackward(dense);
-  OperationsCount const expected_charge = 98305;  // Pre-calculated backward charge for give shape.
+  OperationsCount const charge = g.ChargeBackward(dense);
+  OperationsCount const expected_charge =
+      9044198;  // Pre-calculated backward charge for give shape.
 
-  ASSERT_EQ(charge, expected_charge);
+  EXPECT_EQ(charge, expected_charge);
 
   OperationsCount const foward_charge = g.ChargeForward(dense);
   ASSERT_NE(foward_charge, expected_charge);  // A smoke test to prevent calling Forward instead.

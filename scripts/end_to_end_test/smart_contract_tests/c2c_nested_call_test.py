@@ -70,8 +70,8 @@ def run(options, benefactor):
 
     for i in range(len(contracts) - 1):
         api.sync(contracts[i].action(api, 'set_callee',
-                                     400, [entity1], str(contracts[i + 1].address)))
+                                     400, entity1, str(contracts[i + 1].address)))
     api.sync(contracts[-1].action(api, 'set_callee',
-                                  400, [entity1], str(contract_terminal.address)))
+                                  400, entity1, str(contract_terminal.address)))
 
-    api.sync(contracts[0].action(api, 'c2c_call', 400, [entity1]))
+    api.sync(contracts[0].action(api, 'c2c_call', 400, entity1))

@@ -72,6 +72,8 @@ std::shared_ptr<fetch::ml::Graph<TypeParam>> PrepareTestGraph(
   error_name = g->template AddNode<fetch::ml::ops::MeanSquareErrorLoss<TypeParam>>(
       "Error", {output_name, label_name});
 
+  g->Compile();
+
   // Fill weights with non-random values
   auto weights_refs = g->GetWeightsReferences();
   for (auto &weight : weights_refs)

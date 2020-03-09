@@ -459,9 +459,9 @@ char const *ToString(SynergeticContract::Status status)
   return text;
 }
 
-void SynergeticContract::UpdateContractContext(ContractContext const &context)
+void SynergeticContract::UpdateContractContext(ContractContext context)
 {
-  context_ = std::make_unique<ContractContext>(context);
+  context_ = std::make_unique<ContractContext>(std::move(context));
 }
 
 ContractContext const &SynergeticContract::context() const
