@@ -20,12 +20,14 @@
 #include "telemetry/measurement.hpp"
 #include "telemetry/telemetry.hpp"
 
-#include <algorithm>
+#include <cassert>
 #include <initializer_list>
 #include <memory>
 #include <mutex>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
+#include <utility>
 #include <vector>
 
 namespace fetch {
@@ -59,7 +61,7 @@ public:
   template <typename T>
   GaugePtr<T> CreateGauge(std::string name, std::string description, Labels labels = Labels{});
 
-  HistogramPtr CreateHistogram(std::initializer_list<double> const &buckets, std::string name,
+  HistogramPtr CreateHistogram(std::initializer_list<double> buckets, std::string name,
                                std::string description = "", Labels labels = Labels{});
 
   HistogramMapPtr CreateHistogramMap(std::vector<double> buckets, std::string name,
@@ -81,13 +83,35 @@ public:
 
 private:
   using MeasurementPtr = std::shared_ptr<Measurement>;
-  using Measurements   = std::vector<MeasurementPtr>;
+
+  class FastMeasurementHash
+  {
+    static constexpr char KEY   = '\0';
+    static constexpr char VALUE = '\1';
+
+  public:
+    std::size_t operator()(MeasurementPtr const &measurement) const;
+  };
+
+  struct LabelsEqual
+  {
+    bool operator()(MeasurementPtr const &left, MeasurementPtr const &right) const;
+  };
+
+  using SameNameMeasurements = std::unordered_set<MeasurementPtr, FastMeasurementHash, LabelsEqual>;
+  using Measurements         = std::unordered_map<std::string, SameNameMeasurements>;
 
   // Construction / Destruction
   Registry()  = default;
   ~Registry() = default;
 
+  template <class M, class... Args>
+  std::shared_ptr<M> Create(std::string name, Args &&... args);
+
   static bool ValidateName(std::string const &name);
+
+  template <class M>
+  std::shared_ptr<M> Insert(std::string name, std::shared_ptr<M> m);
 
   mutable std::mutex lock_;
   Measurements       measurements_;
@@ -106,20 +130,7 @@ template <typename T>
 Registry::GaugePtr<T> Registry::CreateGauge(std::string name, std::string description,
                                             Labels labels)
 {
-  GaugePtr<T> gauge{};
-
-  if (ValidateName(name))
-  {
-    gauge = std::make_shared<Gauge<T>>(std::move(name), description, std::move(labels));
-
-    // add the gauge to the register
-    {
-      std::lock_guard<std::mutex> guard(lock_);
-      measurements_.push_back(gauge);
-    }
-  }
-
-  return gauge;
+  return Create<Gauge<T>>(name, std::move(name), std::move(description), std::move(labels));
 }
 
 /**
@@ -132,36 +143,50 @@ Registry::GaugePtr<T> Registry::CreateGauge(std::string name, std::string descri
 template <typename T>
 std::shared_ptr<T> Registry::LookupMeasurement(std::string const &name) const
 {
-  std::shared_ptr<T> measurement{};
-
-  auto const matcher = [&name](MeasurementPtr const &m) { return (m->name() == name); };
-
   std::lock_guard<std::mutex> guard(lock_);
-
-  // attempt to find the first metric matching the name with the type
-  for (auto start = measurements_.begin(), end = measurements_.end(); start != end;)
+  auto                        measurements_it = measurements_.find(name);
+  if (measurements_it == measurements_.end())
   {
-    // attempt to locate the next match
-    auto match = std::find_if(start, end, matcher);
-
-    if (match != measurements_.end())
-    {
-      // attempt to convert the measurement to the chosen type
-      measurement = std::dynamic_pointer_cast<T>(*match);
-      if (measurement)
-      {
-        break;
-      }
-
-      // otherwise advance the iterator to move to the next element (since the type mismatched)
-      ++match;
-    }
-
-    // move the next element
-    start = match;
+    return {};
   }
 
-  return measurement;
+  auto const &named_cell = measurements_it->second;
+  assert(!named_cell.empty());
+  return std::dynamic_pointer_cast<T>(*named_cell.begin());
+}
+
+template <class M, class... Args>
+std::shared_ptr<M> Registry::Create(std::string name, Args &&... args)
+{
+  if (!ValidateName(name))
+  {
+    return {};
+  }
+
+  return Insert(std::move(name), std::make_shared<M>(std::forward<Args>(args)...));
+}
+
+template <class M>
+std::shared_ptr<M> Registry::Insert(std::string name, std::shared_ptr<M> m)
+{
+  std::lock_guard<std::mutex> guard(lock_);
+
+  auto  measurements_it = measurements_.emplace(std::move(name), SameNameMeasurements{}).first;
+  auto &named_cell      = measurements_it->second;
+
+  try
+  {
+    auto cell_it = named_cell.insert(std::move(m)).first;
+    return std::dynamic_pointer_cast<M>(*cell_it);
+  }
+  catch (...)
+  {
+    if (named_cell.empty())
+    {
+      measurements_.erase(measurements_it);
+    }
+    throw;
+  }
 }
 
 }  // namespace telemetry

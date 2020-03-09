@@ -63,11 +63,11 @@ TEST_F(VMDataloaderTests, vmdataloader_addtensordata)
   EXPECT_NO_THROW(dl->AddDataByData(data_vmarray, label_vmtensor));
 
   ChargeAmount charge = dl->EstimateAddDataByData(data_vmarray, label_vmtensor);
-  EXPECT_EQ(charge, 339);
+  EXPECT_EQ(charge, 1576);
 
   EXPECT_NO_THROW(dl->GetNext());
   charge = dl->EstimateGetNext();
-  EXPECT_EQ(charge, 19);
+  EXPECT_EQ(charge, 1440);
 
   EXPECT_NO_THROW(dl->IsDone());
   charge = dl->EstimateIsDone();
