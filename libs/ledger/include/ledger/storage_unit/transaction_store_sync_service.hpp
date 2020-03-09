@@ -110,7 +110,7 @@ public:
                               TransactionStorageEngineInterface &store,
                               TxFinderProtocol *                 tx_finder_protocol,
                               TrimCacheCallback                  trim_cache_callback);
-  ~TransactionStoreSyncService() override;
+  ~TransactionStoreSyncService() override = default;
 
   void Start()
   {
