@@ -2007,7 +2007,8 @@ DigestSet MainChain::DetectDuplicateTransactions(BlockHash const &           sta
   BlockPtr block;
   if (!LookupBlock(starting_hash, block) || block->is_loose)
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "TX uniqueness verify on bad block hash");
+    FETCH_LOG_WARN(LOGGING_NAME, "TX uniqueness verify on ", block ? "loose" : "unknown",
+                   " block hash");
     return {};
   }
 

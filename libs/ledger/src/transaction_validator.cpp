@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "chain/transaction.hpp"
+#include "chain/transaction_validity_period.hpp"
 #include "ledger/chain/block.hpp"
 #include "ledger/chaincode/contract_context.hpp"
 #include "ledger/chaincode/contract_context_attacher.hpp"
@@ -119,6 +120,22 @@ ContractExecutionStatus TransactionValidator::operator()(chain::Transaction cons
     {
       return ContractExecutionStatus::INSUFFICIENT_AVAILABLE_FUNDS;
     }
+  }
+
+  return ContractExecutionStatus::SUCCESS;
+}
+
+ContractExecutionStatus TransactionValidator::operator()(chain::TransactionLayout const &tx_lo,
+                                                         uint64_t block_index) const
+{
+  if (chain::GetValidity(tx_lo, block_index) != chain::Transaction::Validity::VALID)
+  {
+    return ContractExecutionStatus::TX_NOT_VALID_FOR_BLOCK;
+  }
+
+  if (tx_lo.charge_rate() == 0)
+  {
+    return ContractExecutionStatus::TX_NOT_ENOUGH_CHARGE;
   }
 
   return ContractExecutionStatus::SUCCESS;

@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "chain/transaction.hpp"
+#include "chain/tx_declaration.hpp"
 #include "core/bitvector.hpp"
 #include "ledger/chaincode/token_contract.hpp"
 #include "ledger/fees/chargeable.hpp"
@@ -38,7 +39,7 @@ class FeeManager
 {
 public:
   using CachedStorageAdapterPtr = std::shared_ptr<CachedStorageAdapter>;
-  using TransactionPtr          = std::shared_ptr<chain::Transaction>;
+  using TransactionPtr          = chain::TransactionPtr;
   using BlockIndex              = uint64_t;
   using Status                  = ContractExecutionStatus;
   using Result                  = ContractExecutionResult;

@@ -18,11 +18,15 @@
 //------------------------------------------------------------------------------
 
 #include "chain/transaction_layout.hpp"
+#include "chain/tx_declaration.hpp"
 #include "core/digest.hpp"
 #include "core/mutex.hpp"
 #include "ledger/block_packer_interface.hpp"
 #include "ledger/chain/block.hpp"
+#include "ledger/chaincode/token_contract.hpp"
 #include "ledger/miner/transaction_layout_queue.hpp"
+#include "ledger/storage_unit/storage_unit_interface.hpp"
+#include "ledger/transaction_validator.hpp"
 #include "meta/log2.hpp"
 #include "telemetry/telemetry.hpp"
 #include "vectorise/threading/pool.hpp"
@@ -52,15 +56,15 @@ public:
   using TransactionLayout = chain::TransactionLayout;
 
   // Construction / Destruction
-  explicit BasicMiner(uint32_t log2_num_lanes);
+  BasicMiner(uint32_t log2_num_lanes, StorageInterface &storage);
   BasicMiner(BasicMiner const &) = delete;
   BasicMiner(BasicMiner &&)      = delete;
   ~BasicMiner() override         = default;
 
   /// @name Miner Interface
   /// @{
-  void     EnqueueTransaction(chain::Transaction const &tx) override;
-  void     EnqueueTransaction(chain::TransactionLayout const &layout) override;
+  bool     EnqueueTransaction(chain::TransactionPtr tx) override;
+  bool     EnqueueTransaction(chain::TransactionLayout const &layout) override;
   void     GenerateBlock(Block &block, std::size_t num_lanes, std::size_t num_slices,
                          MainChain const &chain) override;
   uint64_t GetBacklog() const override;
@@ -73,7 +77,14 @@ public:
 private:
   using ThreadPool = threading::Pool;
   using Queue      = TransactionLayoutQueue;
+  using TxIdx      = chain::TransactionIndex;
 
+  enum class ExecutionStatusSimplyExplained
+  {
+    INVALID,
+    VALID,
+    PENDING
+  };
   /// @name Packing Operations
   /// @{
   static void GenerateSlices(Queue &transactions, Block &block, std::size_t offset,
@@ -100,6 +111,16 @@ private:
   /// @{
   mutable Mutex mining_pool_lock_;  ///< Mining pool lock (priority 0)
   Queue         mining_pool_;       ///< The main mining queue for the node
+  mutable TxIdx txs_to_mine_;       ///< Transactions to be executed
+  /// @}
+
+  /// @name Transaction Validation
+  /// @{
+  StorageInterface &             storage_;
+  TokenContract                  token_contract_{};
+  TransactionValidator           tx_validator_{storage_, token_contract_};
+  ExecutionStatusSimplyExplained CheckValidity(TransactionLayout const &tx_lo,
+                                               uint64_t                 block_number) const;
   /// @}
 
   /// @name Telemetry

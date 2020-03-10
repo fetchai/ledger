@@ -19,6 +19,7 @@
 
 #include "chain/transaction.hpp"
 #include "chain/transaction_builder.hpp"
+#include "chain/tx_declaration.hpp"
 #include "core/random/lcg.hpp"
 #include "crypto/ecdsa.hpp"
 #include "meta/type_traits.hpp"
@@ -28,8 +29,9 @@
 using fetch::byte_array::ByteArray;
 using fetch::chain::Transaction;
 using fetch::chain::TransactionBuilder;
+using fetch::chain::TransactionPtr;
 using fetch::crypto::ECDSASigner;
-using TransactionList = std::vector<TransactionBuilder::TransactionPtr>;
+using TransactionList = std::vector<TransactionPtr>;
 
 template <typename Word = uint64_t>
 fetch::meta::IfIsUnsignedInteger<Word, ByteArray> GenerateRandomArray(

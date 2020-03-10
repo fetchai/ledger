@@ -18,28 +18,24 @@
 //------------------------------------------------------------------------------
 
 #include "chain/tx_declaration.hpp"
+#include "core/digest.hpp"
 
 #include <memory>
-#include <vector>
+#include <unordered_map>
 
 namespace fetch {
-namespace ledger {
+namespace chain {
 
-class TransactionSink
-{
-public:
-  using TransactionPtr  = chain::TransactionPtr;
-  using TransactionList = std::vector<TransactionPtr>;
+/**
+ * The transaction class
+ */
+class Transaction;
 
-  // Construction / Destruction
-  TransactionSink()          = default;
-  virtual ~TransactionSink() = default;
+using TransactionPtr = std::shared_ptr<Transaction>;
 
-  /// @name Transaction Sink
-  /// @{
-  virtual void OnTransaction(TransactionPtr const &tx) = 0;
-  /// @}
-};
+using TransactionIndex = DigestMap<TransactionPtr>;
 
-}  // namespace ledger
+class TransactionLayout;
+
+}  // namespace chain
 }  // namespace fetch
