@@ -21,6 +21,7 @@
 
 #include "chain/transaction.hpp"
 #include "chain/transaction_builder.hpp"
+#include "chain/tx_declaration.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 #include "crypto/ecdsa.hpp"
 #include "crypto/identity.hpp"
@@ -60,7 +61,7 @@ protected:
   using Query                 = Contract::Query;
   using IdentifierPtr         = std::shared_ptr<ConstByteArray>;
   using CachedStorageAdapter  = fetch::ledger::CachedStorageAdapter;
-  using TransactionPtr        = fetch::chain::TransactionBuilder::TransactionPtr;
+  using TransactionPtr        = fetch::chain::TransactionPtr;
 
   void SetUp() override
   {

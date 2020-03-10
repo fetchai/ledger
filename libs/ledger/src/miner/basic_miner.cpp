@@ -19,6 +19,9 @@
 #include "chain/address.hpp"
 #include "chain/transaction.hpp"
 #include "chain/transaction_validity_period.hpp"
+#include "chain/tx_declaration.hpp"
+#include "core/digest.hpp"
+#include "core/macros.hpp"
 #include "ledger/chain/block.hpp"
 #include "ledger/chain/main_chain.hpp"
 #include "ledger/miner/basic_miner.hpp"
@@ -62,10 +65,11 @@ T Clip3(T value, T min_value, T max_value)
  * @param log2_num_lanes Log2 of the number of lanes
  * @param num_slices The number of slices
  */
-BasicMiner::BasicMiner(uint32_t log2_num_lanes)
+BasicMiner::BasicMiner(uint32_t log2_num_lanes, StorageInterface &storage)
   : log2_num_lanes_{log2_num_lanes}
   , max_num_threads_{std::thread::hardware_concurrency()}
   , thread_pool_{max_num_threads_, "Miner"}
+  , storage_{storage}
   , mining_pool_size_{telemetry::Registry::Instance().CreateGauge<uint64_t>(
         "ledger_miner_mining_pool_size", "The current size of the mining pool")}
   , max_mining_pool_size_{telemetry::Registry::Instance().CreateGauge<uint64_t>(
@@ -84,9 +88,16 @@ BasicMiner::BasicMiner(uint32_t log2_num_lanes)
  *
  * @param tx The reference to the transaction
  */
-void BasicMiner::EnqueueTransaction(chain::Transaction const &tx)
+bool BasicMiner::EnqueueTransaction(chain::TransactionPtr tx)
 {
-  EnqueueTransaction(chain::TransactionLayout{tx, log2_num_lanes_});
+  if (EnqueueTransaction(chain::TransactionLayout{*tx, log2_num_lanes_}))
+  {
+    FETCH_LOCK(mining_pool_lock_);
+    txs_to_mine_.emplace(tx->digest(), std::move(tx));
+    return true;
+  }
+
+  return false;
 }
 
 /**
@@ -97,26 +108,66 @@ void BasicMiner::EnqueueTransaction(chain::Transaction const &tx)
  *
  * @param layout The layout to be added to the queue
  */
-void BasicMiner::EnqueueTransaction(chain::TransactionLayout const &layout)
+bool BasicMiner::EnqueueTransaction(chain::TransactionLayout const &layout)
 {
   FETCH_LOCK(pending_lock_);
 
   if (layout.mask().size() != (1u << log2_num_lanes_))
   {
     FETCH_LOG_WARN(LOGGING_NAME, "Discarding layout due to incompatible mask size");
-    return;
+    return false;
   }
 
   if (pending_.Add(layout))
   {
     max_pending_pool_size_->max(pending_.size());
     FETCH_LOG_DEBUG(LOGGING_NAME, "Enqueued Transaction (added) 0x", layout.digest().ToHex());
+    return true;
   }
-  else
+
+  duplicate_count_->increment();
+  FETCH_LOG_DEBUG(LOGGING_NAME, "Enqueued Transaction (duplicate) 0x", layout.digest().ToHex());
+  return false;
+}
+
+/**
+ * Check if transaction is valid and should be mined.
+ *
+ * @param tx_lo Transaction layout to check
+ * @param block_number
+ * @return valid/invalid/undecidable at this moment
+ */
+BasicMiner::ExecutionStatusSimplyExplained BasicMiner::CheckValidity(TransactionLayout const &tx_lo,
+                                                                     uint64_t block_number) const
+{
+  // First check if this layout is not valid for this block, or charge rate is not set.
+  ContractExecutionStatus ces = tx_validator_(tx_lo, block_number);
+  if (ces != ContractExecutionStatus::SUCCESS)
   {
-    duplicate_count_->increment();
-    FETCH_LOG_DEBUG(LOGGING_NAME, "Enqueued Transaction (duplicate) 0x", layout.digest().ToHex());
+    return ExecutionStatusSimplyExplained::INVALID;
   }
+
+  // Here, this layout is purportedly valid. If we know the transaction it belongs to,
+  // let's check if this transaction can be proven valid.
+  auto respective_transaction_itr = txs_to_mine_.find(tx_lo.digest());
+  if (respective_transaction_itr == txs_to_mine_.end())
+  {
+    // nothing can be done here, assume the layout is not invalid
+    return ExecutionStatusSimplyExplained::VALID;
+  }
+
+  ces = tx_validator_(*respective_transaction_itr->second, block_number);
+  if (ces == ContractExecutionStatus::SUCCESS)
+  {
+    // this is a valid transaction to mine
+    // we don't need to remember the transaction itself anymore
+    txs_to_mine_.erase(respective_transaction_itr);
+    return ExecutionStatusSimplyExplained::VALID;
+  }
+
+  // The layout itself is not apparently invalid yet transaction validity could not be verified at
+  // this moment. Keep it for later.
+  return ExecutionStatusSimplyExplained::PENDING;
 }
 
 /**
@@ -139,15 +190,21 @@ void BasicMiner::GenerateBlock(Block &block, std::size_t num_lanes, std::size_t 
   }
 
   // generate an invalid transaction set and remove them from the mining pool
-  DigestSet invalid{};
-  for (auto const &layout : mining_pool_)
+  for (auto layout_it = mining_pool_.begin(); layout_it != mining_pool_.end();)
   {
-    if (chain::Transaction::Validity::VALID != chain::GetValidity(layout, block.block_number))
+    switch (CheckValidity(*layout_it, block.block_number))
     {
-      invalid.emplace(layout.digest());
+    case ExecutionStatusSimplyExplained::PENDING:
+      EnqueueTransaction(*layout_it);
+      FETCH_FALLTHROUGH;
+    case ExecutionStatusSimplyExplained::INVALID:
+      layout_it = mining_pool_.Erase(layout_it);
+      break;
+    default:
+      ++layout_it;
+      break;
     }
   }
-  mining_pool_.Remove(invalid);
 
   // detect the transactions which have already been incorporated into previous blocks
   auto const duplicates =
