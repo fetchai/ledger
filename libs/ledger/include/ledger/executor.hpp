@@ -17,6 +17,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include "chain/transaction.hpp"
+#include "chain/tx_declaration.hpp"
 #include "crypto/fnv.hpp"
 #include "ledger/chain/block.hpp"
 #include "ledger/chaincode/chain_code_cache.hpp"
@@ -64,7 +66,7 @@ public:
   /// @}
 
 private:
-  using TransactionPtr          = std::shared_ptr<chain::Transaction>;
+  using TransactionPtr          = chain::TransactionPtr;
   using CachedStorageAdapterPtr = std::shared_ptr<CachedStorageAdapter>;
 
   bool RetrieveTransaction(Digest const &digest);
