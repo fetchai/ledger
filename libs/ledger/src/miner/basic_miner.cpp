@@ -19,7 +19,9 @@
 #include "chain/address.hpp"
 #include "chain/transaction.hpp"
 #include "chain/transaction_validity_period.hpp"
+#include "chain/tx_declaration.hpp"
 #include "core/digest.hpp"
+#include "core/macros.hpp"
 #include "ledger/chain/block.hpp"
 #include "ledger/chain/main_chain.hpp"
 #include "ledger/miner/basic_miner.hpp"
@@ -90,6 +92,7 @@ bool BasicMiner::EnqueueTransaction(chain::TransactionPtr tx)
 {
   if (EnqueueTransaction(chain::TransactionLayout{*tx, log2_num_lanes_}))
   {
+    FETCH_LOCK(mining_pool_lock_);
     txs_to_mine_.emplace(tx->digest(), std::move(tx));
     return true;
   }
@@ -128,27 +131,43 @@ bool BasicMiner::EnqueueTransaction(chain::TransactionLayout const &layout)
 }
 
 /**
- * Check if transaction is inbvalid and should not be mined.
+ * Check if transaction is valid and should be mined.
  *
  * @param tx_lo Transaction layout to check
  * @param block_number
+ * @return valid/invalid/undecidable at this moment
  */
-bool BasicMiner::IsInvalid(TransactionLayout const &tx_lo, uint64_t block_number) const
+ExecutionStatusSimplyExplained BasicMiner::CheckValidity(TransactionLayout const &tx_lo,
+                                                         uint64_t block_number) const
 {
-  ContractExecutionStatus ces;
+  // First check if this layout is not valid for this block, or charge rate is not set.
+  ContractExecutionStatus ces = tx_validator_(tx_lo, block_number);
+  if (ces != ContractExecutionStatus::SUCCESS)
+  {
+    return ExecutionStatusSimplyExplained::INVALID;
+  }
 
+  // Here, this layout is purportedly valid. If we know the transaction it belongs to,
+  // let's check if this transaction can be proven valid.
   auto respective_transaction_itr = txs_to_mine_.find(tx_lo.digest());
   if (respective_transaction_itr == txs_to_mine_.end())
   {
-    ces = tx_validator_(tx_lo, block_number);
-  }
-  else
-  {
-    ces = tx_validator_(*respective_transaction_itr->second, block_number);
-    txs_to_mine_.erase(respective_transaction_itr);
+    // nothing can be done here, assume the layout is not invalid
+    return ExecutionStatusSimplyExplained::VALID;
   }
 
-  return ces != ContractExecutionStatus::SUCCESS;
+  ces = tx_validator_(*respective_transaction_itr->second, block_number);
+  if (ces == ContractExecutionStatus::SUCCESS)
+  {
+    // this is a valid transaction to mine
+    // we don't need to remember the transaction itself anymore
+    txs_to_mine_.erase(respective_transaction_itr);
+    return ExecutionStatusSimplyExplained::VALID;
+  }
+
+  // The layout itself is not apparently invalid yet transaction validity could not be verified at
+  // this moment. Keep it for later.
+  return ExecutionStatusSimplyExplained::PENDING;
 }
 
 /**
@@ -171,15 +190,20 @@ void BasicMiner::GenerateBlock(Block &block, std::size_t num_lanes, std::size_t 
   }
 
   // generate an invalid transaction set and remove them from the mining pool
-  DigestSet invalid{};
-  for (auto const &layout : mining_pool_)
+  for (auto layout_it = mining_pool_.begin(); layout_it != mining_pool_.end(); ++layout_it)
   {
-    if (IsInvalid(layout, block.block_number))
+    switch (CheckValidity(*layout_it, block.block_number))
     {
-      invalid.emplace(layout.digest());
+    case ExecutionStatusSimplyExplained::PENDING:
+      EnqueueTransaction(*layout_it);
+      FETCH_FALLTHROUGH;
+    case ExecutionStatusSimplyExplained::INVALID:
+      mining_pool_.Erase(layout_it);
+      break;
+    default:
+      break;
     }
   }
-  mining_pool_.Remove(invalid);
 
   // detect the transactions which have already been incorporated into previous blocks
   auto const duplicates =

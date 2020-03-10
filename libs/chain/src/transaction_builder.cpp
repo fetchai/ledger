@@ -19,6 +19,7 @@
 #include "chain/transaction.hpp"
 #include "chain/transaction_builder.hpp"
 #include "chain/transaction_serializer.hpp"
+#include "chain/tx_declaration.hpp"
 #include "core/macros.hpp"
 #include "crypto/prover.hpp"
 #include "crypto/sha256.hpp"

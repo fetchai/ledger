@@ -30,12 +30,10 @@ struct DigestHashAdapter
 {
   std::size_t operator()(Digest const &hash) const noexcept
   {
-    if (hash.empty())
+    if (hash.size() < sizeof(std::size_t))
     {
       return 0;
     }
-
-    assert(hash.size() >= sizeof(std::size_t));
     return *reinterpret_cast<std::size_t const *>(hash.pointer());
   }
 };

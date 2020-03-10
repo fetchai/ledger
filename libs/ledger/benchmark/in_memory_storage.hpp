@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "chain/transaction.hpp"
+#include "chain/tx_declaration.hpp"
 #include "core/digest.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 

@@ -19,6 +19,7 @@
 
 #include "chain/transaction.hpp"
 #include "chain/transaction_builder.hpp"
+#include "chain/tx_declaration.hpp"
 #include "core/random/lcg.hpp"
 #include "crypto/ecdsa.hpp"
 #include "meta/type_traits.hpp"

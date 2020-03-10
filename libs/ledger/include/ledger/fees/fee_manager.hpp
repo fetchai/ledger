@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "chain/transaction.hpp"
+#include "chain/tx_declaration.hpp"
 #include "core/bitvector.hpp"
 #include "ledger/chaincode/token_contract.hpp"
 #include "ledger/fees/chargeable.hpp"

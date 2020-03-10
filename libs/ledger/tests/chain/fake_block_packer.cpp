@@ -18,6 +18,7 @@
 
 #include "fake_block_packer.hpp"
 
+#include "chain/tx_declaration.hpp"
 #include "core/macros.hpp"
 #include "ledger/chain/block.hpp"
 #include "vectorise/platform.hpp"

@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "chain/transaction_builder.hpp"
+#include "chain/tx_declaration.hpp"
 #include "crypto/ecdsa.hpp"
 #include "ledger/chaincode/deed.hpp"
 #include "variant/variant.hpp"

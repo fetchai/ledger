@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "chain/transaction_layout.hpp"
+#include "chain/tx_declaration.hpp"
 #include "core/digest.hpp"
 #include "core/mutex.hpp"
 #include "ledger/block_packer_interface.hpp"
@@ -78,6 +79,12 @@ private:
   using Queue      = TransactionLayoutQueue;
   using TxIdx      = chain::TransactionIndex;
 
+  enum class ExecutionStatusSimplyExplained
+  {
+    INVALID,
+    VALID,
+    PENDING
+  };
   /// @name Packing Operations
   /// @{
   static void GenerateSlices(Queue &transactions, Block &block, std::size_t offset,
@@ -109,10 +116,11 @@ private:
 
   /// @name Transaction Validation
   /// @{
-  StorageInterface &   storage_;
-  TokenContract        token_contract_{};
-  TransactionValidator tx_validator_{storage_, token_contract_};
-  bool                 IsInvalid(TransactionLayout const &tx_lo, uint64_t block_number) const;
+  StorageInterface &             storage_;
+  TokenContract                  token_contract_{};
+  TransactionValidator           tx_validator_{storage_, token_contract_};
+  ExecutionStatusSimplyExplained CheckValidity(TransactionLayout const &tx_lo,
+                                               uint64_t                 block_number) const;
   /// @}
 
   /// @name Telemetry

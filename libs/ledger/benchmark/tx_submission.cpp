@@ -20,6 +20,7 @@
 
 #include "chain/transaction_builder.hpp"
 #include "chain/transaction_rpc_serializers.hpp"
+#include "chain/tx_declaration.hpp"
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/random/lcg.hpp"

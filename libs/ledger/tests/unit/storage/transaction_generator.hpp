@@ -20,6 +20,7 @@
 #include "chain/address.hpp"
 #include "chain/transaction.hpp"
 #include "chain/transaction_builder.hpp"
+#include "chain/tx_declaration.hpp"
 #include "core/bitvector.hpp"
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/const_byte_array.hpp"

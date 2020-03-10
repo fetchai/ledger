@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "chain/tx_declaration.hpp"
 #include "core/digest.hpp"
 
 #include <memory>

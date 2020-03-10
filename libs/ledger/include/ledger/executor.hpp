@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "chain/transaction.hpp"
+#include "chain/tx_declaration.hpp"
 #include "crypto/fnv.hpp"
 #include "ledger/chain/block.hpp"
 #include "ledger/chaincode/chain_code_cache.hpp"
