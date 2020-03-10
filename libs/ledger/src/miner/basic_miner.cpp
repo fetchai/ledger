@@ -190,7 +190,7 @@ void BasicMiner::GenerateBlock(Block &block, std::size_t num_lanes, std::size_t 
   }
 
   // generate an invalid transaction set and remove them from the mining pool
-  for (auto layout_it = mining_pool_.begin(); layout_it != mining_pool_.end(); ++layout_it)
+  for (auto layout_it = mining_pool_.begin(); layout_it != mining_pool_.end();)
   {
     switch (CheckValidity(*layout_it, block.block_number))
     {
@@ -198,9 +198,10 @@ void BasicMiner::GenerateBlock(Block &block, std::size_t num_lanes, std::size_t 
       EnqueueTransaction(*layout_it);
       FETCH_FALLTHROUGH;
     case ExecutionStatusSimplyExplained::INVALID:
-      mining_pool_.Erase(layout_it);
+      layout_it = mining_pool_.Erase(layout_it);
       break;
     default:
+      ++layout_it;
       break;
     }
   }

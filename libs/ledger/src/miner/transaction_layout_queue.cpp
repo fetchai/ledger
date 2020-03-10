@@ -41,7 +41,7 @@ bool TransactionLayoutQueue::Add(TransactionLayout const &item)
   if (success)
   {
     // this is a non-duplicate transaction
-    list_.emplace_back(item);
+    list_.push_back(item);
   }
 
   return success;
@@ -205,6 +205,8 @@ void TransactionLayoutQueue::Splice(TransactionLayoutQueue &other, Iterator star
 
 TransactionLayoutQueue::Iterator TransactionLayoutQueue::Erase(ConstIterator iterator)
 {
+  assert(iterator != cend());
+
   // remove the associated digest from the set
   digests_.erase(iterator->digest());
 
