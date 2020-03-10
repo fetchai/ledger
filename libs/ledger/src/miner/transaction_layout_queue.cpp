@@ -33,18 +33,15 @@ namespace ledger {
  */
 bool TransactionLayoutQueue::Add(TransactionLayout const &item)
 {
-  bool success{false};
-
   auto const &digest = item.digest();
 
-  // ensure that this isn't already a duplicate transaction layout
-  if (digests_.find(digest) == digests_.end())
-  {
-    // update the digest set and list
-    list_.emplace_back(item);
-    digests_.insert(digest);
+  // try to add this digest and check if it's new
+  bool success = digests_.insert(digest).second;
 
-    success = true;
+  if (success)
+  {
+    // this is a non-duplicate transaction
+    list_.push_back(item);
   }
 
   return success;
@@ -58,23 +55,29 @@ bool TransactionLayoutQueue::Add(TransactionLayout const &item)
  */
 bool TransactionLayoutQueue::Remove(Digest const &digest)
 {
-  bool success{false};
-
-  // attempt to find the target digest
-  auto const it = std::find_if(
-      list_.begin(), list_.end(),
-      [&digest](TransactionLayout const &layout) { return layout.digest() == digest; });
-
-  // if we found the target element then remove the list entry and the digest from the set
-  if (list_.end() != it)
+  // try to remove this digest to see if it's known
+  if (digests_.erase(digest) != 0)
   {
+    // attempt to find the target digest
+    auto const it = std::find_if(
+        list_.begin(), list_.end(),
+        [&digest](TransactionLayout const &layout) { return layout.digest() == digest; });
+    assert(it != list_.end());
     list_.erase(it);
-    digests_.erase(digest);
-
-    success = true;
+    return true;
   }
 
-  return success;
+#ifndef NDEBUG
+  {
+    // there's no such digest among those enqueued, assert that there's no such layout
+    auto const it = std::find_if(
+        list_.begin(), list_.end(),
+        [&digest](TransactionLayout const &layout) { return layout.digest() == digest; });
+    assert(it == list_.end());
+  }
+#endif
+
+  return false;
 }
 
 /**
@@ -83,30 +86,29 @@ bool TransactionLayoutQueue::Remove(Digest const &digest)
  * @param digests The set of the transaction digests to be removed
  * @return The number of transaction layouts removed from the queue
  */
-std::size_t TransactionLayoutQueue::Remove(DigestSet const &digests)
+std::size_t TransactionLayoutQueue::Remove(DigestSet const &digests_to_remove)
 {
-  std::size_t count{0};
+  const std::size_t current_population = digests_.size();
 
-  if (!digests.empty())
+  if (!digests_to_remove.empty())
   {
-    list_.remove_if([this, &digests, &count](TransactionLayout const &layout) {
+    list_.remove_if([this, &digests_to_remove](TransactionLayout const &layout) {
       auto const &digest = layout.digest();
 
       // determine if we should remove this element
-      bool const remove = digests.find(digest) != digests.end();
+      bool const remove = digests_to_remove.count(digest) != 0;
 
-      // also update the digests set too
+      // also update the digests_to_remove set too
       if (remove)
       {
         digests_.erase(digest);
-        ++count;
       }
 
       return remove;
     });
   }
 
-  return count;
+  return current_population - digests_.size();
 }
 
 /**
@@ -120,6 +122,7 @@ void TransactionLayoutQueue::Splice(TransactionLayoutQueue &other)
 {
   // extract the queue from other queue
   UnderlyingList input = std::move(other.list_);
+  other.list_.clear();
   other.digests_.clear();
 
   // loop through the queue and filter out the duplicate entries from the main queue
@@ -182,13 +185,10 @@ void TransactionLayoutQueue::Splice(TransactionLayoutQueue &other, Iterator star
     other.digests_.erase(digest);
 
     // determine if this is a new entry or not
-    bool const new_entry = digests_.find(digest) == digests_.end();
+    bool const new_entry = digests_.insert(digest).second;
 
     if (new_entry)
     {
-      // update this queues digest set (in anticipation for new transaction objects)
-      digests_.insert(digest);
-
       // advance on to the next entry
       ++current;
     }
@@ -205,6 +205,8 @@ void TransactionLayoutQueue::Splice(TransactionLayoutQueue &other, Iterator star
 
 TransactionLayoutQueue::Iterator TransactionLayoutQueue::Erase(ConstIterator iterator)
 {
+  assert(iterator != cend());
+
   // remove the associated digest from the set
   digests_.erase(iterator->digest());
 

@@ -16,6 +16,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "mock_storage_interface.hpp"
 #include "tx_generator.hpp"
 
 #include "bloom_filter/bloom_filter.hpp"
@@ -29,6 +30,7 @@
 
 #include "gtest/gtest.h"
 
+#include <algorithm>
 #include <cassert>
 #include <chrono>
 #include <cstddef>
@@ -37,11 +39,11 @@
 #include <random>
 
 using fetch::BitVector;
-using fetch::Digest;
 using fetch::DigestMap;
 using fetch::DigestSet;
 using fetch::meta::IsLog2;
 using fetch::meta::Log2;
+using testing::NiceMock;
 
 class BasicMinerTests : public ::testing::TestWithParam<std::size_t>
 {
@@ -69,6 +71,7 @@ protected:
   using MainChain         = fetch::ledger::MainChain;
   using Block             = fetch::ledger::Block;
   using LayoutMap         = DigestMap<TransactionLayout>;
+  using Storage           = NiceMock<MockStorage>;
 
   void SetUp() override
   {
@@ -76,7 +79,7 @@ protected:
 
     rng_.seed(RANDOM_SEED);
     generator_.Seed(RANDOM_SEED);
-    miner_ = std::make_unique<BasicMiner>(uint32_t{LOG2_NUM_LANES});
+    miner_ = std::make_unique<BasicMiner>(uint32_t{LOG2_NUM_LANES}, storage_);
   }
 
   LayoutMap PopulateWithTransactions(std::size_t num_transactions, std::size_t duplicates = 1)
@@ -85,6 +88,7 @@ protected:
 
     std::poisson_distribution<uint32_t> dist(5.0);
 
+    std::vector<TransactionLayout> screenplay;
     for (std::size_t i = 0; i < num_transactions; ++i)
     {
       uint32_t const num_resources = dist(rng_);
@@ -94,11 +98,25 @@ protected:
 
       for (std::size_t j = 0; j < duplicates; ++j)
       {
-        miner_->EnqueueTransaction(tx);
+        screenplay.push_back(tx);
       }
+    }
+    std::shuffle(screenplay.begin(), screenplay.end(), rng_);
 
+    for (auto const &tx_lo : screenplay)
+    {
       // ensure that the generator has not produced any duplicates
-      assert(layout.find(tx.digest()) == layout.end());
+      if (miner_->EnqueueTransaction(tx_lo))
+      {
+        EXPECT_EQ(layout.find(tx_lo.digest()), layout.end())
+            << " when adding tx " << tx_lo.digest().ToHex().SubArray(0, 8);
+        layout.emplace(tx_lo.digest(), tx_lo);
+      }
+      else
+      {
+        EXPECT_NE(layout.find(tx_lo.digest()), layout.end())
+            << " when adding tx " << tx_lo.digest().ToHex().SubArray(0, 8);
+      }
     }
 
     return layout;
@@ -107,6 +125,7 @@ protected:
   Rng                  rng_{};
   TransactionGenerator generator_{LOG2_NUM_LANES};
   BasicMinerPtr        miner_;
+  Storage              storage_;
 };
 
 TEST_P(BasicMinerTests, SimpleExample)
@@ -152,11 +171,12 @@ TEST_P(BasicMinerTests, RejectReplayedTransactions)
   DigestSet transactions_already_seen{};
   DigestSet transactions_within_block{};
 
-  while (miner_->GetBacklog() > 0)
+  do
   {
     Block block;
 
     block.previous_hash = chain.GetHeaviestBlockHash();
+    block.block_number  = chain.GetHeaviestBlock()->block_number + 1;
 
     miner_->GenerateBlock(block, NUM_LANES, NUM_SLICES, chain);
 
@@ -187,7 +207,7 @@ TEST_P(BasicMinerTests, RejectReplayedTransactions)
 
     /* Note no mining needed here - main chain doesn't care */
     chain.AddBlock(block);
-  }
+  } while (miner_->GetBacklog() > 0);
 
   // Now, push on all of the TXs that are already in the blockchain
   for (auto const &digest : transactions_already_seen)
