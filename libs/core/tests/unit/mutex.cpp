@@ -33,6 +33,10 @@ using namespace std::chrono_literals;
 
 TEST(DebugMutex, SimpleProblem)
 {
+  /* Seven philosophers are seated behind a round table and are trying to eat spaghetti.
+   * They only have seven forks interspersed between them.
+   * Each one first takes a fork on his left and then tries to acquire one on his right.
+   */
   fetch::DeadlockHandler::ThrowOnDeadlock();
   {
     Mutex                  mutex;
@@ -45,10 +49,15 @@ TEST(DebugMutex, SimpleProblem)
   std::vector<Mutex>       forks(TABLE_SIZE);
   std::vector<std::thread> dining_philosophers;
   std::atomic<std::size_t> hungry_philosophers{0};
+  std::atomic<std::size_t> left_forks_wielded{0};
 
-  auto runnable = [&hungry_philosophers](auto left_fork, auto right_fork) {
+  auto runnable = [&hungry_philosophers, &left_forks_wielded](auto left_fork, auto right_fork) {
     FETCH_LOCK(left_fork.get());  // everybody, get and lock your forks
-    std::this_thread::sleep_for(100ms);
+    ++left_forks_wielded;
+    while (left_forks_wielded < TABLE_SIZE)
+    {
+      std::this_thread::sleep_for(1ms);
+    }
     try
     {
       FETCH_LOCK(right_fork.get());
@@ -74,43 +83,9 @@ TEST(DebugMutex, SimpleProblem)
   ASSERT_EQ(hungry_philosophers, 1);
 }
 
-TEST(DebugMutex, MultiThreadDeadlock)
-{
-  fetch::DeadlockHandler::ThrowOnDeadlock();
-  Mutex m[5];
-  auto  f = [&m](int32_t n) {
-    std::lock_guard<Mutex> guard1(m[n]);
-    std::this_thread::sleep_for(std::chrono::seconds(1));
-
-    if (n != 0)
-    {
-      std::lock_guard<Mutex> guard2(m[n - 1]);
-    }
-  };
-
-  std::vector<std::thread> threads;
-
-  {
-    std::lock_guard<Mutex> guard1(m[0]);
-    threads.emplace_back(f, 1);
-    threads.emplace_back(f, 2);
-    threads.emplace_back(f, 3);
-    threads.emplace_back(f, 4);
-
-    std::this_thread::sleep_for(std::chrono::seconds(2));
-
-    EXPECT_THROW(std::lock_guard<Mutex> guard2(m[4]), std::runtime_error);
-  }
-  //  t0.join();
-  threads[0].join();
-  threads[1].join();
-  threads[2].join();
-  threads[3].join();
-  threads.clear();
-}
-
 TEST(DebugMutex, DISABLED_MultiThreadDeadlock2)
 {
+  // Basically the same as in the test above but aborts rather than throw.
   fetch::DeadlockHandler::AbortOnDeadlock();
   Mutex m[5];
   auto  f = [&m](int32_t n) {
@@ -146,7 +121,9 @@ TEST(DebugMutex, DISABLED_MultiThreadDeadlock2)
 
 TEST(DebugMutex, CorrectRecursive)
 {
+  // Two threads modify a single string synchronised through a recursive mutex.
   fetch::DeadlockHandler::ThrowOnDeadlock();
+  fetch::RecursiveLockAttempt::SetTimeoutMs(400);
   RMutex m;
 
   EXPECT_TRUE(m.try_lock());
@@ -169,7 +146,7 @@ TEST(DebugMutex, CorrectRecursive)
     rv += c;
     rv += c;
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(250));
+    std::this_thread::sleep_for(std::chrono::milliseconds(50));
 
     m.unlock();
     m.unlock();
@@ -177,7 +154,7 @@ TEST(DebugMutex, CorrectRecursive)
     rv += c;
     rv += c;
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(250));
+    std::this_thread::sleep_for(std::chrono::milliseconds(50));
 
     m.unlock();
     m.unlock();
@@ -191,11 +168,44 @@ TEST(DebugMutex, CorrectRecursive)
   threads[1].join();
 
   ASSERT_TRUE(rv == "aaaabbbb" || rv == "bbbbaaaa");
+
+  {
+    // A thread acquires a recursive mutex and holds it for a long time ...
+    // luckily not long enough for the dispatcher to assume a deadlock.
+    fetch::DeadlockHandler::ThrowOnDeadlock();
+    fetch::RecursiveLockAttempt::SetTimeoutMs(200);
+    RMutex m;
+
+    std::vector<std::thread> threads;
+
+    std::atomic<std::size_t> visited{0};
+
+    threads.emplace_back([&m] {
+      FETCH_LOCK(m);
+      std::this_thread::sleep_for(150ms);
+    });
+
+    threads.emplace_back([&m, &visited] {
+      std::this_thread::sleep_for(100ms);
+      FETCH_LOCK(m);
+      ++visited;
+    });
+
+    for (auto &t : threads)
+    {
+      t.join();
+    }
+
+    EXPECT_EQ(visited, 1);
+  }
 }
 
 TEST(DebugMutex, IncorrectRecursive)
 {
   {
+    // A thread acquires a recursive mutex and holds it for way too long.
+    // Some time later, another thread tries to acquire the same mutex.
+    // The dispatcher notices the first thread has been holding it for way too long.
     fetch::DeadlockHandler::ThrowOnDeadlock();
     fetch::RecursiveLockAttempt::SetTimeoutMs(100);
     RMutex m;
@@ -220,6 +230,10 @@ TEST(DebugMutex, IncorrectRecursive)
   }
 
   {
+    // A thread acquires a recursive mutex and holds it for way too long.
+    // Another thread tries to acquire the same mutex and is blocked until mutex release.
+    // Some time later, the dispatcher notices the second thread has been waiting for the mutex
+    // for way too long.
     fetch::DeadlockHandler::ThrowOnDeadlock();
     fetch::RecursiveLockAttempt::SetTimeoutMs(200);
     RMutex m;
@@ -240,33 +254,5 @@ TEST(DebugMutex, IncorrectRecursive)
     {
       t.join();
     }
-  }
-
-  {
-    fetch::DeadlockHandler::ThrowOnDeadlock();
-    fetch::RecursiveLockAttempt::SetTimeoutMs(300);
-    RMutex m;
-
-    std::vector<std::thread> threads;
-
-    std::atomic<std::size_t> visited{0};
-
-    threads.emplace_back([&m] {
-      FETCH_LOCK(m);
-      std::this_thread::sleep_for(200ms);
-    });
-
-    threads.emplace_back([&m, &visited] {
-      std::this_thread::sleep_for(100ms);
-      FETCH_LOCK(m);
-      ++visited;
-    });
-
-    for (auto &t : threads)
-    {
-      t.join();
-    }
-
-    EXPECT_EQ(visited, 1);
   }
 }
