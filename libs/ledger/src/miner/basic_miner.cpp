@@ -137,8 +137,8 @@ bool BasicMiner::EnqueueTransaction(chain::TransactionLayout const &layout)
  * @param block_number
  * @return valid/invalid/undecidable at this moment
  */
-ExecutionStatusSimplyExplained BasicMiner::CheckValidity(TransactionLayout const &tx_lo,
-                                                         uint64_t block_number) const
+BasicMiner::ExecutionStatusSimplyExplained BasicMiner::CheckValidity(TransactionLayout const &tx_lo,
+                                                                     uint64_t block_number) const
 {
   // First check if this layout is not valid for this block, or charge rate is not set.
   ContractExecutionStatus ces = tx_validator_(tx_lo, block_number);
