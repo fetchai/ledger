@@ -990,7 +990,11 @@ TEST_F(VMModelEstimatorTests, charge_forward_one_dense)
                      TensorType::ChargeIterate({inputs, batch_size})));
 
   // n*m*1 matmul operations
-  expected_cost += (inputs * outputs) * LOW_MULTIPLICATION_PER_ELEMENT * batch_size;
+  expected_cost +=
+      fetch::ml::charge_estimation::ops::OP_MATRIX_MULTIPLY_OVERHEAD;  // set up overhead
+  expected_cost += inputs * outputs * batch_size *
+                   fetch::ml::charge_estimation::ops::OP_MATRIX_MULTIPLY_FORWARD_2D;
+
   // m bias weights reading
   expected_cost += outputs * WEIGHTS_READING_PER_ELEMENT * batch_size;
 
