@@ -160,6 +160,12 @@ static constexpr OperationsCount SWITCH_BACKWARD_PER_ELEMENT =
 
 static constexpr OperationsCount OP_DEFAULT_CONSTRUCTION_COST         = 1;
 static constexpr OperationsCount OP_MATRIX_MULTIPLY_CONSTRUCTION_COST = 3;
+static constexpr OperationsCount OP_MATRIX_MULTIPLY_OVERHEAD          = 500;
+static constexpr OperationsCount OP_MATRIX_MULTIPLY_BACKWARD_OVERHEAD = 1700;
+static constexpr OperationsCount OP_MATRIX_MULTIPLY_FORWARD_2D        = 25;
+static constexpr OperationsCount OP_MATRIX_MULTIPLY_FORWARD_3D        = 15;
+static constexpr OperationsCount OP_MATRIX_MULTIPLY_BACKWARD          = 10;
+static constexpr OperationsCount OP_MATRIX_MULTIPLY_BATCH_SCALING     = 2;
 
 }  // namespace ops
 }  // namespace charge_estimation
