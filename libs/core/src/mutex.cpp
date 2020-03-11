@@ -24,6 +24,7 @@
 #include <cassert>
 #include <iostream>
 #include <sstream>
+#include <stdexcept>
 
 using namespace std::chrono_literals;
 
@@ -135,9 +136,23 @@ bool RecursiveLockAttempt::IsDeadlocked(LockDetails const &owner)
          Now() >= owner.taken_at + std::chrono::milliseconds(timeout_ms_);
 }
 
+namespace {
+
+auto Clock()
+{
+  auto ret_val = moment::GetClock("core:RecursiveLockAttempt");
+  if (!ret_val)
+  {
+    throw std::runtime_error("Failed to initialize core:RecursiveLockAttempt clock");
+  }
+  return ret_val;
+}
+
+}  // namespace
+
 RecursiveLockAttempt::Timestamp RecursiveLockAttempt::Now()
 {
-  static auto clock = moment::GetClock("core:RecursiveLockAttempt");
+  static auto clock = Clock();
   return clock->Now();
 }
 
