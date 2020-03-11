@@ -39,8 +39,6 @@ using namespace std::chrono_literals;
 
 namespace fetch {
 
-#ifdef FETCH_DEBUG_MUTEX
-
 /**
  * The two policies describe specific actions to be taken when locking each of the mutex types.
  * They both implement static interface LockPolicy which specifies the following member types:
@@ -533,13 +531,15 @@ private:
   Lockable &lockable_;
 };
 
-using Mutex             = SimpleDebugMutex;
-using RMutex            = RecursiveDebugMutex;
-using ConditionVariable = std::condition_variable_any;
+#ifdef FETCH_DEBUG_MUTEX
 
 #define FETCH_LOCK(lockable)                                          \
   fetch::DebugLockGuard<std::decay_t<decltype(lockable)>> FETCH_JOIN( \
       mutex_locked_on_line, __LINE__)(lockable, __FILE__, __LINE__)
+
+using Mutex             = SimpleDebugMutex;
+using RMutex            = RecursiveDebugMutex;
+using ConditionVariable = std::condition_variable_any;
 
 #else  // !FETCH_DEBUG_MUTEX
 

@@ -16,6 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
+#define FETCH_DEBUG_MUTEX
+
 #include "core/mutex.hpp"
 #include "moment/clocks.hpp"
 
