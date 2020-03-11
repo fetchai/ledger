@@ -35,11 +35,11 @@
 #include <unordered_map>
 #include <vector>
 
-#ifdef FETCH_DEBUG_MUTEX
-
 using namespace std::chrono_literals;
 
 namespace fetch {
+
+#ifdef FETCH_DEBUG_MUTEX
 
 /**
  * The two policies describe specific actions to be taken when locking each of the mutex types.
