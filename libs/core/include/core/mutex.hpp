@@ -35,19 +35,57 @@
 #include <unordered_map>
 #include <vector>
 
+#ifdef FETCH_DEBUG_MUTEX
+
 using namespace std::chrono_literals;
 
 namespace fetch {
 
+/**
+ * The two policies describe specific actions to be taken when locking each of the mutex types.
+ * They both implement static interface LockPolicy which specifies the following member types:
+ *
+ * Mutex       — the type of mutex governed by this policy
+ *               Mutex inherits this policy, as is common with policies since MC++D
+ * LockDetails — value to be kept in lock table, describing current owner thread and line of code
+ *               this mutex was acquired at
+ *
+ * and the following member functions:
+ *
+ * bool Populate(LockDetails &owner)
+ *     extra initialization applied to this mutex's lock table entry when this mutex is locked
+ *     returns true iff this mutex has been just locked, after being free
+ *
+ * bool Depopulate(LockDetails &ex_owner)
+ *     extra cleanup applied to this mutex's lock table entry when this mutex is released
+ *     returns true iff this mutex has been fully unlocked and is now free
+ *
+ * bool SafeToLock(LockDetails const &new_owner)
+ *     returns true iff this mutex, while being locked, can still be safely locked by new_owner
+ *
+ * bool IsDeadlocked(LockDetails const &new_owner)
+ *     returns true if attempting to lock this mutex by new_owner woudl result in a deadlock
+ *
+ * template<class Mutex>
+ * void Lock(Mutex &mutex, LockLocation const &location)
+ *     mutex is locked from location (if there's no deadlock)
+ */
 class SimpleLockAttempt;
 class RecursiveLockAttempt;
 
+/**
+ * MutexRegister<LockPolicy> is a table that keeps track of locations where
+ * LockPolicy-inheriting mutexes were locked from
+ */
 template <class LockPolicy>
 class MutexRegister;
 
 using SimpleMutexRegister    = MutexRegister<SimpleLockAttempt>;
 using RecursiveMutexRegister = MutexRegister<RecursiveLockAttempt>;
 
+/**
+ * The DebugMutex class decorates UnderlyingMutex by registering locks/unlocks with MutexRegister.
+ */
 template <class UnderlyingMutex, class MutexRegister>
 class DebugMutex;
 
@@ -68,6 +106,7 @@ class DeadlockHandler
 public:
   static void DeadlockDetected(std::string const &message);
 
+  // Setters
   static void ThrowOnDeadlock();
 
   static void AbortOnDeadlock();
@@ -86,6 +125,7 @@ protected:
     std::thread::id id = std::this_thread::get_id();
   };
 
+  // LockPolicy's methods are trivial for non-recursive mutexes.
   static constexpr bool Populate(LockDetails & /*owner*/) noexcept
   {
     return true;
@@ -96,6 +136,7 @@ protected:
     return true;
   }
 
+  // It is never safe to try to lock a locked non-recursive mutex, even in the same thread.
   static constexpr bool SafeToLock(LockDetails const & /*owner*/) noexcept
   {
     return false;
@@ -138,25 +179,38 @@ protected:
   void Lock(M &m, LockLocation const &location)
   {
     uint64_t current_score = locked_times_;
+    // Keep attempting to lock the mutex for specified time.
     while (!m.try_lock_for(std::chrono::milliseconds(timeout_ms_)))
     {
+      // The mutex is still locked by someone else.
       if (locked_times_ == current_score)
       {
+        // During the call to try_lock_for(), mutex's history of locks hasn't changed.
+        // Disregarding the possibility that it was locked by other threads 2⁶⁴ times
+        // while we were waiting, this should mean the same thread is still holding it
+        // for way too long.
         std::stringstream ss{""};
         ss << "Deadlock occured when acquiring lock at " << location.filename << ":"
            << location.line << std::endl;
         DeadlockHandler::DeadlockDetected(ss.str());
+        // Control cannot reach this line.
       }
+      // Update the score and keep trying to lock it.
       current_score = locked_times_;
     }
+    // Update mutex's history of locks.
     ++locked_times_;
   }
 
 private:
-  static std::atomic<uint64_t> timeout_ms_;
-  std::atomic<uint64_t>        locked_times_{0};
+  static std::atomic<uint64_t>
+                        timeout_ms_;       // Signal deadlock if a thread holds a mutex for so long.
+  std::atomic<uint64_t> locked_times_{0};  // History of locks.
 };
 
+/**
+ * MutexRegister maintains mutex-thread-source code position relations.
+ */
 template <class LockPolicy>
 class MutexRegister : public DeadlockHandler, LockPolicy
 {
@@ -182,11 +236,15 @@ public:
     auto &         instance = Instance();
     GuardOfMutexes non_fetch_lock_to_avoid_recursion(instance.mutex_);
 
+    // Create of find a table record for this mutex.
     auto lock_owners_it = instance.lock_owners_.emplace(mutex, LockDetails{}).first;
     try
     {
+      // Initialize/update table record.
       if (Populate(lock_owners_it->second))
       {
+        // Populate() returned true; this indicates the mutex has been acquired for the first time
+        // so we create a source code position table entry.
         instance.lock_location_.emplace(mutex, std::move(location));
       }
     }
@@ -197,6 +255,7 @@ public:
       throw;
     }
 
+    // This thread has gained that mutex; deregister its waiting-for status.
     auto thread = std::this_thread::get_id();
     instance.waiting_for_.erase(thread);
     instance.waiting_location_.erase(thread);
@@ -217,6 +276,9 @@ public:
 
     if (Depopulate(lock_owners_it->second))
     {
+      // Depopulate() returned true, which means the mutex has ben released completely
+      // and is now free.
+      // Erase table entries.
       instance.lock_owners_.erase(lock_owners_it);
       instance.lock_location_.erase(mutex);
     }
@@ -235,6 +297,7 @@ public:
 
     instance.CheckForDeadlocks(mutex, location);
 
+    // Deadlock not detected, register this thread's waiting-for status.
     auto thread         = std::this_thread::get_id();
     auto waiting_for_it = instance.waiting_for_.emplace(thread, mutex).first;
     try
@@ -273,6 +336,7 @@ private:
     auto own_it = lock_owners_.find(mutex);
     if (own_it == lock_owners_.end() || SafeToLock(own_it->second))
     {
+      // Either this mutex is still free, or it's safe to lock.
       return;
     }
     while (own_it != lock_owners_.end())
@@ -283,6 +347,7 @@ private:
         DeadlockDetected(CreateTrace(mutex, location));
         return;
       }
+      // Check if that thread is in turn waiting for some other mutex.
       auto wfit = waiting_for_.find(owner.id);
       if (wfit == waiting_for_.end())
       {
@@ -297,7 +362,7 @@ private:
    * When a deadlock detected, create an error message to be thrown/printed to stderr.
    *
    * @param mutex A pointer to mutex locked deadly
-   * @param location Code point the lock is performed at
+   * @param location Code point the attempted lock is performed at
    */
   std::string CreateTrace(MutexPtr mutex, LockLocation const &location)
   {
@@ -362,22 +427,30 @@ private:
 using SimpleMutexRegister    = MutexRegister<SimpleLockAttempt>;
 using RecursiveMutexRegister = MutexRegister<RecursiveLockAttempt>;
 
-template <class UnderlyingMutex, class LockAttempt>
-class DebugMutex : UnderlyingMutex, LockAttempt
+template <class UnderlyingMutex, class LockPolicy>
+class DebugMutex : UnderlyingMutex, LockPolicy
 {
-  using Register = MutexRegister<LockAttempt>;
+  using Register = MutexRegister<LockPolicy>;
 
 public:
   DebugMutex()  = default;
   ~DebugMutex() = default;
 
+  /**
+   * Locks this mutex at specified source code location.
+   *
+   * @param loc
+   */
   void lock(LockLocation loc)
   {
     Register::QueueUpFor(this, loc);
-    LockAttempt::Lock(static_cast<UnderlyingMutex &>(*this), loc);
+    LockPolicy::Lock(Unsafe(), loc);
     Register::RegisterMutexAcquisition(this, std::move(loc));
   }
 
+  /**
+   * STL-conformat lock(), locks this mutex the same way as above, location remains unknown.
+   */
   void lock()
   {
     lock({});
@@ -400,17 +473,26 @@ public:
     return false;
   }
 
+private:
+  /**
+   * Get the underlying mutex for direct locking.
+   *
+   * @return
+   */
   UnderlyingMutex &Unsafe()
   {
     return *this;
   }
 };
 
-template <typename T>
+/**
+ * RAII-locker, similar to std::lock_guard, but source code position-aware.
+ */
+template <typename M>
 class DebugLockGuard
 {
 public:
-  using Lockable = T;
+  using Lockable = M;
 
   DebugLockGuard(Lockable &lockable, char const * /*filename*/, uint32_t /*line*/)
     : lockable_{lockable}
@@ -427,6 +509,9 @@ private:
   Lockable &lockable_;
 };
 
+/**
+ * Only with decorated mutex types defined in this header, source code position-awareness matters.
+ */
 template <class UnderlyingMutex, class MutexRegister>
 class DebugLockGuard<DebugMutex<UnderlyingMutex, MutexRegister>>
 {
@@ -447,8 +532,6 @@ public:
 private:
   Lockable &lockable_;
 };
-
-#ifdef FETCH_DEBUG_MUTEX
 
 using Mutex             = SimpleDebugMutex;
 using RMutex            = RecursiveDebugMutex;

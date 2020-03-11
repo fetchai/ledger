@@ -121,54 +121,55 @@ TEST(DebugMutex, DISABLED_MultiThreadDeadlock2)
 
 TEST(DebugMutex, CorrectRecursive)
 {
-  // Two threads modify a single string synchronised through a recursive mutex.
-  fetch::DeadlockHandler::ThrowOnDeadlock();
-  fetch::RecursiveLockAttempt::SetTimeoutMs(400);
-  RMutex m;
+  {
+    // Two threads modify a single string synchronised through a recursive mutex.
+    fetch::DeadlockHandler::ThrowOnDeadlock();
+    fetch::RecursiveLockAttempt::SetTimeoutMs(400);
+    RMutex m;
 
-  EXPECT_TRUE(m.try_lock());
-  EXPECT_TRUE(m.try_lock());
-  EXPECT_TRUE(m.try_lock());
-  EXPECT_TRUE(m.try_lock());
-  m.unlock();
-  m.unlock();
-  m.unlock();
-  m.unlock();
-
-  std::string rv;
-
-  auto f = [&m, &rv](char c) {
-    m.lock();
-    m.lock();
-    m.lock();
-    m.lock();
-
-    rv += c;
-    rv += c;
-
-    std::this_thread::sleep_for(std::chrono::milliseconds(50));
-
+    EXPECT_TRUE(m.try_lock());
+    EXPECT_TRUE(m.try_lock());
+    EXPECT_TRUE(m.try_lock());
+    EXPECT_TRUE(m.try_lock());
+    m.unlock();
+    m.unlock();
     m.unlock();
     m.unlock();
 
-    rv += c;
-    rv += c;
+    std::string rv;
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(50));
+    auto f = [&m, &rv](char c) {
+      m.lock();
+      m.lock();
+      m.lock();
+      m.lock();
 
-    m.unlock();
-    m.unlock();
-  };
+      rv += c;
+      rv += c;
 
-  std::vector<std::thread> threads;
-  threads.emplace_back(f, 'a');
-  threads.emplace_back(f, 'b');
+      std::this_thread::sleep_for(std::chrono::milliseconds(50));
 
-  threads[0].join();
-  threads[1].join();
+      m.unlock();
+      m.unlock();
 
-  ASSERT_TRUE(rv == "aaaabbbb" || rv == "bbbbaaaa");
+      rv += c;
+      rv += c;
 
+      std::this_thread::sleep_for(std::chrono::milliseconds(50));
+
+      m.unlock();
+      m.unlock();
+    };
+
+    std::vector<std::thread> threads;
+    threads.emplace_back(f, 'a');
+    threads.emplace_back(f, 'b');
+
+    threads[0].join();
+    threads[1].join();
+
+    ASSERT_TRUE(rv == "aaaabbbb" || rv == "bbbbaaaa");
+  }
   {
     // A thread acquires a recursive mutex and holds it for a long time ...
     // luckily not long enough for the dispatcher to assume a deadlock.

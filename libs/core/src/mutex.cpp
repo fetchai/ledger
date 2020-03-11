@@ -40,6 +40,7 @@ moment::ClockInterface::Timestamp Now()
 
 std::atomic<bool> DeadlockHandler::throw_on_deadlock_{false};
 
+// The default deadlock timeout for recursive mutexes is 40 minutes.
 std::atomic<uint64_t> RecursiveLockAttempt::timeout_ms_{2'400'000ull};
 
 /**
@@ -100,6 +101,7 @@ bool RecursiveLockAttempt::Populate(LockDetails &owner) noexcept
 {
   if (owner.recursion_depth++ == 0)
   {
+    // This mutex was free before, populate the freshly created table entry.
     owner.taken_at = Now();
     return true;
   }
