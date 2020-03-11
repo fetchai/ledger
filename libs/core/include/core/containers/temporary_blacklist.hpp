@@ -20,6 +20,7 @@
 #include "core/containers/append.hpp"
 #include "core/containers/is_in.hpp"
 #include "core/mutex.hpp"
+#include "moment/clock_interfaces.hpp"
 
 #include <chrono>
 #include <deque>
@@ -36,8 +37,7 @@ class TemporaryBlacklist
 {
 public:
   using type     = T;
-  using Clock    = std::chrono::steady_clock;
-  using Duration = Clock::duration;
+  using Duration = moment::ClockInterface::Duration;
 
   TemporaryBlacklist() = default;
   explicit TemporaryBlacklist(Duration cooldown_period)
@@ -71,9 +71,19 @@ public:
   }
 
 private:
-  using TimePoint   = Clock::time_point;
-  using Chronology  = std::deque<std::pair<TimePoint, type>>;
+  using Timestamp   = Clock::Timestamp;
+  using Chronology  = std::deque<std::pair<Timestamp, type>>;
   using Blacklisted = std::unordered_set<type>;
+
+  static Timestamp Now()
+  {
+    static ClockPtr clock = moment::GetClock("core:TemporaryBlacklist");
+    if (!clock)
+    {
+      return {};
+    }
+    return clock->Now();
+  }
 
   void Cleanup(TimePoint t) const
   {
