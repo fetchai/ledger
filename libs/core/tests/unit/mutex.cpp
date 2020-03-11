@@ -139,6 +139,7 @@ inline void WaitFor(std::atomic<Bools> const &... until)
   {
     std::this_thread::sleep_for(1ms);
   }
+  std::this_thread::sleep_for(1ms);
 }
 
 using Bool = std::atomic<bool>;
