@@ -155,14 +155,15 @@ public:
   static void SetTimeoutMs(uint64_t timeout_ms);
 
 protected:
-  using Mutex    = RecursiveDebugMutex;
-  using Duration = moment::ClockInterface::Duration;
+  using Mutex     = RecursiveDebugMutex;
+  using Duration  = moment::ClockInterface::Duration;
+  using Timestamp = moment::ClockInterface::Timestamp;
 
   struct LockDetails
   {
-    moment::ClockInterface::Timestamp taken_at;
-    std::thread::id                   id              = std::this_thread::get_id();
-    uint64_t                          recursion_depth = 0;
+    Timestamp       taken_at;
+    std::thread::id id              = std::this_thread::get_id();
+    uint64_t        recursion_depth = 0;
   };
 
   static bool Populate(LockDetails &owner) noexcept;
@@ -201,9 +202,11 @@ protected:
   }
 
 private:
-  static std::atomic<uint64_t>
-                        timeout_ms_;       // Signal deadlock if a thread holds a mutex for so long.
-  std::atomic<uint64_t> locked_times_{0};  // History of locks.
+  static Timestamp Now();
+
+  // Signal deadlock if a thread holds a mutex for so long.
+  static std::atomic<uint64_t> timeout_ms_;
+  std::atomic<uint64_t>        locked_times_{0};  // History of locks.
 };
 
 /**

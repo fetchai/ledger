@@ -29,17 +29,6 @@ using namespace std::chrono_literals;
 
 namespace fetch {
 
-namespace {
-
-moment::ClockInterface::Timestamp Now()
-{
-  static auto clock = moment::GetClock("RecursiveLockAttempt");
-
-  return clock->Now();
-}
-
-}  // namespace
-
 std::atomic<bool> DeadlockHandler::throw_on_deadlock_{false};
 
 // The default deadlock timeout for recursive mutexes is 40 minutes.
@@ -144,6 +133,12 @@ bool RecursiveLockAttempt::IsDeadlocked(LockDetails const &owner)
 {
   return owner.id != std::this_thread::get_id() &&
          Now() >= owner.taken_at + std::chrono::milliseconds(timeout_ms_);
+}
+
+RecursiveLockAttempt::Timestamp RecursiveLockAttempt::Now()
+{
+  static auto clock = moment::GetClock("core:RecursiveLockAttempt");
+  return clock->Now();
 }
 
 }  // namespace fetch

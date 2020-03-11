@@ -17,9 +17,12 @@
 //------------------------------------------------------------------------------
 
 #include "core/mutex.hpp"
+#include "meta/value_util.hpp"
+#include "moment/clocks.hpp"
 
 #include "gmock/gmock.h"
 
+#include <atomic>
 #include <chrono>
 #include <cstdint>
 #include <functional>
@@ -30,6 +33,16 @@ using Mutex  = fetch::SimpleDebugMutex;
 using RMutex = fetch::RecursiveDebugMutex;
 
 using namespace std::chrono_literals;
+
+namespace {
+
+auto Clock()
+{
+  static auto ret_val = fetch::moment::CreateAdjustableClock("core:RecursiveLockAttempt");
+  return ret_val;
+}
+
+}  // namespace
 
 TEST(DebugMutex, SimpleProblem)
 {
@@ -119,8 +132,20 @@ TEST(DebugMutex, DISABLED_MultiThreadDeadlock2)
   threads.clear();
 }
 
+template <class... Bools>
+inline void WaitFor(std::atomic<Bools> const &... until)
+{
+  while (!fetch::value_util::Accumulate(std::logical_or<void>{}, false, until...))
+  {
+    std::this_thread::sleep_for(1ms);
+  }
+}
+
+using Bool = std::atomic<bool>;
+
 TEST(DebugMutex, CorrectRecursive)
 {
+  Clock()->AddOffset(0s);
   {
     // Two threads modify a single string synchronised through a recursive mutex.
     fetch::DeadlockHandler::ThrowOnDeadlock();
@@ -138,24 +163,26 @@ TEST(DebugMutex, CorrectRecursive)
 
     std::string rv;
 
-    auto f = [&m, &rv](char c) {
+    Bool start_descending{false}, out_channel{false};
+
+    auto f = [&m, &rv, &start_descending, &out_channel](char c) {
       m.lock();
       m.lock();
       m.lock();
       m.lock();
 
+      out_channel = true;
+
       rv += c;
       rv += c;
 
-      std::this_thread::sleep_for(std::chrono::milliseconds(50));
+      WaitFor(start_descending);
 
       m.unlock();
       m.unlock();
 
       rv += c;
       rv += c;
-
-      std::this_thread::sleep_for(std::chrono::milliseconds(50));
 
       m.unlock();
       m.unlock();
@@ -165,8 +192,13 @@ TEST(DebugMutex, CorrectRecursive)
     threads.emplace_back(f, 'a');
     threads.emplace_back(f, 'b');
 
-    threads[0].join();
-    threads[1].join();
+    WaitFor(out_channel);
+    start_descending = true;
+
+    for (auto &t : threads)
+    {
+      t.join();
+    }
 
     ASSERT_TRUE(rv == "aaaabbbb" || rv == "bbbbaaaa");
   }
@@ -174,23 +206,29 @@ TEST(DebugMutex, CorrectRecursive)
     // A thread acquires a recursive mutex and holds it for a long time ...
     // luckily not long enough for the dispatcher to assume a deadlock.
     fetch::DeadlockHandler::ThrowOnDeadlock();
-    fetch::RecursiveLockAttempt::SetTimeoutMs(200);
+    fetch::RecursiveLockAttempt::SetTimeoutMs(200'000);
     RMutex m;
 
     std::vector<std::thread> threads;
 
     std::atomic<std::size_t> visited{0};
+    Bool                     wake_first{false}, wake_second{false};
 
-    threads.emplace_back([&m] {
+    threads.emplace_back([&m, &wake_first] {
       FETCH_LOCK(m);
-      std::this_thread::sleep_for(150ms);
+      WaitFor(wake_first);
     });
 
-    threads.emplace_back([&m, &visited] {
-      std::this_thread::sleep_for(100ms);
+    threads.emplace_back([&m, &visited, &wake_second] {
+      WaitFor(wake_second);
       FETCH_LOCK(m);
       ++visited;
     });
+
+    Clock()->AddOffset(100s);
+    wake_second = true;
+    Clock()->AddOffset(50s);
+    wake_first = true;
 
     for (auto &t : threads)
     {
@@ -203,31 +241,39 @@ TEST(DebugMutex, CorrectRecursive)
 
 TEST(DebugMutex, IncorrectRecursive)
 {
+  Clock()->AddOffset(0s);
   {
     // A thread acquires a recursive mutex and holds it for way too long.
     // Some time later, another thread tries to acquire the same mutex.
     // The dispatcher notices the first thread has been holding it for way too long.
     fetch::DeadlockHandler::ThrowOnDeadlock();
-    fetch::RecursiveLockAttempt::SetTimeoutMs(100);
+    fetch::RecursiveLockAttempt::SetTimeoutMs(100'000);
     RMutex m;
+    Bool   wake_first{false}, wake_second{false}, output_channel{false};
 
     std::vector<std::thread> threads;
 
-    threads.emplace_back([&m] {
+    threads.emplace_back([&m, &wake_first, &output_channel] {
       FETCH_LOCK(m);
       FETCH_LOCK(m);
-      std::this_thread::sleep_for(300ms);
+      output_channel = true;
+      WaitFor(wake_first);
     });
 
-    threads.emplace_back([&m] {
-      std::this_thread::sleep_for(200ms);
+    threads.emplace_back([&m, &wake_second] {
+      WaitFor(wake_second);
+      std::this_thread::sleep_for(10ms);
       EXPECT_THROW(std::lock_guard<RMutex> failed_guard(m), std::runtime_error);
     });
 
-    for (auto &t : threads)
-    {
-      t.join();
-    }
+    WaitFor(output_channel);
+    Clock()->AddOffset(200s);
+    wake_second = true;
+    Clock()->AddOffset(100s);
+
+    threads[1].join();
+    wake_first = true;
+    threads[0].join();
   }
 
   {
@@ -235,6 +281,8 @@ TEST(DebugMutex, IncorrectRecursive)
     // Another thread tries to acquire the same mutex and is blocked until mutex release.
     // Some time later, the dispatcher notices the second thread has been waiting for the mutex
     // for way too long.
+    // Since RecursiveLockAttemtp uses std::recursive_timed_mutex::try_lock_for() it is unlikely
+    // AdjustableClock can be properly used here.
     fetch::DeadlockHandler::ThrowOnDeadlock();
     fetch::RecursiveLockAttempt::SetTimeoutMs(200);
     RMutex m;
