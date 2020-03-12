@@ -71,9 +71,9 @@ public:
   void UpdateCurrentBlock(BlockIndex block_index) override;
   /// @}
 
-  /// @name Committee Generation
+  /// @name Cabinet Generation
   CabinetPtr BuildCabinet(Block const &current, uint64_t cabinet_size,
-                          ConsensusInterface::Minerwhitelist const &whitelist = {});
+                          ConsensusInterface::Minerwhitelist const &whitelist = {}) const;
   CabinetPtr BuildCabinet(uint64_t block_number, uint64_t entropy, uint64_t cabinet_size,
                           ConsensusInterface::Minerwhitelist const &whitelist = {}) const;
   /// @}

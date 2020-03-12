@@ -63,7 +63,7 @@ void StakeManager::UpdateCurrentBlock(BlockIndex block_index)
 
 StakeManager::CabinetPtr StakeManager::BuildCabinet(
     Block const &current, uint64_t cabinet_size,
-    ConsensusInterface::Minerwhitelist const &whitelist)
+    ConsensusInterface::Minerwhitelist const &whitelist) const
 {
   CabinetPtr cabinet{};
 
