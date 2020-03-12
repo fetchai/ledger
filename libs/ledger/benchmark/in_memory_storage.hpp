@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "chain/transaction.hpp"
+#include "chain/tx_declaration.hpp"
 #include "core/digest.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 
@@ -72,7 +73,7 @@ public:
   InMemoryStorageUnit &operator=(InMemoryStorageUnit &&) = delete;
 
 private:
-  using TransactionPtr   = std::shared_ptr<Transaction>;
+  using TransactionPtr   = fetch::chain::TransactionPtr;
   using TransactionStore = std::unordered_map<Digest, TransactionPtr>;
   using StateSnapshot    = std::unordered_map<Digest, StateValue>;
   using StateSnapshotPtr = std::shared_ptr<StateSnapshot>;

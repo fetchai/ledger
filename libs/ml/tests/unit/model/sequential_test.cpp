@@ -264,7 +264,7 @@ TYPED_TEST(SequentialModelTest, charge_one_dense)
   model.Compile(optimiser_type, fetch::ml::ops::LossType::MEAN_SQUARE_ERROR);
 
   OperationsCount const cost          = model.ChargeForward(data.shape());
-  OperationsCount const expected_cost = 1896;  // A pre-calculated cost for a Dense with 8 neurons.
+  OperationsCount const expected_cost = 4700;  // A pre-calculated cost for a Dense with 8 neurons.
   EXPECT_EQ(cost, expected_cost);
 }
 

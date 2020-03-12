@@ -18,15 +18,20 @@
 
 #include "fake_block_packer.hpp"
 
+#include "chain/tx_declaration.hpp"
 #include "core/macros.hpp"
 #include "ledger/chain/block.hpp"
 #include "vectorise/platform.hpp"
 
-void FakeBlockPacker::EnqueueTransaction(fetch::chain::Transaction const & /*tx*/)
-{}
+bool FakeBlockPacker::EnqueueTransaction(fetch::chain::TransactionPtr /*tx*/)
+{
+  return true;
+}
 
-void FakeBlockPacker::EnqueueTransaction(fetch::chain::TransactionLayout const & /*layout*/)
-{}
+bool FakeBlockPacker::EnqueueTransaction(fetch::chain::TransactionLayout const & /*layout*/)
+{
+  return true;
+}
 
 void FakeBlockPacker::GenerateBlock(fetch::ledger::Block &block, std::size_t num_lanes,
                                     std::size_t num_slices, fetch::ledger::MainChain const &chain)

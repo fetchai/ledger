@@ -17,29 +17,19 @@
 //
 //------------------------------------------------------------------------------
 
-#include "chain/tx_declaration.hpp"
+#include "ledger/storage_unit/storage_unit_interface.hpp"
 
-#include <memory>
-#include <vector>
+#include "gmock/gmock.h"
 
-namespace fetch {
-namespace ledger {
+using fetch::ledger::StorageInterface;
 
-class TransactionSink
+class MockStorage : public StorageInterface
 {
 public:
-  using TransactionPtr  = chain::TransactionPtr;
-  using TransactionList = std::vector<TransactionPtr>;
-
-  // Construction / Destruction
-  TransactionSink()          = default;
-  virtual ~TransactionSink() = default;
-
-  /// @name Transaction Sink
-  /// @{
-  virtual void OnTransaction(TransactionPtr const &tx) = 0;
-  /// @}
+  MOCK_CONST_METHOD1(Get, Document(ResourceAddress const &));
+  MOCK_METHOD1(GetOrCreate, Document(ResourceAddress const &));
+  MOCK_METHOD2(Set, void(ResourceAddress const &, StateValue const &));
+  MOCK_METHOD1(Lock, bool(ShardIndex));
+  MOCK_METHOD1(Unlock, bool(ShardIndex));
+  MOCK_METHOD0(Reset, void());
 };
-
-}  // namespace ledger
-}  // namespace fetch

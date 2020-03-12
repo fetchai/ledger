@@ -20,6 +20,7 @@
 
 #include "chain/transaction_builder.hpp"
 #include "chain/transaction_rpc_serializers.hpp"
+#include "chain/tx_declaration.hpp"
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/random/lcg.hpp"
@@ -31,13 +32,13 @@
 #include <vector>
 
 using fetch::chain::Transaction;
-using fetch::chain::TransactionBuilder;
+using fetch::chain::TransactionPtr;
 using fetch::crypto::ECDSASigner;
 using fetch::storage::ResourceID;
 
 using ObjectStore      = fetch::storage::ObjectStore<Transaction>;
 using TransactionStore = fetch::storage::TransientObjectStore<Transaction>;
-using TransactionList  = std::vector<TransactionBuilder::TransactionPtr>;
+using TransactionList  = std::vector<TransactionPtr>;
 
 void TxSubmitWrites(benchmark::State &state)
 {

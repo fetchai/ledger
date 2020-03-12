@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "chain/transaction.hpp"
+#include "chain/tx_declaration.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/service_ids.hpp"
 #include "core/state_machine.hpp"
@@ -59,7 +60,7 @@ public:
   static constexpr char const *LOGGING_NAME = "DAGSyncService";
 
   using MuddleEndpoint = muddle::MuddleEndpoint;
-  using TransactionPtr = std::shared_ptr<chain::Transaction>;
+  using TransactionPtr = chain::TransactionPtr;
 
   using Client          = muddle::rpc::Client;
   using ClientPtr       = std::shared_ptr<Client>;
