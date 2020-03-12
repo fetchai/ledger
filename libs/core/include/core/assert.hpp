@@ -20,10 +20,12 @@
 #include <cassert>
 #include <iostream>
 #include <stdexcept>
+#include <utility>
 
 namespace fetch {
 namespace assert {
 namespace details {
+
 struct Printer
 {
   template <typename T, typename... Args>
@@ -39,9 +41,18 @@ struct Printer
     std::cerr << next;
   }
 };
+
 }  // namespace details
-}  // namespace assert
-}  // namespace fetch
+
+template <class T>
+T &&True(T &&t, char const *error_message)
+{
+  if (!t)
+  {
+    throw std::runtime_error(error_message);
+  }
+  return std::forward<T>(t);
+}
 
 #ifndef FETCH_DISABLE_TODO_COUT
 
@@ -78,3 +89,6 @@ struct Printer
 #else
 #define ASSERT(...) (void)(__VA_ARGS__)
 #endif
+
+}  // namespace assert
+}  // namespace fetch

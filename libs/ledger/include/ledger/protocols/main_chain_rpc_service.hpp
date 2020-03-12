@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/containers/temporary_blacklist.hpp"
 #include "core/future_timepoint.hpp"
 #include "core/mutex.hpp"
 #include "core/random/lcg.hpp"
@@ -168,9 +169,10 @@ public:
   MainChainRpcService &operator=(MainChainRpcService &&) = delete;
 
 private:
-  using StateMachine    = core::StateMachine<State>;
-  using StateMachinePtr = std::shared_ptr<StateMachine>;
-  using DeadlineTimer   = fetch::moment::DeadlineTimer;
+  using StateMachine       = core::StateMachine<State>;
+  using StateMachinePtr    = std::shared_ptr<StateMachine>;
+  using DeadlineTimer      = moment::DeadlineTimer;
+  using TemporaryBlacklist = core::TemporaryBlacklist<Address>;
 
   /// @name Utilities
   /// @{
@@ -197,9 +199,10 @@ private:
 
   /// @name System Components
   /// @{
-  MuddleEndpoint &endpoint_;
-  MainChain &     chain_;
-  TrustSystem &   trust_;
+  MuddleEndpoint &   endpoint_;
+  MainChain &        chain_;
+  TrustSystem &      trust_;
+  TemporaryBlacklist alien_peers_;  // peers that reported a mismatched genesis
   /// @}
 
   /// @name Block Validation

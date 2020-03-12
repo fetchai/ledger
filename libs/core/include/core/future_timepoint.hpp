@@ -20,6 +20,8 @@
 #include <chrono>
 #include <thread>
 
+using namespace std::chrono_literals;
+
 namespace fetch {
 namespace core {
 
@@ -33,15 +35,13 @@ public:
   using Duration  = Clock::duration;
   using Timepoint = Clock::time_point;
 
-  explicit FutureTimepoint(Duration const &dur)
-  {
-    due_time_ = Clock::now() + dur;
-  }
+  explicit FutureTimepoint(Duration dur)
+    : due_time_{Clock::now() + dur}
+  {}
 
   FutureTimepoint()
-  {
-    due_time_ = Clock::now() - std::chrono::seconds(10000);
-  }
+    : FutureTimepoint(-10000s)
+  {}
 
   ~FutureTimepoint() = default;
 
@@ -55,7 +55,7 @@ public:
     due_time_ = Clock::now() + std::chrono::milliseconds(milliseconds);
   }
 
-  void Set(Duration const &dur)
+  void Set(Duration dur)
   {
     due_time_ = Clock::now() + dur;
   }
@@ -65,7 +65,7 @@ public:
     due_time_ = Clock::now() - std::chrono::seconds(1);
   }
 
-  void SetMilliseconds(Timepoint const &timepoint, std::size_t milliseconds)
+  void SetMilliseconds(Timepoint timepoint, std::size_t milliseconds)
   {
     due_time_ = timepoint + std::chrono::milliseconds(milliseconds);
   }
@@ -82,7 +82,7 @@ public:
     return *this;
   }
 
-  bool IsDue(Timepoint const &time_point) const
+  bool IsDue(Timepoint time_point) const
   {
     return due_time_ <= time_point;
   }

@@ -17,13 +17,35 @@
 //
 //------------------------------------------------------------------------------
 
+#include <utility>
+
 namespace fetch {
 namespace core {
 
 template <typename Container, typename Value>
-bool IsIn(Container const &container, Value const &value)
+auto Append(Container &container, Value value) -> decltype(container.insert(std::move(value)))
 {
-  return container.find(value) != container.end();
+  return container.insert(std::move(value));
+}
+
+template <typename Container, typename... Args>
+auto Append(Container &container, Args &&... args)
+    -> decltype(container.emplace(std::forward<Args>(args)...))
+{
+  return container.emplace(std::forward<Args>(args)...);
+}
+
+template <typename Container, typename Value>
+auto Append(Container &container, Value value) -> decltype(container.push_back(std::move(value)))
+{
+  return container.push_back(std::move(value));
+}
+
+template <typename Container, typename... Args>
+auto Append(Container &container, Args &&... args)
+    -> decltype(container.emplace_back(std::forward<Args>(args)...))
+{
+  return container.emplace_back(std::forward<Args>(args)...);
 }
 
 }  // namespace core
