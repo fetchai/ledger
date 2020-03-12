@@ -24,6 +24,10 @@ namespace ledger {
 
 namespace {
 
+constexpr char const *GOVERNANCE_VERSION_PROPERTY_NAME   = "version";
+constexpr char const *GOVERNANCE_DATA_PROPERTY_NAME      = "data";
+constexpr char const *GOVERNANCE_ACCEPT_BY_PROPERTY_NAME = "accept_by";
+
 template <uint64_t VERSION>
 bool ValidateDataForVersion(variant::Variant const &data);
 
@@ -79,9 +83,8 @@ GovernanceProposal::GovernanceProposal(variant::Variant const &v)
   throw std::runtime_error("Invalid proposal format");
 }
 
-SubmittedGovernanceProposal::SubmittedGovernanceProposal(
-    GovernanceProposal proposal_param, std::vector<chain::Address> votes_for_param,
-    std::vector<chain::Address> votes_against_param)
+Ballot::Ballot(GovernanceProposal proposal_param, std::vector<chain::Address> votes_for_param,
+               std::vector<chain::Address> votes_against_param)
   : proposal{std::move(proposal_param)}
   , votes_for{std::move(votes_for_param)}
   , votes_against{std::move(votes_against_param)}
@@ -89,16 +92,16 @@ SubmittedGovernanceProposal::SubmittedGovernanceProposal(
   ValidateData(proposal.data, proposal.version);
 }
 
-SubmittedGovernanceProposal SubmittedGovernanceProposal::CreateDefaultProposal()
+Ballot Ballot::CreateDefaultBallot()
 {
   auto data = variant::Variant::Object();
 
   data[GOVERNANCE_CHARGE_MULTIPLIER_PROPERTY_NAME] = 0;
 
-  return SubmittedGovernanceProposal(GovernanceProposal{0u, std::move(data), 0u},
-                                     std::vector<chain::Address>{}, std::vector<chain::Address>{});
+  return Ballot(GovernanceProposal{0u, std::move(data), 0u}, std::vector<chain::Address>{},
+                std::vector<chain::Address>{});
 }
-//???identifying proposals, hash of what data? adress of submitter+counter?
+
 bool GovernanceProposal::operator==(GovernanceProposal const &x) const
 {
   return version == x.version && data == x.data && accept_by == x.accept_by;

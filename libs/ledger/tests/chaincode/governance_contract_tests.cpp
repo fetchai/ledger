@@ -27,6 +27,7 @@
 
 #include <initializer_list>
 #include <memory>
+#include <sstream>
 #include <string>
 
 using fetch::chain::Address;
@@ -290,10 +291,20 @@ TEST_F(GovernanceContractTests, submit_proposal_with_too_long_voting_period)
 TEST_F(GovernanceContractTests, submit_valid_proposal_with_queue_empty)
 {
   auto const result = SendPropose(valid_v0_proposal1, true);
-
-  //  auto const status???verify rthe default proposal is in place
-
   ASSERT_EQ(result.status, Contract::Status::OK);
+
+  auto const response = SendGetProposals();
+
+  ASSERT_TRUE(response["voting_queue"].size() == 1);
+  ASSERT_TRUE(response["max_number_of_proposals"].As<uint64_t>() == 2);
+
+  ASSERT_TRUE(response["active_proposal"]["version"].As<uint64_t>() == 0);
+  ASSERT_TRUE(response["active_proposal"]["data"]["charge_multiplier"].As<uint64_t>() == 0);
+  ASSERT_TRUE(response["active_proposal"]["accept_by"].As<uint64_t>() == 0);
+
+  ASSERT_TRUE(response["voting_queue"][0]["version"].As<uint64_t>() == 0);
+  ASSERT_TRUE(response["voting_queue"][0]["data"]["charge_multiplier"].As<uint64_t>() == 17);
+  ASSERT_TRUE(response["voting_queue"][0]["accept_by"].As<uint64_t>() == 1200);
 }
 
 TEST_F(GovernanceContractTests, submit_valid_proposal_when_queue_full)
@@ -303,6 +314,19 @@ TEST_F(GovernanceContractTests, submit_valid_proposal_when_queue_full)
 
   ASSERT_EQ(result1.status, Contract::Status::OK);
   ASSERT_EQ(result2.status, Contract::Status::FAILED);
+
+  auto const response = SendGetProposals();
+
+  ASSERT_TRUE(response["voting_queue"].size() == 1);
+  ASSERT_TRUE(response["max_number_of_proposals"].As<uint64_t>() == 2);
+
+  ASSERT_TRUE(response["active_proposal"]["version"].As<uint64_t>() == 0);
+  ASSERT_TRUE(response["active_proposal"]["data"]["charge_multiplier"].As<uint64_t>() == 0);
+  ASSERT_TRUE(response["active_proposal"]["accept_by"].As<uint64_t>() == 0);
+
+  ASSERT_TRUE(response["voting_queue"][0]["version"].As<uint64_t>() == 0);
+  ASSERT_TRUE(response["voting_queue"][0]["data"]["charge_multiplier"].As<uint64_t>() == 17);
+  ASSERT_TRUE(response["voting_queue"][0]["accept_by"].As<uint64_t>() == 1200);
 }
 
 TEST_F(GovernanceContractTests, query_proposals_before_any_had_been_submitted)
@@ -354,8 +378,8 @@ TEST_F(GovernanceContractTests, submit_then_reject_proposal)
   ASSERT_TRUE(response1["voting_queue"][0]["data"]["charge_multiplier"].As<uint64_t>() == 17);
   ASSERT_TRUE(response1["voting_queue"][0]["accept_by"].As<uint64_t>() == 1200);
 
-  SendRejectVotes(valid_v0_proposal1, {&cabinet_entities[0], &cabinet_entities[1],
-                                       &cabinet_entities[2]});  //???try doing refs instead of ptrs
+  SendRejectVotes(valid_v0_proposal1,
+                  {&cabinet_entities[0], &cabinet_entities[1], &cabinet_entities[2]});
 
   auto const response2 = SendGetProposals();
 
@@ -473,8 +497,20 @@ TEST_F(GovernanceContractTests, after_a_miner_rejects_a_proposal_they_cannot_vot
   ASSERT_EQ(result3.status, Contract::Status::FAILED);
 }
 
+TEST_F(GovernanceContractTests, duplicate_proposals_are_forbidden)
+{
+  auto const response = SendGetProposals();
+
+  std::ostringstream ss;
+  ss << response["active_proposal"];
+  auto const json = ss.str();
+
+  auto const result = SendPropose(json, false);
+
+  ASSERT_EQ(result.status, Contract::Status::FAILED);
+}
+
 }  // namespace
 
 }  // namespace ledger
 }  // namespace fetch
-//???forbid submitting duplicate props

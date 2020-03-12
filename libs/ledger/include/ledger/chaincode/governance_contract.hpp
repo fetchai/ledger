@@ -26,7 +26,7 @@ namespace fetch {
 namespace ledger {
 
 class GovernanceProposal;
-class SubmittedGovernanceProposal;
+class Ballot;
 
 class GovernanceContract : public Contract
 {
@@ -49,20 +49,22 @@ public:
 private:
   uint64_t CalculateFee() const override;
 
-  using SubmittedGovernanceProposalQueue = std::vector<SubmittedGovernanceProposal>;
+  using BallotQueue = std::vector<Ballot>;
 
   template <typename GetVotesFn>
-  Contract::Result CastVote(chain::Transaction const &tx, GetVotesFn &&);
+  Contract::Result CastVote(chain::Transaction const &, GetVotesFn &&);
+  template <typename GetVotesFn>
+  bool IsDecided(GetVotesFn &&) const;
 
   bool GovernanceTxPreCheck(chain::Transaction const &tx) const;
 
   bool SignedAndIssuedBySameCabinetMember(chain::Transaction const &tx) const;
   bool IsExpired(GovernanceProposal const &proposal) const;
-  bool IsRejected(SubmittedGovernanceProposal const &proposal) const;
-  bool IsAccepted(SubmittedGovernanceProposal const &proposal) const;
+  bool IsRejected(Ballot const &ballot) const;
+  bool IsAccepted(Ballot const &ballot) const;
 
-  SubmittedGovernanceProposalQueue Load();
-  bool                             Save(SubmittedGovernanceProposalQueue const &proposals);
+  BallotQueue Load();
+  bool        Save(BallotQueue const &ballots);
 
   uint64_t charge_{0};
 };
