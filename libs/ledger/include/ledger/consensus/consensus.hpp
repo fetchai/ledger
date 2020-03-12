@@ -119,6 +119,8 @@ private:
   NotarisationPtr notarisation_;
   mutable Mutex   mutex_;
 
+  UnorderedCabinet GetCabinet(Block const &block) const;
+
   bool     ValidBlockTiming(Block const &previous, Block const &proposed) const;
   bool     ShouldTriggerNewCabinet(Block const &block);
   bool     EnoughQualSigned(Block const &previous, Block const &current) const;

@@ -158,10 +158,19 @@ Consensus::WeightedQual QualWeightedByEntropy(Consensus::BlockEntropy::Cabinet c
 
 Consensus::UnorderedCabinet Consensus::GetCabinet() const
 {
-  Block beginning_of_aeon = GetBeginningOfAeon(current_block_, chain_);
+  return GetCabinet(current_block_);
+}
+
+Consensus::UnorderedCabinet Consensus::GetCabinet(Block const &block) const
+{
+  auto cabinet = stake_->BuildCabinet(block, max_cabinet_size_, whitelist_);
+  if (cabinet == nullptr)
+  {
+    return {};
+  }
 
   UnorderedCabinet cabinet_copy{};
-  for (auto const &x : beginning_of_aeon.block_entropy.qualified)
+  for (auto const &x : *cabinet)
   {
     cabinet_copy.emplace(x);
   }
@@ -171,10 +180,7 @@ Consensus::UnorderedCabinet Consensus::GetCabinet() const
 
 uint32_t Consensus::GetThreshold(Block const &block) const
 {
-  Block beginning_of_aeon = GetBeginningOfAeon(block, chain_);
-
-  auto cabinet_size = static_cast<double>(beginning_of_aeon.block_entropy.qualified.size());
-
+  auto cabinet_size = static_cast<double>(GetCabinet(block).size());
   return static_cast<uint32_t>(std::floor(cabinet_size * threshold_)) + 1;
 }
 
