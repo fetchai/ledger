@@ -407,12 +407,12 @@ static void ReluArguments(benchmark::internal::Benchmark *b)
   }
 }
 
+BENCHMARK_TEMPLATE(BM_ReluForward, fetch::fixed_point::fp64_t)
+    ->Apply(ReluArguments)
+    ->Unit(benchmark::kNanosecond);
 BENCHMARK_TEMPLATE(BM_ReluForward, float)->Apply(ReluArguments)->Unit(benchmark::kNanosecond);
 BENCHMARK_TEMPLATE(BM_ReluForward, double)->Apply(ReluArguments)->Unit(benchmark::kNanosecond);
 BENCHMARK_TEMPLATE(BM_ReluForward, fetch::fixed_point::fp32_t)
-    ->Apply(ReluArguments)
-    ->Unit(benchmark::kNanosecond);
-BENCHMARK_TEMPLATE(BM_ReluForward, fetch::fixed_point::fp64_t)
     ->Apply(ReluArguments)
     ->Unit(benchmark::kNanosecond);
 BENCHMARK_TEMPLATE(BM_ReluForward, fetch::fixed_point::fp128_t)

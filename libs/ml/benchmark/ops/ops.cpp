@@ -2340,6 +2340,7 @@ static void MatMul3DArguments(benchmark::internal::Benchmark *b)
   {
     for (std::int64_t &j : dim_size)
     {
+
       b->Args({N_ELEMENTS, j, 2, i});
     }
     for (std::int64_t &j : dim_size)
