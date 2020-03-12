@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/containers/temporary_blacklist.hpp"
+#include "moment/clocks.hpp"
 
 #include "gtest/gtest.h"
 
@@ -31,23 +32,24 @@ using TestedClass = fetch::core::TemporaryBlacklist<int>;
 
 TEST(TemporaryBlacklistTests, Main)
 {
+  auto        clock = fetch::moment::CreateAdjustableClock(fetch::core::BLACKLIST_CLOCK_NAME);
   TestedClass blacklist(500ms);
 
   blacklist.Blacklist(10);
-  std::this_thread::sleep_for(250ms);
+  clock->AddOffset(250ms);
   blacklist.Blacklist(42);
 
   ASSERT_TRUE(blacklist.IsBlacklisted(10));
   ASSERT_TRUE(blacklist.IsBlacklisted(42));
   ASSERT_EQ(blacklist.size(), 2);
 
-  std::this_thread::sleep_for(300ms);
+  clock->AddOffset(300ms);
 
   ASSERT_FALSE(blacklist.IsBlacklisted(10));
   ASSERT_TRUE(blacklist.IsBlacklisted(42));
   ASSERT_EQ(blacklist.size(), 1);
 
-  std::this_thread::sleep_for(300ms);
+  clock->AddOffset(300ms);
 
   ASSERT_FALSE(blacklist.IsBlacklisted(10));
   ASSERT_FALSE(blacklist.IsBlacklisted(42));

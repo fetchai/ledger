@@ -17,10 +17,12 @@
 //
 //------------------------------------------------------------------------------
 
+#include "core/assert.hpp"
 #include "core/containers/append.hpp"
 #include "core/containers/is_in.hpp"
 #include "core/mutex.hpp"
 #include "moment/clock_interfaces.hpp"
+#include "moment/clocks.hpp"
 
 #include <chrono>
 #include <deque>
@@ -31,6 +33,8 @@ namespace fetch {
 namespace core {
 
 using namespace std::chrono_literals;
+
+constexpr char const *BLACKLIST_CLOCK_NAME = "core:TemporaryBlacklist";
 
 template <class T>
 class TemporaryBlacklist
@@ -52,7 +56,7 @@ public:
 
   void Blacklist(T t)
   {
-    auto now = Clock::now();
+    auto now = Now();
     Cleanup(now);
     Append(chronology_, now, t);
     Append(blacklisted_, std::move(t));
@@ -60,32 +64,29 @@ public:
 
   bool IsBlacklisted(T const &t) const
   {
-    Cleanup(Clock::now());
+    Cleanup(Now());
     return IsIn(blacklisted_, t);
   }
 
   std::size_t size() const
   {
-    Cleanup(Clock::now());
+    Cleanup(Now());
     return blacklisted_.size();
   }
 
 private:
-  using Timestamp   = Clock::Timestamp;
+  using Timestamp   = moment::ClockInterface::Timestamp;
   using Chronology  = std::deque<std::pair<Timestamp, type>>;
   using Blacklisted = std::unordered_set<type>;
 
   static Timestamp Now()
   {
-    static ClockPtr clock = moment::GetClock("core:TemporaryBlacklist");
-    if (!clock)
-    {
-      return {};
-    }
+    static moment::ClockPtr clock = assert::True(moment::GetClock(BLACKLIST_CLOCK_NAME),
+                                                 "Could not initialize blacklist timer");
     return clock->Now();
   }
 
-  void Cleanup(TimePoint t) const
+  void Cleanup(Timestamp t) const
   {
     t -= cooldown_period_;
     auto chrono_it = chronology_.begin();
