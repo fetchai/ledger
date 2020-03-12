@@ -163,6 +163,8 @@ Consensus::UnorderedCabinet Consensus::GetCabinet() const
 
 Consensus::UnorderedCabinet Consensus::GetCabinet(Block const &block) const
 {
+  MilliTimer const timer{"GetCabinet ", 1000};
+
   auto cabinet = stake_->BuildCabinet(block, max_cabinet_size_, whitelist_);
   if (cabinet == nullptr)
   {
