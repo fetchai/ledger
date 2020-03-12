@@ -356,6 +356,8 @@ Status SynergeticContract::Complete(chain::Address const &address, BitVector con
 
 uint64_t SynergeticContract::CalculateFee() const
 {
+  // TODO(WK) Charge was calculated correctly before governance implemented.
+  //          Use VM charge multiplier here
   return charge_;
 }
 
@@ -471,4 +473,3 @@ ContractContext const &SynergeticContract::context() const
 
 }  // namespace ledger
 }  // namespace fetch
-//???use charge multiplier for synergetic executions
