@@ -96,7 +96,7 @@ protected:
     fetch::chain::InitialiseTestConstants();
   }
 
-  void TearDown() override
+  void SetUp() override
   {
     rpc_service_ = std::make_shared<MainChainRpcService>(endpoint_, rpc_client_, chain_, trust_,
                                                          CreateNonOwning(consensus_));
@@ -303,10 +303,8 @@ TEST_F(MainChainSyncTest, GenesisMismatch)
   auto counter =
       fetch::telemetry::Registry::Instance().LookupMeasurement<fetch::telemetry::Counter>(
           "ledger_mainchain_service_network_mismatches_total");
-  std::cerr << "TST: " << counter.get() << '\n';
   ASSERT_TRUE(counter);
   ASSERT_EQ(counter->count(), 0);
-  std::cerr << counter->name() << '\n';
   // counter->increment();
 
   FollowPath(State::SYNCHRONISING, State::START_SYNC_WITH_PEER, State::REQUEST_NEXT_BLOCKS,
@@ -314,11 +312,6 @@ TEST_F(MainChainSyncTest, GenesisMismatch)
              // dropped just past the opening credits
              State::COMPLETE_SYNC_WITH_PEER);
 
-  for (int i{}; i < 3; ++i)
-  {
-    std::cerr << counter->count() << '\n';
-    std::this_thread::sleep_for(std::chrono::seconds(1));
-  }
   ASSERT_EQ(counter->count(), 1);
 }
 
