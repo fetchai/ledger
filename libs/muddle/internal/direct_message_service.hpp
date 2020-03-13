@@ -100,8 +100,8 @@ private:
   Router &          router_;
   MuddleRegister &  register_;
 
-  std::recursive_mutex lock_;
-  Reservations         reservations_;
+  RMutex       lock_;
+  Reservations reservations_;
 };
 
 }  // namespace muddle

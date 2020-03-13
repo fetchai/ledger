@@ -119,7 +119,7 @@ private:
   using ThreadPool = std::vector<ThreadPtr>;
   using Flag       = std::atomic<bool>;
   using Counter    = std::atomic<std::size_t>;
-  using Condition  = std::condition_variable;
+  using Condition  = ConditionVariable;
 
   void ProcessLoop(std::size_t index);
 

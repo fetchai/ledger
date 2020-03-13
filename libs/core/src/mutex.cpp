@@ -16,145 +16,144 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/mutex.hpp"
+#define FETCH_DEBUG_MUTEX
 
+#include "core/mutex.hpp"
+#include "moment/clocks.hpp"
+
+#include <cassert>
 #include <iostream>
 #include <sstream>
+#include <stdexcept>
+
+using namespace std::chrono_literals;
 
 namespace fetch {
 
-#ifdef FETCH_DEBUG_MUTEX
+std::atomic<bool> DeadlockHandler::throw_on_deadlock_{false};
+
+// The default deadlock timeout for recursive mutexes is 40 minutes.
+std::atomic<uint64_t> RecursiveLockAttempt::timeout_ms_{2'400'000ull};
+
+/**
+ * Either throws a runtime error with a message,
+ * or prints that message on stderr and aborts,
+ * depending on throw_on_deadlock_ value.
+ *
+ * @param message Error message for the exception raised/to be printed before abort()
+ */
+void DeadlockHandler::DeadlockDetected(std::string const &message)
+{
+  if (static_cast<bool>(throw_on_deadlock_))
+  {
+    throw std::runtime_error(message);
+  }
+
+  std::cerr << message << std::endl;
+  abort();
+}
+
+void DeadlockHandler::ThrowOnDeadlock()
+{
+  throw_on_deadlock_ = true;
+}
+
+void DeadlockHandler::AbortOnDeadlock()
+{
+  throw_on_deadlock_ = false;
+}
+
+/**
+ * Check if there's a deadlock on a simple DebugMutex.
+ *
+ * @param owner Thread id of mutex's current owner
+ * @return true iff attempting to lock() this mutex would result in a deadlock
+ */
+bool SimpleLockAttempt::IsDeadlocked(LockDetails const &owner) noexcept
+{
+  return owner.id == std::this_thread::get_id();
+}
+
+void RecursiveLockAttempt::SetTimeoutMs(uint64_t timeout_ms)
+{
+  timeout_ms_ = timeout_ms;
+}
+
+/**
+ * At the moment of mutex acquisition, update owner id record.
+ * The moment of time is recorded, when a thread locks a recursive mutex for the first time,
+ * and if after recursive_deadlock_timeout_ that thread has not fully released this mutex yetr,
+ * a deadlock is assumed.
+ * If this owner has already acquired this mutex, recursion depth is incremented.
+ *
+ * @param owner A record, either fresh or already known, of a thread that owns a recursive mutex.
+ * @return true iff it's the very first, depthwise, acquisition of this mutex by this thread
+ */
+bool RecursiveLockAttempt::Populate(LockDetails &owner) noexcept
+{
+  if (owner.recursion_depth++ == 0)
+  {
+    // This mutex was free before, populate the freshly created table entry.
+    owner.taken_at = Now();
+    return true;
+  }
+  return false;
+}
+
+/**
+ * At the moment of mutex release, update owner id record.
+ *
+ * @param owner A record of a thread that owns a recursive mutex.
+ * @return true iff this thread has just fully released this mutex.
+ */
+bool RecursiveLockAttempt::Depopulate(LockDetails &owner) noexcept
+{
+  return --owner.recursion_depth == 0;
+}
+
+/**
+ * At the moment of a recursive mutex acquisition, check if this mutex can be safely recursively
+ * lecked by this thread, i.e. if the thread already has this mutex acquired.
+ *
+ * @param owner A record of a thread that is to lock a recursive mutex.
+ * @return true iff this thread already has this mutex locked.
+ */
+bool RecursiveLockAttempt::SafeToLock(LockDetails const &owner) noexcept
+{
+  return owner.id == std::this_thread::get_id();
+}
+
+/**
+ * Check if there's a deadlock on a RecursiveDebugMutex.
+ * In fact, checks if another thread has been holding this mutex for way too long.
+ *
+ * @param owner A record of a thread that owns a recursive mutex.
+ * @return true iff this takes suspiciously long.
+ */
+bool RecursiveLockAttempt::IsDeadlocked(LockDetails const &owner)
+{
+  return owner.id != std::this_thread::get_id() &&
+         Now() >= owner.taken_at + std::chrono::milliseconds(timeout_ms_);
+}
 
 namespace {
-MutexRegister mutex_register;
-}
 
-std::atomic<bool> MutexRegister::throw_on_deadlock_{false};
-
-void QueueUpFor(DebugMutex *mutex, std::thread::id thread, LockLocation const &location)
+auto Clock()
 {
-  mutex_register.QueueUpFor(mutex, thread, location);
-}
-
-void RegisterMutexAcquisition(DebugMutex *mutex, std::thread::id thread,
-                              LockLocation const &location)
-{
-  mutex_register.RegisterMutexAcquisition(mutex, thread, location);
-}
-
-void UnregisterMutexAcquisition(DebugMutex *mutex, std::thread::id thread)
-{
-  mutex_register.UnregisterMutexAcquisition(mutex, thread);
-}
-
-void MutexRegister::QueueUpFor(DebugMutex *mutex, std::thread::id thread,
-                               LockLocation const &location)
-{
-  FETCH_LOCK(mutex_);
-
-  FindDeadlock(mutex, thread, location);
-  waiting_for_.insert({thread, mutex});
-  waiting_location_.insert({thread, location});
-}
-
-void MutexRegister::RegisterMutexAcquisition(DebugMutex *mutex, std::thread::id thread,
-                                             LockLocation const &location)
-{
-  FETCH_LOCK(mutex_);
-
-  // Registering the matrix diagonal
-  lock_owners_.insert({mutex, thread});
-  lock_location_.insert({mutex, location});
-  waiting_for_.erase(thread);
-  waiting_location_.erase(thread);
-}
-
-void MutexRegister::UnregisterMutexAcquisition(DebugMutex *mutex, std::thread::id /*thread*/)
-{
-  FETCH_LOCK(mutex_);
-  lock_owners_.erase(mutex);
-  lock_location_.erase(mutex);
-}
-
-void MutexRegister::FindDeadlock(DebugMutex *first_mutex, std::thread::id thread,
-                                 LockLocation const &location)
-{
-  DebugMutex *mutex = first_mutex;
-  while (true)
+  auto ret_val = moment::GetClock("core:RecursiveLockAttempt");
+  if (!ret_val)
   {
-    auto own_it = lock_owners_.find(mutex);
-    // All good, nobody is holding a lock on this one.
-    if (own_it == lock_owners_.end())
-    {
-      break;
-    }
-    auto owner = own_it->second;
-
-    // If we have found a path back to the current thread
-    if (owner == thread)
-    {
-      DeadlockDetected(CreateTrace(first_mutex, thread, location));
-      break;
-    }
-
-    auto wfit = waiting_for_.find(owner);
-    if (wfit == waiting_for_.end())
-    {
-      break;
-    }
-
-    mutex = wfit->second;
+    throw std::runtime_error("Failed to initialize core:RecursiveLockAttempt clock");
   }
+  return ret_val;
 }
 
-std::string MutexRegister::CreateTrace(DebugMutex *first_mutex, std::thread::id thread,
-                                       LockLocation const &location)
+}  // namespace
+
+RecursiveLockAttempt::Timestamp RecursiveLockAttempt::Now()
 {
-  std::stringstream ss{""};
-  ss << "Deadlock occur when acquiring lock in " << location.filename << ":" << location.line
-     << std::endl;
-
-  DebugMutex *mutex = first_mutex;
-  int         n{0};
-  while (true)
-  {
-    auto own_it = lock_owners_.find(mutex);
-    // All good, nobody is holding a lock on this one.
-    if (own_it == lock_owners_.end())
-    {
-      ss << "False report - no deadlock." << std::endl;
-      return ss.str();
-    }
-
-    auto loc1 = lock_location_.find(mutex)->second;
-    ss << " - Mutex " << n << " locked in " << loc1.filename << ":" << loc1.line << std::endl;
-
-    auto owner = own_it->second;
-
-    // If we have found a path back to the current thread
-    if (owner == thread)
-    {
-      return ss.str();
-    }
-
-    auto wfit = waiting_for_.find(owner);
-    if (wfit == waiting_for_.end())
-    {
-      ss << "False report - no deadlock." << std::endl;
-      return ss.str();
-    }
-
-    auto loc2 = waiting_location_.find(owner)->second;
-    ss << " - Thread " << n << " waits mutex release on " << loc2.filename << ":" << loc2.line
-       << std::endl;
-
-    mutex = wfit->second;
-    ++n;
-  }
-
-  return "Magically escaped an infinite loop";
+  static auto clock = Clock();
+  return clock->Now();
 }
-
-#endif  // FETCH_DEBUG_MUTEX
 
 }  // namespace fetch

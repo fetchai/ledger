@@ -428,7 +428,7 @@ void ExecutionManager::MonitorThreadEntrypoint()
 
       // enter the idle state where we wait for the next block to be posted
       {
-        std::unique_lock<std::mutex> lock(monitor_lock_);
+        std::unique_lock<Mutex> lock(monitor_lock_);
         monitor_wake_.wait(lock);
       }
 
