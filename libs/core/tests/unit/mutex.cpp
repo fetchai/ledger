@@ -150,51 +150,45 @@ TEST(DebugMutex, CorrectRecursive)
   {
     // Two threads modify a single string synchronised through a recursive mutex.
     fetch::DeadlockHandler::ThrowOnDeadlock();
-    fetch::RecursiveLockAttempt::SetTimeoutMs(400);
+    fetch::RecursiveLockAttempt::SetTimeoutMs(5'000);
     RMutex m;
 
-    EXPECT_TRUE(m.try_lock());
-    EXPECT_TRUE(m.try_lock());
-    EXPECT_TRUE(m.try_lock());
-    EXPECT_TRUE(m.try_lock());
-    m.unlock();
-    m.unlock();
-    m.unlock();
-    m.unlock();
+    std::atomic<std::size_t> level{0};
+    for (std::size_t i{}; i < 4; ++i)
+    {
+      if (m.try_lock())
+      {
+        ++level;
+      }
+    }
+    while (level-- > 0)
+    {
+      m.unlock();
+    }
 
     std::string rv;
 
-    Bool start_descending{false}, out_channel{false};
+    auto f = [&m, &rv](char c) {
+      std::this_thread::sleep_for(10ms);
+      FETCH_LOCK(m);
+      std::this_thread::sleep_for(10ms);
+      FETCH_LOCK(m);
+      {
+        std::this_thread::sleep_for(10ms);
+        FETCH_LOCK(m);
+        std::this_thread::sleep_for(10ms);
+        FETCH_LOCK(m);
 
-    auto f = [&m, &rv, &start_descending, &out_channel](char c) {
-      m.lock();
-      m.lock();
-      m.lock();
-      m.lock();
-
-      out_channel = true;
-
+        rv += c;
+        rv += c;
+      }
       rv += c;
       rv += c;
-
-      WaitFor(start_descending);
-
-      m.unlock();
-      m.unlock();
-
-      rv += c;
-      rv += c;
-
-      m.unlock();
-      m.unlock();
     };
 
     std::vector<std::thread> threads;
     threads.emplace_back(f, 'a');
     threads.emplace_back(f, 'b');
-
-    WaitFor(out_channel);
-    start_descending = true;
 
     for (auto &t : threads)
     {

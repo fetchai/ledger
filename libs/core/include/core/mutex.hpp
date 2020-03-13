@@ -179,8 +179,14 @@ protected:
   {
     uint64_t current_score = locked_times_;
     // Keep attempting to lock the mutex for specified time.
-    while (!m.try_lock_for(std::chrono::milliseconds(timeout_ms_)))
+    auto deadline = Now() + Timeout();
+    while (!m.try_lock_for(Timeout()))
     {
+      if (Now() < deadline)
+      {
+        // try_lock_for() exited spuriously before timeout
+        continue;
+      }
       // The mutex is still locked by someone else.
       if (locked_times_ == current_score)
       {
@@ -203,6 +209,11 @@ protected:
 
 private:
   static Timestamp Now();
+
+  constexpr Duration Timeout() const
+  {
+    return std::chrono::milliseconds(timeout_ms_);
+  }
 
   // Signal deadlock if a thread holds a mutex for so long.
   static std::atomic<uint64_t> timeout_ms_;
@@ -463,15 +474,20 @@ public:
     UnderlyingMutex::unlock();
   }
 
-  bool try_lock()
+  bool try_lock(LockLocation loc)
   {
     if (UnderlyingMutex::try_lock())
     {
-      Register::RegisterMutexAcquisition(this);
+      Register::RegisterMutexAcquisition(this, std::move(loc));
       return true;
     }
 
     return false;
+  }
+
+  bool try_lock()
+  {
+    return try_lock({});
   }
 
 private:
