@@ -90,7 +90,7 @@ TEST(DebugMutex, SimpleProblem)
 
   for (auto &philosopher : dining_philosophers)
   {
-    philosopher.join();
+    philosopher.join();  // come join us at this dinner party!
   }
 
   ASSERT_EQ(hungry_philosophers, 1);
