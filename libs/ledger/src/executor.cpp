@@ -80,13 +80,18 @@ Executor::Executor(StorageUnitPtr storage)
  * @return The status code for the operation
  */
 Executor::Result Executor::Execute(Digest const &digest, BlockIndex block, SliceIndex slice,
-                                   BitVector const &shards)
+                                   BitVector const &          shards,
+                                   ChargeConfiguration const &charge_config,
+                                   UnorderedCabinet const &   cabinet)
 {
   telemetry::FunctionTimer const timer{*overall_duration_};
 
   FETCH_LOG_DEBUG(LOGGING_NAME, "Executing tx 0x", digest.ToHex());
 
   Result result{Status::INEXPLICABLE_FAILURE};
+
+  charge_configuration_ = charge_config;
+  cabinet_              = std::move(cabinet);
 
   // cache the state for the current transaction
   block_          = block;
@@ -278,6 +283,8 @@ bool Executor::ExecuteTransactionContract(Result &result)
                          .SetStorage(storage_.get())
                          .SetStateAdapter(&storage_adapter)
                          .SetBlockIndex(block_)
+                         .SetChargeConfig(charge_configuration_)
+                         .SetCabinet(cabinet_)
                          .Build();
 
       ContractContextAttacher raii_attacher(*contract, std::move(context));

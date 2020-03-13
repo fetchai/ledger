@@ -19,6 +19,7 @@
 
 #include "chain/constants.hpp"
 #include "ledger/chain/block.hpp"
+#include "ledger/chaincode/charge_configuration.hpp"
 #include "ledger/execution_manager_interface.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 
@@ -47,6 +48,8 @@ public:
   void           SetLastProcessedBlock(Digest hash) override;
   State          GetState() override;
   bool           Abort() override;
+  void           SetChargeConfiguration(fetch::ledger::ChargeConfiguration) override;
+  void           SetCabinet(UnorderedCabinet) override;
   /// @}
 
 private:

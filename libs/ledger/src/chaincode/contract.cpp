@@ -188,7 +188,8 @@ bool Contract::ParseAsJson(chain::Transaction const &tx, variant::Variant &outpu
  */
 ledger::StateAdapter &Contract::state()
 {
-  detailed_assert(context_->state_adapter != nullptr);
+  detailed_assert(context_ != nullptr && context_->state_adapter != nullptr);
+
   return *context_->state_adapter;
 }
 

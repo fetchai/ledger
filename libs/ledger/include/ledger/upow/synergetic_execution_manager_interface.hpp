@@ -17,7 +17,12 @@
 //
 //------------------------------------------------------------------------------
 
+#include "crypto/identity.hpp"
+#include "ledger/chaincode/charge_configuration.hpp"
+
 #include <cstddef>
+#include <cstdint>
+#include <unordered_set>
 
 namespace fetch {
 namespace ledger {
@@ -27,6 +32,8 @@ class Block;
 class SynergeticExecutionManagerInterface
 {
 public:
+  using UnorderedCabinet = std::unordered_set<crypto::Identity>;
+
   // Construction / Destruction
   SynergeticExecutionManagerInterface()          = default;
   virtual ~SynergeticExecutionManagerInterface() = default;
@@ -46,6 +53,9 @@ public:
   virtual ExecStatus PrepareWorkQueue(Block const &current, Block const &previous) = 0;
   virtual bool       ValidateWorkAndUpdateState(std::size_t num_lanes)             = 0;
   /// @}
+
+  virtual void SetChargeConfiguration(ChargeConfiguration) = 0;
+  virtual void SetCabinet(UnorderedCabinet)                = 0;
 };
 
 char const *ToString(SynergeticExecutionManagerInterface::ExecStatus status);

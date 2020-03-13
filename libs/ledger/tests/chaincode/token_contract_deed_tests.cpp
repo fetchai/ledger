@@ -293,7 +293,7 @@ TEST_F(TokenContractDeedTests, verify_basic_scenario)
   Deed deed{signees, thresholds};
   ASSERT_TRUE(deed.IsSane());
 
-  // This must verify SSUCCESSFULLY, since signatories 0 & 2 have accumulated
+  // This must verify SUCCESSFULLY, since signatories 0 & 2 have accumulated
   // weight 4(=1+3) and so "op0" and "op1" thresholds (1 and 4) are in reach.
   EXPECT_TRUE(deed.Verify(*tx, "op0"));
   EXPECT_TRUE(deed.Verify(*tx, "op1"));
@@ -326,7 +326,7 @@ TEST_F(TokenContractDeedTests, verify_ignores_signatory_not_defined_in_deed_as_s
   Deed deed{signees, thresholds};
   ASSERT_TRUE(deed.IsSane());
 
-  // This must verify SSUCCESSFULLY, since weight of signatory 0 is 1 and
+  // This must verify SUCCESSFULLY, since weight of signatory 0 is 1 and
   // threshold "op0" is 1.
   EXPECT_TRUE(deed.Verify(*tx, "op0"));
 

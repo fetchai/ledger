@@ -26,10 +26,9 @@
 #include "json/document.hpp"
 #include "ledger/chaincode/deed.hpp"
 #include "ledger/chaincode/token_contract.hpp"
+#include "ledger/chaincode/wallet_record.hpp"
 
 #include "gmock/gmock.h"
-
-#include <ledger/chaincode/wallet_record.hpp>
 
 #include <memory>
 #include <random>
@@ -45,25 +44,13 @@ using fetch::chain::TransactionBuilder;
 using fetch::variant::Variant;
 using ::testing::_;
 
-struct Entity
-{
-  crypto::ECDSASigner signer{};
-  Address             address{signer.identity()};
-};
-
 using ConstByteArray = byte_array::ConstByteArray;
-using Entities       = std::vector<Entity>;
 using SigneesPtr     = std::shared_ptr<Deed::Signees>;
 using ThresholdsPtr  = std::shared_ptr<Deed::OperationTresholds>;
 
 class TokenContractTests : public ContractTest
 {
 protected:
-  static void SetUpTestCase()
-  {
-    fetch::chain::InitialiseTestConstants();
-  }
-
   using Query              = Contract::Query;
   using TokenContractPtr   = std::unique_ptr<TokenContract>;
   using MockStorageUnitPtr = std::unique_ptr<MockStorageUnit>;
@@ -71,10 +58,6 @@ protected:
 
   void SetUp() override
   {
-    // setup the base class
-    ContractTest::SetUp();
-
-    // create the
     contract_      = std::make_unique<TokenContract>();
     contract_name_ = std::make_shared<ConstByteArray>(std::string{TokenContract::NAME});
   }

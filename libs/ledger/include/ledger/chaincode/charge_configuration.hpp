@@ -17,36 +17,40 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/byte_array/const_byte_array.hpp"
-#include "ledger/chaincode/contract.hpp"
+#include <cstdint>
 
 namespace fetch {
-namespace chain {
-
-class Address;
-
-}  // namespace chain
 namespace ledger {
 
-class SmartContractManager : public Contract
+class ChargeConfiguration
 {
 public:
-  static constexpr char const *NAME = "fetch.contract";
+  class Builder
+  {
+  public:
+    Builder()                = default;
+    ~Builder()               = default;
+    Builder(Builder const &) = delete;
+    Builder(Builder &&)      = delete;
+    Builder &operator=(Builder const &) = delete;
+    Builder &operator=(Builder &&) = delete;
 
-  using ConstByteArray = byte_array::ConstByteArray;
+    Builder &SetChargeMultiplier(uint64_t multiplier);
 
-  static storage::ResourceAddress CreateAddressForContract(chain::Address const &contract_id);
+    ChargeConfiguration Build() const;
 
-  SmartContractManager();
-  ~SmartContractManager() override = default;
+  private:
+    uint64_t charge_multiplier_{};
+  };
 
-  uint64_t CalculateFee() const override;
+  ChargeConfiguration() = default;
+
+  uint64_t charge_multiplier{};
 
 private:
-  /// @name Transaction Handlers
-  /// @{
-  Result OnCreate(chain::Transaction const &tx);
-  /// @}
+  explicit ChargeConfiguration(uint64_t vm__charge_multiplier);
+
+  friend class Builder;
 };
 
 }  // namespace ledger

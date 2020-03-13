@@ -25,6 +25,8 @@ namespace ledger {
 class ExecutionManagerInterface
 {
 public:
+  using UnorderedCabinet = std::unordered_set<crypto::Identity>;
+
   enum class ScheduleStatus
   {
     SCHEDULED = 0,  ///< The block has been scheduled for execution
@@ -64,6 +66,9 @@ public:
   virtual State          GetState()                                 = 0;
   virtual bool           Abort()                                    = 0;
   /// @}
+
+  virtual void SetChargeConfiguration(ChargeConfiguration) = 0;
+  virtual void SetCabinet(UnorderedCabinet)                = 0;
 };
 
 /**

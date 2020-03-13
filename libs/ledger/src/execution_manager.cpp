@@ -261,7 +261,7 @@ void ExecutionManager::DispatchExecution(ExecutionItem &item)
     counters_.ApplyVoid([](auto &counters) { ++counters.active; });
 
     // execute the item
-    item.Execute(*executor);
+    item.Execute(*executor, charge_config_, cabinet_);
     auto const &result{item.result()};
 
     // determine what the status is
@@ -528,7 +528,6 @@ void ExecutionManager::MonitorThreadEntrypoint()
             break;
 
           case ExecutionStatusCategory::BLOCK_INVALIDATING_ERROR:
-          default:
             ++num_fatal_errors;
             break;
           }

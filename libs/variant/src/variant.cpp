@@ -33,6 +33,11 @@ namespace variant {
  */
 Variant &Variant::operator=(Variant const &value)
 {
+  if (this == &value)
+  {
+    return *this;
+  }
+
   // update the type
   type_ = value.type_;
 

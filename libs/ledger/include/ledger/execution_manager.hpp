@@ -74,6 +74,16 @@ public:
   void Start();
   void Stop();
 
+  void SetChargeConfiguration(ChargeConfiguration config) override
+  {
+    charge_config_ = std::move(config);
+  }
+
+  void SetCabinet(ExecutorInterface::UnorderedCabinet cabinet) override
+  {
+    cabinet_ = std::move(cabinet);
+  }
+
   // statistics
   std::size_t completed_executions() const
   {
@@ -113,7 +123,9 @@ private:
     chain::Address last_block_miner{};
   };
 
-  uint32_t const log2_num_lanes_;
+  uint32_t const      log2_num_lanes_;
+  ChargeConfiguration charge_config_{};
+  UnorderedCabinet    cabinet_{};
 
   Flag running_{false};
   Flag monitor_ready_{false};

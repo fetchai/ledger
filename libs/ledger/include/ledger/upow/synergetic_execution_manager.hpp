@@ -77,6 +77,19 @@ private:
   void ExecuteItem(WorkQueue &queue, ProblemData const &problem_data, std::size_t num_lanes,
                    chain::Address const &miner);
 
+  void SetChargeConfiguration(ChargeConfiguration charge_config) override
+  {
+    charge_config_ = charge_config;
+  }
+
+  void SetCabinet(UnorderedCabinet cabinet) override
+  {
+    cabinet_ = std::move(cabinet);
+  }
+
+  ChargeConfiguration charge_config_{};
+  UnorderedCabinet    cabinet_{};
+
   // System Components
   DAGPtr dag_;
 

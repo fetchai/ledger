@@ -57,6 +57,11 @@ public:
   void SetDefaultStartTime(uint64_t default_start_time) override;
   void SetWhitelist(Minerwhitelist const &whitelist) override;
 
+  UnorderedCabinet GetCabinet() const override
+  {
+    return {};
+  }
+
   // Operators
   SimulatedPowConsensus &operator=(SimulatedPowConsensus const &) = delete;
   SimulatedPowConsensus &operator=(SimulatedPowConsensus &&) = delete;

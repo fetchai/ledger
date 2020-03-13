@@ -290,5 +290,14 @@ bool Transaction::IsFromSubtreeSync() const
   return old_;
 }
 
+bool Transaction::IsSignedBy(crypto::Identity const &identity) const
+{
+  auto const signatory =
+      std::find_if(signatories().begin(), signatories().end(),
+                   [identity](auto const &signatory) { return signatory.identity == identity; });
+
+  return signatory != signatories().end();
+}
+
 }  // namespace chain
 }  // namespace fetch

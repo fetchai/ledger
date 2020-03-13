@@ -365,7 +365,7 @@ bool GenesisFileCreator::LoadConsensus(Variant const &object, ConsensusParameter
       auto address  = chain::Address(identity);
 
       FETCH_LOG_INFO(LOGGING_NAME, "Restoring stake. Identity: ", identity.identifier().ToBase64(),
-                     " (address): ", address.address().ToBase64(), " amount: ", amount);
+                     " (address): ", address.display(), " amount: ", amount);
 
       // The initial set of miners is stored in the genesis block
       genesis_block_.block_entropy.qualified.insert(identity.identifier());

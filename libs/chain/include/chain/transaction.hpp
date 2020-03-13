@@ -137,6 +137,7 @@ public:
   /// @{
   bool Verify();
   bool IsVerified() const;
+  bool IsSignedBy(Identity const &identity) const;
   bool IsSignedByFromAddress() const;
   void SetFromSubtreeSync();
   bool IsFromSubtreeSync() const;

@@ -61,7 +61,8 @@ SynergeticExecutor::SynergeticExecutor(StorageInterface &storage)
 {}
 
 void SynergeticExecutor::Verify(WorkQueue &solutions, ProblemData const &problem_data,
-                                std::size_t num_lanes, chain::Address const &miner)
+                                std::size_t num_lanes, chain::Address const &miner,
+                                ChargeConfiguration charge_config)
 {
   std::unique_ptr<SynergeticContract> contract;
 
@@ -114,11 +115,11 @@ void SynergeticExecutor::Verify(WorkQueue &solutions, ProblemData const &problem
 
       // complete the work and resolve the work queue
       contract->Attach(storage_);
-
       auto context = ContractContext::Builder{}
                          .SetTokenContract(&token_contract_)
                          .SetContractAddress(solution->address())
                          .SetStateAdapter(&storage_adapter)
+                         .SetChargeConfig(charge_config)
                          .Build();
       contract->UpdateContractContext(std::move(context));
 

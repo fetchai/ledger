@@ -19,6 +19,7 @@
 #include "core/serializers/main_serializer.hpp"
 #include "ledger/chaincode/chain_code_factory.hpp"
 #include "ledger/chaincode/contract_context.hpp"
+#include "ledger/chaincode/governance_contract.hpp"
 #include "ledger/chaincode/smart_contract.hpp"
 #include "ledger/chaincode/smart_contract_manager.hpp"
 #include "ledger/chaincode/token_contract.hpp"
@@ -50,6 +51,7 @@ FactoryRegistry CreateRegistry()
 
   registry[TokenContract::NAME]        = []() { return std::make_unique<TokenContract>(); };
   registry[SmartContractManager::NAME] = []() { return std::make_unique<SmartContractManager>(); };
+  registry[GovernanceContract::NAME]   = []() { return std::make_unique<GovernanceContract>(); };
 
   return registry;
 }

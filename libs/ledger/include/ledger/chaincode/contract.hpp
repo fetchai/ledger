@@ -102,11 +102,6 @@ public:
   TransactionHandlerMap const &transaction_handlers() const;
   /// @}
 
-  uint64_t CalculateFee() const override
-  {
-    return 0;
-  }
-
   // Operators
   Contract &operator=(Contract const &) = delete;
   Contract &operator=(Contract &&) = delete;

@@ -33,11 +33,12 @@ namespace ledger {
 class ExecutionItem
 {
 public:
-  using LaneIndex  = uint32_t;
-  using BlockIndex = ExecutorInterface::BlockIndex;
-  using SliceIndex = ExecutorInterface::SliceIndex;
-  using Status     = ExecutorInterface::Status;
-  using Result     = ExecutorInterface::Result;
+  using LaneIndex        = uint32_t;
+  using BlockIndex       = ExecutorInterface::BlockIndex;
+  using SliceIndex       = ExecutorInterface::SliceIndex;
+  using Status           = ExecutorInterface::Status;
+  using Result           = ExecutorInterface::Result;
+  using UnorderedCabinet = ExecutorInterface::UnorderedCabinet;
 
   static constexpr char const *LOGGING_NAME = "ExecutionItem";
 
@@ -55,7 +56,8 @@ public:
   TokenAmount      fee() const;
   /// @}
 
-  void Execute(ExecutorInterface &executor);
+  void Execute(ExecutorInterface &executor, ChargeConfiguration const &charge_config,
+               ExecutorInterface::UnorderedCabinet const &cabinet);
   void AggregateStakeUpdates(StakeUpdateEvents &events);
 
   // Operators
@@ -101,11 +103,13 @@ inline uint64_t ExecutionItem::fee() const
   return fee_;
 }
 
-inline void ExecutionItem::Execute(ExecutorInterface &executor)
+inline void ExecutionItem::Execute(ExecutorInterface &                        executor,
+                                   ChargeConfiguration const &                charge_config,
+                                   ExecutorInterface::UnorderedCabinet const &cabinet)
 {
   try
   {
-    result_ = executor.Execute(digest_, block_, slice_, shards_);
+    result_ = executor.Execute(digest_, block_, slice_, shards_, charge_config, cabinet);
     fee_ += result_.fee;
   }
   catch (std::exception const &ex)

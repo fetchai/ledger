@@ -156,50 +156,33 @@ Consensus::WeightedQual QualWeightedByEntropy(Consensus::BlockEntropy::Cabinet c
   return DeterministicShuffle(ret, entropy);
 }
 
-// TODO(HUT): probably this is not required any more.
-Consensus::CabinetPtr Consensus::GetCabinet(Block const &previous) const
+Consensus::UnorderedCabinet Consensus::GetCabinet() const
+{
+  return GetCabinet(current_block_);
+}
+
+Consensus::UnorderedCabinet Consensus::GetCabinet(Block const &block) const
 {
   MilliTimer const timer{"GetCabinet ", 1000};
-  // Calculate the last relevant snapshot
-  uint64_t const last_snapshot = previous.block_number - (previous.block_number % aeon_period_);
 
-  // Invalid to request a cabinet too far ahead in time
-  assert(cabinet_history_.find(last_snapshot) != cabinet_history_.end());
-
-  if (cabinet_history_.find(last_snapshot) == cabinet_history_.end())
+  auto cabinet = stake_->BuildCabinet(block, max_cabinet_size_, whitelist_);
+  if (cabinet == nullptr)
   {
-    FETCH_LOG_INFO(LOGGING_NAME, "No cabinet history found for block: ", previous.block_number,
-                   " AKA ", last_snapshot);
-    return nullptr;
+    return {};
   }
 
-  // If the last cabinet was the valid cabinet, return this. Otherwise, deterministically
-  // shuffle the cabinet using the random beacon
-  if (last_snapshot == previous.block_number)
+  UnorderedCabinet cabinet_copy{};
+  for (auto const &x : *cabinet)
   {
-    return cabinet_history_.at(last_snapshot);
+    cabinet_copy.emplace(x);
   }
 
-  auto cabinet_ptr = cabinet_history_.find(last_snapshot);
-
-  if (cabinet_ptr == cabinet_history_.end() || !(cabinet_ptr->second))
-  {
-    FETCH_LOG_ERROR(LOGGING_NAME, "Could not get cabinet from snapshot ", last_snapshot,
-                    " for block ", previous.block_number, " 0x", previous.hash);
-
-    throw std::runtime_error("Could not get cabinet from snapshot");
-  }
-
-  Cabinet cabinet_copy = *(cabinet_ptr->second);
-
-  DeterministicShuffle(cabinet_copy, previous.block_entropy.EntropyAsU64());
-
-  return std::make_shared<Cabinet>(cabinet_copy);
+  return cabinet_copy;
 }
 
 uint32_t Consensus::GetThreshold(Block const &block) const
 {
-  auto cabinet_size = static_cast<double>(GetCabinet(block)->size());
+  auto cabinet_size = static_cast<double>(GetCabinet(block).size());
   return static_cast<uint32_t>(std::floor(cabinet_size * threshold_)) + 1;
 }
 

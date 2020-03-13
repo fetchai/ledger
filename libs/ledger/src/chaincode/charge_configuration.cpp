@@ -1,4 +1,3 @@
-#pragma once
 //------------------------------------------------------------------------------
 //
 //   Copyright 2018-2020 Fetch.AI Limited
@@ -17,37 +16,26 @@
 //
 //------------------------------------------------------------------------------
 
-#include "core/byte_array/const_byte_array.hpp"
-#include "ledger/chaincode/contract.hpp"
+#include "ledger/chaincode/charge_configuration.hpp"
 
 namespace fetch {
-namespace chain {
-
-class Address;
-
-}  // namespace chain
 namespace ledger {
 
-class SmartContractManager : public Contract
+ChargeConfiguration::Builder &ChargeConfiguration::Builder::SetChargeMultiplier(uint64_t multiplier)
 {
-public:
-  static constexpr char const *NAME = "fetch.contract";
+  charge_multiplier_ = multiplier;
 
-  using ConstByteArray = byte_array::ConstByteArray;
+  return *this;
+}
 
-  static storage::ResourceAddress CreateAddressForContract(chain::Address const &contract_id);
+ChargeConfiguration ChargeConfiguration::Builder::Build() const
+{
+  return ChargeConfiguration{charge_multiplier_};
+}
 
-  SmartContractManager();
-  ~SmartContractManager() override = default;
-
-  uint64_t CalculateFee() const override;
-
-private:
-  /// @name Transaction Handlers
-  /// @{
-  Result OnCreate(chain::Transaction const &tx);
-  /// @}
-};
+ChargeConfiguration::ChargeConfiguration(uint64_t multiplier)
+  : charge_multiplier{multiplier}
+{}
 
 }  // namespace ledger
 }  // namespace fetch

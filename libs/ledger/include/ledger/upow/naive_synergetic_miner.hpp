@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "core/state_machine.hpp"
+#include "ledger/chaincode/governance_contract.hpp"
 #include "ledger/chaincode/token_contract.hpp"
 #include "ledger/dag/dag_interface.hpp"
 #include "ledger/upow/synergetic_contract.hpp"
@@ -89,6 +90,7 @@ private:
   std::shared_ptr<StateMachine> state_machine_;
   std::atomic<bool>             is_mining_{false};
   TokenContract                 token_contract_{};
+  GovernanceContract            governance_contract_;
 };
 
 }  // namespace ledger

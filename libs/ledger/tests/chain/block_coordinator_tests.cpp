@@ -269,7 +269,9 @@ TEST_F(BlockCoordinatorTests, CheckBasicInteraction)
     EXPECT_CALL(*execution_manager_, LastProcessedBlock());
 
     // pre block validation
-    // none
+    EXPECT_CALL(*storage_unit_, Get(_));
+    EXPECT_CALL(*execution_manager_, SetChargeConfiguration(_));
+    EXPECT_CALL(*execution_manager_, SetCabinet(_));
 
     // schedule of the genesis block
     EXPECT_CALL(*execution_manager_, Execute(IsBlock(genesis)));
@@ -289,6 +291,11 @@ TEST_F(BlockCoordinatorTests, CheckBasicInteraction)
     EXPECT_CALL(*storage_unit_, LastCommitHash());
     EXPECT_CALL(*storage_unit_, CurrentHash());
     EXPECT_CALL(*execution_manager_, LastProcessedBlock());
+
+    // new synergetic execution
+    EXPECT_CALL(*storage_unit_, Get(_));
+    EXPECT_CALL(*execution_manager_, SetChargeConfiguration(_));
+    EXPECT_CALL(*execution_manager_, SetCabinet(_));
 
     // packer the new block
     EXPECT_CALL(*packer_, GenerateBlock(IsBlockFollowing(genesis), NUM_LANES, NUM_SLICES, _));
@@ -393,7 +400,9 @@ TEST_F(BlockCoordinatorTests, CheckLongBlockStartUp)
     EXPECT_CALL(*execution_manager_, SetLastProcessedBlock(genesis->hash));
 
     // pre block validation
-    // none
+    EXPECT_CALL(*storage_unit_, Get(_));
+    EXPECT_CALL(*execution_manager_, SetChargeConfiguration(_));
+    EXPECT_CALL(*execution_manager_, SetCabinet(_));
 
     // execute - B1
     EXPECT_CALL(*execution_manager_, Execute(IsBlock(b1)));
@@ -415,6 +424,10 @@ TEST_F(BlockCoordinatorTests, CheckLongBlockStartUp)
     EXPECT_CALL(*execution_manager_, SetLastProcessedBlock(b1->hash));
 
     // schedule of the next block
+    EXPECT_CALL(*storage_unit_, Get(_));
+    EXPECT_CALL(*execution_manager_, SetChargeConfiguration(_));
+    EXPECT_CALL(*execution_manager_, SetCabinet(_));
+
     EXPECT_CALL(*execution_manager_, Execute(IsBlock(b2)));
 
     // wait for the execution to complete
@@ -434,6 +447,10 @@ TEST_F(BlockCoordinatorTests, CheckLongBlockStartUp)
     EXPECT_CALL(*execution_manager_, SetLastProcessedBlock(b2->hash));
 
     // schedule of the next block
+    EXPECT_CALL(*storage_unit_, Get(_));
+    EXPECT_CALL(*execution_manager_, SetChargeConfiguration(_));
+    EXPECT_CALL(*execution_manager_, SetCabinet(_));
+
     EXPECT_CALL(*execution_manager_, Execute(IsBlock(b3)));
 
     // wait for the execution to complete
@@ -460,6 +477,10 @@ TEST_F(BlockCoordinatorTests, CheckLongBlockStartUp)
     EXPECT_CALL(*execution_manager_, SetLastProcessedBlock(b3->hash));
 
     // schedule of the next block
+    EXPECT_CALL(*storage_unit_, Get(_));
+    EXPECT_CALL(*execution_manager_, SetChargeConfiguration(_));
+    EXPECT_CALL(*execution_manager_, SetCabinet(_));
+
     EXPECT_CALL(*execution_manager_, Execute(IsBlock(b4)));
 
     // wait for the execution to complete
@@ -486,6 +507,10 @@ TEST_F(BlockCoordinatorTests, CheckLongBlockStartUp)
     EXPECT_CALL(*execution_manager_, SetLastProcessedBlock(b4->hash));
 
     // schedule of the next block
+    EXPECT_CALL(*storage_unit_, Get(_));
+    EXPECT_CALL(*execution_manager_, SetChargeConfiguration(_));
+    EXPECT_CALL(*execution_manager_, SetCabinet(_));
+
     EXPECT_CALL(*execution_manager_, Execute(IsBlock(b5)));
 
     // wait for the execution to complete
@@ -623,7 +648,9 @@ TEST_F(BlockCoordinatorTests, CheckInvalidBlockNumber)
     EXPECT_CALL(*execution_manager_, LastProcessedBlock());
 
     // pre block validation
-    // none
+    EXPECT_CALL(*storage_unit_, Get(_));
+    EXPECT_CALL(*execution_manager_, SetChargeConfiguration(_));
+    EXPECT_CALL(*execution_manager_, SetCabinet(_));
 
     // schedule of the genesis block
     EXPECT_CALL(*execution_manager_, Execute(IsBlock(genesis)));
@@ -697,7 +724,9 @@ TEST_F(BlockCoordinatorTests, CheckInvalidNumLanes)
     EXPECT_CALL(*execution_manager_, LastProcessedBlock());
 
     // pre block validation
-    // none
+    EXPECT_CALL(*storage_unit_, Get(_));
+    EXPECT_CALL(*execution_manager_, SetChargeConfiguration(_));
+    EXPECT_CALL(*execution_manager_, SetCabinet(_));
 
     // schedule of the genesis block
     EXPECT_CALL(*execution_manager_, Execute(IsBlock(genesis)));
@@ -727,6 +756,9 @@ TEST_F(BlockCoordinatorTests, CheckInvalidNumLanes)
     EXPECT_CALL(*storage_unit_, HashExists(genesis->merkle_hash, 0));
     EXPECT_CALL(*storage_unit_, RevertToHash(genesis->merkle_hash, 0));
     EXPECT_CALL(*execution_manager_, SetLastProcessedBlock(genesis->hash));
+    EXPECT_CALL(*storage_unit_, Get(_));
+    EXPECT_CALL(*execution_manager_, SetChargeConfiguration(_));
+    EXPECT_CALL(*execution_manager_, SetCabinet(_));
 
     // block should be removed and reverted back to previous
     EXPECT_CALL(*storage_unit_, HashExists(genesis->merkle_hash, 0));
@@ -795,7 +827,9 @@ TEST_F(BlockCoordinatorTests, CheckInvalidNumSlices)
     EXPECT_CALL(*execution_manager_, LastProcessedBlock());
 
     // pre block validation
-    // none
+    EXPECT_CALL(*storage_unit_, Get(_));
+    EXPECT_CALL(*execution_manager_, SetChargeConfiguration(_));
+    EXPECT_CALL(*execution_manager_, SetCabinet(_));
 
     // schedule of the genesis block
     EXPECT_CALL(*execution_manager_, Execute(IsBlock(genesis)));
@@ -824,6 +858,11 @@ TEST_F(BlockCoordinatorTests, CheckInvalidNumSlices)
     EXPECT_CALL(*storage_unit_, HashExists(genesis->merkle_hash, 0));
     EXPECT_CALL(*storage_unit_, RevertToHash(genesis->merkle_hash, 0));
     EXPECT_CALL(*execution_manager_, SetLastProcessedBlock(genesis->hash));
+
+    // pre block validation
+    EXPECT_CALL(*storage_unit_, Get(_));
+    EXPECT_CALL(*execution_manager_, SetChargeConfiguration(_));
+    EXPECT_CALL(*execution_manager_, SetCabinet(_));
 
     // block should be removed and reverted back to previous
     EXPECT_CALL(*storage_unit_, HashExists(genesis->merkle_hash, 0));
@@ -892,7 +931,9 @@ TEST_F(BlockCoordinatorTests, CheckBlockMining)
     EXPECT_CALL(*execution_manager_, LastProcessedBlock());
 
     // pre block validation
-    // none
+    EXPECT_CALL(*storage_unit_, Get(_));
+    EXPECT_CALL(*execution_manager_, SetChargeConfiguration(_));
+    EXPECT_CALL(*execution_manager_, SetCabinet(_));
 
     // schedule of the genesis block
     EXPECT_CALL(*execution_manager_, Execute(IsBlock(genesis)));
@@ -911,6 +952,11 @@ TEST_F(BlockCoordinatorTests, CheckBlockMining)
     EXPECT_CALL(*execution_manager_, LastProcessedBlock());
 
     // -- Event: Generate a block
+
+    // new synergetic execution
+    EXPECT_CALL(*storage_unit_, Get(_));
+    EXPECT_CALL(*execution_manager_, SetChargeConfiguration(_));
+    EXPECT_CALL(*execution_manager_, SetCabinet(_));
 
     // block packing
     EXPECT_CALL(*packer_, GenerateBlock(IsBlockFollowing(genesis), _, _, _));
@@ -995,7 +1041,9 @@ TEST_F(BlockCoordinatorTests, CheckPanicMode)
     EXPECT_CALL(*execution_manager_, LastProcessedBlock());
 
     // pre block validation
-    // none
+    EXPECT_CALL(*storage_unit_, Get(_));
+    EXPECT_CALL(*execution_manager_, SetChargeConfiguration(_));
+    EXPECT_CALL(*execution_manager_, SetCabinet(_));
 
     // schedule of the genesis block
     EXPECT_CALL(*execution_manager_, Execute(IsBlock(genesis)));
@@ -1024,6 +1072,10 @@ TEST_F(BlockCoordinatorTests, CheckPanicMode)
     EXPECT_CALL(*execution_manager_, SetLastProcessedBlock(genesis->hash));
 
     // schedule of the next block
+    EXPECT_CALL(*storage_unit_, Get(_));
+    EXPECT_CALL(*execution_manager_, SetChargeConfiguration(_));
+    EXPECT_CALL(*execution_manager_, SetCabinet(_));
+
     EXPECT_CALL(*execution_manager_, Execute(IsBlock(b1)));
 
     // wait for the execution to complete
@@ -1043,6 +1095,10 @@ TEST_F(BlockCoordinatorTests, CheckPanicMode)
     EXPECT_CALL(*execution_manager_, SetLastProcessedBlock(b1->hash));
 
     // schedule of the next block
+    EXPECT_CALL(*storage_unit_, Get(_));
+    EXPECT_CALL(*execution_manager_, SetChargeConfiguration(_));
+    EXPECT_CALL(*execution_manager_, SetCabinet(_));
+
     EXPECT_CALL(*execution_manager_, Execute(IsBlock(b2_1)));
 
     // wait for the execution to complete
@@ -1079,6 +1135,10 @@ TEST_F(BlockCoordinatorTests, CheckPanicMode)
     EXPECT_CALL(*execution_manager_, SetLastProcessedBlock(b1->hash));
 
     // schedule of the next block
+    EXPECT_CALL(*storage_unit_, Get(_));
+    EXPECT_CALL(*execution_manager_, SetChargeConfiguration(_));
+    EXPECT_CALL(*execution_manager_, SetCabinet(_));
+
     EXPECT_CALL(*execution_manager_, Execute(IsBlock(b2_2)));
 
     // wait for the execution to complete

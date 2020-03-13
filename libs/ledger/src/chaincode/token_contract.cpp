@@ -514,5 +514,11 @@ void TokenContract::ExtractStakeUpdates(StakeUpdateEvents &updates)
   updates = std::move(stake_updates_);
 }
 
+uint64_t TokenContract::CalculateFee() const
+{
+  // TODO(WK): Compute token contract charges using this function
+  return 0;
+}
+
 }  // namespace ledger
 }  // namespace fetch

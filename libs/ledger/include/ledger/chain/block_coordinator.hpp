@@ -25,6 +25,7 @@
 #include "core/synchronisation/protected.hpp"
 #include "ledger/chain/block.hpp"
 #include "ledger/chain/main_chain.hpp"
+#include "ledger/chaincode/governance_contract.hpp"
 #include "ledger/consensus/consensus_interface.hpp"
 #include "ledger/dag/dag_interface.hpp"
 #include "ledger/upow/naive_synergetic_miner.hpp"
@@ -72,7 +73,7 @@ class BlockSinkInterface;
  * - Waiting in and idle / synchronised state
  *
  *                                  ┌──────────────────┐
- *                                  │   Synchronise    │
+ *                                  │   Synchronising  │
  *                                  │                  │◀───────────────────────────────┐
  *                                  └──────────────────┘                                │
  *                                            │                                         │
@@ -260,6 +261,8 @@ private:
   using DeadlineTimer     = fetch::moment::DeadlineTimer;
   using SynExecStatus     = SynergeticExecutionManagerInterface::ExecStatus;
 
+  void CheckChainConfig();
+
   /// @name Monitor State
   /// @{
   State OnReloadState();
@@ -310,7 +313,8 @@ private:
 
   /// @name Status
   /// @{
-  LastExecutedBlock last_executed_block_;
+  LastExecutedBlock  last_executed_block_;
+  GovernanceContract governance_contract_{};
   /// @}
 
   /// @name State Machine State
