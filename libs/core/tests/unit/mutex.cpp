@@ -169,14 +169,14 @@ TEST(DebugMutex, CorrectRecursive)
     std::string rv;
 
     auto f = [&m, &rv](char c) {
-      std::this_thread::sleep_for(10ms);
+      std::this_thread::sleep_for(1ms);
       FETCH_LOCK(m);
-      std::this_thread::sleep_for(10ms);
+      std::this_thread::sleep_for(1ms);
       FETCH_LOCK(m);
       {
-        std::this_thread::sleep_for(10ms);
+        std::this_thread::sleep_for(1ms);
         FETCH_LOCK(m);
-        std::this_thread::sleep_for(10ms);
+        std::this_thread::sleep_for(1ms);
         FETCH_LOCK(m);
 
         rv += c;
