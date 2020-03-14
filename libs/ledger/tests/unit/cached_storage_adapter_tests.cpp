@@ -16,6 +16,8 @@
 //
 //------------------------------------------------------------------------------
 
+#include "mock_storage_interface.hpp"
+
 #include "ledger/storage_unit/cached_storage_adapter.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
 #include "storage/resource_mapper.hpp"
@@ -25,22 +27,10 @@
 namespace {
 
 using fetch::ledger::CachedStorageAdapter;
-using fetch::ledger::StorageInterface;
 using fetch::storage::Document;
 using fetch::storage::ResourceAddress;
 
 using testing::Return;
-
-class MockStorage : public StorageInterface
-{
-public:
-  MOCK_CONST_METHOD1(Get, Document(ResourceAddress const &));
-  MOCK_METHOD1(GetOrCreate, Document(ResourceAddress const &));
-  MOCK_METHOD2(Set, void(ResourceAddress const &, StateValue const &));
-  MOCK_METHOD1(Lock, bool(ShardIndex));
-  MOCK_METHOD1(Unlock, bool(ShardIndex));
-  MOCK_METHOD0(Reset, void());
-};
 
 class CachedStorageAdapterTests : public testing::Test
 {

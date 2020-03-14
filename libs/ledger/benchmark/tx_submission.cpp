@@ -20,6 +20,7 @@
 
 #include "chain/transaction_builder.hpp"
 #include "chain/transaction_rpc_serializers.hpp"
+#include "chain/tx_declaration.hpp"
 #include "core/byte_array/byte_array.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 #include "core/random/lcg.hpp"
@@ -35,12 +36,12 @@
 namespace {
 
 using fetch::chain::Transaction;
-using fetch::chain::TransactionBuilder;
+using fetch::chain::TransactionPtr;
 using fetch::crypto::ECDSASigner;
 using fetch::ledger::TransactionStorageEngine;
 using fetch::ledger::TransactionStore;
 
-using TransactionList = std::vector<TransactionBuilder::TransactionPtr>;
+using TransactionList = std::vector<TransactionPtr>;
 
 constexpr uint32_t LANE_ID        = 0;
 constexpr uint32_t LOG2_NUM_LANES = 2;

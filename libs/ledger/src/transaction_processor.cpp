@@ -18,6 +18,7 @@
 
 #include "chain/transaction.hpp"
 #include "chain/transaction_layout.hpp"
+#include "chain/tx_declaration.hpp"
 #include "core/set_thread_name.hpp"
 #include "ledger/block_packer_interface.hpp"
 #include "ledger/storage_unit/storage_unit_interface.hpp"
@@ -86,7 +87,7 @@ void TransactionProcessor::OnTransaction(TransactionPtr const &tx)
   case Transaction::ContractMode::CHAIN_CODE:
 
     // dispatch the summary to the miner
-    packer_.EnqueueTransaction(*tx);
+    packer_.EnqueueTransaction(tx);
 
     // update the status cache with the state of this transaction
     if (status_cache_)

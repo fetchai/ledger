@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "chain/tx_declaration.hpp"
 #include "vm/array.hpp"
 #include "vm/object.hpp"
 

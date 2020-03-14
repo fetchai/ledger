@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "chain/transaction.hpp"
+#include "chain/tx_declaration.hpp"
 #include "vm/module.hpp"
 #include "vm_modules/ledger/context.hpp"
 

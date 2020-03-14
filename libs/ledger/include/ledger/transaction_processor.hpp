@@ -17,6 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include "chain/tx_declaration.hpp"
 #include "ledger/dag/dag_interface.hpp"
 #include "ledger/storage_unit/transaction_sinks.hpp"
 #include "ledger/transaction_verifier.hpp"

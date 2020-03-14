@@ -18,6 +18,7 @@
 //------------------------------------------------------------------------------
 
 #include "chain/transaction.hpp"
+#include "chain/tx_declaration.hpp"
 #include "core/byte_array/const_byte_array.hpp"
 
 #include <memory>
@@ -43,7 +44,6 @@ public:
   using TokenAmount    = Transaction::TokenAmount;
   using BlockIndex     = Transaction::BlockIndex;
   using CounterValue   = Transaction::Counter;
-  using TransactionPtr = std::shared_ptr<Transaction>;
   using ConstByteArray = byte_array::ConstByteArray;
 
   /**
