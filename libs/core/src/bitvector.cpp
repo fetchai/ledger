@@ -32,6 +32,14 @@ BitVector::BitVector(BitVector const &other)
   , blocks_(other.blocks_)
 {}
 
+BitVector &BitVector::operator=(BitVector const &other)
+{
+  data_   = other.data_.Copy();
+  size_   = other.size_;
+  blocks_ = other.blocks_;
+  return *this;
+}
+
 /**
  * Resize the vector to n bits
  *

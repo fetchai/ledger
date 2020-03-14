@@ -56,6 +56,7 @@
 // Representation of a possible configuration of the key value trie. When the split is maximal
 // (256), this represents that the node is a leaf. The nodes can contain additional information
 
+#include "core/buffer_io.hpp"
 #include "crypto/sha256.hpp"
 #include "storage/cached_random_access_stack.hpp"
 #include "storage/key.hpp"
@@ -106,8 +107,8 @@ struct KeyValuePair
   union
   {
     IndexType value = 0;
-    IndexType left;
-  };
+    IndexType branch;
+  } left;
   IndexType right = 0;
 
   bool operator==(KeyValuePair const &kv) const
@@ -128,7 +129,7 @@ struct KeyValuePair
   bool UpdateLeaf(uint64_t val, byte_array::ConstByteArray const &data)
   {
     memcpy(hash, data.pointer(), N);
-    value = val;
+    left.value = val;
 
     return true;
   }
@@ -148,6 +149,26 @@ struct KeyValuePair
   byte_array::ByteArray Hash() const
   {
     return {hash, N};
+  }
+
+  static constexpr std::size_t BinarySize() noexcept
+  {
+    return sizeof(key) + sizeof(hash) + sizeof(split) + sizeof(parent) + sizeof(left) +
+           sizeof(right);
+  }
+
+  constexpr char const *BinaryRead(char const *buf)
+  {
+    buf = buffer_io::BufRead(buf, key, hash, split, parent);
+    buf = buffer_io::DirtyBufRead(buf, left);
+    return buffer_io::BufRead(buf, right);
+  }
+
+  constexpr char *BinaryWrite(char *buf) const
+  {
+    buf = buffer_io::BufWrite(buf, key, hash, split, parent);
+    buf = buffer_io::DirtyBufWrite(buf, left);
+    return buffer_io::BufWrite(buf, right);
   }
 };
 
@@ -279,7 +300,7 @@ public:
         continue;
       }
 
-      stack_.Get(element.left, left);
+      stack_.Get(element.left.branch, left);
       stack_.Get(element.right, right);
       element.UpdateNode(left, right);
       stack_.Set(task.element, element);
@@ -297,7 +318,7 @@ public:
   {
     key_value_pair p;
     stack_.Get(i, p);
-    v = p.value;
+    v = p.left.value;
   }
 
   bool GetIfExists(byte_array::ConstByteArray const &key_str, IndexType &value)
@@ -313,7 +334,7 @@ public:
 
     if (!split)
     {
-      value = kv.value;
+      value = kv.left.value;
     }
 
     return !split;
@@ -329,7 +350,7 @@ public:
     IndexType      depth;
     FindNearest(key, kv, split, pos, left_right, depth);
     assert(!split);
-    return kv.value;
+    return kv.left.value;
   }
 
   /**
@@ -410,11 +431,11 @@ public:
         break;
       }
 
-      kv.split  = uint16_t(pos);
-      kv.left   = lid;
-      kv.right  = rid;
-      kv.parent = pid;
-      index     = stack_.Push(kv);
+      kv.split       = uint16_t(pos);
+      kv.left.branch = lid;
+      kv.right       = rid;
+      kv.parent      = pid;
+      index          = stack_.Push(kv);
 
       if (update_root)
       {
@@ -423,9 +444,9 @@ public:
       else
       {
         stack_.Get(pid, parent);
-        if (parent.left == cid)
+        if (parent.left.branch == cid)
         {
-          parent.left = index;
+          parent.left.branch = index;
         }
         else
         {
@@ -437,7 +458,7 @@ public:
       switch (left_right)
       {
       case -1:
-        index = kv.left;
+        index = kv.left.branch;
         kv    = left;
         break;
       case 1:
@@ -581,7 +602,7 @@ public:
 
     std::pair<byte_array::ByteArray, uint64_t> operator*() const
     {
-      return std::make_pair(kv_.key.ToByteArray(), kv_.value);
+      return std::make_pair(kv_.key.ToByteArray(), kv_.left.value);
     }
 
   protected:
@@ -723,14 +744,14 @@ public:
     assert(parent_index != uint64_t(-1));
 
     // Determine the sibling left/right from parent left/right
-    if (kv_index == parent.left)
+    if (kv_index == parent.left.branch)
     {
       sibling_index = parent.right;
       stack_.Get(sibling_index, sibling);
     }
     else if (kv_index == parent.right)
     {
-      sibling_index = parent.left;
+      sibling_index = parent.left.branch;
       stack_.Get(sibling_index, sibling);
     }
     else
@@ -748,9 +769,9 @@ public:
       stack_.Get(sibling.parent, new_sibling_parent);
 
       // Update parent left/right
-      if (new_sibling_parent.left == parent_index)
+      if (new_sibling_parent.left.branch == parent_index)
       {
-        new_sibling_parent.left = sibling_index;
+        new_sibling_parent.left.branch = sibling_index;
       }
       else if (new_sibling_parent.right == parent_index)
       {
@@ -814,7 +835,7 @@ private:
     while (pid != IndexType(-1))
     {
       stack_.Get(pid, parent);
-      if (cid == parent.left)
+      if (cid == parent.left.branch)
       {
         left = child;
         stack_.Get(parent.right, right);
@@ -822,7 +843,7 @@ private:
       else
       {
         right = child;
-        stack_.Get(parent.left, left);
+        stack_.Get(parent.left.branch, left);
       }
 
       parent.UpdateNode(left, right);
@@ -879,7 +900,7 @@ private:
       switch (left_right)
       {
       case -1:
-        next = kv.left;
+        next = kv.left.branch;
         break;
       case 1:
         next = kv.right;
@@ -945,7 +966,7 @@ private:
   {
     while (!kv.is_leaf())
     {
-      stack_.Get(kv.left, kv);
+      stack_.Get(kv.left.branch, kv);
     }
   }
 
@@ -1046,9 +1067,9 @@ private:
       {
         last_element_parent.right = index;
       }
-      else if (last_element_parent.left == stack_end)
+      else if (last_element_parent.left.branch == stack_end)
       {
-        last_element_parent.left = index;
+        last_element_parent.left.branch = index;
       }
       else
       {
@@ -1074,9 +1095,9 @@ private:
     {
       key_value_pair kv;
 
-      stack_.Get(last_element.left, kv);
+      stack_.Get(last_element.left.branch, kv);
       kv.parent = index;
-      stack_.Set(last_element.left, kv);
+      stack_.Set(last_element.left.branch, kv);
 
       stack_.Get(last_element.right, kv);
       kv.parent = index;
@@ -1126,20 +1147,21 @@ private:
       if (kv.is_leaf())
       {
         // Note: the key value index shouldn't really know that 0 is invalid, but it is.
-        if (kv.value == 0 || kv.value == uint64_t(-1))
+        if (kv.left.value == 0 || kv.left.value == uint64_t(-1))
         {
           throw StorageException("leaf key in key value index is malformed");
         }
 
-        if (leaf_values.find(kv.value) != leaf_values.end())
+        if (leaf_values.find(kv.left.value) != leaf_values.end())
         {
           throw StorageException("Duplicate values found in key value index! " +
-                                 std::to_string(kv.value));
+                                 std::to_string(kv.left.value));
         }
       }
       else
       {
-        if (kv.left == kv.right || kv.left == uint64_t(-1) || kv.right == uint64_t(-1))
+        if (kv.left.branch == kv.right || kv.left.branch == uint64_t(-1) ||
+            kv.right == uint64_t(-1))
         {
           throw StorageException("key in key value index is malformed");
         }
@@ -1154,7 +1176,7 @@ private:
 
         if (!kv.is_leaf())
         {
-          nodes_stack.push_back(kv.left);
+          nodes_stack.push_back(kv.left.branch);
           verified_so_far[verified_so_far.size() - 1]++;
           verified_so_far.push_back(0);
         }
@@ -1237,7 +1259,7 @@ private:
         // Clear dummy
         kv_dummy = key_value_pair{};
 
-        stack_.Get(kv.left, kv_left);
+        stack_.Get(kv.left.branch, kv_left);
         stack_.Get(kv.right, kv_right);
 
         kv_dummy.UpdateNode(kv_left, kv_right);
@@ -1256,7 +1278,7 @@ private:
 
         if (!kv.is_leaf())
         {
-          nodes_stack.push_back(kv.left);
+          nodes_stack.push_back(kv.left.branch);
           verified_so_far[verified_so_far.size() - 1]++;
           verified_so_far.push_back(0);
         }

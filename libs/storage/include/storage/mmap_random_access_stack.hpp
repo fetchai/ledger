@@ -25,6 +25,7 @@
 //  └──────┴───────────┴───────────┴───────────┴───────────┘
 
 #include "core/assert.hpp"
+#include "core/buffer_io.hpp"
 #include "storage/fetch_mmap.hpp"
 #include "storage/storage_exception.hpp"
 
@@ -84,9 +85,7 @@ private:
         return false;
       }
       stream.seekg(0, std::fstream::beg);
-      stream.write(reinterpret_cast<char const *>(&magic), sizeof(magic));
-      stream.write(reinterpret_cast<char const *>(&objects), sizeof(objects));
-      stream.write(reinterpret_cast<char const *>(&extra), sizeof(extra));
+      buffer_io::FWrite(stream, magic, objects, extra);
       stream.flush();
       return bool(stream);
     }

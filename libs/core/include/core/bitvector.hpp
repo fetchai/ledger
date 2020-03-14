@@ -63,6 +63,11 @@ public:
   // Construction  / Destruction
   explicit BitVector(std::size_t n = 0);
   BitVector(BitVector const &other);
+  BitVector(BitVector &&other) = default;
+
+  BitVector &operator=(BitVector const &other);
+  BitVector &operator=(BitVector &&other) = default;
+
   ~BitVector() = default;
 
   void Resize(std::size_t bit_size);
