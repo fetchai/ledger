@@ -105,7 +105,7 @@ static_assert(meta::IsPOD<BloomFilterMetadata>, "Metadata must be POD");
 
 constexpr char const *LOGGING_NAME = "HBloomFilter";
 
-constexpr std::size_t BLOOM_FILTER_SIZE = 160 * 8 * 1024 * 1024;
+constexpr std::size_t BLOOM_FILTER_SIZE = 3 * 8 * 1024 * 1024;
 
 // this number is vague adjustment to allow room for current and future serialisation over head
 // on the filter. This is, therefore is not a strictly derived value
