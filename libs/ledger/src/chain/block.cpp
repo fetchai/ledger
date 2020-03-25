@@ -33,7 +33,7 @@ namespace {
 
 constexpr char const *LOGGING_NAME = "Block";
 
-} // namespace
+}  // namespace
 
 bool Block::operator==(Block const &rhs) const
 {
