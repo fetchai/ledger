@@ -29,6 +29,11 @@
 
 namespace fetch {
 namespace ledger {
+namespace {
+
+constexpr char const *LOGGING_NAME = "Block";
+
+} // namespace
 
 bool Block::operator==(Block const &rhs) const
 {

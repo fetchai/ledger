@@ -17,9 +17,9 @@
 //
 //------------------------------------------------------------------------------
 
-#include "http/http_server.hpp"
 #include "http/json_response.hpp"
 #include "http/module.hpp"
+#include "http/server.hpp"
 #include "logging/logging.hpp"
 
 #include <mutex>

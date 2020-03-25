@@ -38,7 +38,6 @@ PeriodicRunnable::PeriodicRunnable(std::string const &name, Duration const &peri
   , state_gauge_{telemetry::Registry::Instance().CreateGauge<uint64_t>(
         ToLowerCase(name) + "_periodic_runnable_gauge",
         "Generic periodic runnable state as integer")}
-  , name_{name}
 {}
 
 bool PeriodicRunnable::IsReadyToExecute() const
@@ -59,11 +58,6 @@ void PeriodicRunnable::Execute()
 std::string PeriodicRunnable::GetId() const
 {
   return "PeriodicRunnable";
-}
-
-std::string PeriodicRunnable::GetDebug() const
-{
-  return name_;
 }
 
 }  // namespace core

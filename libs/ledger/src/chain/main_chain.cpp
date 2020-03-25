@@ -81,7 +81,7 @@ MainChain::MainChain(Mode mode, bool dirty_block_functionality)
 MainChain::MainChain(Mode mode, Config const &cfg)
   : mode_{mode}
   , dirty_block_functionality_{cfg.enable_dirty_blocks}
-  , bloom_filter_{SelectMode(mode), "chain.hbloom.v2.db", "chain.hbloom.meta.v2.db",
+  , bloom_filter_{SelectMode(mode), "chain.hbloom.v3.db", "chain.hbloom.meta.v2.db",
                   cfg.bloom_filter_window, cfg.bloom_filter_cached_buckets}
   , bloom_filter_queried_bit_count_(telemetry::Registry::Instance().CreateGauge<std::size_t>(
         "ledger_main_chain_bloom_filter_queried_bit_number",

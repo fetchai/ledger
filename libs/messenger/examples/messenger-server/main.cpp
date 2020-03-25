@@ -17,7 +17,7 @@
 //------------------------------------------------------------------------------
 
 #include "crypto/ecdsa.hpp"
-#include "http/http_server.hpp"
+#include "http/server.hpp"
 #include "messenger/messenger_api.hpp"
 #include "messenger/messenger_http_interface.hpp"
 #include <iostream>

@@ -17,7 +17,7 @@
 //
 //------------------------------------------------------------------------------
 
-#include "http/http_server.hpp"
+#include "http/server.hpp"
 
 namespace fetch {
 namespace http {

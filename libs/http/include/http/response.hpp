@@ -31,7 +31,7 @@
 namespace fetch {
 namespace http {
 
-class HTTPResponse
+class HTTPResponse : public std::enable_shared_from_this<HTTPResponse>
 {
 public:
   explicit HTTPResponse(byte_array::ConstByteArray body = {},

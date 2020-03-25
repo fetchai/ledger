@@ -91,8 +91,7 @@ public:
   bool        IsValid() const;
 
 private:
-  static constexpr char const *LOGGING_NAME = "Block";
-  SystemClock                  clock_ = moment::GetClock("block:body", moment::ClockType::SYSTEM);
+  SystemClock clock_ = moment::GetClock("block:body", moment::ClockType::SYSTEM);
 };
 
 }  // namespace ledger

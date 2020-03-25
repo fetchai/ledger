@@ -36,27 +36,37 @@ static char const *FETCH_MAYBE_UNUSED ToString(fetch::ledger::tx_sync::State sta
 {
   using State = fetch::ledger::tx_sync::State;
 
+  char const *text = "Unknown";
+
   switch (state)
   {
   case State::INITIAL:
-    return "Initial";
+    text = "Initial";
+    break;
   case State::QUERY_OBJECT_COUNTS:
-    return "Query Object Counts";
+    text = "Query Object Counts";
+    break;
   case State::RESOLVING_OBJECT_COUNTS:
-    return "Resolving Object Counts";
+    text = "Resolving Object Counts";
+    break;
   case State::QUERY_SUBTREE:
-    return "Query Subtree";
+    text = "Query Subtree";
+    break;
   case State::RESOLVING_SUBTREE:
-    return "Resolving Subtree";
+    text = "Resolving Subtree";
+    break;
   case State::QUERY_OBJECTS:
-    return "Query Objects";
+    text = "Query Objects";
+    break;
   case State::RESOLVING_OBJECTS:
-    return "Resolving Objects";
+    text = "Resolving Objects";
+    break;
   case State::TRIM_CACHE:
-    return "Trim Cache";
+    text = "Trim Cache";
+    break;
   }
 
-  return "Unknown";
+  return text;
 }
 
 namespace fetch {
@@ -66,8 +76,7 @@ TransactionStoreSyncService::TransactionStoreSyncService(Config const &cfg, Mudd
                                                          TransactionStorageEngineInterface &store,
                                                          TxFinderProtocol *tx_finder_protocol,
                                                          TrimCacheCallback trim_cache_callback)
-  : recently_seen_txs_(RECENTLY_SEEN_CACHE_SIZE)
-  , trim_cache_callback_(std::move(trim_cache_callback))
+  : trim_cache_callback_(std::move(trim_cache_callback))
   , state_machine_{std::make_shared<core::StateMachine<State>>("TransactionStoreSyncService",
                                                                State::INITIAL)}
   , tx_finder_protocol_(tx_finder_protocol)
@@ -92,9 +101,6 @@ TransactionStoreSyncService::TransactionStoreSyncService(Config const &cfg, Mudd
   , subtree_failure_total_{telemetry::Registry::Instance().CreateCounter(
         "ledger_tx_store_sync_service_subtree_failure_total",
         "The total number of subtree request failures observed")}
-  , tss_duplicates_dropped_{telemetry::Registry::Instance().CreateCounter(
-        "ledger_tx_store_sync_service_tss_duplicates_dropped_total",
-        "The total number of duplicate TXs dropped during syncing")}
   , current_tss_state_{telemetry::Registry::Instance().CreateGauge<uint64_t>(
         "current_tss_state", "The state in the state machine of the tx store")}
   , current_tss_peers_{telemetry::Registry::Instance().CreateGauge<uint64_t>(
@@ -120,6 +126,11 @@ TransactionStoreSyncService::TransactionStoreSyncService(Config const &cfg, Mudd
     FETCH_UNUSED(new_state);
     FETCH_LOG_DEBUG(LOGGING_NAME, "*** Updating state to: ", ToString(new_state));
   });
+}
+
+TransactionStoreSyncService::~TransactionStoreSyncService()
+{
+  client_ = nullptr;
 }
 
 TransactionStoreSyncService::State TransactionStoreSyncService::OnInitial()
@@ -294,8 +305,6 @@ TransactionStoreSyncService::State TransactionStoreSyncService::OnResolvingSubtr
 
     for (auto &tx : result.promised)
     {
-      // this transaction is not recent
-      tx.SetFromSubtreeSync();
       // add the transaction to the verifier
       verifier_.AddTransaction(std::make_shared<chain::Transaction>(tx));
 
@@ -429,16 +438,8 @@ TransactionStoreSyncService::State TransactionStoreSyncService::OnResolvingObjec
 
     for (auto &tx : result.promised)
     {
-      if (AlreadySeen(tx))
-      {
-        FETCH_LOG_DEBUG(LOGGING_NAME, "Dropping already seen transaction");
-        tss_duplicates_dropped_->add(1);
-      }
-      else
-      {
-        verifier_.AddTransaction(std::make_shared<chain::Transaction>(tx));
-        ++synced_tx;
-      }
+      verifier_.AddTransaction(std::make_shared<chain::Transaction>(tx));
+      ++synced_tx;
     }
   }
 
@@ -488,32 +489,9 @@ void TransactionStoreSyncService::OnTransaction(TransactionPtr const &tx)
     FETCH_LOG_DEBUG(LOGGING_NAME, "Verified Sync TX: ", tx->digest().ToBase64(), " (",
                     tx->digest().ToHex(), ')');
 
-    // This transaction is recent unless it was received at subtree sync.
-    store_.Add(*tx, !tx->IsFromSubtreeSync());
+    store_.Add(*tx, true);
     stored_transactions_->increment();
   }
-}
-
-bool TransactionStoreSyncService::AlreadySeen(chain::Transaction const &tx)
-{
-  auto const &digest = tx.digest();
-  bool        result{false};
-
-  if (store_.Has(digest))
-  {
-    result = true;
-  }
-
-  if (recently_seen_txs_.Seen(digest))
-  {
-    result = true;
-  }
-  else
-  {
-    recently_seen_txs_.Add(digest);
-  }
-
-  return result;
 }
 
 }  // namespace ledger

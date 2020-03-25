@@ -137,8 +137,6 @@ public:
   bool Verify();
   bool IsVerified() const;
   bool IsSignedByFromAddress() const;
-  void SetFromSubtreeSync();
-  bool IsFromSubtreeSync() const;
   /// @}
 
   // Operators
@@ -169,7 +167,6 @@ private:
   Digest digest_{};                       ///< The digest of the transaction
   bool   verification_completed_{false};  ///< Signal that the verification has been done
   bool   verified_{false};                ///< The cached result of the verification
-  bool   old_{false};                     ///< Whether this transaction came from sync, or is recent
   /// @}
 
   // There are only two ways to generate a transaction, each from one of the two companion classes:

@@ -19,7 +19,7 @@
 
 #include "core/byte_array/const_byte_array.hpp"
 #include "http/authentication_level.hpp"
-#include "http/http_server.hpp"
+#include "http/server.hpp"
 
 #include <cstdint>
 #include <utility>

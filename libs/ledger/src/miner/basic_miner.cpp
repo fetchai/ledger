@@ -151,7 +151,7 @@ void BasicMiner::GenerateBlock(Block &block, std::size_t num_lanes, std::size_t 
 
   // detect the transactions which have already been incorporated into previous blocks
   auto const duplicates =
-      chain.DetectDuplicateTransactions(block.previous_hash, mining_pool_.TxLayouts(), true);
+      chain.DetectDuplicateTransactions(block.previous_hash, mining_pool_.TxLayouts());
 
   duplicate_filtered_count_->add(duplicates.size());
 

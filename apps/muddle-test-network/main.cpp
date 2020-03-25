@@ -25,7 +25,7 @@
 #include "crypto/ecdsa.hpp"
 #include "crypto/prover.hpp"
 #include "crypto/sha256.hpp"
-#include "http/http_server.hpp"
+#include "http/server.hpp"
 #include "http/middleware/allow_origin.hpp"
 #include "http/middleware/telemetry.hpp"
 #include "http/module.hpp"

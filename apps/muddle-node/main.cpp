@@ -23,7 +23,7 @@
 #include "core/macros.hpp"
 #include "core/synchronisation/protected.hpp"
 #include "crypto/ecdsa.hpp"
-#include "http/http_server.hpp"
+#include "http/server.hpp"
 #include "http/module.hpp"
 #include "muddle/muddle_endpoint.hpp"
 #include "muddle/muddle_interface.hpp"
