@@ -41,8 +41,8 @@ public:
   using Counter        = uint64_t;
 
   constexpr static uint64_t   MAXIMUM_TX_CHARGE_LIMIT    = 10000000000;
-  constexpr static BlockIndex MAXIMUM_TX_VALIDITY_PERIOD = 40000;
-  constexpr static BlockIndex DEFAULT_TX_VALIDITY_PERIOD = 1000;
+  constexpr static BlockIndex MAXIMUM_TX_VALIDITY_PERIOD = 500;
+  constexpr static BlockIndex DEFAULT_TX_VALIDITY_PERIOD = 500;
 
   /**
    * Represents a single target and token about. The transaction format allows any number of
