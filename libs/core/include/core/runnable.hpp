@@ -44,6 +44,11 @@ public:
 
   virtual std::string GetId() const = 0;
 
+  virtual bool IsExpectedToBlock() const
+  {
+    return false;
+  }
+
   virtual std::string GetDebug() const
   {
     return std::string("No debug info");

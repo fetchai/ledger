@@ -299,8 +299,8 @@ byte_array::ConstByteArray StorageUnitClient::Commit(uint64_t const commit_index
       }
     }
 
-    FETCH_LOG_INFO(LOGGING_NAME, "Committing merkle hash at index: ", commit_index, " to stack: 0x",
-                   tree.root().ToHex());
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Committing merkle hash at index: ", commit_index,
+                    " to stack: 0x", tree.root().ToHex());
 
     permanent_state_merkle_stack_.Push(tree);
     permanent_state_merkle_stack_.Flush(false);
@@ -324,8 +324,8 @@ bool StorageUnitClient::HashInStack(Hash const &hash, uint64_t index)
 
   if (index >= merkle_stack_size)
   {
-    FETCH_LOG_WARN(LOGGING_NAME, "Tried to find hash in merkle tree when index more than stack: ",
-                   merkle_stack_size, " index: ", index);
+    FETCH_LOG_DEBUG(LOGGING_NAME, "Tried to find hash in merkle tree when index more than stack: ",
+                    merkle_stack_size, " index: ", index);
     return false;
   }
 

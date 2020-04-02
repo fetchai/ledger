@@ -237,7 +237,6 @@ TransactionStoreSyncService::State TransactionStoreSyncService::OnResolvingObjec
 TransactionStoreSyncService::State TransactionStoreSyncService::OnQuerySubtree()
 {
   current_tss_state_->set(static_cast<uint64_t>(state_machine_->state()));
-  assert(!roots_to_sync_.empty());
   auto const orig_num_of_roots{roots_to_sync_.size()};
 
   auto const directly_connected_peers = muddle_.GetDirectlyConnectedPeers();

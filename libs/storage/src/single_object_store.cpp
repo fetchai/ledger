@@ -110,6 +110,7 @@ bool SingleObjectStore::Load(std::string const &file_name)
   if (FileSize() == 0)
   {
     // Write metadata to new file
+    file_handle_.seekg(0, std::fstream::beg);
     WriteFile(file_handle_, reinterpret_cast<char const *>(&meta), sizeof(meta));
     file_handle_.flush();
     return true;

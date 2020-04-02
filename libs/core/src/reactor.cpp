@@ -176,23 +176,38 @@ void Reactor::StopWorkerAndWatcher()
 void Reactor::ReactorWatch()
 {
   uint32_t last_seen_executed = 0;
+  uint64_t notifications      = 0;
 
   while (running_)
   {
     std::unique_lock<std::mutex> lock(cv_m_);
     cv_.wait_for(lock, std::chrono::milliseconds(thread_watcher_check_ms_));
 
-    auto        runnable_concrete = last_executed_runnable_.lock();
-    std::string runnable_name     = runnable_concrete ? runnable_concrete->GetId() : "nullptr fail";
+    auto       runnable_concrete = last_executed_runnable_.lock();
+    bool const runnable_expected_to_block =
+        runnable_concrete ? runnable_concrete->IsExpectedToBlock() : false;
+    std::string runnable_name  = runnable_concrete ? runnable_concrete->GetId() : "nullptr fail";
     std::string runnable_debug = runnable_concrete ? runnable_concrete->GetDebug() : "nullptr fail";
 
     if ((last_seen_executed == execution_counter_) && currently_executing_)
     {
-      FETCH_LOG_WARN(LOGGING_NAME,
-                     "Very long execution noticed at execution counter: ", last_seen_executed,
-                     ". from runnable: ", runnable_name, " debug: ", runnable_debug);
+      bool const suppress_log = runnable_expected_to_block && (notifications > 0);
+
+      if (!suppress_log)
+      {
+        FETCH_LOG_WARN(LOGGING_NAME,
+                       "Very long execution noticed at execution counter: ", last_seen_executed,
+                       ". from runnable: ", runnable_name, " debug: ", runnable_debug,
+                       " blocking: ", runnable_expected_to_block);
+      }
+
       executions_way_too_long_++;
       way_too_long_total_->increment();
+      ++notifications;
+    }
+    else
+    {
+      notifications = 0;
     }
 
     last_seen_executed = execution_counter_;

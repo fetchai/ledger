@@ -467,17 +467,25 @@ bool FixedSizeJournalFile::Flush()
  */
 bool FixedSizeJournalFile::Clear(std::string const &filename)
 {
+  // close the stream
+  if (stream_.is_open())
+  {
+    stream_.close();
+  }
+
+  // clear any of the input flags
+  stream_.clear();
+
+  // stage 2. open the output file for normal handling
   stream_.open(filename.c_str(), std::ios::in | std::ios::out | std::ios::binary | std::ios::trunc);
 
   // ensure that the total sectors is correctly reset too
   total_sectors_ = 0;
 
-  // check to see if the open was successful
-  bool const success = stream_.is_open() && !(stream_.bad() || stream_.fail());
+  bool const success = stream_.is_open() && stream_;
   if (!success)
   {
-    stream_.clear();  // reset stream flags
-    FETCH_LOG_ERROR(LOGGING_NAME, "Failed to open requested file");
+    FETCH_LOG_ERROR(LOGGING_NAME, "Failed to open requested file: ", filename, " -> ", errno);
     return false;
   }
 

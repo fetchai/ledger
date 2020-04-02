@@ -991,11 +991,35 @@ bool Constellation::CheckStateIntegrity()
     return true;
   }
 
-  // Walk back down the chain until we find a state we could revert to
-  while (current_block &&
-         !storage_->HashExists(current_block->merkle_hash, current_block->block_number))
   {
-    current_block = chain_->GetBlock(current_block->previous_hash);
+    using Clock     = std::chrono::steady_clock;
+    using Timepoint = Clock::time_point;
+
+    FETCH_LOG_INFO(LOGGING_NAME, "Searching for starting state hash...");
+
+    Timepoint last_notify = Clock::now();
+
+    // Walk back down the chain until we find a state we could revert to
+    while (current_block &&
+           !storage_->HashExists(current_block->merkle_hash, current_block->block_number))
+    {
+      current_block = chain_->GetBlock(current_block->previous_hash);
+
+      if (current_block && ((current_block->block_number & 0x3f) == 0))
+      {
+        auto const now   = Clock::now();
+        auto const delta = now - last_notify;
+
+        if (delta >= std::chrono::seconds{5})
+        {
+          FETCH_LOG_INFO(LOGGING_NAME, "Searching for starting state hash... (current block: ",
+                         current_block->block_number, ")");
+          last_notify = now;
+        }
+      }
+    }
+
+    FETCH_LOG_INFO(LOGGING_NAME, "Searching for starting state hash...complete");
   }
 
   if (!current_block)

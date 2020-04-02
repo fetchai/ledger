@@ -89,6 +89,10 @@ public:
   void        Execute() override;
   std::string GetId() const override;
   std::string GetDebug() const override;
+  bool        IsExpectedToBlock() const override
+  {
+    return blocking_;
+  }
   /// @}
 
   State state() const
@@ -99,6 +103,11 @@ public:
   State previous_state() const
   {
     return previous_state_;
+  }
+
+  void SetBlocking(bool blocking)
+  {
+    blocking_ = blocking;
   }
 
   template <typename R, typename P>
@@ -129,6 +138,7 @@ private:
   ProtectedCallbackMap          callbacks_{};
   std::atomic<State>            current_state_;
   std::atomic<State>            previous_state_{current_state_.load()};
+  std::atomic<bool>             blocking_{false};
   Timepoint                     next_execution_{};
   ProtectedStateChangeCallback  state_change_callback_{};
   telemetry::GaugePtr<uint64_t> state_gauge_;

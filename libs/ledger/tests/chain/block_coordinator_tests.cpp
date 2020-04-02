@@ -262,6 +262,9 @@ TEST_F(BlockCoordinatorTests, CheckBasicInteraction)
   {
     InSequence s;
 
+    // reload state
+    EXPECT_CALL(*execution_manager_, LastProcessedBlock());
+
     // syncing
     EXPECT_CALL(*storage_unit_, LastCommitHash());
     EXPECT_CALL(*storage_unit_, CurrentHash());
@@ -369,19 +372,14 @@ TEST_F(BlockCoordinatorTests, CheckLongBlockStartUp)
   ASSERT_EQ(BlockStatus::ADDED, main_chain_->AddBlock(*b3));
 
   // processing of genesis block
-  ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), fetch::chain::ZERO_HASH);
+  execution_manager_->fake.SetLastProcessedBlock(fetch::chain::GetGenesisDigest());
+  ASSERT_EQ(execution_manager_->fake.LastProcessedBlock(), fetch::chain::GetGenesisDigest());
 
   {
     InSequence s;
 
     // reloading state
-    EXPECT_CALL(*storage_unit_, HashExists(b3->merkle_hash, b3->block_number));
-    EXPECT_CALL(*storage_unit_, HashExists(b2->merkle_hash, b2->block_number));
-    EXPECT_CALL(*storage_unit_, HashExists(b1->merkle_hash, b1->block_number));
-    EXPECT_CALL(*storage_unit_, HashExists(genesis->merkle_hash, genesis->block_number));
-    EXPECT_CALL(*storage_unit_, HashExists(genesis->merkle_hash, genesis->block_number));
-    EXPECT_CALL(*storage_unit_, RevertToHash(genesis->merkle_hash, genesis->block_number));
-    EXPECT_CALL(*execution_manager_, SetLastProcessedBlock(genesis->hash));
+    EXPECT_CALL(*execution_manager_, LastProcessedBlock());
 
     // syncing - Genesis
     EXPECT_CALL(*storage_unit_, LastCommitHash());
@@ -616,6 +614,9 @@ TEST_F(BlockCoordinatorTests, CheckInvalidBlockNumber)
   {
     InSequence s;
 
+    // reloading state
+    EXPECT_CALL(*execution_manager_, LastProcessedBlock());
+
     // syncing
     EXPECT_CALL(*storage_unit_, LastCommitHash());
     EXPECT_CALL(*storage_unit_, CurrentHash());
@@ -689,6 +690,9 @@ TEST_F(BlockCoordinatorTests, CheckInvalidNumLanes)
   // define the call expectations
   {
     InSequence s;
+
+    // reloading state
+    EXPECT_CALL(*execution_manager_, LastProcessedBlock());
 
     // syncing
     EXPECT_CALL(*storage_unit_, LastCommitHash());
@@ -788,6 +792,9 @@ TEST_F(BlockCoordinatorTests, CheckInvalidNumSlices)
   {
     InSequence s;
 
+    // reloading state
+    EXPECT_CALL(*execution_manager_, LastProcessedBlock());
+
     // syncing
     EXPECT_CALL(*storage_unit_, LastCommitHash());
     EXPECT_CALL(*storage_unit_, CurrentHash());
@@ -884,6 +891,9 @@ TEST_F(BlockCoordinatorTests, CheckBlockMining)
   // define the call expectations
   {
     InSequence s;
+
+    // reloading state
+    EXPECT_CALL(*execution_manager_, LastProcessedBlock());
 
     // syncing
     EXPECT_CALL(*storage_unit_, LastCommitHash());
@@ -987,6 +997,9 @@ TEST_F(BlockCoordinatorTests, CheckPanicMode)
   // define the call expectations
   {
     InSequence s;
+
+    // reloading state
+    EXPECT_CALL(*execution_manager_, LastProcessedBlock());
 
     // syncing
     EXPECT_CALL(*storage_unit_, LastCommitHash());

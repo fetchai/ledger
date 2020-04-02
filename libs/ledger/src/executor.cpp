@@ -97,6 +97,8 @@ Executor::Result Executor::Execute(Digest const &digest, BlockIndex block, Slice
   // attempt to retrieve the transaction from the storage
   if (!RetrieveTransaction(digest))
   {
+    FETCH_LOG_WARN(LOGGING_NAME, "Unable to retrieve tx: 0x", digest.ToHex());
+
     // signal that the contract failed to be executed
     result.status = Status::TX_LOOKUP_FAILURE;
   }
@@ -121,6 +123,8 @@ Executor::Result Executor::Execute(Digest const &digest, BlockIndex block, Slice
 
     if (!success)
     {
+      FETCH_LOG_WARN(LOGGING_NAME, "Failure to execute TX: 0x", digest.ToHex());
+
       // in addition to avoid indeterminate data being partially flushed. In the case of the when
       // the transaction execution fails then we also clear all the cached data.
       storage_cache_->Clear();
@@ -210,6 +214,8 @@ bool Executor::ValidationChecks(Result &result)
 
   if (status != Status::SUCCESS)
   {
+    FETCH_LOG_WARN(LOGGING_NAME, "Basic Validation Checks Failed: ", ToString(status));
+
     result.status = status;
     return false;
   }
@@ -238,7 +244,6 @@ bool Executor::ExecuteTransactionContract(Result &result)
       contract_id = current_tx_->chain_code();
       break;
     case ContractMode::NOT_PRESENT:
-      break;
     case ContractMode::SYNERGETIC:
       // synergetic contracts are not supported through normal pipeline
       break;

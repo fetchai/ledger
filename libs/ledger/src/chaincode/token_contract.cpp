@@ -169,6 +169,8 @@ bool TokenContract::TransferTokens(chain::Transaction const &tx, chain::Address 
   WalletRecord from_record{};
   if (!GetStateRecord(from_record, tx.from()))
   {
+    FETCH_LOG_WARN(LOGGING_NAME, "Unable to lookup the token state record for ",
+                   tx.from().display());
     return false;
   }
 
@@ -180,6 +182,7 @@ bool TokenContract::TransferTokens(chain::Transaction const &tx, chain::Address 
     // Verify that current transaction possesses authority to perform the transfer
     if (!from_record.deed->Verify(tx, Deed::TRANSFER))
     {
+      FETCH_LOG_WARN(LOGGING_NAME, "Multisig Deed Failure: ", tx.from().display());
       return false;
     }
   }
@@ -191,6 +194,7 @@ bool TokenContract::TransferTokens(chain::Transaction const &tx, chain::Address 
     // SOURCE address MUST be present when NO preceding deed exists.
     if (!tx.IsSignedByFromAddress())
     {
+      FETCH_LOG_WARN(LOGGING_NAME, "Signature Failure: ", tx.from().display());
       return false;
     }
   }

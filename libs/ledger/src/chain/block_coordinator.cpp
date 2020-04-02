@@ -246,64 +246,9 @@ BlockCoordinator::State BlockCoordinator::OnReloadState()
   current_block_coord_state_->set(static_cast<uint64_t>(state_machine_->state()));
   reload_state_count_->increment();
 
-  // By default we need to populate this.
-  current_block_ = MainChain::CreateGenesisBlock();
-
-  FETCH_LOG_INFO(LOGGING_NAME, "Loading block coordinator old state...");
-
-  auto block = chain_.GetHeaviestBlock();
-
-  if (block->IsGenesis())
-  {
-    FETCH_LOG_INFO(LOGGING_NAME, "The main chain's heaviest is genesis. Nothing to load.");
-    return State::RESET;
-  }
-
-  // Walk back down the chain until we find a state we can revert to
-  while (block && !storage_unit_.HashExists(block->merkle_hash, block->block_number))
-  {
-    block = chain_.GetBlock(block->previous_hash);
-  }
-
-  if (!block)
-  {
-    FETCH_LOG_WARN(LOGGING_NAME, "Failed to walk back the chain when recovering!");
-  }
-
-  if (block && storage_unit_.HashExists(block->merkle_hash, block->block_number))
-  {
-    FETCH_LOG_INFO(LOGGING_NAME, "Found a block to revert to! Block: ", block->block_number,
-                   " hex: 0x", block->hash.ToHex(), " merkle hash: 0x", block->merkle_hash.ToHex());
-
-    if (!storage_unit_.RevertToHash(block->merkle_hash, block->block_number))
-    {
-      FETCH_LOG_WARN(LOGGING_NAME, "The revert operation failed!");
-      return State::RESET;
-    }
-
-    FETCH_LOG_INFO(LOGGING_NAME, "Reverted storage unit.");
-
-    // Need to revert the DAG too
-    if (dag_ && !dag_->RevertToEpoch(block->block_number))
-    {
-      FETCH_LOG_WARN(LOGGING_NAME, "Reverting the DAG failed!");
-      return State::RESET;
-    }
-
-    FETCH_LOG_INFO(LOGGING_NAME, "reverted dag.");
-
-    // we need to update the execution manager state and also our locally cached state about the
-    // 'last' block that has been executed
-    execution_manager_.SetLastProcessedBlock(block->hash);
-    last_executed_block_.ApplyVoid([&block](auto &digest) { digest = block->hash; });
-    current_block_ = block;
-
-    FETCH_LOG_INFO(LOGGING_NAME, "Success.");
-  }
-  else
-  {
-    FETCH_LOG_INFO(LOGGING_NAME, "Didn't find any prior merkle state to revert to.");
-  }
+  // keep everything in sync
+  last_executed_block_.ApplyVoid(
+      [this](auto &digest) { digest = execution_manager_.LastProcessedBlock(); });
 
   return State::RESET;
 }
@@ -398,9 +343,13 @@ BlockCoordinator::State BlockCoordinator::OnSynchronising()
 
     if (blocks_to_common_ancestor_.empty())
     {
+      state_machine_->SetBlocking(true);
+
       lookup_success = chain_.GetPathToCommonAncestor(
           blocks_to_common_ancestor_, current_hash, last_processed_block,
           COMMON_PATH_TO_ANCESTOR_LENGTH_LIMIT, MainChain::BehaviourWhenLimit::RETURN_LEAST_RECENT);
+
+      state_machine_->SetBlocking(false);
     }
     else
     {

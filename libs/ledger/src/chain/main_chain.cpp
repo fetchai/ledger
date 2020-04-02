@@ -51,22 +51,6 @@ namespace {
 
 constexpr uint64_t DIRTY_TIMEOUT = 600;
 
-bloom::HistoricalBloomFilter::Mode SelectMode(MainChain::Mode mode)
-{
-  bloom::HistoricalBloomFilter::Mode bloom_mode{bloom::HistoricalBloomFilter::Mode ::LOAD_DATABASE};
-
-  switch (mode)
-  {
-  case MainChain::Mode::IN_MEMORY_DB:
-  case MainChain::Mode::CREATE_PERSISTENT_DB:
-    bloom_mode = bloom::HistoricalBloomFilter::Mode::NEW_DATABASE;
-  case MainChain::Mode::LOAD_PERSISTENT_DB:
-    break;
-  }
-
-  return bloom_mode;
-}
-
 }  // namespace
 
 /**
@@ -81,8 +65,9 @@ MainChain::MainChain(Mode mode, bool dirty_block_functionality)
 MainChain::MainChain(Mode mode, Config const &cfg)
   : mode_{mode}
   , dirty_block_functionality_{cfg.enable_dirty_blocks}
-  , bloom_filter_{SelectMode(mode), "chain.hbloom.v3.db", "chain.hbloom.meta.v2.db",
-                  cfg.bloom_filter_window, cfg.bloom_filter_cached_buckets}
+  , bloom_filter_{bloom::HistoricalBloomFilter::Mode::NEW_DATABASE, "chain.hbloom.v3.db",
+                  "chain.hbloom.meta.v3.db", cfg.bloom_filter_window,
+                  cfg.bloom_filter_cached_buckets}
   , bloom_filter_queried_bit_count_(telemetry::Registry::Instance().CreateGauge<std::size_t>(
         "ledger_main_chain_bloom_filter_queried_bit_number",
         "Total number of bits checked during each query to the Ledger Main Chain Bloom filter"))
@@ -112,7 +97,9 @@ MainChain::MainChain(Mode mode, Config const &cfg)
     // create the block store
     block_store_ = std::make_unique<BlockStore>();
 
+    FETCH_LOG_INFO(LOGGING_NAME, "Starting main chain recovery...");
     RecoverFromFile(mode_);
+    FETCH_LOG_INFO(LOGGING_NAME, "Starting main chain recovery...complete");
   }
 
   // create the genesis block and add it to the cache
@@ -1051,10 +1038,17 @@ void MainChain::RecoverFromFile(Mode mode)
   // clear the transaction bloom filter
   bloom_filter_.Reset();
 
+  using Clock     = std::chrono::steady_clock;
+  using Timepoint = Clock::time_point;
+  using Duration  = Clock::duration;
+
+  Timepoint last_notify = Clock::now();
+
   bool recovery_complete{false};
   if (!head_block_hash.empty() && LoadBlock(head_block_hash, *head))
   {
-    auto block_index = head->block_number;
+    auto       block_index = head->block_number;
+    auto const head_index  = block_index;
 
     // Copy head block so as to walk down the chain
     IntBlockPtr next = std::make_shared<Block>(*head);
@@ -1072,6 +1066,20 @@ void MainChain::RecoverFromFile(Mode mode)
       if ((block_index % bloom_filter_.window_size()) == 0)
       {
         bloom_filter_.TrimCache();
+
+        Timepoint const now          = Clock::now();
+        Duration const  delta_notify = now - last_notify;
+
+        if (delta_notify >= std::chrono::seconds{10})
+        {
+          // calculate the progress %
+          auto const progress = (100 * (head_index - block_index)) / (head_index + 1);
+
+          FETCH_LOG_INFO(LOGGING_NAME, "Chain recovery in progress: ", head_index - block_index,
+                         "/", head_index + 1, " : ", progress, "%");
+
+          last_notify = now;
+        }
       }
 
       block_index = next->block_number;
