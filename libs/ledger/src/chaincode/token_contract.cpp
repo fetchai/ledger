@@ -306,7 +306,7 @@ Contract::Result TokenContract::AddStake(chain::Transaction const &tx)
             // record the stake update event
             stake_updates_.emplace_back(
                 StakeUpdateEvent{context().block_index + chain::STAKE_WARM_UP_PERIOD,
-                                 crypto::Identity(input.FromBase64()), amount});
+                                 crypto::Identity(input.FromBase64()), record.stake});
 
             // save the state
             auto const status = SetStateRecord(record, tx.from());
@@ -335,7 +335,9 @@ Contract::Result TokenContract::DeStake(chain::Transaction const &tx)
   {
     // attempt to extract the amount field
     uint64_t amount{0};
-    if (Extract(data, AMOUNT_NAME, amount))
+    ConstByteArray input;
+
+    if (Extract(data, AMOUNT_NAME, amount) && Extract(data, ADDRESS_NAME, input))
     {
       // look up the state record (to see if there is a deed associated with this address)
       WalletRecord record{};
@@ -345,6 +347,7 @@ Contract::Result TokenContract::DeStake(chain::Transaction const &tx)
         if (IsOperationValid(record, tx, Deed::STAKE))
         {
           FETCH_LOG_INFO(LOGGING_NAME, "Destaking! : ", amount, " of ", record.stake);
+
           // destake the amount
           if (record.stake >= amount)
           {
@@ -352,6 +355,11 @@ Contract::Result TokenContract::DeStake(chain::Transaction const &tx)
 
             // Put it in a cooldown state
             record.cooldown_stake[context().block_index + chain::STAKE_COOL_DOWN_PERIOD] += amount;
+
+            // record the stake update event
+            stake_updates_.emplace_back(
+                StakeUpdateEvent{context().block_index + chain::STAKE_COOL_DOWN_PERIOD,
+                                 crypto::Identity(input.FromBase64()), record.stake});
 
             // save the state
             auto const status = SetStateRecord(record, tx.from());
